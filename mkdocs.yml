@@ -3,7 +3,8 @@ site_description: A Comprehensive Modeling Framework Empowered by PyTorch
 repo_name: fuliucansheng/unitorch
 repo_url: https://github.com/fuliucansheng/unitorch
 copyright: Copyright &copy; 2023 FULIUCANSHENG
-site_dir: sites
+docs_dir: wiki
+site_dir: docs
 
 nav:
   - Home: index.md
