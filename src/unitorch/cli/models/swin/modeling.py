@@ -21,6 +21,7 @@ from unitorch.cli.models.swin import pretrained_swin_infos
 @register_model("core/model/classification/swin")
 class SwinForImageClassification(_SwinForImageClassification):
     """Swin Transformer model for image classification."""
+
     def __init__(
         self,
         config_path: str,

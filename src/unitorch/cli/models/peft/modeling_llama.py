@@ -28,6 +28,7 @@ from unitorch.cli.models.llama import pretrained_llama_infos
 @register_model("core/model/classification/peft/adalora/llama")
 class LlamaAdaLoraForClassification(_LlamaAdaLoraForClassification):
     """LlamaAdaLora model for classification tasks."""
+
     def __init__(
         self,
         config_path: str,
@@ -185,6 +186,7 @@ class LlamaAdaLoraForClassification(_LlamaAdaLoraForClassification):
 @register_model("core/model/generation/peft/adalora/llama", generation_model_decorator)
 class LlamaAdaLoraForGeneration(_LlamaAdaLoraForGeneration):
     """LlamaAdaLora model for generation tasks."""
+
     def __init__(
         self,
         config_path: str,
@@ -326,7 +328,7 @@ class LlamaAdaLoraForGeneration(_LlamaAdaLoraForGeneration):
         Returns:
             GenerationOutputs: The output of the generation task.
         """
-        
+
         outputs = super().forward(
             input_ids=input_ids,
             attention_mask=attention_mask,
@@ -411,6 +413,7 @@ class LlamaAdaLoraForGeneration(_LlamaAdaLoraForGeneration):
 @register_model("core/model/classification/peft/lora/llama")
 class LlamaLoraForClassification(_LlamaLoraForClassification):
     """LlamaLora model for classification tasks."""
+
     def __init__(
         self,
         config_path: str,
@@ -543,6 +546,7 @@ class LlamaLoraForClassification(_LlamaLoraForClassification):
 @register_model("core/model/generation/peft/lora/llama", generation_model_decorator)
 class LlamaLoraForGeneration(_LlamaLoraForGeneration):
     """LlamaLora model for generation tasks."""
+
     def __init__(
         self,
         config_path: str,

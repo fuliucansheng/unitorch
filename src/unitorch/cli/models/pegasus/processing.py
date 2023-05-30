@@ -22,6 +22,7 @@ from unitorch.cli.models.pegasus import pretrained_pegasus_infos
 
 class PegasusProcessor(_PegasusProcessor):
     """Processor for the Pegasus model."""
+
     def __init__(
         self,
         vocab_path: str,

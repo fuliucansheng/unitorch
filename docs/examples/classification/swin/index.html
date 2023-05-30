@@ -19,11 +19,11 @@
         <link rel="next" href="../clip/">
       
       <link rel="icon" href="../../../icon.png">
-      <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.14">
+      <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.11">
     
     
       
-        <title>Image - unitorch</title>
+        <title>Swin - unitorch</title>
       
     
     
@@ -77,7 +77,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#swin-image-classification" class="md-skip">
+        <a href="#swin-image-classification-tutorial" class="md-skip">
           Skip to content
         </a>
       
@@ -109,7 +109,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Image
+              Swin
             
           </span>
         </div>
@@ -977,7 +977,7 @@
   
     <li class="md-nav__item">
       <a href="../roberta/" class="md-nav__link">
-        Text
+        Roberta
       </a>
     </li>
   
@@ -999,9 +999,88 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Swin
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
-        Image
+        Swin
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#step-1-prepare-dataset-files" class="md-nav__link">
+    Step 1: Prepare Dataset Files
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-2-prepare-configini-file" class="md-nav__link">
+    Step 2: Prepare config.ini File
+  </a>
+  
+    <nav class="md-nav" aria-label="Step 2: Prepare config.ini File">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#task-settings" class="md-nav__link">
+    Task Settings
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#model-settings" class="md-nav__link">
+    Model Settings
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dataset-settings" class="md-nav__link">
+    Dataset Settings
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#processing-settings" class="md-nav__link">
+    Processing Settings
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-3-run-training-command" class="md-nav__link">
+    Step 3: Run Training Command
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -1015,7 +1094,7 @@
   
     <li class="md-nav__item">
       <a href="../clip/" class="md-nav__link">
-        Multi-Modal
+        Clip
       </a>
     </li>
   
@@ -1034,14 +1113,83 @@
   
   
   
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2_3" >
+      
+      
+        
+          
+        
+      
+      
+        <label class="md-nav__link" for="__nav_3_2_3" id="__nav_3_2_3_label" tabindex="0">
+          Caption
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_3_2_3_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_3_2_3">
+          <span class="md-nav__icon md-icon"></span>
+          Caption
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
     <li class="md-nav__item">
       <a href="../../caption/blip/" class="md-nav__link">
-        Caption
+        Blip
       </a>
     </li>
   
 
             
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2_4" >
+      
+      
+        
+          
+        
+      
+      
+        <label class="md-nav__link" for="__nav_3_2_4" id="__nav_3_2_4_label" tabindex="0">
+          Generation
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_3_2_4_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_3_2_4">
+          <span class="md-nav__icon md-icon"></span>
+          Generation
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
           
             
               
@@ -1050,8 +1198,15 @@
   
     <li class="md-nav__item">
       <a href="../../generation/bart/" class="md-nav__link">
-        Generation
+        Bart
       </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
     </li>
   
 
@@ -1062,10 +1217,48 @@
   
   
   
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2_5" >
+      
+      
+        
+          
+        
+      
+      
+        <label class="md-nav__link" for="__nav_3_2_5" id="__nav_3_2_5_label" tabindex="0">
+          Diffusion
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_3_2_5_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_3_2_5">
+          <span class="md-nav__icon md-icon"></span>
+          Diffusion
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
     <li class="md-nav__item">
       <a href="../../diffusion/controlnet/" class="md-nav__link">
-        Diffusion
+        ControlNet
       </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
     </li>
   
 
@@ -1804,6 +1997,69 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#step-1-prepare-dataset-files" class="md-nav__link">
+    Step 1: Prepare Dataset Files
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-2-prepare-configini-file" class="md-nav__link">
+    Step 2: Prepare config.ini File
+  </a>
+  
+    <nav class="md-nav" aria-label="Step 2: Prepare config.ini File">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#task-settings" class="md-nav__link">
+    Task Settings
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#model-settings" class="md-nav__link">
+    Model Settings
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dataset-settings" class="md-nav__link">
+    Dataset Settings
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#processing-settings" class="md-nav__link">
+    Processing Settings
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-3-run-training-command" class="md-nav__link">
+    Step 3: Run Training Command
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -1820,7 +2076,123 @@
   
 
 
-<h1 id="swin-image-classification">Swin Image Classification<a class="headerlink" href="#swin-image-classification" title="Permanent link">¤</a></h1>
+<h1 id="swin-image-classification-tutorial">Swin Image Classification Tutorial<a class="headerlink" href="#swin-image-classification-tutorial" title="Permanent link">¤</a></h1>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;In this tutorial, we will learn how to perform image classification using the Swin model. Swin is a transformer-based model that has been pre-trained on a large corpus of image and can be fine-tuned for specific downstream tasks like image classification.</p>
+<h2 id="step-1-prepare-dataset-files">Step 1: Prepare Dataset Files<a class="headerlink" href="#step-1-prepare-dataset-files" title="Permanent link">¤</a></h2>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;Prepare a TSV (Tab-Separated Values) file as an example. You can also use JSON, PARQUET or HUB dataset formats. The TSV file should have three columns with the following dataset settings. The "image" column contains the image path string in the zip files. You need to start an image service first.</p>
+<h2 id="step-2-prepare-configini-file">Step 2: Prepare config.ini File<a class="headerlink" href="#step-2-prepare-configini-file" title="Permanent link">¤</a></h2>
+<p>Take this <a href="https://github.com/fuliucansheng/unitorch/examples/configs/classification/swin.ini">config</a> as a template.</p>
+<h3 id="task-settings">Task Settings<a class="headerlink" href="#task-settings" title="Permanent link">¤</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># optim</span>
+<span class="k">[core/optim/adamw]</span>
+<span class="na">learning_rate</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">0.0001</span>
+
+<span class="c1"># scheduler</span>
+<span class="k">[core/scheduler/linear_warmup]</span>
+<span class="na">num_warmup_rate</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">0.001</span>
+
+<span class="c1"># task</span>
+<span class="k">[core/task/supervised]</span>
+<span class="na">model</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">core/model/classification/swin</span>
+<span class="na">optim</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">core/optim/adamw</span>
+<span class="na">scheduler</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">core/scheduler/linear_warmup</span>
+<span class="na">dataset</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">core/dataset/ast</span>
+<span class="na">loss_fn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">core/loss/ce</span>
+<span class="na">score_fn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">core/score/acc</span>
+<span class="na">monitor_fns</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">[&#39;core/score/acc&#39;]</span>
+<span class="na">output_header</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">[&#39;image&#39;]</span>
+<span class="na">postprocess_fn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">core/postprocess/classification/score</span>
+<span class="na">writer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">core/writer/csv</span>
+
+<span class="na">from_ckpt_dir</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">${core/cli:from_ckpt_dir}</span>
+<span class="na">to_ckpt_dir</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">${core/cli:cache_dir}</span>
+<span class="na">output_path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">${core/cli:cache_dir}/output.txt</span>
+<span class="na">train_batch_size</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">8</span>
+<span class="na">dev_batch_size</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">32</span>
+<span class="na">test_batch_size</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">32</span>
+</code></pre></div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ul>
+<li><code>model</code>: model to be used in the task.</li>
+<li><code>optim</code>: optim to be used in the task.</li>
+<li><code>scheduler</code>: scheduler to be used in the task.</li>
+<li><code>loss_fn</code>: loss to be used in the task.</li>
+<li><code>score_fn</code>: metric to be used for saving checkpoints.</li>
+<li><code>monitor_fns</code>: metrics for logging.</li>
+<li><code>output_header</code>: save these fields for inference.</li>
+<li><code>postprocess_fn</code>, <code>writer</code>: post-process functions and writer for inference.</li>
+<li><code>{train, dev, test}_batch_size</code>: batch size settings for train/eval/inference.</li>
+</ul>
+</div>
+<h3 id="model-settings">Model Settings<a class="headerlink" href="#model-settings" title="Permanent link">¤</a></h3>
+<div class="highlight"><pre><span></span><code><span class="k">[core/model/classification/swin]</span>
+<span class="na">pretrained_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">swin-base-patch4-window7-224</span>
+<span class="na">num_classes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">1000</span>
+</code></pre></div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The options in [core/model/classification/swin] are settings for the Swin model.</p>
+</div>
+<h3 id="dataset-settings">Dataset Settings<a class="headerlink" href="#dataset-settings" title="Permanent link">¤</a></h3>
+<div class="highlight"><pre><span></span><code><span class="k">[core/dataset/ast]</span>
+<span class="na">names</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">[&#39;image&#39;, &#39;label&#39;]</span>
+
+<span class="k">[core/dataset/ast/train]</span>
+<span class="na">data_files</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">${core/cli:train_file}</span>
+<span class="na">preprocess_functions</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">[</span>
+<span class="w">    </span><span class="na">&#39;core/process/swin/image_classification(core/process/image/read(image))&#39;, </span>
+<span class="w">    </span><span class="na">&#39;core/process/label(label)&#39;</span>
+<span class="w">  </span><span class="na">]</span>
+
+<span class="k">[core/dataset/ast/dev]</span>
+<span class="na">data_files</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">${core/cli:dev_file}</span>
+<span class="na">preprocess_functions</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">[</span>
+<span class="w">    </span><span class="na">&#39;core/process/swin/image_classification(core/process/image/read(image))&#39;,</span>
+<span class="w">    </span><span class="na">&#39;core/process/label(label)&#39;</span>
+<span class="w">  </span><span class="na">]</span>
+
+<span class="k">[core/dataset/ast/test]</span>
+<span class="na">names</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">[&#39;image&#39;]</span>
+<span class="na">data_files</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">${core/cli:test_file}</span>
+<span class="na">preprocess_functions</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">[</span>
+<span class="w">    </span><span class="na">&#39;core/process/swin/image_classification(core/process/image/read(image))&#39;</span>
+<span class="w">  </span><span class="na">]</span>
+</code></pre></div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ul>
+<li>The options in [core/dataset/ast/train] are settings for the training data.</li>
+<li><code>names</code> specifies the fields in the dataset. For TSV files, this should be the header.</li>
+<li><code>preprocess_functions</code> are the preprocess functions used to convert the raw data into tensors as model inputs.</li>
+<li>These options can be set independently for train, dev, and test.</li>
+</ul>
+</div>
+<h3 id="processing-settings">Processing Settings<a class="headerlink" href="#processing-settings" title="Permanent link">¤</a></h3>
+<div class="highlight"><pre><span></span><code><span class="k">[core/process/swin]</span>
+<span class="na">pretrained_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">swin-base-patch4-window7-224</span>
+
+<span class="k">[core/process/image]</span>
+<span class="na">http_url</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">http://0.0.0.0:11230/?image={0}</span>
+</code></pre></div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ul>
+<li>The options in [core/process/swin] are settings for the Swin processor used in dataset.</li>
+<li>The options in [core/process/image] are settings for the Image processor to read image from the local service.</li>
+</ul>
+</div>
+<h2 id="step-3-run-training-command">Step 3: Run Training Command<a class="headerlink" href="#step-3-run-training-command" title="Permanent link">¤</a></h2>
+<p>Start local image service first:</p>
+<div class="highlight"><pre><span></span><code>unitorch-service<span class="w"> </span>path/to/service.ini<span class="w"> </span>--zip_folder<span class="w"> </span>path/to/zip/folder
+</code></pre></div>
+<p>Use the following command to run the training:</p>
+<div class="highlight"><pre><span></span><code>unitorch-train<span class="w"> </span>path/to/config.ini<span class="w"> </span>--train_file<span class="w"> </span>path/to/train.tsv<span class="w"> </span>--dev_file<span class="w"> </span>path/to/dev.tsv<span class="w"> </span>--core/task/supervised@train_batch_size<span class="w"> </span><span class="m">128</span>
+</code></pre></div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The --core/task/supervised@train_batch_size 128 part of the command overrides the parameter setting in the config file.</p>
+</div>
 
 
 
@@ -1847,7 +2219,7 @@
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../roberta/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Text" rel="prev">
+          <a href="../roberta/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Roberta" rel="prev">
             <div class="md-footer__button md-icon">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
             </div>
@@ -1856,20 +2228,20 @@
                 Previous
               </span>
               <div class="md-ellipsis">
-                Text
+                Roberta
               </div>
             </div>
           </a>
         
         
           
-          <a href="../clip/" class="md-footer__link md-footer__link--next" aria-label="Next: Multi-Modal" rel="next">
+          <a href="../clip/" class="md-footer__link md-footer__link--next" aria-label="Next: Clip" rel="next">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                Multi-Modal
+                Clip
               </div>
             </div>
             <div class="md-footer__button md-icon">
@@ -1953,7 +2325,7 @@
     <script id="__config" type="application/json">{"base": "../../..", "features": ["announce.dismiss", "content.code.annotate", "content.code.copy", "content.tooltips", "navigation.footer", "navigation.indexes", "navigation.sections", "navigation.tabs", "navigation.top", "navigation.instant", "navigation.tracking", "navigation.path", "search.highlight", "search.suggest", "toc.follow", "header.autohide"], "search": "../../../assets/javascripts/workers/search.208ed371.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.b4d07000.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.fac441b0.min.js"></script>
       
     
   </body>

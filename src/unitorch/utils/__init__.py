@@ -28,7 +28,12 @@ from huggingface_hub.utils import hf_raise_for_status
 
 from unitorch import is_offline_mode, get_cache_home
 from unitorch.utils.decorators import replace
-from unitorch.utils.functional import pop_value, rpartial, truncate_sequence_pair, nested_dict_value
+from unitorch.utils.functional import (
+    pop_value,
+    rpartial,
+    truncate_sequence_pair,
+    nested_dict_value,
+)
 from unitorch.utils.image_utils import make_grid
 from unitorch.utils.import_utils import (
     is_deepspeed_available,

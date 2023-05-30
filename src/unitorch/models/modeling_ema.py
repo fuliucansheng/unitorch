@@ -16,15 +16,15 @@ class ExponentialMovingAverage(nn.Module, CheckpointMixin):
     """
     Exponential Moving Average (EMA) for model parameters.
     """
-    
+
     checkpoint_name = "pytorch_ema_model.bin"
 
     def __init__(
         self,
         model,
-        decay:Optional[float]=0.9999,
-        tau:Optional[int]=2000,
-        num_steps:Optional[int]=0,
+        decay: Optional[float] = 0.9999,
+        tau: Optional[int] = 2000,
+        num_steps: Optional[int] = 0,
     ):
         """
         Initializes the ExponentialMovingAverage.

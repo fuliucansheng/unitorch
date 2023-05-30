@@ -20,6 +20,7 @@ from unitorch.cli.models.xpegasus import pretrained_xpegasus_infos
 @register_model("core/model/generation/xpegasus", generation_model_decorator)
 class XPegasusForGeneration(_XPegasusForGeneration):
     """XPegasus model for generation tasks."""
+
     def __init__(
         self,
         config_path: str,

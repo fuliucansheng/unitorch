@@ -22,6 +22,7 @@ from unitorch.cli.models.clip import pretrained_clip_infos
 
 class ClipProcessor(_ClipProcessor):
     """Processor for the CLIP model."""
+
     def __init__(
         self,
         vocab_path: str,

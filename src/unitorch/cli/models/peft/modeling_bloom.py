@@ -28,6 +28,7 @@ from unitorch.cli.models.bloom import pretrained_bloom_infos
 @register_model("core/model/classification/peft/adalora/bloom")
 class BloomAdaLoraForClassification(_BloomAdaLoraForClassification):
     """BloomAdaLora model for classification tasks."""
+
     def __init__(
         self,
         config_path: str,
@@ -185,6 +186,7 @@ class BloomAdaLoraForClassification(_BloomAdaLoraForClassification):
 @register_model("core/model/generation/peft/adalora/bloom", generation_model_decorator)
 class BloomAdaLoraForGeneration(_BloomAdaLoraForGeneration):
     """BloomAdaLora model for generation tasks."""
+
     def __init__(
         self,
         config_path: str,
@@ -541,6 +543,7 @@ class BloomLoraForClassification(_BloomLoraForClassification):
 @register_model("core/model/generation/peft/lora/bloom", generation_model_decorator)
 class BloomLoraForGeneration(_BloomLoraForGeneration):
     """BloomLora model for generation tasks."""
+
     def __init__(
         self,
         config_path: str,

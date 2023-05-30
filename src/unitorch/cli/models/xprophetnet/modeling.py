@@ -22,6 +22,7 @@ from unitorch.cli.models.xprophetnet import pretrained_xprophetnet_infos
 @register_model("core/model/generation/xprophetnet", generation_model_decorator)
 class XProphetNetForGeneration(_XProphetNetForGeneration):
     """XProphetNet model for generation tasks."""
+
     def __init__(
         self,
         config_path: str,

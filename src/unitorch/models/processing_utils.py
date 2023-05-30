@@ -21,6 +21,7 @@ class HfTextGenerationProcessor:
         max_seq_length (int, optional): Maximum sequence length. Defaults to 128.
         max_gen_seq_length (int, optional): Maximum generated sequence length. Defaults to 48.
     """
+
     def __init__(
         self,
         tokenizer: PreTrainedTokenizer,
@@ -195,6 +196,7 @@ class HfTextClassificationProcessor:
         target_type_id (int, optional): Target type ID. Defaults to 1.
         position_start_id (int, optional): Start position ID. Defaults to 0.
     """
+
     def __init__(
         self,
         tokenizer: PreTrainedTokenizer,
@@ -291,6 +293,7 @@ class HfImageClassificationProcessor:
     """
     Processor for image classification tasks.
     """
+
     def __init__(
         self,
         vision_processor: BaseImageProcessor,
@@ -304,13 +307,13 @@ class HfImageClassificationProcessor:
         self.vision_processor = vision_processor
 
         self.size = getattr(self.vision_processor, "size", None)
-            
+
         self.resample = getattr(self.vision_processor, "resample", None)
-            
+
         self.crop_size = getattr(self.vision_processor, "crop_size", None)
-            
+
         self.rescale_factor = getattr(self.vision_processor, "rescale_factor", None)
-            
+
         self.image_mean = getattr(self.vision_processor, "image_mean", None)
         self.image_std = getattr(self.vision_processor, "image_std", None)
 

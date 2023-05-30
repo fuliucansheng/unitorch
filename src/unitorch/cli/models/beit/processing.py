@@ -22,6 +22,7 @@ from unitorch.cli.models.beit import pretrained_beit_infos
 
 class BeitProcessor(_BeitProcessor):
     """Class for processing images using the Beit model."""
+
     def __init__(
         self,
         vision_config_path: str,

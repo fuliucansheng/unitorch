@@ -21,6 +21,7 @@ from unitorch.cli.models.roberta import pretrained_roberta_infos
 @register_model("core/model/classification/roberta")
 class RobertaForClassification(_RobertaForClassification):
     """Roberta model for classification tasks."""
+
     def __init__(
         self,
         config_path: str,

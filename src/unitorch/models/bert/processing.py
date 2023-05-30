@@ -216,9 +216,7 @@ class BertProcessor(HfTextClassificationProcessor):
             input_ids=torch.tensor(input_ids, dtype=torch.long),
             token_type_ids=torch.tensor(token_type_ids, dtype=torch.long),
             attention_mask=torch.tensor(attention_mask, dtype=torch.long),
-            position_ids=torch.tensor(
-                    list(range(max_seq_length)), dtype=torch.long
-            ),
+            position_ids=torch.tensor(list(range(max_seq_length)), dtype=torch.long),
             nsp_label=torch.tensor(int(nsp_label), dtype=torch.long),
             mlm_label=torch.tensor(label, dtype=torch.long),
             mlm_label_mask=torch.tensor(label_mask, dtype=torch.long),

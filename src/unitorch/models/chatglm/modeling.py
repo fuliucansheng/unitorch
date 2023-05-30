@@ -27,6 +27,7 @@ class ChatGLMForClassification(GenericModel):
         hidden_dropout_prob (Optional[float]): The dropout probability for the hidden layers. Defaults to 0.1.
         gradient_checkpointing (Optional[bool]): Whether to use gradient checkpointing. Defaults to False.
     """
+
     def __init__(
         self,
         config_path: str,

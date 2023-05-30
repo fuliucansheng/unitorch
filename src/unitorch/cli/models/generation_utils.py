@@ -24,6 +24,7 @@ class GenerationOutputs(TensorsOutputs, WriterMixin):
         sequences_scores (Optional[torch.Tensor]): Scores associated with the generated sequences.
             Defaults to an empty tensor.
     """
+
     sequences: torch.Tensor
     sequences_scores: Optional[torch.Tensor] = torch.empty(0)
 
@@ -40,6 +41,7 @@ class GenerationTargets(TensorsTargets):
         sample_weight (Optional[torch.Tensor]): Sample weights for the reference sequences.
             Defaults to an empty tensor.
     """
+
     refs: torch.Tensor
     masks: Optional[torch.Tensor] = torch.empty(0)
     sample_weight: Optional[torch.Tensor] = torch.empty(0)

@@ -21,6 +21,7 @@ from unitorch.cli.models.bart import pretrained_bart_infos
 
 class BartProcessor(_BartProcessor):
     """Class for processing data with BART model."""
+
     def __init__(
         self,
         vocab_path: str,

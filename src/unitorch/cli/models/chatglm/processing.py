@@ -21,6 +21,7 @@ from unitorch.cli.models.chatglm import pretrained_chatglm_infos
 
 class ChatGLMProcessor(_ChatGLMProcessor):
     """Processor for the ChatGLM model."""
+
     def __init__(
         self,
         vocab_path: str,

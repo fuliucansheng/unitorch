@@ -21,6 +21,7 @@ from unitorch.cli.models.deberta import pretrained_deberta_v2_infos
 @register_model("core/model/classification/deberta/v2")
 class DebertaV2ForClassification(_DebertaV2ForClassification):
     """Deberta V2 model for classification tasks."""
+
     def __init__(
         self,
         config_path: str,

@@ -21,6 +21,7 @@ from unitorch.cli.models.roberta import pretrained_roberta_infos
 
 class RobertaProcessor(_RobertaProcessor):
     """Processor for the Roberta model."""
+
     def __init__(
         self,
         vocab_path,

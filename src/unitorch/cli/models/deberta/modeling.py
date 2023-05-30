@@ -21,6 +21,7 @@ from unitorch.cli.models.deberta import pretrained_deberta_infos
 @register_model("core/model/classification/deberta")
 class DebertaForClassification(_DebertaForClassification):
     """Deberta model for classification tasks."""
+
     def __init__(
         self,
         config_path: str,

@@ -20,6 +20,7 @@ from unitorch.cli.models.mt5 import pretrained_mt5_infos
 @register_model("core/model/generation/mt5", generation_model_decorator)
 class MT5ForGeneration(_MT5ForGeneration):
     """MT5 model for generation tasks."""
+
     def __init__(
         self,
         config_path: str,

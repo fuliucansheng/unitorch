@@ -172,6 +172,7 @@ class ASTHFIterableDatasets(HFIterableDatasets):
 @register_dataset("core/dataset/ast")
 class ASTDatasets:
     """Class for managing AST datasets."""
+
     splits = ["train", "dev", "test"]
     templates = ["csv", "json", "parquet", "hub"]
     __ASTDatasets__ = dict()

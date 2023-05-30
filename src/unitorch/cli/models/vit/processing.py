@@ -22,6 +22,7 @@ from unitorch.cli.models.vit import pretrained_vit_infos
 
 class ViTProcessor(_ViTProcessor):
     """Vision Transformer (ViT) Processor for handling image processing tasks."""
+
     def __init__(
         self,
         vision_config_path: str,

@@ -21,6 +21,7 @@ from unitorch.cli.models.xlm_roberta import pretrained_xlm_roberta_infos
 
 class XLMRobertaProcessor(_XLMRobertaProcessor):
     """XLM-RoBERTa Processor for handling text processing tasks."""
+
     def __init__(
         self,
         vocab_path: str,

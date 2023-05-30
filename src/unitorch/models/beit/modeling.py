@@ -25,7 +25,7 @@ class BeitForImageClassification(GenericModel):
         Args:
             config_path (str): The path to the configuration file.
             num_classes (Optional[int], optional): The number of classes for classification. Defaults to 1.
-        """        
+        """
         super().__init__()
         config = BeitConfig.from_json_file(config_path)
 

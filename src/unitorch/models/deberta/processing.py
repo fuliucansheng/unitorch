@@ -21,6 +21,7 @@ class DebertaProcessor(HfTextClassificationProcessor):
     """
     Processor for DeBERTa-based text classification models.
     """
+
     def __init__(
         self,
         vocab_path: str,

@@ -27,7 +27,7 @@ class T5Processor(HfTextGenerationProcessor):
     """
     Processor for T5-based text generation models.
     """
-    
+
     def __init__(
         self,
         vocab_path: str,

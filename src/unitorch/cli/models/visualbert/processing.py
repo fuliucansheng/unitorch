@@ -21,6 +21,7 @@ from unitorch.cli.models.visualbert import pretrained_visualbert_infos
 
 class VisualBertProcessor(_VisualBertProcessor):
     """VisualBERT Processor for text and image inputs."""
+
     def __init__(
         self,
         vocab_path,

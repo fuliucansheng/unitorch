@@ -35,6 +35,7 @@ class WriterOutputs:
 @register_writer("core/writer/jsonl")
 class GeneralJsonlWriter(GenericWriter):
     """Class for writing data in JSONL format."""
+
     def __init__(
         self,
         output_file: str,
@@ -116,6 +117,7 @@ class GeneralJsonlWriter(GenericWriter):
 @register_writer("core/writer/csv")
 class GeneralCsvWriter(GenericWriter):
     """Class for writing data in CSV format."""
+
     def __init__(
         self,
         output_file: str,

@@ -43,12 +43,15 @@ nav:
       - Service: 
         - Zip Image: examples/service/zip_image.md
       - Classification:
-        - Text: examples/classification/roberta.md
-        - Image: examples/classification/swin.md
-        - Multi-Modal: examples/classification/clip.md
-      - Caption: examples/caption/blip.md
-      - Generation: examples/generation/bart.md
-      - Diffusion: examples/diffusion/controlnet.md
+        - Roberta: examples/classification/roberta.md
+        - Swin: examples/classification/swin.md
+        - Clip: examples/classification/clip.md
+      - Caption: 
+        - Blip: examples/caption/blip.md
+      - Generation: 
+        - Bart: examples/generation/bart.md
+      - Diffusion: 
+        - ControlNet: examples/diffusion/controlnet.md
     - Task:
       - Supervised: cli/supervised.md
       - Deepspeed: cli/deepspeed.md

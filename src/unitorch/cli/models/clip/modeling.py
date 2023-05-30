@@ -24,6 +24,7 @@ from unitorch.cli.models.clip import pretrained_clip_infos
 @register_model("core/model/pretrain/clip")
 class ClipForPretrain(_ClipForPretrain):
     """CLIP model for pretraining."""
+
     def __init__(
         self,
         config_path: str,
@@ -129,6 +130,7 @@ class ClipForPretrain(_ClipForPretrain):
 @register_model("core/model/classification/clip")
 class ClipForClassification(_ClipForClassification):
     """CLIP model for classification."""
+
     def __init__(
         self,
         config_path: str,
@@ -234,6 +236,7 @@ class ClipForClassification(_ClipForClassification):
 @register_model("core/model/classification/clip/text")
 class ClipForTextClassification(_ClipForTextClassification):
     """CLIP model for text classification."""
+
     def __init__(
         self,
         config_path: str,
@@ -336,6 +339,7 @@ class ClipForTextClassification(_ClipForTextClassification):
 @register_model("core/model/classification/clip/image")
 class ClipForImageClassification(_ClipForImageClassification):
     """CLIP model for image classification."""
+
     def __init__(
         self,
         config_path: str,

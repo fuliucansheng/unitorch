@@ -25,6 +25,7 @@ from unitorch.cli.models.bloom import pretrained_bloom_infos
 @register_model("core/model/classification/bloom")
 class BloomForClassification(_BloomForClassification):
     """Bloom model for classification."""
+
     def __init__(
         self,
         config_path: str,
@@ -109,6 +110,7 @@ class BloomForClassification(_BloomForClassification):
 @register_model("core/model/pretrain/bloom")
 class BloomForPretrain(_BloomForPretrain):
     """Bloom model for pretraining."""
+
     def __init__(
         self,
         config_path: str,
@@ -195,6 +197,7 @@ class BloomForPretrain(_BloomForPretrain):
 @register_model("core/model/generation/bloom", generation_model_decorator)
 class BloomForGeneration(_BloomForGeneration):
     """Bloom model for text generation."""
+
     def __init__(
         self,
         config_path: str,

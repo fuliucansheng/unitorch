@@ -16,6 +16,7 @@ class VisualBertForClassification(GenericModel):
     """
     VisualBERT model for classification tasks.
     """
+
     def __init__(
         self,
         config_path: str,
@@ -83,6 +84,7 @@ class VisualBertForPretrain(GenericModel):
     """
     VisualBERT model for pretraining tasks.
     """
+
     def __init__(
         self,
         config_path: str,

@@ -22,6 +22,7 @@ from unitorch.cli.models.visualbert import pretrained_visualbert_infos
 @register_model("core/model/classification/visualbert")
 class VisualBertForClassification(_VisualBertForClassification):
     """VisualBERT for Classification model."""
+
     def __init__(
         self,
         config_path: str,
@@ -124,6 +125,7 @@ class VisualBertForClassification(_VisualBertForClassification):
 @register_model("core/model/pretrain/visualbert")
 class VisualBertForPretrain(_VisualBertForPretrain):
     """VisualBERT for Pretraining model."""
+
     def __init__(
         self,
         config_path: str,

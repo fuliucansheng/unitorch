@@ -179,6 +179,7 @@ class BartForGeneration(GenericModel):
     """
     BART model for text generation.
     """
+
     prefix_keys_in_state_dict = {"^(?!model\.model\.).*": "model.model."}
 
     def __init__(

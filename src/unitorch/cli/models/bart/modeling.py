@@ -20,7 +20,7 @@ from unitorch.cli.models.bart import pretrained_bart_infos
 @register_model("core/model/generation/bart", generation_model_decorator)
 class BartForGeneration(_BartForGeneration):
     """BART model for generation tasks."""
-    
+
     def __init__(
         self,
         config_path: str,

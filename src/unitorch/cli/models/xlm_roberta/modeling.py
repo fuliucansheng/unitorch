@@ -22,6 +22,7 @@ from unitorch.cli.models.xlm_roberta import pretrained_xlm_roberta_infos
 @register_model("core/model/classification/xlm_roberta")
 class XLMRobertaForClassification(_XLMRobertaForClassification):
     """XLM-RoBERTa model for classification tasks."""
+
     def __init__(
         self,
         config_path: str,
@@ -113,6 +114,7 @@ class XLMRobertaForClassification(_XLMRobertaForClassification):
 @register_model("core/model/classification/xlm_roberta_xl")
 class XLMRobertaXLForClassification(_XLMRobertaXLForClassification):
     """XLM-RoBERTa XL model for classification tasks."""
+
     def __init__(
         self,
         config_path: str,

@@ -22,6 +22,7 @@ from unitorch.cli.models.t5 import pretrained_t5_infos
 
 class T5Processor(_T5Processor):
     """T5 Processor for text generation."""
+
     def __init__(
         self,
         vocab_path: str,

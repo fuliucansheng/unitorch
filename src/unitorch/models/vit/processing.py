@@ -17,7 +17,7 @@ class ViTProcessor(HfImageClassificationProcessor):
     """
     Processor for ViT-based image classification models.
     """
-    
+
     def __init__(
         self,
         vision_config_path: str,

@@ -26,6 +26,7 @@ from unitorch.cli.models.blip import pretrained_blip_infos
 @register_model("core/model/pretrain/blip")
 class BlipForPretrain(_BlipForPretrain):
     """BLIP model for pretraining."""
+
     def __init__(
         self,
         config_path: str,
@@ -131,6 +132,7 @@ class BlipForPretrain(_BlipForPretrain):
 @register_model("core/model/classification/blip")
 class BlipForClassification(_BlipForClassification):
     """BLIP model for classification."""
+
     def __init__(
         self,
         config_path: str,
@@ -236,6 +238,7 @@ class BlipForClassification(_BlipForClassification):
 @register_model("core/model/classification/blip/text")
 class BlipForTextClassification(_BlipForTextClassification):
     """BLIP model for text classification."""
+
     def __init__(
         self,
         config_path: str,
@@ -338,6 +341,7 @@ class BlipForTextClassification(_BlipForTextClassification):
 @register_model("core/model/classification/blip/image")
 class BlipForImageClassification(_BlipForImageClassification):
     """BLIP model for image classification."""
+
     def __init__(
         self,
         config_path: str,
@@ -432,6 +436,7 @@ class BlipForImageClassification(_BlipForImageClassification):
 @register_model("core/model/caption/blip", generation_model_decorator)
 class BlipForImageCaption(_BlipForImageCaption):
     """BLIP model for image captioning."""
+
     def __init__(
         self,
         config_path: str,

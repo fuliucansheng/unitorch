@@ -21,6 +21,7 @@ from unitorch.cli.models.deberta import pretrained_deberta_v2_infos
 
 class DebertaV2Processor(_DebertaV2Processor):
     """Processor for Deberta V2 models."""
+
     def __init__(
         self,
         vocab_path,

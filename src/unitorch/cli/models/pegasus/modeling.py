@@ -20,6 +20,7 @@ from unitorch.cli.models.pegasus import pretrained_pegasus_infos
 @register_model("core/model/generation/pegasus", generation_model_decorator)
 class PegasusForGeneration(_PegasusForGeneration):
     """Pegasus model for generation tasks."""
+
     def __init__(
         self,
         config_path: str,

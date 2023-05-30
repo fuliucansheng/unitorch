@@ -25,6 +25,7 @@ from unitorch.cli.models.llama import pretrained_llama_infos
 @register_model("core/model/classification/llama")
 class LlamaForClassification(_LlamaForClassification):
     """Llama model for classification tasks."""
+
     def __init__(
         self,
         config_path: str,
@@ -115,6 +116,7 @@ class LlamaForClassification(_LlamaForClassification):
 @register_model("core/model/pretrain/llama")
 class LlamaForPretrain(_LlamaForPretrain):
     """Llama model for pretraining tasks."""
+
     def __init__(
         self,
         config_path: str,
@@ -206,6 +208,7 @@ class LlamaForPretrain(_LlamaForPretrain):
 @register_model("core/model/generation/llama", generation_model_decorator)
 class LlamaForGeneration(_LlamaForGeneration):
     """Llama model for generation tasks."""
+
     def __init__(
         self,
         config_path: str,

@@ -91,6 +91,7 @@ class BloomAdaLoraForGeneration(GenericModel, PeftCheckpointMixin):
     """
     BloomAdaLora model for generation tasks.
     """
+
     prefix_keys_in_state_dict = {
         "^(?!peft_model\.base_model\.model\.).*": "peft_model.base_model.model.transformer."
     }

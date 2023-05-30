@@ -31,6 +31,7 @@ class BartProcessor(HfTextGenerationProcessor):
     Processor for BART model.
     Inherits from HfTextGenerationProcessor.
     """
+
     def __init__(
         self,
         vocab_path: str,

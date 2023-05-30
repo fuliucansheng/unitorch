@@ -22,6 +22,7 @@ from unitorch.cli.models.blip import pretrained_blip_infos
 
 class BlipProcessor(_BlipProcessor):
     """Processor for the BLIP model."""
+
     def __init__(
         self,
         vocab_path: str,

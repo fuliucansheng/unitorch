@@ -17,6 +17,7 @@ class BloomForClassification(GenericModel):
     """
     A classification model based on the Bloom architecture.
     """
+
     prefix_keys_in_state_dict = {"^(?!transformer\.).*": "transformer."}
 
     def __init__(
@@ -25,7 +26,7 @@ class BloomForClassification(GenericModel):
         num_classes: Optional[int] = 1,
         hidden_dropout_prob: Optional[float] = 0.1,
         gradient_checkpointing: Optional[bool] = False,
-    ): 
+    ):
         """
         Initializes a new instance of the BloomForClassification model.
 
@@ -72,6 +73,7 @@ class BloomForPretrain(GenericModel):
     """
     A pretraining model based on the Bloom architecture.
     """
+
     prefix_keys_in_state_dict = {"^(?!transformer\.).*": "transformer."}
 
     def __init__(
@@ -137,6 +139,7 @@ class BloomForGeneration(GenericModel):
     """
     A generation model based on the Bloom architecture.
     """
+
     prefix_keys_in_state_dict = {"^(?!model\.).*": "model.transformer."}
 
     def __init__(

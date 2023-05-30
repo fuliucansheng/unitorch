@@ -21,6 +21,7 @@ from unitorch.cli.models.xprophetnet import pretrained_xprophetnet_infos
 
 class XProphetNetProcessor(_XProphetNetProcessor):
     """XProphetNet processor for data preprocessing and postprocessing."""
+
     def __init__(
         self,
         vocab_path: str,

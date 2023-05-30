@@ -19,6 +19,7 @@ from unitorch.cli.models.bert import pretrained_bert_infos
 @register_model("core/model/classification/bert")
 class BertForClassification(_BertForClassification):
     """BERT model for classification tasks."""
+
     def __init__(
         self,
         config_path: str,

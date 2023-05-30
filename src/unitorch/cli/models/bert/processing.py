@@ -21,6 +21,7 @@ from unitorch.cli.models.bert import pretrained_bert_infos
 
 class BertProcessor(_BertProcessor):
     """Processor for BERT models."""
+
     def __init__(
         self,
         vocab_path: str,

@@ -76,6 +76,7 @@ def truncate_sequence_pair(
         else:
             tokens_pair.pop()
 
+
 nested_dict_value = (
     lambda a, b, *c: (
         nested_dict_value(a[b], *c) if isinstance(a[b], dict) and len(c) > 0 else a[b]

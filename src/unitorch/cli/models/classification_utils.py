@@ -23,6 +23,7 @@ class ClassificationOutputs(TensorsOutputs, WriterMixin):
     Args:
         outputs (torch.Tensor): Output tensor containing the classification results.
     """
+
     outputs: torch.Tensor
 
 
@@ -55,12 +56,14 @@ class ClassificationTargets(TensorsTargets):
         targets (torch.Tensor): The target tensor.
         sample_weight (Optional[torch.Tensor]): The weight associated with each target. Defaults to a tensor with a value of 1.0.
     """
+
     targets: torch.Tensor
     sample_weight: Optional[torch.Tensor] = torch.tensor(1.0)
 
 
 class ClassificationProcessor:
     """Processor for classification models."""
+
     def __init__(
         self,
         act_fn: Optional[str] = None,

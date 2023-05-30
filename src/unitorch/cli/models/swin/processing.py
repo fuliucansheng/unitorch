@@ -22,6 +22,7 @@ from unitorch.cli.models.swin import pretrained_swin_infos
 
 class SwinProcessor(_SwinProcessor):
     """Swin Transformer processor for image tasks."""
+
     def __init__(
         self,
         vision_config_path: str,

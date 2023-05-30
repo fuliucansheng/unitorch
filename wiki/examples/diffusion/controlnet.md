@@ -1,1 +1,1 @@
-# ControlNet Diffusion
+# ControlNet Diffusion Tutorial

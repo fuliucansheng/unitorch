@@ -20,6 +20,7 @@ from unitorch.cli.models.t5 import pretrained_t5_infos
 @register_model("core/model/generation/t5", generation_model_decorator)
 class T5ForGeneration(_T5ForGeneration):
     """T5 model for text generation."""
+
     def __init__(
         self,
         config_path: str,
@@ -33,7 +34,8 @@ class T5ForGeneration(_T5ForGeneration):
             gradient_checkpointing (Optional[bool]): Whether to use gradient checkpointing during training. Defaults to False.
         """
         super().__init__(
-            config_path=config_path, gradient_checkpointing=gradient_checkpointing,
+            config_path=config_path,
+            gradient_checkpointing=gradient_checkpointing,
         )
 
     @classmethod

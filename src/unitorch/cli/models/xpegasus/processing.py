@@ -21,6 +21,7 @@ from unitorch.cli.models.xpegasus import pretrained_xpegasus_infos
 
 class XPegasusProcessor(_XPegasusProcessor):
     """XPegasus processor for preprocessing and postprocessing."""
+
     def __init__(
         self,
         vocab_path: str,

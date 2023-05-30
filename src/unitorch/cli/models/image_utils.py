@@ -28,6 +28,7 @@ class ImageProcessor:
     """
     Processor for image-related operations.
     """
+
     def __init__(
         self,
         image_type: Optional[str] = None,

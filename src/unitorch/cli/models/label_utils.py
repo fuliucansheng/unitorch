@@ -17,6 +17,7 @@ class LabelProcessor:
     """
     Processor for label-related operations.
     """
+
     def __init__(
         self,
         num_classes: Optional[int] = None,

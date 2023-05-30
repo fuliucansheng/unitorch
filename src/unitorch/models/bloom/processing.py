@@ -22,6 +22,7 @@ class BloomProcessor(HfTextClassificationProcessor, HfTextGenerationProcessor):
     """
     Processor for the Bloom model that combines text classification and text generation functionality.
     """
+
     def __init__(
         self,
         tokenizer_file: str,

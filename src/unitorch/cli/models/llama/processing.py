@@ -21,6 +21,7 @@ from unitorch.cli.models.llama import pretrained_llama_infos
 
 class LlamaProcessor(_LlamaProcessor):
     """Processor for Llama models."""
+
     def __init__(
         self,
         vocab_path,

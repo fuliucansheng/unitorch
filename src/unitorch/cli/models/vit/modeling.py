@@ -19,6 +19,7 @@ from unitorch.cli.models.vit import pretrained_vit_infos
 @register_model("core/model/classification/vit")
 class ViTForImageClassification(_ViTForImageClassification):
     """Vision Transformer (ViT) for Image Classification model."""
+
     def __init__(
         self,
         config_path: str,

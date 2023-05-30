@@ -21,7 +21,7 @@ class XLMRobertaProcessor(HfTextClassificationProcessor):
     """
     Processor for XLM-RoBERTa model for text classification tasks.
     """
-    
+
     def __init__(
         self,
         vocab_path: str,

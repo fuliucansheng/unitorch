@@ -25,6 +25,7 @@ from unitorch.cli.models.chatglm import pretrained_chatglm_infos
 @register_model("core/model/classification/chatglm")
 class ChatGLMForClassification(_ChatGLMForClassification):
     """Classification model based on ChatGLM."""
+
     def __init__(
         self,
         config_path: str,
@@ -112,6 +113,7 @@ class ChatGLMForClassification(_ChatGLMForClassification):
 @register_model("core/model/pretrain/chatglm")
 class ChatGLMForPretrain(_ChatGLMForPretrain):
     """Pretraining model based on ChatGLM."""
+
     def __init__(
         self,
         config_path: str,
@@ -201,6 +203,7 @@ class ChatGLMForPretrain(_ChatGLMForPretrain):
 @register_model("core/model/generation/chatglm", generation_model_decorator)
 class ChatGLMForGeneration(_ChatGLMForGeneration):
     """Generation model based on ChatGLM."""
+
     def __init__(
         self,
         config_path: str,

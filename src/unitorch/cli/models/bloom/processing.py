@@ -21,6 +21,7 @@ from unitorch.cli.models.bloom import pretrained_bloom_infos
 
 class BloomProcessor(_BloomProcessor):
     """Processor for Bloom language models."""
+
     def __init__(
         self,
         tokenizer_file: str,

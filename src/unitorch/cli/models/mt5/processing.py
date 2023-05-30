@@ -22,6 +22,7 @@ from unitorch.cli.models.mt5 import pretrained_mt5_infos
 
 class MT5Processor(_MT5Processor):
     """Processor for MT5 models."""
+
     def __init__(
         self,
         vocab_path: str,

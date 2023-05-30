@@ -21,6 +21,7 @@ from unitorch.cli.models.beit import pretrained_beit_infos
 @register_model("core/model/classification/beit")
 class BeitForImageClassification(_BeitForImageClassification):
     """Class for image classification using the Beit model."""
+
     def __init__(
         self,
         config_path: str,
