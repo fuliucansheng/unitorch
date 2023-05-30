@@ -5,6 +5,7 @@ repo_url: https://github.com/fuliucansheng/unitorch
 copyright: Copyright &copy; 2023 FULIUCANSHENG
 docs_dir: wiki
 site_dir: docs
+site_url: https://fuliucansheng.github.io/unitorch
 
 nav:
   - Home: index.md
