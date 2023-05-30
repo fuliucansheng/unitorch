@@ -1,0 +1,13 @@
+*.pyc
+.DS_Store
+.vscode/*
+.eggs/*
+docs/.DS_Store
+build/*
+src/unitorch.egg-info/*
+dist/*
+cache/
+cache*/
+.vs/*
+.vs
+./pytest_cache/*

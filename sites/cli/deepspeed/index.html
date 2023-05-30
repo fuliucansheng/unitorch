@@ -1,0 +1,4097 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="A Comprehensive Modeling Framework Empowered by PyTorch">
+      
+      
+      
+      
+        <link rel="prev" href="../supervised/">
+      
+      
+        <link rel="next" href="../ast/">
+      
+      <link rel="icon" href="../../icon.png">
+      <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.14">
+    
+    
+      
+        <title>Deepspeed - unitorch</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.85bb2934.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.a6bdf11c.min.css">
+      
+      
+
+    
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_markdown_exec_ansi.css">
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+      <link rel="stylesheet" href="../../static/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="indigo">
+  
+    
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#unitorchclitasksdeepspeed" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="unitorch" class="md-header__button md-logo" aria-label="unitorch" data-md-component="logo">
+      
+  <img src="../../icon.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            unitorch
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Deepspeed
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/fuliucansheng/unitorch" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    fuliucansheng/unitorch
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+
+
+  <li class="md-tabs__item">
+    <a href="../.." class="md-tabs__link">
+      Home
+    </a>
+  </li>
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../overview/" class="md-tabs__link">
+        Documentation
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+    
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../configuration/" class="md-tabs__link md-tabs__link--active">
+        Commands
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="unitorch" class="md-nav__button md-logo" aria-label="unitorch" data-md-component="logo">
+      
+  <img src="../../icon.png" alt="logo">
+
+    </a>
+    unitorch
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/fuliucansheng/unitorch" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    fuliucansheng/unitorch
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        Home
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+      
+      
+        
+          
+        
+          
+        
+          
+        
+      
+      
+        <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+          Documentation
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_2">
+          <span class="md-nav__icon md-icon"></span>
+          Documentation
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../overview/" class="md-nav__link">
+        Overview
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../installation/" class="md-nav__link">
+        Installation
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_3" >
+      
+      
+        
+          
+            
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+      
+      
+        
+        
+        <div class="md-nav__link md-nav__link--index ">
+          <a href="../../models/">References</a>
+          
+            <label for="__nav_2_3">
+              <span class="md-nav__icon md-icon"></span>
+            </label>
+          
+        </div>
+      
+      <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_3_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_2_3">
+          <span class="md-nav__icon md-icon"></span>
+          References
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../models/bart/" class="md-nav__link">
+        Bart
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../models/beit/" class="md-nav__link">
+        Beit
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../models/bert/" class="md-nav__link">
+        Bert
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../models/blip/" class="md-nav__link">
+        Blip
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../models/bloom/" class="md-nav__link">
+        Bloom
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../models/chatglm/" class="md-nav__link">
+        ChatGLM
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../models/clip/" class="md-nav__link">
+        Clip
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../models/deberta/" class="md-nav__link">
+        Deberta
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../models/diffusers/" class="md-nav__link">
+        Diffusers
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../models/llama/" class="md-nav__link">
+        Llama
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../models/mbart/" class="md-nav__link">
+        MBart
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../models/mt5/" class="md-nav__link">
+        MT5
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../models/peft/" class="md-nav__link">
+        Peft
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../models/pegasus/" class="md-nav__link">
+        Pegasus
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../models/prophetnet/" class="md-nav__link">
+        ProphetNet
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../models/roberta/" class="md-nav__link">
+        Roberta
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../models/swin/" class="md-nav__link">
+        Swin
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../models/t5/" class="md-nav__link">
+        T5
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../models/visualbert/" class="md-nav__link">
+        VisualBert
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../models/vit/" class="md-nav__link">
+        ViT
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../models/xlm_roberta/" class="md-nav__link">
+        XLMRoberta
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../models/xpegasus/" class="md-nav__link">
+        XPegasus
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../models/xprophetnet/" class="md-nav__link">
+        XProphetNet
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+      
+      
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+      
+      
+        <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+          Commands
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+        <label class="md-nav__title" for="__nav_3">
+          <span class="md-nav__icon md-icon"></span>
+          Commands
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../configuration/" class="md-nav__link">
+        Configuration
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2" >
+      
+      
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+      
+      
+        <label class="md-nav__link" for="__nav_3_2" id="__nav_3_2_label" tabindex="0">
+          Examples
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_3_2">
+          <span class="md-nav__icon md-icon"></span>
+          Examples
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2_1" >
+      
+      
+        
+          
+        
+      
+      
+        <label class="md-nav__link" for="__nav_3_2_1" id="__nav_3_2_1_label" tabindex="0">
+          Service
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_3_2_1_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_3_2_1">
+          <span class="md-nav__icon md-icon"></span>
+          Service
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/service/zip_image/" class="md-nav__link">
+        Zip Image
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2_2" >
+      
+      
+        
+          
+        
+          
+        
+          
+        
+      
+      
+        <label class="md-nav__link" for="__nav_3_2_2" id="__nav_3_2_2_label" tabindex="0">
+          Classification
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_3_2_2_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_3_2_2">
+          <span class="md-nav__icon md-icon"></span>
+          Classification
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/classification/roberta/" class="md-nav__link">
+        Text
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/classification/swin/" class="md-nav__link">
+        Image
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/classification/clip/" class="md-nav__link">
+        Multi-Modal
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/caption/blip/" class="md-nav__link">
+        Caption
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/generation/bart/" class="md-nav__link">
+        Generation
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/diffusion/controlnet/" class="md-nav__link">
+        Diffusion
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_3" checked>
+      
+      
+        
+          
+        
+          
+        
+      
+      
+        <label class="md-nav__link" for="__nav_3_3" id="__nav_3_3_label" tabindex="0">
+          Task
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_3_label" aria-expanded="true">
+        <label class="md-nav__title" for="__nav_3_3">
+          <span class="md-nav__icon md-icon"></span>
+          Task
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../supervised/" class="md-nav__link">
+        Supervised
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Deepspeed
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        Deepspeed
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#deepspeedtask" class="md-nav__link">
+    DeepspeedTask
+  </a>
+  
+    <nav class="md-nav" aria-label="DeepspeedTask">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#unitorch.cli.tasks.deepspeed.DeepspeedTask.eval" class="md-nav__link">
+    eval()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#unitorch.cli.tasks.deepspeed.DeepspeedTask.from_core_configure" class="md-nav__link">
+    from_core_configure()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#unitorch.cli.tasks.deepspeed.DeepspeedTask.infer" class="md-nav__link">
+    infer()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#unitorch.cli.tasks.deepspeed.DeepspeedTask.train" class="md-nav__link">
+    train()
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_4" >
+      
+      
+        
+          
+        
+      
+      
+        <label class="md-nav__link" for="__nav_3_4" id="__nav_3_4_label" tabindex="0">
+          Dataset
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_4_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_3_4">
+          <span class="md-nav__icon md-icon"></span>
+          Dataset
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ast/" class="md-nav__link">
+        Ast
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../datatypes/" class="md-nav__link">
+        DataTypes
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_6" >
+      
+      
+        
+          
+        
+          
+        
+      
+      
+        <label class="md-nav__link" for="__nav_3_6" id="__nav_3_6_label" tabindex="0">
+          Processing
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_6_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_3_6">
+          <span class="md-nav__icon md-icon"></span>
+          Processing
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../preprocess/" class="md-nav__link">
+        Preprocess
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../postprocess/" class="md-nav__link">
+        Postprocess
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_7" >
+      
+      
+        
+          
+        
+          
+        
+          
+        
+      
+      
+        <label class="md-nav__link" for="__nav_3_7" id="__nav_3_7_label" tabindex="0">
+          Writer
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_7_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_3_7">
+          <span class="md-nav__icon md-icon"></span>
+          Writer
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../csv/" class="md-nav__link">
+        Csv
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../jsonl/" class="md-nav__link">
+        Jsonl
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../parquet/" class="md-nav__link">
+        Parquet
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_8" >
+      
+      
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+      
+      
+        <label class="md-nav__link" for="__nav_3_8" id="__nav_3_8_label" tabindex="0">
+          References
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_8_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_3_8">
+          <span class="md-nav__icon md-icon"></span>
+          References
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models/bart/" class="md-nav__link">
+        Bart
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models/beit/" class="md-nav__link">
+        Beit
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models/bert/" class="md-nav__link">
+        Bert
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models/blip/" class="md-nav__link">
+        Blip
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models/bloom/" class="md-nav__link">
+        Bloom
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models/chatglm/" class="md-nav__link">
+        ChatGLM
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models/clip/" class="md-nav__link">
+        Clip
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models/deberta/" class="md-nav__link">
+        Deberta
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models/diffusers/" class="md-nav__link">
+        Diffusers
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models/llama/" class="md-nav__link">
+        Llama
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models/mbart/" class="md-nav__link">
+        MBart
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models/mt5/" class="md-nav__link">
+        MT5
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models/peft/" class="md-nav__link">
+        Peft
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models/pegasus/" class="md-nav__link">
+        Pegasus
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models/prophetnet/" class="md-nav__link">
+        ProphetNet
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models/roberta/" class="md-nav__link">
+        Roberta
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models/swin/" class="md-nav__link">
+        Swin
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models/t5/" class="md-nav__link">
+        T5
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models/visualbert/" class="md-nav__link">
+        VisualBert
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models/vit/" class="md-nav__link">
+        ViT
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models/xlm_roberta/" class="md-nav__link">
+        XLMRoberta
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models/xpegasus/" class="md-nav__link">
+        XPegasus
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models/xprophetnet/" class="md-nav__link">
+        XProphetNet
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#deepspeedtask" class="md-nav__link">
+    DeepspeedTask
+  </a>
+  
+    <nav class="md-nav" aria-label="DeepspeedTask">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#unitorch.cli.tasks.deepspeed.DeepspeedTask.eval" class="md-nav__link">
+    eval()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#unitorch.cli.tasks.deepspeed.DeepspeedTask.from_core_configure" class="md-nav__link">
+    from_core_configure()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#unitorch.cli.tasks.deepspeed.DeepspeedTask.infer" class="md-nav__link">
+    infer()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#unitorch.cli.tasks.deepspeed.DeepspeedTask.train" class="md-nav__link">
+    train()
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+<h1 id="unitorchclitasksdeepspeed">unitorch.cli.tasks.deepspeed<a class="headerlink" href="#unitorchclitasksdeepspeed" title="Permanent link">¤</a></h1>
+<h2 id="deepspeedtask">DeepspeedTask<a class="headerlink" href="#deepspeedtask" title="Permanent link">¤</a></h2>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p><strong><code>core/task/deepspeed/supervised</code></strong> is the section for configuration of DeepspeedTask.</p>
+</div>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+  <div class="doc doc-contents first">
+
+  
+      <p>Task class for deepspeed supervised learning.</p>
+
+  
+      <p>Initialize the DeepspeedTask.</p>
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>configure</code></td>
+          <td>
+          </td>
+          <td><p>The configuration object.</p></td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>model</code></td>
+          <td>
+          </td>
+          <td><p>The model for supervised learning.</p></td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>datasets</code></td>
+          <td>
+          </td>
+          <td><p>The datasets for training and evaluation.</p></td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>local_rank</code></td>
+          <td>
+                <code>optional</code>
+          </td>
+          <td><p>The local rank for distributed training. Defaults to -1.</p></td>
+          <td>
+                <code>-1</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>seed</code></td>
+          <td>
+                <code>optional</code>
+          </td>
+          <td><p>The random seed. Defaults to 1123.</p></td>
+          <td>
+                <code>1123</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+          <details class="quote">
+            <summary>Source code in <code>src/unitorch/cli/tasks/deepspeed.py</code></summary>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 72</span>
+<span class="normal"> 73</span>
+<span class="normal"> 74</span>
+<span class="normal"> 75</span>
+<span class="normal"> 76</span>
+<span class="normal"> 77</span>
+<span class="normal"> 78</span>
+<span class="normal"> 79</span>
+<span class="normal"> 80</span>
+<span class="normal"> 81</span>
+<span class="normal"> 82</span>
+<span class="normal"> 83</span>
+<span class="normal"> 84</span>
+<span class="normal"> 85</span>
+<span class="normal"> 86</span>
+<span class="normal"> 87</span>
+<span class="normal"> 88</span>
+<span class="normal"> 89</span>
+<span class="normal"> 90</span>
+<span class="normal"> 91</span>
+<span class="normal"> 92</span>
+<span class="normal"> 93</span>
+<span class="normal"> 94</span>
+<span class="normal"> 95</span>
+<span class="normal"> 96</span>
+<span class="normal"> 97</span>
+<span class="normal"> 98</span>
+<span class="normal"> 99</span>
+<span class="normal">100</span>
+<span class="normal">101</span>
+<span class="normal">102</span>
+<span class="normal">103</span>
+<span class="normal">104</span>
+<span class="normal">105</span>
+<span class="normal">106</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span>
+    <span class="n">configure</span><span class="p">,</span>
+    <span class="n">model</span><span class="p">,</span>
+    <span class="n">datasets</span><span class="p">,</span>
+    <span class="n">local_rank</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">seed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1123</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Initialize the DeepspeedTask.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        configure: The configuration object.</span>
+<span class="sd">        model: The model for supervised learning.</span>
+<span class="sd">        datasets: The datasets for training and evaluation.</span>
+<span class="sd">        local_rank (optional): The local rank for distributed training. Defaults to -1.</span>
+<span class="sd">        seed (optional): The random seed. Defaults to 1123.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">set_seed</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">n_gpu</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="mi">0</span>
+    <span class="k">if</span> <span class="n">dist</span><span class="o">.</span><span class="n">is_initialized</span><span class="p">():</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_gpu</span> <span class="o">=</span> <span class="n">dist</span><span class="o">.</span><span class="n">get_world_size</span><span class="p">()</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">configure</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">datasets</span> <span class="o">=</span> <span class="n">datasets</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">local_rank</span> <span class="o">=</span> <span class="n">local_rank</span>
+
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">local_rank</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+        <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">set_device</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">local_rank</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">():</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">cuda</span><span class="p">()</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">best_score</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+</code></pre></div></td></tr></table></div>
+          </details>
+
+  
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 id="unitorch.cli.tasks.deepspeed.DeepspeedTask.eval" class="doc doc-heading">
+        <span class="doc doc-object-name doc-function-name">eval</span>
+
+
+<a href="#unitorch.cli.tasks.deepspeed.DeepspeedTask.eval" class="headerlink" title="Permanent link">¤</a></h3>
+<div class="codehilite"><pre><span></span><code><span class="nb">eval</span><span class="p">(</span>
+    <span class="n">monitor_fns</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span>
+    <span class="n">from_ckpt_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;./from_ckpt&quot;</span><span class="p">,</span>
+    <span class="n">dev_batch_size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">128</span><span class="p">,</span>
+    <span class="n">pin_memory</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">num_workers</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
+    <span class="n">gpu_mode</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>Evaluate the model.</p>
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>monitor_fns</code></td>
+          <td>
+                <code><span title="typing.Union">Union</span>[str, <span title="typing.List">List</span>[str]]</code>
+          </td>
+          <td><p>The monitoring functions for evaluation.</p></td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>from_ckpt_dir</code></td>
+          <td>
+                <code>optional</code>
+          </td>
+          <td><p>The directory path to load checkpoints from. Defaults to "./from_ckpt".</p></td>
+          <td>
+                <code>&#39;./from_ckpt&#39;</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>dev_batch_size</code></td>
+          <td>
+                <code>optional</code>
+          </td>
+          <td><p>The batch size for evaluation. Defaults to 128.</p></td>
+          <td>
+                <code>128</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>pin_memory</code></td>
+          <td>
+                <code>optional</code>
+          </td>
+          <td><p>Whether to pin memory during data loading. Defaults to True.</p></td>
+          <td>
+                <code>True</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>num_workers</code></td>
+          <td>
+                <code>optional</code>
+          </td>
+          <td><p>The number of worker processes for data loading. Defaults to 4.</p></td>
+          <td>
+                <code>4</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>gpu_mode</code></td>
+          <td>
+                <code>optional</code>
+          </td>
+          <td><p>Whether to make GPU active. Defaults to False.</p></td>
+          <td>
+                <code>False</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+      <details class="quote">
+        <summary>Source code in <code>src/unitorch/cli/tasks/deepspeed.py</code></summary>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">484</span>
+<span class="normal">485</span>
+<span class="normal">486</span>
+<span class="normal">487</span>
+<span class="normal">488</span>
+<span class="normal">489</span>
+<span class="normal">490</span>
+<span class="normal">491</span>
+<span class="normal">492</span>
+<span class="normal">493</span>
+<span class="normal">494</span>
+<span class="normal">495</span>
+<span class="normal">496</span>
+<span class="normal">497</span>
+<span class="normal">498</span>
+<span class="normal">499</span>
+<span class="normal">500</span>
+<span class="normal">501</span>
+<span class="normal">502</span>
+<span class="normal">503</span>
+<span class="normal">504</span>
+<span class="normal">505</span>
+<span class="normal">506</span>
+<span class="normal">507</span>
+<span class="normal">508</span>
+<span class="normal">509</span>
+<span class="normal">510</span>
+<span class="normal">511</span>
+<span class="normal">512</span>
+<span class="normal">513</span>
+<span class="normal">514</span>
+<span class="normal">515</span>
+<span class="normal">516</span>
+<span class="normal">517</span>
+<span class="normal">518</span>
+<span class="normal">519</span>
+<span class="normal">520</span>
+<span class="normal">521</span>
+<span class="normal">522</span>
+<span class="normal">523</span>
+<span class="normal">524</span>
+<span class="normal">525</span>
+<span class="normal">526</span>
+<span class="normal">527</span>
+<span class="normal">528</span>
+<span class="normal">529</span>
+<span class="normal">530</span>
+<span class="normal">531</span>
+<span class="normal">532</span>
+<span class="normal">533</span>
+<span class="normal">534</span>
+<span class="normal">535</span>
+<span class="normal">536</span>
+<span class="normal">537</span>
+<span class="normal">538</span>
+<span class="normal">539</span>
+<span class="normal">540</span>
+<span class="normal">541</span>
+<span class="normal">542</span>
+<span class="normal">543</span>
+<span class="normal">544</span>
+<span class="normal">545</span>
+<span class="normal">546</span>
+<span class="normal">547</span>
+<span class="normal">548</span>
+<span class="normal">549</span>
+<span class="normal">550</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
+<span class="nd">@add_default_section_for_function</span><span class="p">(</span><span class="s2">&quot;core/task/deepspeed/supervised&quot;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">eval</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span>
+    <span class="n">monitor_fns</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span>
+    <span class="n">from_ckpt_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;./from_ckpt&quot;</span><span class="p">,</span>
+    <span class="n">dev_batch_size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">128</span><span class="p">,</span>
+    <span class="n">pin_memory</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">num_workers</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
+    <span class="n">gpu_mode</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Evaluate the model.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        monitor_fns: The monitoring functions for evaluation.</span>
+<span class="sd">        from_ckpt_dir (optional): The directory path to load checkpoints from. Defaults to &quot;./from_ckpt&quot;.</span>
+<span class="sd">        dev_batch_size (optional): The batch size for evaluation. Defaults to 128.</span>
+<span class="sd">        pin_memory (optional): Whether to pin memory during data loading. Defaults to True.</span>
+<span class="sd">        num_workers (optional): The number of worker processes for data loading. Defaults to 4.</span>
+<span class="sd">        gpu_mode (optional): Whether to make GPU active. Defaults to False.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">monitor_fns</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">init_registered_module</span><span class="p">(</span><span class="n">monitor_fn</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">,</span> <span class="n">registered_score</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">monitor_fn</span> <span class="ow">in</span> <span class="n">monitor_fns</span>
+        <span class="k">if</span> <span class="n">monitor_fn</span> <span class="ow">in</span> <span class="n">registered_score</span>
+    <span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">from_ckpt_dir</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">from_checkpoint</span><span class="p">(</span><span class="n">from_ckpt_dir</span><span class="p">)</span>
+
+    <span class="n">global_rank</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_gpu</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">parallel</span><span class="o">.</span><span class="n">DistributedDataParallel</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
+            <span class="n">device_ids</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">local_rank</span><span class="p">],</span>
+            <span class="n">output_device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">local_rank</span><span class="p">,</span>
+            <span class="n">find_unused_parameters</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">broadcast_buffers</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">global_rank</span> <span class="o">=</span> <span class="n">dist</span><span class="o">.</span><span class="n">get_rank</span><span class="p">()</span>
+
+    <span class="n">dev_sampler</span> <span class="o">=</span> <span class="n">DistributedSampler</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_gpu</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">SequentialSampler</span>
+    <span class="k">if</span> <span class="n">gpu_mode</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">ActiveGPUJob</span><span class="p">()</span> <span class="k">as</span> <span class="n">_</span><span class="p">:</span>
+            <span class="n">dataset_dev</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;dev&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">dataset_dev</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;dev&quot;</span><span class="p">)</span>
+    <span class="n">iter_dev</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span>
+        <span class="n">dataset_dev</span><span class="p">,</span>
+        <span class="n">sampler</span><span class="o">=</span><span class="n">dev_sampler</span><span class="p">(</span><span class="n">dataset_dev</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dataset_dev</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">)</span>
+        <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">batch_size</span><span class="o">=</span><span class="n">dev_batch_size</span><span class="p">,</span>
+        <span class="n">shuffle</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">pin_memory</span><span class="o">=</span><span class="n">pin_memory</span><span class="p">,</span>
+        <span class="n">num_workers</span><span class="o">=</span><span class="n">num_workers</span><span class="p">,</span>
+        <span class="n">collate_fn</span><span class="o">=</span><span class="n">collate_fn</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">results</span> <span class="o">=</span> <span class="n">infer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">module</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_gpu</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">iter_dev</span><span class="p">)</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">local_rank</span> <span class="ow">in</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]:</span>
+        <span class="n">monitor</span><span class="p">(</span>
+            <span class="n">outputs</span><span class="o">=</span><span class="n">results</span><span class="o">.</span><span class="n">outputs</span><span class="p">,</span>
+            <span class="n">targets</span><span class="o">=</span><span class="n">results</span><span class="o">.</span><span class="n">targets</span><span class="p">,</span>
+            <span class="n">monitor_fns</span><span class="o">=</span><span class="n">monitor_fns</span><span class="p">,</span>
+        <span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+      </details>
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 id="unitorch.cli.tasks.deepspeed.DeepspeedTask.from_core_configure" class="doc doc-heading">
+        <span class="doc doc-object-name doc-function-name">from_core_configure</span>
+
+  
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+  </span>
+
+<a href="#unitorch.cli.tasks.deepspeed.DeepspeedTask.from_core_configure" class="headerlink" title="Permanent link">¤</a></h3>
+<div class="codehilite"><pre><span></span><code><span class="n">from_core_configure</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>Create a DeepspeedTask instance from a core configuration.</p>
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>config</code></td>
+          <td>
+          </td>
+          <td><p>The core configuration.</p></td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>**kwargs</code></td>
+          <td>
+          </td>
+          <td><p>Additional keyword arguments.</p></td>
+          <td>
+                <code>{}</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+          </td>
+          <td><p>A DeepspeedTask instance.</p></td>
+        </tr>
+    </tbody>
+  </table>
+
+      <details class="quote">
+        <summary>Source code in <code>src/unitorch/cli/tasks/deepspeed.py</code></summary>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">108</span>
+<span class="normal">109</span>
+<span class="normal">110</span>
+<span class="normal">111</span>
+<span class="normal">112</span>
+<span class="normal">113</span>
+<span class="normal">114</span>
+<span class="normal">115</span>
+<span class="normal">116</span>
+<span class="normal">117</span>
+<span class="normal">118</span>
+<span class="normal">119</span>
+<span class="normal">120</span>
+<span class="normal">121</span>
+<span class="normal">122</span>
+<span class="normal">123</span>
+<span class="normal">124</span>
+<span class="normal">125</span>
+<span class="normal">126</span>
+<span class="normal">127</span>
+<span class="normal">128</span>
+<span class="normal">129</span>
+<span class="normal">130</span>
+<span class="normal">131</span>
+<span class="normal">132</span>
+<span class="normal">133</span>
+<span class="normal">134</span>
+<span class="normal">135</span>
+<span class="normal">136</span>
+<span class="normal">137</span>
+<span class="normal">138</span>
+<span class="normal">139</span>
+<span class="normal">140</span>
+<span class="normal">141</span>
+<span class="normal">142</span>
+<span class="normal">143</span>
+<span class="normal">144</span>
+<span class="normal">145</span>
+<span class="normal">146</span>
+<span class="normal">147</span>
+<span class="normal">148</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
+<span class="nd">@add_default_section_for_init</span><span class="p">(</span><span class="s2">&quot;core/task/deepspeed/supervised&quot;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">from_core_configure</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create a DeepspeedTask instance from a core configuration.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        config: The core configuration.</span>
+<span class="sd">        **kwargs: Additional keyword arguments.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A DeepspeedTask instance.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">deepspeed</span><span class="o">.</span><span class="n">init_distributed</span><span class="p">(</span><span class="n">dist_backend</span><span class="o">=</span><span class="s2">&quot;nccl&quot;</span><span class="p">,</span> <span class="n">init_method</span><span class="o">=</span><span class="s2">&quot;env://&quot;</span><span class="p">)</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;PyTorch is not in distributed mode&quot;</span><span class="p">)</span>
+
+    <span class="n">config</span><span class="o">.</span><span class="n">set_default_section</span><span class="p">(</span><span class="s2">&quot;core/task/deepspeed/supervised&quot;</span><span class="p">)</span>
+
+    <span class="n">model</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">getoption</span><span class="p">(</span><span class="s2">&quot;model&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">dataset</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">getoption</span><span class="p">(</span><span class="s2">&quot;dataset&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">init_registered_module</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">registered_model</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">dataset</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">dataset</span> <span class="o">=</span> <span class="n">init_registered_module</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">registered_dataset</span><span class="p">)</span>
+
+    <span class="n">local_rank</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">getdefault</span><span class="p">(</span>
+        <span class="s2">&quot;core/cli&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;local_rank&quot;</span><span class="p">,</span>
+        <span class="n">get_local_rank</span><span class="p">(),</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span>
+        <span class="n">configure</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
+        <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+        <span class="n">datasets</span><span class="o">=</span><span class="n">dataset</span><span class="p">,</span>
+        <span class="n">local_rank</span><span class="o">=</span><span class="n">local_rank</span><span class="p">,</span>
+    <span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+      </details>
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 id="unitorch.cli.tasks.deepspeed.DeepspeedTask.infer" class="doc doc-heading">
+        <span class="doc doc-object-name doc-function-name">infer</span>
+
+
+<a href="#unitorch.cli.tasks.deepspeed.DeepspeedTask.infer" class="headerlink" title="Permanent link">¤</a></h3>
+<div class="codehilite"><pre><span></span><code><span class="n">infer</span><span class="p">(</span>
+    <span class="n">postprocess_fn</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">writer</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">test_batch_size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">128</span><span class="p">,</span>
+    <span class="n">pin_memory</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">num_workers</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
+    <span class="n">max_size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">10000</span><span class="p">,</span>
+    <span class="n">from_ckpt_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;./from_ckpt&quot;</span><span class="p">,</span>
+    <span class="n">output_header</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">output_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;./cache/predict.txt&quot;</span><span class="p">,</span>
+    <span class="n">postprocess_workers</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
+    <span class="n">gpu_mode</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>Perform inference using the trained model.</p>
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>postprocess_fn</code></td>
+          <td>
+                <code>str</code>
+          </td>
+          <td><p>The post-processing function for inference.</p></td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>writer</code></td>
+          <td>
+                <code>str</code>
+          </td>
+          <td><p>The writer for writing the results.</p></td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>test_batch_size</code></td>
+          <td>
+                <code>optional</code>
+          </td>
+          <td><p>The batch size for inference. Defaults to 128.</p></td>
+          <td>
+                <code>128</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>pin_memory</code></td>
+          <td>
+                <code>optional</code>
+          </td>
+          <td><p>Whether to pin memory during data loading. Defaults to True.</p></td>
+          <td>
+                <code>True</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>num_workers</code></td>
+          <td>
+                <code>optional</code>
+          </td>
+          <td><p>The number of worker processes for data loading. Defaults to 4.</p></td>
+          <td>
+                <code>4</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>max_size</code></td>
+          <td>
+                <code>optional</code>
+          </td>
+          <td><p>The maximum size of the dataset for inference. Defaults to 10000.</p></td>
+          <td>
+                <code>10000</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>from_ckpt_dir</code></td>
+          <td>
+                <code>optional</code>
+          </td>
+          <td><p>The directory path to load checkpoints from. Defaults to "./from_ckpt".</p></td>
+          <td>
+                <code>&#39;./from_ckpt&#39;</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>output_header</code></td>
+          <td>
+                <code>optional</code>
+          </td>
+          <td><p>The header for the output file. Defaults to None.</p></td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>output_path</code></td>
+          <td>
+                <code>optional</code>
+          </td>
+          <td><p>The path to save the output file. Defaults to "./cache/predict.txt".</p></td>
+          <td>
+                <code>&#39;./cache/predict.txt&#39;</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>postprocess_workers</code></td>
+          <td>
+                <code>optional</code>
+          </td>
+          <td><p>The number of worker processes for post-processing. Defaults to 2.</p></td>
+          <td>
+                <code>2</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>gpu_mode</code></td>
+          <td>
+                <code>optional</code>
+          </td>
+          <td><p>Whether to make GPU active. Defaults to False.</p></td>
+          <td>
+                <code>False</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+      <details class="quote">
+        <summary>Source code in <code>src/unitorch/cli/tasks/deepspeed.py</code></summary>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">552</span>
+<span class="normal">553</span>
+<span class="normal">554</span>
+<span class="normal">555</span>
+<span class="normal">556</span>
+<span class="normal">557</span>
+<span class="normal">558</span>
+<span class="normal">559</span>
+<span class="normal">560</span>
+<span class="normal">561</span>
+<span class="normal">562</span>
+<span class="normal">563</span>
+<span class="normal">564</span>
+<span class="normal">565</span>
+<span class="normal">566</span>
+<span class="normal">567</span>
+<span class="normal">568</span>
+<span class="normal">569</span>
+<span class="normal">570</span>
+<span class="normal">571</span>
+<span class="normal">572</span>
+<span class="normal">573</span>
+<span class="normal">574</span>
+<span class="normal">575</span>
+<span class="normal">576</span>
+<span class="normal">577</span>
+<span class="normal">578</span>
+<span class="normal">579</span>
+<span class="normal">580</span>
+<span class="normal">581</span>
+<span class="normal">582</span>
+<span class="normal">583</span>
+<span class="normal">584</span>
+<span class="normal">585</span>
+<span class="normal">586</span>
+<span class="normal">587</span>
+<span class="normal">588</span>
+<span class="normal">589</span>
+<span class="normal">590</span>
+<span class="normal">591</span>
+<span class="normal">592</span>
+<span class="normal">593</span>
+<span class="normal">594</span>
+<span class="normal">595</span>
+<span class="normal">596</span>
+<span class="normal">597</span>
+<span class="normal">598</span>
+<span class="normal">599</span>
+<span class="normal">600</span>
+<span class="normal">601</span>
+<span class="normal">602</span>
+<span class="normal">603</span>
+<span class="normal">604</span>
+<span class="normal">605</span>
+<span class="normal">606</span>
+<span class="normal">607</span>
+<span class="normal">608</span>
+<span class="normal">609</span>
+<span class="normal">610</span>
+<span class="normal">611</span>
+<span class="normal">612</span>
+<span class="normal">613</span>
+<span class="normal">614</span>
+<span class="normal">615</span>
+<span class="normal">616</span>
+<span class="normal">617</span>
+<span class="normal">618</span>
+<span class="normal">619</span>
+<span class="normal">620</span>
+<span class="normal">621</span>
+<span class="normal">622</span>
+<span class="normal">623</span>
+<span class="normal">624</span>
+<span class="normal">625</span>
+<span class="normal">626</span>
+<span class="normal">627</span>
+<span class="normal">628</span>
+<span class="normal">629</span>
+<span class="normal">630</span>
+<span class="normal">631</span>
+<span class="normal">632</span>
+<span class="normal">633</span>
+<span class="normal">634</span>
+<span class="normal">635</span>
+<span class="normal">636</span>
+<span class="normal">637</span>
+<span class="normal">638</span>
+<span class="normal">639</span>
+<span class="normal">640</span>
+<span class="normal">641</span>
+<span class="normal">642</span>
+<span class="normal">643</span>
+<span class="normal">644</span>
+<span class="normal">645</span>
+<span class="normal">646</span>
+<span class="normal">647</span>
+<span class="normal">648</span>
+<span class="normal">649</span>
+<span class="normal">650</span>
+<span class="normal">651</span>
+<span class="normal">652</span>
+<span class="normal">653</span>
+<span class="normal">654</span>
+<span class="normal">655</span>
+<span class="normal">656</span>
+<span class="normal">657</span>
+<span class="normal">658</span>
+<span class="normal">659</span>
+<span class="normal">660</span>
+<span class="normal">661</span>
+<span class="normal">662</span>
+<span class="normal">663</span>
+<span class="normal">664</span>
+<span class="normal">665</span>
+<span class="normal">666</span>
+<span class="normal">667</span>
+<span class="normal">668</span>
+<span class="normal">669</span>
+<span class="normal">670</span>
+<span class="normal">671</span>
+<span class="normal">672</span>
+<span class="normal">673</span>
+<span class="normal">674</span>
+<span class="normal">675</span>
+<span class="normal">676</span>
+<span class="normal">677</span>
+<span class="normal">678</span>
+<span class="normal">679</span>
+<span class="normal">680</span>
+<span class="normal">681</span>
+<span class="normal">682</span>
+<span class="normal">683</span>
+<span class="normal">684</span>
+<span class="normal">685</span>
+<span class="normal">686</span>
+<span class="normal">687</span>
+<span class="normal">688</span>
+<span class="normal">689</span>
+<span class="normal">690</span>
+<span class="normal">691</span>
+<span class="normal">692</span>
+<span class="normal">693</span>
+<span class="normal">694</span>
+<span class="normal">695</span>
+<span class="normal">696</span>
+<span class="normal">697</span>
+<span class="normal">698</span>
+<span class="normal">699</span>
+<span class="normal">700</span>
+<span class="normal">701</span>
+<span class="normal">702</span>
+<span class="normal">703</span>
+<span class="normal">704</span>
+<span class="normal">705</span>
+<span class="normal">706</span>
+<span class="normal">707</span>
+<span class="normal">708</span>
+<span class="normal">709</span>
+<span class="normal">710</span>
+<span class="normal">711</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
+<span class="nd">@add_default_section_for_function</span><span class="p">(</span><span class="s2">&quot;core/task/deepspeed/supervised&quot;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">infer</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span>
+    <span class="n">postprocess_fn</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">writer</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">test_batch_size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">128</span><span class="p">,</span>
+    <span class="n">pin_memory</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">num_workers</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
+    <span class="n">max_size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">10000</span><span class="p">,</span>
+    <span class="n">from_ckpt_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;./from_ckpt&quot;</span><span class="p">,</span>
+    <span class="n">output_header</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">output_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;./cache/predict.txt&quot;</span><span class="p">,</span>
+    <span class="n">postprocess_workers</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
+    <span class="n">gpu_mode</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Perform inference using the trained model.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        postprocess_fn: The post-processing function for inference.</span>
+<span class="sd">        writer: The writer for writing the results.</span>
+<span class="sd">        test_batch_size (optional): The batch size for inference. Defaults to 128.</span>
+<span class="sd">        pin_memory (optional): Whether to pin memory during data loading. Defaults to True.</span>
+<span class="sd">        num_workers (optional): The number of worker processes for data loading. Defaults to 4.</span>
+<span class="sd">        max_size (optional): The maximum size of the dataset for inference. Defaults to 10000.</span>
+<span class="sd">        from_ckpt_dir (optional): The directory path to load checkpoints from. Defaults to &quot;./from_ckpt&quot;.</span>
+<span class="sd">        output_header (optional): The header for the output file. Defaults to None.</span>
+<span class="sd">        output_path (optional): The path to save the output file. Defaults to &quot;./cache/predict.txt&quot;.</span>
+<span class="sd">        postprocess_workers (optional): The number of worker processes for post-processing. Defaults to 2.</span>
+<span class="sd">        gpu_mode (optional): Whether to make GPU active. Defaults to False.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_gpu</span> <span class="o">&lt;=</span> <span class="mi">1</span>
+    <span class="k">assert</span> <span class="n">writer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+
+    <span class="n">output_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">output_path</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">output_dir</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">postprocess_fn</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">postprocess_fn</span> <span class="o">=</span> <span class="n">init_registered_process</span><span class="p">(</span><span class="n">postprocess_fn</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">writer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">writer</span> <span class="o">=</span> <span class="n">init_registered_module</span><span class="p">(</span>
+            <span class="n">writer</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">,</span>
+            <span class="n">registered_writer</span><span class="p">,</span>
+            <span class="n">output_file</span><span class="o">=</span><span class="n">output_path</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="n">skip_step</span> <span class="o">=</span> <span class="n">writer</span><span class="o">.</span><span class="n">skip_n_samples</span>
+
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">from_ckpt_dir</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">from_checkpoint</span><span class="p">(</span><span class="n">from_ckpt_dir</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">skip_step</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">sampler</span> <span class="o">=</span> <span class="n">SequentialSampler</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">sampler</span> <span class="o">=</span> <span class="n">SequentialSkipSampler</span>
+
+    <span class="k">if</span> <span class="n">gpu_mode</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">ActiveGPUJob</span><span class="p">()</span> <span class="k">as</span> <span class="n">_</span><span class="p">:</span>
+            <span class="n">dataset_test</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;test&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">dataset_test</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;test&quot;</span><span class="p">)</span>
+
+    <span class="n">iter_test</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span>
+        <span class="n">dataset_test</span><span class="p">,</span>
+        <span class="n">sampler</span><span class="o">=</span><span class="n">sampler</span><span class="p">(</span><span class="n">dataset_test</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dataset_test</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">)</span>
+        <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">batch_size</span><span class="o">=</span><span class="n">test_batch_size</span><span class="p">,</span>
+        <span class="n">shuffle</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">pin_memory</span><span class="o">=</span><span class="n">pin_memory</span><span class="p">,</span>
+        <span class="n">num_workers</span><span class="o">=</span><span class="n">num_workers</span><span class="p">,</span>
+        <span class="n">collate_fn</span><span class="o">=</span><span class="n">collate_fn</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">skip_step</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">output_file</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">output_path</span><span class="p">,</span> <span class="s2">&quot;a&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">output_file</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">output_path</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">skip_step</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">dataset_test</span><span class="p">,</span> <span class="s2">&quot;set_skip_step&quot;</span><span class="p">):</span>
+        <span class="n">dataset_test</span><span class="o">.</span><span class="n">set_skip_step</span><span class="p">(</span><span class="n">skip_step</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">skip_step</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">iter_test</span><span class="o">.</span><span class="n">sampler</span><span class="p">,</span> <span class="s2">&quot;set_skip_step&quot;</span><span class="p">):</span>
+        <span class="n">iter_test</span><span class="o">.</span><span class="n">sampler</span><span class="o">.</span><span class="n">set_skip_step</span><span class="p">(</span><span class="n">skip_step</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">dataset_test</span><span class="p">,</span> <span class="s2">&quot;dataset&quot;</span><span class="p">):</span>
+        <span class="n">data_info</span> <span class="o">=</span> <span class="n">dataset_test</span><span class="o">.</span><span class="n">dataset</span>
+        <span class="n">data_info</span> <span class="o">=</span> <span class="n">DatasetFeature</span><span class="p">(</span><span class="n">data_info</span><span class="p">)</span>
+        <span class="n">iter_data</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span>
+            <span class="n">deepcopy</span><span class="p">(</span><span class="n">data_info</span><span class="p">),</span>
+            <span class="n">sampler</span><span class="o">=</span><span class="n">sampler</span><span class="p">(</span><span class="n">data_info</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dataset_test</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">)</span>
+            <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">batch_size</span><span class="o">=</span><span class="n">test_batch_size</span><span class="p">,</span>
+            <span class="n">shuffle</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">pin_memory</span><span class="o">=</span><span class="n">pin_memory</span><span class="p">,</span>
+            <span class="n">num_workers</span><span class="o">=</span><span class="n">num_workers</span><span class="p">,</span>
+            <span class="n">collate_fn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">iter_data</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">if</span> <span class="n">skip_step</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">iter_data</span><span class="o">.</span><span class="n">sampler</span><span class="p">,</span> <span class="s2">&quot;set_skip_step&quot;</span><span class="p">):</span>
+        <span class="n">iter_data</span><span class="o">.</span><span class="n">sampler</span><span class="o">.</span><span class="n">set_skip_step</span><span class="p">(</span><span class="n">skip_step</span><span class="p">)</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+    <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+    <span class="n">data_queue</span> <span class="o">=</span> <span class="n">Queue</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="n">max_size</span><span class="p">)</span>
+    <span class="n">msg_queue</span> <span class="o">=</span> <span class="n">Queue</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="n">max_size</span><span class="p">)</span>
+    <span class="n">postprocess_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">postprocess_workers</span><span class="p">):</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">PostProcess</span><span class="p">(</span>
+            <span class="n">postprocess_fn</span><span class="p">,</span>
+            <span class="n">data_queue</span><span class="p">,</span>
+            <span class="n">msg_queue</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">postprocess_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+    <span class="n">io_process</span> <span class="o">=</span> <span class="n">IOProcess</span><span class="p">(</span><span class="n">msg_queue</span><span class="p">,</span> <span class="n">writer</span><span class="o">=</span><span class="n">writer</span><span class="p">)</span>
+    <span class="n">io_process</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">iter_data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">step</span><span class="p">,</span> <span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">iter_test</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">():</span>
+                <span class="n">inputs</span> <span class="o">=</span> <span class="n">inputs</span><span class="o">.</span><span class="n">cuda</span><span class="p">()</span>
+            <span class="n">outputs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="o">**</span><span class="n">inputs</span><span class="o">.</span><span class="n">dict</span><span class="p">())</span>
+            <span class="n">outputs</span> <span class="o">=</span> <span class="n">outputs</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span>
+            <span class="n">data_queue</span><span class="o">.</span><span class="n">put</span><span class="p">((</span><span class="n">step</span><span class="p">,</span> <span class="n">outputs</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">step</span><span class="p">,</span> <span class="p">((</span><span class="n">inputs</span><span class="p">,</span> <span class="n">_</span><span class="p">),</span> <span class="n">_infos</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">iter_test</span><span class="p">,</span> <span class="n">iter_data</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">():</span>
+                <span class="n">inputs</span> <span class="o">=</span> <span class="n">inputs</span><span class="o">.</span><span class="n">cuda</span><span class="p">()</span>
+            <span class="n">outputs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="o">**</span><span class="n">inputs</span><span class="o">.</span><span class="n">dict</span><span class="p">())</span>
+            <span class="n">outputs</span> <span class="o">=</span> <span class="n">outputs</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">output_header</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">_infos</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">_infos</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">output_header</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">_infos</span><span class="p">}</span>
+                <span class="n">outputs</span><span class="o">.</span><span class="n">set_base_dataframe</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">_infos</span><span class="p">))</span>
+            <span class="n">data_queue</span><span class="o">.</span><span class="n">put</span><span class="p">((</span><span class="n">step</span><span class="p">,</span> <span class="n">outputs</span><span class="p">))</span>
+
+    <span class="n">data_queue</span><span class="o">.</span><span class="n">put</span><span class="p">((</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">GENERATE_FINISHED</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">postprocess_list</span><span class="p">:</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+
+    <span class="n">msg_queue</span><span class="o">.</span><span class="n">put</span><span class="p">((</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">GENERATE_FINISHED</span><span class="p">))</span>
+    <span class="n">io_process</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+
+    <span class="n">end</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="n">ms</span> <span class="o">=</span> <span class="p">(</span><span class="n">end</span> <span class="o">-</span> <span class="n">start</span><span class="p">)</span> <span class="o">*</span> <span class="mi">1000</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+        <span class="s2">&quot;</span><span class="si">{:.2f}</span><span class="s2"> ms, </span><span class="si">{:.1f}</span><span class="s2"> sample/s&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="n">ms</span><span class="p">,</span>
+            <span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">dataset_test</span><span class="p">)</span> <span class="o">-</span> <span class="n">skip_step</span><span class="p">)</span> <span class="o">/</span> <span class="n">ms</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">),</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+      </details>
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 id="unitorch.cli.tasks.deepspeed.DeepspeedTask.train" class="doc doc-heading">
+        <span class="doc doc-object-name doc-function-name">train</span>
+
+
+<a href="#unitorch.cli.tasks.deepspeed.DeepspeedTask.train" class="headerlink" title="Permanent link">¤</a></h3>
+<div class="codehilite"><pre><span></span><code><span class="n">train</span><span class="p">(</span>
+    <span class="n">config_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">optim</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">loss_fn</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">score_fn</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">monitor_fns</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">from_ckpt_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;./from_ckpt&quot;</span><span class="p">,</span>
+    <span class="n">to_ckpt_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;./to_ckpt&quot;</span><span class="p">,</span>
+    <span class="n">train_batch_size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">128</span><span class="p">,</span>
+    <span class="n">dev_batch_size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">128</span><span class="p">,</span>
+    <span class="n">pin_memory</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">num_workers</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
+    <span class="n">save_optimizer</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">save_scheduler</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">log_freq</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+    <span class="n">ckpt_freq</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">10000</span><span class="p">,</span>
+    <span class="n">grad_acc_step</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="n">max_grad_norm</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+    <span class="n">learning_rate</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">max_warmup_learning_rate</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">num_warmup_steps</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">epochs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
+    <span class="n">use_ema</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">ema_decay</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.9999</span><span class="p">,</span>
+    <span class="n">ema_tau</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2000</span><span class="p">,</span>
+    <span class="n">gpu_mode</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>Train the model using deepspeed.</p>
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>config_path</code></td>
+          <td>
+                <code>str</code>
+          </td>
+          <td><p>The path to the deepspeed configuration file.</p></td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>optim</code></td>
+          <td>
+                <code>str</code>
+          </td>
+          <td><p>The optimizer used for training.</p></td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>loss_fn</code></td>
+          <td>
+                <code>str</code>
+          </td>
+          <td><p>The loss function used for training.</p></td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>score_fn</code></td>
+          <td>
+                <code>str</code>
+          </td>
+          <td><p>The score function used for evaluation.</p></td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>monitor_fns</code></td>
+          <td>
+                <code>optional</code>
+          </td>
+          <td><p>The monitoring functions for evaluation. Defaults to None.</p></td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>from_ckpt_dir</code></td>
+          <td>
+                <code>optional</code>
+          </td>
+          <td><p>The directory path to load checkpoints from. Defaults to "./from_ckpt".</p></td>
+          <td>
+                <code>&#39;./from_ckpt&#39;</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>to_ckpt_dir</code></td>
+          <td>
+                <code>optional</code>
+          </td>
+          <td><p>The directory path to save checkpoints to. Defaults to "./to_ckpt".</p></td>
+          <td>
+                <code>&#39;./to_ckpt&#39;</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>train_batch_size</code></td>
+          <td>
+                <code>optional</code>
+          </td>
+          <td><p>The batch size for training. Defaults to 128.</p></td>
+          <td>
+                <code>128</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>dev_batch_size</code></td>
+          <td>
+                <code>optional</code>
+          </td>
+          <td><p>The batch size for evaluation. Defaults to 128.</p></td>
+          <td>
+                <code>128</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>pin_memory</code></td>
+          <td>
+                <code>optional</code>
+          </td>
+          <td><p>Whether to pin memory during data loading. Defaults to True.</p></td>
+          <td>
+                <code>True</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>num_workers</code></td>
+          <td>
+                <code>optional</code>
+          </td>
+          <td><p>The number of worker processes for data loading. Defaults to 4.</p></td>
+          <td>
+                <code>4</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>save_optimizer</code></td>
+          <td>
+                <code>optional</code>
+          </td>
+          <td><p>Whether to save the optimizer state. Defaults to True.</p></td>
+          <td>
+                <code>True</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>save_scheduler</code></td>
+          <td>
+                <code>optional</code>
+          </td>
+          <td><p>Whether to save the scheduler state. Defaults to True.</p></td>
+          <td>
+                <code>True</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>log_freq</code></td>
+          <td>
+                <code>optional</code>
+          </td>
+          <td><p>The frequency of logging. Defaults to 100.</p></td>
+          <td>
+                <code>100</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>ckpt_freq</code></td>
+          <td>
+                <code>optional</code>
+          </td>
+          <td><p>The frequency of saving checkpoints. Defaults to 10000.</p></td>
+          <td>
+                <code>10000</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>grad_acc_step</code></td>
+          <td>
+                <code>optional</code>
+          </td>
+          <td><p>The number of gradient accumulation steps. Defaults to 1.</p></td>
+          <td>
+                <code>1</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>max_grad_norm</code></td>
+          <td>
+                <code>optional</code>
+          </td>
+          <td><p>The maximum gradient norm. Defaults to 1.0.</p></td>
+          <td>
+                <code>1.0</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>learning_rate</code></td>
+          <td>
+                <code>optional</code>
+          </td>
+          <td><p>The learning rate for the optimizer. Defaults to None.</p></td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>max_warmup_learning_rate</code></td>
+          <td>
+                <code>optional</code>
+          </td>
+          <td><p>The maximum learning rate during warmup. Defaults to None.</p></td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>num_warmup_steps</code></td>
+          <td>
+                <code>optional</code>
+          </td>
+          <td><p>The number of warmup steps. Defaults to None.</p></td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>epochs</code></td>
+          <td>
+                <code>optional</code>
+          </td>
+          <td><p>The number of training epochs. Defaults to 5.</p></td>
+          <td>
+                <code>5</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>use_ema</code></td>
+          <td>
+                <code>optional</code>
+          </td>
+          <td><p>Whether to use exponential moving average. Defaults to False.</p></td>
+          <td>
+                <code>False</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>ema_decay</code></td>
+          <td>
+                <code>optional</code>
+          </td>
+          <td><p>The decay factor for exponential moving average. Defaults to 0.9999.</p></td>
+          <td>
+                <code>0.9999</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>ema_tau</code></td>
+          <td>
+                <code>optional</code>
+          </td>
+          <td><p>The time constant for exponential moving average. Defaults to 2000.</p></td>
+          <td>
+                <code>2000</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>gpu_mode</code></td>
+          <td>
+                <code>optional</code>
+          </td>
+          <td><p>Whether to make GPU active. Defaults to False.</p></td>
+          <td>
+                <code>False</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+      <details class="quote">
+        <summary>Source code in <code>src/unitorch/cli/tasks/deepspeed.py</code></summary>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">150</span>
+<span class="normal">151</span>
+<span class="normal">152</span>
+<span class="normal">153</span>
+<span class="normal">154</span>
+<span class="normal">155</span>
+<span class="normal">156</span>
+<span class="normal">157</span>
+<span class="normal">158</span>
+<span class="normal">159</span>
+<span class="normal">160</span>
+<span class="normal">161</span>
+<span class="normal">162</span>
+<span class="normal">163</span>
+<span class="normal">164</span>
+<span class="normal">165</span>
+<span class="normal">166</span>
+<span class="normal">167</span>
+<span class="normal">168</span>
+<span class="normal">169</span>
+<span class="normal">170</span>
+<span class="normal">171</span>
+<span class="normal">172</span>
+<span class="normal">173</span>
+<span class="normal">174</span>
+<span class="normal">175</span>
+<span class="normal">176</span>
+<span class="normal">177</span>
+<span class="normal">178</span>
+<span class="normal">179</span>
+<span class="normal">180</span>
+<span class="normal">181</span>
+<span class="normal">182</span>
+<span class="normal">183</span>
+<span class="normal">184</span>
+<span class="normal">185</span>
+<span class="normal">186</span>
+<span class="normal">187</span>
+<span class="normal">188</span>
+<span class="normal">189</span>
+<span class="normal">190</span>
+<span class="normal">191</span>
+<span class="normal">192</span>
+<span class="normal">193</span>
+<span class="normal">194</span>
+<span class="normal">195</span>
+<span class="normal">196</span>
+<span class="normal">197</span>
+<span class="normal">198</span>
+<span class="normal">199</span>
+<span class="normal">200</span>
+<span class="normal">201</span>
+<span class="normal">202</span>
+<span class="normal">203</span>
+<span class="normal">204</span>
+<span class="normal">205</span>
+<span class="normal">206</span>
+<span class="normal">207</span>
+<span class="normal">208</span>
+<span class="normal">209</span>
+<span class="normal">210</span>
+<span class="normal">211</span>
+<span class="normal">212</span>
+<span class="normal">213</span>
+<span class="normal">214</span>
+<span class="normal">215</span>
+<span class="normal">216</span>
+<span class="normal">217</span>
+<span class="normal">218</span>
+<span class="normal">219</span>
+<span class="normal">220</span>
+<span class="normal">221</span>
+<span class="normal">222</span>
+<span class="normal">223</span>
+<span class="normal">224</span>
+<span class="normal">225</span>
+<span class="normal">226</span>
+<span class="normal">227</span>
+<span class="normal">228</span>
+<span class="normal">229</span>
+<span class="normal">230</span>
+<span class="normal">231</span>
+<span class="normal">232</span>
+<span class="normal">233</span>
+<span class="normal">234</span>
+<span class="normal">235</span>
+<span class="normal">236</span>
+<span class="normal">237</span>
+<span class="normal">238</span>
+<span class="normal">239</span>
+<span class="normal">240</span>
+<span class="normal">241</span>
+<span class="normal">242</span>
+<span class="normal">243</span>
+<span class="normal">244</span>
+<span class="normal">245</span>
+<span class="normal">246</span>
+<span class="normal">247</span>
+<span class="normal">248</span>
+<span class="normal">249</span>
+<span class="normal">250</span>
+<span class="normal">251</span>
+<span class="normal">252</span>
+<span class="normal">253</span>
+<span class="normal">254</span>
+<span class="normal">255</span>
+<span class="normal">256</span>
+<span class="normal">257</span>
+<span class="normal">258</span>
+<span class="normal">259</span>
+<span class="normal">260</span>
+<span class="normal">261</span>
+<span class="normal">262</span>
+<span class="normal">263</span>
+<span class="normal">264</span>
+<span class="normal">265</span>
+<span class="normal">266</span>
+<span class="normal">267</span>
+<span class="normal">268</span>
+<span class="normal">269</span>
+<span class="normal">270</span>
+<span class="normal">271</span>
+<span class="normal">272</span>
+<span class="normal">273</span>
+<span class="normal">274</span>
+<span class="normal">275</span>
+<span class="normal">276</span>
+<span class="normal">277</span>
+<span class="normal">278</span>
+<span class="normal">279</span>
+<span class="normal">280</span>
+<span class="normal">281</span>
+<span class="normal">282</span>
+<span class="normal">283</span>
+<span class="normal">284</span>
+<span class="normal">285</span>
+<span class="normal">286</span>
+<span class="normal">287</span>
+<span class="normal">288</span>
+<span class="normal">289</span>
+<span class="normal">290</span>
+<span class="normal">291</span>
+<span class="normal">292</span>
+<span class="normal">293</span>
+<span class="normal">294</span>
+<span class="normal">295</span>
+<span class="normal">296</span>
+<span class="normal">297</span>
+<span class="normal">298</span>
+<span class="normal">299</span>
+<span class="normal">300</span>
+<span class="normal">301</span>
+<span class="normal">302</span>
+<span class="normal">303</span>
+<span class="normal">304</span>
+<span class="normal">305</span>
+<span class="normal">306</span>
+<span class="normal">307</span>
+<span class="normal">308</span>
+<span class="normal">309</span>
+<span class="normal">310</span>
+<span class="normal">311</span>
+<span class="normal">312</span>
+<span class="normal">313</span>
+<span class="normal">314</span>
+<span class="normal">315</span>
+<span class="normal">316</span>
+<span class="normal">317</span>
+<span class="normal">318</span>
+<span class="normal">319</span>
+<span class="normal">320</span>
+<span class="normal">321</span>
+<span class="normal">322</span>
+<span class="normal">323</span>
+<span class="normal">324</span>
+<span class="normal">325</span>
+<span class="normal">326</span>
+<span class="normal">327</span>
+<span class="normal">328</span>
+<span class="normal">329</span>
+<span class="normal">330</span>
+<span class="normal">331</span>
+<span class="normal">332</span>
+<span class="normal">333</span>
+<span class="normal">334</span>
+<span class="normal">335</span>
+<span class="normal">336</span>
+<span class="normal">337</span>
+<span class="normal">338</span>
+<span class="normal">339</span>
+<span class="normal">340</span>
+<span class="normal">341</span>
+<span class="normal">342</span>
+<span class="normal">343</span>
+<span class="normal">344</span>
+<span class="normal">345</span>
+<span class="normal">346</span>
+<span class="normal">347</span>
+<span class="normal">348</span>
+<span class="normal">349</span>
+<span class="normal">350</span>
+<span class="normal">351</span>
+<span class="normal">352</span>
+<span class="normal">353</span>
+<span class="normal">354</span>
+<span class="normal">355</span>
+<span class="normal">356</span>
+<span class="normal">357</span>
+<span class="normal">358</span>
+<span class="normal">359</span>
+<span class="normal">360</span>
+<span class="normal">361</span>
+<span class="normal">362</span>
+<span class="normal">363</span>
+<span class="normal">364</span>
+<span class="normal">365</span>
+<span class="normal">366</span>
+<span class="normal">367</span>
+<span class="normal">368</span>
+<span class="normal">369</span>
+<span class="normal">370</span>
+<span class="normal">371</span>
+<span class="normal">372</span>
+<span class="normal">373</span>
+<span class="normal">374</span>
+<span class="normal">375</span>
+<span class="normal">376</span>
+<span class="normal">377</span>
+<span class="normal">378</span>
+<span class="normal">379</span>
+<span class="normal">380</span>
+<span class="normal">381</span>
+<span class="normal">382</span>
+<span class="normal">383</span>
+<span class="normal">384</span>
+<span class="normal">385</span>
+<span class="normal">386</span>
+<span class="normal">387</span>
+<span class="normal">388</span>
+<span class="normal">389</span>
+<span class="normal">390</span>
+<span class="normal">391</span>
+<span class="normal">392</span>
+<span class="normal">393</span>
+<span class="normal">394</span>
+<span class="normal">395</span>
+<span class="normal">396</span>
+<span class="normal">397</span>
+<span class="normal">398</span>
+<span class="normal">399</span>
+<span class="normal">400</span>
+<span class="normal">401</span>
+<span class="normal">402</span>
+<span class="normal">403</span>
+<span class="normal">404</span>
+<span class="normal">405</span>
+<span class="normal">406</span>
+<span class="normal">407</span>
+<span class="normal">408</span>
+<span class="normal">409</span>
+<span class="normal">410</span>
+<span class="normal">411</span>
+<span class="normal">412</span>
+<span class="normal">413</span>
+<span class="normal">414</span>
+<span class="normal">415</span>
+<span class="normal">416</span>
+<span class="normal">417</span>
+<span class="normal">418</span>
+<span class="normal">419</span>
+<span class="normal">420</span>
+<span class="normal">421</span>
+<span class="normal">422</span>
+<span class="normal">423</span>
+<span class="normal">424</span>
+<span class="normal">425</span>
+<span class="normal">426</span>
+<span class="normal">427</span>
+<span class="normal">428</span>
+<span class="normal">429</span>
+<span class="normal">430</span>
+<span class="normal">431</span>
+<span class="normal">432</span>
+<span class="normal">433</span>
+<span class="normal">434</span>
+<span class="normal">435</span>
+<span class="normal">436</span>
+<span class="normal">437</span>
+<span class="normal">438</span>
+<span class="normal">439</span>
+<span class="normal">440</span>
+<span class="normal">441</span>
+<span class="normal">442</span>
+<span class="normal">443</span>
+<span class="normal">444</span>
+<span class="normal">445</span>
+<span class="normal">446</span>
+<span class="normal">447</span>
+<span class="normal">448</span>
+<span class="normal">449</span>
+<span class="normal">450</span>
+<span class="normal">451</span>
+<span class="normal">452</span>
+<span class="normal">453</span>
+<span class="normal">454</span>
+<span class="normal">455</span>
+<span class="normal">456</span>
+<span class="normal">457</span>
+<span class="normal">458</span>
+<span class="normal">459</span>
+<span class="normal">460</span>
+<span class="normal">461</span>
+<span class="normal">462</span>
+<span class="normal">463</span>
+<span class="normal">464</span>
+<span class="normal">465</span>
+<span class="normal">466</span>
+<span class="normal">467</span>
+<span class="normal">468</span>
+<span class="normal">469</span>
+<span class="normal">470</span>
+<span class="normal">471</span>
+<span class="normal">472</span>
+<span class="normal">473</span>
+<span class="normal">474</span>
+<span class="normal">475</span>
+<span class="normal">476</span>
+<span class="normal">477</span>
+<span class="normal">478</span>
+<span class="normal">479</span>
+<span class="normal">480</span>
+<span class="normal">481</span>
+<span class="normal">482</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@add_default_section_for_function</span><span class="p">(</span><span class="s2">&quot;core/task/deepspeed/supervised&quot;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">train</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span>
+    <span class="n">config_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">optim</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">loss_fn</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">score_fn</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">monitor_fns</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">from_ckpt_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;./from_ckpt&quot;</span><span class="p">,</span>
+    <span class="n">to_ckpt_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;./to_ckpt&quot;</span><span class="p">,</span>
+    <span class="n">train_batch_size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">128</span><span class="p">,</span>
+    <span class="n">dev_batch_size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">128</span><span class="p">,</span>
+    <span class="n">pin_memory</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">num_workers</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
+    <span class="n">save_optimizer</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">save_scheduler</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">log_freq</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+    <span class="n">ckpt_freq</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">10000</span><span class="p">,</span>
+    <span class="n">grad_acc_step</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="n">max_grad_norm</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+    <span class="n">learning_rate</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">max_warmup_learning_rate</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">num_warmup_steps</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">epochs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
+    <span class="n">use_ema</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">ema_decay</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.9999</span><span class="p">,</span>
+    <span class="n">ema_tau</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2000</span><span class="p">,</span>
+    <span class="n">gpu_mode</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Train the model using deepspeed.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        config_path: The path to the deepspeed configuration file.</span>
+<span class="sd">        optim: The optimizer used for training.</span>
+<span class="sd">        loss_fn: The loss function used for training.</span>
+<span class="sd">        score_fn: The score function used for evaluation.</span>
+<span class="sd">        monitor_fns (optional): The monitoring functions for evaluation. Defaults to None.</span>
+<span class="sd">        from_ckpt_dir (optional): The directory path to load checkpoints from. Defaults to &quot;./from_ckpt&quot;.</span>
+<span class="sd">        to_ckpt_dir (optional): The directory path to save checkpoints to. Defaults to &quot;./to_ckpt&quot;.</span>
+<span class="sd">        train_batch_size (optional): The batch size for training. Defaults to 128.</span>
+<span class="sd">        dev_batch_size (optional): The batch size for evaluation. Defaults to 128.</span>
+<span class="sd">        pin_memory (optional): Whether to pin memory during data loading. Defaults to True.</span>
+<span class="sd">        num_workers (optional): The number of worker processes for data loading. Defaults to 4.</span>
+<span class="sd">        save_optimizer (optional): Whether to save the optimizer state. Defaults to True.</span>
+<span class="sd">        save_scheduler (optional): Whether to save the scheduler state. Defaults to True.</span>
+<span class="sd">        log_freq (optional): The frequency of logging. Defaults to 100.</span>
+<span class="sd">        ckpt_freq (optional): The frequency of saving checkpoints. Defaults to 10000.</span>
+<span class="sd">        grad_acc_step (optional): The number of gradient accumulation steps. Defaults to 1.</span>
+<span class="sd">        max_grad_norm (optional): The maximum gradient norm. Defaults to 1.0.</span>
+<span class="sd">        learning_rate (optional): The learning rate for the optimizer. Defaults to None.</span>
+<span class="sd">        max_warmup_learning_rate (optional): The maximum learning rate during warmup. Defaults to None.</span>
+<span class="sd">        num_warmup_steps (optional): The number of warmup steps. Defaults to None.</span>
+<span class="sd">        epochs (optional): The number of training epochs. Defaults to 5.</span>
+<span class="sd">        use_ema (optional): Whether to use exponential moving average. Defaults to False.</span>
+<span class="sd">        ema_decay (optional): The decay factor for exponential moving average. Defaults to 0.9999.</span>
+<span class="sd">        ema_tau (optional): The time constant for exponential moving average. Defaults to 2000.</span>
+<span class="sd">        gpu_mode (optional): Whether to make GPU active. Defaults to False.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">to_ckpt_dir</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">local_rank</span> <span class="ow">in</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]:</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">to_ckpt_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">loss_fn</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">loss_fn</span> <span class="o">=</span> <span class="n">init_registered_module</span><span class="p">(</span><span class="n">loss_fn</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">,</span> <span class="n">registered_loss</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">score_fn</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">score_fn</span> <span class="o">=</span> <span class="n">init_registered_module</span><span class="p">(</span><span class="n">score_fn</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">,</span> <span class="n">registered_score</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">monitor_fns</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">monitor_fns</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">init_registered_module</span><span class="p">(</span><span class="n">monitor_fn</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">,</span> <span class="n">registered_score</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">monitor_fn</span> <span class="ow">in</span> <span class="n">monitor_fns</span>
+            <span class="k">if</span> <span class="n">monitor_fn</span> <span class="ow">in</span> <span class="n">registered_score</span>
+        <span class="p">]</span>
+
+    <span class="n">config_file</span> <span class="o">=</span> <span class="n">cached_path</span><span class="p">(</span><span class="n">config_path</span><span class="p">)</span>
+    <span class="n">config_dict</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">config_file</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">))</span>
+    <span class="n">config_dict</span><span class="p">[</span><span class="s2">&quot;train_micro_batch_size_per_gpu&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">train_batch_size</span>
+
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">from_ckpt_dir</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">from_checkpoint</span><span class="p">(</span><span class="n">from_ckpt_dir</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">to_ckpt_dir</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">from_checkpoint</span><span class="p">(</span>
+            <span class="n">to_ckpt_dir</span><span class="p">,</span>
+            <span class="n">weight_name</span><span class="o">=</span><span class="s2">&quot;pytorch_model_latest.bin&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="n">params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">()</span>
+    <span class="n">params</span> <span class="o">=</span> <span class="nb">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">requires_grad</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
+
+    <span class="k">assert</span> <span class="s2">&quot;optimizer&quot;</span> <span class="ow">in</span> <span class="n">config_dict</span>
+
+    <span class="k">if</span> <span class="s2">&quot;params&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">config_dict</span><span class="p">[</span><span class="s2">&quot;optimizer&quot;</span><span class="p">]:</span>
+        <span class="n">config_dict</span><span class="p">[</span><span class="s2">&quot;optimizer&quot;</span><span class="p">][</span><span class="s2">&quot;params&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="s2">&quot;scheduler&quot;</span> <span class="ow">in</span> <span class="n">config_dict</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s2">&quot;params&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">config_dict</span><span class="p">[</span><span class="s2">&quot;scheduler&quot;</span><span class="p">]:</span>
+            <span class="n">config_dict</span><span class="p">[</span><span class="s2">&quot;scheduler&quot;</span><span class="p">][</span><span class="s2">&quot;params&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">learning_rate</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">config_dict</span><span class="p">[</span><span class="s2">&quot;optimizer&quot;</span><span class="p">][</span><span class="s2">&quot;params&quot;</span><span class="p">][</span><span class="s2">&quot;lr&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">learning_rate</span>
+        <span class="k">if</span> <span class="s2">&quot;scheduler&quot;</span> <span class="ow">in</span> <span class="n">config_dict</span><span class="p">:</span>
+            <span class="n">config_dict</span><span class="p">[</span><span class="s2">&quot;scheduler&quot;</span><span class="p">][</span><span class="s2">&quot;params&quot;</span><span class="p">][</span><span class="s2">&quot;warmup_max_lr&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">learning_rate</span>
+
+    <span class="k">if</span> <span class="n">max_warmup_learning_rate</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s2">&quot;scheduler&quot;</span> <span class="ow">in</span> <span class="n">config_dict</span><span class="p">:</span>
+        <span class="n">config_dict</span><span class="p">[</span><span class="s2">&quot;scheduler&quot;</span><span class="p">][</span><span class="s2">&quot;params&quot;</span><span class="p">][</span>
+            <span class="s2">&quot;warmup_max_lr&quot;</span>
+        <span class="p">]</span> <span class="o">=</span> <span class="n">max_warmup_learning_rate</span>
+
+    <span class="k">if</span> <span class="n">num_warmup_steps</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s2">&quot;scheduler&quot;</span> <span class="ow">in</span> <span class="n">config_dict</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s2">&quot;params&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">config_dict</span><span class="p">[</span><span class="s2">&quot;scheduler&quot;</span><span class="p">]:</span>
+            <span class="n">config_dict</span><span class="p">[</span><span class="s2">&quot;scheduler&quot;</span><span class="p">][</span><span class="s2">&quot;params&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="n">config_dict</span><span class="p">[</span><span class="s2">&quot;scheduler&quot;</span><span class="p">][</span><span class="s2">&quot;params&quot;</span><span class="p">][</span><span class="s2">&quot;warmup_num_steps&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">num_warmup_steps</span>
+
+    <span class="n">info_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">to_ckpt_dir</span><span class="p">,</span> <span class="s2">&quot;info.json&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">info_path</span><span class="p">):</span>
+        <span class="n">info</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">to_ckpt_dir</span><span class="p">,</span> <span class="s2">&quot;info.json&quot;</span><span class="p">)))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">info</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+
+    <span class="n">global_epoch</span> <span class="o">=</span> <span class="n">info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;global_epoch&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">global_step</span> <span class="o">=</span> <span class="n">info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;global_step&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">best_score</span> <span class="o">=</span> <span class="n">info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;best_score&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">best_score</span><span class="p">)</span>
+
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;the best score is </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">best_score</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">ema_model</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">use_ema</span><span class="p">:</span>
+        <span class="n">num_ema_steps</span> <span class="o">=</span> <span class="n">info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;num_ema_steps&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ema_model</span> <span class="o">=</span> <span class="n">ExponentialMovingAverage</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
+            <span class="n">decay</span><span class="o">=</span><span class="n">ema_decay</span><span class="p">,</span>
+            <span class="n">tau</span><span class="o">=</span><span class="n">ema_tau</span><span class="p">,</span>
+            <span class="n">num_steps</span><span class="o">=</span><span class="n">num_ema_steps</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">from_ckpt_dir</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ema_model</span><span class="o">.</span><span class="n">from_checkpoint</span><span class="p">(</span>
+                <span class="n">from_ckpt_dir</span><span class="p">,</span>
+                <span class="n">weight_name</span><span class="o">=</span><span class="s2">&quot;pytorch_ema_model.bin&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">to_ckpt_dir</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ema_model</span><span class="o">.</span><span class="n">from_checkpoint</span><span class="p">(</span>
+                <span class="n">to_ckpt_dir</span><span class="p">,</span>
+                <span class="n">weight_name</span><span class="o">=</span><span class="s2">&quot;pytorch_ema_model_latest.bin&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">named_parameters</span><span class="p">():</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">: trainable - </span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">requires_grad</span><span class="si">}</span><span class="s2"> | tensor shape - </span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">optim</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">scheduler</span> <span class="o">=</span> <span class="n">deepspeed</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span>
+        <span class="n">model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
+        <span class="n">config</span><span class="o">=</span><span class="n">config_dict</span><span class="p">,</span>
+        <span class="n">model_parameters</span><span class="o">=</span><span class="n">params</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">global_rank</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_gpu</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">global_rank</span> <span class="o">=</span> <span class="n">dist</span><span class="o">.</span><span class="n">get_rank</span><span class="p">()</span>
+
+    <span class="n">train_sampler</span> <span class="o">=</span> <span class="n">DistributedSkipSampler</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_gpu</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">RandomSkipSampler</span>
+    <span class="n">dev_sampler</span> <span class="o">=</span> <span class="n">DistributedSampler</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_gpu</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">SequentialSampler</span>
+
+    <span class="k">if</span> <span class="n">gpu_mode</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">ActiveGPUJob</span><span class="p">()</span> <span class="k">as</span> <span class="n">_</span><span class="p">:</span>
+            <span class="n">dataset_train</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;train&quot;</span><span class="p">)</span>
+            <span class="n">dataset_dev</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;dev&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">dataset_train</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;train&quot;</span><span class="p">)</span>
+        <span class="n">dataset_dev</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;dev&quot;</span><span class="p">)</span>
+
+    <span class="n">iter_train</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span>
+        <span class="n">dataset_train</span><span class="p">,</span>
+        <span class="n">sampler</span><span class="o">=</span><span class="n">train_sampler</span><span class="p">(</span><span class="n">dataset_train</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dataset_train</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">)</span>
+        <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">batch_size</span><span class="o">=</span><span class="n">train_batch_size</span><span class="p">,</span>
+        <span class="n">shuffle</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">pin_memory</span><span class="o">=</span><span class="n">pin_memory</span><span class="p">,</span>
+        <span class="n">num_workers</span><span class="o">=</span><span class="n">num_workers</span><span class="p">,</span>
+        <span class="n">collate_fn</span><span class="o">=</span><span class="n">collate_fn</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">iter_dev</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span>
+        <span class="n">dataset_dev</span><span class="p">,</span>
+        <span class="n">sampler</span><span class="o">=</span><span class="n">dev_sampler</span><span class="p">(</span><span class="n">dataset_dev</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dataset_dev</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">)</span>
+        <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">batch_size</span><span class="o">=</span><span class="n">dev_batch_size</span><span class="p">,</span>
+        <span class="n">shuffle</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">pin_memory</span><span class="o">=</span><span class="n">pin_memory</span><span class="p">,</span>
+        <span class="n">num_workers</span><span class="o">=</span><span class="n">num_workers</span><span class="p">,</span>
+        <span class="n">collate_fn</span><span class="o">=</span><span class="n">collate_fn</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">log_loss</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">dev_epoch</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">epochs</span><span class="p">):</span>
+        <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">empty_cache</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">e</span> <span class="o">&lt;</span> <span class="n">global_epoch</span><span class="p">:</span>
+            <span class="k">continue</span>
+
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">dataset_train</span><span class="p">,</span> <span class="s2">&quot;set_epoch&quot;</span><span class="p">):</span>
+            <span class="n">dataset_train</span><span class="o">.</span><span class="n">set_epoch</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">dataset_train</span><span class="p">,</span> <span class="s2">&quot;set_skip_step&quot;</span><span class="p">):</span>
+            <span class="n">dataset_train</span><span class="o">.</span><span class="n">set_skip_step</span><span class="p">(</span><span class="n">global_step</span> <span class="o">*</span> <span class="n">train_batch_size</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">iter_train</span><span class="o">.</span><span class="n">sampler</span><span class="p">,</span> <span class="s2">&quot;set_epoch&quot;</span><span class="p">):</span>
+            <span class="n">iter_train</span><span class="o">.</span><span class="n">sampler</span><span class="o">.</span><span class="n">set_epoch</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">iter_train</span><span class="o">.</span><span class="n">sampler</span><span class="p">,</span> <span class="s2">&quot;set_skip_step&quot;</span><span class="p">):</span>
+            <span class="n">iter_train</span><span class="o">.</span><span class="n">sampler</span><span class="o">.</span><span class="n">set_skip_step</span><span class="p">(</span><span class="n">global_step</span> <span class="o">*</span> <span class="n">train_batch_size</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+        <span class="n">is_update_step</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">for</span> <span class="n">step</span><span class="p">,</span> <span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="n">targets</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">iter_train</span><span class="p">):</span>
+            <span class="n">step</span> <span class="o">=</span> <span class="n">step</span> <span class="o">+</span> <span class="n">global_step</span>
+            <span class="n">is_update_step</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">():</span>
+                <span class="n">inputs</span> <span class="o">=</span> <span class="n">inputs</span><span class="o">.</span><span class="n">cuda</span><span class="p">()</span>
+                <span class="n">targets</span> <span class="o">=</span> <span class="n">targets</span><span class="o">.</span><span class="n">cuda</span><span class="p">()</span>
+
+            <span class="k">if</span> <span class="n">is_torch2_available</span><span class="p">():</span>
+                <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">amp</span><span class="o">.</span><span class="n">autocast</span><span class="p">(</span>
+                    <span class="n">enabled</span><span class="o">=</span><span class="kc">True</span>
+                <span class="p">)</span> <span class="k">as</span> <span class="n">autocast</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">backends</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">sdp_kernel</span><span class="p">(</span>
+                    <span class="n">enable_flash</span><span class="o">=</span><span class="kc">False</span>
+                <span class="p">)</span> <span class="k">as</span> <span class="n">disable</span><span class="p">:</span>
+                    <span class="n">outputs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="o">**</span><span class="n">inputs</span><span class="o">.</span><span class="n">dict</span><span class="p">())</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">outputs</span><span class="p">,</span> <span class="n">LossOutputs</span><span class="p">):</span>
+                        <span class="n">loss</span> <span class="o">=</span> <span class="n">outputs</span><span class="o">.</span><span class="n">loss</span> <span class="o">/</span> <span class="n">grad_acc_step</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">loss</span> <span class="o">=</span> <span class="p">(</span>
+                            <span class="n">loss_fn</span><span class="p">(</span><span class="n">outputs</span><span class="o">=</span><span class="n">outputs</span><span class="p">,</span> <span class="n">targets</span><span class="o">=</span><span class="n">targets</span><span class="p">)</span>
+                            <span class="o">/</span> <span class="n">grad_acc_step</span>
+                        <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">amp</span><span class="o">.</span><span class="n">autocast</span><span class="p">(</span><span class="n">enabled</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">autocast</span><span class="p">:</span>
+                    <span class="n">outputs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="o">**</span><span class="n">inputs</span><span class="o">.</span><span class="n">dict</span><span class="p">())</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">outputs</span><span class="p">,</span> <span class="n">LossOutputs</span><span class="p">):</span>
+                        <span class="n">loss</span> <span class="o">=</span> <span class="n">outputs</span><span class="o">.</span><span class="n">loss</span> <span class="o">/</span> <span class="n">grad_acc_step</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">loss</span> <span class="o">=</span> <span class="p">(</span>
+                            <span class="n">loss_fn</span><span class="p">(</span><span class="n">outputs</span><span class="o">=</span><span class="n">outputs</span><span class="p">,</span> <span class="n">targets</span><span class="o">=</span><span class="n">targets</span><span class="p">)</span>
+                            <span class="o">/</span> <span class="n">grad_acc_step</span>
+                        <span class="p">)</span>
+
+            <span class="n">nn</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">clip_grad_norm_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">max_grad_norm</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">backward</span><span class="p">(</span><span class="n">loss</span><span class="p">)</span>
+
+            <span class="n">log_loss</span> <span class="o">+=</span> <span class="n">loss</span><span class="o">.</span><span class="n">data</span> <span class="o">*</span> <span class="n">grad_acc_step</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">step</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="n">grad_acc_step</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">is_update_step</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="n">optim</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">scheduler</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">scheduler</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+                <span class="n">optim</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+
+                <span class="k">if</span> <span class="n">use_ema</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">ema_model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">ema_model</span><span class="o">.</span><span class="n">step</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">module</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_gpu</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span>
+                    <span class="p">)</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="n">step</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="n">log_freq</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">global_rank</span> <span class="ow">in</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]:</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;epoch </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2"> step </span><span class="si">{</span><span class="n">step</span><span class="si">}</span><span class="s2">: loss -- </span><span class="si">{</span><span class="w"> </span><span class="n">log_loss</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">log_freq</span><span class="w"> </span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+                <span class="n">log_loss</span> <span class="o">=</span> <span class="mi">0</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="n">step</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="n">ckpt_freq</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">dataset_dev</span><span class="p">,</span> <span class="s2">&quot;set_epoch&quot;</span><span class="p">):</span>
+                    <span class="n">dataset_dev</span><span class="o">.</span><span class="n">set_epoch</span><span class="p">(</span><span class="n">dev_epoch</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">iter_dev</span><span class="o">.</span><span class="n">sampler</span><span class="p">,</span> <span class="s2">&quot;set_epoch&quot;</span><span class="p">):</span>
+                    <span class="n">iter_dev</span><span class="o">.</span><span class="n">sampler</span><span class="o">.</span><span class="n">set_epoch</span><span class="p">(</span><span class="n">dev_epoch</span><span class="p">)</span>
+
+                <span class="n">dev_epoch</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">best_score</span> <span class="o">=</span> <span class="n">save_checkpoint</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">module</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_gpu</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
+                    <span class="n">to_ckpt_dir</span><span class="p">,</span>
+                    <span class="n">iter_dev</span><span class="p">,</span>
+                    <span class="n">score_fn</span><span class="p">,</span>
+                    <span class="n">monitor_fns</span><span class="p">,</span>
+                    <span class="n">optim</span><span class="o">=</span><span class="n">optim</span> <span class="k">if</span> <span class="n">save_optimizer</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                    <span class="n">scheduler</span><span class="o">=</span><span class="n">scheduler</span> <span class="k">if</span> <span class="n">save_scheduler</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                    <span class="n">ema_model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ema_ema_model</span> <span class="k">if</span> <span class="n">use_ema</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                    <span class="n">best_score</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">best_score</span><span class="p">,</span>
+                    <span class="n">info_path</span><span class="o">=</span><span class="n">info_path</span><span class="p">,</span>
+                    <span class="n">local_rank</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">local_rank</span><span class="p">,</span>
+                    <span class="n">global_epoch</span><span class="o">=</span><span class="n">e</span><span class="p">,</span>
+                    <span class="n">global_step</span><span class="o">=</span><span class="n">step</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
+                <span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">is_update_step</span><span class="p">:</span>
+            <span class="n">optim</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">scheduler</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">scheduler</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+            <span class="n">optim</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+
+            <span class="k">if</span> <span class="n">use_ema</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">ema_model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ema_model</span><span class="o">.</span><span class="n">step</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">module</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_gpu</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span>
+                <span class="p">)</span>
+
+        <span class="n">log_loss</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">dataset_dev</span><span class="p">,</span> <span class="s2">&quot;set_epoch&quot;</span><span class="p">):</span>
+            <span class="n">dataset_dev</span><span class="o">.</span><span class="n">set_epoch</span><span class="p">(</span><span class="n">dev_epoch</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">iter_dev</span><span class="o">.</span><span class="n">sampler</span><span class="p">,</span> <span class="s2">&quot;set_epoch&quot;</span><span class="p">):</span>
+            <span class="n">iter_dev</span><span class="o">.</span><span class="n">sampler</span><span class="o">.</span><span class="n">set_epoch</span><span class="p">(</span><span class="n">dev_epoch</span><span class="p">)</span>
+
+        <span class="n">dev_epoch</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="n">global_step</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">best_score</span> <span class="o">=</span> <span class="n">save_checkpoint</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">module</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_gpu</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
+            <span class="n">to_ckpt_dir</span><span class="p">,</span>
+            <span class="n">iter_dev</span><span class="p">,</span>
+            <span class="n">score_fn</span><span class="p">,</span>
+            <span class="n">monitor_fns</span><span class="p">,</span>
+            <span class="n">optim</span><span class="o">=</span><span class="n">optim</span> <span class="k">if</span> <span class="n">save_optimizer</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">scheduler</span><span class="o">=</span><span class="n">scheduler</span> <span class="k">if</span> <span class="n">save_scheduler</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">ema_model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ema_ema_model</span> <span class="k">if</span> <span class="n">use_ema</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">best_score</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">best_score</span><span class="p">,</span>
+            <span class="n">info_path</span><span class="o">=</span><span class="n">info_path</span><span class="p">,</span>
+            <span class="n">local_rank</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">local_rank</span><span class="p">,</span>
+            <span class="n">global_epoch</span><span class="o">=</span><span class="n">e</span><span class="p">,</span>
+            <span class="n">global_step</span><span class="o">=</span><span class="n">step</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+      </details>
+  </div>
+
+</div>
+
+
+
+  </div>
+
+  </div>
+
+</div>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12Z"/></svg>
+            Back to top
+          </button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../supervised/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Supervised" rel="prev">
+            <div class="md-footer__button md-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Supervised
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../ast/" class="md-footer__link md-footer__link--next" aria-label="Next: Ast" rel="next">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Ast
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4Z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2023 FULIUCANSHENG
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        <div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/fuliucansheng" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://twitter.com/fuliucansheng" target="_blank" rel="noopener" title="twitter.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M459.37 151.716c.325 4.548.325 9.097.325 13.645 0 138.72-105.583 298.558-298.558 298.558-59.452 0-114.68-17.219-161.137-47.106 8.447.974 16.568 1.299 25.34 1.299 49.055 0 94.213-16.568 130.274-44.832-46.132-.975-84.792-31.188-98.112-72.772 6.498.974 12.995 1.624 19.818 1.624 9.421 0 18.843-1.3 27.614-3.573-48.081-9.747-84.143-51.98-84.143-102.985v-1.299c13.969 7.797 30.214 12.67 47.431 13.319-28.264-18.843-46.781-51.005-46.781-87.391 0-19.492 5.197-37.36 14.294-52.954 51.655 63.675 129.3 105.258 216.365 109.807-1.624-7.797-2.599-15.918-2.599-24.04 0-57.828 46.782-104.934 104.934-104.934 30.213 0 57.502 12.67 76.67 33.137 23.715-4.548 46.456-13.32 66.599-25.34-7.798 24.366-24.366 44.833-46.132 57.827 21.117-2.273 41.584-8.122 60.426-16.243-14.292 20.791-32.161 39.308-52.628 54.253z"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://pypi.org/project/unitorch/" target="_blank" rel="noopener" title="pypi.org" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.8 200.5c-7.7-30.9-22.3-54.2-53.4-54.2h-40.1v47.4c0 36.8-31.2 67.8-66.8 67.8H172.7c-29.2 0-53.4 25-53.4 54.3v101.8c0 29 25.2 46 53.4 54.3 33.8 9.9 66.3 11.7 106.8 0 26.9-7.8 53.4-23.5 53.4-54.3v-40.7H226.2v-13.6h160.2c31.1 0 42.6-21.7 53.4-54.2 11.2-33.5 10.7-65.7 0-108.6zM286.2 404c11.1 0 20.1 9.1 20.1 20.3 0 11.3-9 20.4-20.1 20.4-11 0-20.1-9.2-20.1-20.4.1-11.3 9.1-20.3 20.1-20.3zM167.8 248.1h106.8c29.7 0 53.4-24.5 53.4-54.3V91.9c0-29-24.4-50.7-53.4-55.6-35.8-5.9-74.7-5.6-106.8.1-45.2 8-53.4 24.7-53.4 55.6v40.7h106.9v13.6h-147c-31.1 0-58.3 18.7-66.8 54.2-9.8 40.7-10.2 66.1 0 108.6 7.6 31.6 25.7 54.2 56.8 54.2H101v-48.8c0-35.3 30.5-66.4 66.8-66.4zm-6.7-142.6c-11.1 0-20.1-9.1-20.1-20.3.1-11.3 9-20.4 20.1-20.4 11 0 20.1 9.2 20.1 20.4s-9 20.3-20.1 20.3z"/></svg>
+    </a>
+  
+    
+    
+    
+    
+    <a href="mailto:fuliucansheng@gmail.com" target="_blank" rel="noopener" title="" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M498.1 5.6c10.1 7 15.4 19.1 13.5 31.2l-64 416c-1.5 9.7-7.4 18.2-16 23s-18.9 5.4-28 1.6L284 427.7l-68.5 74.1c-8.9 9.7-22.9 12.9-35.2 8.1S160 493.2 160 480v-83.6c0-4 1.5-7.8 4.2-10.7l167.6-182.9c5.8-6.3 5.6-16-.4-22s-15.7-6.4-22-.7L106 360.8l-88.3-44.2C7.1 311.3.3 300.7 0 288.9s5.9-22.8 16.1-28.7l448-256c10.7-6.1 23.9-5.5 34 1.4z"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    <script id="__config" type="application/json">{"base": "../..", "features": ["announce.dismiss", "content.code.annotate", "content.code.copy", "content.tooltips", "navigation.footer", "navigation.indexes", "navigation.sections", "navigation.tabs", "navigation.top", "navigation.instant", "navigation.tracking", "navigation.path", "search.highlight", "search.suggest", "toc.follow", "header.autohide"], "search": "../../assets/javascripts/workers/search.208ed371.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.b4d07000.min.js"></script>
+      
+    
+  </body>
+</html>
