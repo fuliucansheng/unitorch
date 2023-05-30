@@ -28,7 +28,7 @@ hide:
 
 <div style="text-align: center; width: 60%; margin: auto; margin-top: 5%">
   <a
-    href="/overview/"
+    href="overview/"
     title="Get Started"
     class="md-button md-button--primary"
     style="background-color: black; border: 0px"
@@ -53,5 +53,5 @@ hide:
 </div>
 
 <div style="text-align: center; width: 80%; margin: auto; margin-top: 5%">
-<img src="/static/overview.png"/>
+<img src="static/overview.png"/>
 </div>
