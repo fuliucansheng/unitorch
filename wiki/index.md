@@ -53,5 +53,5 @@ hide:
 </div>
 
 <div style="text-align: center; width: 80%; margin: auto; margin-top: 5%; margin-bottom: 5%">
-<img src="static/overview.png"/>
+<img src="overview.png"/>
 </div>

@@ -47,7 +47,6 @@ if torch.cuda.is_available():
     }
 
 else:
-
     all_extensions = {}
 
 

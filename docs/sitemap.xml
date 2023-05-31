@@ -2,357 +2,357 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/configuration/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/installation/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/overview/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/benchmarks/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/ast/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/csv/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/datatypes/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/deepspeed/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/jsonl/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/parquet/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/postprocess/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/preprocess/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/supervised/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/models/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/models/bart/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/models/beit/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/models/bert/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/models/blip/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/models/bloom/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/models/chatglm/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/models/clip/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/models/deberta/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/models/diffusers/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/models/llama/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/models/mbart/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/models/mt5/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/models/peft/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/models/pegasus/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/models/prophetnet/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/models/roberta/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/models/swin/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/models/t5/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/models/visualbert/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/models/vit/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/models/xlm_roberta/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/models/xpegasus/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/models/xprophetnet/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/examples/caption/blip/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/examples/classification/clip/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/examples/classification/roberta/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/examples/classification/swin/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/examples/diffusion/controlnet/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/examples/generation/bart/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/examples/service/zip_image/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/labs/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/models/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/models/bart/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/models/beit/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/models/bert/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/models/blip/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/models/bloom/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/models/chatglm/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/models/clip/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/models/deberta/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/models/diffusers/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/models/llama/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/models/mbart/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/models/mt5/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/models/peft/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/models/pegasus/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/models/prophetnet/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/models/roberta/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/models/swin/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/models/t5/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/models/visualbert/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/models/vit/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/models/xlm_roberta/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/models/xpegasus/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/models/xprophetnet/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/coverage/</loc>
-         <lastmod>2023-05-30</lastmod>
+         <lastmod>2023-05-31</lastmod>
          <changefreq>daily</changefreq>
     </url>
 </urlset>

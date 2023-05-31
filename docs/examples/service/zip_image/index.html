@@ -19,7 +19,7 @@
         <link rel="next" href="../../classification/roberta/">
       
       <link rel="icon" href="../../../icon.png">
-      <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.11">
+      <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.14">
     
     
       
@@ -865,8 +865,6 @@
         
           
         
-          
-        
       
       
         <label class="md-nav__link" for="__nav_3_2" id="__nav_3_2_label" tabindex="0">
@@ -929,9 +927,81 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Zip Image
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         Zip Image
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#configuration-files" class="md-nav__link">
+    Configuration files
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuration files">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#single-zip-folder" class="md-nav__link">
+    Single zip folder
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#multiple-zip-folders" class="md-nav__link">
+    Multiple zip folders
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#start-service" class="md-nav__link">
+    Start Service
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#stop-service" class="md-nav__link">
+    Stop Service
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#restart-service" class="md-nav__link">
+    Restart Service
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -1120,58 +1190,6 @@
     <li class="md-nav__item">
       <a href="../../generation/bart/" class="md-nav__link">
         Bart
-      </a>
-    </li>
-  
-
-            
-          
-        </ul>
-      </nav>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-  
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-      
-      
-      
-      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2_5" >
-      
-      
-        
-          
-        
-      
-      
-        <label class="md-nav__link" for="__nav_3_2_5" id="__nav_3_2_5_label" tabindex="0">
-          Diffusion
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_3_2_5_label" aria-expanded="false">
-        <label class="md-nav__title" for="__nav_3_2_5">
-          <span class="md-nav__icon md-icon"></span>
-          Diffusion
-        </label>
-        <ul class="md-nav__list" data-md-scrollfix>
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../diffusion/controlnet/" class="md-nav__link">
-        ControlNet
       </a>
     </li>
   
@@ -1918,6 +1936,62 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#configuration-files" class="md-nav__link">
+    Configuration files
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuration files">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#single-zip-folder" class="md-nav__link">
+    Single zip folder
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#multiple-zip-folders" class="md-nav__link">
+    Multiple zip folders
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#start-service" class="md-nav__link">
+    Start Service
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#stop-service" class="md-nav__link">
+    Stop Service
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#restart-service" class="md-nav__link">
+    Restart Service
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -1935,7 +2009,49 @@
 
 
 <h1 id="zip-image-service-tutorial">Zip Image Service Tutorial<a class="headerlink" href="#zip-image-service-tutorial" title="Permanent link">¤</a></h1>
-<p>&nbsp;&nbsp;&nbsp;&nbsp;In this tutorial, we will learn how to use image service for image-related models training/inference.</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;In this tutorial, we will explore the usage of an image service for training and inference with image-related models. This service is specifically designed to handle large-scale image datasets, containing over 300 million images. The image service operates in the backend and offers an HTTP API that allows Users &amp; GPU processes to access image bytes by using an image ID.</p>
+<hr/>
+
+<p><img alt="Zip Image Service" src="../zip_image.jpg" /></p>
+<hr/>
+
+<h3 id="configuration-files">Configuration files<a class="headerlink" href="#configuration-files" title="Permanent link">¤</a></h3>
+<h4 id="single-zip-folder"><a href="https://github.com/fuliucansheng/unitorch/blob/master/examples/configs/services/zip_image/config.ini">Single zip folder</a><a class="headerlink" href="#single-zip-folder" title="Permanent link">¤</a></h4>
+<div class="highlight"><pre><span></span><code><span class="k">[core/cli]</span>
+<span class="na">zip_folder</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">zip_folder/</span>
+<span class="na">service_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">core/service/zip_image</span>
+
+<span class="k">[core/service/zip_image]</span>
+<span class="na">zip_folder</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">${core/cli:zip_folder}</span>
+<span class="na">zip_extension</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">.zip</span>
+</code></pre></div>
+<h4 id="multiple-zip-folders"><a href="https://github.com/fuliucansheng/unitorch/blob/master/examples/configs/services/zip_image/config_v2.ini">Multiple zip folders</a><a class="headerlink" href="#multiple-zip-folders" title="Permanent link">¤</a></h4>
+<div class="highlight"><pre><span></span><code><span class="k">[core/cli]</span>
+<span class="na">zip_folder1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">zip_folder1/</span>
+<span class="na">zip_folder2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">zip_folder2/</span>
+<span class="na">zip_folder3</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">zip_folder3/</span>
+<span class="na">service_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">core/service/zip_image</span>
+
+<span class="k">[core/service/zip_image]</span>
+<span class="na">zip_folder</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">[</span>
+<span class="w">    </span><span class="na">&quot;${core/cli</span><span class="o">:</span><span class="s">zip_folder1}&quot;,</span>
+<span class="w">    </span><span class="na">&quot;${core/cli</span><span class="o">:</span><span class="s">zip_folder2}&quot;,</span>
+<span class="w">    </span><span class="na">&quot;${core/cli</span><span class="o">:</span><span class="s">zip_folder3}&quot;</span>
+<span class="w">  </span><span class="na">]</span>
+<span class="na">zip_extension</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">.zip</span>
+</code></pre></div>
+<h3 id="start-service">Start Service<a class="headerlink" href="#start-service" title="Permanent link">¤</a></h3>
+<div class="highlight"><pre><span></span><code>unitorch-service<span class="w"> </span>start<span class="w"> </span>path/to/zip/image/service.ini<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--zip_folder<span class="w"> </span>path/to/zip/folder
+</code></pre></div>
+<h3 id="stop-service">Stop Service<a class="headerlink" href="#stop-service" title="Permanent link">¤</a></h3>
+<div class="highlight"><pre><span></span><code>unitorch-service<span class="w"> </span>stop<span class="w"> </span>path/to/zip/image/service.ini<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--zip_folder<span class="w"> </span>path/to/zip/folder
+</code></pre></div>
+<h3 id="restart-service">Restart Service<a class="headerlink" href="#restart-service" title="Permanent link">¤</a></h3>
+<div class="highlight"><pre><span></span><code>unitorch-service<span class="w"> </span>restart<span class="w"> </span>path/to/zip/image/service.ini<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--zip_folder<span class="w"> </span>path/to/zip/folder
+</code></pre></div>
 
 
 
@@ -2068,7 +2184,7 @@
     <script id="__config" type="application/json">{"base": "../../..", "features": ["announce.dismiss", "content.code.annotate", "content.code.copy", "content.tooltips", "navigation.footer", "navigation.indexes", "navigation.sections", "navigation.tabs", "navigation.top", "navigation.instant", "navigation.tracking", "navigation.path", "search.highlight", "search.suggest", "toc.follow", "header.autohide"], "search": "../../../assets/javascripts/workers/search.208ed371.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.fac441b0.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.b4d07000.min.js"></script>
       
     
   </body>

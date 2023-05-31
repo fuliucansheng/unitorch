@@ -38,8 +38,8 @@ from_ckpt_dir = ${core/cli:from_ckpt_dir}
 to_ckpt_dir = ${core/cli:cache_dir}
 output_path = ${core/cli:cache_dir}/output.txt
 train_batch_size = 4
-dev_batch_size = 32
-test_batch_size = 32
+dev_batch_size = 8
+test_batch_size = 8
 ```
 
 !!! note
@@ -121,3 +121,12 @@ unitorch-train path/to/config.ini --train_file path/to/train.tsv --dev_file path
 
 !!! note
     The --core/task/supervised@train_batch_size 128 part of the command overrides the parameter setting in the config file.
+
+Use the following command to run the inference:
+
+```bash
+unitorch-infer path/to/config.ini --test_file path/to/test.tsv --from_ckpt_dir path/to/ckpt/folder --core/task/supervised@test_batch_size 128
+```
+
+!!! note
+    The --core/task/supervised@test_batch_size 128 part of the command overrides the parameter setting in the config file.

@@ -27,11 +27,13 @@ pip3 install unitorch[deepspeed]
 ## Install Source
 
 ```bash
-pip3 install git+https://github.com/fuliucansheng/unitorch#egg=unitorch[deepspeed]
+pip3 install \
+    "git+https://github.com/fuliucansheng/unitorch#egg=unitorch[deepspeed]"
 ```
 
 ## Install Extension
 
 ```bash
-UNITORCH_EXTENSIONS=NGRAM pip3 install git+https://github.com/fuliucansheng/unitorch
+UNITORCH_EXTENSIONS=NGRAM pip3 install \
+    "git+https://github.com/fuliucansheng/unitorch"
 ```

@@ -58,7 +58,7 @@ test_batch_size = 32
 ```ini
 [core/model/classification/swin]
 pretrained_name = swin-base-patch4-window7-224
-num_classes = 1000
+num_classes = 2
 ```
 
 !!! note
@@ -118,7 +118,7 @@ http_url = http://0.0.0.0:11230/?image={0}
 Start local image service first:
 
 ```bash
-unitorch-service path/to/service.ini --zip_folder path/to/zip/folder
+unitorch-service start path/to/zip/image/service.ini --zip_folder path/to/zip/folder
 ```
 
 Use the following command to run the training:
@@ -129,3 +129,12 @@ unitorch-train path/to/config.ini --train_file path/to/train.tsv --dev_file path
 
 !!! note
     The --core/task/supervised@train_batch_size 128 part of the command overrides the parameter setting in the config file.
+
+Use the following command to run the inference:
+
+```bash
+unitorch-infer path/to/config.ini --test_file path/to/test.tsv --from_ckpt_dir path/to/ckpt/folder --core/task/supervised@test_batch_size 128
+```
+
+!!! note
+    The --core/task/supervised@test_batch_size 128 part of the command overrides the parameter setting in the config file.

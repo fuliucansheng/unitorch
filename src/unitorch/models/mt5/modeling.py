@@ -10,7 +10,12 @@ import transformers
 from copy import deepcopy
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from transformers import MT5Config, MT5Model, MT5ForConditionalGeneration
-from transformers.models.mt5.modeling_mt5 import MT5Stack
+from transformers.models.mt5.modeling_mt5 import (
+    MT5Stack,
+    MT5DenseGatedActDense,
+    MT5LayerNorm,
+    MT5DenseActDense,
+)
 from transformers.modeling_outputs import Seq2SeqLMOutput
 from unitorch.utils.decorators import replace
 from unitorch.models import GenericModel, GenericOutputs
@@ -194,6 +199,26 @@ class MT5AttentionV2(transformers.models.mt5.modeling_mt5.MT5Attention):
         if output_attentions:
             outputs = outputs + (attn_weights,)
         return outputs
+
+
+@replace(transformers.models.mt5.modeling_mt5.MT5LayerFF)
+class MT5LayerFF(nn.Module):
+    def __init__(self, config: MT5Config):
+        super().__init__()
+        if config.is_gated_act:
+            self.DenseReluDense = MT5DenseGatedActDense(config)
+        else:
+            self.DenseReluDense = MT5DenseActDense(config)
+
+        self.layer_norm = MT5LayerNorm(config.d_model, eps=config.layer_norm_epsilon)
+        self.dropout = nn.Dropout(config.dropout_rate)
+
+    def forward(self, hidden_states):
+        with torch.cuda.amp.autocast(enabled=False):
+            forwarded_states = self.layer_norm(hidden_states)
+            forwarded_states = self.DenseReluDense(forwarded_states)
+            hidden_states = hidden_states + self.dropout(forwarded_states)
+        return hidden_states
 
 
 class MT5ForGeneration(GenericModel):

@@ -50,8 +50,8 @@ nav:
         - Blip: examples/caption/blip.md
       - Generation: 
         - Bart: examples/generation/bart.md
-      - Diffusion: 
-        - ControlNet: examples/diffusion/controlnet.md
+      # - Diffusion: 
+      #  - ControlNet: examples/diffusion/controlnet.md
     - Task:
       - Supervised: cli/supervised.md
       - Deepspeed: cli/deepspeed.md

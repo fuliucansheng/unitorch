@@ -9,6 +9,8 @@ from unitorch.models import GenericModel
 
 
 class BertForClassification(GenericModel):
+    replace_keys_in_state_dict = {"gamma": "weight", "beta": "bias"}
+
     def __init__(
         self,
         config_path: str,

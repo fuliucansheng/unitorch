@@ -9,7 +9,7 @@ hide:
 
 <hr/>
 
-![Overview](static/overview.png)
+![Overview](overview.png)
 
 <hr/>
 

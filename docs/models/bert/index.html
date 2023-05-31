@@ -19,7 +19,7 @@
         <link rel="next" href="../blip/">
       
       <link rel="icon" href="../../icon.png">
-      <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.11">
+      <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.14">
     
     
       
@@ -939,8 +939,6 @@
         
           
         
-          
-        
       
       
         <label class="md-nav__link" for="__nav_3_2" id="__nav_3_2_label" tabindex="0">
@@ -1182,58 +1180,6 @@
     <li class="md-nav__item">
       <a href="../../examples/generation/bart/" class="md-nav__link">
         Bart
-      </a>
-    </li>
-  
-
-            
-          
-        </ul>
-      </nav>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-  
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-      
-      
-      
-      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2_5" >
-      
-      
-        
-          
-        
-      
-      
-        <label class="md-nav__link" for="__nav_3_2_5" id="__nav_3_2_5_label" tabindex="0">
-          Diffusion
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_3_2_5_label" aria-expanded="false">
-        <label class="md-nav__title" for="__nav_3_2_5">
-          <span class="md-nav__icon md-icon"></span>
-          Diffusion
-        </label>
-        <ul class="md-nav__list" data-md-scrollfix>
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../examples/diffusion/controlnet/" class="md-nav__link">
-        ControlNet
       </a>
     </li>
   
@@ -2655,9 +2601,7 @@
 
           <details class="quote">
             <summary>Source code in <code>src/unitorch/models/bert/modeling.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">12</span>
-<span class="normal">13</span>
-<span class="normal">14</span>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">14</span>
 <span class="normal">15</span>
 <span class="normal">16</span>
 <span class="normal">17</span>
@@ -2675,7 +2619,9 @@
 <span class="normal">29</span>
 <span class="normal">30</span>
 <span class="normal">31</span>
-<span class="normal">32</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+<span class="normal">32</span>
+<span class="normal">33</span>
+<span class="normal">34</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">config_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">num_classes</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
@@ -2806,9 +2752,7 @@
 
       <details class="quote">
         <summary>Source code in <code>src/unitorch/models/bert/modeling.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">34</span>
-<span class="normal">35</span>
-<span class="normal">36</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">36</span>
 <span class="normal">37</span>
 <span class="normal">38</span>
 <span class="normal">39</span>
@@ -2835,7 +2779,9 @@
 <span class="normal">60</span>
 <span class="normal">61</span>
 <span class="normal">62</span>
-<span class="normal">63</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
+<span class="normal">63</span>
+<span class="normal">64</span>
+<span class="normal">65</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">input_ids</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
     <span class="n">attention_mask</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -3010,7 +2956,7 @@
     <script id="__config" type="application/json">{"base": "../..", "features": ["announce.dismiss", "content.code.annotate", "content.code.copy", "content.tooltips", "navigation.footer", "navigation.indexes", "navigation.sections", "navigation.tabs", "navigation.top", "navigation.instant", "navigation.tracking", "navigation.path", "search.highlight", "search.suggest", "toc.follow", "header.autohide"], "search": "../../assets/javascripts/workers/search.208ed371.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.fac441b0.min.js"></script>
+      <script src="../../assets/javascripts/bundle.b4d07000.min.js"></script>
       
     
   </body>

@@ -167,7 +167,7 @@ class BlipProcessor(_BlipProcessor):
         self,
         text: str,
         image: Union[Image.Image, str],
-        max_seq_length: Optional[int] = None,
+        max_gen_seq_length: Optional[int] = None,
     ):
         """
         Perform text and image generation using the BlipProcessor.
@@ -175,7 +175,7 @@ class BlipProcessor(_BlipProcessor):
         Args:
             text (str): The input text.
             image (Union[Image.Image, str]): The input image.
-            max_seq_length (int, optional): The maximum sequence length. Defaults to None.
+            max_gen_seq_length (int, optional): The maximum sequence length. Defaults to None.
 
         Returns:
             TensorsInputs: The tensor inputs.
@@ -183,15 +183,18 @@ class BlipProcessor(_BlipProcessor):
         if isinstance(image, str):
             image = Image.open(image)
 
-        outputs = super().classification(
+        outputs = super().generation(
             text=text,
             image=image,
-            max_seq_length=max_seq_length,
+            max_gen_seq_length=max_gen_seq_length,
         )
         return TensorsInputs(
             input_ids=outputs.input_ids,
             attention_mask=outputs.attention_mask,
             pixel_values=outputs.pixel_values,
+        ), GenerationTargets(
+            refs=outputs.input_ids_label,
+            masks=outputs.attention_mask_label,
         )
 
     @register_process("core/process/blip/generation/labels")

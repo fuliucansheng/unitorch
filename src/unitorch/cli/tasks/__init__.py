@@ -13,4 +13,4 @@ from unitorch.cli.tasks.supervised import SupervisedTask
 
 if is_deepspeed_available():
     import unitorch.cli.tasks.deepspeed
-    from unitorch.cli.tasks.deepspeed import DeepSpeedTask
+    from unitorch.cli.tasks.deepspeed import DeepspeedTask

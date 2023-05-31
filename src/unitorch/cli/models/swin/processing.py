@@ -80,5 +80,5 @@ class SwinProcessor(_SwinProcessor):
         """
         if isinstance(image, str):
             image = Image.open(image)
-        outputs = super().image_classification(image=image)
+        outputs = super().classification(image=image)
         return TensorsInputs(pixel_values=outputs.pixel_values)
