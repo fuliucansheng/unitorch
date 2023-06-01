@@ -4,7 +4,7 @@
 
 
 [Documentation](https://fuliucansheng.github.io/unitorch) •
-[Installation Instructions](https://fuliucansheng.github.io/unitorch/#/install) •
+[Installation Instructions](https://fuliucansheng.github.io/unitorch/installation/) •
 [Reporting Issues](https://github.com/fuliucansheng/unitorch/issues/new?assignees=&labels=&template=bug-report.yml)
 
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/unitorch)](https://pypi.org/project/unitorch/)

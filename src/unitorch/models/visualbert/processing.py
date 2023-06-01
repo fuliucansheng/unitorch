@@ -44,14 +44,8 @@ class VisualBertProcessor(BertProcessor):
             masked_lm_prob (Optional[float]): Probability for masked LM. Defaults to 0.15.
             max_predictions_per_seq (Optional[int]): Maximum number of masked LM predictions per sequence. Defaults to 20.
         """
-        tokenizer = get_bert_tokenizer(
-            vocab_path,
-            do_lower_case=do_lower_case,
-            do_basic_tokenize=do_basic_tokenize,
-            special_input_ids=special_input_ids,
-        )
         super().__init__(
-            tokenizer=tokenizer,
+            vocab_path=vocab_path,
             max_seq_length=max_seq_length,
             do_lower_case=do_lower_case,
             do_basic_tokenize=do_basic_tokenize,
