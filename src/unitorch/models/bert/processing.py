@@ -161,12 +161,12 @@ class BertProcessor(HfTextClassificationProcessor):
             self.max_predictions_per_seq,
         )
 
-        tokens = self.tokenizer.tokenize(str(text))
+        _tokens = self.tokenizer.tokenize(str(text))
         tokens_pair = self.tokenizer.tokenize(str(text_pair))
-        truncate_sequence_pair(tokens, tokens_pair, max_seq_length - 3)
+        truncate_sequence_pair(_tokens, tokens_pair, max_seq_length - 3)
         tokens = (
             [self.cls_token]
-            + tokens
+            + _tokens
             + [self.sep_token]
             + tokens_pair
             + [self.sep_token]
@@ -201,7 +201,7 @@ class BertProcessor(HfTextClassificationProcessor):
             tokens[index] = mask_token
 
         input_ids = self.tokenizer.convert_tokens_to_ids(tokens)
-        token_type_ids = [0] + [0] * len(tokens) + [0] + [1] * len(tokens_pair) + [1]
+        token_type_ids = [0] + [0] * len(_tokens) + [0] + [1] * len(tokens_pair) + [1]
         attention_mask = [1] * len(input_ids)
 
         padding = [0] * (max_seq_length - len(input_ids))
