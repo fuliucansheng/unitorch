@@ -478,7 +478,7 @@ class DeepspeedTask:
                 info_path=info_path,
                 local_rank=self.local_rank,
                 global_epoch=e,
-                global_step=step + 1,
+                global_step=0,
             )
 
     @torch.no_grad()
