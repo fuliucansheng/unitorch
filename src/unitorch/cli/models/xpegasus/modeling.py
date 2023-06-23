@@ -75,7 +75,7 @@ class XPegasusForGeneration(_XPegasusForGeneration):
 
         return inst
 
-    # @autocast()
+    @autocast()
     def forward(
         self,
         input_ids: torch.Tensor,

@@ -161,8 +161,8 @@ class DeepspeedTask:
         dev_batch_size: Optional[int] = 128,
         pin_memory: Optional[bool] = True,
         num_workers: Optional[int] = 4,
-        save_optimizer: Optional[bool] = True,
-        save_scheduler: Optional[bool] = True,
+        save_optimizer: Optional[bool] = False,
+        save_scheduler: Optional[bool] = False,
         log_freq: Optional[int] = 100,
         ckpt_freq: Optional[int] = 10000,
         grad_acc_step: Optional[int] = 1,
@@ -191,8 +191,8 @@ class DeepspeedTask:
             dev_batch_size (optional): The batch size for evaluation. Defaults to 128.
             pin_memory (optional): Whether to pin memory during data loading. Defaults to True.
             num_workers (optional): The number of worker processes for data loading. Defaults to 4.
-            save_optimizer (optional): Whether to save the optimizer state. Defaults to True.
-            save_scheduler (optional): Whether to save the scheduler state. Defaults to True.
+            save_optimizer (optional): Whether to save the optimizer state. Defaults to False.
+            save_scheduler (optional): Whether to save the scheduler state. Defaults to False.
             log_freq (optional): The frequency of logging. Defaults to 100.
             ckpt_freq (optional): The frequency of saving checkpoints. Defaults to 10000.
             grad_acc_step (optional): The number of gradient accumulation steps. Defaults to 1.
@@ -435,7 +435,7 @@ class DeepspeedTask:
                         monitor_fns,
                         optim=optim if save_optimizer else None,
                         scheduler=scheduler if save_scheduler else None,
-                        ema_model=self.ema_ema_model if use_ema else None,
+                        ema_model=self.ema_model if use_ema else None,
                         best_score=self.best_score,
                         info_path=info_path,
                         local_rank=self.local_rank,
@@ -473,12 +473,12 @@ class DeepspeedTask:
                 monitor_fns,
                 optim=optim if save_optimizer else None,
                 scheduler=scheduler if save_scheduler else None,
-                ema_model=self.ema_ema_model if use_ema else None,
+                ema_model=self.ema_model if use_ema else None,
                 best_score=self.best_score,
                 info_path=info_path,
                 local_rank=self.local_rank,
                 global_epoch=e,
-                global_step=step + 1,
+                global_step=0,
             )
 
     @torch.no_grad()

@@ -17,6 +17,7 @@ from unitorch.score import (
     roc_auc_score,
     ndcg_score,
     matthews_corrcoef,
+    pearsonr,
     auc,
     precision_recall_curve,
 )
@@ -300,6 +301,34 @@ class MattCorrScore(Score):
 
         return matthews_corrcoef(targets, outputs)
 
+@register_score("core/score/pearsonr_corr")
+class PearsonrCorrScore(Score):
+    def __init__(
+        self,
+    ):
+        super().__init__()
+
+    @classmethod
+    @add_default_section_for_init("core/score/pearsonr_corr")
+    def from_core_configure(cls, config, **kwargs):
+        pass
+
+    def forward(
+        self,
+        outputs: ClassificationOutputs,
+        targets: ClassificationTargets,
+    ):
+        if isinstance(outputs, ClassificationOutputs):
+            outputs = outputs.outputs
+        if isinstance(targets, ClassificationTargets):
+            targets = targets.targets
+
+        outputs = outputs.view(-1)
+        targets = targets.view(-1)
+
+        assert outputs.numel() == targets.numel()
+
+        return pearsonr(targets, outputs)
 
 @register_score("core/score/bleu")
 class BleuScore(Score):

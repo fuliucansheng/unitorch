@@ -3,6 +3,7 @@
 
 import torch
 import torch.nn as nn
+import numpy as np
 from sklearn.metrics import (
     accuracy_score,
     f1_score,
@@ -53,6 +54,9 @@ def remove_strings_ignore_tokens(inputs: Any, ignore_tokens: Optional[Set[str]])
         )
     else:
         return inputs
+    
+
+pearsonr = lambda y_true, y_pred: np.corrcoef(y_true, y_pred)[0, 1]
 
 
 from unitorch.score.bleu import bleu_score

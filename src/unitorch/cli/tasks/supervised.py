@@ -606,7 +606,7 @@ class SupervisedTask:
                         monitor_fns,
                         optim=optim if save_optimizer else None,
                         scheduler=scheduler if save_scheduler else None,
-                        ema_model=self.ema_ema_model if use_ema else None,
+                        ema_model=self.ema_model if use_ema else None,
                         best_score=self.best_score,
                         info_path=info_path,
                         local_rank=self.local_rank,
@@ -645,12 +645,12 @@ class SupervisedTask:
                 monitor_fns,
                 optim=optim if save_optimizer else None,
                 scheduler=scheduler if save_scheduler else None,
-                ema_model=self.ema_ema_model if use_ema else None,
+                ema_model=self.ema_model if use_ema else None,
                 best_score=self.best_score,
                 info_path=info_path,
                 local_rank=self.local_rank,
                 global_epoch=e,
-                global_step=step + 1,
+                global_step=0,
             )
 
     @torch.no_grad()
