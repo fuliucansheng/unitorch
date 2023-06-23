@@ -1,5 +1,7 @@
 configparser
 sentencepiece
+mkdocs
+mkdocs-material
 fire>=0.2.1
 pandas<=1.5.3
 scikit-learn>=0.24.2
