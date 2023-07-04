@@ -691,7 +691,7 @@ class DeepspeedTask:
                 outputs = outputs.cpu()
                 if output_header is not None:
                     _infos = {k: _infos[k] for k in output_header if k in _infos}
-                    outputs.set_base_dataframe(pd.DataFrame(_infos))
+                    outputs.from_pandas(pd.DataFrame(_infos))
                 data_queue.put((step, outputs))
 
         data_queue.put((-1, GENERATE_FINISHED))

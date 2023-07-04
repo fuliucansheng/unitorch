@@ -2998,7 +2998,7 @@
             <span class="n">outputs</span> <span class="o">=</span> <span class="n">outputs</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span>
             <span class="k">if</span> <span class="n">output_header</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">_infos</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">_infos</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">output_header</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">_infos</span><span class="p">}</span>
-                <span class="n">outputs</span><span class="o">.</span><span class="n">set_base_dataframe</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">_infos</span><span class="p">))</span>
+                <span class="n">outputs</span><span class="o">.</span><span class="n">from_pandas</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">_infos</span><span class="p">))</span>
             <span class="n">data_queue</span><span class="o">.</span><span class="n">put</span><span class="p">((</span><span class="n">step</span><span class="p">,</span> <span class="n">outputs</span><span class="p">))</span>
 
     <span class="n">data_queue</span><span class="o">.</span><span class="n">put</span><span class="p">((</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">GENERATE_FINISHED</span><span class="p">))</span>
@@ -3757,7 +3757,7 @@
 
     <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">from_ckpt_dir</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">from_checkpoint</span><span class="p">(</span><span class="n">from_ckpt_dir</span><span class="p">)</span>
-        <span class="n">optim</span><span class="o">.</span><span class="n">from_checkpoint</span><span class="p">(</span><span class="n">from_ckpt_dir</span><span class="p">)</span>
+        <span class="n">optim</span><span class="o">.</span><span class="n">from_checkpoint</span><span class="p">(</span><span class="n">from_ckpt_dir</span><span class="p">,</span> <span class="n">weight_name</span><span class="o">=</span><span class="s2">&quot;pytorch_optim.bin&quot;</span><span class="p">,)</span>
 
     <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">to_ckpt_dir</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">from_checkpoint</span><span class="p">(</span>
@@ -3984,7 +3984,7 @@
                     <span class="n">monitor_fns</span><span class="p">,</span>
                     <span class="n">optim</span><span class="o">=</span><span class="n">optim</span> <span class="k">if</span> <span class="n">save_optimizer</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
                     <span class="n">scheduler</span><span class="o">=</span><span class="n">scheduler</span> <span class="k">if</span> <span class="n">save_scheduler</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
-                    <span class="n">ema_model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ema_ema_model</span> <span class="k">if</span> <span class="n">use_ema</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                    <span class="n">ema_model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ema_model</span> <span class="k">if</span> <span class="n">use_ema</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
                     <span class="n">best_score</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">best_score</span><span class="p">,</span>
                     <span class="n">info_path</span><span class="o">=</span><span class="n">info_path</span><span class="p">,</span>
                     <span class="n">local_rank</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">local_rank</span><span class="p">,</span>
@@ -4023,12 +4023,12 @@
             <span class="n">monitor_fns</span><span class="p">,</span>
             <span class="n">optim</span><span class="o">=</span><span class="n">optim</span> <span class="k">if</span> <span class="n">save_optimizer</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
             <span class="n">scheduler</span><span class="o">=</span><span class="n">scheduler</span> <span class="k">if</span> <span class="n">save_scheduler</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
-            <span class="n">ema_model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ema_ema_model</span> <span class="k">if</span> <span class="n">use_ema</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">ema_model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ema_model</span> <span class="k">if</span> <span class="n">use_ema</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
             <span class="n">best_score</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">best_score</span><span class="p">,</span>
             <span class="n">info_path</span><span class="o">=</span><span class="n">info_path</span><span class="p">,</span>
             <span class="n">local_rank</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">local_rank</span><span class="p">,</span>
             <span class="n">global_epoch</span><span class="o">=</span><span class="n">e</span><span class="p">,</span>
-            <span class="n">global_step</span><span class="o">=</span><span class="n">step</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="n">global_step</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
         <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
       </details>

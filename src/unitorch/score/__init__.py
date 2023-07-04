@@ -54,7 +54,7 @@ def remove_strings_ignore_tokens(inputs: Any, ignore_tokens: Optional[Set[str]])
         )
     else:
         return inputs
-    
+
 
 pearsonr = lambda y_true, y_pred: np.corrcoef(y_true, y_pred)[0, 1]
 

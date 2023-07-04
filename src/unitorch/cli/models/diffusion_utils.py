@@ -3,6 +3,7 @@
 
 import os
 import torch
+import torch.nn as nn
 import hashlib
 from PIL import Image
 from dataclasses import dataclass
@@ -54,7 +55,45 @@ class DiffusionProcessor:
     ):
         results = outputs.to_pandas()
         assert results.shape[0] == 0 or results.shape[0] == outputs.outputs.shape[0]
-        images = outputs.outputs.numpy().transpose(0, 2, 3, 1)
+        images = outputs.outputs.numpy()
         images = numpy_to_pil(images)
         results["diffusion"] = [self.save(image) for image in images]
         return WriterOutputs(results)
+
+
+def diffusion_model_decorator(cls):
+    class DiffusionModel(nn.Module):
+        def __init__(self, *args, **kwargs):
+            super().__init__()
+            if "__diffusion_model__" in kwargs:
+                self.model = kwargs.pop("__diffusion_model__")
+            else:
+                self.model = cls(*args, **kwargs)
+
+            __more_attrs__ = [
+                "load_state_dict",
+                "state_dict",
+                "save_checkpoint",
+                "from_checkpoint",
+                "from_pretrained",
+            ]
+            for __more_attr__ in __more_attrs__:
+                setattr(self, __more_attr__, getattr(self.model, __more_attr__))
+
+            self.model.register_forward_hook(self._hook)
+            self.__in_training__ = False
+
+        def _hook(self, module, inputs, outputs):
+            self.__in_training__ = True
+
+        def forward(self, *args, **kwargs):
+            if self.training or self.__in_training__:
+                return self.model(*args, **kwargs)
+            return self.model.generate(*args, **kwargs)
+
+        @classmethod
+        def from_core_configure(_cls, cfg, **kwargs):
+            model = cls.from_core_configure(cfg, **kwargs)
+            return _cls(__diffusion_model__=model)
+
+    return DiffusionModel

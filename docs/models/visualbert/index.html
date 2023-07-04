@@ -2178,13 +2178,7 @@
 <span class="normal">52</span>
 <span class="normal">53</span>
 <span class="normal">54</span>
-<span class="normal">55</span>
-<span class="normal">56</span>
-<span class="normal">57</span>
-<span class="normal">58</span>
-<span class="normal">59</span>
-<span class="normal">60</span>
-<span class="normal">61</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+<span class="normal">55</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">vocab_path</span><span class="p">,</span>
     <span class="n">max_seq_length</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">128</span><span class="p">,</span>
@@ -2208,14 +2202,8 @@
 <span class="sd">        masked_lm_prob (Optional[float]): Probability for masked LM. Defaults to 0.15.</span>
 <span class="sd">        max_predictions_per_seq (Optional[int]): Maximum number of masked LM predictions per sequence. Defaults to 20.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">tokenizer</span> <span class="o">=</span> <span class="n">get_bert_tokenizer</span><span class="p">(</span>
-        <span class="n">vocab_path</span><span class="p">,</span>
-        <span class="n">do_lower_case</span><span class="o">=</span><span class="n">do_lower_case</span><span class="p">,</span>
-        <span class="n">do_basic_tokenize</span><span class="o">=</span><span class="n">do_basic_tokenize</span><span class="p">,</span>
-        <span class="n">special_input_ids</span><span class="o">=</span><span class="n">special_input_ids</span><span class="p">,</span>
-    <span class="p">)</span>
     <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
-        <span class="n">tokenizer</span><span class="o">=</span><span class="n">tokenizer</span><span class="p">,</span>
+        <span class="n">vocab_path</span><span class="o">=</span><span class="n">vocab_path</span><span class="p">,</span>
         <span class="n">max_seq_length</span><span class="o">=</span><span class="n">max_seq_length</span><span class="p">,</span>
         <span class="n">do_lower_case</span><span class="o">=</span><span class="n">do_lower_case</span><span class="p">,</span>
         <span class="n">do_basic_tokenize</span><span class="o">=</span><span class="n">do_basic_tokenize</span><span class="p">,</span>

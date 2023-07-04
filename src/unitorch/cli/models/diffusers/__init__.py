@@ -19,7 +19,7 @@ __hf_hub_stable_dict__ = lambda name: {
     "scheduler": f"https://huggingface.co/{name}/resolve/main/scheduler/scheduler_config.json",
 }
 
-__hf_hub_stable_controlnet_dict__ = lambda name: {
+__hf_hub_controlnet_dict__ = lambda name: {
     **__hf_hub_stable_dict__("runwayml/stable-diffusion-v1-5"),
     **{
         "controlnet": {
@@ -34,23 +34,15 @@ pretrained_diffusers_infos = {
         "config": "https://huggingface.co/anton-l/ddpm-ema-pokemon-64/resolve/main/unet/config.json",
         "weight": "https://huggingface.co/anton-l/ddpm-ema-pokemon-64/resolve/main/unet/diffusion_pytorch_model.bin",
     },
-    "stable-diffusion-v1.5": __hf_hub_stable_dict__("runwayml/stable-diffusion-v1-5"),
-    "stable-diffusion-v2": __hf_hub_stable_dict__("stabilityai/stable-diffusion-2"),
-    "stable-diffusion-v2.1": __hf_hub_stable_dict__("stabilityai/stable-diffusion-2-1"),
-    "stable-diffusion-v2-inpainting": __hf_hub_stable_dict__(
-        "stabilityai/stable-diffusion-2-inpainting"
-    ),
-    "stable-diffusion-x4-upscaler": __hf_hub_stable_dict__(
+    "stable-v1.5": __hf_hub_stable_dict__("runwayml/stable-diffusion-v1-5"),
+    "stable-v2": __hf_hub_stable_dict__("stabilityai/stable-diffusion-2"),
+    "stable-v2.1": __hf_hub_stable_dict__("stabilityai/stable-diffusion-2-1"),
+    "stable-x4-upscaler": __hf_hub_stable_dict__(
         "stabilityai/stable-diffusion-x4-upscaler"
     ),
-    "stable-diffusion-controlnet-canny": __hf_hub_stable_controlnet_dict__(
-        "lllyasviel/sd-controlnet-canny"
-    ),
-    "stable-diffusion-controlnet-openpose": __hf_hub_stable_controlnet_dict__(
+    "controlnet-canny": __hf_hub_controlnet_dict__("lllyasviel/sd-controlnet-canny"),
+    "controlnet-openpose": __hf_hub_controlnet_dict__(
         "lllyasviel/sd-controlnet-openpose"
-    ),
-    "stable-diffusion-controlnet-depth": __hf_hub_stable_controlnet_dict__(
-        "lllyasviel/sd-controlnet-depth"
     ),
 }
 from unitorch import is_diffusers_available

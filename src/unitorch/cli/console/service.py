@@ -144,8 +144,10 @@ def service(service_action: str, service_path_or_dir: str, **kwargs):
     if gpu_mode:
         with ActiveGPUJob() as _:
             service_inst = main_service_cls["obj"](config)
-    else:
+    elif service_action in ["start", "restart"]:
         service_inst = main_service_cls["obj"](config)
+    else:
+        service_inst = None
 
     hexsha = config.hexsha(6)
     service_name = service_name + f"@{hexsha}"

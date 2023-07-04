@@ -301,6 +301,7 @@ class MattCorrScore(Score):
 
         return matthews_corrcoef(targets, outputs)
 
+
 @register_score("core/score/pearsonr_corr")
 class PearsonrCorrScore(Score):
     def __init__(
@@ -329,6 +330,7 @@ class PearsonrCorrScore(Score):
         assert outputs.numel() == targets.numel()
 
         return pearsonr(targets, outputs)
+
 
 @register_score("core/score/bleu")
 class BleuScore(Score):

@@ -180,7 +180,7 @@ class BartForGeneration(GenericModel):
     BART model for text generation.
     """
 
-    prefix_keys_in_state_dict = {"^(?!model\.model\.).*": "model.model."}
+    prefix_keys_in_state_dict = {"^(?!model\.model\.|model\.).*": "model.model."}
 
     def __init__(
         self,
@@ -197,6 +197,7 @@ class BartForGeneration(GenericModel):
         super().__init__()
         self.config = BartConfig.from_json_file(config_path)
         self.config.gradient_checkpointing = gradient_checkpointing
+        self.config.forced_bos_token_id = None
         self.model = BartForConditionalGeneration(self.config)
         self.init_weights()
 
@@ -227,6 +228,7 @@ class BartForGeneration(GenericModel):
             return_dict=True,
         )
         logits = outputs.logits
+        print("model :", logits[0, 0, 0].item(), logits[0, 0, 41552].item())
         return logits
 
     @torch.no_grad()

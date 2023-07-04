@@ -188,7 +188,7 @@ class XPegasusForGeneration(GenericModel):
     """
 
     prefix_keys_in_state_dict = {
-        "^(?!model\.model\.)model\.": "model.",
+        "^(?!model\.model\.|model\.lm_head\.)model\.": "model.",
         "^lm_head.": "model.",
     }
 

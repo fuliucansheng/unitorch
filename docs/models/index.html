@@ -2373,7 +2373,9 @@
 <span class="normal">140</span>
 <span class="normal">141</span>
 <span class="normal">142</span>
-<span class="normal">143</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">from_pretrained</span><span class="p">(</span>
+<span class="normal">143</span>
+<span class="normal">144</span>
+<span class="normal">145</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">from_pretrained</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">weight_path</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">state_dict</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -2395,17 +2397,19 @@
     <span class="k">assert</span> <span class="n">weight_path</span> <span class="ow">or</span> <span class="n">state_dict</span><span class="p">,</span> <span class="s2">&quot;weight_path or state_dict must be set&quot;</span>
 
     <span class="c1"># Load state_dict(s) based on the provided weight_path or state_dict</span>
+    <span class="n">state_dicts</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">if</span> <span class="n">weight_path</span><span class="p">:</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">weight_path</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
             <span class="n">weight_path</span> <span class="o">=</span> <span class="p">[</span><span class="n">weight_path</span><span class="p">]</span>
         <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">weight_path</span><span class="p">:</span>
             <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Loading weights from </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">state_dicts</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">state_dicts</span> <span class="o">+=</span> <span class="p">[</span>
             <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">hf_cached_path</span><span class="p">(</span><span class="n">path</span><span class="p">),</span> <span class="n">map_location</span><span class="o">=</span><span class="s2">&quot;cpu&quot;</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">weight_path</span>
         <span class="p">]</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">state_dicts</span> <span class="o">=</span> <span class="n">state_dict</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">state_dict</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="k">else</span> <span class="p">[</span><span class="n">state_dict</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">state_dict</span><span class="p">:</span>
+        <span class="n">state_dicts</span> <span class="o">+=</span> <span class="n">state_dict</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">state_dict</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="k">else</span> <span class="p">[</span><span class="n">state_dict</span><span class="p">]</span>
 
     <span class="n">self_state_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">state_dict</span><span class="p">()</span>  <span class="c1"># Get the current state_dict of the model</span>
     <span class="n">load_keys</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># Keep track of the keys loaded from the state_dict(s)</span>
@@ -2595,9 +2599,9 @@
 
           <details class="quote">
             <summary>Source code in <code>src/unitorch/models/__init__.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">147</span>
-<span class="normal">148</span>
-<span class="normal">149</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">149</span>
+<span class="normal">150</span>
+<span class="normal">151</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
     <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
     <span class="k">pass</span>
 </code></pre></div></td></tr></table></div>
@@ -2714,11 +2718,11 @@
 
       <details class="quote">
         <summary>Source code in <code>src/unitorch/models/__init__.py</code></summary>
-        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">168</span>
-<span class="normal">169</span>
-<span class="normal">170</span>
+        <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">170</span>
 <span class="normal">171</span>
-<span class="normal">172</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">init_weights</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="normal">172</span>
+<span class="normal">173</span>
+<span class="normal">174</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">init_weights</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initialize the weights of the model.</span>
 <span class="sd">    &quot;&quot;&quot;</span>

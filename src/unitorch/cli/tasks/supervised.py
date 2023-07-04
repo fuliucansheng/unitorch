@@ -379,7 +379,7 @@ class SupervisedTask:
 
         if os.path.exists(from_ckpt_dir):
             self.model.from_checkpoint(from_ckpt_dir)
-            optim.from_checkpoint(from_ckpt_dir)
+            optim.from_checkpoint(from_ckpt_dir, weight_name="pytorch_optim.bin",)
 
         if os.path.exists(to_ckpt_dir):
             self.model.from_checkpoint(
@@ -858,7 +858,7 @@ class SupervisedTask:
                 outputs = outputs.cpu()
                 if output_header is not None:
                     _infos = {k: _infos[k] for k in output_header if k in _infos}
-                    outputs.set_base_dataframe(pd.DataFrame(_infos))
+                    outputs.from_pandas(pd.DataFrame(_infos))
                 data_queue.put((step, outputs))
 
         data_queue.put((-1, GENERATE_FINISHED))

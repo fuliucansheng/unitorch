@@ -3010,7 +3010,7 @@
             <span class="n">outputs</span> <span class="o">=</span> <span class="n">outputs</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span>
             <span class="k">if</span> <span class="n">output_header</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">_infos</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">_infos</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">output_header</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">_infos</span><span class="p">}</span>
-                <span class="n">outputs</span><span class="o">.</span><span class="n">set_base_dataframe</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">_infos</span><span class="p">))</span>
+                <span class="n">outputs</span><span class="o">.</span><span class="n">from_pandas</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">_infos</span><span class="p">))</span>
             <span class="n">data_queue</span><span class="o">.</span><span class="n">put</span><span class="p">((</span><span class="n">step</span><span class="p">,</span> <span class="n">outputs</span><span class="p">))</span>
 
     <span class="n">data_queue</span><span class="o">.</span><span class="n">put</span><span class="p">((</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">GENERATE_FINISHED</span><span class="p">))</span>
@@ -3055,8 +3055,8 @@
     <span class="n">dev_batch_size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">128</span><span class="p">,</span>
     <span class="n">pin_memory</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">num_workers</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
-    <span class="n">save_optimizer</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-    <span class="n">save_scheduler</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">save_optimizer</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">save_scheduler</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">log_freq</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
     <span class="n">ckpt_freq</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">10000</span><span class="p">,</span>
     <span class="n">grad_acc_step</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
@@ -3202,9 +3202,9 @@
           <td>
                 <code>optional</code>
           </td>
-          <td><p>Whether to save the optimizer state. Defaults to True.</p></td>
+          <td><p>Whether to save the optimizer state. Defaults to False.</p></td>
           <td>
-                <code>True</code>
+                <code>False</code>
           </td>
         </tr>
         <tr>
@@ -3212,9 +3212,9 @@
           <td>
                 <code>optional</code>
           </td>
-          <td><p>Whether to save the scheduler state. Defaults to True.</p></td>
+          <td><p>Whether to save the scheduler state. Defaults to False.</p></td>
           <td>
-                <code>True</code>
+                <code>False</code>
           </td>
         </tr>
         <tr>
@@ -3688,8 +3688,8 @@
     <span class="n">dev_batch_size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">128</span><span class="p">,</span>
     <span class="n">pin_memory</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">num_workers</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
-    <span class="n">save_optimizer</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-    <span class="n">save_scheduler</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">save_optimizer</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">save_scheduler</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">log_freq</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
     <span class="n">ckpt_freq</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">10000</span><span class="p">,</span>
     <span class="n">grad_acc_step</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
@@ -3718,8 +3718,8 @@
 <span class="sd">        dev_batch_size (optional): The batch size for evaluation. Defaults to 128.</span>
 <span class="sd">        pin_memory (optional): Whether to pin memory during data loading. Defaults to True.</span>
 <span class="sd">        num_workers (optional): The number of worker processes for data loading. Defaults to 4.</span>
-<span class="sd">        save_optimizer (optional): Whether to save the optimizer state. Defaults to True.</span>
-<span class="sd">        save_scheduler (optional): Whether to save the scheduler state. Defaults to True.</span>
+<span class="sd">        save_optimizer (optional): Whether to save the optimizer state. Defaults to False.</span>
+<span class="sd">        save_scheduler (optional): Whether to save the scheduler state. Defaults to False.</span>
 <span class="sd">        log_freq (optional): The frequency of logging. Defaults to 100.</span>
 <span class="sd">        ckpt_freq (optional): The frequency of saving checkpoints. Defaults to 10000.</span>
 <span class="sd">        grad_acc_step (optional): The number of gradient accumulation steps. Defaults to 1.</span>
@@ -3962,7 +3962,7 @@
                     <span class="n">monitor_fns</span><span class="p">,</span>
                     <span class="n">optim</span><span class="o">=</span><span class="n">optim</span> <span class="k">if</span> <span class="n">save_optimizer</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
                     <span class="n">scheduler</span><span class="o">=</span><span class="n">scheduler</span> <span class="k">if</span> <span class="n">save_scheduler</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
-                    <span class="n">ema_model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ema_ema_model</span> <span class="k">if</span> <span class="n">use_ema</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                    <span class="n">ema_model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ema_model</span> <span class="k">if</span> <span class="n">use_ema</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
                     <span class="n">best_score</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">best_score</span><span class="p">,</span>
                     <span class="n">info_path</span><span class="o">=</span><span class="n">info_path</span><span class="p">,</span>
                     <span class="n">local_rank</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">local_rank</span><span class="p">,</span>
@@ -4000,12 +4000,12 @@
             <span class="n">monitor_fns</span><span class="p">,</span>
             <span class="n">optim</span><span class="o">=</span><span class="n">optim</span> <span class="k">if</span> <span class="n">save_optimizer</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
             <span class="n">scheduler</span><span class="o">=</span><span class="n">scheduler</span> <span class="k">if</span> <span class="n">save_scheduler</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
-            <span class="n">ema_model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ema_ema_model</span> <span class="k">if</span> <span class="n">use_ema</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">ema_model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ema_model</span> <span class="k">if</span> <span class="n">use_ema</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
             <span class="n">best_score</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">best_score</span><span class="p">,</span>
             <span class="n">info_path</span><span class="o">=</span><span class="n">info_path</span><span class="p">,</span>
             <span class="n">local_rank</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">local_rank</span><span class="p">,</span>
             <span class="n">global_epoch</span><span class="o">=</span><span class="n">e</span><span class="p">,</span>
-            <span class="n">global_step</span><span class="o">=</span><span class="n">step</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="n">global_step</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
         <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
       </details>

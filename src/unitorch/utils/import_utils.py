@@ -21,6 +21,32 @@ def is_deepspeed_available():
     return _deepspeed_available or is_offline_debug_mode()
 
 
+# accelerate
+_accelerate_available = importlib.util.find_spec("accelerate") is not None
+try:
+    _accelerate_version = importlib_metadata.version("accelerate")
+    logging.debug(f"Successfully imported accelerate version {_accelerate_version}")
+except importlib_metadata.PackageNotFoundError:
+    _accelerate_available = False
+
+
+def is_accelerate_available():
+    return _accelerate_available or is_offline_debug_mode()
+
+
+# megatron
+_megatron_available = importlib.util.find_spec("megatron") is not None
+try:
+    _megatron_version = importlib_metadata.version("megatron")
+    logging.debug(f"Successfully imported megatron version {_megatron_version}")
+except importlib_metadata.PackageNotFoundError:
+    _megatron_available = False
+
+
+def is_megatron_available():
+    return _megatron_available or is_offline_debug_mode()
+
+
 # diffusers
 _diffusers_available = importlib.util.find_spec("diffusers") is not None
 try:

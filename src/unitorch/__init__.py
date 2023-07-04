@@ -19,7 +19,7 @@ def get_cache_home():
 
 
 ### version
-VERSION = "0.0.0.3"
+VERSION = "0.0.0.4"
 
 ### is offline mode
 UNITORCH_OFFLINE = os.environ.get("UNITORCH_OFFLINE", "0").upper()
@@ -88,6 +88,8 @@ def set_seed(seed: int):
 from unitorch.utils import cached_path as hf_cached_path
 from unitorch.utils import (
     is_deepspeed_available,
+    is_accelerate_available,
+    is_megatron_available,
     is_diffusers_available,
     is_torch_available,
     is_torch2_available,

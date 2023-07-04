@@ -37,6 +37,8 @@ from unitorch.utils.functional import (
 from unitorch.utils.image_utils import make_grid
 from unitorch.utils.import_utils import (
     is_deepspeed_available,
+    is_accelerate_available,
+    is_megatron_available,
     is_diffusers_available,
     is_torch_available,
     is_torch2_available,

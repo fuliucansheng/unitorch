@@ -11,12 +11,12 @@ from unitorch.cli import add_default_section_for_init, register_writer
 
 
 class WriterMixin:
-    def set_base_dataframe(self, df: pd.DataFrame):
-        self.__base_dataframe__ = df
+    def from_pandas(self, df: pd.DataFrame):
+        self.__pandas_dataframe__ = df
 
     def to_pandas(self):
-        if hasattr(self, "__base_dataframe__"):
-            return pd.DataFrame(self.__base_dataframe__)
+        if hasattr(self, "__pandas_dataframe__"):
+            return pd.DataFrame(self.__pandas_dataframe__)
         return pd.DataFrame()
 
 

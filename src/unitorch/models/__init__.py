@@ -90,17 +90,19 @@ class CheckpointMixin:
         assert weight_path or state_dict, "weight_path or state_dict must be set"
 
         # Load state_dict(s) based on the provided weight_path or state_dict
+        state_dicts = []
         if weight_path:
             if isinstance(weight_path, str):
                 weight_path = [weight_path]
             for path in weight_path:
                 logging.debug(f"Loading weights from {path}")
-            state_dicts = [
+            state_dicts += [
                 torch.load(hf_cached_path(path), map_location="cpu")
                 for path in weight_path
             ]
-        else:
-            state_dicts = state_dict if isinstance(state_dict, list) else [state_dict]
+        
+        if state_dict:
+            state_dicts += state_dict if isinstance(state_dict, list) else [state_dict]
 
         self_state_dict = self.state_dict()  # Get the current state_dict of the model
         load_keys = []  # Keep track of the keys loaded from the state_dict(s)

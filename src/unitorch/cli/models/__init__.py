@@ -68,6 +68,7 @@ import unitorch.cli.models.processing_utils
 
 if is_diffusers_available():
     from unitorch.cli.models.diffusion_utils import DiffusionOutputs, DiffusionTargets
+    from unitorch.cli.models.diffusion_utils import diffusion_model_decorator
     import unitorch.cli.models.diffusers
 
 # import model classes & process functions
