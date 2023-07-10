@@ -182,7 +182,7 @@ class PegasusAttentionV2(transformers.models.pegasus.modeling_pegasus.PegasusAtt
 
 class PegasusForGeneration(GenericModel):
     prefix_keys_in_state_dict = {
-        "^(?!model\.model\.)model\.": "model.",
+        "^(?!model\.model\.|model\.lm_head\.)model\.": "model.",
         "^lm_head.": "model.",
     }
 

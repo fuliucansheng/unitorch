@@ -13,7 +13,6 @@ from unitorch.cli import (
     import_library,
     cached_path,
     set_global_config,
-    registered_task,
     registered_script,
     init_registered_module,
 )

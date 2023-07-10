@@ -138,14 +138,15 @@ class ControlNetForImageGeneration(_ControlNetForImageGeneration):
                 cached_path(nested_dict_value(pretrain_infos, "vae", "weight")),
                 # cached_path(nested_dict_value(pretrain_infos, "controlnet", "weight")),
             ]
-            controlnet = cached_path(nested_dict_value(pretrain_infos, "controlnet", "weight"))
+            controlnet = cached_path(
+                nested_dict_value(pretrain_infos, "controlnet", "weight")
+            )
             state_dict = torch.load(controlnet, map_location="cpu")
-            state_dict = {f"controlnet.{k}": v for k, v in state_dict.items()} 
-
+            state_dict = {f"controlnet.{k}": v for k, v in state_dict.items()}
 
         if weight_path is not None:
             inst.from_pretrained(weight_path, state_dict=state_dict)
-        
+
         return inst
 
     @autocast()

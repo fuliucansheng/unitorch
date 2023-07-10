@@ -47,6 +47,19 @@ def is_megatron_available():
     return _megatron_available or is_offline_debug_mode()
 
 
+# fastapi
+_fastapi_available = importlib.util.find_spec("fastapi") is not None
+try:
+    _fastapi_version = importlib_metadata.version("fastapi")
+    logging.debug(f"Successfully imported fastapi version {_fastapi_version}")
+except importlib_metadata.PackageNotFoundError:
+    _fastapi_available = False
+
+
+def is_fastapi_available():
+    return _fastapi_available or is_offline_debug_mode()
+
+
 # diffusers
 _diffusers_available = importlib.util.find_spec("diffusers") is not None
 try:

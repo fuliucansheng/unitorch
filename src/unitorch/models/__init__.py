@@ -100,7 +100,7 @@ class CheckpointMixin:
                 torch.load(hf_cached_path(path), map_location="cpu")
                 for path in weight_path
             ]
-        
+
         if state_dict:
             state_dicts += state_dict if isinstance(state_dict, list) else [state_dict]
 
@@ -211,6 +211,7 @@ import unitorch.models.chatglm
 import unitorch.models.clip
 import unitorch.models.deberta
 import unitorch.models.diffusers
+import unitorch.models.minigpt4
 import unitorch.models.llama
 import unitorch.models.mbart
 import unitorch.models.mt5

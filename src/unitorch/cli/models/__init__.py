@@ -80,6 +80,7 @@ import unitorch.cli.models.bloom
 import unitorch.cli.models.chatglm
 import unitorch.cli.models.clip
 import unitorch.cli.models.deberta
+import unitorch.cli.models.minigpt4
 import unitorch.cli.models.llama
 import unitorch.cli.models.mbart
 import unitorch.cli.models.mt5

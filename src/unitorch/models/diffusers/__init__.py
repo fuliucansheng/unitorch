@@ -4,7 +4,6 @@
 from unitorch import is_diffusers_available
 
 if is_diffusers_available():
-
     from unitorch.models.diffusers.modeling_controlnet import (
         ControlNetForImageGeneration,
     )

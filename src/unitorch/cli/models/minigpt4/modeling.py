@@ -4,8 +4,11 @@
 import torch
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from torch.cuda.amp import autocast
+from transformers.utils import is_remote_url
 from unitorch.utils import pop_value, nested_dict_value
-from unitorch.models.xpegasus import XPegasusForGeneration as _XPegasusForGeneration
+from unitorch.models.minigpt4 import (
+    MiniGPT4ViTLlamaForGeneration as _MiniGPT4ViTLlamaForGeneration,
+)
 from unitorch.cli import (
     cached_path,
     add_default_section_for_init,
@@ -13,105 +16,121 @@ from unitorch.cli import (
     register_model,
 )
 from unitorch.cli.models import generation_model_decorator
-from unitorch.cli.models import GenerationOutputs
-from unitorch.cli.models.xpegasus import pretrained_xpegasus_infos
+from unitorch.cli.models import ClassificationOutputs, GenerationOutputs, LossOutputs
+from unitorch.cli.models.minigpt4 import pretrained_minigpt4_infos
 
 
-@register_model("core/model/generation/xpegasus", generation_model_decorator)
-class XPegasusForGeneration(_XPegasusForGeneration):
-    """XPegasus model for generation tasks."""
+@register_model("core/model/generation/llama", generation_model_decorator)
+class MiniGPT4ViTLlamaForGeneration(_MiniGPT4ViTLlamaForGeneration):
+    """MiniGPT4 model for generation tasks."""
 
     def __init__(
         self,
-        config_path: str,
+        blip2_config_path: str,
+        llama_config_path: str,
         gradient_checkpointing: Optional[bool] = False,
     ):
-        """
-        Initialize XPegasusForGeneration.
-
-        Args:
-            config_path (str): The path to the model configuration file.
-            gradient_checkpointing (bool, optional): Whether to use gradient checkpointing. Defaults to False.
-        """
         super().__init__(
-            config_path=config_path,
+            blip2_config_path=blip2_config_path,
+            llama_config_path=llama_config_path,
             gradient_checkpointing=gradient_checkpointing,
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/generation/xpegasus")
+    @add_default_section_for_init("core/model/generation/minigpt4")
     def from_core_configure(cls, config, **kwargs):
         """
-        Create an instance of XPegasusForGeneration from a core configuration.
+        Create an instance of MiniGPT4ViTLlamaForGeneration from a core configuration.
 
         Args:
             config: The core configuration.
             **kwargs: Additional keyword arguments.
 
         Returns:
-            XPegasusForGeneration: The instantiated XPegasusForGeneration model.
+            LlamaForGeneration: An instance of LlamaForGeneration.
         """
-        config.set_default_section("core/model/generation/xpegasus")
-        pretrained_name = config.getoption("pretrained_name", "default-xpegasus")
-        config_path = config.getoption("config_path", None)
-        config_path = pop_value(
-            config_path,
-            nested_dict_value(pretrained_xpegasus_infos, pretrained_name, "config"),
-        )
+        config.set_default_section("core/model/generation/minigpt4")
+        pretrained_name = config.getoption("pretrained_name", "default-minigpt4")
 
-        config_path = cached_path(config_path)
+        blip2_config_path = config.getoption("blip2_config_path", None)
+        blip2_config_path = pop_value(
+            blip2_config_path,
+            nested_dict_value(
+                pretrained_minigpt4_infos, pretrained_name, "blip2_config_path"
+            ),
+        )
+        blip2_config_path = cached_path(blip2_config_path)
+
+        llama_config_path = config.getoption("llama_config_path", None)
+        llama_config_path = pop_value(
+            llama_config_path,
+            nested_dict_value(
+                pretrained_minigpt4_infos, pretrained_name, "llama_config_path"
+            ),
+        )
+        llama_config_path = cached_path(llama_config_path)
+
         gradient_checkpointing = config.getoption("gradient_checkpointing", False)
 
-        inst = cls(config_path, gradient_checkpointing)
+        inst = cls(blip2_config_path, llama_config_path, gradient_checkpointing)
         pretrained_weight_path = config.getoption("pretrained_weight_path", None)
         weight_path = pop_value(
             pretrained_weight_path,
-            nested_dict_value(pretrained_xpegasus_infos, pretrained_name, "weight"),
+            nested_dict_value(pretrained_minigpt4_infos, pretrained_name, "weight"),
             check_none=False,
         )
+
         if weight_path is not None:
-            weight_path = cached_path(weight_path)
-            inst.from_pretrained(weight_path)
+            inst.from_pretrained(
+                weight_path=weight_path,
+            )
 
         return inst
 
-    # @autocast()
+    @autocast()
     def forward(
         self,
-        input_ids: torch.Tensor,
-        attention_mask: torch.Tensor,
+        pixel_values: torch.Tensor,
+        prefix_input_ids: torch.Tensor,
+        suffix_input_ids: torch.Tensor,
         decoder_input_ids: torch.Tensor,
-        decoder_attention_mask: torch.Tensor,
+        prefix_attention_mask: Optional[torch.Tensor] = None,
+        suffix_attention_mask: Optional[torch.Tensor] = None,
+        decoder_attention_mask: Optional[torch.Tensor] = None,
     ):
         """
-        Perform a forward pass through the model.
+        Perform a forward pass on the MiniGPT4ViTLlamaForGeneration model.
 
         Args:
-            input_ids (torch.Tensor): Input token IDs.
-            attention_mask (torch.Tensor): Attention mask.
-            decoder_input_ids (torch.Tensor): Decoder input token IDs.
-            decoder_attention_mask (torch.Tensor): Decoder attention mask.
+            input_ids (torch.Tensor, optional): The input tensor containing the input IDs. Defaults to None.
+            attention_mask (torch.Tensor, optional): The attention mask tensor. Defaults to None.
+            position_ids (torch.Tensor, optional): The position IDs tensor. Defaults to None.
 
         Returns:
-            GenerationOutputs: The generation outputs.
+            GenerationOutputs: The output of the generation model.
         """
         outputs = super().forward(
-            input_ids=input_ids,
-            attention_mask=attention_mask,
+            pixel_values=pixel_values,
+            prefix_input_ids=prefix_input_ids,
+            suffix_input_ids=suffix_input_ids,
             decoder_input_ids=decoder_input_ids,
+            prefix_attention_mask=prefix_attention_mask,
+            suffix_attention_mask=suffix_attention_mask,
             decoder_attention_mask=decoder_attention_mask,
         )
         return GenerationOutputs(sequences=outputs)
 
-    @add_default_section_for_function("core/model/generation/xpegasus")
+    @add_default_section_for_function("core/model/generation/minigpt4")
     @torch.no_grad()
     @autocast()
     def generate(
         self,
-        input_ids: torch.Tensor,
+        pixel_values: torch.Tensor,
+        prefix_input_ids: torch.Tensor,
+        suffix_input_ids: torch.Tensor,
         num_beams: Optional[int] = 5,
-        decoder_start_token_id: Optional[int] = 0,
-        decoder_end_token_id: Optional[int] = 1,
+        decoder_start_token_id: Optional[int] = 1,
+        decoder_end_token_id: Optional[int] = 2,
         num_return_sequences: Optional[int] = 1,
         min_gen_seq_length: Optional[int] = 0,
         max_gen_seq_length: Optional[int] = 48,
@@ -127,7 +146,7 @@ class XPegasusForGeneration(_XPegasusForGeneration):
         top_p: Optional[float] = 1.0,
     ):
         """
-        Generate sequences using the XPegasus model.
+        Generate sequences using the MinGPT4 model.
 
         Args:
             input_ids (torch.Tensor): Input token IDs.
@@ -152,7 +171,9 @@ class XPegasusForGeneration(_XPegasusForGeneration):
             GenerationOutputs: The generation outputs.
         """
         outputs = super().generate(
-            input_ids,
+            pixel_values=pixel_values,
+            prefix_input_ids=prefix_input_ids,
+            suffix_input_ids=suffix_input_ids,
             num_beams=num_beams,
             decoder_start_token_id=decoder_start_token_id,
             decoder_end_token_id=decoder_end_token_id,

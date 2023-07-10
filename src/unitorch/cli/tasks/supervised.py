@@ -379,7 +379,10 @@ class SupervisedTask:
 
         if os.path.exists(from_ckpt_dir):
             self.model.from_checkpoint(from_ckpt_dir)
-            optim.from_checkpoint(from_ckpt_dir, weight_name="pytorch_optim.bin",)
+            optim.from_checkpoint(
+                from_ckpt_dir,
+                weight_name="pytorch_optim.bin",
+            )
 
         if os.path.exists(to_ckpt_dir):
             self.model.from_checkpoint(

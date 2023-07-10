@@ -39,6 +39,7 @@ from unitorch.utils.import_utils import (
     is_deepspeed_available,
     is_accelerate_available,
     is_megatron_available,
+    is_fastapi_available,
     is_diffusers_available,
     is_torch_available,
     is_torch2_available,

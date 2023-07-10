@@ -234,15 +234,15 @@ class BloomProcessor(HfTextClassificationProcessor, HfTextGenerationProcessor):
         _tokens = padding_a + tokens + tokens_pair + padding_b
         input_ids = self.tokenizer.convert_tokens_to_ids(_tokens)
 
-        tokens_label = tokens_pair[1:max_gen_seq_length] + [self.pad_token] * (
+        tokens_label = tokens_pair + [self.pad_token] * (
             max_gen_seq_length - len(tokens_pair) + 1
         )
         input_ids_label = self.tokenizer.convert_tokens_to_ids(tokens_label)
-        input_ids_label = [0] * max_seq_length + input_ids_label
-        attention_mask_label = [1] * len(tokens_pair[1:max_gen_seq_length]) + [0] * (
+        input_ids_label = [0] * (max_seq_length - 1) + input_ids_label
+        attention_mask_label = [1] * len(tokens_pair) + [0] * (
             max_gen_seq_length - len(tokens_pair) + 1
         )
-        attention_mask_label = [0] * max_seq_length + attention_mask_label
+        attention_mask_label = [0] * (max_seq_length - 1) + attention_mask_label
 
         return GenericOutputs(
             input_ids=torch.tensor(input_ids, dtype=torch.long),
