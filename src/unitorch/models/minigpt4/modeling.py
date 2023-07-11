@@ -13,7 +13,6 @@ import torch.nn.functional as F
 import torch.distributed as dist
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 
-from transformers.models.vit.modeling_vit import ViTConfig, ViTModel
 from transformers import LlamaConfig, LlamaForCausalLM
 from transformers.models.blip_2.modeling_blip_2 import (
     Blip2Config,
@@ -25,7 +24,7 @@ from unitorch.models import GenericModel, GenericOutputs
 from unitorch.models.clip.modeling import AllGather
 
 
-class MiniGPT4ViTLlamaModel(nn.Module):
+class MiniGPT4Blip2LlamaModel(nn.Module):
     def __init__(
         self,
         blip2_config: Blip2Config,
@@ -60,7 +59,7 @@ class MiniGPT4ViTLlamaModel(nn.Module):
         suffix_attention_mask: Optional[torch.Tensor] = None,
         decoder_attention_mask: Optional[torch.Tensor] = None,
     ):
-        vision_outputs = self.vit(
+        vision_outputs = self.vision_model(
             pixel_values=pixel_values,
         )
         image_embeds = vision_outputs[0]
@@ -140,7 +139,7 @@ class MiniGPT4ViTLlamaModel(nn.Module):
         suffix_input_ids: Optional[torch.Tensor] = None,
         **generate_kwargs,
     ):
-        vision_outputs = self.vit(
+        vision_outputs = self.vision_model(
             pixel_values=pixel_values,
         )
         image_embeds = vision_outputs[0]
@@ -158,27 +157,41 @@ class MiniGPT4ViTLlamaModel(nn.Module):
 
         inputs_embeds = self.language_projection(query_embeds)
 
+        attention_mask = torch.ones(
+            inputs_embeds.size(0), inputs_embeds.size(1), dtype=torch.bool
+        ).to(inputs_embeds.device)
+
         if prefix_input_ids is not None:
             prefix_inputs_embeds = self.llama.get_input_embeddings()(prefix_input_ids)
             inputs_embeds = torch.cat([prefix_inputs_embeds, inputs_embeds], dim=1)
+            attention_mask = torch.cat(
+                [prefix_input_ids.ne(self.blip2_config.pad_token_id), attention_mask],
+                dim=1,
+            )
 
         if suffix_input_ids is not None:
             suffix_inputs_embeds = self.llama.get_input_embeddings()(suffix_input_ids)
             inputs_embeds = torch.cat([inputs_embeds, suffix_inputs_embeds], dim=1)
+            attention_mask = torch.cat(
+                [attention_mask, suffix_input_ids.ne(self.blip2_config.pad_token_id)],
+                dim=1,
+            )
 
         outputs = self.llama.generate(
             inputs_embeds=inputs_embeds,
+            attention_mask=attention_mask,
             **generate_kwargs,
         )
 
         return outputs
 
 
-class MiniGPT4ViTLlamaForGeneration(GenericModel):
+class MiniGPT4Blip2LlamaForGeneration(GenericModel):
     prefix_keys_in_state_dict = {
         "^qformer.": "model.",
+        "^query_tokens": "model.",
         "^vision_model.": "model.",
-        "^(?!model\.llama\.)model\.": "model.llama.",
+        "^(?!model\.llama\.|model\.language_projection\.)model\.": "model.llama.",
         "^lm_head.": "model.llama.",
     }
 
@@ -186,6 +199,10 @@ class MiniGPT4ViTLlamaForGeneration(GenericModel):
         self,
         blip2_config_path: str,
         llama_config_path: str,
+        pad_token_id: Optional[int] = 0,
+        freeze_vision_model: Optional[bool] = True,
+        freeze_qformer_model: Optional[bool] = True,
+        freeze_llama_model: Optional[bool] = True,
         gradient_checkpointing: Optional[bool] = False,
     ):
         """
@@ -197,10 +214,23 @@ class MiniGPT4ViTLlamaForGeneration(GenericModel):
         """
         super().__init__()
         self.blip2_config = Blip2Config.from_json_file(blip2_config_path)
+        self.blip2_config.pad_token_id = pad_token_id
         self.llama_config = LlamaConfig.from_json_file(llama_config_path)
         self.llama_config.gradient_checkpointing = gradient_checkpointing
-        self.model = MiniGPT4ViTLlamaModel(self.blip2_config, self.llama_config)
+        self.model = MiniGPT4Blip2LlamaModel(self.blip2_config, self.llama_config)
         self.init_weights()
+
+        if freeze_vision_model:
+            for param in self.model.vision_model.parameters():
+                param.requires_grad = False
+
+        if freeze_qformer_model:
+            for param in self.model.qformer.parameters():
+                param.requires_grad = False
+
+        if freeze_llama_model:
+            for param in self.model.llama.parameters():
+                param.requires_grad = False
 
     def forward(
         self,
@@ -245,7 +275,7 @@ class MiniGPT4ViTLlamaForGeneration(GenericModel):
         suffix_input_ids: torch.Tensor,
         num_beams: Optional[int] = 5,
         decoder_start_token_id: Optional[int] = 1,
-        decoder_end_token_id: Optional[int] = 2,
+        decoder_end_token_id: Optional[Union[int, List[int]]] = 2,
         num_return_sequences: Optional[int] = 1,
         min_gen_seq_length: Optional[int] = 0,
         max_gen_seq_length: Optional[int] = 48,

@@ -11,7 +11,7 @@ import numpy as np
 import torch
 
 from transformers import LlamaTokenizer
-from transformers import ViTImageProcessor
+from transformers import BlipImageProcessor
 
 from unitorch.utils import pop_value, truncate_sequence_pair
 from unitorch.models import (
@@ -22,7 +22,7 @@ from unitorch.models import (
 )
 
 
-class MiniGPT4ViTLlamaProcessor(
+class MiniGPT4Blip2LlamaProcessor(
     HfTextClassificationProcessor,
     HfImageClassificationProcessor,
     HfTextGenerationProcessor,
@@ -49,7 +49,7 @@ class MiniGPT4ViTLlamaProcessor(
         tokenizer.cls_token_id = tokenizer.bos_token_id
         tokenizer.sep_token_id = tokenizer.eos_token_id
         tokenizer.pad_token_id = tokenizer.unk_token_id
-        vision_processor = ViTImageProcessor.from_json_file(vision_config_path)
+        vision_processor = BlipImageProcessor.from_json_file(vision_config_path)
         HfTextClassificationProcessor.__init__(
             self,
             tokenizer=tokenizer,

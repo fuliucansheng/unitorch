@@ -7,7 +7,7 @@ from torch.cuda.amp import autocast
 from transformers.utils import is_remote_url
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.minigpt4 import (
-    MiniGPT4ViTLlamaForGeneration as _MiniGPT4ViTLlamaForGeneration,
+    MiniGPT4Blip2LlamaForGeneration as _MiniGPT4Blip2LlamaForGeneration,
 )
 from unitorch.cli import (
     cached_path,
@@ -20,19 +20,27 @@ from unitorch.cli.models import ClassificationOutputs, GenerationOutputs, LossOu
 from unitorch.cli.models.minigpt4 import pretrained_minigpt4_infos
 
 
-@register_model("core/model/generation/llama", generation_model_decorator)
-class MiniGPT4ViTLlamaForGeneration(_MiniGPT4ViTLlamaForGeneration):
+@register_model("core/model/generation/minigpt4", generation_model_decorator)
+class MiniGPT4Blip2LlamaForGeneration(_MiniGPT4Blip2LlamaForGeneration):
     """MiniGPT4 model for generation tasks."""
 
     def __init__(
         self,
         blip2_config_path: str,
         llama_config_path: str,
+        pad_token_id: Optional[int] = 0,
+        freeze_vision_model: Optional[bool] = True,
+        freeze_qformer_model: Optional[bool] = True,
+        freeze_llama_model: Optional[bool] = True,
         gradient_checkpointing: Optional[bool] = False,
     ):
         super().__init__(
             blip2_config_path=blip2_config_path,
             llama_config_path=llama_config_path,
+            pad_token_id=pad_token_id,
+            freeze_vision_model=freeze_vision_model,
+            freeze_qformer_model=freeze_qformer_model,
+            freeze_llama_model=freeze_llama_model,
             gradient_checkpointing=gradient_checkpointing,
         )
 
@@ -40,7 +48,7 @@ class MiniGPT4ViTLlamaForGeneration(_MiniGPT4ViTLlamaForGeneration):
     @add_default_section_for_init("core/model/generation/minigpt4")
     def from_core_configure(cls, config, **kwargs):
         """
-        Create an instance of MiniGPT4ViTLlamaForGeneration from a core configuration.
+        Create an instance of MiniGPT4Blip2LlamaForGeneration from a core configuration.
 
         Args:
             config: The core configuration.
@@ -70,9 +78,19 @@ class MiniGPT4ViTLlamaForGeneration(_MiniGPT4ViTLlamaForGeneration):
         )
         llama_config_path = cached_path(llama_config_path)
 
+        freeze_vision_model = config.getoption("freeze_vision_model", True)
+        freeze_qformer_model = config.getoption("freeze_qformer_model", True)
+        freeze_llama_model = config.getoption("freeze_llama_model", True)
         gradient_checkpointing = config.getoption("gradient_checkpointing", False)
 
-        inst = cls(blip2_config_path, llama_config_path, gradient_checkpointing)
+        inst = cls(
+            blip2_config_path,
+            llama_config_path,
+            freeze_vision_model=freeze_vision_model,
+            freeze_qformer_model=freeze_qformer_model,
+            freeze_llama_model=freeze_llama_model,
+            gradient_checkpointing=gradient_checkpointing,
+        )
         pretrained_weight_path = config.getoption("pretrained_weight_path", None)
         weight_path = pop_value(
             pretrained_weight_path,
@@ -99,7 +117,7 @@ class MiniGPT4ViTLlamaForGeneration(_MiniGPT4ViTLlamaForGeneration):
         decoder_attention_mask: Optional[torch.Tensor] = None,
     ):
         """
-        Perform a forward pass on the MiniGPT4ViTLlamaForGeneration model.
+        Perform a forward pass on the MiniGPT4Blip2LlamaForGeneration model.
 
         Args:
             input_ids (torch.Tensor, optional): The input tensor containing the input IDs. Defaults to None.
@@ -130,7 +148,7 @@ class MiniGPT4ViTLlamaForGeneration(_MiniGPT4ViTLlamaForGeneration):
         suffix_input_ids: torch.Tensor,
         num_beams: Optional[int] = 5,
         decoder_start_token_id: Optional[int] = 1,
-        decoder_end_token_id: Optional[int] = 2,
+        decoder_end_token_id: Optional[Union[int, List[int]]] = 2,
         num_return_sequences: Optional[int] = 1,
         min_gen_seq_length: Optional[int] = 0,
         max_gen_seq_length: Optional[int] = 48,

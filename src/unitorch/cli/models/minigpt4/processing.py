@@ -5,7 +5,7 @@ from PIL import Image
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.minigpt4 import (
-    MiniGPT4ViTLlamaProcessor as _MiniGPT4ViTLlamaProcessor,
+    MiniGPT4Blip2LlamaProcessor as _MiniGPT4Blip2LlamaProcessor,
 )
 from unitorch.cli import (
     cached_path,
@@ -22,7 +22,7 @@ from unitorch.cli.models import (
 from unitorch.cli.models.minigpt4 import pretrained_minigpt4_infos
 
 
-class MiniGPT4ViTLlamaProcessor(_MiniGPT4ViTLlamaProcessor):
+class MiniGPT4Blip2LlamaProcessor(_MiniGPT4Blip2LlamaProcessor):
     """Processor for Llama models."""
 
     def __init__(
@@ -33,7 +33,7 @@ class MiniGPT4ViTLlamaProcessor(_MiniGPT4ViTLlamaProcessor):
         max_gen_seq_length: Optional[int] = 128,
     ):
         """
-        Initialize the MiniGPT4ViTLlamaProcessor.
+        Initialize the MiniGPT4Blip2LlamaProcessor.
 
         Args:
             vocab_path (str): The path to the vocabulary file.
@@ -51,14 +51,14 @@ class MiniGPT4ViTLlamaProcessor(_MiniGPT4ViTLlamaProcessor):
     @add_default_section_for_init("core/process/minigpt4")
     def from_core_configure(cls, config, **kwargs):
         """
-        Create an instance of MiniGPT4ViTLlamaProcessor from a core configuration.
+        Create an instance of MiniGPT4Blip2LlamaProcessor from a core configuration.
 
         Args:
             config: The core configuration.
             **kwargs: Additional keyword arguments.
 
         Returns:
-            MiniGPT4ViTLlamaProcessor: An instance of MiniGPT4ViTLlamaProcessor.
+            MiniGPT4Blip2LlamaProcessor: An instance of MiniGPT4Blip2LlamaProcessor.
         """
         config.set_default_section("core/process/minigpt4")
         pretrained_name = config.getoption("pretrained_name", "default-minigpt4")
