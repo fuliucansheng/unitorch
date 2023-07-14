@@ -201,7 +201,7 @@ class BlipProcessor(
     def generation(
         self,
         text: str,
-        image: str,
+        image: Image.Image,
         max_gen_seq_length: Optional[int] = None,
     ) -> GenericOutputs:
         """
@@ -209,7 +209,7 @@ class BlipProcessor(
 
         Args:
             text (str): The input text.
-            image (PIL.Image.Image): The input image to caption.
+            image (Image.Image): The input image to caption.
             max_gen_seq_length (int, optional): Maximum generated sequence length. Defaults to None.
 
         Returns:

@@ -3,6 +3,7 @@
 
 import os
 import random
+import logging
 from functools import partial
 from PIL import Image
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
@@ -27,21 +28,27 @@ class MiniGPT4Blip2LlamaProcessor(
     HfImageClassificationProcessor,
     HfTextGenerationProcessor,
 ):
+    """
+    MiniGPT4Blip2LlamaProcessor is a class for processing inputs and outputs of the MiniGPT4 model with Blip2 and Llama.
+    It inherits from the _MiniGPT4Blip2LlamaProcessor class.
+    """
     def __init__(
         self,
         vocab_file: str,
         vision_config_path: str,
-        max_prefix_seq_length: Optional[int] = 32,
+        max_prefix_seq_length: Optional[int] = 64,
         max_suffix_seq_length: Optional[int] = 128,
         max_gen_seq_length: Optional[int] = 48,
     ):
         """
-        Initialize the LlamaProcessor.
+        Initializes a MiniGPT4Blip2LlamaProcessor instance.
 
         Args:
-            vocab_file (str): Path to the vocabulary file.
-            max_seq_length (int, optional): Maximum sequence length for text classification. Defaults to 128.
-            max_gen_seq_length (int, optional): Maximum sequence length for text generation. Defaults to 48.
+            vocab_path (str): The file path to the vocabulary.
+            vision_config_path (str): The file path to the vision configuration.
+            max_prefix_seq_length (int, optional): The maximum length of the prefix sequence. Defaults to 64.
+            max_suffix_seq_length (int, optional): The maximum length of the suffix sequence. Defaults to 128.
+            max_gen_seq_length (int, optional): The maximum length of the generated sequence. Defaults to 48.
         """
         tokenizer = LlamaTokenizer(vocab_file=vocab_file)
         tokenizer.cls_token = tokenizer.bos_token
@@ -78,8 +85,11 @@ class MiniGPT4Blip2LlamaProcessor(
         Process text as a prompt.
 
         Args:
-            text (str): Input text.
-            max_seq_length (int, optional): Maximum sequence length. Defaults to None.
+            prefix_text (str): The prefix text.
+            suffix_text (str): The suffix text.
+            image (PIL.Image.Image): The input image.
+            max_prefix_seq_length (int, optional): The maximum length of the prefix sequence. Defaults to None.
+            max_suffix_seq_length (int, optional): The maximum length of the suffix sequence. Defaults to None.
 
         Returns:
             GenericOutputs: Processed input_ids tensor.
@@ -92,12 +102,22 @@ class MiniGPT4Blip2LlamaProcessor(
             max_suffix_seq_length,
             self.max_suffix_seq_length,
         )
-        prefix_tokens = self.tokenizer.tokenize(str(prefix_text))[
-            : max_prefix_seq_length - 1
-        ]
-        suffix_tokens = self.tokenizer.tokenize(str(suffix_text))[
-            :max_suffix_seq_length
-        ]
+        prefix_tokens = self.tokenizer.tokenize(str(prefix_text))
+
+        if len(prefix_tokens) >= max_prefix_seq_length:
+            logging.warning(f"Input prefix text {prefix_text} has been truncated to {max_prefix_seq_length - 1} tokens.")
+            prefix_tokens = prefix_tokens[
+                : max_prefix_seq_length - 1
+            ]
+
+        suffix_tokens = self.tokenizer.tokenize(str(suffix_text))
+
+        if len(suffix_tokens) > max_suffix_seq_length:
+            logging.warning(f"Input suffix text {suffix_text} has been truncated to {max_suffix_seq_length} tokens.")
+            suffix_tokens = suffix_tokens[
+                :max_suffix_seq_length
+            ]
+
 
         prefix_tokens = [self.bos_token] + prefix_tokens
         prefix_padding = [self.pad_token] * (max_prefix_seq_length - len(prefix_tokens))
@@ -131,8 +151,11 @@ class MiniGPT4Blip2LlamaProcessor(
         Process text for generation inputs.
 
         Args:
-            text (str): Input text.
-            max_seq_length (int, optional): Maximum sequence length. Defaults to None.
+            prefix_text (str): The prefix text.
+            suffix_text (str): The suffix text.
+            image (PIL.Image.Image): The input image.
+            max_prefix_seq_length (int, optional): The maximum length of the prefix sequence. Defaults to None.
+            max_suffix_seq_length (int, optional): The maximum length of the suffix sequence. Defaults to None.
 
         Returns:
             GenericOutputs: Processed input_ids tensor.
@@ -145,12 +168,21 @@ class MiniGPT4Blip2LlamaProcessor(
             max_suffix_seq_length,
             self.max_suffix_seq_length,
         )
-        prefix_tokens = self.tokenizer.tokenize(str(prefix_text))[
-            : max_prefix_seq_length - 1
-        ]
-        suffix_tokens = self.tokenizer.tokenize(str(suffix_text))[
-            :max_suffix_seq_length
-        ]
+        prefix_tokens = self.tokenizer.tokenize(str(prefix_text))
+
+        if len(prefix_tokens) >= max_prefix_seq_length:
+            logging.warning(f"Input prefix text {prefix_text} has been truncated to {max_prefix_seq_length - 1} tokens.")
+            prefix_tokens = prefix_tokens[
+                : max_prefix_seq_length - 1
+            ]
+
+        suffix_tokens = self.tokenizer.tokenize(str(suffix_text))
+
+        if len(suffix_tokens) > max_suffix_seq_length:
+            logging.warning(f"Input suffix text {suffix_text} has been truncated to {max_suffix_seq_length} tokens.")
+            suffix_tokens = suffix_tokens[
+                :max_suffix_seq_length
+            ]
 
         prefix_tokens = [self.bos_token] + prefix_tokens
         prefix_padding = [self.pad_token] * (max_prefix_seq_length - len(prefix_tokens))
@@ -223,10 +255,13 @@ class MiniGPT4Blip2LlamaProcessor(
         Process text for generation.
 
         Args:
-            text (str): Input text.
-            text_pair (str): Input text pair.
-            max_seq_length (int, optional): Maximum sequence length. Defaults to None.
-            max_gen_seq_length (int, optional): Maximum generation sequence length. Defaults to None.
+            prefix_text (str): The prefix text.
+            suffix_text (str): The suffix text.
+            text_pair (str): The text pair.
+            image (PIL.Image.Image): The input image.
+            max_prefix_seq_length (int, optional): The maximum length of the prefix sequence. Defaults to None.
+            max_suffix_seq_length (int, optional): The maximum length of the suffix sequence. Defaults to None.
+            max_gen_seq_length (int, optional): The maximum length of the generated sequence. Defaults to None.
 
         Returns:
             GenericOutputs: Processed input_ids, attention_mask, input_ids_label, and attention_mask_label tensors.
@@ -243,13 +278,21 @@ class MiniGPT4Blip2LlamaProcessor(
             max_gen_seq_length,
             self.max_gen_seq_length,
         )
+        prefix_tokens = self.tokenizer.tokenize(str(prefix_text))
 
-        prefix_tokens = self.tokenizer.tokenize(str(prefix_text))[
-            : max_prefix_seq_length - 1
-        ]
-        suffix_tokens = self.tokenizer.tokenize(str(suffix_text))[
-            :max_suffix_seq_length
-        ]
+        if len(prefix_tokens) >= max_prefix_seq_length:
+            logging.warning(f"Input prefix text {prefix_text} has been truncated to {max_prefix_seq_length - 1} tokens.")
+            prefix_tokens = prefix_tokens[
+                : max_prefix_seq_length - 1
+            ]
+
+        suffix_tokens = self.tokenizer.tokenize(str(suffix_text))
+
+        if len(suffix_tokens) > max_suffix_seq_length:
+            logging.warning(f"Input suffix text {suffix_text} has been truncated to {max_suffix_seq_length} tokens.")
+            suffix_tokens = suffix_tokens[
+                :max_suffix_seq_length
+            ]
 
         prefix_tokens = [self.bos_token] + prefix_tokens
         prefix_padding = [self.pad_token] * (max_prefix_seq_length - len(prefix_tokens))
