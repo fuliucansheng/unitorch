@@ -1,6 +1,7 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
+import re
 from PIL import Image
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from unitorch.utils import pop_value, nested_dict_value
@@ -29,7 +30,8 @@ class MiniGPT4Blip2LlamaProcessor(_MiniGPT4Blip2LlamaProcessor):
         self,
         vocab_path: str,
         vision_config_path: str,
-        max_seq_length: Optional[int] = 128,
+        max_prefix_seq_length: Optional[int] = 32,
+        max_suffix_seq_length: Optional[int] = 128,
         max_gen_seq_length: Optional[int] = 128,
     ):
         """
@@ -37,13 +39,14 @@ class MiniGPT4Blip2LlamaProcessor(_MiniGPT4Blip2LlamaProcessor):
 
         Args:
             vocab_path (str): The path to the vocabulary file.
-            max_seq_length (int, optional): The maximum sequence length. Defaults to 128.
+            max_prefix_seq_length (int, optional): The maximum sequence length. Defaults to 128.
             max_gen_seq_length (int, optional): The maximum generated sequence length. Defaults to 128.
         """
         super().__init__(
             vocab_file=vocab_path,
             vision_config_path=vision_config_path,
-            max_seq_length=max_seq_length,
+            max_prefix_seq_length=max_prefix_seq_length,
+            max_suffix_seq_length=max_suffix_seq_length,
             max_gen_seq_length=max_gen_seq_length,
         )
 
@@ -89,14 +92,15 @@ class MiniGPT4Blip2LlamaProcessor(_MiniGPT4Blip2LlamaProcessor):
         prefix_text: str,
         suffix_text: str,
         image: Image.Image,
-        max_seq_length: Optional[int] = None,
+        max_prefix_seq_length: Optional[int] = None,
+        max_suffix_seq_length: Optional[int] = None,
     ):
         """
         Process inputs for prompt-based generation.
 
         Args:
             text (str): The input text.
-            max_seq_length (int, optional): The maximum sequence length. Defaults to None.
+            max_prefix_seq_length (int, optional): The maximum sequence length. Defaults to None.
 
         Returns:
             TensorsInputs: Processed tensors inputs.
@@ -105,7 +109,8 @@ class MiniGPT4Blip2LlamaProcessor(_MiniGPT4Blip2LlamaProcessor):
             prefix_text=prefix_text,
             suffix_text=suffix_text,
             image=image,
-            max_seq_length=max_seq_length,
+            max_prefix_seq_length=max_prefix_seq_length,
+            max_suffix_seq_length=max_suffix_seq_length,
         )
         return TensorsInputs(
             prefix_input_ids=outputs.prefix_input_ids,
@@ -119,14 +124,15 @@ class MiniGPT4Blip2LlamaProcessor(_MiniGPT4Blip2LlamaProcessor):
         prefix_text: str,
         suffix_text: str,
         image: Image.Image,
-        max_seq_length: Optional[int] = None,
+        max_prefix_seq_length: Optional[int] = None,
+        max_suffix_seq_length: Optional[int] = None,
     ):
         """
         Preprocess the input text for generation tasks.
 
         Args:
             text (str): The input text.
-            max_seq_length (int, optional): The maximum sequence length. Defaults to None.
+            max_prefix_seq_length (int, optional): The maximum sequence length. Defaults to None.
 
         Returns:
             TensorsInputs: The processed input tensors.
@@ -135,7 +141,8 @@ class MiniGPT4Blip2LlamaProcessor(_MiniGPT4Blip2LlamaProcessor):
             prefix_text=prefix_text,
             suffix_text=suffix_text,
             image=image,
-            max_seq_length=max_seq_length,
+            max_prefix_seq_length=max_prefix_seq_length,
+            max_suffix_seq_length=max_suffix_seq_length,
         )
         return TensorsInputs(
             prefix_input_ids=outputs.prefix_input_ids,
@@ -175,7 +182,8 @@ class MiniGPT4Blip2LlamaProcessor(_MiniGPT4Blip2LlamaProcessor):
         suffix_text: str,
         text_pair: str,
         image: Image.Image,
-        max_seq_length: Optional[int] = None,
+        max_prefix_seq_length: Optional[int] = None,
+        max_suffix_seq_length: Optional[int] = None,
         max_gen_seq_length: Optional[int] = None,
     ):
         """
@@ -184,7 +192,7 @@ class MiniGPT4Blip2LlamaProcessor(_MiniGPT4Blip2LlamaProcessor):
         Args:
             text (str): The input text.
             text_pair (str, optional): The paired input text. Defaults to None.
-            max_seq_length (int, optional): The maximum sequence length. Defaults to None.
+            max_prefix_seq_length (int, optional): The maximum sequence length. Defaults to None.
             max_gen_seq_length (int, optional): The maximum generation sequence length. Defaults to None.
 
         Returns:
@@ -195,7 +203,8 @@ class MiniGPT4Blip2LlamaProcessor(_MiniGPT4Blip2LlamaProcessor):
             suffix_text=suffix_text,
             text_pair=text_pair,
             image=image,
-            max_seq_length=max_seq_length,
+            max_prefix_seq_length=max_prefix_seq_length,
+            max_suffix_seq_length=max_suffix_seq_length,
             max_gen_seq_length=max_gen_seq_length,
         )
         return TensorsInputs(
@@ -229,5 +238,11 @@ class MiniGPT4Blip2LlamaProcessor(_MiniGPT4Blip2LlamaProcessor):
         assert results.shape[0] == 0 or results.shape[0] == outputs.sequences.shape[0]
 
         decoded = super().detokenize(sequences=outputs.sequences)
+        cleanup_string = lambda text: re.sub(r"###|\n", "", text)
+        if isinstance(decoded[0], list):
+            decoded = [list(map(cleanup_string, sequence)) for sequence in decoded]
+        elif isinstance(decoded[0], str):
+            decoded = list(map(cleanup_string, decoded))
+
         results["decoded"] = decoded
         return WriterOutputs(results)

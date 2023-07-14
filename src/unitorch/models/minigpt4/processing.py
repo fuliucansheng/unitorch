@@ -31,7 +31,8 @@ class MiniGPT4Blip2LlamaProcessor(
         self,
         vocab_file: str,
         vision_config_path: str,
-        max_seq_length: Optional[int] = 128,
+        max_prefix_seq_length: Optional[int] = 32,
+        max_suffix_seq_length: Optional[int] = 128,
         max_gen_seq_length: Optional[int] = 48,
     ):
         """
@@ -53,22 +54,25 @@ class MiniGPT4Blip2LlamaProcessor(
         HfTextClassificationProcessor.__init__(
             self,
             tokenizer=tokenizer,
-            max_seq_length=max_seq_length,
+            max_seq_length=max_prefix_seq_length,
         )
         HfTextGenerationProcessor.__init__(
             self,
             tokenizer=tokenizer,
-            max_seq_length=max_seq_length,
+            max_seq_length=max_prefix_seq_length,
             max_gen_seq_length=max_gen_seq_length,
         )
         HfImageClassificationProcessor.__init__(self, vision_processor=vision_processor)
+        self.max_prefix_seq_length = max_prefix_seq_length
+        self.max_suffix_seq_length = max_suffix_seq_length
 
     def prompt(
         self,
         prefix_text: str,
         suffix_text: str,
         image: Image.Image,
-        max_seq_length: Optional[int] = None,
+        max_prefix_seq_length: Optional[int] = None,
+        max_suffix_seq_length: Optional[int] = None,
     ):
         """
         Process text as a prompt.
@@ -80,18 +84,24 @@ class MiniGPT4Blip2LlamaProcessor(
         Returns:
             GenericOutputs: Processed input_ids tensor.
         """
-        max_seq_length = pop_value(
-            max_seq_length,
-            self.max_seq_length,
+        max_prefix_seq_length = pop_value(
+            max_prefix_seq_length,
+            self.max_prefix_seq_length,
         )
-        prefix_tokens = self.tokenizer.tokenize(str(prefix_text))
-        suffix_tokens = self.tokenizer.tokenize(str(suffix_text))[: max_seq_length - 1]
+        max_suffix_seq_length = pop_value(
+            max_suffix_seq_length,
+            self.max_suffix_seq_length,
+        )
+        prefix_tokens = self.tokenizer.tokenize(str(prefix_text))[: max_prefix_seq_length - 1]
+        suffix_tokens = self.tokenizer.tokenize(str(suffix_text))[: max_suffix_seq_length]
 
-        prefix_tokens = prefix_tokens[: max_seq_length - len(suffix_tokens) - 1]
         prefix_tokens = [self.bos_token] + prefix_tokens
-        padding = [self.pad_token] * (max_seq_length - len(prefix_tokens))
-        prefix_tokens = padding + prefix_tokens
+        prefix_padding = [self.pad_token] * (max_prefix_seq_length - len(prefix_tokens))
+        prefix_tokens = prefix_padding + prefix_tokens
         prefix_input_ids = self.tokenizer.convert_tokens_to_ids(prefix_tokens)
+
+        suffix_padding = [self.pad_token] * (max_suffix_seq_length - len(suffix_tokens))
+        suffix_tokens = suffix_padding + suffix_tokens
         suffix_input_ids = self.tokenizer.convert_tokens_to_ids(suffix_tokens)
 
         outputs = HfImageClassificationProcessor.classification(
@@ -110,7 +120,8 @@ class MiniGPT4Blip2LlamaProcessor(
         prefix_text: str,
         suffix_text: str,
         image: Image.Image,
-        max_seq_length: Optional[int] = None,
+        max_prefix_seq_length: Optional[int] = None,
+        max_suffix_seq_length: Optional[int] = None,
     ):
         """
         Process text for generation inputs.
@@ -122,18 +133,24 @@ class MiniGPT4Blip2LlamaProcessor(
         Returns:
             GenericOutputs: Processed input_ids tensor.
         """
-        max_seq_length = pop_value(
-            max_seq_length,
-            self.max_seq_length,
+        max_prefix_seq_length = pop_value(
+            max_prefix_seq_length,
+            self.max_prefix_seq_length,
         )
-        prefix_tokens = self.tokenizer.tokenize(str(prefix_text))
-        suffix_tokens = self.tokenizer.tokenize(str(suffix_text))
+        max_suffix_seq_length = pop_value(
+            max_suffix_seq_length,
+            self.max_suffix_seq_length,
+        )
+        prefix_tokens = self.tokenizer.tokenize(str(prefix_text))[: max_prefix_seq_length - 1]
+        suffix_tokens = self.tokenizer.tokenize(str(suffix_text))[: max_suffix_seq_length]
 
-        prefix_tokens = prefix_tokens[: max_seq_length - 1]
         prefix_tokens = [self.bos_token] + prefix_tokens
-        padding = [self.pad_token] * (max_seq_length - len(prefix_tokens))
-        prefix_tokens = padding + prefix_tokens
+        prefix_padding = [self.pad_token] * (max_prefix_seq_length - len(prefix_tokens))
+        prefix_tokens = prefix_padding + prefix_tokens
         prefix_input_ids = self.tokenizer.convert_tokens_to_ids(prefix_tokens)
+
+        suffix_padding = [self.pad_token] * (max_suffix_seq_length - len(suffix_tokens))
+        suffix_tokens = suffix_padding + suffix_tokens
         suffix_input_ids = self.tokenizer.convert_tokens_to_ids(suffix_tokens)
 
         outputs = HfImageClassificationProcessor.classification(
@@ -190,7 +207,8 @@ class MiniGPT4Blip2LlamaProcessor(
         suffix_text: str,
         text_pair: str,
         image: Image.Image,
-        max_seq_length: Optional[int] = None,
+        max_prefix_seq_length: Optional[int] = None,
+        max_suffix_seq_length: Optional[int] = None,
         max_gen_seq_length: Optional[int] = None,
     ):
         """
@@ -205,52 +223,50 @@ class MiniGPT4Blip2LlamaProcessor(
         Returns:
             GenericOutputs: Processed input_ids, attention_mask, input_ids_label, and attention_mask_label tensors.
         """
-        max_seq_length = pop_value(
-            max_seq_length,
-            self.max_seq_length,
+        max_prefix_seq_length = pop_value(
+            max_prefix_seq_length,
+            self.max_prefix_seq_length,
+        )
+        max_suffix_seq_length = pop_value(
+            max_suffix_seq_length,
+            self.max_suffix_seq_length,
         )
         max_gen_seq_length = pop_value(
             max_gen_seq_length,
             self.max_gen_seq_length,
         )
-        max_seq_length = max_seq_length + max_gen_seq_length
 
-        prefix_tokens = self.tokenizer.tokenize(str(prefix_text))
-        suffix_tokens = self.tokenizer.tokenize(str(suffix_text))
+        prefix_tokens = self.tokenizer.tokenize(str(prefix_text))[: max_prefix_seq_length - 1]
+        suffix_tokens = self.tokenizer.tokenize(str(suffix_text))[: max_suffix_seq_length]
 
-        prefix_tokens = prefix_tokens[: max_seq_length - 1]
         prefix_tokens = [self.bos_token] + prefix_tokens
-
+        prefix_padding = [self.pad_token] * (max_prefix_seq_length - len(prefix_tokens))
+        prefix_attention_mask = [0] * len(prefix_padding) + [1] * len(prefix_tokens)
+        prefix_tokens = prefix_padding + prefix_tokens
         prefix_input_ids = self.tokenizer.convert_tokens_to_ids(prefix_tokens)
-        suffix_input_ids = self.tokenizer.convert_tokens_to_ids(suffix_tokens)
 
-        padding_a = [self.pad_token] * (max_seq_length - len(prefix_tokens))
-        prefix_input_ids = self.tokenizer.convert_tokens_to_ids(
-            padding_a + prefix_tokens
-        )
-        prefix_attention_mask = [0] * len(padding_a) + [1] * len(prefix_tokens)
-
+        suffix_padding = [self.pad_token] * (max_suffix_seq_length - len(suffix_tokens))
+        suffix_attention_mask = [0] * len(suffix_padding) + [1] * len(suffix_tokens)
+        suffix_tokens = suffix_padding + suffix_tokens
         suffix_input_ids = self.tokenizer.convert_tokens_to_ids(suffix_tokens)
-        suffix_attention_mask = [1] * len(suffix_tokens)
 
         tokens_pair = self.tokenizer.tokenize(str(text_pair))[
             : max_gen_seq_length - 1
         ] + [self.eos_token]
 
-        padding_b = [self.pad_token] * (max_gen_seq_length - len(tokens_pair))
-        input_ids_pair = self.tokenizer.convert_tokens_to_ids(tokens_pair + padding_b)
-        attention_mask_pair = [1] * len(tokens_pair) + [0] * len(padding_b)
+        padding_pair = [self.pad_token] * (max_gen_seq_length - len(tokens_pair))
+        input_ids_pair = self.tokenizer.convert_tokens_to_ids(tokens_pair + padding_pair)
+        attention_mask_pair = [1] * len(tokens_pair) + [0] * len(padding_pair)
 
-        suffix_seq_length = len(suffix_tokens)
         tokens_label = tokens_pair + [self.pad_token] * (
             max_gen_seq_length - len(tokens_pair) + 1
         )
         input_ids_label = self.tokenizer.convert_tokens_to_ids(tokens_label)
-        input_ids_label = [0] * (suffix_seq_length - 1) + input_ids_label
+        input_ids_label = [0] * (max_suffix_seq_length - 1) + input_ids_label
         attention_mask_label = [1] * len(tokens_pair) + [0] * (
             max_gen_seq_length - len(tokens_pair) + 1
         )
-        attention_mask_label = [0] * (suffix_seq_length - 1) + attention_mask_label
+        attention_mask_label = [0] * (max_suffix_seq_length - 1) + attention_mask_label
 
         outputs = HfImageClassificationProcessor.classification(
             self,
