@@ -32,6 +32,7 @@ class MiniGPT4Blip2LlamaProcessor(
     MiniGPT4Blip2LlamaProcessor is a class for processing inputs and outputs of the MiniGPT4 model with Blip2 and Llama.
     It inherits from the _MiniGPT4Blip2LlamaProcessor class.
     """
+
     def __init__(
         self,
         vocab_file: str,
@@ -105,19 +106,18 @@ class MiniGPT4Blip2LlamaProcessor(
         prefix_tokens = self.tokenizer.tokenize(str(prefix_text))
 
         if len(prefix_tokens) >= max_prefix_seq_length:
-            logging.warning(f"Input prefix text {prefix_text} has been truncated to {max_prefix_seq_length - 1} tokens.")
-            prefix_tokens = prefix_tokens[
-                : max_prefix_seq_length - 1
-            ]
+            logging.warning(
+                f"Input prefix text {prefix_text} has been truncated to {max_prefix_seq_length - 1} tokens."
+            )
+            prefix_tokens = prefix_tokens[: max_prefix_seq_length - 1]
 
         suffix_tokens = self.tokenizer.tokenize(str(suffix_text))
 
         if len(suffix_tokens) > max_suffix_seq_length:
-            logging.warning(f"Input suffix text {suffix_text} has been truncated to {max_suffix_seq_length} tokens.")
-            suffix_tokens = suffix_tokens[
-                :max_suffix_seq_length
-            ]
-
+            logging.warning(
+                f"Input suffix text {suffix_text} has been truncated to {max_suffix_seq_length} tokens."
+            )
+            suffix_tokens = suffix_tokens[:max_suffix_seq_length]
 
         prefix_tokens = [self.bos_token] + prefix_tokens
         prefix_padding = [self.pad_token] * (max_prefix_seq_length - len(prefix_tokens))
@@ -171,18 +171,18 @@ class MiniGPT4Blip2LlamaProcessor(
         prefix_tokens = self.tokenizer.tokenize(str(prefix_text))
 
         if len(prefix_tokens) >= max_prefix_seq_length:
-            logging.warning(f"Input prefix text {prefix_text} has been truncated to {max_prefix_seq_length - 1} tokens.")
-            prefix_tokens = prefix_tokens[
-                : max_prefix_seq_length - 1
-            ]
+            logging.warning(
+                f"Input prefix text {prefix_text} has been truncated to {max_prefix_seq_length - 1} tokens."
+            )
+            prefix_tokens = prefix_tokens[: max_prefix_seq_length - 1]
 
         suffix_tokens = self.tokenizer.tokenize(str(suffix_text))
 
         if len(suffix_tokens) > max_suffix_seq_length:
-            logging.warning(f"Input suffix text {suffix_text} has been truncated to {max_suffix_seq_length} tokens.")
-            suffix_tokens = suffix_tokens[
-                :max_suffix_seq_length
-            ]
+            logging.warning(
+                f"Input suffix text {suffix_text} has been truncated to {max_suffix_seq_length} tokens."
+            )
+            suffix_tokens = suffix_tokens[:max_suffix_seq_length]
 
         prefix_tokens = [self.bos_token] + prefix_tokens
         prefix_padding = [self.pad_token] * (max_prefix_seq_length - len(prefix_tokens))
@@ -281,18 +281,18 @@ class MiniGPT4Blip2LlamaProcessor(
         prefix_tokens = self.tokenizer.tokenize(str(prefix_text))
 
         if len(prefix_tokens) >= max_prefix_seq_length:
-            logging.warning(f"Input prefix text {prefix_text} has been truncated to {max_prefix_seq_length - 1} tokens.")
-            prefix_tokens = prefix_tokens[
-                : max_prefix_seq_length - 1
-            ]
+            logging.warning(
+                f"Input prefix text {prefix_text} has been truncated to {max_prefix_seq_length - 1} tokens."
+            )
+            prefix_tokens = prefix_tokens[: max_prefix_seq_length - 1]
 
         suffix_tokens = self.tokenizer.tokenize(str(suffix_text))
 
         if len(suffix_tokens) > max_suffix_seq_length:
-            logging.warning(f"Input suffix text {suffix_text} has been truncated to {max_suffix_seq_length} tokens.")
-            suffix_tokens = suffix_tokens[
-                :max_suffix_seq_length
-            ]
+            logging.warning(
+                f"Input suffix text {suffix_text} has been truncated to {max_suffix_seq_length} tokens."
+            )
+            suffix_tokens = suffix_tokens[:max_suffix_seq_length]
 
         prefix_tokens = [self.bos_token] + prefix_tokens
         prefix_padding = [self.pad_token] * (max_prefix_seq_length - len(prefix_tokens))
