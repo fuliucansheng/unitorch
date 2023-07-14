@@ -707,7 +707,7 @@ class BlipForImageCaption(GenericModel):
         attention_mask: Optional[torch.Tensor] = None,
         num_beams: Optional[int] = 5,
         decoder_start_token_id: Optional[int] = 101,
-        decoder_end_token_id: Optional[int] = 102,
+        decoder_end_token_id: Optional[Union[int, List[int]]] = 102,
         num_return_sequences: Optional[int] = 1,
         min_gen_seq_length: Optional[int] = 0,
         max_gen_seq_length: Optional[int] = 48,
@@ -731,7 +731,7 @@ class BlipForImageCaption(GenericModel):
             attention_mask (Optional[torch.Tensor], optional): Attention mask. Defaults to None.
             num_beams (Optional[int], optional): Number of beams for beam search. Defaults to 5.
             decoder_start_token_id (Optional[int], optional): ID of the start token for decoding. Defaults to 30522.
-            decoder_end_token_id (Optional[int], optional): ID of the end token for decoding. Defaults to 2.
+            decoder_end_token_id (int or List[int], optional): ID of the end token for decoding. Defaults to 2.
             num_return_sequences (Optional[int], optional): Number of caption sequences to return. Defaults to 1.
             min_gen_seq_length (Optional[int], optional): Minimum length of generated sequences. Defaults to 0.
             max_gen_seq_length (Optional[int], optional): Maximum length of generated sequences. Defaults to 48.

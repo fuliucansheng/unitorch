@@ -525,7 +525,7 @@ class BlipForImageCaption(_BlipForImageCaption):
         pixel_values: torch.Tensor,
         num_beams: Optional[int] = 5,
         decoder_start_token_id: Optional[int] = 101,
-        decoder_end_token_id: Optional[int] = 102,
+        decoder_end_token_id: Optional[Union[int, List[int]]] = 102,
         num_return_sequences: Optional[int] = 1,
         min_gen_seq_length: Optional[int] = 0,
         max_gen_seq_length: Optional[int] = 48,
@@ -547,7 +547,7 @@ class BlipForImageCaption(_BlipForImageCaption):
             pixel_values (torch.Tensor): The pixel values of the images.
             num_beams (int, optional): The number of beams for beam search. Defaults to 5.
             decoder_start_token_id (int, optional): The start token ID for the decoder. Defaults to 30522.
-            decoder_end_token_id (int, optional): The end token ID for the decoder. Defaults to 2.
+            decoder_end_token_id (int or List[int], optional): The end token ID for the decoder. Defaults to 2.
             num_return_sequences (int, optional): The number of sequences to return. Defaults to 1.
             min_gen_seq_length (int, optional): The minimum length of generated sequences. Defaults to 0.
             max_gen_seq_length (int, optional): The maximum length of generated sequences. Defaults to 48.

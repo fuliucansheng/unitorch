@@ -189,7 +189,7 @@ class BloomForGeneration(GenericModel):
         input_ids: torch.Tensor,
         num_beams: Optional[int] = 5,
         decoder_start_token_id: Optional[int] = 1,
-        decoder_end_token_id: Optional[int] = 2,
+        decoder_end_token_id: Optional[Union[int, List[int]]] = 2,
         num_return_sequences: Optional[int] = 1,
         min_gen_seq_length: Optional[int] = 0,
         max_gen_seq_length: Optional[int] = 48,

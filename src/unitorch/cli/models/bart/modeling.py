@@ -110,7 +110,7 @@ class BartForGeneration(_BartForGeneration):
         input_ids: torch.Tensor,
         num_beams: Optional[int] = 5,
         decoder_start_token_id: Optional[int] = 2,
-        decoder_end_token_id: Optional[int] = 2,
+        decoder_end_token_id: Optional[Union[int, List[int]]] = 2,
         num_return_sequences: Optional[int] = 1,
         min_gen_seq_length: Optional[int] = 0,
         max_gen_seq_length: Optional[int] = 48,
@@ -132,7 +132,7 @@ class BartForGeneration(_BartForGeneration):
             input_ids (torch.Tensor): Input IDs.
             num_beams (int, optional): Number of beams for beam search.
             decoder_start_token_id (int, optional): ID of the decoder start token.
-            decoder_end_token_id (int, optional): ID of the decoder end token.
+            decoder_end_token_id (int or List[int], optional): ID of the decoder end token.
             num_return_sequences (int, optional): Number of generated sequences to return.
             min_gen_seq_length (int, optional): Minimum length of generated sequences.
             max_gen_seq_length (int, optional): Maximum length of generated sequences.

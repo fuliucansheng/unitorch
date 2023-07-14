@@ -120,7 +120,7 @@ class XProphetNetForGeneration(_XProphetNetForGeneration):
         input_ids: torch.Tensor,
         num_beams: Optional[int] = 5,
         decoder_start_token_id: Optional[int] = 2,
-        decoder_end_token_id: Optional[int] = 2,
+        decoder_end_token_id: Optional[Union[int, List[int]]] = 2,
         num_return_sequences: Optional[int] = 1,
         min_gen_seq_length: Optional[int] = 0,
         max_gen_seq_length: Optional[int] = 48,
@@ -142,7 +142,7 @@ class XProphetNetForGeneration(_XProphetNetForGeneration):
             input_ids (torch.Tensor): Input tensor IDs.
             num_beams (int, optional): The number of beams for beam search. Defaults to 5.
             decoder_start_token_id (int, optional): The ID of the decoder start token. Defaults to 2.
-            decoder_end_token_id (int, optional): The ID of the decoder end token. Defaults to 2.
+            decoder_end_token_id (int or List[int], optional): The ID of the decoder end token. Defaults to 2.
             num_return_sequences (int, optional): The number of returned sequences. Defaults to 1.
             min_gen_seq_length (int, optional): The minimum generated sequence length. Defaults to 0.
             max_gen_seq_length (int, optional): The maximum generated sequence length. Defaults to 48.

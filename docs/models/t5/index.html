@@ -2400,7 +2400,9 @@
     <span class="n">input_ids</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
     <span class="n">num_beams</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
     <span class="n">decoder_start_token_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
-    <span class="n">decoder_end_token_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="n">decoder_end_token_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span>
+        <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span>
+    <span class="p">]</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
     <span class="n">num_return_sequences</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
     <span class="n">min_gen_seq_length</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
     <span class="n">max_gen_seq_length</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">48</span><span class="p">,</span>
@@ -2465,7 +2467,7 @@
         <tr>
           <td><code>decoder_end_token_id</code></td>
           <td>
-                <code>int</code>
+                <code>int or List[int]</code>
           </td>
           <td><p>The decoder's end token ID. Defaults to 2.</p></td>
           <td>
@@ -2713,7 +2715,7 @@
     <span class="n">input_ids</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
     <span class="n">num_beams</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
     <span class="n">decoder_start_token_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
-    <span class="n">decoder_end_token_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="n">decoder_end_token_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
     <span class="n">num_return_sequences</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
     <span class="n">min_gen_seq_length</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
     <span class="n">max_gen_seq_length</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">48</span><span class="p">,</span>
@@ -2735,7 +2737,7 @@
 <span class="sd">        input_ids: The input token IDs.</span>
 <span class="sd">        num_beams (int, optional): The number of beams for beam search. Defaults to 5.</span>
 <span class="sd">        decoder_start_token_id (int, optional): The decoder&#39;s start token ID. Defaults to 2.</span>
-<span class="sd">        decoder_end_token_id (int, optional): The decoder&#39;s end token ID. Defaults to 2.</span>
+<span class="sd">        decoder_end_token_id (int or List[int], optional): The decoder&#39;s end token ID. Defaults to 2.</span>
 <span class="sd">        num_return_sequences (int, optional): The number of generated sequences to return. Defaults to 1.</span>
 <span class="sd">        min_gen_seq_length (int, optional): The minimum length of the generated sequences. Defaults to 0.</span>
 <span class="sd">        max_gen_seq_length (int, optional): The maximum length of the generated sequences. Defaults to 48.</span>

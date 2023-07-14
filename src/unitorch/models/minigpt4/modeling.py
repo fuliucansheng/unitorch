@@ -25,11 +25,23 @@ from unitorch.models.clip.modeling import AllGather
 
 
 class MiniGPT4Blip2LlamaModel(nn.Module):
+    """
+    MiniGPT4Blip2LlamaModel is a model that combines the Blip2VisionModel, Blip2QFormerModel, and LlamaForCausalLM
+    models for generation. It inherits from the nn.Module class.
+    """
+
     def __init__(
         self,
         blip2_config: Blip2Config,
         llama_config: LlamaConfig,
     ):
+        """
+        Initializes a MiniGPT4Blip2LlamaModel instance.
+
+        Args:
+            blip2_config (Blip2Config): The configuration for the Blip2 model.
+            llama_config (LlamaConfig): The configuration for the Llama model.
+        """
         super().__init__()
         self.blip2_config = blip2_config
         self.vision_model = Blip2VisionModel(self.blip2_config.vision_config)
@@ -59,6 +71,21 @@ class MiniGPT4Blip2LlamaModel(nn.Module):
         suffix_attention_mask: Optional[torch.Tensor] = None,
         decoder_attention_mask: Optional[torch.Tensor] = None,
     ):
+        """
+        Performs a forward pass of the MiniGPT4Blip2LlamaModel.
+
+        Args:
+            pixel_values (torch.Tensor): The pixel values.
+            prefix_input_ids (torch.Tensor): The input IDs for the prefix tokens.
+            suffix_input_ids (torch.Tensor): The input IDs for the suffix tokens.
+            decoder_input_ids (torch.Tensor): The input IDs for the decoder tokens.
+            prefix_attention_mask (torch.Tensor, optional): The attention mask for the prefix tokens.
+            suffix_attention_mask (torch.Tensor, optional): The attention mask for the suffix tokens.
+            decoder_attention_mask (torch.Tensor, optional): The attention mask for the decoder tokens.
+
+        Returns:
+            outputs: The model outputs.
+        """
         vision_outputs = self.vision_model(
             pixel_values=pixel_values,
         )
@@ -139,6 +166,18 @@ class MiniGPT4Blip2LlamaModel(nn.Module):
         suffix_input_ids: Optional[torch.Tensor] = None,
         **generate_kwargs,
     ):
+        """
+        Generates sequences using the MiniGPT4Blip2LlamaModel.
+
+        Args:
+            pixel_values (torch.FloatTensor): The pixel values.
+            prefix_input_ids (torch.Tensor, optional): The input IDs for the prefix tokens. Defaults to None.
+            suffix_input_ids (torch.Tensor, optional): The input IDs for the suffix tokens. Defaults to None.
+            **generate_kwargs: Additional keyword arguments for sequence generation.
+
+        Returns:
+            outputs: The generation outputs.
+        """
         vision_outputs = self.vision_model(
             pixel_values=pixel_values,
         )
@@ -187,6 +226,11 @@ class MiniGPT4Blip2LlamaModel(nn.Module):
 
 
 class MiniGPT4Blip2LlamaForGeneration(GenericModel):
+    """
+    MiniGPT4Blip2LlamaForGeneration is a generation model that combines the MiniGPT4Blip2LlamaModel with generation
+    capabilities. It inherits from the GenericModel class.
+    """
+
     prefix_keys_in_state_dict = {
         "^qformer.": "model.",
         "^query_tokens": "model.",
@@ -206,10 +250,15 @@ class MiniGPT4Blip2LlamaForGeneration(GenericModel):
         gradient_checkpointing: Optional[bool] = False,
     ):
         """
-        Llama model for text generation tasks.
+        Initializes a MiniGPT4Blip2LlamaForGeneration instance.
 
         Args:
-            config_path (str): Path to the model configuration file.
+            blip2_config_path (str): The path to the Blip2 model configuration file.
+            llama_config_path (str): The path to the Llama model configuration file.
+            pad_token_id (int, optional): The ID of the padding token. Defaults to 0.
+            freeze_vision_model (bool, optional): Whether to freeze the parameters of the vision model. Defaults to True.
+            freeze_qformer_model (bool, optional): Whether to freeze the parameters of the qformer model. Defaults to True.
+            freeze_llama_model (bool, optional): Whether to freeze the parameters of the llama model. Defaults to True.
             gradient_checkpointing (bool, optional): Whether to use gradient checkpointing. Defaults to False.
         """
         super().__init__()
@@ -243,15 +292,19 @@ class MiniGPT4Blip2LlamaForGeneration(GenericModel):
         decoder_attention_mask: Optional[torch.Tensor] = None,
     ):
         """
-        Forward pass of the generation model.
+        Performs a forward pass of the MiniGPT4Blip2LlamaForGeneration model.
 
         Args:
-            input_ids (torch.Tensor, optional): Input tensor of shape (batch_size, sequence_length). Defaults to None.
-            attention_mask (torch.Tensor, optional): Attention mask tensor of shape (batch_size, sequence_length). Defaults to None.
-            position_ids (torch.Tensor, optional): Position IDs tensor of shape (batch_size, sequence_length). Defaults to None.
+            pixel_values (torch.Tensor): The pixel values.
+            prefix_input_ids (torch.Tensor): The input IDs for the prefix tokens.
+            suffix_input_ids (torch.Tensor): The input IDs for the suffix tokens.
+            decoder_input_ids (torch.Tensor): The input IDs for the decoder tokens.
+            prefix_attention_mask (torch.Tensor, optional): The attention mask for the prefix tokens.
+            suffix_attention_mask (torch.Tensor, optional): The attention mask for the suffix tokens.
+            decoder_attention_mask (torch.Tensor, optional): The attention mask for the decoder tokens.
 
         Returns:
-            torch Output logits.Tensor: tensor of shape (batch_size, sequence_length, vocab_size).
+            logits: The output logits.
         """
         outputs = self.model(
             pixel_values=pixel_values,
@@ -291,29 +344,31 @@ class MiniGPT4Blip2LlamaForGeneration(GenericModel):
         top_p: Optional[float] = 1.0,
     ):
         """
-        Generate text using the generation model.
+        Generates sequences using the MiniGPT4Blip2LlamaForGeneration model.
 
         Args:
-            input_ids: Input tensor of shape (batch_size, sequence_length).
-            num_beams (int, optional): Number of beams for beam search. Defaults to 5.
-            decoder_start_token_id (int, optional): Start token ID for the decoder. Defaults to 2.
-            decoder_end_token_id (int, optional): End token ID for the decoder. Defaults to 2.
-            num_return_sequences (int, optional): Number of generated sequences to return. Defaults to 1.
-            min_gen_seq_length (int, optional): Minimum length of generated sequences. Defaults to 0.
-            max_gen_seq_length (int, optional): Maximum length of generated sequences. Defaults to 48.
-            repetition_penalty (float, optional): Penalty for repeated tokens. Defaults to 1.0.
-            no_repeat_ngram_size (int, optional): Size of n-grams to avoid repeating. Defaults to 0.
-            early_stopping (bool, optional): Whether to stop generation early. Defaults to True.
-            length_penalty (float, optional): Penalty for longer sequences. Defaults to 1.0.
-            num_beam_groups (int, optional): Number of beam groups for diverse beam search. Defaults to 1.
-            diversity_penalty (float, optional): Penalty for diverse sequences in diverse beam search. Defaults to 0.0.
+            pixel_values (torch.Tensor): The pixel values.
+            prefix_input_ids (torch.Tensor): The input IDs for the prefix tokens.
+            suffix_input_ids (torch.Tensor): The input IDs for the suffix tokens.
+            num_beams (int, optional): The number of beams for beam search. Defaults to 5.
+            decoder_start_token_id (int, optional): The ID of the decoder start token. Defaults to 1.
+            decoder_end_token_id (int or List[int], optional): The ID(s) of the decoder end token(s). Defaults to 2.
+            num_return_sequences (int, optional): The number of generated sequences to return. Defaults to 1.
+            min_gen_seq_length (int, optional): The minimum length of the generated sequences. Defaults to 0.
+            max_gen_seq_length (int, optional): The maximum length of the generated sequences. Defaults to 48.
+            repetition_penalty (float, optional): The repetition penalty. Defaults to 1.0.
+            no_repeat_ngram_size (int, optional): The size of the n-grams to avoid repeating. Defaults to 0.
+            early_stopping (bool, optional): Whether to stop generation early when all beams are finished. Defaults to True.
+            length_penalty (float, optional): The length penalty. Defaults to 1.0.
+            num_beam_groups (int, optional): The number of groups for diverse beam search. Defaults to 1.
+            diversity_penalty (float, optional): The diversity penalty. Defaults to 0.0.
             do_sample (bool, optional): Whether to use sampling for generation. Defaults to False.
-            temperature (float, optional): Sampling temperature. Defaults to 1.0.
-            top_k (int, optional): Top-k value for sampling. Defaults to 50.
-            top_p (float, optional): Top-p value for sampling. Defaults to 1.0.
+            temperature (float, optional): The temperature value for sampling. Defaults to 1.0.
+            top_k (int, optional): The value for top-k sampling. Defaults to 50.
+            top_p (float, optional): The value for top-p sampling. Defaults to 1.0.
 
         Returns:
-            GenericOutputs: Generated sequences and their scores.
+            outputs (GenericOutputs): The generated sequences and their scores.
         """
         outputs = self.model.generate(
             pixel_values=pixel_values,

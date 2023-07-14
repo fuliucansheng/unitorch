@@ -22,7 +22,10 @@ from unitorch.cli.models.minigpt4 import pretrained_minigpt4_infos
 
 @register_model("core/model/generation/minigpt4", generation_model_decorator)
 class MiniGPT4Blip2LlamaForGeneration(_MiniGPT4Blip2LlamaForGeneration):
-    """MiniGPT4 model for generation tasks."""
+    """
+    MiniGPT4Blip2LlamaForGeneration is a class for generating sequences using the MiniGPT4 model with Blip2 and Llama.
+    It inherits from the _MiniGPT4Blip2LlamaForGeneration class.
+    """
 
     def __init__(
         self,
@@ -34,6 +37,18 @@ class MiniGPT4Blip2LlamaForGeneration(_MiniGPT4Blip2LlamaForGeneration):
         freeze_llama_model: Optional[bool] = True,
         gradient_checkpointing: Optional[bool] = False,
     ):
+        """
+        Initializes a MiniGPT4Blip2LlamaForGeneration instance.
+
+        Args:
+            blip2_config_path (str): The file path to the Blip2 configuration.
+            llama_config_path (str): The file path to the Llama configuration.
+            pad_token_id (int, optional): The ID of the padding token. Defaults to 0.
+            freeze_vision_model (bool, optional): Whether to freeze the vision model. Defaults to True.
+            freeze_qformer_model (bool, optional): Whether to freeze the query transformer model. Defaults to True.
+            freeze_llama_model (bool, optional): Whether to freeze the Llama model. Defaults to True.
+            gradient_checkpointing (bool, optional): Whether to use gradient checkpointing. Defaults to False.
+        """
         super().__init__(
             blip2_config_path=blip2_config_path,
             llama_config_path=llama_config_path,
@@ -48,14 +63,14 @@ class MiniGPT4Blip2LlamaForGeneration(_MiniGPT4Blip2LlamaForGeneration):
     @add_default_section_for_init("core/model/generation/minigpt4")
     def from_core_configure(cls, config, **kwargs):
         """
-        Create an instance of MiniGPT4Blip2LlamaForGeneration from a core configuration.
+        Creates a MiniGPT4Blip2LlamaForGeneration instance from a core configuration.
 
         Args:
-            config: The core configuration.
+            config: The configuration object.
             **kwargs: Additional keyword arguments.
 
         Returns:
-            LlamaForGeneration: An instance of LlamaForGeneration.
+            MiniGPT4Blip2LlamaForGeneration: The created instance.
         """
         config.set_default_section("core/model/generation/minigpt4")
         pretrained_name = config.getoption("pretrained_name", "default-minigpt4")
@@ -117,15 +132,22 @@ class MiniGPT4Blip2LlamaForGeneration(_MiniGPT4Blip2LlamaForGeneration):
         decoder_attention_mask: Optional[torch.Tensor] = None,
     ):
         """
-        Perform a forward pass on the MiniGPT4Blip2LlamaForGeneration model.
+        Performs a forward pass through the model.
 
         Args:
-            input_ids (torch.Tensor, optional): The input tensor containing the input IDs. Defaults to None.
-            attention_mask (torch.Tensor, optional): The attention mask tensor. Defaults to None.
-            position_ids (torch.Tensor, optional): The position IDs tensor. Defaults to None.
+            pixel_values (torch.Tensor): The pixel values.
+            prefix_input_ids (torch.Tensor): The input IDs for the prefix tokens.
+            suffix_input_ids (torch.Tensor): The input IDs for the suffix tokens.
+            decoder_input_ids (torch.Tensor): The input IDs for the decoder tokens.
+            prefix_attention_mask (torch.Tensor, optional): The attention mask for the prefix tokens.
+                Defaults to None.
+            suffix_attention_mask (torch.Tensor, optional): The attention mask for the suffix tokens.
+                Defaults to None.
+            decoder_attention_mask (torch.Tensor, optional): The attention mask for the decoder tokens.
+                Defaults to None.
 
         Returns:
-            GenerationOutputs: The output of the generation model.
+            GenerationOutputs: The generation outputs.
         """
         outputs = super().forward(
             pixel_values=pixel_values,
@@ -164,26 +186,30 @@ class MiniGPT4Blip2LlamaForGeneration(_MiniGPT4Blip2LlamaForGeneration):
         top_p: Optional[float] = 1.0,
     ):
         """
-        Generate sequences using the MinGPT4 model.
+        Generates sequences using the model.
 
         Args:
-            input_ids (torch.Tensor): Input token IDs.
-            num_beams (int, optional): Number of beams for beam search. Defaults to 5.
-            decoder_start_token_id (int, optional): Decoder start token ID. Defaults to 0.
-            decoder_end_token_id (int, optional): Decoder end token ID. Defaults to 1.
-            num_return_sequences (int, optional): Number of generated sequences to return. Defaults to 1.
-            min_gen_seq_length (int, optional): Minimum generation sequence length. Defaults to 0.
-            max_gen_seq_length (int, optional): Maximum generation sequence length. Defaults to 48.
-            repetition_penalty (float, optional): Repetition penalty. Defaults to 1.0.
-            no_repeat_ngram_size (int, optional): Size of n-grams to prevent repetition. Defaults to 0.
+            pixel_values (torch.Tensor): The pixel values.
+            prefix_input_ids (torch.Tensor): The input IDs for the prefix tokens.
+            suffix_input_ids (torch.Tensor): The input IDs for the suffix tokens.
+            num_beams (int, optional): The number of beams for beam search. Defaults to 5.
+            decoder_start_token_id (int, optional): The ID of the decoder start token. Defaults to 1.
+            decoder_end_token_id (int or List[int], optional): The ID(s) of the decoder end token(s).
+                Defaults to 2.
+            num_return_sequences (int, optional): The number of sequences to return. Defaults to 1.
+            min_gen_seq_length (int, optional): The minimum generated sequence length. Defaults to 0.
+            max_gen_seq_length (int, optional): The maximum generated sequence length. Defaults to 48.
+            repetition_penalty (float, optional): The repetition penalty. Defaults to 1.0.
+            no_repeat_ngram_size (int, optional): The size of the n-grams to avoid repeating. Defaults to 0.
             early_stopping (bool, optional): Whether to perform early stopping. Defaults to True.
-            length_penalty (float, optional): Length penalty. Defaults to 1.0.
-            num_beam_groups (int, optional): Number of beam groups for diverse beam search. Defaults to 1.
-            diversity_penalty (float, optional): Diversity penalty for diverse beam search. Defaults to 0.0.
-            do_sample (bool, optional): Whether to use sampling for generation. Defaults to False.
-            temperature (float, optional): Sampling temperature. Defaults to 1.0.
-            top_k (int, optional): Top-k sampling parameter. Defaults to 50.
-            top_p (float, optional): Top-p sampling parameter. Defaults to 1.0.
+            length_penalty (float, optional): The length penalty. Defaults to 1.0.
+            num_beam_groups (int, optional): The number of beam groups for diverse beam search.
+                Defaults to 1.
+            diversity_penalty (float, optional): The diversity penalty for diverse beam search. Defaults to 0.0.
+            do_sample (bool, optional): Whether to use sampling instead of beam search. Defaults to False.
+            temperature (float, optional): The temperature value for sampling. Defaults to 1.0.
+            top_k (int, optional): The value for top-k sampling. Defaults to 50.
+            top_p (float, optional): The value for top-p (nucleus) sampling. Defaults to 1.0.
 
         Returns:
             GenerationOutputs: The generation outputs.

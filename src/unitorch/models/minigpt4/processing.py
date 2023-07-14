@@ -92,8 +92,12 @@ class MiniGPT4Blip2LlamaProcessor(
             max_suffix_seq_length,
             self.max_suffix_seq_length,
         )
-        prefix_tokens = self.tokenizer.tokenize(str(prefix_text))[: max_prefix_seq_length - 1]
-        suffix_tokens = self.tokenizer.tokenize(str(suffix_text))[: max_suffix_seq_length]
+        prefix_tokens = self.tokenizer.tokenize(str(prefix_text))[
+            : max_prefix_seq_length - 1
+        ]
+        suffix_tokens = self.tokenizer.tokenize(str(suffix_text))[
+            :max_suffix_seq_length
+        ]
 
         prefix_tokens = [self.bos_token] + prefix_tokens
         prefix_padding = [self.pad_token] * (max_prefix_seq_length - len(prefix_tokens))
@@ -141,8 +145,12 @@ class MiniGPT4Blip2LlamaProcessor(
             max_suffix_seq_length,
             self.max_suffix_seq_length,
         )
-        prefix_tokens = self.tokenizer.tokenize(str(prefix_text))[: max_prefix_seq_length - 1]
-        suffix_tokens = self.tokenizer.tokenize(str(suffix_text))[: max_suffix_seq_length]
+        prefix_tokens = self.tokenizer.tokenize(str(prefix_text))[
+            : max_prefix_seq_length - 1
+        ]
+        suffix_tokens = self.tokenizer.tokenize(str(suffix_text))[
+            :max_suffix_seq_length
+        ]
 
         prefix_tokens = [self.bos_token] + prefix_tokens
         prefix_padding = [self.pad_token] * (max_prefix_seq_length - len(prefix_tokens))
@@ -236,8 +244,12 @@ class MiniGPT4Blip2LlamaProcessor(
             self.max_gen_seq_length,
         )
 
-        prefix_tokens = self.tokenizer.tokenize(str(prefix_text))[: max_prefix_seq_length - 1]
-        suffix_tokens = self.tokenizer.tokenize(str(suffix_text))[: max_suffix_seq_length]
+        prefix_tokens = self.tokenizer.tokenize(str(prefix_text))[
+            : max_prefix_seq_length - 1
+        ]
+        suffix_tokens = self.tokenizer.tokenize(str(suffix_text))[
+            :max_suffix_seq_length
+        ]
 
         prefix_tokens = [self.bos_token] + prefix_tokens
         prefix_padding = [self.pad_token] * (max_prefix_seq_length - len(prefix_tokens))
@@ -255,7 +267,9 @@ class MiniGPT4Blip2LlamaProcessor(
         ] + [self.eos_token]
 
         padding_pair = [self.pad_token] * (max_gen_seq_length - len(tokens_pair))
-        input_ids_pair = self.tokenizer.convert_tokens_to_ids(tokens_pair + padding_pair)
+        input_ids_pair = self.tokenizer.convert_tokens_to_ids(
+            tokens_pair + padding_pair
+        )
         attention_mask_pair = [1] * len(tokens_pair) + [0] * len(padding_pair)
 
         tokens_label = tokens_pair + [self.pad_token] * (

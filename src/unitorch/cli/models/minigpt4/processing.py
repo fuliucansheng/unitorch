@@ -24,7 +24,10 @@ from unitorch.cli.models.minigpt4 import pretrained_minigpt4_infos
 
 
 class MiniGPT4Blip2LlamaProcessor(_MiniGPT4Blip2LlamaProcessor):
-    """Processor for Llama models."""
+    """
+    MiniGPT4Blip2LlamaProcessor is a class for processing inputs and outputs of the MiniGPT4 model with Blip2 and Llama.
+    It inherits from the _MiniGPT4Blip2LlamaProcessor class.
+    """
 
     def __init__(
         self,
@@ -35,12 +38,14 @@ class MiniGPT4Blip2LlamaProcessor(_MiniGPT4Blip2LlamaProcessor):
         max_gen_seq_length: Optional[int] = 128,
     ):
         """
-        Initialize the MiniGPT4Blip2LlamaProcessor.
+        Initializes a MiniGPT4Blip2LlamaProcessor instance.
 
         Args:
-            vocab_path (str): The path to the vocabulary file.
-            max_prefix_seq_length (int, optional): The maximum sequence length. Defaults to 128.
-            max_gen_seq_length (int, optional): The maximum generated sequence length. Defaults to 128.
+            vocab_path (str): The file path to the vocabulary.
+            vision_config_path (str): The file path to the vision configuration.
+            max_prefix_seq_length (int, optional): The maximum length of the prefix sequence. Defaults to 32.
+            max_suffix_seq_length (int, optional): The maximum length of the suffix sequence. Defaults to 128.
+            max_gen_seq_length (int, optional): The maximum length of the generated sequence. Defaults to 128.
         """
         super().__init__(
             vocab_file=vocab_path,
@@ -54,14 +59,14 @@ class MiniGPT4Blip2LlamaProcessor(_MiniGPT4Blip2LlamaProcessor):
     @add_default_section_for_init("core/process/minigpt4")
     def from_core_configure(cls, config, **kwargs):
         """
-        Create an instance of MiniGPT4Blip2LlamaProcessor from a core configuration.
+        Creates a MiniGPT4Blip2LlamaProcessor instance from a core configuration.
 
         Args:
-            config: The core configuration.
+            config: The configuration object.
             **kwargs: Additional keyword arguments.
 
         Returns:
-            MiniGPT4Blip2LlamaProcessor: An instance of MiniGPT4Blip2LlamaProcessor.
+            dict: The dictionary containing the processor configuration.
         """
         config.set_default_section("core/process/minigpt4")
         pretrained_name = config.getoption("pretrained_name", "default-minigpt4")
@@ -96,14 +101,17 @@ class MiniGPT4Blip2LlamaProcessor(_MiniGPT4Blip2LlamaProcessor):
         max_suffix_seq_length: Optional[int] = None,
     ):
         """
-        Process inputs for prompt-based generation.
+        Processes inputs for the prompt mode.
 
         Args:
-            text (str): The input text.
-            max_prefix_seq_length (int, optional): The maximum sequence length. Defaults to None.
+            prefix_text (str): The prefix text.
+            suffix_text (str): The suffix text.
+            image (PIL.Image.Image): The input image.
+            max_prefix_seq_length (int, optional): The maximum length of the prefix sequence. Defaults to None.
+            max_suffix_seq_length (int, optional): The maximum length of the suffix sequence. Defaults to None.
 
         Returns:
-            TensorsInputs: Processed tensors inputs.
+            TensorsInputs: The processed input tensors.
         """
         outputs = super().prompt(
             prefix_text=prefix_text,
@@ -128,11 +136,14 @@ class MiniGPT4Blip2LlamaProcessor(_MiniGPT4Blip2LlamaProcessor):
         max_suffix_seq_length: Optional[int] = None,
     ):
         """
-        Preprocess the input text for generation tasks.
+        Processes inputs for the generation mode.
 
         Args:
-            text (str): The input text.
-            max_prefix_seq_length (int, optional): The maximum sequence length. Defaults to None.
+            prefix_text (str): The prefix text.
+            suffix_text (str): The suffix text.
+            image (PIL.Image.Image): The input image.
+            max_prefix_seq_length (int, optional): The maximum length of the prefix sequence. Defaults to None.
+            max_suffix_seq_length (int, optional): The maximum length of the suffix sequence. Defaults to None.
 
         Returns:
             TensorsInputs: The processed input tensors.
@@ -157,11 +168,11 @@ class MiniGPT4Blip2LlamaProcessor(_MiniGPT4Blip2LlamaProcessor):
         max_gen_seq_length: Optional[int] = None,
     ):
         """
-        Preprocess the target text for generation tasks.
+        Processes labels for the generation mode.
 
         Args:
-            text (str): The target text.
-            max_gen_seq_length (int, optional): The maximum generation sequence length. Defaults to None.
+            text (str): The input text.
+            max_gen_seq_length (int, optional): The maximum length of the generated sequence. Defaults to None.
 
         Returns:
             GenerationTargets: The processed generation targets.
@@ -187,16 +198,20 @@ class MiniGPT4Blip2LlamaProcessor(_MiniGPT4Blip2LlamaProcessor):
         max_gen_seq_length: Optional[int] = None,
     ):
         """
-        Preprocess the input and target texts for generation tasks.
+        Processes inputs and labels for the generation mode.
 
         Args:
-            text (str): The input text.
-            text_pair (str, optional): The paired input text. Defaults to None.
-            max_prefix_seq_length (int, optional): The maximum sequence length. Defaults to None.
-            max_gen_seq_length (int, optional): The maximum generation sequence length. Defaults to None.
+            prefix_text (str): The prefix text.
+            suffix_text (str): The suffix text.
+            text_pair (str): The text pair.
+            image (PIL.Image.Image): The input image.
+            max_prefix_seq_length (int, optional): The maximum length of the prefix sequence. Defaults to None.
+            max_suffix_seq_length (int, optional): The maximum length of the suffix sequence. Defaults to None.
+            max_gen_seq_length (int, optional): The maximum length of the generated sequence. Defaults to None.
 
         Returns:
-            Tuple[TensorsInputs, GenerationTargets]: The processed input tensors and generation targets.
+            TensorsInputs: The processed input tensors.
+            GenerationTargets: The processed generation targets.
         """
         outputs = super().generation(
             prefix_text=prefix_text,
@@ -226,13 +241,13 @@ class MiniGPT4Blip2LlamaProcessor(_MiniGPT4Blip2LlamaProcessor):
         outputs: GenerationOutputs,
     ):
         """
-        Detokenize the generated sequences.
+        Detokenizes the generation outputs.
 
         Args:
             outputs (GenerationOutputs): The generation outputs.
 
         Returns:
-            WriterOutputs: The detokenized writer outputs.
+            WriterOutputs: The processed writer outputs.
         """
         results = outputs.to_pandas()
         assert results.shape[0] == 0 or results.shape[0] == outputs.sequences.shape[0]
@@ -243,6 +258,9 @@ class MiniGPT4Blip2LlamaProcessor(_MiniGPT4Blip2LlamaProcessor):
             decoded = [list(map(cleanup_string, sequence)) for sequence in decoded]
         elif isinstance(decoded[0], str):
             decoded = list(map(cleanup_string, decoded))
-
+        else:
+            raise ValueError(
+                f"Unsupported type for minigpt4 detokenize: {type(decoded[0])}"
+            )
         results["decoded"] = decoded
         return WriterOutputs(results)

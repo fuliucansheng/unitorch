@@ -245,7 +245,7 @@ class XPegasusForGeneration(GenericModel):
         input_ids: torch.Tensor,
         num_beams: Optional[int] = 5,
         decoder_start_token_id: Optional[int] = 0,
-        decoder_end_token_id: Optional[int] = 1,
+        decoder_end_token_id: Optional[Union[int, List[int]]] = 1,
         num_return_sequences: Optional[int] = 1,
         min_gen_seq_length: Optional[int] = 0,
         max_gen_seq_length: Optional[int] = 48,
@@ -267,7 +267,7 @@ class XPegasusForGeneration(GenericModel):
             input_ids: The input token IDs.
             num_beams (int, optional): The number of beams for beam search. Defaults to 5.
             decoder_start_token_id (int, optional): The decoder's start token ID. Defaults to 2.
-            decoder_end_token_id (int, optional): The decoder's end token ID. Defaults to 2.
+            decoder_end_token_id (int or List[int], optional): The decoder's end token ID. Defaults to 2.
             num_return_sequences (int, optional): The number of generated sequences to return. Defaults to 1.
             min_gen_seq_length (int, optional): The minimum length of the generated sequences. Defaults to 0.
             max_gen_seq_length (int, optional): The maximum length of the generated sequences. Defaults to 48.
