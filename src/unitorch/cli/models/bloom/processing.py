@@ -1,6 +1,7 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
+import re
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.bloom import BloomProcessor as _BloomProcessor
@@ -249,5 +250,14 @@ class BloomProcessor(_BloomProcessor):
         assert results.shape[0] == 0 or results.shape[0] == outputs.sequences.shape[0]
 
         decoded = super().detokenize(sequences=outputs.sequences)
+        cleanup_string = lambda text: re.sub(r"\n", " ", text)
+        if isinstance(decoded[0], list):
+            decoded = [list(map(cleanup_string, sequence)) for sequence in decoded]
+        elif isinstance(decoded[0], str):
+            decoded = list(map(cleanup_string, decoded))
+        else:
+            raise ValueError(
+                f"Unsupported type for minigpt4 detokenize: {type(decoded[0])}"
+            )
         results["decoded"] = decoded
         return WriterOutputs(results)

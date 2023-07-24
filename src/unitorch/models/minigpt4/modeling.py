@@ -235,7 +235,7 @@ class MiniGPT4Blip2LlamaForGeneration(GenericModel):
         "^qformer.": "model.",
         "^query_tokens": "model.",
         "^vision_model.": "model.",
-        "^(?!model\.llama\.|model\.language_projection\.)model\.": "model.llama.",
+        "^(?!model\.llama\.|model\.language_projection\.|model\.qformer\.|model\.query_tokens|model\.vision_model\.)model\.": "model.llama.",
         "^lm_head.": "model.llama.",
     }
 

@@ -113,18 +113,19 @@ class ClassificationProcessor:
         results = outputs.to_pandas()
         assert results.shape[0] == 0 or results.shape[0] == outputs.outputs.shape[0]
 
+        outputs = outputs.outputs.numpy()
         if self.act_fn is not None:
-            outputs.outputs = self.act_fn(outputs.outputs)
+            outputs = self.act_fn(outputs)
 
-        if outputs.outputs.dim() == 2:
+        if outputs.ndim == 2:
             pscore = (
-                outputs.outputs[:, 1]
-                if outputs.outputs.size(-1) > 1
-                else outputs.outputs[:, 0]
+                outputs[:, 1]
+                if outputs.shape[-1] > 1
+                else outputs[:, 0]
             )
             results["pscore"] = pscore.tolist()
         else:
-            results["pscore"] = outputs.outputs.tolist()
+            results["pscore"] = outputs.tolist()
         return WriterOutputs(results)
 
     @register_process("core/postprocess/classification/score")
@@ -172,32 +173,32 @@ class ClassificationProcessor:
         results = outputs.to_pandas()
         assert results.shape[0] == 0 or results.shape[0] == outputs.embedding.shape[0]
 
-        embedding = outputs.embedding
-        if embedding.dim() > 2:
+        embedding = outputs.embedding.numpy()
+        if embedding.ndim > 2:
             embedding = embedding.reshape(embedding.size(0), -1)
         results["embedding"] = embedding.tolist()
 
-        embedding1 = outputs.embedding1
-        if embedding1.numel() > 0:
-            if embedding1.dim() > 2:
+        embedding1 = outputs.embedding1.numpy()
+        if embedding1.size > 0:
+            if embedding1.ndim > 2:
                 embedding1 = embedding1.reshape(embedding1.size(0), -1)
             results["embedding1"] = embedding1.tolist()
 
-        embedding2 = outputs.embedding2
-        if embedding2.numel() > 0:
-            if embedding2.dim() > 2:
+        embedding2 = outputs.embedding2.numpy()
+        if embedding2.size > 0:
+            if embedding2.ndim > 2:
                 embedding2 = embedding2.reshape(embedding2.size(0), -1)
             results["embedding2"] = embedding2.tolist()
 
-        embedding3 = outputs.embedding3
-        if embedding3.numel() > 0:
-            if embedding3.dim() > 2:
+        embedding3 = outputs.embedding3.numpy()
+        if embedding3.size > 0:
+            if embedding3.ndim > 2:
                 embedding3 = embedding3.reshape(embedding3.size(0), -1)
             results["embedding3"] = embedding3.tolist()
 
-        embedding4 = outputs.embedding4
-        if embedding4.numel() > 0:
-            if embedding4.dim() > 2:
+        embedding4 = outputs.embedding4.numpy()
+        if embedding4.size > 0:
+            if embedding4.ndim > 2:
                 embedding4 = embedding4.reshape(embedding4.size(0), -1)
             results["embedding4"] = embedding4.tolist()
 
@@ -220,44 +221,44 @@ class ClassificationProcessor:
         results = outputs.to_pandas()
         assert results.shape[0] == 0 or results.shape[0] == outputs.embedding.shape[0]
 
-        embedding = outputs.embedding
-        if embedding.dim() > 2:
+        embedding = outputs.embedding.numpy()
+        if embedding.ndim > 2:
             embedding = embedding.reshape(embedding.size(0), -1)
         results["embedding"] = embedding.tolist()
         results["embedding"] = results["embedding"].map(
             lambda x: " ".join([str(i) for i in x])
         )
 
-        embedding1 = outputs.embedding1
-        if embedding1.numel() > 0:
-            if embedding1.dim() > 2:
+        embedding1 = outputs.embedding1.numpy()
+        if embedding1.size > 0:
+            if embedding1.ndim > 2:
                 embedding1 = embedding1.reshape(embedding1.size(0), -1)
             results["embedding1"] = embedding1.tolist()
             results["embedding1"] = results["embedding1"].map(
                 lambda x: " ".join([str(i) for i in x])
             )
 
-        embedding2 = outputs.embedding2
-        if embedding2.numel() > 0:
-            if embedding2.dim() > 2:
+        embedding2 = outputs.embedding2.numpy()
+        if embedding2.size > 0:
+            if embedding2.ndim > 2:
                 embedding2 = embedding2.reshape(embedding2.size(0), -1)
             results["embedding2"] = embedding2.tolist()
             results["embedding2"] = results["embedding2"].map(
                 lambda x: " ".join([str(i) for i in x])
             )
 
-        embedding3 = outputs.embedding3
-        if embedding3.numel() > 0:
-            if embedding3.dim() > 2:
+        embedding3 = outputs.embedding3.numpy()
+        if embedding3.size > 0:
+            if embedding3.ndim > 2:
                 embedding3 = embedding3.reshape(embedding3.size(0), -1)
             results["embedding3"] = embedding3.tolist()
             results["embedding3"] = results["embedding3"].map(
                 lambda x: " ".join([str(i) for i in x])
             )
 
-        embedding4 = outputs.embedding4
-        if embedding4.numel() > 0:
-            if embedding4.dim() > 2:
+        embedding4 = outputs.embedding4.numpy()
+        if embedding4.size > 0:
+            if embedding4.ndim > 2:
                 embedding4 = embedding4.reshape(embedding4.size(0), -1)
             results["embedding4"] = embedding4.tolist()
             results["embedding4"] = results["embedding4"].map(
