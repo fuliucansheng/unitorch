@@ -32,7 +32,6 @@ deepspeed = ["deepspeed==0.9.0", "mpi4py==3.1.4"]
 diffusers = ["diffusers==0.16.1"]
 accelerate = ["accelerate==0.20.3"]
 chatglm = ["protobuf==3.20.0", "icetk==0.0.4", "cpm_kernels==1.0.11"]
-fastapi = ["fastapi>=0.99.0"]
 all = ["unitorch[deepspeed,diffusers,accelerate,chatglm]"]
 
 [project.scripts]
@@ -41,7 +40,6 @@ unitorch-eval = "unitorch.cli.console.eval:cli_main"
 unitorch-infer = "unitorch.cli.console.infer:cli_main"
 unitorch-script= "unitorch.cli.console.script:cli_main"
 unitorch-service = "unitorch.cli.console.service:cli_main"
-unitorch-fastapi = "unitorch.cli.console.fastapi:cli_main"
 
 [tool.setuptools]
 include-package-data = true

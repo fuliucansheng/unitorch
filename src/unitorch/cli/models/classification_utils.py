@@ -118,11 +118,7 @@ class ClassificationProcessor:
             outputs = self.act_fn(outputs)
 
         if outputs.ndim == 2:
-            pscore = (
-                outputs[:, 1]
-                if outputs.shape[-1] > 1
-                else outputs[:, 0]
-            )
+            pscore = outputs[:, 1] if outputs.shape[-1] > 1 else outputs[:, 0]
             results["pscore"] = pscore.tolist()
         else:
             results["pscore"] = outputs.tolist()
