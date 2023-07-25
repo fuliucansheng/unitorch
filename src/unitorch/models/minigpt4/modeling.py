@@ -232,11 +232,12 @@ class MiniGPT4Blip2LlamaForGeneration(GenericModel):
     """
 
     prefix_keys_in_state_dict = {
-        "^qformer.": "model.",
-        "^query_tokens": "model.",
-        "^vision_model.": "model.",
-        "^(?!model\.llama\.|model\.language_projection\.|model\.qformer\.|model\.query_tokens|model\.vision_model\.)model\.": "model.llama.",
-        "^lm_head.": "model.llama.",
+        "^qformer.": "base_model.",
+        "^query_tokens": "base_model.",
+        "^vision_model.": "base_model.",
+        "^model.language_projection.": "base_",
+        "^(?!model\.language_projection\.)model\.": "base_model.llama.",
+        "^lm_head.": "base_model.llama.",
     }
 
     def __init__(
@@ -266,19 +267,19 @@ class MiniGPT4Blip2LlamaForGeneration(GenericModel):
         self.blip2_config.pad_token_id = pad_token_id
         self.llama_config = LlamaConfig.from_json_file(llama_config_path)
         self.llama_config.gradient_checkpointing = gradient_checkpointing
-        self.model = MiniGPT4Blip2LlamaModel(self.blip2_config, self.llama_config)
+        self.base_model = MiniGPT4Blip2LlamaModel(self.blip2_config, self.llama_config)
         self.init_weights()
 
         if freeze_vision_model:
-            for param in self.model.vision_model.parameters():
+            for param in self.base_model.vision_model.parameters():
                 param.requires_grad = False
 
         if freeze_qformer_model:
-            for param in self.model.qformer.parameters():
+            for param in self.base_model.qformer.parameters():
                 param.requires_grad = False
 
         if freeze_llama_model:
-            for param in self.model.llama.parameters():
+            for param in self.base_model.llama.parameters():
                 param.requires_grad = False
 
     def forward(
@@ -306,7 +307,7 @@ class MiniGPT4Blip2LlamaForGeneration(GenericModel):
         Returns:
             logits: The output logits.
         """
-        outputs = self.model(
+        outputs = self.base_model(
             pixel_values=pixel_values,
             prefix_input_ids=prefix_input_ids,
             suffix_input_ids=suffix_input_ids,
@@ -370,7 +371,7 @@ class MiniGPT4Blip2LlamaForGeneration(GenericModel):
         Returns:
             outputs (GenericOutputs): The generated sequences and their scores.
         """
-        outputs = self.model.generate(
+        outputs = self.base_model.generate(
             pixel_values=pixel_values,
             prefix_input_ids=prefix_input_ids,
             suffix_input_ids=suffix_input_ids,

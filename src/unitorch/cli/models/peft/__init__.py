@@ -15,3 +15,4 @@ from unitorch.cli.models.peft.modeling_llama import (
     LlamaLoraForClassification,
     LlamaLoraForGeneration,
 )
+from unitorch.cli.models.peft.modeling_minigpt4 import MiniGPT4LoraForGeneration

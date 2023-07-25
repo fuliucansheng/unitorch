@@ -8,10 +8,10 @@ from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from peft import AdaLoraConfig, PeftModelForCausalLM
 from transformers import BloomModel, BloomConfig, BloomForCausalLM
 from unitorch.models import GenericModel, GenericOutputs
-from unitorch.models.peft import PeftModelForSequenceClassification, PeftCheckpointMixin
+from unitorch.models.peft import PeftModelForSequenceClassification, GenericPeftModel
 
 
-class BloomAdaLoraForClassification(GenericModel, PeftCheckpointMixin):
+class BloomAdaLoraForClassification(GenericPeftModel):
     """
     BloomAdaLora model for classification tasks.
     """
@@ -87,7 +87,7 @@ class BloomAdaLoraForClassification(GenericModel, PeftCheckpointMixin):
         return logits
 
 
-class BloomAdaLoraForGeneration(GenericModel, PeftCheckpointMixin):
+class BloomAdaLoraForGeneration(GenericPeftModel):
     """
     BloomAdaLora model for generation tasks.
     """
