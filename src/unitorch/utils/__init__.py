@@ -43,6 +43,7 @@ from unitorch.utils.import_utils import (
     is_diffusers_available,
     is_torch_available,
     is_torch2_available,
+    is_bitsandbytes_available,
 )
 from unitorch.utils.io import GenericWriter, IOProcess, PostProcess, GENERATE_FINISHED
 from unitorch.utils.torch_utils import get_local_rank

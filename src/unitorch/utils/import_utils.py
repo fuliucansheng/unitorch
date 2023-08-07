@@ -88,3 +88,16 @@ def is_torch_available():
 
 def is_torch2_available():
     return _torch_available and _torch_version >= "2.0.0"
+
+
+# bitsandbytes
+_bitsandbytes_available = importlib.util.find_spec("bitsandbytes") is not None
+try:
+    _bitsandbytes_version = importlib_metadata.version("bitsandbytes")
+    logging.debug(f"Successfully imported bitsandbytes version {_bitsandbytes_version}")
+except importlib_metadata.PackageNotFoundError:
+    _bitsandbytes_available = False
+
+
+def is_bitsandbytes_available():
+    return _bitsandbytes_available or is_offline_debug_mode()

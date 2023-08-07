@@ -14,6 +14,7 @@ from peft import (
     PeftModelForSequenceClassification,
 )
 from unitorch.utils import replace
+from unitorch.models import CheckpointMixin
 
 
 @replace(PeftModelForSequenceClassification)
@@ -91,7 +92,7 @@ class PeftModelForSequenceClassification(PeftModelForSequenceClassification):
             return self.base_model(inputs_embeds=inputs_embeds, **kwargs)
 
 
-class PeftCheckpointMixin:
+class PeftCheckpointMixin(CheckpointMixin):
     checkpoint_name = "pytorch_peft_model.bin"
 
     def save_checkpoint(

@@ -200,6 +200,7 @@ from unitorch.models.processing_utils import (
     HfImageClassificationProcessor,
 )
 from unitorch.models.modeling_ema import ExponentialMovingAverage
+from unitorch.models.quantization import QuantizationConfig, QuantizationMixin
 
 # import models
 import unitorch.models.bart
