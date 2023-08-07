@@ -8,10 +8,10 @@ from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from peft import AdaLoraConfig, PeftModelForCausalLM
 from transformers import LlamaModel, LlamaConfig, LlamaForCausalLM
 from unitorch.models import GenericModel, GenericOutputs
-from unitorch.models.peft import PeftModelForSequenceClassification, PeftCheckpointMixin
+from unitorch.models.peft import PeftModelForSequenceClassification, GenericPeftModel
 
 
-class LlamaAdaLoraForClassification(GenericModel, PeftCheckpointMixin):
+class LlamaAdaLoraForClassification(GenericPeftModel):
     prefix_keys_in_state_dict = {
         "^(?!peft_model\.base_model\.model\.).*": "peft_model.base_model."
     }
@@ -83,7 +83,7 @@ class LlamaAdaLoraForClassification(GenericModel, PeftCheckpointMixin):
         return logits
 
 
-class LlamaAdaLoraForGeneration(GenericModel, PeftCheckpointMixin):
+class LlamaAdaLoraForGeneration(GenericPeftModel):
     prefix_keys_in_state_dict = {
         "^(?!peft_model\.base_model\.model\.model\.)model\.": "peft_model.base_model.model.",
         "^lm_head.": "peft_model.base_model.model.",
