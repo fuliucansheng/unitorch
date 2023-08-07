@@ -20,7 +20,12 @@ from transformers.models.blip_2.modeling_blip_2 import (
     Blip2QFormerModel,
 )
 from unitorch.utils.decorators import replace
-from unitorch.models import GenericModel, GenericOutputs
+from unitorch.models import (
+    GenericModel,
+    GenericOutputs,
+    QuantizationConfig,
+    QuantizationMixin,
+)
 from unitorch.models.clip.modeling import AllGather
 
 
@@ -225,7 +230,7 @@ class MiniGPT4Blip2LlamaModel(nn.Module):
         return outputs
 
 
-class MiniGPT4Blip2LlamaForGeneration(GenericModel):
+class MiniGPT4Blip2LlamaForGeneration(GenericModel, QuantizationMixin):
     """
     MiniGPT4Blip2LlamaForGeneration is a generation model that combines the MiniGPT4Blip2LlamaModel with generation
     capabilities. It inherits from the GenericModel class.
@@ -243,6 +248,7 @@ class MiniGPT4Blip2LlamaForGeneration(GenericModel):
         self,
         blip2_config_path: str,
         llama_config_path: str,
+        quant_config_path: Optional[str] = None,
         pad_token_id: Optional[int] = 0,
         freeze_vision_model: Optional[bool] = True,
         freeze_qformer_model: Optional[bool] = True,
@@ -280,6 +286,10 @@ class MiniGPT4Blip2LlamaForGeneration(GenericModel):
         if freeze_llama_model:
             for param in self.model.llama.parameters():
                 param.requires_grad = False
+
+        if quant_config_path is not None:
+            self.quant_config = QuantizationConfig.from_json_file(quant_config_path)
+            self.quantize(self.quant_config)
 
     def forward(
         self,
