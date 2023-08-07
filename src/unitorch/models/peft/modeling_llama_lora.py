@@ -7,11 +7,11 @@ import torch.nn as nn
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from peft import LoraConfig, PeftModelForCausalLM
 from transformers import LlamaModel, LlamaConfig, LlamaForCausalLM
-from unitorch.models import GenericModel, GenericOutputs
+from unitorch.models import GenericModel, GenericOutputs, QuantizationConfig, QuantizationMixin
 from unitorch.models.peft import PeftModelForSequenceClassification, GenericPeftModel
 
 
-class LlamaLoraForClassification(GenericPeftModel):
+class LlamaLoraForClassification(GenericPeftModel, QuantizationMixin):
     prefix_keys_in_state_dict = {
         "^(?!peft_model\.base_model\.model\.).*": "peft_model.base_model."
     }
@@ -19,6 +19,7 @@ class LlamaLoraForClassification(GenericPeftModel):
     def __init__(
         self,
         config_path: str,
+        quant_config_path: Optional[str] = None,
         lora_r: Optional[int] = 16,
         lora_alpha: Optional[int] = 32,
         lora_dropout: Optional[float] = 0.05,
@@ -38,8 +39,12 @@ class LlamaLoraForClassification(GenericPeftModel):
             fan_in_fan_out=fan_in_fan_out,
             target_modules=target_modules,
         )
+        self.model = LlamaModel(self.config)
+        if quant_config_path is not None:
+            self.quant_config = QuantizationConfig.from_json_file(quant_config_path)
+            self.model.quantize(self.quant_config)
         self.peft_model = PeftModelForSequenceClassification(
-            LlamaModel(self.config), self.peft_config
+            self.model, self.peft_config
         )
         self.dropout = nn.Dropout(hidden_dropout_prob)
         self.classifier = nn.Linear(self.config.hidden_size, num_classes)
@@ -82,6 +87,7 @@ class LlamaLoraForGeneration(GenericPeftModel):
     def __init__(
         self,
         config_path: str,
+        quant_config_path: Optional[str] = None,
         lora_r: Optional[int] = 16,
         lora_alpha: Optional[int] = 32,
         lora_dropout: Optional[float] = 0.05,
@@ -99,8 +105,12 @@ class LlamaLoraForGeneration(GenericPeftModel):
             fan_in_fan_out=fan_in_fan_out,
             target_modules=target_modules,
         )
+        self.model = LlamaForCausalLM(self.config)
+        if quant_config_path is not None:
+            self.quant_config = QuantizationConfig.from_json_file(quant_config_path)
+            self.model.quantize(self.quant_config)
         self.peft_model = PeftModelForCausalLM(
-            LlamaForCausalLM(self.config), self.peft_config
+            self.model, self.peft_config
         )
         self.init_weights()
 

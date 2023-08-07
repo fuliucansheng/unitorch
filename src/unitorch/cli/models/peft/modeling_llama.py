@@ -32,6 +32,7 @@ class LlamaAdaLoraForClassification(_LlamaAdaLoraForClassification):
     def __init__(
         self,
         config_path: str,
+        quant_config_path: Optional[str] = None,
         target_r: Optional[int] = 8,
         init_r: Optional[int] = 12,
         tinit: Optional[int] = 0,
@@ -65,6 +66,7 @@ class LlamaAdaLoraForClassification(_LlamaAdaLoraForClassification):
         """
         super().__init__(
             config_path=config_path,
+            quant_config_path=quant_config_path,
             target_r=target_r,
             init_r=init_r,
             tinit=tinit,
@@ -100,6 +102,9 @@ class LlamaAdaLoraForClassification(_LlamaAdaLoraForClassification):
             nested_dict_value(pretrained_llama_infos, pretrained_name, "config"),
         )
         config_path = cached_path(config_path)
+        quant_config_path = config.getoption("quant_config_path", None)
+        if quant_config_path is not None:
+            quant_config_path = cached_path(quant_config_path)
 
         target_r = config.getoption("target_r", 8)
         init_r = config.getoption("init_r", 12)
@@ -117,6 +122,7 @@ class LlamaAdaLoraForClassification(_LlamaAdaLoraForClassification):
 
         inst = cls(
             config_path,
+            quant_config_path=quant_config_path,
             target_r=target_r,
             init_r=init_r,
             tinit=tinit,
@@ -190,6 +196,7 @@ class LlamaAdaLoraForGeneration(_LlamaAdaLoraForGeneration):
     def __init__(
         self,
         config_path: str,
+        quant_config_path: Optional[str] = None,
         target_r: Optional[int] = 8,
         init_r: Optional[int] = 12,
         tinit: Optional[int] = 0,
@@ -221,6 +228,7 @@ class LlamaAdaLoraForGeneration(_LlamaAdaLoraForGeneration):
         """
         super().__init__(
             config_path=config_path,
+            quant_config_path=quant_config_path,
             target_r=target_r,
             init_r=init_r,
             tinit=tinit,
@@ -255,6 +263,9 @@ class LlamaAdaLoraForGeneration(_LlamaAdaLoraForGeneration):
             nested_dict_value(pretrained_llama_infos, pretrained_name, "config"),
         )
         config_path = cached_path(config_path)
+        quant_config_path = config.getoption("quant_config_path", None)
+        if quant_config_path is not None:
+            quant_config_path = cached_path(quant_config_path)
 
         target_r = config.getoption("target_r", 8)
         init_r = config.getoption("init_r", 12)
@@ -271,6 +282,7 @@ class LlamaAdaLoraForGeneration(_LlamaAdaLoraForGeneration):
 
         inst = cls(
             config_path,
+            quant_config_path=quant_config_path,
             target_r=target_r,
             init_r=init_r,
             tinit=tinit,
@@ -417,6 +429,7 @@ class LlamaLoraForClassification(_LlamaLoraForClassification):
     def __init__(
         self,
         config_path: str,
+        quant_config_path: Optional[str] = None,
         lora_r: Optional[int] = 16,
         lora_alpha: Optional[int] = 32,
         lora_dropout: Optional[float] = 0.05,
@@ -440,6 +453,7 @@ class LlamaLoraForClassification(_LlamaLoraForClassification):
         """
         super().__init__(
             config_path=config_path,
+            quant_config_path=quant_config_path,
             lora_r=lora_r,
             lora_alpha=lora_alpha,
             lora_dropout=lora_dropout,
@@ -471,6 +485,10 @@ class LlamaLoraForClassification(_LlamaLoraForClassification):
         )
         config_path = cached_path(config_path)
 
+        quant_config_path = config.getoption("quant_config_path", None)
+        if quant_config_path is not None:
+            quant_config_path = cached_path(quant_config_path)
+
         lora_r = config.getoption("lora_r", 16)
         lora_alpha = config.getoption("lora_alpha", 32)
         lora_dropout = config.getoption("lora_dropout", 0.05)
@@ -482,6 +500,7 @@ class LlamaLoraForClassification(_LlamaLoraForClassification):
 
         inst = cls(
             config_path,
+            quant_config_path=quant_config_path,
             lora_r=lora_r,
             lora_alpha=lora_alpha,
             lora_dropout=lora_dropout,
@@ -550,6 +569,7 @@ class LlamaLoraForGeneration(_LlamaLoraForGeneration):
     def __init__(
         self,
         config_path: str,
+        quant_config_path: Optional[str] = None,
         lora_r: Optional[int] = 16,
         lora_alpha: Optional[int] = 32,
         lora_dropout: Optional[float] = 0.05,
@@ -571,6 +591,7 @@ class LlamaLoraForGeneration(_LlamaLoraForGeneration):
         """
         super().__init__(
             config_path=config_path,
+            quant_config_path=quant_config_path,
             lora_r=lora_r,
             lora_alpha=lora_alpha,
             lora_dropout=lora_dropout,
@@ -600,6 +621,9 @@ class LlamaLoraForGeneration(_LlamaLoraForGeneration):
             nested_dict_value(pretrained_llama_infos, pretrained_name, "config"),
         )
         config_path = cached_path(config_path)
+        quant_config_path = config.getoption("quant_config_path", None)
+        if quant_config_path is not None:
+            quant_config_path = cached_path(quant_config_path)
 
         lora_r = config.getoption("lora_r", 16)
         lora_alpha = config.getoption("lora_alpha", 32)
@@ -611,6 +635,7 @@ class LlamaLoraForGeneration(_LlamaLoraForGeneration):
 
         inst = cls(
             config_path,
+            quant_config_path=quant_config_path,
             lora_r=lora_r,
             lora_alpha=lora_alpha,
             lora_dropout=lora_dropout,
