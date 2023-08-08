@@ -70,7 +70,7 @@ import unitorch.cli.optim.lion
 # bitsandbytes
 from unitorch.utils import is_bitsandbytes_available
 
-if is_bitsandbytes_available:
+if is_bitsandbytes_available():
     from unitorch.optim import Adam8bit, AdamW8bit
 
     @register_optim("core/optim/adam8bit")
