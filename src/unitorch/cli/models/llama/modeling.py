@@ -76,7 +76,12 @@ class LlamaForClassification(_LlamaForClassification):
         gradient_checkpointing = config.getoption("gradient_checkpointing", False)
         num_classes = config.getoption("num_classes", 1)
 
-        inst = cls(config_path, quant_config_path=quant_config_path, num_classes=num_classes, gradient_checkpointing=gradient_checkpointing,)
+        inst = cls(
+            config_path,
+            quant_config_path=quant_config_path,
+            num_classes=num_classes,
+            gradient_checkpointing=gradient_checkpointing,
+        )
 
         pretrained_weight_path = config.getoption("pretrained_weight_path", None)
         weight_path = pop_value(
@@ -168,7 +173,11 @@ class LlamaForPretrain(_LlamaForPretrain):
             quant_config_path = cached_path(quant_config_path)
         gradient_checkpointing = config.getoption("gradient_checkpointing", False)
 
-        inst = cls(config_path, quant_config_path=quant_config_path, gradient_checkpointing=gradient_checkpointing,)
+        inst = cls(
+            config_path,
+            quant_config_path=quant_config_path,
+            gradient_checkpointing=gradient_checkpointing,
+        )
         pretrained_weight_path = config.getoption("pretrained_weight_path", None)
         weight_path = pop_value(
             pretrained_weight_path,
@@ -265,7 +274,11 @@ class LlamaForGeneration(_LlamaForGeneration):
             quant_config_path = cached_path(quant_config_path)
         gradient_checkpointing = config.getoption("gradient_checkpointing", False)
 
-        inst = cls(config_path, quant_config_path=quant_config_path, gradient_checkpointing=gradient_checkpointing,)
+        inst = cls(
+            config_path,
+            quant_config_path=quant_config_path,
+            gradient_checkpointing=gradient_checkpointing,
+        )
         pretrained_weight_path = config.getoption("pretrained_weight_path", None)
         weight_path = pop_value(
             pretrained_weight_path,

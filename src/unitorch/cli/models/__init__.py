@@ -77,7 +77,6 @@ import unitorch.cli.models.bert
 import unitorch.cli.models.beit
 import unitorch.cli.models.blip
 import unitorch.cli.models.bloom
-import unitorch.cli.models.chatglm
 import unitorch.cli.models.clip
 import unitorch.cli.models.deberta
 import unitorch.cli.models.minigpt4

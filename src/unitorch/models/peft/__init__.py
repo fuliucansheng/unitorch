@@ -146,6 +146,7 @@ class PeftCheckpointMixin(CheckpointMixin):
             f"{type(self).__name__} model load weight from checkpoint {weight_path}"
         )
 
+
 class GenericPeftModel(nn.Module, PeftCheckpointMixin):
     def __init__(self):
         super().__init__()
@@ -195,20 +196,11 @@ class GenericPeftModel(nn.Module, PeftCheckpointMixin):
         return next(self.parameters()).device
 
 
-from unitorch.models.peft.modeling_bloom_adalora import (
-    BloomAdaLoraForClassification,
-    BloomAdaLoraForGeneration,
-)
 from unitorch.models.peft.modeling_bloom_lora import (
     BloomLoraForClassification,
     BloomLoraForGeneration,
-)
-from unitorch.models.peft.modeling_llama_adalora import (
-    LlamaAdaLoraForClassification,
-    LlamaAdaLoraForGeneration,
 )
 from unitorch.models.peft.modeling_llama_lora import (
     LlamaLoraForClassification,
     LlamaLoraForGeneration,
 )
-from unitorch.models.peft.modeling_minigpt4_lora import MiniGPT4LoraForGeneration

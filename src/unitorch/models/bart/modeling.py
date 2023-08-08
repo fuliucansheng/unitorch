@@ -228,7 +228,6 @@ class BartForGeneration(GenericModel):
             return_dict=True,
         )
         logits = outputs.logits
-        print("model :", logits[0, 0, 0].item(), logits[0, 0, 41552].item())
         return logits
 
     @torch.no_grad()

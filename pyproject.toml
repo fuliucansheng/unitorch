@@ -31,8 +31,7 @@ dynamic = ["version", "dependencies"]
 deepspeed = ["deepspeed==0.9.0", "mpi4py==3.1.4"]
 diffusers = ["diffusers==0.16.1"]
 quantization = ["bitsandbytes>=0.41.1"]
-chatglm = ["protobuf==3.20.0", "icetk==0.0.4", "cpm_kernels==1.0.11"]
-all = ["unitorch[deepspeed,diffusers,quantization,chatglm]"]
+all = ["unitorch[deepspeed,diffusers,quantization]"]
 
 [project.scripts]
 unitorch-train = "unitorch.cli.console.train:cli_main"

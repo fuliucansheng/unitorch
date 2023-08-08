@@ -10,7 +10,12 @@ import transformers
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from transformers import LlamaModel, LlamaConfig, LlamaForCausalLM
 from unitorch.utils.decorators import replace
-from unitorch.models import GenericModel, GenericOutputs, QuantizationConfig, QuantizationMixin
+from unitorch.models import (
+    GenericModel,
+    GenericOutputs,
+    QuantizationConfig,
+    QuantizationMixin,
+)
 
 
 class LlamaForClassification(GenericModel, QuantizationMixin):

@@ -7,7 +7,13 @@ import torch.nn as nn
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from peft import LoraConfig, PeftModelForCausalLM
 from transformers import LlamaModel, LlamaConfig, LlamaForCausalLM
-from unitorch.models import GenericModel, GenericOutputs, QuantizationConfig, QuantizationMixin
+from unitorch.models import (
+    GenericModel,
+    GenericOutputs,
+    QuantizationConfig,
+    QuantizationMixin,
+)
+from unitorch.models.quantization import quantize_model
 from unitorch.models.peft import PeftModelForSequenceClassification, GenericPeftModel
 
 
@@ -39,13 +45,12 @@ class LlamaLoraForClassification(GenericPeftModel, QuantizationMixin):
             fan_in_fan_out=fan_in_fan_out,
             target_modules=target_modules,
         )
-        self.model = LlamaModel(self.config)
+        model = LlamaModel(self.config)
         if quant_config_path is not None:
-            self.quant_config = QuantizationConfig.from_json_file(quant_config_path)
-            self.model.quantize(self.quant_config)
-        self.peft_model = PeftModelForSequenceClassification(
-            self.model, self.peft_config
-        )
+            quant_config = QuantizationConfig.from_json_file(quant_config_path)
+            ignore_modules = target_modules + ["lm_head"]
+            model = quantize_model(model, quant_config, ignore_modules=ignore_modules)
+        self.peft_model = PeftModelForSequenceClassification(model, self.peft_config)
         self.dropout = nn.Dropout(hidden_dropout_prob)
         self.classifier = nn.Linear(self.config.hidden_size, num_classes)
         self.init_weights()
@@ -105,13 +110,12 @@ class LlamaLoraForGeneration(GenericPeftModel):
             fan_in_fan_out=fan_in_fan_out,
             target_modules=target_modules,
         )
-        self.model = LlamaForCausalLM(self.config)
+        model = LlamaForCausalLM(self.config)
         if quant_config_path is not None:
-            self.quant_config = QuantizationConfig.from_json_file(quant_config_path)
-            self.model.quantize(self.quant_config)
-        self.peft_model = PeftModelForCausalLM(
-            self.model, self.peft_config
-        )
+            quant_config = QuantizationConfig.from_json_file(quant_config_path)
+            ignore_modules = target_modules + ["lm_head"]
+            model = quantize_model(model, quant_config, ignore_modules=ignore_modules)
+        self.peft_model = PeftModelForCausalLM(model, self.peft_config)
         self.init_weights()
 
     def forward(

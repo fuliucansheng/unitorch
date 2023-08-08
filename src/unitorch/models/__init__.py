@@ -208,7 +208,6 @@ import unitorch.models.beit
 import unitorch.models.bert
 import unitorch.models.blip
 import unitorch.models.bloom
-import unitorch.models.chatglm
 import unitorch.models.clip
 import unitorch.models.deberta
 import unitorch.models.diffusers
