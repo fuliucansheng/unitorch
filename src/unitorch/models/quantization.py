@@ -19,6 +19,8 @@ def quantize_model(model, config, ignore_modules):
         modules_to_not_convert=ignore_modules,
         quantization_config=config,
     )
+    if ignore_modules is None:
+        ignore_modules = ["lm_head"]
     for name, value in {**params, **buffers}.items():
         if any(m in name for m in ignore_modules):
             continue

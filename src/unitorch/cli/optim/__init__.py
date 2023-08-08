@@ -66,3 +66,43 @@ class AdamWOptimizer(AdamW, CheckpointMixin):
 
 # more optims
 import unitorch.cli.optim.lion
+
+# bitsandbytes
+from unitorch.utils import is_bitsandbytes_available
+
+if is_bitsandbytes_available:
+    from unitorch.optim import Adam8bit, AdamW8bit
+
+    @register_optim("core/optim/adam8bit")
+    class Adam8bitOptimizer(Adam8bit, CheckpointMixin):
+        def __init__(
+            self,
+            params,
+            learning_rate: Optional[float] = 0.00001,
+        ):
+            super().__init__(
+                params=params,
+                lr=learning_rate,
+            )
+
+        @classmethod
+        @add_default_section_for_init("core/optim/adam8bit")
+        def from_core_configure(cls, config, **kwargs):
+            pass
+
+    @register_optim("core/optim/adamw8bit")
+    class AdamW8bitOptimizer(AdamW8bit, CheckpointMixin):
+        def __init__(
+            self,
+            params,
+            learning_rate: Optional[float] = 0.00001,
+        ):
+            super().__init__(
+                params=params,
+                lr=learning_rate,
+            )
+
+        @classmethod
+        @add_default_section_for_init("core/optim/adamw8bit")
+        def from_core_configure(cls, config, **kwargs):
+            pass

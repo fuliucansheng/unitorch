@@ -144,7 +144,7 @@ class LlamaForPretrain(GenericModel):
         return loss
 
 
-class LlamaForGeneration(GenericModel):
+class LlamaForGeneration(GenericModel, QuantizationMixin):
     prefix_keys_in_state_dict = {
         "^(?!model\.model\.|model\.lm_head\.)model\.": "model.",
         "^lm_head.": "model.",
