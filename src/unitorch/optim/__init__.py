@@ -9,5 +9,5 @@ from unitorch.optim.lion import Lion
 
 from unitorch.utils import is_bitsandbytes_available
 
-if is_bitsandbytes_available:
+if is_bitsandbytes_available():
     from bitsandbytes.optim import Adam8bit, AdamW8bit
