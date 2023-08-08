@@ -17,10 +17,15 @@ from diffusers.schedulers import (
     PNDMScheduler,
 )
 from diffusers.pipelines import StableDiffusionControlNetPipeline
-from unitorch.models import GenericModel, GenericOutputs
+from unitorch.models import (
+    GenericModel,
+    GenericOutputs,
+    QuantizationConfig,
+    QuantizationMixin,
+)
 
 
-class ControlNetForImageGeneration(GenericModel):
+class ControlNetForImageGeneration(GenericModel, QuantizationMixin):
     prefix_keys_in_state_dict = {
         # unet weights
         "^conv_in.*": "unet.",
@@ -53,6 +58,7 @@ class ControlNetForImageGeneration(GenericModel):
         vae_config_path: str,
         controlnet_config_path: str,
         scheduler_config_path: str,
+        quant_config_path: Optional[str] = None,
         image_size: Optional[int] = 224,
         in_channels: Optional[int] = 4,
         out_channels: Optional[int] = 4,
@@ -95,6 +101,10 @@ class ControlNetForImageGeneration(GenericModel):
 
         if freeze_unet_encoder:
             self.unet.requires_grad = False
+
+        if quant_config_path is not None:
+            self.quant_config = QuantizationConfig.from_json_file(quant_config_path)
+            self.quantize(self.quant_config, ignore_modules=["lm_head"])
 
     def forward(
         self,

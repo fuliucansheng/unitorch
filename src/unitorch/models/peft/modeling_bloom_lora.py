@@ -8,10 +8,10 @@ from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from peft import LoraConfig, PeftModelForCausalLM
 from transformers import BloomModel, BloomConfig, BloomForCausalLM
 from unitorch.models import GenericModel, GenericOutputs
-from unitorch.models.peft import PeftModelForSequenceClassification, PeftCheckpointMixin
+from unitorch.models.peft import PeftModelForSequenceClassification, GenericPeftModel
 
 
-class BloomLoraForClassification(GenericModel, PeftCheckpointMixin):
+class BloomLoraForClassification(GenericPeftModel):
     prefix_keys_in_state_dict = {
         "^(?!peft_model\.base_model\.model\.).*": "peft_model.base_model.model."
     }
@@ -73,7 +73,7 @@ class BloomLoraForClassification(GenericModel, PeftCheckpointMixin):
         return logits
 
 
-class BloomLoraForGeneration(GenericModel, PeftCheckpointMixin):
+class BloomLoraForGeneration(GenericPeftModel):
     prefix_keys_in_state_dict = {
         "^(?!peft_model\.base_model\.model\.).*": "peft_model.base_model.model.transformer."
     }

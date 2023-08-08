@@ -5,6 +5,7 @@ import os
 import warnings
 import logging
 import torch
+import torch.nn as nn
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from peft import (
     PeftConfig,
@@ -13,6 +14,7 @@ from peft import (
     PeftModelForSequenceClassification,
 )
 from unitorch.utils import replace
+from unitorch.models import CheckpointMixin
 
 
 @replace(PeftModelForSequenceClassification)
@@ -90,7 +92,7 @@ class PeftModelForSequenceClassification(PeftModelForSequenceClassification):
             return self.base_model(inputs_embeds=inputs_embeds, **kwargs)
 
 
-class PeftCheckpointMixin:
+class PeftCheckpointMixin(CheckpointMixin):
     checkpoint_name = "pytorch_peft_model.bin"
 
     def save_checkpoint(
@@ -145,17 +147,58 @@ class PeftCheckpointMixin:
         )
 
 
-from unitorch.models.peft.modeling_bloom_adalora import (
-    BloomAdaLoraForClassification,
-    BloomAdaLoraForGeneration,
-)
+class GenericPeftModel(nn.Module, PeftCheckpointMixin):
+    def __init__(self):
+        super().__init__()
+        pass
+
+    def _init_weights(self, module):
+        """
+        Initialize the weights of the given module.
+
+        Args:
+            module (nn.Module): The module to initialize weights for.
+        """
+        if isinstance(module, (nn.Linear, nn.Embedding)):
+            module.weight.data.normal_(mean=0.0, std=0.02)
+
+        if isinstance(module, nn.LayerNorm):
+            module.bias.data.zero_()
+            module.weight.data.fill_(1.0)
+
+        if isinstance(module, nn.Linear) and module.bias is not None:
+            module.bias.data.zero_()
+
+    def init_weights(self):
+        """
+        Initialize the weights of the model.
+        """
+        self.apply(self._init_weights)
+
+    @property
+    def dtype(self) -> torch.dtype:
+        """
+        Returns the data type of the model's parameters.
+
+        Returns:
+            torch.dtype: The data type of the model's parameters.
+        """
+        return next(self.parameters()).dtype
+
+    @property
+    def device(self):
+        """
+        Returns the device of the model's parameters.
+
+        Returns:
+            torch.device: The device of the model's parameters.
+        """
+        return next(self.parameters()).device
+
+
 from unitorch.models.peft.modeling_bloom_lora import (
     BloomLoraForClassification,
     BloomLoraForGeneration,
-)
-from unitorch.models.peft.modeling_llama_adalora import (
-    LlamaAdaLoraForClassification,
-    LlamaAdaLoraForGeneration,
 )
 from unitorch.models.peft.modeling_llama_lora import (
     LlamaLoraForClassification,

@@ -23,10 +23,15 @@ from diffusers.pipelines import (
     StableDiffusionInpaintPipeline,
     StableDiffusionDepth2ImgPipeline,
 )
-from unitorch.models import GenericModel, GenericOutputs
+from unitorch.models import (
+    GenericModel,
+    GenericOutputs,
+    QuantizationConfig,
+    QuantizationMixin,
+)
 
 
-class StableForImageGeneration(GenericModel):
+class StableForImageGeneration(GenericModel, QuantizationMixin):
     prefix_keys_in_state_dict = {
         # unet weights
         "^conv_in.*": "unet.",
@@ -47,6 +52,7 @@ class StableForImageGeneration(GenericModel):
         self,
         config_path: str,
         scheduler_config_path: str,
+        quant_config_path: Optional[str] = None,
         image_size: Optional[int] = 224,
         in_channels: Optional[int] = 3,
         out_channels: Optional[int] = 3,
@@ -71,6 +77,10 @@ class StableForImageGeneration(GenericModel):
 
         scheduler_config_dict = json.load(open(scheduler_config_path))
         self.scheduler = DDPMScheduler.from_config(scheduler_config_dict)
+
+        if quant_config_path is not None:
+            self.quant_config = QuantizationConfig.from_json_file(quant_config_path)
+            self.quantize(self.quant_config)
 
     def forward(self, pixel_values: torch.Tensor):
         noise = torch.randn(pixel_values.shape).to(pixel_values.device)
@@ -107,7 +117,7 @@ class StableForImageGeneration(GenericModel):
         return GenericOutputs(images=images)
 
 
-class StableForText2ImageGeneration(GenericModel):
+class StableForText2ImageGeneration(GenericModel, QuantizationMixin):
     prefix_keys_in_state_dict = {
         # unet weights
         "^conv_in.*": "unet.",
@@ -139,6 +149,7 @@ class StableForText2ImageGeneration(GenericModel):
         text_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
+        quant_config_path: Optional[str] = None,
         image_size: Optional[int] = 224,
         in_channels: Optional[int] = 4,
         out_channels: Optional[int] = 4,
@@ -180,6 +191,10 @@ class StableForText2ImageGeneration(GenericModel):
 
         if freeze_text_encoder:
             self.text.requires_grad = False
+
+        if quant_config_path is not None:
+            self.quant_config = QuantizationConfig.from_json_file(quant_config_path)
+            self.quantize(self.quant_config)
 
     def forward(
         self,

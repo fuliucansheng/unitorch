@@ -31,6 +31,7 @@ class MiniGPT4Blip2LlamaForGeneration(_MiniGPT4Blip2LlamaForGeneration):
         self,
         blip2_config_path: str,
         llama_config_path: str,
+        quant_config_path: Optional[str] = None,
         pad_token_id: Optional[int] = 0,
         freeze_vision_model: Optional[bool] = True,
         freeze_qformer_model: Optional[bool] = True,
@@ -52,6 +53,7 @@ class MiniGPT4Blip2LlamaForGeneration(_MiniGPT4Blip2LlamaForGeneration):
         super().__init__(
             blip2_config_path=blip2_config_path,
             llama_config_path=llama_config_path,
+            quant_config_path=quant_config_path,
             pad_token_id=pad_token_id,
             freeze_vision_model=freeze_vision_model,
             freeze_qformer_model=freeze_qformer_model,
@@ -93,6 +95,10 @@ class MiniGPT4Blip2LlamaForGeneration(_MiniGPT4Blip2LlamaForGeneration):
         )
         llama_config_path = cached_path(llama_config_path)
 
+        quant_config_path = config.getoption("quant_config_path", None)
+        if quant_config_path is not None:
+            quant_config_path = cached_path(quant_config_path)
+
         freeze_vision_model = config.getoption("freeze_vision_model", True)
         freeze_qformer_model = config.getoption("freeze_qformer_model", True)
         freeze_llama_model = config.getoption("freeze_llama_model", True)
@@ -101,6 +107,7 @@ class MiniGPT4Blip2LlamaForGeneration(_MiniGPT4Blip2LlamaForGeneration):
         inst = cls(
             blip2_config_path,
             llama_config_path,
+            quant_config_path=quant_config_path,
             freeze_vision_model=freeze_vision_model,
             freeze_qformer_model=freeze_qformer_model,
             freeze_llama_model=freeze_llama_model,
