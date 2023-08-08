@@ -29,21 +29,8 @@ if torch.cuda.is_available():
         ],
     )
 
-    dyhead_cuda_extension = CUDAExtension(
-        "unitorch.clib.dyhead",
-        [
-            "unitorch/clib/cuda/dyhead/module.cpp",
-            "unitorch/clib/cuda/dyhead/deform_conv.cu",
-            "unitorch/clib/cuda/dyhead/deform_conv_kernel.cu",
-            "unitorch/clib/cuda/dyhead/sigmoid_focal_loss.cu",
-        ],
-    )
-
-    detectron2_cuda_extension = [dyhead_cuda_extension]
-
     all_extensions = {
         "NGRAM": ngram_cuda_extension,
-        "DETECTRON2": detectron2_cuda_extension,
     }
 
 else:
