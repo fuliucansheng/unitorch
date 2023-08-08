@@ -27,6 +27,7 @@ class StableForImageGeneration(_StableForImageGeneration):
         self,
         config_path: str,
         scheduler_config_path: str,
+        quant_config_path: Optional[str] = None,
         image_size: Optional[int] = 224,
         in_channels: Optional[int] = 3,
         out_channels: Optional[int] = 3,
@@ -37,6 +38,7 @@ class StableForImageGeneration(_StableForImageGeneration):
         super().__init__(
             config_path=config_path,
             scheduler_config_path=scheduler_config_path,
+            quant_config_path=quant_config_path,
             image_size=image_size,
             in_channels=in_channels,
             out_channels=out_channels,
@@ -64,6 +66,9 @@ class StableForImageGeneration(_StableForImageGeneration):
             nested_dict_value(pretrained_diffusers_infos, pretrained_name, "scheduler"),
         )
         scheduler_config_path = cached_path(scheduler_config_path)
+        quant_config_path = config.getoption("quant_config_path", None)
+        if quant_config_path is not None:
+            quant_config_path = cached_path(quant_config_path)
 
         image_size = config.getoption("image_size", 224)
         in_channels = config.getoption("in_channels", 3)
@@ -75,6 +80,7 @@ class StableForImageGeneration(_StableForImageGeneration):
         inst = cls(
             config_path=config_path,
             scheduler_config_path=scheduler_config_path,
+            quant_config_path=quant_config_path,
             image_size=image_size,
             in_channels=in_channels,
             out_channels=out_channels,
@@ -120,6 +126,7 @@ class StableForText2ImageGeneration(_StableForText2ImageGeneration):
         text_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
+        quant_config_path: Optional[str] = None,
         image_size: Optional[int] = 224,
         in_channels: Optional[int] = 4,
         out_channels: Optional[int] = 4,
@@ -134,6 +141,7 @@ class StableForText2ImageGeneration(_StableForText2ImageGeneration):
             text_config_path=text_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
+            quant_config_path=quant_config_path,
             image_size=image_size,
             in_channels=in_channels,
             out_channels=out_channels,
@@ -179,6 +187,10 @@ class StableForText2ImageGeneration(_StableForText2ImageGeneration):
         )
         scheduler_config_path = cached_path(scheduler_config_path)
 
+        quant_config_path = config.getoption("quant_config_path", None)
+        if quant_config_path is not None:
+            quant_config_path = cached_path(quant_config_path)
+
         image_size = config.getoption("image_size", 224)
         in_channels = config.getoption("in_channels", 4)
         out_channels = config.getoption("out_channels", 4)
@@ -193,6 +205,7 @@ class StableForText2ImageGeneration(_StableForText2ImageGeneration):
             text_config_path=text_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
+            quant_config_path=quant_config_path,
             image_size=image_size,
             in_channels=in_channels,
             out_channels=out_channels,

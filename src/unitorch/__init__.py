@@ -95,6 +95,11 @@ from unitorch.utils import (
     is_torch2_available,
 )
 
+if is_diffusers_available():
+    import diffusers
+
+    diffusers.logging.set_verbosity_error()
+
 # imports from other files
 import unitorch.datasets
 import unitorch.loss
