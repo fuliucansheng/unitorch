@@ -128,7 +128,8 @@ class CheckpointMixin:
                     key = re.sub(rkey, nkey, key)
                 if key in self_state_dict and value.shape == self_state_dict[key].shape:
                     self_state_dict[key] = value
-                    load_keys.append(key)
+                    if key not in load_keys:
+                        load_keys.append(key)
                 else:
                     non_load_keys.append(key)
 

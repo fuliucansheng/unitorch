@@ -37,7 +37,7 @@ all = ["unitorch[deepspeed,diffusers,quantization]"]
 unitorch-train = "unitorch.cli.console.train:cli_main"
 unitorch-eval = "unitorch.cli.console.eval:cli_main"
 unitorch-infer = "unitorch.cli.console.infer:cli_main"
-unitorch-script= "unitorch.cli.console.script:cli_main"
+unitorch-launch= "unitorch.cli.console.launch:cli_main"
 unitorch-service = "unitorch.cli.console.service:cli_main"
 
 [tool.setuptools]

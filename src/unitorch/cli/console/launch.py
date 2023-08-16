@@ -19,7 +19,7 @@ from unitorch.cli import (
 
 
 @fire.decorators.SetParseFn(str)
-def script(script_path_or_dir: str, **kwargs):
+def launch(script_path_or_dir: str, **kwargs):
     config_file = kwargs.pop("config_file", "config.ini")
 
     if script_path_or_dir and os.path.isdir(script_path_or_dir):
@@ -70,4 +70,4 @@ def script(script_path_or_dir: str, **kwargs):
 
 
 def cli_main():
-    fire.Fire(script)
+    fire.Fire(launch)
