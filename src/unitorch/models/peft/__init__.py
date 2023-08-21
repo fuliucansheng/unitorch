@@ -93,7 +93,9 @@ class PeftModelForSequenceClassification(PeftModelForSequenceClassification):
 
 
 class PeftCheckpointMixin(CheckpointMixin):
-    checkpoint_name = "pytorch_peft_model.bin"
+    checkpoint_name = "pytorch_model.bin"
+
+    modules_to_save_checkpoints = ["lora"]
 
     def save_checkpoint(
         self,
@@ -114,7 +116,11 @@ class PeftCheckpointMixin(CheckpointMixin):
         if weight_name is None:
             weight_name = self.checkpoint_name
         state_dict = self.state_dict()
-        state_dict = {k: v for k, v in state_dict.items() if ".lora_" in k}
+        state_dict = {
+            k: v
+            for k, v in state_dict.items()
+            if any(m in k for m in self.modules_to_save_checkpoints)
+        }
         weight_path = os.path.join(ckpt_dir, weight_name)
         torch.save(state_dict, weight_path)
         logging.info(f"{type(self).__name__} model save checkpoint to {weight_path}")
@@ -140,7 +146,17 @@ class PeftCheckpointMixin(CheckpointMixin):
         weight_path = os.path.join(ckpt_dir, weight_name)
         if not os.path.exists(weight_path):
             return
+        _state_dict = self.state_dict()
+        _state_dict = {
+            k: v
+            for k, v in _state_dict.items()
+            if any(m in k for m in self.modules_to_save_checkpoints)
+        }
         state_dict = torch.load(weight_path, map_location="cpu")
+        assert all(
+            k in state_dict.keys() and state_dict[k].shape == v.shape
+            for k, v in _state_dict.items()
+        )
         self.load_state_dict(state_dict, strict=False)
         logging.info(
             f"{type(self).__name__} model load weight from checkpoint {weight_path}"

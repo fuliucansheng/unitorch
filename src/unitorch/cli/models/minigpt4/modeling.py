@@ -127,7 +127,6 @@ class MiniGPT4Blip2LlamaForGeneration(_MiniGPT4Blip2LlamaForGeneration):
 
         return inst
 
-    @autocast()
     def forward(
         self,
         pixel_values: torch.Tensor,
@@ -169,7 +168,6 @@ class MiniGPT4Blip2LlamaForGeneration(_MiniGPT4Blip2LlamaForGeneration):
 
     @add_default_section_for_function("core/model/generation/minigpt4")
     @torch.no_grad()
-    @autocast()
     def generate(
         self,
         pixel_values: torch.Tensor,

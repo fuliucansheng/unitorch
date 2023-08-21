@@ -221,7 +221,6 @@ class LlamaProcessor(HfTextClassificationProcessor, HfTextGenerationProcessor):
             max_gen_seq_length,
             self.max_gen_seq_length,
         )
-        max_seq_length = max_seq_length + max_gen_seq_length
 
         tokens = [self.bos_token] + self.tokenizer.tokenize(str(text))[
             1 - max_seq_length :
