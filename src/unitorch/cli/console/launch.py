@@ -65,7 +65,7 @@ def launch(script_path_or_dir: str, **kwargs):
     if main_script_cls is None:
         raise ValueError(f"script {script_name} not found")
     inst = main_script_cls["obj"](config)
-    inst.run()
+    inst.launch()
     os._exit(0)
 
 

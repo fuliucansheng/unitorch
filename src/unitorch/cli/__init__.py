@@ -195,7 +195,7 @@ class GenericScript(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def run(self, **kwargs):
+    def launch(self, **kwargs):
         pass
 
 
