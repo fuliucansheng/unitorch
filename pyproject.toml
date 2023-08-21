@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=40.0", "torch>=1.13", "torchvision", "torchaudio"]
+requires = ["setuptools>=62.1.0", "torch>=1.13", "torchvision", "torchaudio"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -37,7 +37,7 @@ all = ["unitorch[deepspeed,diffusers,quantization]"]
 unitorch-train = "unitorch.cli.console.train:cli_main"
 unitorch-eval = "unitorch.cli.console.eval:cli_main"
 unitorch-infer = "unitorch.cli.console.infer:cli_main"
-unitorch-script= "unitorch.cli.console.script:cli_main"
+unitorch-launch= "unitorch.cli.console.launch:cli_main"
 unitorch-service = "unitorch.cli.console.service:cli_main"
 
 [tool.setuptools]

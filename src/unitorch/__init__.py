@@ -19,7 +19,7 @@ def get_cache_home():
 
 
 ### version
-VERSION = "0.0.0.6"
+VERSION = "0.0.0.7"
 
 ### is offline mode
 UNITORCH_OFFLINE = os.environ.get("UNITORCH_OFFLINE", "0").upper()
