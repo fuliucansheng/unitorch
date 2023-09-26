@@ -22,30 +22,22 @@ class ControlNetProcessor(_ControlNetProcessor):
         self,
         vocab_path: str,
         merge_path: str,
-        max_seq_length: Optional[int] = 128,
+        vae_config_path: str,
+        max_seq_length: Optional[int] = 77,
         position_start_id: Optional[int] = 0,
-        pixel_mean: List[float] = [0.5],
-        pixel_std: List[float] = [0.5],
-        resize_shape: Optional[List[int]] = [224, 224],
-        crop_shape: Optional[List[int]] = [224, 224],
     ):
         super().__init__(
             vocab_path=vocab_path,
             merge_path=merge_path,
+            vae_config_path=vae_config_path,
             max_seq_length=max_seq_length,
             position_start_id=position_start_id,
-            pixel_mean=pixel_mean,
-            pixel_std=pixel_std,
-            resize_shape=resize_shape,
-            crop_shape=crop_shape,
         )
-        self.resize_shape = resize_shape
-        self.crop_shape = crop_shape
 
     @classmethod
-    @add_default_section_for_init("core/process/diffusion/controlnet")
+    @add_default_section_for_init("core/process/diffusers/controlnet")
     def from_core_configure(cls, config, **kwargs):
-        config.set_default_section("core/process/diffusion/controlnet")
+        config.set_default_section("core/process/diffusers/controlnet")
         pretrained_name = config.getoption("pretrained_name", "controlnet-canny")
         pretrain_infos = nested_dict_value(pretrained_diffusers_infos, pretrained_name)
 
@@ -63,49 +55,87 @@ class ControlNetProcessor(_ControlNetProcessor):
         )
         merge_path = cached_path(merge_path)
 
+        vae_config_path = config.getoption("vae_config_path", None)
+        vae_config_path = pop_value(
+            vae_config_path,
+            nested_dict_value(pretrain_infos, "vae", "config"),
+        )
+        vae_config_path = cached_path(vae_config_path)
+
         return {
             "vocab_path": vocab_path,
             "merge_path": merge_path,
+            "vae_config_path": vae_config_path,
         }
 
-    @register_process("core/process/diffusion/controlnet")
-    def controlnet(
+    @register_process("core/process/diffusers/controlnet/text2image/inputs")
+    def _text2image_inputs(
         self,
         prompt: str,
-        image: Image.Image,
-        condition_image: Image.Image,
-        max_seq_length: Optional[int] = None,
-    ):
-        outputs = super().controlnet(
-            prompt=prompt,
-            image=image.convert("RGB"),
-            condition_image=condition_image.convert("RGB"),
-            max_seq_length=max_seq_length,
-        )
-        return TensorsInputs(
-            input_ids=outputs.input_ids,
-            attention_mask=outputs.attention_mask,
-            pixel_values=outputs.pixel_values,
-            condition_pixel_values=outputs.condition_pixel_values,
-        )
-
-    @register_process("core/process/diffusion/controlnet/inputs")
-    def controlnet_inputs(
-        self,
-        prompt: str,
-        condition_image: Image.Image,
+        condition_image: Union[Image.Image, str],
         negative_prompt: Optional[str] = "",
         max_seq_length: Optional[int] = None,
     ):
-        outputs = super().controlnet_inputs(
+        outputs = super().text2image_inputs(
             prompt=prompt,
-            condition_image=condition_image.convert("RGB"),
+            condition_image=condition_image,
             negative_prompt=negative_prompt,
             max_seq_length=max_seq_length,
         )
         return TensorsInputs(
             input_ids=outputs.input_ids,
             negative_input_ids=outputs.negative_input_ids,
+            condition_pixel_values=outputs.condition_pixel_values,
+            attention_mask=outputs.attention_mask,
+            negative_attention_mask=outputs.negative_attention_mask,
+        )
+
+    @register_process("core/process/diffusers/controlnet/image2image/inputs")
+    def _image2image_inputs(
+        self,
+        prompt: str,
+        condition_image: Union[Image.Image, str],
+        image: Union[Image.Image, str],
+        negative_prompt: Optional[str] = "",
+        max_seq_length: Optional[int] = None,
+    ):
+        outputs = super().image2image_inputs(
+            prompt=prompt,
+            condition_image=condition_image,
+            image=image,
+            negative_prompt=negative_prompt,
+            max_seq_length=max_seq_length,
+        )
+        return TensorsInputs(
+            input_ids=outputs.input_ids,
+            negative_input_ids=outputs.negative_input_ids,
+            pixel_values=outputs.pixel_values,
+            condition_pixel_values=outputs.condition_pixel_values,
+            attention_mask=outputs.attention_mask,
+            negative_attention_mask=outputs.negative_attention_mask,
+        )
+
+    @register_process("core/process/diffusers/controlnet/inpainting/inputs")
+    def _inpainting_inputs(
+        prompt: str,
+        condition_image: Union[Image.Image, str],
+        image: Union[Image.Image, str],
+        mask_image: Union[Image.Image, str],
+        negative_prompt: Optional[str] = "",
+        max_seq_length: Optional[int] = None,
+    ):
+        outputs = super().inpainting_inputs(
+            prompt=prompt,
+            condition_image=condition_image,
+            image=image,
+            mask_image=mask_image,
+            negative_prompt=negative_prompt,
+            max_seq_length=max_seq_length,
+        )
+        return TensorsInputs(
+            input_ids=outputs.input_ids,
+            negative_input_ids=outputs.negative_input_ids,
+            pixel_values=outputs.pixel_values,
             condition_pixel_values=outputs.condition_pixel_values,
             attention_mask=outputs.attention_mask,
             negative_attention_mask=outputs.negative_attention_mask,

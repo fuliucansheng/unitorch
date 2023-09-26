@@ -8,7 +8,7 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 ### cache setting
 ENV_VARS_TRUE_VALUES = {"1", "ON", "YES", "TRUE"}
 UNITORCH_CACHE = os.getenv(
-    "UNITORCH_CACHE", os.path.join(os.getenv("HOME"), ".cache/unitorch")
+    "UNITORCH_CACHE", os.path.join(os.getenv("HOME", "."), ".cache/unitorch")
 )
 os.environ["TRANSFORMERS_CACHE"] = UNITORCH_CACHE
 os.environ["HF_DATASETS_CACHE"] = UNITORCH_CACHE
@@ -65,8 +65,10 @@ import torch.multiprocessing
 
 torch.multiprocessing.set_sharing_strategy("file_system")
 
+# torch.backends.cuda.matmul.allow_tf32 = False
 torch.backends.cudnn.deterministic = False
 torch.backends.cudnn.benchmark = True
+# torch.backends.cudnn.allow_tf32 = True
 
 
 def set_seed(seed: int):

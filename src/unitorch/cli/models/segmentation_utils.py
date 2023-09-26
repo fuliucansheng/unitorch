@@ -1,8 +1,11 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
+import os
 import torch
+import hashlib
 import torch.nn as nn
+from PIL import Image
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from unitorch.cli import (
@@ -16,19 +19,17 @@ from unitorch.cli.models.modeling_utils import ListTensorsOutputs, ListTensorsTa
 
 @dataclass
 class SegmentationOutputs(ListTensorsOutputs, WriterMixin):
-    outputs: List[torch.Tensor]
+    outputs: Union[torch.Tensor, List[torch.Tensor]]
 
 
 @dataclass
 class SegmentationTargets(ListTensorsTargets):
-    targets: List[torch.Tensor]
+    targets: Union[torch.Tensor, List[torch.Tensor]]
     sample_weight: Optional[torch.Tensor] = torch.empty(0)
 
 
 class SegmentationProcessor:
-    def __init__(
-        self,
-    ):
+    def __init__(self):
         pass
 
     @classmethod
@@ -42,9 +43,9 @@ class SegmentationProcessor:
         outputs: SegmentationOutputs,
     ):
         results = outputs.to_pandas()
-        assert results.shape[0] == 0 or results.shape[0] == len(outputs.outputs)
+        assert results.shape[0] == 0 or results.shape[0] == len(outputs.masks)
         results["pixel_class"] = [
-            m.numpy().argmax(-1).reshape(-1).tolist() for m in outputs.outputs
+            m.numpy().argmax(-1).reshape(-1).tolist() for m in outputs.masks
         ]
         return WriterOutputs(results)
 
@@ -67,6 +68,8 @@ def segmentation_model_decorator(cls):
             ]
             for __more_attr__ in __more_attrs__:
                 setattr(self, __more_attr__, getattr(self.model, __more_attr__))
+
+            assert hasattr(self.model, "segment")
 
         def forward(self, *args, **kwargs):
             if self.training:

@@ -19,7 +19,6 @@ nav:
       - Bert: models/bert.md
       - Blip: models/blip.md
       - Bloom: models/bloom.md
-      - ChatGLM: models/chatglm.md
       - Clip: models/clip.md
       - Deberta: models/deberta.md
       - Diffusers: models/diffusers.md
@@ -72,7 +71,6 @@ nav:
       - Bert: cli/models/bert.md
       - Blip: cli/models/blip.md
       - Bloom: cli/models/bloom.md
-      - ChatGLM: cli/models/chatglm.md
       - Clip: cli/models/clip.md
       - Deberta: cli/models/deberta.md
       - Diffusers: cli/models/diffusers.md

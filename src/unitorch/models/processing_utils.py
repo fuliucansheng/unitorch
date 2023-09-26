@@ -311,6 +311,7 @@ class HfImageClassificationProcessor:
         self.resample = getattr(self.vision_processor, "resample", None)
 
         self.crop_size = getattr(self.vision_processor, "crop_size", None)
+        self.pad_size = getattr(self.vision_processor, "pad_size", None)
 
         self.rescale_factor = getattr(self.vision_processor, "rescale_factor", None)
 
@@ -319,7 +320,7 @@ class HfImageClassificationProcessor:
 
     def classification(
         self,
-        image: Image.Image,
+        image: Union[Image.Image, str],
     ):
         """
         Perform image classification on the given image.
@@ -330,6 +331,9 @@ class HfImageClassificationProcessor:
         Returns:
             GenericOutputs: The output of the image classification, including pixel values.
         """
+        if isinstance(image, str):
+            image = Image.open(image)
+
         if self.size is not None:
             image = self.vision_processor.resize(
                 image=to_numpy_array(image.convert("RGB")),
@@ -354,6 +358,12 @@ class HfImageClassificationProcessor:
                 image=image,
                 mean=self.image_mean,
                 std=self.image_std,
+            )
+
+        if self.pad_size is not None:
+            image = self.vision_processor.pad_image(
+                image,
+                size=self.pad_size,
             )
 
         image = to_channel_dimension_format(image, ChannelDimension.FIRST)

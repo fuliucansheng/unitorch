@@ -15,15 +15,15 @@ from unitorch.cli.models.modeling_utils import ListTensorsOutputs, ListTensorsTa
 
 
 class DetectionOutputs(ListTensorsOutputs, WriterMixin):
-    bboxes: List[torch.Tensor]
-    scores: List[torch.Tensor]
-    classes: List[torch.Tensor]
-    features: Optional[List[torch.Tensor]] = torch.empty(0)
+    bboxes: Union[torch.Tensor, List[torch.Tensor]]
+    scores: Union[torch.Tensor, List[torch.Tensor]]
+    classes: Union[torch.Tensor, List[torch.Tensor]]
+    features: Optional[Union[torch.Tensor, List[torch.Tensor]]] = torch.empty(0)
 
 
 class DetectionTargets(ListTensorsTargets):
-    bboxes: List[torch.Tensor]
-    classes: List[torch.Tensor]
+    bboxes: Union[torch.Tensor, List[torch.Tensor]]
+    classes: Union[torch.Tensor, List[torch.Tensor]]
     sample_weight: Optional[torch.Tensor] = torch.empty(0)
 
 
@@ -68,6 +68,8 @@ def detection_model_decorator(cls):
             ]
             for __more_attr__ in __more_attrs__:
                 setattr(self, __more_attr__, getattr(self.model, __more_attr__))
+
+            assert hasattr(self.model, "detect")
 
         def forward(self, *args, **kwargs):
             if self.training:

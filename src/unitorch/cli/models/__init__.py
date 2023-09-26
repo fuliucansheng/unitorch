@@ -88,6 +88,7 @@ import unitorch.cli.models.peft
 import unitorch.cli.models.prophetnet
 import unitorch.cli.models.roberta
 import unitorch.cli.models.swin
+import unitorch.cli.models.sam
 import unitorch.cli.models.t5
 import unitorch.cli.models.visualbert
 import unitorch.cli.models.vit

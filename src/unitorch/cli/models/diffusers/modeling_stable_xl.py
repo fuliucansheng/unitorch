@@ -6,10 +6,10 @@ from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from torch.cuda.amp import autocast
 
 from unitorch.models.diffusers import (
-    StableForText2ImageGeneration as _StableForText2ImageGeneration,
-    StableForImage2ImageGeneration as _StableForImage2ImageGeneration,
-    StableForImageInpainting as _StableForImageInpainting,
-    StableForImageResolution as _StableForImageResolution,
+    StableXLForText2ImageGeneration as _StableXLForText2ImageGeneration,
+    StableXLForImage2ImageGeneration as _StableXLForImage2ImageGeneration,
+    StableXLForImageInpainting as _StableXLForImageInpainting,
+    StableXLRefinerForText2ImageGeneration as _StableXLRefinerForText2ImageGeneration,
 )
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.cli import (
@@ -20,15 +20,16 @@ from unitorch.cli import (
 )
 from unitorch.cli.models import DiffusionOutputs, LossOutputs
 from unitorch.cli.models import diffusion_model_decorator
-from unitorch.cli.models.diffusers import pretrained_diffusers_infos
+from unitorch.cli.models.diffusers import pretrained_diffusers_infos, load_weight
 
 
-@register_model("core/model/diffusers/text2image/stable", diffusion_model_decorator)
-class StableForText2ImageGeneration(_StableForText2ImageGeneration):
+@register_model("core/model/diffusers/text2image/stable_xl", diffusion_model_decorator)
+class StableXLForText2ImageGeneration(_StableXLForText2ImageGeneration):
     def __init__(
         self,
         config_path: str,
         text_config_path: str,
+        text2_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
         quant_config_path: Optional[str] = None,
@@ -44,6 +45,7 @@ class StableForText2ImageGeneration(_StableForText2ImageGeneration):
         super().__init__(
             config_path=config_path,
             text_config_path=text_config_path,
+            text2_config_path=text2_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
             quant_config_path=quant_config_path,
@@ -58,10 +60,10 @@ class StableForText2ImageGeneration(_StableForText2ImageGeneration):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/diffusers/text2image/stable")
+    @add_default_section_for_init("core/model/diffusers/text2image/stable_xl")
     def from_core_configure(cls, config, **kwargs):
-        config.set_default_section("core/model/diffusers/text2image/stable")
-        pretrained_name = config.getoption("pretrained_name", "stable-v1.5")
+        config.set_default_section("core/model/diffusers/text2image/stable_xl")
+        pretrained_name = config.getoption("pretrained_name", "stable-xl-base-1.0")
         pretrain_infos = nested_dict_value(pretrained_diffusers_infos, pretrained_name)
 
         config_path = config.getoption("config_path", None)
@@ -77,6 +79,13 @@ class StableForText2ImageGeneration(_StableForText2ImageGeneration):
             nested_dict_value(pretrain_infos, "text", "config"),
         )
         text_config_path = cached_path(text_config_path)
+
+        text2_config_path = config.getoption("text2_config_path", None)
+        text2_config_path = pop_value(
+            text2_config_path,
+            nested_dict_value(pretrain_infos, "text2", "config"),
+        )
+        text2_config_path = cached_path(text2_config_path)
 
         vae_config_path = config.getoption("vae_config_path", None)
         vae_config_path = pop_value(
@@ -108,6 +117,7 @@ class StableForText2ImageGeneration(_StableForText2ImageGeneration):
         inst = cls(
             config_path=config_path,
             text_config_path=text_config_path,
+            text2_config_path=text2_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
             quant_config_path=quant_config_path,
@@ -123,14 +133,22 @@ class StableForText2ImageGeneration(_StableForText2ImageGeneration):
 
         weight_path = config.getoption("pretrained_weight_path", None)
 
+        state_dict = None
         if weight_path is None and pretrain_infos is not None:
-            weight_path = [
-                cached_path(nested_dict_value(pretrain_infos, "unet", "weight")),
-                cached_path(nested_dict_value(pretrain_infos, "text", "weight")),
-                cached_path(nested_dict_value(pretrain_infos, "vae", "weight")),
+            state_dict = [
+                load_weight(
+                    nested_dict_value(pretrain_infos, "unet", "weight"), "unet."
+                ),
+                load_weight(
+                    nested_dict_value(pretrain_infos, "text", "weight"), "text."
+                ),
+                load_weight(
+                    nested_dict_value(pretrain_infos, "text2", "weight"), "text2."
+                ),
+                load_weight(nested_dict_value(pretrain_infos, "vae", "weight"), "vae."),
             ]
 
-        inst.from_pretrained(weight_path)
+        inst.from_pretrained(weight_path, state_dict=state_dict)
         return inst
 
     @autocast()
@@ -139,7 +157,7 @@ class StableForText2ImageGeneration(_StableForText2ImageGeneration):
     ):
         raise NotImplementedError
 
-    @add_default_section_for_function("core/model/diffusers/text2image/stable")
+    @add_default_section_for_function("core/model/diffusers/text2image/stable_xl")
     @autocast()
     def generate(
         self,
@@ -164,12 +182,13 @@ class StableForText2ImageGeneration(_StableForText2ImageGeneration):
         return DiffusionOutputs(outputs=outputs.images)
 
 
-@register_model("core/model/diffusers/image2image/stable", diffusion_model_decorator)
-class StableForImage2ImageGeneration(_StableForImage2ImageGeneration):
+@register_model("core/model/diffusers/image2image/stable_xl", diffusion_model_decorator)
+class StableXLForImage2ImageGeneration(_StableXLForImage2ImageGeneration):
     def __init__(
         self,
         config_path: str,
         text_config_path: str,
+        text2_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
         quant_config_path: Optional[str] = None,
@@ -185,6 +204,7 @@ class StableForImage2ImageGeneration(_StableForImage2ImageGeneration):
         super().__init__(
             config_path=config_path,
             text_config_path=text_config_path,
+            text2_config_path=text2_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
             quant_config_path=quant_config_path,
@@ -199,12 +219,10 @@ class StableForImage2ImageGeneration(_StableForImage2ImageGeneration):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/diffusers/image2image/stable")
+    @add_default_section_for_init("core/model/diffusers/image2image/stable_xl")
     def from_core_configure(cls, config, **kwargs):
-        config.set_default_section("core/model/diffusers/image2image/stable")
-        pretrained_name = config.getoption(
-            "pretrained_name", "stable-v1.5-nitrosocke-ghibli"
-        )
+        config.set_default_section("core/model/diffusers/image2image/stable_xl")
+        pretrained_name = config.getoption("pretrained_name", "stable-xl-base-1.0")
         pretrain_infos = nested_dict_value(pretrained_diffusers_infos, pretrained_name)
 
         config_path = config.getoption("config_path", None)
@@ -220,6 +238,13 @@ class StableForImage2ImageGeneration(_StableForImage2ImageGeneration):
             nested_dict_value(pretrain_infos, "text", "config"),
         )
         text_config_path = cached_path(text_config_path)
+
+        text2_config_path = config.getoption("text2_config_path", None)
+        text2_config_path = pop_value(
+            text2_config_path,
+            nested_dict_value(pretrain_infos, "text2", "config"),
+        )
+        text2_config_path = cached_path(text2_config_path)
 
         vae_config_path = config.getoption("vae_config_path", None)
         vae_config_path = pop_value(
@@ -251,6 +276,7 @@ class StableForImage2ImageGeneration(_StableForImage2ImageGeneration):
         inst = cls(
             config_path=config_path,
             text_config_path=text_config_path,
+            text2_config_path=text2_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
             quant_config_path=quant_config_path,
@@ -266,14 +292,22 @@ class StableForImage2ImageGeneration(_StableForImage2ImageGeneration):
 
         weight_path = config.getoption("pretrained_weight_path", None)
 
+        state_dict = None
         if weight_path is None and pretrain_infos is not None:
-            weight_path = [
-                cached_path(nested_dict_value(pretrain_infos, "unet", "weight")),
-                cached_path(nested_dict_value(pretrain_infos, "text", "weight")),
-                cached_path(nested_dict_value(pretrain_infos, "vae", "weight")),
+            state_dict = [
+                load_weight(
+                    nested_dict_value(pretrain_infos, "unet", "weight"), "unet."
+                ),
+                load_weight(
+                    nested_dict_value(pretrain_infos, "text", "weight"), "text."
+                ),
+                load_weight(
+                    nested_dict_value(pretrain_infos, "text2", "weight"), "text2."
+                ),
+                load_weight(nested_dict_value(pretrain_infos, "vae", "weight"), "vae."),
             ]
 
-        inst.from_pretrained(weight_path)
+        inst.from_pretrained(weight_path, state_dict=state_dict)
         return inst
 
     @autocast()
@@ -282,7 +316,7 @@ class StableForImage2ImageGeneration(_StableForImage2ImageGeneration):
     ):
         raise NotImplementedError
 
-    @add_default_section_for_function("core/model/diffusers/image2image/stable")
+    @add_default_section_for_function("core/model/diffusers/image2image/stable_xl")
     @autocast()
     def generate(
         self,
@@ -307,12 +341,13 @@ class StableForImage2ImageGeneration(_StableForImage2ImageGeneration):
         return DiffusionOutputs(outputs=outputs.images)
 
 
-@register_model("core/model/diffusers/inpainting/stable", diffusion_model_decorator)
-class StableForImageInpainting(_StableForImageInpainting):
+@register_model("core/model/diffusers/inpainting/stable_xl", diffusion_model_decorator)
+class StableXLForImageInpainting(_StableXLForImageInpainting):
     def __init__(
         self,
         config_path: str,
         text_config_path: str,
+        text2_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
         quant_config_path: Optional[str] = None,
@@ -328,6 +363,7 @@ class StableForImageInpainting(_StableForImageInpainting):
         super().__init__(
             config_path=config_path,
             text_config_path=text_config_path,
+            text2_config_path=text2_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
             quant_config_path=quant_config_path,
@@ -342,10 +378,10 @@ class StableForImageInpainting(_StableForImageInpainting):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/diffusers/inpainting/stable")
+    @add_default_section_for_init("core/model/diffusers/inpainting/stable_xl")
     def from_core_configure(cls, config, **kwargs):
-        config.set_default_section("core/model/diffusers/inpainting/stable")
-        pretrained_name = config.getoption("pretrained_name", "stable-v1.5-inpainting")
+        config.set_default_section("core/model/diffusers/inpainting/stable_xl")
+        pretrained_name = config.getoption("pretrained_name", "stable-xl-base-1.0")
         pretrain_infos = nested_dict_value(pretrained_diffusers_infos, pretrained_name)
 
         config_path = config.getoption("config_path", None)
@@ -361,6 +397,13 @@ class StableForImageInpainting(_StableForImageInpainting):
             nested_dict_value(pretrain_infos, "text", "config"),
         )
         text_config_path = cached_path(text_config_path)
+
+        text2_config_path = config.getoption("text2_config_path", None)
+        text2_config_path = pop_value(
+            text2_config_path,
+            nested_dict_value(pretrain_infos, "text2", "config"),
+        )
+        text2_config_path = cached_path(text2_config_path)
 
         vae_config_path = config.getoption("vae_config_path", None)
         vae_config_path = pop_value(
@@ -392,6 +435,7 @@ class StableForImageInpainting(_StableForImageInpainting):
         inst = cls(
             config_path=config_path,
             text_config_path=text_config_path,
+            text2_config_path=text2_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
             quant_config_path=quant_config_path,
@@ -407,14 +451,22 @@ class StableForImageInpainting(_StableForImageInpainting):
 
         weight_path = config.getoption("pretrained_weight_path", None)
 
+        state_dict = None
         if weight_path is None and pretrain_infos is not None:
-            weight_path = [
-                cached_path(nested_dict_value(pretrain_infos, "unet", "weight")),
-                cached_path(nested_dict_value(pretrain_infos, "text", "weight")),
-                cached_path(nested_dict_value(pretrain_infos, "vae", "weight")),
+            state_dict = [
+                load_weight(
+                    nested_dict_value(pretrain_infos, "unet", "weight"), "unet."
+                ),
+                load_weight(
+                    nested_dict_value(pretrain_infos, "text", "weight"), "text."
+                ),
+                load_weight(
+                    nested_dict_value(pretrain_infos, "text2", "weight"), "text2."
+                ),
+                load_weight(nested_dict_value(pretrain_infos, "vae", "weight"), "vae."),
             ]
 
-        inst.from_pretrained(weight_path)
+        inst.from_pretrained(weight_path, state_dict=state_dict)
         return inst
 
     @autocast()
@@ -423,7 +475,7 @@ class StableForImageInpainting(_StableForImageInpainting):
     ):
         raise NotImplementedError
 
-    @add_default_section_for_function("core/model/diffusers/inpainting/stable")
+    @add_default_section_for_function("core/model/diffusers/inpainting/stable_xl")
     @autocast()
     def generate(
         self,
@@ -450,14 +502,22 @@ class StableForImageInpainting(_StableForImageInpainting):
         return DiffusionOutputs(outputs=outputs.images)
 
 
-@register_model("core/model/diffusers/resolution/stable", diffusion_model_decorator)
-class StableForImageResolution(_StableForImageResolution):
+@register_model(
+    "core/model/diffusers/text2image/stable_xl_refiner", diffusion_model_decorator
+)
+class StableXLRefinerForText2ImageGeneration(_StableXLRefinerForText2ImageGeneration):
     def __init__(
         self,
         config_path: str,
         text_config_path: str,
+        text2_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
+        refiner_config_path: Optional[str] = None,
+        refiner_text_config_path: Optional[str] = None,
+        refiner_text2_config_path: Optional[str] = None,
+        refiner_vae_config_path: Optional[str] = None,
+        refiner_scheduler_config_path: Optional[str] = None,
         quant_config_path: Optional[str] = None,
         image_size: Optional[int] = None,
         in_channels: Optional[int] = None,
@@ -471,8 +531,14 @@ class StableForImageResolution(_StableForImageResolution):
         super().__init__(
             config_path=config_path,
             text_config_path=text_config_path,
+            text2_config_path=text2_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
+            refiner_config_path=refiner_config_path,
+            refiner_text_config_path=refiner_text_config_path,
+            refiner_text2_config_path=refiner_text2_config_path,
+            refiner_vae_config_path=refiner_vae_config_path,
+            refiner_scheduler_config_path=refiner_scheduler_config_path,
             quant_config_path=quant_config_path,
             image_size=image_size,
             in_channels=in_channels,
@@ -485,10 +551,10 @@ class StableForImageResolution(_StableForImageResolution):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/diffusers/resolution/stable")
+    @add_default_section_for_init("core/model/diffusers/text2image/stable_xl_refiner")
     def from_core_configure(cls, config, **kwargs):
-        config.set_default_section("core/model/diffusers/resolution/stable")
-        pretrained_name = config.getoption("pretrained_name", "stable-v1.5-x4-upscaler")
+        config.set_default_section("core/model/diffusers/text2image/stable_xl_refiner")
+        pretrained_name = config.getoption("pretrained_name", "stable-xl-base-refiner")
         pretrain_infos = nested_dict_value(pretrained_diffusers_infos, pretrained_name)
 
         config_path = config.getoption("config_path", None)
@@ -505,6 +571,13 @@ class StableForImageResolution(_StableForImageResolution):
         )
         text_config_path = cached_path(text_config_path)
 
+        text2_config_path = config.getoption("text2_config_path", None)
+        text2_config_path = pop_value(
+            text2_config_path,
+            nested_dict_value(pretrain_infos, "text2", "config"),
+        )
+        text2_config_path = cached_path(text2_config_path)
+
         vae_config_path = config.getoption("vae_config_path", None)
         vae_config_path = pop_value(
             vae_config_path,
@@ -518,6 +591,63 @@ class StableForImageResolution(_StableForImageResolution):
             nested_dict_value(pretrain_infos, "scheduler"),
         )
         scheduler_config_path = cached_path(scheduler_config_path)
+
+        refiner_config_path = config.getoption("refiner_config_path", None)
+        refiner_config_path = pop_value(
+            refiner_config_path,
+            nested_dict_value(pretrain_infos, "refiner_unet", "config"),
+            check_none=False,
+        )
+        refiner_config_path = (
+            cached_path(refiner_config_path)
+            if refiner_config_path is not None
+            else None
+        )
+
+        refiner_text_config_path = config.getoption("refiner_text_config_path", None)
+        refiner_text_config_path = pop_value(
+            refiner_text_config_path,
+            nested_dict_value(pretrain_infos, "refiner_text", "config"),
+            check_none=False,
+        )
+        refiner_text_config_path = (
+            cached_path(refiner_text_config_path)
+            if refiner_text_config_path is not None
+            else None
+        )
+
+        refiner_text2_config_path = config.getoption("refiner_text2_config_path", None)
+        refiner_text2_config_path = pop_value(
+            refiner_text2_config_path,
+            nested_dict_value(pretrain_infos, "refiner_text2", "config"),
+            check_none=False,
+        )
+        refiner_text2_config_path = (
+            cached_path(refiner_text2_config_path)
+            if refiner_text2_config_path is not None
+            else None
+        )
+
+        refiner_vae_config_path = config.getoption("refiner_vae_config_path", None)
+        refiner_vae_config_path = pop_value(
+            refiner_vae_config_path,
+            nested_dict_value(pretrain_infos, "refiner_vae", "config"),
+        )
+        refiner_vae_config_path = cached_path(refiner_vae_config_path)
+
+        refiner_scheduler_config_path = config.getoption(
+            "refiner_scheduler_config_path", None
+        )
+        refiner_scheduler_config_path = pop_value(
+            refiner_scheduler_config_path,
+            nested_dict_value(pretrain_infos, "refiner_scheduler"),
+            check_none=False,
+        )
+        refiner_scheduler_config_path = (
+            cached_path(refiner_scheduler_config_path)
+            if refiner_scheduler_config_path is not None
+            else None
+        )
 
         quant_config_path = config.getoption("quant_config_path", None)
         if quant_config_path is not None:
@@ -535,8 +665,14 @@ class StableForImageResolution(_StableForImageResolution):
         inst = cls(
             config_path=config_path,
             text_config_path=text_config_path,
+            text2_config_path=text2_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
+            refiner_config_path=refiner_config_path,
+            refiner_text_config_path=refiner_text_config_path,
+            refiner_text2_config_path=refiner_text2_config_path,
+            refiner_vae_config_path=refiner_vae_config_path,
+            refiner_scheduler_config_path=refiner_scheduler_config_path,
             quant_config_path=quant_config_path,
             image_size=image_size,
             in_channels=in_channels,
@@ -550,14 +686,50 @@ class StableForImageResolution(_StableForImageResolution):
 
         weight_path = config.getoption("pretrained_weight_path", None)
 
+        state_dict = None
         if weight_path is None and pretrain_infos is not None:
-            weight_path = [
-                cached_path(nested_dict_value(pretrain_infos, "unet", "weight")),
-                cached_path(nested_dict_value(pretrain_infos, "text", "weight")),
-                cached_path(nested_dict_value(pretrain_infos, "vae", "weight")),
+            state_dict = [
+                load_weight(
+                    nested_dict_value(pretrain_infos, "unet", "weight"), "unet."
+                ),
+                load_weight(
+                    nested_dict_value(pretrain_infos, "text", "weight"), "text."
+                ),
+                load_weight(
+                    nested_dict_value(pretrain_infos, "text2", "weight"), "text2."
+                ),
+                load_weight(nested_dict_value(pretrain_infos, "vae", "weight"), "vae."),
             ]
+            if nested_dict_value(pretrain_infos, "refiner_unet", "weight") is not None:
+                state_dict.append(
+                    load_weight(
+                        nested_dict_value(pretrain_infos, "refiner_unet", "weight"),
+                        "refiner_unet.",
+                    )
+                )
+            if nested_dict_value(pretrain_infos, "refiner_text", "weight") is not None:
+                state_dict.append(
+                    load_weight(
+                        nested_dict_value(pretrain_infos, "refiner_text", "weight"),
+                        "refiner_text.",
+                    )
+                )
+            if nested_dict_value(pretrain_infos, "refiner_text2", "weight") is not None:
+                state_dict.append(
+                    load_weight(
+                        nested_dict_value(pretrain_infos, "refiner_text2", "weight"),
+                        "refiner_text2.",
+                    )
+                )
+            if nested_dict_value(pretrain_infos, "refiner_vae", "weight") is not None:
+                state_dict.append(
+                    load_weight(
+                        nested_dict_value(pretrain_infos, "refiner_vae", "weight"),
+                        "refiner_vae.",
+                    )
+                )
 
-        inst.from_pretrained(weight_path)
+        inst.from_pretrained(weight_path, state_dict=state_dict)
         return inst
 
     @autocast()
@@ -566,26 +738,38 @@ class StableForImageResolution(_StableForImageResolution):
     ):
         raise NotImplementedError
 
-    @add_default_section_for_function("core/model/diffusers/resolution/stable")
+    @add_default_section_for_function(
+        "core/model/diffusers/text2image/stable_xl_refiner"
+    )
     @autocast()
     def generate(
         self,
         input_ids: torch.Tensor,
+        input2_ids: torch.Tensor,
         negative_input_ids: torch.Tensor,
-        pixel_values: torch.Tensor,
+        negative_input2_ids: torch.Tensor,
         attention_mask: Optional[torch.Tensor] = None,
+        attention2_mask: Optional[torch.Tensor] = None,
         negative_attention_mask: Optional[torch.Tensor] = None,
-        guidance_scale: Optional[float] = 9.0,
-        noise_level: Optional[int] = 20,
+        negative_attention2_mask: Optional[torch.Tensor] = None,
+        height: Optional[int] = 1024,
+        width: Optional[int] = 1024,
+        high_noise_frac: Optional[float] = 0.8,
+        guidance_scale: Optional[float] = 5.0,
     ):
         outputs = super().generate(
             input_ids=input_ids,
+            input2_ids=input2_ids,
             negative_input_ids=negative_input_ids,
-            pixel_values=pixel_values,
+            negative_input2_ids=negative_input2_ids,
             attention_mask=attention_mask,
+            attention2_mask=attention2_mask,
             negative_attention_mask=negative_attention_mask,
+            negative_attention2_mask=negative_attention2_mask,
+            height=height,
+            width=width,
+            high_noise_frac=high_noise_frac,
             guidance_scale=guidance_scale,
-            noise_level=noise_level,
         )
 
         return DiffusionOutputs(outputs=outputs.images)

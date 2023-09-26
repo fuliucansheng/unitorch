@@ -80,6 +80,8 @@ class CoreConfigureParser(configparser.ConfigParser):
             vars=vars,
             fallback=fallback,
         )
+        if raw:
+            return value
         try:
             return self._ast_literal_eval(value)
         except (SyntaxError, ValueError):

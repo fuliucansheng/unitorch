@@ -86,6 +86,8 @@ def generation_model_decorator(cls):
             for __more_attr__ in __more_attrs__:
                 setattr(self, __more_attr__, getattr(self.model, __more_attr__))
 
+            assert hasattr(self.model, "generate")
+
         def forward(self, *args, **kwargs):
             if self.training:
                 return self.model(*args, **kwargs)

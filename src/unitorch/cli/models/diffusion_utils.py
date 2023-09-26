@@ -8,6 +8,7 @@ import hashlib
 from PIL import Image
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+import safetensors
 from diffusers.utils import numpy_to_pil
 from unitorch.cli import WriterMixin, WriterOutputs
 from unitorch.cli import (
@@ -16,6 +17,22 @@ from unitorch.cli import (
     register_process,
 )
 from unitorch.cli.models.modeling_utils import TensorsOutputs, TensorsTargets
+
+from unitorch.cli import cached_path
+
+
+def load_weight(
+    path,
+    prefix: Optional[str] = "",
+):
+    if path.endswith(".safetensors"):
+        path = cached_path(path)
+        state_dict = safetensors.torch.load_file(path)
+    else:
+        path = cached_path(path)
+        state_dict = torch.load(path, map_location="cpu")
+    state_dict = {f"{prefix}{k}": v for k, v in state_dict.items()}
+    return state_dict
 
 
 @dataclass
@@ -37,7 +54,7 @@ class DiffusionProcessor:
             os.makedirs(self.image_folder, exist_ok=True)
 
     @classmethod
-    @add_default_section_for_init("core/process/diffusion")
+    @add_default_section_for_init("core/process/diffusers")
     def from_core_configure(cls, config, **kwargs):
         pass
 
@@ -79,6 +96,8 @@ def diffusion_model_decorator(cls):
             ]
             for __more_attr__ in __more_attrs__:
                 setattr(self, __more_attr__, getattr(self.model, __more_attr__))
+
+            assert hasattr(self.model, "generate")
 
             self.model.register_forward_hook(self._hook)
             self.__in_training__ = False

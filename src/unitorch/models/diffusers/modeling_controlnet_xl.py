@@ -5,8 +5,9 @@ import json
 import torch
 import torch.nn.functional as F
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+import safetensors
 import diffusers.schedulers as schedulers
-from transformers import CLIPTextConfig, CLIPTextModel
+from transformers import CLIPTextConfig, CLIPTextModel, CLIPTextModelWithProjection
 from diffusers.schedulers import SchedulerMixin
 from diffusers.models import (
     ControlNetModel,
@@ -15,9 +16,9 @@ from diffusers.models import (
     AutoencoderKL,
 )
 from diffusers.pipelines import (
-    StableDiffusionControlNetPipeline,
-    StableDiffusionControlNetImg2ImgPipeline,
-    StableDiffusionControlNetInpaintPipeline,
+    StableDiffusionXLControlNetPipeline,
+    StableDiffusionXLControlNetImg2ImgPipeline,
+    StableDiffusionXLControlNetInpaintPipeline,
 )
 from unitorch.models import (
     GenericModel,
@@ -27,9 +28,10 @@ from unitorch.models import (
 )
 
 
-class ControlNetForText2ImageGeneration(GenericModel, QuantizationMixin):
+class ControlNetXLForText2ImageGeneration(GenericModel, QuantizationMixin):
     prefix_keys_in_state_dict = {
         # unet weights
+        "^add_embedding.*": "unet.",
         "^conv_in.*": "unet.",
         "^conv_norm_out.*": "unet.",
         "^conv_out.*": "unet.",
@@ -37,8 +39,6 @@ class ControlNetForText2ImageGeneration(GenericModel, QuantizationMixin):
         "^up_blocks.*": "unet.",
         "^mid_block.*": "unet.",
         "^down_blocks.*": "unet.",
-        # text weights
-        "^text_model.*": "text.",
         # vae weights
         "^encoder.*": "vae.",
         "^decoder.*": "vae.",
@@ -57,6 +57,7 @@ class ControlNetForText2ImageGeneration(GenericModel, QuantizationMixin):
         self,
         config_path: str,
         text_config_path: str,
+        text2_config_path: str,
         vae_config_path: str,
         controlnet_config_path: str,
         scheduler_config_path: str,
@@ -86,6 +87,8 @@ class ControlNetForText2ImageGeneration(GenericModel, QuantizationMixin):
         self.unet = UNet2DConditionModel.from_config(config_dict)
         text_config = CLIPTextConfig.from_json_file(text_config_path)
         self.text = CLIPTextModel(text_config)
+        text_config2 = CLIPTextConfig.from_json_file(text2_config_path)
+        self.text2 = CLIPTextModelWithProjection(text_config2)
         vae_config_dict = json.load(open(vae_config_path))
         self.vae = AutoencoderKL.from_config(vae_config_dict)
         controlnet_config_dict = json.load(open(controlnet_config_path))
@@ -116,41 +119,69 @@ class ControlNetForText2ImageGeneration(GenericModel, QuantizationMixin):
     ):
         raise NotImplementedError
 
-    @torch.no_grad()
     def generate(
         self,
         input_ids: torch.Tensor,
+        input2_ids: torch.Tensor,
         negative_input_ids: torch.Tensor,
+        negative_input2_ids: torch.Tensor,
         condition_pixel_values: torch.Tensor,
         attention_mask: Optional[torch.Tensor] = None,
+        attention2_mask: Optional[torch.Tensor] = None,
         negative_attention_mask: Optional[torch.Tensor] = None,
+        negative_attention2_mask: Optional[torch.Tensor] = None,
         height: Optional[int] = 1024,
         width: Optional[int] = 1024,
-        guidance_scale: Optional[float] = 7.5,
+        guidance_scale: Optional[float] = 5.0,
     ):
-        prompt_embeds = self.text(
+        prompt_outputs = self.text(
             input_ids,
             attention_mask,
-        )[0]
-        negative_prompt_embeds = self.text(
+            output_hidden_states=True,
+        )
+        prompt_embeds = prompt_outputs.hidden_states[-2]
+        negative_prompt_outputs = self.text(
             negative_input_ids,
             negative_attention_mask,
-        )[0]
-        pipeline = StableDiffusionControlNetPipeline(
+            output_hidden_states=True,
+        )
+        negative_prompt_embeds = negative_prompt_outputs.hidden_states[-2]
+        prompt2_outputs = self.text2(
+            input2_ids,
+            attention2_mask,
+            output_hidden_states=True,
+        )
+        prompt2_embeds = prompt2_outputs.hidden_states[-2]
+        negative_prompt2_outputs = self.text2(
+            negative_input2_ids,
+            negative_attention2_mask,
+            output_hidden_states=True,
+        )
+        negative_prompt2_embeds = negative_prompt2_outputs.hidden_states[-2]
+        pipeline = StableDiffusionXLControlNetPipeline(
             vae=self.vae,
             text_encoder=self.text,
+            text_encoder_2=self.text2,
             unet=self.unet,
             controlnet=self.controlnet,
             scheduler=self.scheduler,
             tokenizer=None,
-            safety_checker=None,
-            feature_extractor=None,
+            tokenizer_2=None,
         )
         pipeline.set_progress_bar_config(disable=True)
+
+        prompt_embeds = torch.concat([prompt_embeds, prompt2_embeds], dim=-1)
+        negative_prompt_embeds = torch.concat(
+            [negative_prompt_embeds, negative_prompt2_embeds], dim=-1
+        )
+        pooled_prompt_embeds = prompt2_outputs[0]
+        negative_pooled_prompt_embeds = negative_prompt2_outputs[0]
         images = pipeline(
             image=condition_pixel_values,
             prompt_embeds=prompt_embeds,
             negative_prompt_embeds=negative_prompt_embeds,
+            pooled_prompt_embeds=pooled_prompt_embeds,
+            negative_pooled_prompt_embeds=negative_pooled_prompt_embeds,
             generator=torch.Generator(device=pipeline.device).manual_seed(self.seed),
             height=height,
             width=width,
@@ -161,9 +192,10 @@ class ControlNetForText2ImageGeneration(GenericModel, QuantizationMixin):
         return GenericOutputs(images=torch.from_numpy(images))
 
 
-class ControlNetForImage2ImageGeneration(GenericModel, QuantizationMixin):
+class ControlNetXLForImage2ImageGeneration(GenericModel, QuantizationMixin):
     prefix_keys_in_state_dict = {
         # unet weights
+        "^add_embedding.*": "unet.",
         "^conv_in.*": "unet.",
         "^conv_norm_out.*": "unet.",
         "^conv_out.*": "unet.",
@@ -171,8 +203,6 @@ class ControlNetForImage2ImageGeneration(GenericModel, QuantizationMixin):
         "^up_blocks.*": "unet.",
         "^mid_block.*": "unet.",
         "^down_blocks.*": "unet.",
-        # text weights
-        "^text_model.*": "text.",
         # vae weights
         "^encoder.*": "vae.",
         "^decoder.*": "vae.",
@@ -191,6 +221,7 @@ class ControlNetForImage2ImageGeneration(GenericModel, QuantizationMixin):
         self,
         config_path: str,
         text_config_path: str,
+        text2_config_path: str,
         vae_config_path: str,
         controlnet_config_path: str,
         scheduler_config_path: str,
@@ -220,6 +251,8 @@ class ControlNetForImage2ImageGeneration(GenericModel, QuantizationMixin):
         self.unet = UNet2DConditionModel.from_config(config_dict)
         text_config = CLIPTextConfig.from_json_file(text_config_path)
         self.text = CLIPTextModel(text_config)
+        text_config2 = CLIPTextConfig.from_json_file(text2_config_path)
+        self.text2 = CLIPTextModelWithProjection(text_config2)
         vae_config_dict = json.load(open(vae_config_path))
         self.vae = AutoencoderKL.from_config(vae_config_dict)
         controlnet_config_dict = json.load(open(controlnet_config_path))
@@ -243,51 +276,81 @@ class ControlNetForImage2ImageGeneration(GenericModel, QuantizationMixin):
 
         if quant_config_path is not None:
             self.quant_config = QuantizationConfig.from_json_file(quant_config_path)
-            self.quantize(self.quant_config, ignore_modules=["lm_head"])
+            self.quantize(self.quant_config)
 
     def forward(
         self,
     ):
         raise NotImplementedError
 
-    @torch.no_grad()
     def generate(
         self,
         input_ids: torch.Tensor,
+        input2_ids: torch.Tensor,
         negative_input_ids: torch.Tensor,
+        negative_input2_ids: torch.Tensor,
         pixel_values: torch.Tensor,
         condition_pixel_values: torch.Tensor,
         attention_mask: Optional[torch.Tensor] = None,
+        attention2_mask: Optional[torch.Tensor] = None,
         negative_attention_mask: Optional[torch.Tensor] = None,
-        strength: Optional[float] = 0.8,
+        negative_attention2_mask: Optional[torch.Tensor] = None,
+        strength: Optional[float] = 0.99,
+        controlnet_conditioning_scale: Optional[float] = 0.5,
         guidance_scale: Optional[float] = 7.5,
     ):
-        prompt_embeds = self.text(
+        prompt_outputs = self.text(
             input_ids,
             attention_mask,
-        )[0]
-        negative_prompt_embeds = self.text(
+            output_hidden_states=True,
+        )
+        prompt_embeds = prompt_outputs.hidden_states[-2]
+        negative_prompt_outputs = self.text(
             negative_input_ids,
             negative_attention_mask,
-        )[0]
-        pipeline = StableDiffusionControlNetImg2ImgPipeline(
+            output_hidden_states=True,
+        )
+        negative_prompt_embeds = negative_prompt_outputs.hidden_states[-2]
+        prompt2_outputs = self.text2(
+            input2_ids,
+            attention2_mask,
+            output_hidden_states=True,
+        )
+        prompt2_embeds = prompt2_outputs.hidden_states[-2]
+        negative_prompt2_outputs = self.text2(
+            negative_input2_ids,
+            negative_attention2_mask,
+            output_hidden_states=True,
+        )
+        negative_prompt2_embeds = negative_prompt2_outputs.hidden_states[-2]
+        pipeline = StableDiffusionXLControlNetImg2ImgPipeline(
             vae=self.vae,
             text_encoder=self.text,
+            text_encoder_2=self.text2,
             unet=self.unet,
             controlnet=self.controlnet,
             scheduler=self.scheduler,
             tokenizer=None,
-            safety_checker=None,
-            feature_extractor=None,
+            tokenizer_2=None,
         )
         pipeline.set_progress_bar_config(disable=True)
+        prompt_embeds = torch.concat([prompt_embeds, prompt2_embeds], dim=-1)
+        negative_prompt_embeds = torch.concat(
+            [negative_prompt_embeds, negative_prompt2_embeds], dim=-1
+        )
+        pooled_prompt_embeds = prompt2_outputs[0]
+        negative_pooled_prompt_embeds = negative_prompt2_outputs[0]
+
         images = pipeline(
             image=pixel_values,
             control_image=condition_pixel_values,
             prompt_embeds=prompt_embeds,
             negative_prompt_embeds=negative_prompt_embeds,
+            pooled_prompt_embeds=pooled_prompt_embeds,
+            negative_pooled_prompt_embeds=negative_pooled_prompt_embeds,
             generator=torch.Generator(device=pipeline.device).manual_seed(self.seed),
             strength=strength,
+            controlnet_conditioning_scale=controlnet_conditioning_scale,
             guidance_scale=guidance_scale,
             output_type="np.array",
         ).images
@@ -295,9 +358,10 @@ class ControlNetForImage2ImageGeneration(GenericModel, QuantizationMixin):
         return GenericOutputs(images=torch.from_numpy(images))
 
 
-class ControlNetForImageInpainting(GenericModel, QuantizationMixin):
+class ControlNetXLForImageInpainting(GenericModel, QuantizationMixin):
     prefix_keys_in_state_dict = {
         # unet weights
+        "^add_embedding.*": "unet.",
         "^conv_in.*": "unet.",
         "^conv_norm_out.*": "unet.",
         "^conv_out.*": "unet.",
@@ -305,8 +369,6 @@ class ControlNetForImageInpainting(GenericModel, QuantizationMixin):
         "^up_blocks.*": "unet.",
         "^mid_block.*": "unet.",
         "^down_blocks.*": "unet.",
-        # text weights
-        "^text_model.*": "text.",
         # vae weights
         "^encoder.*": "vae.",
         "^decoder.*": "vae.",
@@ -325,6 +387,7 @@ class ControlNetForImageInpainting(GenericModel, QuantizationMixin):
         self,
         config_path: str,
         text_config_path: str,
+        text2_config_path: str,
         vae_config_path: str,
         controlnet_config_path: str,
         scheduler_config_path: str,
@@ -354,6 +417,8 @@ class ControlNetForImageInpainting(GenericModel, QuantizationMixin):
         self.unet = UNet2DConditionModel.from_config(config_dict)
         text_config = CLIPTextConfig.from_json_file(text_config_path)
         self.text = CLIPTextModel(text_config)
+        text_config2 = CLIPTextConfig.from_json_file(text2_config_path)
+        self.text2 = CLIPTextModelWithProjection(text_config2)
         vae_config_dict = json.load(open(vae_config_path))
         self.vae = AutoencoderKL.from_config(vae_config_dict)
         controlnet_config_dict = json.load(open(controlnet_config_path))
@@ -384,44 +449,72 @@ class ControlNetForImageInpainting(GenericModel, QuantizationMixin):
     ):
         raise NotImplementedError
 
-    @torch.no_grad()
     def generate(
         self,
         input_ids: torch.Tensor,
+        input2_ids: torch.Tensor,
         negative_input_ids: torch.Tensor,
+        negative_input2_ids: torch.Tensor,
         pixel_values: torch.Tensor,
         pixel_masks: torch.Tensor,
         condition_pixel_values: torch.Tensor,
         attention_mask: Optional[torch.Tensor] = None,
+        attention2_mask: Optional[torch.Tensor] = None,
         negative_attention_mask: Optional[torch.Tensor] = None,
+        negative_attention2_mask: Optional[torch.Tensor] = None,
         strength: Optional[float] = 0.8,
         guidance_scale: Optional[float] = 7.5,
     ):
-        prompt_embeds = self.text(
+        prompt_outputs = self.text(
             input_ids,
             attention_mask,
-        )[0]
-        negative_prompt_embeds = self.text(
+            output_hidden_states=True,
+        )
+        prompt_embeds = prompt_outputs.hidden_states[-2]
+        negative_prompt_outputs = self.text(
             negative_input_ids,
             negative_attention_mask,
-        )[0]
-        pipeline = StableDiffusionControlNetInpaintPipeline(
+            output_hidden_states=True,
+        )
+        negative_prompt_embeds = negative_prompt_outputs.hidden_states[-2]
+        prompt2_outputs = self.text2(
+            input2_ids,
+            attention2_mask,
+            output_hidden_states=True,
+        )
+        prompt2_embeds = prompt2_outputs.hidden_states[-2]
+        negative_prompt2_outputs = self.text2(
+            negative_input2_ids,
+            negative_attention2_mask,
+            output_hidden_states=True,
+        )
+        negative_prompt2_embeds = negative_prompt2_outputs.hidden_states[-2]
+        pipeline = StableDiffusionXLControlNetInpaintPipeline(
             vae=self.vae,
             text_encoder=self.text,
+            text_encoder_2=self.text2,
             unet=self.unet,
             controlnet=self.controlnet,
             scheduler=self.scheduler,
             tokenizer=None,
-            safety_checker=None,
-            feature_extractor=None,
+            tokenizer_2=None,
         )
         pipeline.set_progress_bar_config(disable=True)
+
+        prompt_embeds = torch.concat([prompt_embeds, prompt2_embeds], dim=-1)
+        negative_prompt_embeds = torch.concat(
+            [negative_prompt_embeds, negative_prompt2_embeds], dim=-1
+        )
+        pooled_prompt_embeds = prompt2_outputs[0]
+        negative_pooled_prompt_embeds = negative_prompt2_outputs[0]
         images = pipeline(
             image=pixel_values,
             mask_image=pixel_masks,
             control_image=condition_pixel_values,
             prompt_embeds=prompt_embeds,
             negative_prompt_embeds=negative_prompt_embeds,
+            pooled_prompt_embeds=pooled_prompt_embeds,
+            negative_pooled_prompt_embeds=negative_pooled_prompt_embeds,
             generator=torch.Generator(device=pipeline.device).manual_seed(self.seed),
             strength=strength,
             guidance_scale=guidance_scale,

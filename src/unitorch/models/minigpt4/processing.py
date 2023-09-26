@@ -78,7 +78,7 @@ class MiniGPT4Blip2LlamaProcessor(
         self,
         prefix_text: str,
         suffix_text: str,
-        image: Image.Image,
+        image: Union[Image.Image, str],
         max_prefix_seq_length: Optional[int] = None,
         max_suffix_seq_length: Optional[int] = None,
     ):
@@ -143,7 +143,7 @@ class MiniGPT4Blip2LlamaProcessor(
         self,
         prefix_text: str,
         suffix_text: str,
-        image: Image.Image,
+        image: Union[Image.Image, str],
         max_prefix_seq_length: Optional[int] = None,
         max_suffix_seq_length: Optional[int] = None,
     ):
@@ -246,7 +246,7 @@ class MiniGPT4Blip2LlamaProcessor(
         prefix_text: str,
         suffix_text: str,
         text_pair: str,
-        image: Image.Image,
+        image: Union[Image.Image, str],
         max_prefix_seq_length: Optional[int] = None,
         max_suffix_seq_length: Optional[int] = None,
         max_gen_seq_length: Optional[int] = None,

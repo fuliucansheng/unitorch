@@ -86,7 +86,7 @@ class ClipProcessor(HfImageClassificationProcessor, HfTextClassificationProcesso
 
     def image_classification(
         self,
-        image: Image.Image,
+        image: Union[Image.Image, str],
     ):
         """
         Performs image classification.
@@ -109,7 +109,7 @@ class ClipProcessor(HfImageClassificationProcessor, HfTextClassificationProcesso
     def classification(
         self,
         text: str,
-        image: Image.Image,
+        image: Union[Image.Image, str],
         max_seq_length: Optional[int] = None,
     ):
         """

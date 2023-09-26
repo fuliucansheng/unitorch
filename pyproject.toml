@@ -29,15 +29,19 @@ dynamic = ["version", "dependencies"]
 
 [project.optional-dependencies]
 deepspeed = ["deepspeed==0.9.0", "mpi4py==3.1.4"]
-diffusers = ["diffusers>=0.17.1"]
+diffusers = ["diffusers>=0.21.0", "safetensors>=0.3.1"]
 quantization = ["bitsandbytes>=0.41.1"]
-all = ["unitorch[deepspeed,diffusers,quantization]"]
+fastapi = ["fastapi>=0.103.1"]
+webui = ["gradio>=3.44.3", "gradio_client>=0.5.0"]
+all = ["unitorch[deepspeed,diffusers,quantization,fastapi,webui]"]
 
 [project.scripts]
 unitorch-train = "unitorch.cli.console.train:cli_main"
 unitorch-eval = "unitorch.cli.console.eval:cli_main"
 unitorch-infer = "unitorch.cli.console.infer:cli_main"
 unitorch-launch= "unitorch.cli.console.launch:cli_main"
+unitorch-webui= "unitorch.cli.console.webui:cli_main"
+unitorch-fastapi= "unitorch.cli.console.fastapi:cli_main"
 unitorch-service = "unitorch.cli.console.service:cli_main"
 
 [tool.setuptools]

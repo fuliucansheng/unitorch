@@ -68,7 +68,7 @@ class AccuracyScore(Score):
             targets = targets.view(-1)
 
         if isinstance(outputs, SegmentationOutputs):
-            outputs = outputs.masks
+            outputs = outputs.outputs
             outputs = torch.cat([t.view(-1, t.size(-1)) for t in outputs])
 
         if isinstance(targets, SegmentationTargets):

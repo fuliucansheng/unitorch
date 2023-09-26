@@ -20,26 +20,41 @@ from diffusers.image_processor import VaeImageProcessor
 from unitorch.models import HfTextClassificationProcessor, GenericOutputs
 
 
-class StableProcessor(HfTextClassificationProcessor):
+class StableXLProcessor:
     def __init__(
         self,
-        vocab_path: str,
-        merge_path: str,
+        vocab1_path: str,
+        merge1_path: str,
+        vocab2_path: str,
+        merge2_path: str,
         vae_config_path: Optional[str] = None,
         max_seq_length: Optional[int] = 77,
         position_start_id: Optional[int] = 0,
     ):
-        tokenizer = CLIPTokenizer(
-            vocab_file=vocab_path,
-            merges_file=merge_path,
+        tokenizer1 = CLIPTokenizer(
+            vocab_file=vocab1_path,
+            merges_file=merge1_path,
         )
 
-        tokenizer.cls_token = tokenizer.bos_token
-        tokenizer.sep_token = tokenizer.eos_token
+        tokenizer1.cls_token = tokenizer1.bos_token
+        tokenizer1.sep_token = tokenizer1.eos_token
 
-        HfTextClassificationProcessor.__init__(
-            self,
-            tokenizer=tokenizer,
+        self.text_processor1 = HfTextClassificationProcessor(
+            tokenizer=tokenizer1,
+            max_seq_length=max_seq_length,
+            position_start_id=position_start_id,
+        )
+
+        tokenizer2 = CLIPTokenizer(
+            vocab_file=vocab2_path,
+            merges_file=merge2_path,
+        )
+
+        tokenizer2.cls_token = tokenizer2.bos_token
+        tokenizer2.sep_token = tokenizer2.eos_token
+
+        self.text_processor2 = HfTextClassificationProcessor(
+            tokenizer=tokenizer2,
             max_seq_length=max_seq_length,
             position_start_id=position_start_id,
         )
@@ -52,13 +67,12 @@ class StableProcessor(HfTextClassificationProcessor):
             self.vae_image_processor = VaeImageProcessor(
                 vae_scale_factor=vae_scale_factor
             )
-        else:
-            self.vae_image_processor = None
 
     def text2image(
         self,
         prompt: str,
         image: Union[Image.Image, str],
+        prompt2: Optional[str] = None,
         max_seq_length: Optional[int] = None,
     ):
         pass
@@ -66,40 +80,72 @@ class StableProcessor(HfTextClassificationProcessor):
     def text2image_inputs(
         self,
         prompt: str,
+        prompt2: Optional[str] = None,
         negative_prompt: Optional[str] = "",
+        negative_prompt2: Optional[str] = None,
         max_seq_length: Optional[int] = None,
     ):
-        prompt_outputs = self.classification(prompt, max_seq_length=max_seq_length)
-        negative_prompt_outputs = self.classification(
+        prompt2 = prompt2 or prompt
+        negative_prompt2 = negative_prompt2 or negative_prompt
+        prompt_outputs = self.text_processor1.classification(
+            prompt, max_seq_length=max_seq_length
+        )
+        prompt2_outputs = self.text_processor2.classification(
+            prompt2, max_seq_length=max_seq_length
+        )
+        negative_prompt_outputs = self.text_processor1.classification(
             negative_prompt, max_seq_length=max_seq_length
+        )
+        negative_prompt2_outputs = self.text_processor2.classification(
+            negative_prompt2, max_seq_length=max_seq_length
         )
         return GenericOutputs(
             input_ids=prompt_outputs.input_ids,
             attention_mask=prompt_outputs.attention_mask,
+            input2_ids=prompt2_outputs.input_ids,
+            attention2_mask=prompt2_outputs.attention_mask,
             negative_input_ids=negative_prompt_outputs.input_ids,
             negative_attention_mask=negative_prompt_outputs.attention_mask,
+            negative_input2_ids=negative_prompt2_outputs.input_ids,
+            negative_attention2_mask=negative_prompt2_outputs.attention_mask,
         )
 
     def image2image_inputs(
         self,
         prompt: str,
         image: Union[Image.Image, str],
+        prompt2: Optional[str] = None,
         negative_prompt: Optional[str] = "",
+        negative_prompt2: Optional[str] = None,
         max_seq_length: Optional[int] = None,
     ):
         if isinstance(image, str):
             image = Image.open(image).convert("RGB")
-        prompt_outputs = self.classification(prompt, max_seq_length=max_seq_length)
-        negative_prompt_outputs = self.classification(
+        prompt2 = prompt2 or prompt
+        negative_prompt2 = negative_prompt2 or negative_prompt
+        prompt_outputs = self.text_processor1.classification(
+            prompt, max_seq_length=max_seq_length
+        )
+        prompt2_outputs = self.text_processor2.classification(
+            prompt2, max_seq_length=max_seq_length
+        )
+        negative_prompt_outputs = self.text_processor1.classification(
             negative_prompt, max_seq_length=max_seq_length
+        )
+        negative_prompt2_outputs = self.text_processor2.classification(
+            negative_prompt2, max_seq_length=max_seq_length
         )
         pixel_values = self.vae_image_processor.preprocess(image)[0]
         return GenericOutputs(
+            pixel_values=pixel_values,
             input_ids=prompt_outputs.input_ids,
             attention_mask=prompt_outputs.attention_mask,
-            pixel_values=pixel_values,
+            input2_ids=prompt2_outputs.input_ids,
+            attention2_mask=prompt2_outputs.attention_mask,
             negative_input_ids=negative_prompt_outputs.input_ids,
             negative_attention_mask=negative_prompt_outputs.attention_mask,
+            negative_input2_ids=negative_prompt2_outputs.input_ids,
+            negative_attention2_mask=negative_prompt2_outputs.attention_mask,
         )
 
     def inpainting_inputs(
@@ -107,7 +153,9 @@ class StableProcessor(HfTextClassificationProcessor):
         prompt: str,
         image: Union[Image.Image, str],
         mask_image: Union[Image.Image, str],
+        prompt2: Optional[str] = None,
         negative_prompt: Optional[str] = "",
+        negative_prompt2: Optional[str] = None,
         max_seq_length: Optional[int] = None,
     ):
         if isinstance(image, str):
@@ -116,41 +164,30 @@ class StableProcessor(HfTextClassificationProcessor):
         if isinstance(mask_image, str):
             mask_image = Image.open(mask_image).convert("L")
 
-        prompt_outputs = self.classification(prompt, max_seq_length=max_seq_length)
-        negative_prompt_outputs = self.classification(
+        prompt_outputs = self.text_processor1.classification(
+            prompt, max_seq_length=max_seq_length
+        )
+        prompt2_outputs = self.text_processor2.classification(
+            prompt2, max_seq_length=max_seq_length
+        )
+        negative_prompt_outputs = self.text_processor1.classification(
             negative_prompt, max_seq_length=max_seq_length
+        )
+        negative_prompt2_outputs = self.text_processor2.classification(
+            negative_prompt2, max_seq_length=max_seq_length
         )
         pixel_values = self.vae_image_processor.preprocess(image)[0]
         pixel_masks = self.vae_image_processor.preprocess(mask_image)[0]
         pixel_masks = (pixel_masks + 1) / 2
         return GenericOutputs(
-            input_ids=prompt_outputs.input_ids,
-            attention_mask=prompt_outputs.attention_mask,
             pixel_values=pixel_values,
             pixel_masks=pixel_masks,
-            negative_input_ids=negative_prompt_outputs.input_ids,
-            negative_attention_mask=negative_prompt_outputs.attention_mask,
-        )
-
-    def resolution_inputs(
-        self,
-        prompt: str,
-        image: Union[Image.Image, str],
-        negative_prompt: Optional[str] = "",
-        max_seq_length: Optional[int] = None,
-    ):
-        if isinstance(image, str):
-            image = Image.open(image).convert("RGB")
-
-        prompt_outputs = self.classification(prompt, max_seq_length=max_seq_length)
-        negative_prompt_outputs = self.classification(
-            negative_prompt, max_seq_length=max_seq_length
-        )
-        pixel_values = self.vae_image_processor.preprocess(image)[0]
-        return GenericOutputs(
             input_ids=prompt_outputs.input_ids,
             attention_mask=prompt_outputs.attention_mask,
-            pixel_values=pixel_values,
+            input2_ids=prompt2_outputs.input_ids,
+            attention2_mask=prompt2_outputs.attention_mask,
             negative_input_ids=negative_prompt_outputs.input_ids,
             negative_attention_mask=negative_prompt_outputs.attention_mask,
+            negative_input2_ids=negative_prompt2_outputs.input_ids,
+            negative_attention2_mask=negative_prompt2_outputs.attention_mask,
         )

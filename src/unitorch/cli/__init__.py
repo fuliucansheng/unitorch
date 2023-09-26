@@ -231,6 +231,48 @@ register_service = partial(
 )
 
 
+# webui module
+class GenericWebUI(metaclass=abc.ABCMeta):
+    def __init__(self, config: CoreConfigureParser):
+        pass
+
+    @abc.abstractmethod
+    def start(self, **kwargs):
+        pass
+
+    @abc.abstractmethod
+    def stop(self, **kwargs):
+        pass
+
+
+registered_webui = dict()
+register_webui = partial(
+    registry_func,
+    save_dict=registered_webui,
+)
+
+
+# fastapi module
+class GenericFastAPI(metaclass=abc.ABCMeta):
+    def __init__(self, config: CoreConfigureParser):
+        pass
+
+    @abc.abstractmethod
+    def start(self, **kwargs):
+        pass
+
+    @abc.abstractmethod
+    def stop(self, **kwargs):
+        pass
+
+
+registered_fastapi = dict()
+register_fastapi = partial(
+    registry_func,
+    save_dict=registered_fastapi,
+)
+
+
 # usful function
 from unitorch.cli.writer import WriterMixin, WriterOutputs
 

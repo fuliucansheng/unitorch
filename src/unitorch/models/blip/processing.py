@@ -96,7 +96,7 @@ class BlipProcessor(
 
     def image_classification(
         self,
-        image: Image.Image,
+        image: Union[Image.Image, str],
     ) -> GenericOutputs:
         """
         Performs image classification on the given input image.
@@ -119,7 +119,7 @@ class BlipProcessor(
     def classification(
         self,
         text: str,
-        image: Image.Image,
+        image: Union[Image.Image, str],
         max_seq_length: Optional[int] = None,
     ) -> GenericOutputs:
         """
@@ -201,7 +201,7 @@ class BlipProcessor(
     def generation(
         self,
         text: str,
-        image: Image.Image,
+        image: Union[Image.Image, str],
         max_gen_seq_length: Optional[int] = None,
     ) -> GenericOutputs:
         """
