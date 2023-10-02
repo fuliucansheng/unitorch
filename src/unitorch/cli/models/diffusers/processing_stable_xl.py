@@ -24,6 +24,7 @@ class StableXLProcessor(_StableXLProcessor):
         merge1_path: str,
         vocab2_path: str,
         merge2_path: str,
+        vae_config_path: str,
         max_seq_length: Optional[int] = 77,
         position_start_id: Optional[int] = 0,
     ):
@@ -32,6 +33,7 @@ class StableXLProcessor(_StableXLProcessor):
             merge1_path=merge1_path,
             vocab2_path=vocab2_path,
             merge2_path=merge2_path,
+            vae_config_path=vae_config_path,
             max_seq_length=max_seq_length,
             position_start_id=position_start_id,
         )
@@ -86,23 +88,54 @@ class StableXLProcessor(_StableXLProcessor):
             "vae_config_path": vae_config_path,
         }
 
-    @register_process("core/process/diffusers/stable_xl/text2image/inputs")
-    def _text2image_inputs(
+    @register_process("core/process/diffusers/stable_xl/text2image")
+    def _text2image(
         self,
         prompt: str,
-        negative_prompt: Optional[str] = "",
+        image: Union[Image.Image, str],
+        prompt2: Optional[str] = None,
         max_seq_length: Optional[int] = None,
     ):
-        outputs = super().text2image_inputs(
+        outputs = super().text2image(
             prompt=prompt,
-            negative_prompt=negative_prompt,
+            image=image,
+            prompt2=prompt2,
             max_seq_length=max_seq_length,
         )
         return TensorsInputs(
             input_ids=outputs.input_ids,
             attention_mask=outputs.attention_mask,
+            pixel_values=outputs.pixel_values,
+            input2_ids=outputs.input2_ids,
+            attention2_mask=outputs.attention2_mask,
+            add_time_ids=outputs.add_time_ids,
+        )
+
+    @register_process("core/process/diffusers/stable_xl/text2image/inputs")
+    def _text2image_inputs(
+        self,
+        prompt: str,
+        prompt2: Optional[str] = None,
+        negative_prompt: Optional[str] = "",
+        negative_prompt2: Optional[str] = None,
+        max_seq_length: Optional[int] = None,
+    ):
+        outputs = super().text2image_inputs(
+            prompt=prompt,
+            prompt2=prompt2,
+            negative_prompt=negative_prompt,
+            negative_prompt2=negative_prompt2,
+            max_seq_length=max_seq_length,
+        )
+        return TensorsInputs(
+            input_ids=outputs.input_ids,
+            input2_ids=outputs.input2_ids,
+            attention_mask=outputs.attention_mask,
+            attention2_mask=outputs.attention2_mask,
             negative_input_ids=outputs.negative_input_ids,
             negative_attention_mask=outputs.negative_attention_mask,
+            negative_input2_ids=outputs.negative_input2_ids,
+            negative_attention2_mask=outputs.negative_attention2_mask,
         )
 
     @register_process("core/process/diffusers/stable_xl/image2image/inputs")
@@ -110,21 +143,29 @@ class StableXLProcessor(_StableXLProcessor):
         self,
         prompt: str,
         image: Union[Image.Image, str],
+        prompt2: Optional[str] = None,
         negative_prompt: Optional[str] = "",
+        negative_prompt2: Optional[str] = None,
         max_seq_length: Optional[int] = None,
     ):
         outputs = super().image2image_inputs(
             prompt=prompt,
             image=image,
+            prompt2=prompt2,
             negative_prompt=negative_prompt,
+            negative_prompt2=negative_prompt2,
             max_seq_length=max_seq_length,
         )
         return TensorsInputs(
-            input_ids=outputs.input_ids,
-            attention_mask=outputs.attention_mask,
             pixel_values=outputs.pixel_values,
+            input_ids=outputs.input_ids,
+            input2_ids=outputs.input2_ids,
+            attention_mask=outputs.attention_mask,
+            attention2_mask=outputs.attention2_mask,
             negative_input_ids=outputs.negative_input_ids,
             negative_attention_mask=outputs.negative_attention_mask,
+            negative_input2_ids=outputs.negative_input2_ids,
+            negative_attention2_mask=outputs.negative_attention2_mask,
         )
 
     @register_process("core/process/diffusers/stable_xl/inpainting/inputs")
@@ -133,21 +174,29 @@ class StableXLProcessor(_StableXLProcessor):
         prompt: str,
         image: Union[Image.Image, str],
         mask_image: Union[Image.Image, str],
+        prompt2: Optional[str] = None,
         negative_prompt: Optional[str] = "",
+        negative_prompt2: Optional[str] = None,
         max_seq_length: Optional[int] = None,
     ):
         outputs = super().inpainting_inputs(
             prompt=prompt,
             image=image,
             mask_image=mask_image,
+            prompt2=prompt2,
             negative_prompt=negative_prompt,
+            negative_prompt2=negative_prompt2,
             max_seq_length=max_seq_length,
         )
         return TensorsInputs(
-            input_ids=outputs.input_ids,
-            attention_mask=outputs.attention_mask,
             pixel_values=outputs.pixel_values,
             pixel_masks=outputs.pixel_masks,
+            input_ids=outputs.input_ids,
+            input2_ids=outputs.input2_ids,
+            attention_mask=outputs.attention_mask,
+            attention2_mask=outputs.attention2_mask,
             negative_input_ids=outputs.negative_input_ids,
             negative_attention_mask=outputs.negative_attention_mask,
+            negative_input2_ids=outputs.negative_input2_ids,
+            negative_attention2_mask=outputs.negative_attention2_mask,
         )

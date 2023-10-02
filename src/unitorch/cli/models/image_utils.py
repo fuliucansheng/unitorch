@@ -13,7 +13,7 @@ import torch.nn as nn
 import numpy as np
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from random import random
-from PIL import Image, ImageOps, ImageFile
+from PIL import Image, ImageOps, ImageFile, ImageFilter
 
 from unitorch.cli import (
     add_default_section_for_init,
@@ -173,3 +173,61 @@ class ImageProcessor:
             The rotated image as a PIL Image object.
         """
         return image.rotate(degree, Image.NEAREST, expand=1)
+
+    @register_process("core/process/image/flip")
+    def _flip(
+        self,
+        image: Image.Image,
+        horizontal: Optional[bool] = False,
+        vertical: Optional[bool] = False,
+    ):
+        """
+        Flips the image horizontally or vertically.
+
+        Args:
+            image (Image.Image): The image to flip.
+            horizontal (Optional[bool]): Whether to flip the image horizontally. Defaults to False.
+            vertical (Optional[bool]): Whether to flip the image vertically. Defaults to False.
+
+        Returns:
+            The flipped image as a PIL Image object.
+        """
+        if horizontal:
+            image = image.transpose(Image.FLIP_LEFT_RIGHT)
+        if vertical:
+            image = image.transpose(Image.FLIP_TOP_BOTTOM)
+        return image
+
+    @register_process("core/process/image/resize")
+    def _resize(
+        self,
+        image: Image.Image,
+        size: Optional[Tuple[int, int]] = (256, 256),
+    ):
+        """
+        Resizes the image to the specified size.
+
+        Args:
+            image (Image.Image): The image to resize.
+            size (Optional[Tuple[int, int]]): The size to resize to. Defaults to (256, 256).
+
+        Returns:
+            The resized image as a PIL Image object.
+        """
+        return image.resize(size, Image.BICUBIC)
+
+    @register_process("core/process/image/canny")
+    def _canny(
+        self,
+        image: Image.Image,
+    ):
+        """
+        Detects edges in the image using the Canny algorithm.
+
+        Args:
+            image (Image.Image): The image to detect edges in.
+
+        Returns:
+            The image with detected edges as a PIL Image object.
+        """
+        return image.filter(ImageFilter.FIND_EDGES)

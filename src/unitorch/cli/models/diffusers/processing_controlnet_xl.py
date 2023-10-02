@@ -88,6 +88,32 @@ class ControlNetXLProcessor(_ControlNetXLProcessor):
             "vae_config_path": vae_config_path,
         }
 
+    @register_process("core/process/diffusers/controlnet_xl/text2image")
+    def _text2image(
+        self,
+        prompt: str,
+        image: Union[Image.Image, str],
+        condition_image: Union[Image.Image, str],
+        prompt2: Optional[str] = None,
+        max_seq_length: Optional[int] = None,
+    ):
+        outputs = super().text2image(
+            prompt=prompt,
+            image=image,
+            condition_image=condition_image,
+            prompt2=prompt2,
+            max_seq_length=max_seq_length,
+        )
+        return TensorsInputs(
+            pixel_values=outputs.pixel_values,
+            condition_pixel_values=outputs.condition_pixel_values,
+            input_ids=outputs.input_ids,
+            attention_mask=outputs.attention_mask,
+            input2_ids=outputs.input2_ids,
+            attention2_mask=outputs.attention2_mask,
+            add_time_ids=outputs.add_time_ids,
+        )
+
     @register_process("core/process/diffusers/controlnet_xl/text2image/inputs")
     def _text2image_inputs(
         self,

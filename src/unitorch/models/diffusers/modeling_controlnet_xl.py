@@ -5,10 +5,17 @@ import json
 import torch
 import torch.nn.functional as F
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
-import safetensors
 import diffusers.schedulers as schedulers
 from transformers import CLIPTextConfig, CLIPTextModel, CLIPTextModelWithProjection
 from diffusers.schedulers import SchedulerMixin
+from diffusers.models.attention_processor import (
+    AttnAddedKVProcessor,
+    AttnAddedKVProcessor2_0,
+    LoRAAttnAddedKVProcessor,
+    LoRAAttnProcessor,
+    LoRAAttnProcessor2_0,
+    SlicedAttnAddedKVProcessor,
+)
 from diffusers.models import (
     ControlNetModel,
     UNet2DModel,
@@ -70,6 +77,7 @@ class ControlNetXLForText2ImageGeneration(GenericModel, QuantizationMixin):
         freeze_vae_encoder: Optional[bool] = True,
         freeze_text_encoder: Optional[bool] = True,
         freeze_unet_encoder: Optional[bool] = True,
+        lora_r: Optional[int] = None,
         seed: Optional[int] = 1123,
     ):
         super().__init__()
@@ -102,22 +110,144 @@ class ControlNetXLForText2ImageGeneration(GenericModel, QuantizationMixin):
         self.scheduler = scheduler_class.from_config(scheduler_config_dict)
 
         if freeze_vae_encoder:
-            self.vae.requires_grad = False
+            for param in self.vae.parameters():
+                param.requires_grad = False
 
         if freeze_text_encoder:
-            self.text.requires_grad = False
+            for param in self.text.parameters():
+                param.requires_grad = False
 
         if freeze_unet_encoder:
-            self.unet.requires_grad = False
+            for param in self.unet.parameters():
+                param.requires_grad = False
 
         if quant_config_path is not None:
             self.quant_config = QuantizationConfig.from_json_file(quant_config_path)
-            self.quantize(self.quant_config, ignore_modules=["lm_head"])
+            self.quantize(self.quant_config, ignore_modules=["lm_head", "unet"])
+
+        if lora_r is not None:
+            for param in self.unet.parameters():
+                param.requires_grad = False
+            self.enable_lora(lora_r=lora_r)
+
+    def enable_lora(self, lora_r: Optional[int] = 4):
+        lora_attn_procs = {}
+        for name, attn_processor in self.unet.attn_processors.items():
+            cross_attention_dim = (
+                None
+                if name.endswith("attn1.processor")
+                else self.unet.config.cross_attention_dim
+            )
+            if name.startswith("mid_block"):
+                hidden_size = self.unet.config.block_out_channels[-1]
+            elif name.startswith("up_blocks"):
+                block_id = int(name[len("up_blocks.")])
+                hidden_size = list(reversed(self.unet.config.block_out_channels))[
+                    block_id
+                ]
+            elif name.startswith("down_blocks"):
+                block_id = int(name[len("down_blocks.")])
+                hidden_size = self.unet.config.block_out_channels[block_id]
+
+            if isinstance(
+                attn_processor,
+                (
+                    AttnAddedKVProcessor,
+                    SlicedAttnAddedKVProcessor,
+                    AttnAddedKVProcessor2_0,
+                ),
+            ):
+                lora_attn_processor_class = LoRAAttnAddedKVProcessor
+            else:
+                lora_attn_processor_class = (
+                    LoRAAttnProcessor2_0
+                    if hasattr(F, "scaled_dot_product_attention")
+                    else LoRAAttnProcessor
+                )
+
+            module = lora_attn_processor_class(
+                hidden_size=hidden_size,
+                cross_attention_dim=cross_attention_dim,
+                rank=lora_r,
+            )
+
+            lora_attn_procs[name] = module
+
+        self.unet.set_attn_processor(lora_attn_procs)
 
     def forward(
         self,
+        input_ids: torch.Tensor,
+        input2_ids: torch.Tensor,
+        add_time_ids: torch.Tensor,
+        pixel_values: torch.Tensor,
+        condition_pixel_values: torch.Tensor,
+        attention_mask: Optional[torch.Tensor] = None,
+        attention2_mask: Optional[torch.Tensor] = None,
     ):
-        raise NotImplementedError
+        prompt_outputs = self.text(
+            input_ids,
+            attention_mask,
+            output_hidden_states=True,
+        )
+        prompt_embeds = prompt_outputs.hidden_states[-2]
+        prompt2_outputs = self.text2(
+            input2_ids,
+            attention2_mask,
+            output_hidden_states=True,
+        )
+        prompt2_embeds = prompt2_outputs.hidden_states[-2]
+        prompt_embeds = torch.concat([prompt_embeds, prompt2_embeds], dim=-1)
+        pooled_prompt_embeds = prompt2_outputs[0]
+
+        latents = self.vae.encode(pixel_values).latent_dist.sample()
+        latents = latents * self.vae.config.scaling_factor
+
+        noise = torch.randn(latents.shape).to(latents.device)
+        batch = latents.size(0)
+
+        timesteps = torch.randint(
+            0,
+            self.scheduler.num_train_timesteps,
+            (batch,),
+            device=pixel_values.device,
+        ).long()
+
+        noise_latents = self.scheduler.add_noise(
+            latents,
+            noise,
+            timesteps,
+        )
+
+        encoder_hidden_states = self.text(input_ids, attention_mask)[0]
+        down_block_res_samples, mid_block_res_sample = self.controlnet(
+            noise_latents,
+            timesteps,
+            encoder_hidden_states=encoder_hidden_states,
+            controlnet_cond=condition_pixel_values,
+            added_cond_kwargs={
+                "time_ids": add_time_ids,
+                "text_embeds": pooled_prompt_embeds,
+            },
+            return_dict=False,
+        )
+        outputs = self.unet(
+            noise_latents,
+            timesteps,
+            prompt_embeds,
+            added_cond_kwargs={
+                "time_ids": add_time_ids,
+                "text_embeds": pooled_prompt_embeds,
+            },
+            down_block_additional_residuals=down_block_res_samples,
+            mid_block_additional_residual=mid_block_res_sample,
+        ).sample
+
+        if self.scheduler.config.prediction_type == "v_prediction":
+            noise = self.scheduler.get_velocity(latents, noise, timesteps)
+
+        loss = F.mse_loss(outputs, noise, reduction="mean")
+        return loss
 
     def generate(
         self,
@@ -266,17 +396,20 @@ class ControlNetXLForImage2ImageGeneration(GenericModel, QuantizationMixin):
         self.scheduler = scheduler_class.from_config(scheduler_config_dict)
 
         if freeze_vae_encoder:
-            self.vae.requires_grad = False
+            for param in self.vae.parameters():
+                param.requires_grad = False
 
         if freeze_text_encoder:
-            self.text.requires_grad = False
+            for param in self.text.parameters():
+                param.requires_grad = False
 
         if freeze_unet_encoder:
-            self.unet.requires_grad = False
+            for param in self.unet.parameters():
+                param.requires_grad = False
 
         if quant_config_path is not None:
             self.quant_config = QuantizationConfig.from_json_file(quant_config_path)
-            self.quantize(self.quant_config)
+            self.quantize(self.quant_config, ignore_modules=["lm_head", "unet"])
 
     def forward(
         self,
@@ -432,17 +565,20 @@ class ControlNetXLForImageInpainting(GenericModel, QuantizationMixin):
         self.scheduler = scheduler_class.from_config(scheduler_config_dict)
 
         if freeze_vae_encoder:
-            self.vae.requires_grad = False
+            for param in self.vae.parameters():
+                param.requires_grad = False
 
         if freeze_text_encoder:
-            self.text.requires_grad = False
+            for param in self.text.parameters():
+                param.requires_grad = False
 
         if freeze_unet_encoder:
-            self.unet.requires_grad = False
+            for param in self.unet.parameters():
+                param.requires_grad = False
 
         if quant_config_path is not None:
             self.quant_config = QuantizationConfig.from_json_file(quant_config_path)
-            self.quantize(self.quant_config, ignore_modules=["lm_head"])
+            self.quantize(self.quant_config, ignore_modules=["lm_head", "unet"])
 
     def forward(
         self,

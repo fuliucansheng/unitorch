@@ -704,7 +704,7 @@ class DeepspeedTask:
         end = time.time()
         ms = (end - start) * 1000
         logging.info(
-            "{:.2f} ms, {:.1f} sample/s".format(
+            "{:.2f} ms, {:.2f} sample/s".format(
                 ms,
                 ((len(dataset_test) - skip_step) / ms * 1000),
             )

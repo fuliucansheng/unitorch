@@ -11,6 +11,8 @@ from transformers import CLIPTokenizer
 from torchvision.transforms import (
     Resize,
     CenterCrop,
+    RandomCrop,
+    Lambda,
     ToTensor,
     Normalize,
     Compose,
@@ -28,6 +30,9 @@ class StableProcessor(HfTextClassificationProcessor):
         vae_config_path: Optional[str] = None,
         max_seq_length: Optional[int] = 77,
         position_start_id: Optional[int] = 0,
+        image_size: Optional[int] = 512,
+        center_crop: Optional[bool] = False,
+        random_flip: Optional[bool] = False,
     ):
         tokenizer = CLIPTokenizer(
             vocab_file=vocab_path,
@@ -42,6 +47,16 @@ class StableProcessor(HfTextClassificationProcessor):
             tokenizer=tokenizer,
             max_seq_length=max_seq_length,
             position_start_id=position_start_id,
+        )
+
+        self.vision_processor = Compose(
+            [
+                Resize(image_size),
+                CenterCrop(image_size) if center_crop else RandomCrop(image_size),
+                RandomHorizontalFlip() if random_flip else Lambda(lambda x: x),
+                ToTensor(),
+                Normalize([0.5], [0.5]),
+            ]
         )
 
         if vae_config_path is not None:
@@ -61,7 +76,15 @@ class StableProcessor(HfTextClassificationProcessor):
         image: Union[Image.Image, str],
         max_seq_length: Optional[int] = None,
     ):
-        pass
+        if isinstance(image, str):
+            image = Image.open(image).convert("RGB")
+        prompt_outputs = self.classification(prompt, max_seq_length=max_seq_length)
+        pixel_values = self.vision_processor(image)
+        return GenericOutputs(
+            input_ids=prompt_outputs.input_ids,
+            attention_mask=prompt_outputs.attention_mask,
+            pixel_values=pixel_values,
+        )
 
     def text2image_inputs(
         self,

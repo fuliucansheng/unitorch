@@ -5,7 +5,7 @@ import os
 import torch
 import json
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageFilter
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from transformers import CLIPTokenizer
 from torchvision.transforms import (
@@ -28,6 +28,7 @@ class ControlNetProcessor(HfTextClassificationProcessor):
         vae_config_path: str,
         max_seq_length: Optional[int] = 77,
         position_start_id: Optional[int] = 0,
+        image_size: Optional[int] = 512,
     ):
         tokenizer = CLIPTokenizer(
             vocab_file=vocab_path,
@@ -39,6 +40,21 @@ class ControlNetProcessor(HfTextClassificationProcessor):
             tokenizer=tokenizer,
             max_seq_length=max_seq_length,
             position_start_id=position_start_id,
+        )
+        self.vision_processor = Compose(
+            [
+                Resize(image_size),
+                CenterCrop(image_size),
+                ToTensor(),
+                Normalize([0.5], [0.5]),
+            ]
+        )
+        self.condition_vision_processor = Compose(
+            [
+                Resize(image_size),
+                CenterCrop(image_size),
+                ToTensor(),
+            ]
         )
 
         vae_config_dict = json.load(open(vae_config_path))
@@ -62,7 +78,19 @@ class ControlNetProcessor(HfTextClassificationProcessor):
         condition_image: Union[Image.Image, str],
         max_seq_length: Optional[int] = None,
     ):
-        pass
+        if isinstance(image, str):
+            image = Image.open(image).convert("RGB")
+        if isinstance(condition_image, str):
+            condition_image = Image.open(condition_image).convert("RGB")
+        prompt_outputs = self.classification(prompt, max_seq_length=max_seq_length)
+        pixel_values = self.vision_processor(image)
+        condition_pixel_values = self.condition_vision_processor(condition_image)
+        return GenericOutputs(
+            input_ids=prompt_outputs.input_ids,
+            attention_mask=prompt_outputs.attention_mask,
+            pixel_values=pixel_values,
+            condition_pixel_values=condition_pixel_values,
+        )
 
     def text2image_inputs(
         self,

@@ -39,6 +39,8 @@ class StableForText2ImageGeneration(_StableForText2ImageGeneration):
         num_infer_timesteps: Optional[int] = 50,
         freeze_vae_encoder: Optional[bool] = True,
         freeze_text_encoder: Optional[bool] = True,
+        snr_gamma: Optional[float] = 5.0,
+        lora_r: Optional[int] = None,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
@@ -54,6 +56,8 @@ class StableForText2ImageGeneration(_StableForText2ImageGeneration):
             num_infer_timesteps=num_infer_timesteps,
             freeze_vae_encoder=freeze_vae_encoder,
             freeze_text_encoder=freeze_text_encoder,
+            snr_gamma=snr_gamma,
+            lora_r=lora_r,
             seed=seed,
         )
 
@@ -103,6 +107,8 @@ class StableForText2ImageGeneration(_StableForText2ImageGeneration):
         num_infer_timesteps = config.getoption("num_infer_timesteps", 50)
         freeze_vae_encoder = config.getoption("freeze_vae_encoder", True)
         freeze_text_encoder = config.getoption("freeze_text_encoder", True)
+        snr_gamma = config.getoption("snr_gamma", 5.0)
+        lora_r = config.getoption("lora_r", None)
         seed = config.getoption("seed", 1123)
 
         inst = cls(
@@ -118,6 +124,8 @@ class StableForText2ImageGeneration(_StableForText2ImageGeneration):
             num_infer_timesteps=num_infer_timesteps,
             freeze_vae_encoder=freeze_vae_encoder,
             freeze_text_encoder=freeze_text_encoder,
+            snr_gamma=snr_gamma,
+            lora_r=lora_r,
             seed=seed,
         )
 
@@ -136,8 +144,16 @@ class StableForText2ImageGeneration(_StableForText2ImageGeneration):
     @autocast()
     def forward(
         self,
+        pixel_values: torch.Tensor,
+        input_ids: torch.Tensor,
+        attention_mask: Optional[torch.Tensor] = None,
     ):
-        raise NotImplementedError
+        loss = super().forward(
+            pixel_values=pixel_values,
+            input_ids=input_ids,
+            attention_mask=attention_mask,
+        )
+        return LossOutputs(loss=loss)
 
     @add_default_section_for_function("core/model/diffusers/text2image/stable")
     @autocast()

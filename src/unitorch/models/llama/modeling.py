@@ -186,7 +186,7 @@ class LlamaForClassification(GenericModel, QuantizationMixin):
 
         if quant_config_path is not None:
             self.quant_config = QuantizationConfig.from_json_file(quant_config_path)
-            self.quantize(self.quant_config)
+            self.quantize(self.quant_config, ignore_modules=["lm_head"])
 
     def forward(
         self,
@@ -241,7 +241,7 @@ class LlamaForPretrain(GenericModel):
 
         if quant_config_path is not None:
             self.quant_config = QuantizationConfig.from_json_file(quant_config_path)
-            self.quantize(self.quant_config)
+            self.quantize(self.quant_config, ignore_modules=["lm_head"])
 
     def forward(
         self,
@@ -311,7 +311,7 @@ class LlamaForGeneration(GenericModel, QuantizationMixin):
 
         if quant_config_path is not None:
             self.quant_config = QuantizationConfig.from_json_file(quant_config_path)
-            self.quantize(self.quant_config)
+            self.quantize(self.quant_config, ignore_modules=["lm_head"])
 
     def forward(
         self,

@@ -68,6 +68,28 @@ class ControlNetProcessor(_ControlNetProcessor):
             "vae_config_path": vae_config_path,
         }
 
+    @register_process("core/process/diffusers/controlnet/text2image")
+    def _text2image(
+        self,
+        prompt: str,
+        image: Union[Image.Image, str],
+        condition_image: Union[Image.Image, str],
+        max_seq_length: Optional[int] = None,
+    ):
+        outputs = super().text2image(
+            prompt=prompt,
+            image=image,
+            condition_image=condition_image,
+            max_seq_length=max_seq_length,
+        )
+
+        return TensorsInputs(
+            input_ids=outputs.input_ids,
+            pixel_values=outputs.pixel_values,
+            condition_pixel_values=outputs.condition_pixel_values,
+            attention_mask=outputs.attention_mask,
+        )
+
     @register_process("core/process/diffusers/controlnet/text2image/inputs")
     def _text2image_inputs(
         self,

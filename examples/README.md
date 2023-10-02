@@ -4,7 +4,7 @@ This folder contains actively maintained examples of use of unitorch organized b
 
 # The Big Table of Tasks
 
-Here is the list of all examples for both command line and library use. The links to Colab notebooks to walk through the scripts and run them easily,
+Here is the list of all examples for both command line and library use. The links to Colab notebooks to walk through the scripts and run them easily.
 
 | Task           | Dataset | Model                 | Command Line                               | Colab                                                                                                                                                                                         |
 | -------------- | ------- | --------------------- | ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

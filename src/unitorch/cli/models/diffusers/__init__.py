@@ -118,9 +118,13 @@ from unitorch.cli.models.diffusion_utils import load_weight
 
 import unitorch.cli.models.diffusers.modeling_controlnet
 import unitorch.cli.models.diffusers.modeling_controlnet_xl
+import unitorch.cli.models.diffusers.modeling_dreambooth
+import unitorch.cli.models.diffusers.modeling_dreambooth_xl
 import unitorch.cli.models.diffusers.modeling_stable
 import unitorch.cli.models.diffusers.modeling_stable_xl
 import unitorch.cli.models.diffusers.processing_controlnet
 import unitorch.cli.models.diffusers.processing_controlnet_xl
+import unitorch.cli.models.diffusers.processing_dreambooth
+import unitorch.cli.models.diffusers.processing_dreambooth_xl
 import unitorch.cli.models.diffusers.processing_stable
 import unitorch.cli.models.diffusers.processing_stable_xl

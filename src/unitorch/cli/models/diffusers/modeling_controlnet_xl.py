@@ -165,8 +165,24 @@ class ControlNetXLForText2ImageGeneration(_ControlNetXLForText2ImageGeneration):
     @autocast()
     def forward(
         self,
+        input_ids: torch.Tensor,
+        input2_ids: torch.Tensor,
+        add_time_ids: torch.Tensor,
+        pixel_values: torch.Tensor,
+        condition_pixel_values: torch.Tensor,
+        attention_mask: Optional[torch.Tensor] = None,
+        attention2_mask: Optional[torch.Tensor] = None,
     ):
-        raise NotImplementedError
+        loss = super().forward(
+            input_ids=input_ids,
+            input2_ids=input2_ids,
+            add_time_ids=add_time_ids,
+            pixel_values=pixel_values,
+            condition_pixel_values=condition_pixel_values,
+            attention_mask=attention_mask,
+            attention2_mask=attention2_mask,
+        )
+        return LossOutputs(loss=loss)
 
     @add_default_section_for_function("core/model/diffusers/text2image/controlnet_xl")
     @autocast()

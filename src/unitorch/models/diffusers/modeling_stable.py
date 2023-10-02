@@ -8,6 +8,7 @@ from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 import diffusers.schedulers as schedulers
 from transformers import CLIPTextConfig, CLIPTextModel
 from diffusers.schedulers import SchedulerMixin
+from diffusers.models.attention_processor import LoRAAttnProcessor, LoRAAttnProcessor2_0
 from diffusers.models import (
     UNet2DModel,
     UNet2DConditionModel,
@@ -26,6 +27,34 @@ from unitorch.models import (
     QuantizationConfig,
     QuantizationMixin,
 )
+
+
+def compute_snr(timesteps, noise_scheduler):
+    """
+    Computes SNR as per https://github.com/TiankaiHang/Min-SNR-Diffusion-Training/blob/521b624bd70c67cee4bdf49225915f5945a872e3/guided_diffusion/gaussian_diffusion.py#L847-L849
+    """
+    alphas_cumprod = noise_scheduler.alphas_cumprod
+    sqrt_alphas_cumprod = alphas_cumprod**0.5
+    sqrt_one_minus_alphas_cumprod = (1.0 - alphas_cumprod) ** 0.5
+    # Expand the tensors.
+    # Adapted from https://github.com/TiankaiHang/Min-SNR-Diffusion-Training/blob/521b624bd70c67cee4bdf49225915f5945a872e3/guided_diffusion/gaussian_diffusion.py#L1026
+    sqrt_alphas_cumprod = sqrt_alphas_cumprod.to(device=timesteps.device)[
+        timesteps
+    ].float()
+    while len(sqrt_alphas_cumprod.shape) < len(timesteps.shape):
+        sqrt_alphas_cumprod = sqrt_alphas_cumprod[..., None]
+    alpha = sqrt_alphas_cumprod.expand(timesteps.shape)
+
+    sqrt_one_minus_alphas_cumprod = sqrt_one_minus_alphas_cumprod.to(
+        device=timesteps.device
+    )[timesteps].float()
+    while len(sqrt_one_minus_alphas_cumprod.shape) < len(timesteps.shape):
+        sqrt_one_minus_alphas_cumprod = sqrt_one_minus_alphas_cumprod[..., None]
+    sigma = sqrt_one_minus_alphas_cumprod.expand(timesteps.shape)
+
+    # Compute SNR
+    snr = (alpha / sigma) ** 2
+    return snr
 
 
 class StableForText2ImageGeneration(GenericModel, QuantizationMixin):
@@ -68,6 +97,8 @@ class StableForText2ImageGeneration(GenericModel, QuantizationMixin):
         num_infer_timesteps: Optional[int] = 50,
         freeze_vae_encoder: Optional[bool] = True,
         freeze_text_encoder: Optional[bool] = True,
+        snr_gamma: Optional[float] = 5.0,
+        lora_r: Optional[int] = None,
         seed: Optional[int] = 1123,
     ):
         super().__init__()
@@ -75,6 +106,7 @@ class StableForText2ImageGeneration(GenericModel, QuantizationMixin):
         self.num_train_timesteps = num_train_timesteps
         self.num_infer_timesteps = num_infer_timesteps
         self.image_size = image_size
+        self.snr_gamma = snr_gamma
 
         config_dict = json.load(open(config_path))
         if image_size is not None:
@@ -101,14 +133,48 @@ class StableForText2ImageGeneration(GenericModel, QuantizationMixin):
         self.vae_scale_factor = 2 ** (len(self.vae.config.block_out_channels) - 1)
 
         if freeze_vae_encoder:
-            self.vae.requires_grad = False
+            for param in self.vae.parameters():
+                param.requires_grad = False
 
         if freeze_text_encoder:
-            self.text.requires_grad = False
+            for param in self.text.parameters():
+                param.requires_grad = False
 
         if quant_config_path is not None:
             self.quant_config = QuantizationConfig.from_json_file(quant_config_path)
-            self.quantize(self.quant_config)
+            self.quantize(self.quant_config, ignore_modules=["lm_head", "unet"])
+
+        if lora_r is not None:
+            for param in self.unet.parameters():
+                param.requires_grad = False
+            self.enable_lora(lora_r=lora_r)
+
+    def enable_lora(self, lora_r: Optional[int] = 4):
+        lora_attn_procs = {}
+        for name in self.unet.attn_processors.keys():
+            cross_attention_dim = (
+                None
+                if name.endswith("attn1.processor")
+                else self.unet.config.cross_attention_dim
+            )
+            if name.startswith("mid_block"):
+                hidden_size = self.unet.config.block_out_channels[-1]
+            elif name.startswith("up_blocks"):
+                block_id = int(name[len("up_blocks.")])
+                hidden_size = list(reversed(self.unet.config.block_out_channels))[
+                    block_id
+                ]
+            elif name.startswith("down_blocks"):
+                block_id = int(name[len("down_blocks.")])
+                hidden_size = self.unet.config.block_out_channels[block_id]
+
+            lora_attn_procs[name] = LoRAAttnProcessor(
+                hidden_size=hidden_size,
+                cross_attention_dim=cross_attention_dim,
+                rank=lora_r,
+            )
+
+        self.unet.set_attn_processor(lora_attn_procs)
 
     def forward(
         self,
@@ -142,7 +208,24 @@ class StableForText2ImageGeneration(GenericModel, QuantizationMixin):
         ).sample
         if self.scheduler.config.prediction_type == "v_prediction":
             noise = self.scheduler.get_velocity(latents, noise, timesteps)
-        loss = F.mse_loss(outputs, noise)
+        if self.snr_gamma > 0:
+            snr = compute_snr(timesteps, self.scheduler)
+            base_weight = (
+                torch.stack(
+                    [snr, self.snr_gamma * torch.ones_like(timesteps)], dim=1
+                ).min(dim=1)[0]
+                / snr
+            )
+
+            if self.scheduler.config.prediction_type == "v_prediction":
+                mse_loss_weights = base_weight + 1
+            else:
+                mse_loss_weights = base_weight
+            loss = F.mse_loss(outputs, noise, reduction="none")
+            loss = loss.mean(dim=list(range(1, len(loss.shape)))) * mse_loss_weights
+            loss = loss.mean()
+        else:
+            loss = F.mse_loss(outputs, noise, reduction="mean")
         return loss
 
     def generate(
@@ -261,14 +344,16 @@ class StableForImage2ImageGeneration(GenericModel, QuantizationMixin):
         self.vae_scale_factor = 2 ** (len(self.vae.config.block_out_channels) - 1)
 
         if freeze_vae_encoder:
-            self.vae.requires_grad = False
+            for param in self.vae.parameters():
+                param.requires_grad = False
 
         if freeze_text_encoder:
-            self.text.requires_grad = False
+            for param in self.text.parameters():
+                param.requires_grad = False
 
         if quant_config_path is not None:
             self.quant_config = QuantizationConfig.from_json_file(quant_config_path)
-            self.quantize(self.quant_config)
+            self.quantize(self.quant_config, ignore_modules=["lm_head", "unet"])
 
     def forward(
         self,
@@ -392,14 +477,16 @@ class StableForImageInpainting(GenericModel, QuantizationMixin):
         self.vae_scale_factor = 2 ** (len(self.vae.config.block_out_channels) - 1)
 
         if freeze_vae_encoder:
-            self.vae.requires_grad = False
+            for param in self.vae.parameters():
+                param.requires_grad = False
 
         if freeze_text_encoder:
-            self.text.requires_grad = False
+            for param in self.text.parameters():
+                param.requires_grad = False
 
         if quant_config_path is not None:
             self.quant_config = QuantizationConfig.from_json_file(quant_config_path)
-            self.quantize(self.quant_config)
+            self.quantize(self.quant_config, ignore_modules=["lm_head", "unet"])
 
     def forward(
         self,
@@ -525,14 +612,16 @@ class StableForImageResolution(GenericModel):
         self.vae_scale_factor = 2 ** (len(self.vae.config.block_out_channels) - 1)
 
         if freeze_vae_encoder:
-            self.vae.requires_grad = False
+            for param in self.vae.parameters():
+                param.requires_grad = False
 
         if freeze_text_encoder:
-            self.text.requires_grad = False
+            for param in self.text.parameters():
+                param.requires_grad = False
 
         if quant_config_path is not None:
             self.quant_config = QuantizationConfig.from_json_file(quant_config_path)
-            self.quantize(self.quant_config)
+            self.quantize(self.quant_config, ignore_modules=["lm_head", "unet"])
 
     def forward(
         self,

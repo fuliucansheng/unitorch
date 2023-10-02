@@ -43,6 +43,7 @@ class ControlNetForText2ImageGeneration(_ControlNetForText2ImageGeneration):
         freeze_vae_encoder: Optional[bool] = True,
         freeze_text_encoder: Optional[bool] = True,
         freeze_unet_encoder: Optional[bool] = True,
+        lora_r: Optional[int] = None,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
@@ -60,6 +61,7 @@ class ControlNetForText2ImageGeneration(_ControlNetForText2ImageGeneration):
             freeze_vae_encoder=freeze_vae_encoder,
             freeze_text_encoder=freeze_text_encoder,
             freeze_unet_encoder=freeze_unet_encoder,
+            lora_r=lora_r,
             seed=seed,
         )
 
@@ -119,6 +121,7 @@ class ControlNetForText2ImageGeneration(_ControlNetForText2ImageGeneration):
         freeze_vae_encoder = config.getoption("freeze_vae_encoder", True)
         freeze_text_encoder = config.getoption("freeze_text_encoder", True)
         freeze_unet_encoder = config.getoption("freeze_unet_encoder", True)
+        lora_r = config.getoption("lora_r", None)
         seed = config.getoption("seed", 1123)
 
         inst = cls(
@@ -136,6 +139,7 @@ class ControlNetForText2ImageGeneration(_ControlNetForText2ImageGeneration):
             freeze_vae_encoder=freeze_vae_encoder,
             freeze_text_encoder=freeze_text_encoder,
             freeze_unet_encoder=freeze_unet_encoder,
+            lora_r=lora_r,
             seed=seed,
         )
 
@@ -163,8 +167,18 @@ class ControlNetForText2ImageGeneration(_ControlNetForText2ImageGeneration):
     @autocast()
     def forward(
         self,
+        input_ids: torch.Tensor,
+        pixel_values: torch.Tensor,
+        condition_pixel_values: torch.Tensor,
+        attention_mask: Optional[torch.Tensor] = None,
     ):
-        raise NotImplementedError
+        loss = super().forward(
+            input_ids=input_ids,
+            pixel_values=pixel_values,
+            condition_pixel_values=condition_pixel_values,
+            attention_mask=attention_mask,
+        )
+        return LossOutputs(loss=loss)
 
     @add_default_section_for_function("core/model/diffusers/text2image/controlnet")
     @autocast()

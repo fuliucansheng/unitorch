@@ -25,6 +25,9 @@ class StableProcessor(_StableProcessor):
         vae_config_path: str,
         max_seq_length: Optional[int] = 77,
         position_start_id: Optional[int] = 0,
+        image_size: Optional[int] = 512,
+        center_crop: Optional[bool] = False,
+        random_flip: Optional[bool] = False,
     ):
         super().__init__(
             vocab_path=vocab_path,
@@ -32,6 +35,9 @@ class StableProcessor(_StableProcessor):
             vae_config_path=vae_config_path,
             max_seq_length=max_seq_length,
             position_start_id=position_start_id,
+            image_size=image_size,
+            center_crop=center_crop,
+            random_flip=random_flip,
         )
 
     @classmethod
@@ -67,6 +73,24 @@ class StableProcessor(_StableProcessor):
             "merge_path": merge_path,
             "vae_config_path": vae_config_path,
         }
+
+    @register_process("core/process/diffusers/stable/text2image")
+    def _text2image(
+        self,
+        prompt: str,
+        image: Union[Image.Image, str],
+        max_seq_length: Optional[int] = None,
+    ):
+        outputs = super().text2image(
+            prompt=prompt,
+            image=image,
+            max_seq_length=max_seq_length,
+        )
+        return TensorsInputs(
+            input_ids=outputs.input_ids,
+            attention_mask=outputs.attention_mask,
+            pixel_values=outputs.pixel_values,
+        )
 
     @register_process("core/process/diffusers/stable/text2image/inputs")
     def _text2image_inputs(

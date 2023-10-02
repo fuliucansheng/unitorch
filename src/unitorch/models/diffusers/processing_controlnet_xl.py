@@ -5,7 +5,7 @@ import os
 import torch
 import json
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageFilter
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from transformers import CLIPTokenizer
 from torchvision.transforms import (
@@ -30,6 +30,7 @@ class ControlNetXLProcessor:
         vae_config_path: str,
         max_seq_length: Optional[int] = 77,
         position_start_id: Optional[int] = 0,
+        image_size: Optional[int] = 512,
     ):
         tokenizer1 = CLIPTokenizer(
             vocab_file=vocab1_path,
@@ -58,6 +59,23 @@ class ControlNetXLProcessor:
             max_seq_length=max_seq_length,
             position_start_id=position_start_id,
         )
+
+        self.vision_processor = Compose(
+            [
+                Resize(image_size),
+                CenterCrop(image_size),
+                ToTensor(),
+                Normalize([0.5], [0.5]),
+            ]
+        )
+        self.condition_vision_processor = Compose(
+            [
+                Resize(image_size),
+                CenterCrop(image_size),
+                ToTensor(),
+            ]
+        )
+
         vae_config_dict = json.load(open(vae_config_path))
         vae_scale_factor = 2 ** (len(vae_config_dict.get("block_out_channels", [])) - 1)
         self.vae_image_processor = VaeImageProcessor(
@@ -77,9 +95,50 @@ class ControlNetXLProcessor:
         prompt: str,
         image: Union[Image.Image, str],
         condition_image: Union[Image.Image, str],
+        prompt2: Optional[str] = None,
         max_seq_length: Optional[int] = None,
     ):
-        pass
+        if isinstance(image, str):
+            image = Image.open(image).convert("RGB")
+        if isinstance(condition_image, str):
+            condition_image = Image.open(condition_image).convert("RGB")
+        prompt2 = prompt2 or prompt
+        prompt_outputs = self.text_processor1.classification(
+            prompt, max_seq_length=max_seq_length
+        )
+        prompt2_outputs = self.text_processor2.classification(
+            prompt2, max_seq_length=max_seq_length
+        )
+        original_size = image.size
+        image = self.vision_resize(image)
+        if self.center_crop:
+            y1 = max(0, int(round((image.height - self.image_size) / 2.0)))
+            x1 = max(0, int(round((image.width - self.image_size) / 2.0)))
+            image = self.vision_crop(image)
+        else:
+            y1, x1, h, w = self.vision_crop.get_params(
+                image, (self.image_size, self.image_size)
+            )
+            image = crop(image, y1, x1, h, w)
+        if self.vision_flip:
+            x1 = image.width - x1
+            image = self.vision_flip(image)
+        crop_top_left = (y1, x1)
+        pixel_values = self.vision_processor(image)
+
+        add_time_ids = (
+            original_size + crop_top_left + [self.image_size, self.image_size]
+        )
+        condition_pixel_values = self.condition_vision_processor(condition_image)
+        return GenericOutputs(
+            pixel_values=pixel_values,
+            condition_pixel_values=condition_pixel_values,
+            input_ids=prompt_outputs.input_ids,
+            attention_mask=prompt_outputs.attention_mask,
+            input2_ids=prompt2_outputs.input_ids,
+            attention2_mask=prompt2_outputs.attention_mask,
+            add_time_ids=torch.tensor(add_time_ids),
+        )
 
     def text2image_inputs(
         self,

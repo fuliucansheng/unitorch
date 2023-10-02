@@ -31,3 +31,19 @@ class RandomProcessor:
     @add_default_section_for_init("core/process/random")
     def from_core_configure(cls, config, **kwargs):
         pass
+
+    @register_process("core/process/random/float")
+    def _float(
+        self,
+        low: float = 0.0,
+        high: float = 1.0,
+    ):
+        return random() * (high - low) + low
+
+    @register_process("core/process/random/int")
+    def _int(
+        self,
+        low: int = 0,
+        high: int = 100,
+    ):
+        return int(random() * (high - low) + low)
