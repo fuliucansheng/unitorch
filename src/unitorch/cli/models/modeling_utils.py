@@ -35,7 +35,11 @@ class TensorsMixin:
         new_tensors = {}
         for key in keys:
             new_tensor = [tensors.__tensors__[key] for tensors in list_tensors]
-            new_tensors[key] = torch.cat(new_tensor, dim=dim)
+            if new_tensor[0] is not None:
+                new_tensors[key] = torch.cat(new_tensor, dim=dim)
+            else:
+                new_tensors[key] = None
+
         return cls(**new_tensors)
 
     @classmethod
@@ -50,7 +54,10 @@ class TensorsMixin:
         new_tensors = {}
         for key in keys:
             new_tensor = [tensors.__tensors__[key] for tensors in list_tensors]
-            new_tensors[key] = torch.stack(new_tensor, dim=dim)
+            if new_tensor[0] is not None:
+                new_tensors[key] = torch.stack(new_tensor, dim=dim)
+            else:
+                new_tensors[key] = None
 
         return cls(**new_tensors)
 
@@ -70,7 +77,7 @@ class TensorsMixin:
     def cpu(self, inplace=False):
         new_tensors = {}
         for key, value in self.__tensors__.items():
-            new_value = value.cpu()
+            new_value = value.cpu() if value is not None else None
             new_tensors[key] = new_value
         if inplace:
             for key, value in new_tensors.items():
@@ -81,7 +88,7 @@ class TensorsMixin:
     def cuda(self, inplace=False):
         new_tensors = {}
         for key, value in self.__tensors__.items():
-            new_value = value.cuda()
+            new_value = value.cuda() if value is not None else None
             new_tensors[key] = new_value
         if inplace:
             for key, value in new_tensors.items():
@@ -92,9 +99,12 @@ class TensorsMixin:
     def sync(self, dim=0, inplace=False):
         new_tensors = {}
         for key, value in self.__tensors__.items():
-            new_value = [value.clone() for _ in range(dist.get_world_size())]
-            dist.all_gather(new_value, value)
-            new_value = torch.cat(new_value, dim=dim)
+            if value is not None:
+                new_value = [value.clone() for _ in range(dist.get_world_size())]
+                dist.all_gather(new_value, value)
+                new_value = torch.cat(new_value, dim=dim)
+            else:
+                new_value = None
             new_tensors[key] = new_value
         if inplace:
             for key, value in new_tensors.items():
@@ -139,7 +149,10 @@ class ListTensorsMixin:
                 list_tensors.__list_tensors__[key]
                 for list_tensors in list_of_list_tensors
             ]
-            new_list_tensors[key] = list(chain.from_iterable(new_list_tensor))
+            if new_list_tensor[0] is not None:
+                new_list_tensors[key] = list(chain.from_iterable(new_list_tensor))
+            else:
+                new_list_tensors[key] = None
 
         return cls(**new_list_tensors)
 
@@ -158,8 +171,11 @@ class ListTensorsMixin:
                 list_tensors.__list_tensors__[key]
                 for list_tensors in list_of_list_tensors
             ]
-            assert all([len(list_tensor) == 1 for list_tensor in new_list_tensor])
-            new_list_tensors[key] = list(chain.from_iterable(new_list_tensor))
+            if new_list_tensor[0] is not None:
+                assert all([len(list_tensor) == 1 for list_tensor in new_list_tensor])
+                new_list_tensors[key] = list(chain.from_iterable(new_list_tensor))
+            else:
+                new_list_tensors[key] = None
 
         return cls(**new_list_tensors)
 
@@ -181,8 +197,11 @@ class ListTensorsMixin:
     def cpu(self, inplace=False):
         new_list_tensors = {}
         for key, value in self.__list_tensors__.items():
-            new_value = [_value.cpu() for _value in value]
-            new_list_tensors[key] = new_value
+            if value is not None and value[0] is not None:
+                new_value = [_value.cpu() for _value in value]
+                new_list_tensors[key] = new_value
+            else:
+                new_list_tensors[key] = None
         if inplace:
             for key, value in new_list_tensors.items():
                 self.__tensors__[key] = value
@@ -192,8 +211,11 @@ class ListTensorsMixin:
     def cuda(self, inplace=False):
         new_list_tensors = {}
         for key, value in self.__list_tensors__.items():
-            new_value = [_value.cuda() for _value in value]
-            new_list_tensors[key] = new_value
+            if value is not None and value[0] is not None:
+                new_value = [_value.cuda() for _value in value]
+                new_list_tensors[key] = new_value
+            else:
+                new_list_tensors[key] = None
         if inplace:
             for key, value in new_list_tensors.items():
                 self.__list_tensors__[key] = value
@@ -203,9 +225,12 @@ class ListTensorsMixin:
     def sync(self, inplace=False):
         new_list_tensors = {}
         for key, value in self.__list_tensors__.items():
-            new_value = [[] for _ in range(dist.get_world_size())]
-            dist.all_gather_object(new_value, value)
-            new_value = list(chain.from_iterable(new_value))
+            if value is not None:
+                new_value = [[] for _ in range(dist.get_world_size())]
+                dist.all_gather_object(new_value, value)
+                new_value = list(chain.from_iterable(new_value))
+            else:
+                new_value = None
             new_list_tensors[key] = new_value
         if inplace:
             for key, value in new_list_tensors.items():
@@ -249,14 +274,20 @@ class CombineTensorsMixin(TensorsMixin, ListTensorsMixin):
             new_tensor = [
                 mix_tensors.__tensors__[key] for mix_tensors in list_of_mix_tensors
             ]
-            new_tensors[key] = torch.cat(new_tensor, dim=dim)
+            if new_tensor[0] is not None:
+                new_tensors[key] = torch.cat(new_tensor, dim=dim)
+            else:
+                new_tensors[key] = None
 
         new_list_tensors = {}
         for key in list_tensors_keys:
             new_list_tensor = [
                 mix_tensors.__list_tensors__[key] for mix_tensors in list_of_mix_tensors
             ]
-            new_list_tensors[key] = list(chain.from_iterable(new_list_tensor))
+            if new_list_tensor[0] is not None:
+                new_list_tensors[key] = list(chain.from_iterable(new_list_tensor))
+            else:
+                new_list_tensors[key] = None
 
         return cls(dict_of_tensors=new_tensors, dict_of_list_tensors=new_list_tensors)
 
@@ -276,14 +307,20 @@ class CombineTensorsMixin(TensorsMixin, ListTensorsMixin):
             new_tensor = [
                 mix_tensors.__tensors__[key] for mix_tensors in list_of_mix_tensors
             ]
-            new_tensors[key] = torch.stack(new_tensor, dim=dim)
+            if new_tensor[0] is not None:
+                new_tensors[key] = torch.stack(new_tensor, dim=dim)
+            else:
+                new_tensors[key] = None
 
         new_list_tensors = {}
         for key in list_tensors_keys:
             new_list_tensor = [
                 mix_tensors.__list_tensors__[key] for mix_tensors in list_of_mix_tensors
             ]
-            new_list_tensors[key] = new_list_tensor
+            if new_list_tensor[0] is not None:
+                new_list_tensors[key] = new_list_tensor
+            else:
+                new_list_tensors[key] = None
 
         return cls(dict_of_tensors=new_tensors, dict_of_list_tensors=new_list_tensors)
 

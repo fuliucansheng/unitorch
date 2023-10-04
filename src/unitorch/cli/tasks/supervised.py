@@ -374,7 +374,7 @@ class SupervisedTask:
                 optim,
                 self.config,
                 registered_optim,
-                params=self.model.parameters(),
+                params=filter(lambda x: x.requires_grad, self.model.parameters()),
             )
 
         if os.path.exists(from_ckpt_dir):
@@ -542,7 +542,7 @@ class SupervisedTask:
 
                 if is_torch2_available():
                     with torch.cuda.amp.autocast(
-                        enabled=True
+                        enabled=use_amp
                     ) as autocast, torch.backends.cuda.sdp_kernel(
                         enable_flash=False
                     ) as disable:
@@ -555,7 +555,7 @@ class SupervisedTask:
                                 / grad_acc_step
                             )
                 else:
-                    with torch.cuda.amp.autocast(enabled=True) as autocast:
+                    with torch.cuda.amp.autocast(enabled=use_amp) as autocast:
                         outputs = self.model(**inputs.dict())
                         if isinstance(outputs, LossOutputs):
                             loss = outputs.loss / grad_acc_step

@@ -171,6 +171,7 @@ class DeepspeedTask:
         max_warmup_learning_rate: Optional[float] = None,
         num_warmup_steps: Optional[int] = None,
         epochs: Optional[int] = 5,
+        use_amp: Optional[bool] = False,
         use_ema: Optional[bool] = False,
         ema_decay: Optional[float] = 0.9999,
         ema_tau: Optional[int] = 2000,
@@ -374,7 +375,7 @@ class DeepspeedTask:
 
                 if is_torch2_available():
                     with torch.cuda.amp.autocast(
-                        enabled=True
+                        enabled=use_amp
                     ) as autocast, torch.backends.cuda.sdp_kernel(
                         enable_flash=False
                     ) as disable:
@@ -387,7 +388,7 @@ class DeepspeedTask:
                                 / grad_acc_step
                             )
                 else:
-                    with torch.cuda.amp.autocast(enabled=True) as autocast:
+                    with torch.cuda.amp.autocast(enabled=use_amp) as autocast:
                         outputs = self.model(**inputs.dict())
                         if isinstance(outputs, LossOutputs):
                             loss = outputs.loss / grad_acc_step

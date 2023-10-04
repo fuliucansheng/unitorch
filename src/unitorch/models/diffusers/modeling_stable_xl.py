@@ -100,6 +100,7 @@ class StableXLForText2ImageGeneration(GenericModel, QuantizationMixin):
 
         scheduler_config_dict = json.load(open(scheduler_config_path))
         scheduler_class_name = scheduler_config_dict.get("_class_name", "DDPMScheduler")
+        scheduler_class_name = "DDPMScheduler"
         assert hasattr(schedulers, scheduler_class_name)
         scheduler_class = getattr(schedulers, scheduler_class_name)
         assert issubclass(scheduler_class, SchedulerMixin)
@@ -117,12 +118,24 @@ class StableXLForText2ImageGeneration(GenericModel, QuantizationMixin):
 
         if quant_config_path is not None:
             self.quant_config = QuantizationConfig.from_json_file(quant_config_path)
-            self.quantize(self.quant_config, ignore_modules=["lm_head", "unet"])
+            self.quantize(self.quant_config, ignore_modules=["lm_head", "unet", "vae"])
 
         if lora_r is not None:
             for param in self.unet.parameters():
                 param.requires_grad = False
             self.enable_lora(lora_r=lora_r)
+
+        self.scheduler.set_timesteps(num_inference_steps=self.num_infer_timesteps)
+        self.pipeline = StableDiffusionXLPipeline(
+            vae=self.vae,
+            text_encoder=self.text,
+            text_encoder_2=self.text2,
+            unet=self.unet,
+            scheduler=self.scheduler,
+            tokenizer=None,
+            tokenizer_2=None,
+        )
+        self.pipeline.set_progress_bar_config(disable=True)
 
     def enable_lora(self, lora_r: Optional[int] = 4):
         lora_attn_procs = {}
@@ -201,7 +214,6 @@ class StableXLForText2ImageGeneration(GenericModel, QuantizationMixin):
             timesteps,
         )
 
-        encoder_hidden_states = self.text(input_ids, attention_mask)[0]
         outputs = self.unet(
             noise_latents,
             timesteps,
@@ -227,6 +239,7 @@ class StableXLForText2ImageGeneration(GenericModel, QuantizationMixin):
                 mse_loss_weights = base_weight + 1
             else:
                 mse_loss_weights = base_weight
+            mse_loss_weights[snr == 0] = 1.0
             loss = F.mse_loss(outputs, noise, reduction="none")
             loss = loss.mean(dim=list(range(1, len(loss.shape)))) * mse_loss_weights
             loss = loss.mean()
@@ -250,40 +263,28 @@ class StableXLForText2ImageGeneration(GenericModel, QuantizationMixin):
     ):
         prompt_outputs = self.text(
             input_ids,
-            attention_mask,
+            # attention_mask,
             output_hidden_states=True,
         )
         prompt_embeds = prompt_outputs.hidden_states[-2]
         negative_prompt_outputs = self.text(
             negative_input_ids,
-            negative_attention_mask,
+            # negative_attention_mask,
             output_hidden_states=True,
         )
         negative_prompt_embeds = negative_prompt_outputs.hidden_states[-2]
         prompt2_outputs = self.text2(
             input2_ids,
-            attention2_mask,
+            # attention2_mask,
             output_hidden_states=True,
         )
         prompt2_embeds = prompt2_outputs.hidden_states[-2]
         negative_prompt2_outputs = self.text2(
             negative_input2_ids,
-            negative_attention2_mask,
+            # negative_attention2_mask,
             output_hidden_states=True,
         )
         negative_prompt2_embeds = negative_prompt2_outputs.hidden_states[-2]
-        self.scheduler.set_timesteps(num_inference_steps=self.num_infer_timesteps)
-        pipeline = StableDiffusionXLPipeline(
-            vae=self.vae,
-            text_encoder=self.text,
-            text_encoder_2=self.text2,
-            unet=self.unet,
-            scheduler=self.scheduler,
-            tokenizer=None,
-            tokenizer_2=None,
-        )
-        pipeline.set_progress_bar_config(disable=True)
-
         prompt_embeds = torch.concat([prompt_embeds, prompt2_embeds], dim=-1)
         negative_prompt_embeds = torch.concat(
             [negative_prompt_embeds, negative_prompt2_embeds], dim=-1
@@ -291,12 +292,14 @@ class StableXLForText2ImageGeneration(GenericModel, QuantizationMixin):
         pooled_prompt_embeds = prompt2_outputs[0]
         negative_pooled_prompt_embeds = negative_prompt2_outputs[0]
 
-        images = pipeline(
+        images = self.pipeline(
             prompt_embeds=prompt_embeds,
             negative_prompt_embeds=negative_prompt_embeds,
             pooled_prompt_embeds=pooled_prompt_embeds,
             negative_pooled_prompt_embeds=negative_pooled_prompt_embeds,
-            generator=torch.Generator(device=pipeline.device).manual_seed(self.seed),
+            generator=torch.Generator(device=self.pipeline.device).manual_seed(
+                self.seed
+            ),
             height=height,
             width=width,
             guidance_scale=guidance_scale,
@@ -390,7 +393,19 @@ class StableXLForImage2ImageGeneration(GenericModel, QuantizationMixin):
 
         if quant_config_path is not None:
             self.quant_config = QuantizationConfig.from_json_file(quant_config_path)
-            self.quantize(self.quant_config, ignore_modules=["lm_head", "unet"])
+            self.quantize(self.quant_config, ignore_modules=["lm_head", "unet", "vae"])
+
+        self.scheduler.set_timesteps(num_inference_steps=self.num_infer_timesteps)
+        self.pipeline = StableDiffusionXLImg2ImgPipeline(
+            vae=self.vae,
+            text_encoder=self.text,
+            text_encoder_2=self.text2,
+            unet=self.unet,
+            scheduler=self.scheduler,
+            tokenizer=None,
+            tokenizer_2=None,
+        )
+        pipeline.set_progress_bar_config(disable=True)
 
     def forward(
         self,
@@ -413,40 +428,28 @@ class StableXLForImage2ImageGeneration(GenericModel, QuantizationMixin):
     ):
         prompt_outputs = self.text(
             input_ids,
-            attention_mask,
+            # attention_mask,
             output_hidden_states=True,
         )
         prompt_embeds = prompt_outputs.hidden_states[-2]
         negative_prompt_outputs = self.text(
             negative_input_ids,
-            negative_attention_mask,
+            # negative_attention_mask,
             output_hidden_states=True,
         )
         negative_prompt_embeds = negative_prompt_outputs.hidden_states[-2]
         prompt2_outputs = self.text2(
             input2_ids,
-            attention2_mask,
+            # attention2_mask,
             output_hidden_states=True,
         )
         prompt2_embeds = prompt2_outputs.hidden_states[-2]
         negative_prompt2_outputs = self.text2(
             negative_input2_ids,
-            negative_attention2_mask,
+            # negative_attention2_mask,
             output_hidden_states=True,
         )
         negative_prompt2_embeds = negative_prompt2_outputs.hidden_states[-2]
-        self.scheduler.set_timesteps(num_inference_steps=self.num_infer_timesteps)
-        pipeline = StableDiffusionXLImg2ImgPipeline(
-            vae=self.vae,
-            text_encoder=self.text,
-            text_encoder_2=self.text2,
-            unet=self.unet,
-            scheduler=self.scheduler,
-            tokenizer=None,
-            tokenizer_2=None,
-        )
-        pipeline.set_progress_bar_config(disable=True)
-
         prompt_embeds = torch.concat([prompt_embeds, prompt2_embeds], dim=-1)
         negative_prompt_embeds = torch.concat(
             [negative_prompt_embeds, negative_prompt2_embeds], dim=-1
@@ -454,13 +457,15 @@ class StableXLForImage2ImageGeneration(GenericModel, QuantizationMixin):
         pooled_prompt_embeds = prompt2_outputs[0]
         negative_pooled_prompt_embeds = negative_prompt2_outputs[0]
 
-        images = pipeline(
+        images = self.pipeline(
             image=pixel_values,
             prompt_embeds=prompt_embeds,
             negative_prompt_embeds=negative_prompt_embeds,
             pooled_prompt_embeds=pooled_prompt_embeds,
             negative_pooled_prompt_embeds=negative_pooled_prompt_embeds,
-            generator=torch.Generator(device=pipeline.device).manual_seed(self.seed),
+            generator=torch.Generator(device=self.pipeline.device).manual_seed(
+                self.seed
+            ),
             strength=strength,
             guidance_scale=guidance_scale,
             output_type="np.array",
@@ -553,7 +558,19 @@ class StableXLForImageInpainting(GenericModel, QuantizationMixin):
 
         if quant_config_path is not None:
             self.quant_config = QuantizationConfig.from_json_file(quant_config_path)
-            self.quantize(self.quant_config, ignore_modules=["lm_head", "unet"])
+            self.quantize(self.quant_config, ignore_modules=["lm_head", "unet", "vae"])
+
+        self.scheduler.set_timesteps(num_inference_steps=self.num_infer_timesteps)
+        self.pipeline = StableDiffusionXLInpaintPipeline(
+            vae=self.vae,
+            text_encoder=self.text,
+            text_encoder_2=self.text2,
+            unet=self.unet,
+            scheduler=self.scheduler,
+            tokenizer=None,
+            tokenizer_2=None,
+        )
+        self.pipeline.set_progress_bar_config(disable=True)
 
     def forward(
         self,
@@ -577,40 +594,28 @@ class StableXLForImageInpainting(GenericModel, QuantizationMixin):
     ):
         prompt_outputs = self.text(
             input_ids,
-            attention_mask,
+            # attention_mask,
             output_hidden_states=True,
         )
         prompt_embeds = prompt_outputs.hidden_states[-2]
         negative_prompt_outputs = self.text(
             negative_input_ids,
-            negative_attention_mask,
+            # negative_attention_mask,
             output_hidden_states=True,
         )
         negative_prompt_embeds = negative_prompt_outputs.hidden_states[-2]
         prompt2_outputs = self.text2(
             input2_ids,
-            attention2_mask,
+            # attention2_mask,
             output_hidden_states=True,
         )
         prompt2_embeds = prompt2_outputs.hidden_states[-2]
         negative_prompt2_outputs = self.text2(
             negative_input2_ids,
-            negative_attention2_mask,
+            # negative_attention2_mask,
             output_hidden_states=True,
         )
         negative_prompt2_embeds = negative_prompt2_outputs.hidden_states[-2]
-        self.scheduler.set_timesteps(num_inference_steps=self.num_infer_timesteps)
-        pipeline = StableDiffusionXLInpaintPipeline(
-            vae=self.vae,
-            text_encoder=self.text,
-            text_encoder_2=self.text2,
-            unet=self.unet,
-            scheduler=self.scheduler,
-            tokenizer=None,
-            tokenizer_2=None,
-        )
-        pipeline.set_progress_bar_config(disable=True)
-
         prompt_embeds = torch.concat([prompt_embeds, prompt2_embeds], dim=-1)
         negative_prompt_embeds = torch.concat(
             [negative_prompt_embeds, negative_prompt2_embeds], dim=-1
@@ -618,14 +623,16 @@ class StableXLForImageInpainting(GenericModel, QuantizationMixin):
         pooled_prompt_embeds = prompt2_outputs[0]
         negative_pooled_prompt_embeds = negative_prompt2_outputs[0]
 
-        images = pipeline(
+        images = self.pipeline(
             image=pixel_values,
             mask_image=pixel_masks,
             prompt_embeds=prompt_embeds,
             negative_prompt_embeds=negative_prompt_embeds,
             pooled_prompt_embeds=pooled_prompt_embeds,
             negative_pooled_prompt_embeds=negative_pooled_prompt_embeds,
-            generator=torch.Generator(device=pipeline.device).manual_seed(self.seed),
+            generator=torch.Generator(device=self.pipeline.device).manual_seed(
+                self.seed
+            ),
             strength=strength,
             guidance_scale=guidance_scale,
             output_type="np.array",
@@ -770,7 +777,43 @@ class StableXLRefinerForText2ImageGeneration(GenericModel, QuantizationMixin):
 
         if quant_config_path is not None:
             self.quant_config = QuantizationConfig.from_json_file(quant_config_path)
-            self.quantize(self.quant_config, ignore_modules=["lm_head", "unet"])
+            self.quantize(
+                self.quant_config,
+                ignore_modules=[
+                    "lm_head",
+                    "unet",
+                    "vae",
+                    "refiner_unet",
+                    "refiner_vae",
+                ],
+            )
+
+        self.scheduler.set_timesteps(num_inference_steps=self.num_infer_timesteps)
+        self.pipeline = StableDiffusionXLPipeline(
+            vae=self.vae,
+            text_encoder=self.text,
+            text_encoder_2=self.text2,
+            unet=self.unet,
+            scheduler=self.scheduler,
+            tokenizer=None,
+            tokenizer_2=None,
+        )
+        self.pipeline.set_progress_bar_config(disable=True)
+
+        self.refiner_scheduler.set_timesteps(
+            num_inference_steps=self.num_infer_timesteps
+        )
+        self.refiner_pipeline = StableDiffusionXLImg2ImgPipeline(
+            vae=self.refiner_vae,
+            text_encoder=self.refiner_text,
+            text_encoder_2=self.refiner_text2,
+            unet=self.refiner_unet,
+            scheduler=self.refiner_scheduler,
+            tokenizer=None,
+            tokenizer_2=None,
+            requires_aesthetics_score=True,
+        )
+        self.refiner_pipeline.set_progress_bar_config(disable=True)
 
     def forward(
         self,
@@ -787,6 +830,14 @@ class StableXLRefinerForText2ImageGeneration(GenericModel, QuantizationMixin):
         attention2_mask: Optional[torch.Tensor] = None,
         negative_attention_mask: Optional[torch.Tensor] = None,
         negative_attention2_mask: Optional[torch.Tensor] = None,
+        refiner_input_ids: Optional[torch.Tensor] = None,
+        refiner_input2_ids: Optional[torch.Tensor] = None,
+        refiner_negative_input_ids: Optional[torch.Tensor] = None,
+        refiner_negative_input2_ids: Optional[torch.Tensor] = None,
+        refiner_attention_mask: Optional[torch.Tensor] = None,
+        refiner_attention2_mask: Optional[torch.Tensor] = None,
+        refiner_negative_attention_mask: Optional[torch.Tensor] = None,
+        refiner_negative_attention2_mask: Optional[torch.Tensor] = None,
         height: Optional[int] = 1024,
         width: Optional[int] = 1024,
         high_noise_frac: Optional[float] = 0.8,
@@ -794,40 +845,28 @@ class StableXLRefinerForText2ImageGeneration(GenericModel, QuantizationMixin):
     ):
         prompt_outputs = self.text(
             input_ids,
-            attention_mask,
+            # attention_mask,
             output_hidden_states=True,
         )
         prompt_embeds = prompt_outputs.hidden_states[-2]
         negative_prompt_outputs = self.text(
             negative_input_ids,
-            negative_attention_mask,
+            # negative_attention_mask,
             output_hidden_states=True,
         )
         negative_prompt_embeds = negative_prompt_outputs.hidden_states[-2]
         prompt2_outputs = self.text2(
             input2_ids,
-            attention2_mask,
+            # attention2_mask,
             output_hidden_states=True,
         )
         prompt2_embeds = prompt2_outputs.hidden_states[-2]
         negative_prompt2_outputs = self.text2(
             negative_input2_ids,
-            negative_attention2_mask,
+            # negative_attention2_mask,
             output_hidden_states=True,
         )
         negative_prompt2_embeds = negative_prompt2_outputs.hidden_states[-2]
-        self.scheduler.set_timesteps(num_inference_steps=self.num_infer_timesteps)
-        pipeline = StableDiffusionXLPipeline(
-            vae=self.vae,
-            text_encoder=self.text,
-            text_encoder_2=self.text2,
-            unet=self.unet,
-            scheduler=self.scheduler,
-            tokenizer=None,
-            tokenizer_2=None,
-        )
-        pipeline.set_progress_bar_config(disable=True)
-
         prompt_embeds = torch.concat([prompt_embeds, prompt2_embeds], dim=-1)
         negative_prompt_embeds = torch.concat(
             [negative_prompt_embeds, negative_prompt2_embeds], dim=-1
@@ -835,12 +874,18 @@ class StableXLRefinerForText2ImageGeneration(GenericModel, QuantizationMixin):
         pooled_prompt_embeds = prompt2_outputs[0]
         negative_pooled_prompt_embeds = negative_prompt2_outputs[0]
 
-        images = pipeline(
+        images = self.pipeline(
             prompt_embeds=prompt_embeds,
-            negative_prompt_embeds=negative_prompt_embeds,
+            negative_prompt_embeds=torch.zeros_like(negative_prompt_embeds).to(
+                negative_pooled_prompt_embeds.device
+            ),
             pooled_prompt_embeds=pooled_prompt_embeds,
-            negative_pooled_prompt_embeds=negative_pooled_prompt_embeds,
-            generator=torch.Generator(device=pipeline.device).manual_seed(self.seed),
+            negative_pooled_prompt_embeds=torch.zeros_like(
+                negative_pooled_prompt_embeds
+            ).to(negative_pooled_prompt_embeds.device),
+            generator=torch.Generator(device=self.pipeline.device).manual_seed(
+                self.seed
+            ),
             height=height,
             width=width,
             denoising_end=high_noise_frac,
@@ -848,25 +893,67 @@ class StableXLRefinerForText2ImageGeneration(GenericModel, QuantizationMixin):
             output_type="latent",
         ).images
 
-        refiner_pipeline = StableDiffusionXLImg2ImgPipeline(
-            vae=self.refiner_vae,
-            text_encoder=self.refiner_text,
-            text_encoder_2=self.refiner_text2,
-            unet=self.refiner_unet,
-            scheduler=self.refiner_scheduler,
-            tokenizer=None,
-            tokenizer_2=None,
-        )
+        if self.refiner_text is not None:
+            refiner_prompt_outputs = self.refiner_text(
+                refiner_input_ids,
+                # refiner_attention_mask,
+                output_hidden_states=True,
+            )
+            refiner_prompt_embeds = refiner_prompt_outputs.hidden_states[-2]
+            refiner_negative_prompt_outputs = self.refiner_text(
+                refiner_negative_input_ids,
+                # negative_attention_mask,
+                output_hidden_states=True,
+            )
+            refiner_negative_prompt_embeds = (
+                refiner_negative_prompt_outputs.hidden_states[-2]
+            )
+            refiner_pooled_prompt_embeds = refiner_prompt_outputs[0]
+            refiner_negative_pooled_prompt_embeds = refiner_negative_prompt_outputs[0]
 
-        images = refiner_pipeline(
+        if self.refiner_text2 is not None:
+            refiner_prompt2_outputs = self.refiner_text2(
+                refiner_input2_ids,
+                # refiner_attention2_mask,
+                output_hidden_states=True,
+            )
+            refiner_prompt2_embeds = refiner_prompt2_outputs.hidden_states[-2]
+            refiner_negative_prompt2_outputs = self.refiner_text2(
+                refiner_negative_input2_ids,
+                # refiner_negative_attention2_mask,
+                output_hidden_states=True,
+            )
+            refiner_negative_prompt2_embeds = (
+                refiner_negative_prompt2_outputs.hidden_states[-2]
+            )
+
+            refiner_pooled_prompt_embeds = refiner_prompt2_outputs[0]
+            refiner_negative_pooled_prompt_embeds = refiner_negative_prompt2_outputs[0]
+
+        if self.refiner_text is not None and self.refiner_text2 is not None:
+            refiner_prompt_embeds = torch.concat(
+                [refiner_prompt_embeds, refiner_prompt2_embeds], dim=-1
+            )
+            refiner_negative_prompt_embeds = torch.concat(
+                [refiner_negative_prompt_embeds, refiner_negative_prompt2_embeds],
+                dim=-1,
+            )
+        elif self.refiner_text2 is not None:
+            refiner_prompt_embeds = refiner_prompt2_embeds
+            negative_prompt_embeds = refiner_negative_prompt2_embeds
+
+        images = self.refiner_pipeline(
             image=images,
-            prompt_embeds=prompt_embeds,
-            negative_prompt_embeds=negative_prompt_embeds,
-            pooled_prompt_embeds=pooled_prompt_embeds,
-            negative_pooled_prompt_embeds=negative_pooled_prompt_embeds,
-            generator=torch.Generator(device=pipeline.device).manual_seed(self.seed),
+            prompt_embeds=refiner_prompt_embeds,
+            negative_prompt_embeds=refiner_negative_prompt_embeds,
+            pooled_prompt_embeds=refiner_pooled_prompt_embeds,
+            negative_pooled_prompt_embeds=refiner_negative_pooled_prompt_embeds,
+            generator=torch.Generator(device=self.refiner_pipeline.device).manual_seed(
+                self.seed
+            ),
             denoising_start=high_noise_frac,
             guidance_scale=guidance_scale,
+            target_size=(height, width),
             output_type="np.array",
         ).images
 

@@ -16,6 +16,11 @@ if is_diffusers_available():
         StableXLForImageInpainting,
         StableXLRefinerForText2ImageGeneration,
     )
+    from unitorch.models.diffusers.modeling_stable_xl_refiner import (
+        StableXLRefinerForText2ImageGeneration,
+        StableXLRefinerForImage2ImageGeneration,
+        StableXLRefinerForImageInpainting,
+    )
     from unitorch.models.diffusers.modeling_dreambooth import (
         DreamboothForText2ImageGeneration,
     )
@@ -34,6 +39,9 @@ if is_diffusers_available():
     )
     from unitorch.models.diffusers.processing_stable import StableProcessor
     from unitorch.models.diffusers.processing_stable_xl import StableXLProcessor
+    from unitorch.models.diffusers.processing_stable_xl_refiner import (
+        StableXLRefinerProcessor,
+    )
     from unitorch.models.diffusers.processing_dreambooth import DreamboothProcessor
     from unitorch.models.diffusers.processing_dreambooth_xl import DreamboothXLProcessor
     from unitorch.models.diffusers.processing_controlnet import ControlNetProcessor
