@@ -14,7 +14,6 @@ if is_diffusers_available():
         StableXLForText2ImageGeneration,
         StableXLForImage2ImageGeneration,
         StableXLForImageInpainting,
-        StableXLRefinerForText2ImageGeneration,
     )
     from unitorch.models.diffusers.modeling_stable_xl_refiner import (
         StableXLRefinerForText2ImageGeneration,

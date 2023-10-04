@@ -30,8 +30,7 @@ from unitorch.models import (
 from unitorch.models.diffusers.modeling_stable import compute_snr
 
 
-# base + refiner
-class StableXLRefinerForText2ImageGeneration(GenericModel, QuantizationMixin):
+class GenericStableXLRefinerModel(GenericModel, QuantizationMixin):
     prefix_keys_in_state_dict = {
         # unet weights
         "^add_embedding.*": "unet.",
@@ -106,6 +105,7 @@ class StableXLRefinerForText2ImageGeneration(GenericModel, QuantizationMixin):
         assert hasattr(schedulers, scheduler_class_name)
         scheduler_class = getattr(schedulers, scheduler_class_name)
         assert issubclass(scheduler_class, SchedulerMixin)
+        scheduler_config_dict["num_train_timesteps"] = num_train_timesteps
         self.scheduler = scheduler_class.from_config(scheduler_config_dict)
 
         if refiner_config_path is not None:
@@ -150,6 +150,7 @@ class StableXLRefinerForText2ImageGeneration(GenericModel, QuantizationMixin):
             assert hasattr(schedulers, scheduler_class_name)
             scheduler_class = getattr(schedulers, scheduler_class_name)
             assert issubclass(scheduler_class, SchedulerMixin)
+            scheduler_config_dict["num_train_timesteps"] = num_train_timesteps
             self.refiner_scheduler = scheduler_class.from_config(scheduler_config_dict)
         else:
             self.refiner_scheduler = None
@@ -178,6 +179,58 @@ class StableXLRefinerForText2ImageGeneration(GenericModel, QuantizationMixin):
             )
 
         self.scheduler.set_timesteps(num_inference_steps=self.num_infer_timesteps)
+        if self.refiner_scheduler is not None:
+            self.refiner_scheduler.set_timesteps(
+                num_inference_steps=self.num_infer_timesteps
+            )
+
+
+# base + refiner
+class StableXLRefinerForText2ImageGeneration(GenericStableXLRefinerModel):
+    def __init__(
+        self,
+        config_path: str,
+        text_config_path: str,
+        text2_config_path: str,
+        vae_config_path: str,
+        scheduler_config_path: str,
+        refiner_config_path: Optional[str] = None,
+        refiner_text_config_path: Optional[str] = None,
+        refiner_text2_config_path: Optional[str] = None,
+        refiner_vae_config_path: Optional[str] = None,
+        refiner_scheduler_config_path: Optional[str] = None,
+        quant_config_path: Optional[str] = None,
+        image_size: Optional[int] = None,
+        in_channels: Optional[int] = None,
+        out_channels: Optional[int] = None,
+        num_train_timesteps: Optional[int] = 1000,
+        num_infer_timesteps: Optional[int] = 50,
+        freeze_vae_encoder: Optional[bool] = True,
+        freeze_text_encoder: Optional[bool] = True,
+        seed: Optional[int] = 1123,
+    ):
+        super().__init__(
+            config_path=config_path,
+            text_config_path=text_config_path,
+            text2_config_path=text2_config_path,
+            vae_config_path=vae_config_path,
+            scheduler_config_path=scheduler_config_path,
+            refiner_config_path=refiner_config_path,
+            refiner_text_config_path=refiner_text_config_path,
+            refiner_text2_config_path=refiner_text2_config_path,
+            refiner_vae_config_path=refiner_vae_config_path,
+            refiner_scheduler_config_path=refiner_scheduler_config_path,
+            quant_config_path=quant_config_path,
+            image_size=image_size,
+            in_channels=in_channels,
+            out_channels=out_channels,
+            num_train_timesteps=num_train_timesteps,
+            num_infer_timesteps=num_infer_timesteps,
+            freeze_vae_encoder=freeze_vae_encoder,
+            freeze_text_encoder=freeze_text_encoder,
+            seed=seed,
+        )
+
         self.pipeline = StableDiffusionXLPipeline(
             vae=self.vae,
             text_encoder=self.text,
@@ -189,9 +242,6 @@ class StableXLRefinerForText2ImageGeneration(GenericModel, QuantizationMixin):
         )
         self.pipeline.set_progress_bar_config(disable=True)
 
-        self.refiner_scheduler.set_timesteps(
-            num_inference_steps=self.num_infer_timesteps
-        )
         self.refiner_pipeline = StableDiffusionXLImg2ImgPipeline(
             vae=self.refiner_vae,
             text_encoder=self.refiner_text,

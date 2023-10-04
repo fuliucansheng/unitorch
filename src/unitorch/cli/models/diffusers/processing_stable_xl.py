@@ -42,7 +42,7 @@ class StableXLProcessor(_StableXLProcessor):
     @add_default_section_for_init("core/process/diffusers/stable_xl")
     def from_core_configure(cls, config, **kwargs):
         config.set_default_section("core/process/diffusers/stable_xl")
-        pretrained_name = config.getoption("pretrained_name", "stable-v2")
+        pretrained_name = config.getoption("pretrained_name", "stable-xl-base-1.0")
         pretrain_infos = nested_dict_value(pretrained_diffusers_infos, pretrained_name)
 
         vocab1_path = config.getoption("vocab1_path", None)

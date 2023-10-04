@@ -124,7 +124,7 @@ class DreamboothForText2ImageGeneration(GenericModel, QuantizationMixin):
 
         if quant_config_path is not None:
             self.quant_config = QuantizationConfig.from_json_file(quant_config_path)
-            self.quantize(self.quant_config, ignore_modules=["lm_head", "unet"])
+            self.quantize(self.quant_config, ignore_modules=["lm_head", "unet", "vae"])
 
         if lora_r is not None:
             for param in self.unet.parameters():

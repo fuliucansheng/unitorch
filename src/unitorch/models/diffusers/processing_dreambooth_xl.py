@@ -55,6 +55,13 @@ class DreamboothXLProcessor(HfTextClassificationProcessor):
 
         tokenizer2.cls_token = tokenizer2.bos_token
         tokenizer2.sep_token = tokenizer2.eos_token
+        tokenizer2.pad_token = "!"
+
+        self.text_processor2 = HfTextClassificationProcessor(
+            tokenizer=tokenizer2,
+            max_seq_length=max_seq_length,
+            position_start_id=position_start_id,
+        )
 
         self.image_size = image_size
         self.center_crop = center_crop
@@ -68,12 +75,6 @@ class DreamboothXLProcessor(HfTextClassificationProcessor):
                 ToTensor(),
                 Normalize([0.5], [0.5]),
             ]
-        )
-
-        self.text_processor2 = HfTextClassificationProcessor(
-            tokenizer=tokenizer2,
-            max_seq_length=max_seq_length,
-            position_start_id=position_start_id,
         )
 
         if vae_config_path is not None:

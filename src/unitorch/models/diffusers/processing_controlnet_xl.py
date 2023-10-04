@@ -53,6 +53,7 @@ class ControlNetXLProcessor:
 
         tokenizer2.cls_token = tokenizer2.bos_token
         tokenizer2.sep_token = tokenizer2.eos_token
+        tokenizer2.pad_token = "!"
 
         self.text_processor2 = HfTextClassificationProcessor(
             tokenizer=tokenizer2,
@@ -92,9 +93,9 @@ class ControlNetXLProcessor:
 
     def text2image(
         self,
-        prompt: str,
         image: Union[Image.Image, str],
         condition_image: Union[Image.Image, str],
+        prompt: str,
         prompt2: Optional[str] = None,
         max_seq_length: Optional[int] = None,
     ):
@@ -102,13 +103,7 @@ class ControlNetXLProcessor:
             image = Image.open(image).convert("RGB")
         if isinstance(condition_image, str):
             condition_image = Image.open(condition_image).convert("RGB")
-        prompt2 = prompt2 or prompt
-        prompt_outputs = self.text_processor1.classification(
-            prompt, max_seq_length=max_seq_length
-        )
-        prompt2_outputs = self.text_processor2.classification(
-            prompt2, max_seq_length=max_seq_length
-        )
+
         original_size = image.size
         image = self.vision_resize(image)
         if self.center_crop:
@@ -129,7 +124,17 @@ class ControlNetXLProcessor:
         add_time_ids = (
             original_size + crop_top_left + [self.image_size, self.image_size]
         )
+
         condition_pixel_values = self.condition_vision_processor(condition_image)
+
+        prompt2 = prompt2 or prompt
+        prompt_outputs = self.text_processor1.classification(
+            prompt, max_seq_length=max_seq_length
+        )
+        prompt2_outputs = self.text_processor2.classification(
+            prompt2, max_seq_length=max_seq_length
+        )
+
         return GenericOutputs(
             pixel_values=pixel_values,
             condition_pixel_values=condition_pixel_values,
@@ -142,8 +147,8 @@ class ControlNetXLProcessor:
 
     def text2image_inputs(
         self,
-        prompt: str,
         condition_image: Union[Image.Image, str],
+        prompt: str,
         prompt2: Optional[str] = None,
         negative_prompt: Optional[str] = "",
         negative_prompt2: Optional[str] = None,
@@ -151,6 +156,11 @@ class ControlNetXLProcessor:
     ):
         if isinstance(condition_image, str):
             condition_image = Image.open(condition_image).convert("RGB")
+
+        condition_pixel_values = self.condition_image_processor.preprocess(
+            condition_image
+        )[0]
+
         prompt_outputs = self.text_processor1.classification(
             prompt, max_seq_length=max_seq_length
         )
@@ -163,9 +173,7 @@ class ControlNetXLProcessor:
         negative_prompt2_outputs = self.text_processor2.classification(
             negative_prompt2, max_seq_length=max_seq_length
         )
-        condition_pixel_values = self.condition_image_processor.preprocess(
-            condition_image
-        )[0]
+
         return GenericOutputs(
             condition_pixel_values=condition_pixel_values,
             input_ids=prompt_outputs.input_ids,
@@ -190,45 +198,28 @@ class ControlNetXLProcessor:
     ):
         if isinstance(image, str):
             image = Image.open(image).convert("RGB")
-        if isinstance(condition_image, str):
-            condition_image = Image.open(condition_image).convert("RGB")
-        prompt2 = prompt2 or prompt
-        negative_prompt2 = negative_prompt2 or negative_prompt
-        prompt_outputs = self.text_processor1.classification(
-            prompt, max_seq_length=max_seq_length
-        )
-        prompt2_outputs = self.text_processor2.classification(
-            prompt2, max_seq_length=max_seq_length
-        )
-        negative_prompt_outputs = self.text_processor1.classification(
-            negative_prompt, max_seq_length=max_seq_length
-        )
-        negative_prompt2_outputs = self.text_processor2.classification(
-            negative_prompt2, max_seq_length=max_seq_length
-        )
+
         pixel_values = self.vae_image_processor.preprocess(image)[0]
-        condition_pixel_values = self.condition_image_processor.preprocess(
-            condition_image
-        )[0]
+
+        text_inputs = self.text2image_inputs(
+            condition_image=condition_image,
+            prompt=prompt,
+            prompt2=prompt2,
+            negative_prompt=negative_prompt,
+            negative_prompt2=negative_prompt2,
+            max_seq_length=max_seq_length,
+        )
         return GenericOutputs(
             pixel_values=pixel_values,
-            condition_pixel_values=condition_pixel_values,
-            input_ids=prompt_outputs.input_ids,
-            attention_mask=prompt_outputs.attention_mask,
-            input2_ids=prompt2_outputs.input_ids,
-            attention2_mask=prompt2_outputs.attention_mask,
-            negative_input_ids=negative_prompt_outputs.input_ids,
-            negative_attention_mask=negative_prompt_outputs.attention_mask,
-            negative_input2_ids=negative_prompt2_outputs.input_ids,
-            negative_attention2_mask=negative_prompt2_outputs.attention_mask,
+            **text_inputs,
         )
 
     def inpainting_inputs(
         self,
-        prompt: str,
-        condition_image: Union[Image.Image, str],
         image: Union[Image.Image, str],
         mask_image: Union[Image.Image, str],
+        condition_image: Union[Image.Image, str],
+        prompt: str,
         prompt2: Optional[str] = None,
         negative_prompt: Optional[str] = "",
         negative_prompt2: Optional[str] = None,
@@ -237,40 +228,23 @@ class ControlNetXLProcessor:
         if isinstance(image, str):
             image = Image.open(image).convert("RGB")
 
-        if isinstance(condition_image, str):
-            condition_image = Image.open(condition_image).convert("RGB")
-
         if isinstance(mask_image, str):
             mask_image = Image.open(mask_image).convert("L")
 
-        prompt_outputs = self.text_processor1.classification(
-            prompt, max_seq_length=max_seq_length
-        )
-        prompt2_outputs = self.text_processor2.classification(
-            prompt2, max_seq_length=max_seq_length
-        )
-        negative_prompt_outputs = self.text_processor1.classification(
-            negative_prompt, max_seq_length=max_seq_length
-        )
-        negative_prompt2_outputs = self.text_processor2.classification(
-            negative_prompt2, max_seq_length=max_seq_length
-        )
         pixel_values = self.vae_image_processor.preprocess(image)[0]
         pixel_masks = self.vae_mask_image_processor.preprocess(mask_image)[0]
         pixel_masks = (pixel_masks + 1) / 2
-        condition_pixel_values = self.condition_image_processor.preprocess(
-            condition_image
-        )[0]
+
+        text_inputs = self.text2image_inputs(
+            condition_image=condition_image,
+            prompt=prompt,
+            prompt2=prompt2,
+            negative_prompt=negative_prompt,
+            negative_prompt2=negative_prompt2,
+            max_seq_length=max_seq_length,
+        )
         return GenericOutputs(
             pixel_values=pixel_values,
             pixel_masks=pixel_masks,
-            condition_pixel_values=condition_pixel_values,
-            input_ids=prompt_outputs.input_ids,
-            attention_mask=prompt_outputs.attention_mask,
-            input2_ids=prompt2_outputs.input_ids,
-            attention2_mask=prompt2_outputs.attention_mask,
-            negative_input_ids=negative_prompt_outputs.input_ids,
-            negative_attention_mask=negative_prompt_outputs.attention_mask,
-            negative_input2_ids=negative_prompt2_outputs.input_ids,
-            negative_attention2_mask=negative_prompt2_outputs.attention_mask,
+            **text_inputs,
         )

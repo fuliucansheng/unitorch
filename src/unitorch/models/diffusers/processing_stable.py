@@ -78,12 +78,15 @@ class StableProcessor(HfTextClassificationProcessor):
     ):
         if isinstance(image, str):
             image = Image.open(image).convert("RGB")
-        prompt_outputs = self.classification(prompt, max_seq_length=max_seq_length)
+
         pixel_values = self.vision_processor(image)
+
+        prompt_outputs = self.classification(prompt, max_seq_length=max_seq_length)
+
         return GenericOutputs(
+            pixel_values=pixel_values,
             input_ids=prompt_outputs.input_ids,
             attention_mask=prompt_outputs.attention_mask,
-            pixel_values=pixel_values,
         )
 
     def text2image_inputs(
@@ -96,6 +99,7 @@ class StableProcessor(HfTextClassificationProcessor):
         negative_prompt_outputs = self.classification(
             negative_prompt, max_seq_length=max_seq_length
         )
+
         return GenericOutputs(
             input_ids=prompt_outputs.input_ids,
             attention_mask=prompt_outputs.attention_mask,
@@ -112,17 +116,18 @@ class StableProcessor(HfTextClassificationProcessor):
     ):
         if isinstance(image, str):
             image = Image.open(image).convert("RGB")
-        prompt_outputs = self.classification(prompt, max_seq_length=max_seq_length)
-        negative_prompt_outputs = self.classification(
-            negative_prompt, max_seq_length=max_seq_length
-        )
+
         pixel_values = self.vae_image_processor.preprocess(image)[0]
+
+        text_inputs = self.text2image_inputs(
+            prompt,
+            negative_prompt=negative_prompt,
+            max_seq_length=max_seq_length,
+        )
+
         return GenericOutputs(
-            input_ids=prompt_outputs.input_ids,
-            attention_mask=prompt_outputs.attention_mask,
             pixel_values=pixel_values,
-            negative_input_ids=negative_prompt_outputs.input_ids,
-            negative_attention_mask=negative_prompt_outputs.attention_mask,
+            **text_inputs,
         )
 
     def inpainting_inputs(
@@ -139,41 +144,41 @@ class StableProcessor(HfTextClassificationProcessor):
         if isinstance(mask_image, str):
             mask_image = Image.open(mask_image).convert("L")
 
-        prompt_outputs = self.classification(prompt, max_seq_length=max_seq_length)
-        negative_prompt_outputs = self.classification(
-            negative_prompt, max_seq_length=max_seq_length
-        )
         pixel_values = self.vae_image_processor.preprocess(image)[0]
         pixel_masks = self.vae_image_processor.preprocess(mask_image)[0]
         pixel_masks = (pixel_masks + 1) / 2
+
+        text_inputs = self.text2image_inputs(
+            prompt,
+            negative_prompt=negative_prompt,
+            max_seq_length=max_seq_length,
+        )
+
         return GenericOutputs(
-            input_ids=prompt_outputs.input_ids,
-            attention_mask=prompt_outputs.attention_mask,
             pixel_values=pixel_values,
             pixel_masks=pixel_masks,
-            negative_input_ids=negative_prompt_outputs.input_ids,
-            negative_attention_mask=negative_prompt_outputs.attention_mask,
+            **text_inputs,
         )
 
     def resolution_inputs(
         self,
-        prompt: str,
         image: Union[Image.Image, str],
+        prompt: str,
         negative_prompt: Optional[str] = "",
         max_seq_length: Optional[int] = None,
     ):
         if isinstance(image, str):
             image = Image.open(image).convert("RGB")
 
-        prompt_outputs = self.classification(prompt, max_seq_length=max_seq_length)
-        negative_prompt_outputs = self.classification(
-            negative_prompt, max_seq_length=max_seq_length
-        )
         pixel_values = self.vae_image_processor.preprocess(image)[0]
+
+        text_inputs = self.text2image_inputs(
+            prompt,
+            negative_prompt=negative_prompt,
+            max_seq_length=max_seq_length,
+        )
+
         return GenericOutputs(
-            input_ids=prompt_outputs.input_ids,
-            attention_mask=prompt_outputs.attention_mask,
             pixel_values=pixel_values,
-            negative_input_ids=negative_prompt_outputs.input_ids,
-            negative_attention_mask=negative_prompt_outputs.attention_mask,
+            **text_inputs,
         )

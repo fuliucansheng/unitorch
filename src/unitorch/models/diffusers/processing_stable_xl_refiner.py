@@ -139,13 +139,7 @@ class StableXLRefinerProcessor:
     ):
         if isinstance(image, str):
             image = Image.open(image).convert("RGB")
-        prompt2 = prompt2 or prompt
-        prompt_outputs = self.text_processor1.classification(
-            prompt, max_seq_length=max_seq_length
-        )
-        prompt2_outputs = self.text_processor2.classification(
-            prompt2, max_seq_length=max_seq_length
-        )
+
         original_size = image.size
         image = self.vision_resize(image)
         if self.center_crop:
@@ -165,6 +159,14 @@ class StableXLRefinerProcessor:
 
         add_time_ids = (
             original_size + crop_top_left + [self.image_size, self.image_size]
+        )
+
+        prompt2 = prompt2 or prompt
+        prompt_outputs = self.text_processor1.classification(
+            prompt, max_seq_length=max_seq_length
+        )
+        prompt2_outputs = self.text_processor2.classification(
+            prompt2, max_seq_length=max_seq_length
         )
 
         return GenericOutputs(
@@ -286,31 +288,23 @@ class StableXLRefinerProcessor:
     ):
         if isinstance(image, str):
             image = Image.open(image).convert("RGB")
-        prompt2 = prompt2 or prompt
-        negative_prompt2 = negative_prompt2 or negative_prompt
-        prompt_outputs = self.text_processor1.classification(
-            prompt, max_seq_length=max_seq_length
-        )
-        prompt2_outputs = self.text_processor2.classification(
-            prompt2, max_seq_length=max_seq_length
-        )
-        negative_prompt_outputs = self.text_processor1.classification(
-            negative_prompt, max_seq_length=max_seq_length
-        )
-        negative_prompt2_outputs = self.text_processor2.classification(
-            negative_prompt2, max_seq_length=max_seq_length
-        )
         pixel_values = self.vae_image_processor.preprocess(image)[0]
+
+        text_inputs = self.text2image_inputs(
+            prompt,
+            prompt2=prompt2,
+            negative_prompt=negative_prompt,
+            negative_prompt2=negative_prompt2,
+            refiner_prompt=refiner_prompt,
+            refiner_prompt2=refiner_prompt2,
+            refiner_negative_prompt=refiner_negative_prompt,
+            refiner_negative_prompt2=refiner_negative_prompt2,
+            max_seq_length=max_seq_length,
+        )
+
         return GenericOutputs(
             pixel_values=pixel_values,
-            input_ids=prompt_outputs.input_ids,
-            attention_mask=prompt_outputs.attention_mask,
-            input2_ids=prompt2_outputs.input_ids,
-            attention2_mask=prompt2_outputs.attention_mask,
-            negative_input_ids=negative_prompt_outputs.input_ids,
-            negative_attention_mask=negative_prompt_outputs.attention_mask,
-            negative_input2_ids=negative_prompt2_outputs.input_ids,
-            negative_attention2_mask=negative_prompt2_outputs.attention_mask,
+            **text_inputs,
         )
 
     def inpainting_inputs(
@@ -333,30 +327,24 @@ class StableXLRefinerProcessor:
         if isinstance(mask_image, str):
             mask_image = Image.open(mask_image).convert("L")
 
-        prompt_outputs = self.text_processor1.classification(
-            prompt, max_seq_length=max_seq_length
-        )
-        prompt2_outputs = self.text_processor2.classification(
-            prompt2, max_seq_length=max_seq_length
-        )
-        negative_prompt_outputs = self.text_processor1.classification(
-            negative_prompt, max_seq_length=max_seq_length
-        )
-        negative_prompt2_outputs = self.text_processor2.classification(
-            negative_prompt2, max_seq_length=max_seq_length
-        )
         pixel_values = self.vae_image_processor.preprocess(image)[0]
         pixel_masks = self.vae_image_processor.preprocess(mask_image)[0]
         pixel_masks = (pixel_masks + 1) / 2
+
+        text_inputs = self.text2image_inputs(
+            prompt,
+            prompt2=prompt2,
+            negative_prompt=negative_prompt,
+            negative_prompt2=negative_prompt2,
+            refiner_prompt=refiner_prompt,
+            refiner_prompt2=refiner_prompt2,
+            refiner_negative_prompt=refiner_negative_prompt,
+            refiner_negative_prompt2=refiner_negative_prompt2,
+            max_seq_length=max_seq_length,
+        )
+
         return GenericOutputs(
             pixel_values=pixel_values,
             pixel_masks=pixel_masks,
-            input_ids=prompt_outputs.input_ids,
-            attention_mask=prompt_outputs.attention_mask,
-            input2_ids=prompt2_outputs.input_ids,
-            attention2_mask=prompt2_outputs.attention_mask,
-            negative_input_ids=negative_prompt_outputs.input_ids,
-            negative_attention_mask=negative_prompt_outputs.attention_mask,
-            negative_input2_ids=negative_prompt2_outputs.input_ids,
-            negative_attention2_mask=negative_prompt2_outputs.attention_mask,
+            **text_inputs,
         )
