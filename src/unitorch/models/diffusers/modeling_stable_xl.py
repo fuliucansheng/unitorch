@@ -223,13 +223,13 @@ class StableXLForText2ImageGeneration(GenericStableXLModel):
     ):
         prompt_outputs = self.text(
             input_ids,
-            attention_mask,
+            # attention_mask,
             output_hidden_states=True,
         )
         prompt_embeds = prompt_outputs.hidden_states[-2]
         prompt2_outputs = self.text2(
             input2_ids,
-            attention2_mask,
+            # attention2_mask,
             output_hidden_states=True,
         )
         prompt2_embeds = prompt2_outputs.hidden_states[-2]

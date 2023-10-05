@@ -25,6 +25,7 @@ class ControlNetProcessor(_ControlNetProcessor):
         vae_config_path: str,
         max_seq_length: Optional[int] = 77,
         position_start_id: Optional[int] = 0,
+        pad_token: Optional[str] = "<|endoftext|>",
     ):
         super().__init__(
             vocab_path=vocab_path,
@@ -32,6 +33,7 @@ class ControlNetProcessor(_ControlNetProcessor):
             vae_config_path=vae_config_path,
             max_seq_length=max_seq_length,
             position_start_id=position_start_id,
+            pad_token=pad_token,
         )
 
     @classmethod

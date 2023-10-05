@@ -252,7 +252,8 @@ class StableForText2ImageGeneration(GenericStableModel):
             timesteps,
         )
 
-        encoder_hidden_states = self.text(input_ids, attention_mask)[0]
+        encoder_hidden_states = self.text(input_ids)[0]
+        # encoder_hidden_states = self.text(input_ids, attention_mask)[0]
         outputs = self.unet(
             noise_latents,
             timesteps,
@@ -292,11 +293,11 @@ class StableForText2ImageGeneration(GenericStableModel):
     ):
         prompt_embeds = self.text(
             input_ids,
-            attention_mask,
+            # attention_mask,
         )[0]
         negative_prompt_embeds = self.text(
             negative_input_ids,
-            negative_attention_mask,
+            # negative_attention_mask,
         )[0]
 
         images = self.pipeline(
@@ -379,11 +380,11 @@ class StableForImage2ImageGeneration(GenericStableModel):
     ):
         prompt_embeds = self.text(
             input_ids,
-            attention_mask,
+            # attention_mask,
         )[0]
         negative_prompt_embeds = self.text(
             negative_input_ids,
-            negative_attention_mask,
+            # negative_attention_mask,
         )[0]
 
         images = self.pipeline(
@@ -467,11 +468,11 @@ class StableForImageInpainting(GenericStableModel):
     ):
         prompt_embeds = self.text(
             input_ids,
-            attention_mask,
+            # attention_mask,
         )[0]
         negative_prompt_embeds = self.text(
             negative_input_ids,
-            negative_attention_mask,
+            # negative_attention_mask,
         )[0]
 
         images = self.pipeline(
@@ -556,11 +557,11 @@ class StableForImageResolution(GenericStableModel):
     ):
         prompt_embeds = self.text(
             input_ids,
-            attention_mask,
+            # attention_mask,
         )[0]
         negative_prompt_embeds = self.text(
             negative_input_ids,
-            negative_attention_mask,
+            # negative_attention_mask,
         )[0]
 
         images = self.pipeline(

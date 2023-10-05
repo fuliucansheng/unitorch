@@ -19,6 +19,9 @@ __hf_hub_stable_v1_5_dict__ = lambda name: {
     "scheduler": f"https://huggingface.co/{name}/resolve/main/scheduler/scheduler_config.json",
 }
 
+__hf_hub_stable_v2_dict__ = __hf_hub_stable_v1_5_dict__
+__hf_hub_stable_v2_1_dict__ = __hf_hub_stable_v1_5_dict__
+
 __hf_hub_stable_xl_dict__ = lambda name: {
     "unet": {
         "config": f"https://huggingface.co/{name}/resolve/main/unet/config.json",
@@ -83,6 +86,8 @@ pretrained_diffusers_infos = {
     "stable-v1.5-controlnet-inpainting": __hf_hub_stable_v1_5_controlnet_dict__(
         "lllyasviel/control_v11p_sd15_inpaint"
     ),
+    "stable-v2": __hf_hub_stable_v2_dict__("stabilityai/stable-diffusion-2"),
+    "stable-v2.1": __hf_hub_stable_v2_1_dict__("stabilityai/stable-diffusion-2-1"),
     "stable-xl-base-1.0": __hf_hub_stable_xl_dict__(
         "stabilityai/stable-diffusion-xl-base-1.0"
     ),

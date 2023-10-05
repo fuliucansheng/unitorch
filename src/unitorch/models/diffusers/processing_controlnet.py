@@ -28,6 +28,7 @@ class ControlNetProcessor(HfTextClassificationProcessor):
         vae_config_path: str,
         max_seq_length: Optional[int] = 77,
         position_start_id: Optional[int] = 0,
+        pad_token: Optional[str] = "<|endoftext|>",
         image_size: Optional[int] = 512,
     ):
         tokenizer = CLIPTokenizer(
@@ -36,6 +37,7 @@ class ControlNetProcessor(HfTextClassificationProcessor):
         )
         tokenizer.cls_token = tokenizer.bos_token
         tokenizer.sep_token = tokenizer.eos_token
+        tokenizer.pad_token = pad_token
         super().__init__(
             tokenizer=tokenizer,
             max_seq_length=max_seq_length,

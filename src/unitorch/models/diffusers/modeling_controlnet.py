@@ -255,7 +255,8 @@ class ControlNetForText2ImageGeneration(GenericControlNetModel):
             timesteps,
         )
 
-        encoder_hidden_states = self.text(input_ids, attention_mask)[0]
+        encoder_hidden_states = self.text(input_ids)[0]
+        # encoder_hidden_states = self.text(input_ids, attention_mask)[0]
         down_block_res_samples, mid_block_res_sample = self.controlnet(
             noise_latents,
             timesteps,
@@ -289,11 +290,11 @@ class ControlNetForText2ImageGeneration(GenericControlNetModel):
     ):
         prompt_embeds = self.text(
             input_ids,
-            attention_mask,
+            # attention_mask,
         )[0]
         negative_prompt_embeds = self.text(
             negative_input_ids,
-            negative_attention_mask,
+            # negative_attention_mask,
         )[0]
 
         images = self.pipeline(
@@ -381,11 +382,11 @@ class ControlNetForImage2ImageGeneration(GenericControlNetModel):
     ):
         prompt_embeds = self.text(
             input_ids,
-            attention_mask,
+            # attention_mask,
         )[0]
         negative_prompt_embeds = self.text(
             negative_input_ids,
-            negative_attention_mask,
+            # negative_attention_mask,
         )[0]
 
         images = self.pipeline(
@@ -474,11 +475,11 @@ class ControlNetForImageInpainting(GenericControlNetModel):
     ):
         prompt_embeds = self.text(
             input_ids,
-            attention_mask,
+            # attention_mask,
         )[0]
         negative_prompt_embeds = self.text(
             negative_input_ids,
-            negative_attention_mask,
+            # negative_attention_mask,
         )[0]
 
         images = self.pipeline(

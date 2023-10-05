@@ -36,6 +36,10 @@ class StableXLRefinerProcessor:
         vae_config_path: Optional[str] = None,
         max_seq_length: Optional[int] = 77,
         position_start_id: Optional[int] = 0,
+        pad_token1: Optional[str] = "<|endoftext|>",
+        pad_token2: Optional[str] = "!",
+        refiner_pad_token1: Optional[str] = "<|endoftext|>",
+        refiner_pad_token2: Optional[str] = "!",
         image_size: Optional[int] = 512,
         center_crop: Optional[bool] = False,
     ):
@@ -46,6 +50,7 @@ class StableXLRefinerProcessor:
 
         tokenizer1.cls_token = tokenizer1.bos_token
         tokenizer1.sep_token = tokenizer1.eos_token
+        tokenizer1.pad_token = pad_token1
 
         self.text_processor1 = HfTextClassificationProcessor(
             tokenizer=tokenizer1,
@@ -60,6 +65,7 @@ class StableXLRefinerProcessor:
 
         tokenizer2.cls_token = tokenizer2.bos_token
         tokenizer2.sep_token = tokenizer2.eos_token
+        tokenizer2.pad_token = pad_token2
 
         tokenizer2.pad_token = "!"
         self.text_processor2 = HfTextClassificationProcessor(
@@ -76,6 +82,7 @@ class StableXLRefinerProcessor:
 
             refiner_tokenizer1.cls_token = refiner_tokenizer1.bos_token
             refiner_tokenizer1.sep_token = refiner_tokenizer1.eos_token
+            refiner_tokenizer1.pad_token = refiner_pad_token1
 
             self.refiner_text_processor1 = HfTextClassificationProcessor(
                 tokenizer=refiner_tokenizer1,
@@ -93,6 +100,7 @@ class StableXLRefinerProcessor:
 
             refiner_tokenizer2.cls_token = refiner_tokenizer2.bos_token
             refiner_tokenizer2.sep_token = refiner_tokenizer2.eos_token
+            refiner_tokenizer2.pad_token = refiner_pad_token2
 
             refiner_tokenizer2.pad_token = "!"
             self.refiner_text_processor2 = HfTextClassificationProcessor(

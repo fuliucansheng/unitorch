@@ -25,6 +25,7 @@ class DreamboothProcessor(_DreamboothProcessor):
         vae_config_path: str,
         max_seq_length: Optional[int] = 77,
         position_start_id: Optional[int] = 0,
+        pad_token: Optional[str] = "<|endoftext|>",
         image_size: Optional[int] = 512,
         center_crop: Optional[bool] = False,
     ):
@@ -34,6 +35,7 @@ class DreamboothProcessor(_DreamboothProcessor):
             vae_config_path=vae_config_path,
             max_seq_length=max_seq_length,
             position_start_id=position_start_id,
+            pad_token=pad_token,
             image_size=image_size,
             center_crop=center_crop,
         )

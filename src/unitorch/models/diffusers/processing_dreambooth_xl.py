@@ -31,6 +31,8 @@ class DreamboothXLProcessor(HfTextClassificationProcessor):
         vae_config_path: Optional[str] = None,
         max_seq_length: Optional[int] = 77,
         position_start_id: Optional[int] = 0,
+        pad_token1: Optional[str] = "<|endoftext|>",
+        pad_token2: Optional[str] = "!",
         image_size: Optional[int] = 512,
         center_crop: Optional[bool] = False,
     ):
@@ -41,6 +43,7 @@ class DreamboothXLProcessor(HfTextClassificationProcessor):
 
         tokenizer1.cls_token = tokenizer1.bos_token
         tokenizer1.sep_token = tokenizer1.eos_token
+        tokenizer1.pad_token = pad_token1
 
         self.text_processor1 = HfTextClassificationProcessor(
             tokenizer=tokenizer1,
@@ -55,7 +58,7 @@ class DreamboothXLProcessor(HfTextClassificationProcessor):
 
         tokenizer2.cls_token = tokenizer2.bos_token
         tokenizer2.sep_token = tokenizer2.eos_token
-        tokenizer2.pad_token = "!"
+        tokenizer2.pad_token = pad_token2
 
         self.text_processor2 = HfTextClassificationProcessor(
             tokenizer=tokenizer2,

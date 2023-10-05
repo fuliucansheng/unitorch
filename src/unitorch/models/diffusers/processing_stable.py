@@ -30,6 +30,7 @@ class StableProcessor(HfTextClassificationProcessor):
         vae_config_path: Optional[str] = None,
         max_seq_length: Optional[int] = 77,
         position_start_id: Optional[int] = 0,
+        pad_token: Optional[str] = "<|endoftext|>",
         image_size: Optional[int] = 512,
         center_crop: Optional[bool] = False,
         random_flip: Optional[bool] = False,
@@ -41,6 +42,7 @@ class StableProcessor(HfTextClassificationProcessor):
 
         tokenizer.cls_token = tokenizer.bos_token
         tokenizer.sep_token = tokenizer.eos_token
+        tokenizer.pad_token = pad_token
 
         HfTextClassificationProcessor.__init__(
             self,

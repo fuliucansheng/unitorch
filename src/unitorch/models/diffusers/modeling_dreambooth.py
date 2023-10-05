@@ -221,7 +221,8 @@ class DreamboothForText2ImageGeneration(GenericModel, QuantizationMixin):
             timesteps,
         )
 
-        encoder_hidden_states = self.text(mix_input_ids, mix_attention_mask)[0]
+        encoder_hidden_states = self.text(mix_input_ids)[0]
+        # encoder_hidden_states = self.text(mix_input_ids, mix_attention_mask)[0]
         outputs = self.unet(
             noise_latents,
             timesteps,
@@ -268,11 +269,11 @@ class DreamboothForText2ImageGeneration(GenericModel, QuantizationMixin):
     ):
         prompt_embeds = self.text(
             input_ids,
-            attention_mask,
+            # attention_mask,
         )[0]
         negative_prompt_embeds = self.text(
             negative_input_ids,
-            negative_attention_mask,
+            # negative_attention_mask,
         )[0]
         self.scheduler.set_timesteps(num_inference_steps=self.num_infer_timesteps)
         pipeline = StableDiffusionPipeline(
