@@ -110,6 +110,7 @@ class DreamboothForText2ImageGeneration(GenericModel, QuantizationMixin):
         assert hasattr(schedulers, scheduler_class_name)
         scheduler_class = getattr(schedulers, scheduler_class_name)
         assert issubclass(scheduler_class, SchedulerMixin)
+        scheduler_config_dict["num_train_timesteps"] = num_train_timesteps
         self.scheduler = scheduler_class.from_config(scheduler_config_dict)
 
         self.vae_scale_factor = 2 ** (len(self.vae.config.block_out_channels) - 1)
@@ -176,6 +177,18 @@ class DreamboothForText2ImageGeneration(GenericModel, QuantizationMixin):
 
         self.unet.set_attn_processor(lora_attn_procs)
 
+        self.scheduler.set_timesteps(num_inference_steps=self.num_infer_timesteps)
+        self.pipeline = StableDiffusionPipeline(
+            vae=self.vae,
+            text_encoder=self.text,
+            unet=self.unet,
+            scheduler=self.scheduler,
+            tokenizer=None,
+            safety_checker=None,
+            feature_extractor=None,
+        )
+        self.pipeline.set_progress_bar_config(disable=True)
+
     def forward(
         self,
         pixel_values: torch.Tensor,
@@ -210,7 +223,7 @@ class DreamboothForText2ImageGeneration(GenericModel, QuantizationMixin):
 
         timesteps = torch.randint(
             0,
-            self.scheduler.num_train_timesteps,
+            self.scheduler.config.num_train_timesteps,
             (batch,),
             device=mix_pixel_values.device,
         ).long()
@@ -275,22 +288,11 @@ class DreamboothForText2ImageGeneration(GenericModel, QuantizationMixin):
             negative_input_ids,
             # negative_attention_mask,
         )[0]
-        self.scheduler.set_timesteps(num_inference_steps=self.num_infer_timesteps)
-        pipeline = StableDiffusionPipeline(
-            vae=self.vae,
-            text_encoder=self.text,
-            unet=self.unet,
-            scheduler=self.scheduler,
-            tokenizer=None,
-            safety_checker=None,
-            feature_extractor=None,
-        )
-        pipeline.set_progress_bar_config(disable=True)
 
-        images = pipeline(
+        images = self.pipeline(
             prompt_embeds=prompt_embeds,
             negative_prompt_embeds=negative_prompt_embeds,
-            generator=torch.Generator(device=pipeline.device).manual_seed(self.seed),
+            generator=torch.Generator(device=self.pipeline.device).manual_seed(self.seed),
             height=height,
             width=width,
             guidance_scale=guidance_scale,

@@ -42,12 +42,15 @@ def is_offline_debug_mode():
 import logging
 import warnings
 
-UNITORCH_DEBUG_VALUES = {"OFF": 50, "INFO": 20, "DETAIL": 10}
+UNITORCH_DEBUG_VALUES = {"OFF": 50, "INFO": 20, "DETAIL": 10, "CPU": 10}
 UNITORCH_DEBUG = os.environ.get("UNITORCH_DEBUG", "INFO").upper()
 UNITORCH_DEBUG = (
     UNITORCH_DEBUG if UNITORCH_DEBUG in UNITORCH_DEBUG_VALUES.keys() else "INFO"
 )
 UNITORCH_DEBUG_INT = UNITORCH_DEBUG_VALUES.get(UNITORCH_DEBUG)
+
+if UNITORCH_DEBUG == "CPU":
+    os.environ["CUDA_VISIBLE_DEVICES"] = "999"
 
 warnings.filterwarnings("ignore")
 logging.basicConfig(

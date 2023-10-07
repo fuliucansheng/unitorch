@@ -366,6 +366,8 @@ class StableXLForImage2ImageGeneration(GenericStableXLModel):
         num_infer_timesteps: Optional[int] = 50,
         freeze_vae_encoder: Optional[bool] = True,
         freeze_text_encoder: Optional[bool] = True,
+        snr_gamma: Optional[float] = 5.0,
+        lora_r: Optional[int] = None,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
@@ -396,7 +398,7 @@ class StableXLForImage2ImageGeneration(GenericStableXLModel):
             tokenizer=None,
             tokenizer_2=None,
         )
-        pipeline.set_progress_bar_config(disable=True)
+        self.pipeline.set_progress_bar_config(disable=True)
 
     def forward(
         self,
@@ -481,6 +483,8 @@ class StableXLForImageInpainting(GenericStableXLModel):
         num_infer_timesteps: Optional[int] = 50,
         freeze_vae_encoder: Optional[bool] = True,
         freeze_text_encoder: Optional[bool] = True,
+        snr_gamma: Optional[float] = 5.0,
+        lora_r: Optional[int] = None,
         seed: Optional[int] = 1123,
     ):
         super().__init__(

@@ -22,11 +22,7 @@ from diffusers.models import (
     AutoencoderKL,
 )
 from diffusers.pipelines import (
-    StableDiffusionPipeline,
-    StableDiffusionImg2ImgPipeline,
-    StableDiffusionInpaintPipeline,
-    StableDiffusionUpscalePipeline,
-    StableDiffusionDepth2ImgPipeline,
+    StableDiffusionXLPipeline,
 )
 from unitorch.models import (
     GenericModel,
@@ -110,6 +106,7 @@ class DreamboothXLForText2ImageGeneration(GenericModel, QuantizationMixin):
         assert hasattr(schedulers, scheduler_class_name)
         scheduler_class = getattr(schedulers, scheduler_class_name)
         assert issubclass(scheduler_class, SchedulerMixin)
+        scheduler_config_dict["num_train_timesteps"] = num_train_timesteps
         self.scheduler = scheduler_class.from_config(scheduler_config_dict)
 
         self.vae_scale_factor = 2 ** (len(self.vae.config.block_out_channels) - 1)
@@ -175,6 +172,18 @@ class DreamboothXLForText2ImageGeneration(GenericModel, QuantizationMixin):
             lora_attn_procs[name] = module
 
         self.unet.set_attn_processor(lora_attn_procs)
+
+        self.scheduler.set_timesteps(num_inference_steps=self.num_infer_timesteps)
+        self.pipeline = StableDiffusionXLPipeline(
+            vae=self.vae,
+            text_encoder=self.text,
+            text_encoder_2=self.text2,
+            unet=self.unet,
+            scheduler=self.scheduler,
+            tokenizer=None,
+            tokenizer_2=None,
+        )
+        self.pipeline.set_progress_bar_config(disable=True)
 
     def forward(
         self,
@@ -270,7 +279,7 @@ class DreamboothXLForText2ImageGeneration(GenericModel, QuantizationMixin):
 
         timesteps = torch.randint(
             0,
-            self.scheduler.num_train_timesteps,
+            self.scheduler.config.num_train_timesteps,
             (batch,),
             device=mix_pixel_values.device,
         ).long()
@@ -359,17 +368,6 @@ class DreamboothXLForText2ImageGeneration(GenericModel, QuantizationMixin):
             output_hidden_states=True,
         )
         negative_prompt2_embeds = negative_prompt2_outputs.hidden_states[-2]
-        self.scheduler.set_timesteps(num_inference_steps=self.num_infer_timesteps)
-        pipeline = StableDiffusionXLPipeline(
-            vae=self.vae,
-            text_encoder=self.text,
-            text_encoder_2=self.text2,
-            unet=self.unet,
-            scheduler=self.scheduler,
-            tokenizer=None,
-            tokenizer_2=None,
-        )
-        pipeline.set_progress_bar_config(disable=True)
 
         prompt_embeds = torch.concat([prompt_embeds, prompt2_embeds], dim=-1)
         negative_prompt_embeds = torch.concat(
@@ -378,12 +376,12 @@ class DreamboothXLForText2ImageGeneration(GenericModel, QuantizationMixin):
         pooled_prompt_embeds = prompt2_outputs[0]
         negative_pooled_prompt_embeds = negative_prompt2_outputs[0]
 
-        images = pipeline(
+        images = self.pipeline(
             prompt_embeds=prompt_embeds,
             negative_prompt_embeds=negative_prompt_embeds,
             pooled_prompt_embeds=pooled_prompt_embeds,
             negative_pooled_prompt_embeds=negative_pooled_prompt_embeds,
-            generator=torch.Generator(device=pipeline.device).manual_seed(self.seed),
+            generator=torch.Generator(device=self.pipeline.device).manual_seed(self.seed),
             height=height,
             width=width,
             guidance_scale=guidance_scale,
