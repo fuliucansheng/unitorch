@@ -292,7 +292,9 @@ class DreamboothForText2ImageGeneration(GenericModel, QuantizationMixin):
         images = self.pipeline(
             prompt_embeds=prompt_embeds,
             negative_prompt_embeds=negative_prompt_embeds,
-            generator=torch.Generator(device=self.pipeline.device).manual_seed(self.seed),
+            generator=torch.Generator(device=self.pipeline.device).manual_seed(
+                self.seed
+            ),
             height=height,
             width=width,
             guidance_scale=guidance_scale,

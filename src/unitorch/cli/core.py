@@ -113,7 +113,7 @@ class CoreConfigureParser(configparser.ConfigParser):
                     ":".center(5, " "),
                     k.ljust(30, " "),
                     ":".center(5, " "),
-                    v.ljust(30, " "),
+                    str(v).ljust(30, " "),
                 )
         print("#" * 30, "Config Info End".center(20, " "), "#" * 30)
 

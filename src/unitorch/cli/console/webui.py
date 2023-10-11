@@ -6,7 +6,9 @@ import sys
 import fire
 import logging
 import importlib
+import gradio as gr
 import unitorch.cli
+from torch.multiprocessing import spawn
 from transformers.utils import is_remote_url
 from unitorch.cli import CoreConfigureParser
 from unitorch.cli import (
@@ -16,7 +18,11 @@ from unitorch.cli import (
     registered_webui,
     init_registered_module,
 )
+import unitorch.cli.pipelines.webui
 
+def start_webui_process(pid, webui_name: str, config: CoreConfigureParser):
+    webui_instance = registered_webui.get(webui_name)["obj"](config)
+    webui_instance.start()
 
 @fire.decorators.SetParseFn(str)
 def webui(config_path_or_dir: str, **kwargs):
@@ -59,6 +65,21 @@ def webui(config_path_or_dir: str, **kwargs):
     if depends_libraries:
         for library in depends_libraries:
             import_library(library)
+
+    enabled_webuis = config.getdefault("core/cli", "enabled_webuis", None)
+    assert enabled_webuis is not None
+    if isinstance(enabled_webuis, str):
+        enabled_webuis = [enabled_webuis]
+    assert all(enabled_webui in registered_webui for enabled_webui in enabled_webuis)
+
+    webui_processes = []
+    for enabled_webui in enabled_webuis:
+        webui_processes.append(
+            spawn(start_webui_process, args=(enabled_webui, config), join=False, daemon=True,)
+        )
+    
+    for webui_process in webui_processes:
+        webui_process.join()
 
     os._exit(0)
 

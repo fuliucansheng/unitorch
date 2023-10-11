@@ -381,7 +381,9 @@ class DreamboothXLForText2ImageGeneration(GenericModel, QuantizationMixin):
             negative_prompt_embeds=negative_prompt_embeds,
             pooled_prompt_embeds=pooled_prompt_embeds,
             negative_pooled_prompt_embeds=negative_pooled_prompt_embeds,
-            generator=torch.Generator(device=self.pipeline.device).manual_seed(self.seed),
+            generator=torch.Generator(device=self.pipeline.device).manual_seed(
+                self.seed
+            ),
             height=height,
             width=width,
             guidance_scale=guidance_scale,

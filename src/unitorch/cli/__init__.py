@@ -257,12 +257,16 @@ class GenericFastAPI(metaclass=abc.ABCMeta):
     def __init__(self, config: CoreConfigureParser):
         pass
 
-    @abc.abstractmethod
-    def start(self, **kwargs):
+    @abc.abstractproperty
+    def router(self):
         pass
 
     @abc.abstractmethod
-    def stop(self, **kwargs):
+    def start(self):
+        pass
+
+    @abc.abstractmethod
+    def stop(self):
         pass
 
 

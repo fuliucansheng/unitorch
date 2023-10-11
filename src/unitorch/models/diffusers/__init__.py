@@ -36,6 +36,10 @@ if is_diffusers_available():
         ControlNetXLForImage2ImageGeneration,
         ControlNetXLForImageInpainting,
     )
+    from unitorch.models.diffusers.modeling_animate import (
+        AnimateForText2VideoGeneration,
+        AnimateForImage2VideoGeneration,
+    )
     from unitorch.models.diffusers.processing_stable import StableProcessor
     from unitorch.models.diffusers.processing_stable_xl import StableXLProcessor
     from unitorch.models.diffusers.processing_stable_xl_refiner import (

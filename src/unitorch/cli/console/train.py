@@ -55,13 +55,13 @@ def train(config_path_or_dir: str, **kwargs):
 
     set_global_config(config)
 
-    task_name = config.getdefault("core/cli", "task_name", None)
     depends_libraries = config.getdefault("core/cli", "depends_libraries", None)
 
     if depends_libraries:
         for library in depends_libraries:
             import_library(library)
 
+    task_name = config.getdefault("core/cli", "task_name", None)
     assert task_name is not None and task_name in registered_task
     cli_task = init_registered_module(task_name, config, registered_task)
 

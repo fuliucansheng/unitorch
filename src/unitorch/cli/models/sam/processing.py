@@ -22,15 +22,15 @@ class SamProcessor(_SamProcessor):
     def __init__(
         self,
         vision_config_path: str,
-        image_folder: Optional[str] = None,
+        output_folder: Optional[str] = None,
     ):
         super().__init__(
             vision_config_path=vision_config_path,
         )
-        assert image_folder is not None
-        self.image_folder = image_folder
-        if not os.path.exists(image_folder):
-            os.makedirs(self.image_folder, exist_ok=True)
+        assert output_folder is not None
+        self.output_folder = output_folder
+        if not os.path.exists(output_folder):
+            os.makedirs(self.output_folder, exist_ok=True)
 
     @classmethod
     @add_default_section_for_init("core/process/sam")
@@ -53,7 +53,7 @@ class SamProcessor(_SamProcessor):
         md5 = hashlib.md5()
         md5.update(image.tobytes())
         name = md5.hexdigest() + ".jpg"
-        image.save(f"{self.image_folder}/{name}")
+        image.save(f"{self.output_folder}/{name}")
         return name
 
     @register_process("core/process/sam/segmentation/inputs")

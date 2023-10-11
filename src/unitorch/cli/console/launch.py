@@ -53,13 +53,14 @@ def launch(script_path_or_dir: str, **kwargs):
         config = CoreConfigureParser(params=params)
 
     depends_libraries = config.getdefault("core/cli", "depends_libraries", None)
-    script_name = config.getdefault("core/cli", "script_name", None)
-
-    assert script_name is not None
 
     if depends_libraries:
         for library in depends_libraries:
             import_library(library)
+
+    script_name = config.getdefault("core/cli", "script_name", None)
+
+    assert script_name is not None
 
     main_script_cls = registered_script.get(script_name)
     if main_script_cls is None:

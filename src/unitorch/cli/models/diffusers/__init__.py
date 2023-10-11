@@ -86,6 +86,16 @@ pretrained_diffusers_infos = {
     "stable-v1.5-controlnet-inpainting": __hf_hub_stable_v1_5_controlnet_dict__(
         "lllyasviel/control_v11p_sd15_inpaint"
     ),
+    "stable-v1.5-animate-v2": {
+        **__hf_hub_stable_v1_5_dict__("runwayml/stable-diffusion-v1-5"),
+        **{
+            "unet": {
+                "config": f"https://huggingface.co/itsadarshms/animatediff-v2-stable-diffusion-1.5/resolve/main/unet/config.json",
+                "weight": f"https://huggingface.co/itsadarshms/animatediff-v2-stable-diffusion-1.5/resolve/main/unet/diffusion_pytorch_model.safetensors",
+            },
+            "scheduler": f"https://huggingface.co/itsadarshms/animatediff-v2-stable-diffusion-1.5/resolve/main/scheduler/scheduler_config.json",
+        },
+    },
     "stable-v2": __hf_hub_stable_v2_dict__("stabilityai/stable-diffusion-2"),
     "stable-v2.1": __hf_hub_stable_v2_1_dict__("stabilityai/stable-diffusion-2-1"),
     "stable-xl-base-1.0": __hf_hub_stable_xl_dict__(
@@ -128,6 +138,7 @@ import unitorch.cli.models.diffusers.modeling_dreambooth_xl
 import unitorch.cli.models.diffusers.modeling_stable
 import unitorch.cli.models.diffusers.modeling_stable_xl
 import unitorch.cli.models.diffusers.modeling_stable_xl_refiner
+import unitorch.cli.models.diffusers.modeling_animate
 import unitorch.cli.models.diffusers.processing_controlnet
 import unitorch.cli.models.diffusers.processing_controlnet_xl
 import unitorch.cli.models.diffusers.processing_dreambooth

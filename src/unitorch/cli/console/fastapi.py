@@ -6,7 +6,9 @@ import sys
 import fire
 import logging
 import importlib
+import uvicorn
 import unitorch.cli
+from fastapi import FastAPI
 from transformers.utils import is_remote_url
 from unitorch.cli import CoreConfigureParser
 from unitorch.cli import (
@@ -16,6 +18,7 @@ from unitorch.cli import (
     registered_fastapi,
     init_registered_module,
 )
+import unitorch.cli.pipelines.fastapi
 
 
 @fire.decorators.SetParseFn(str)
@@ -60,7 +63,24 @@ def fastapi(config_path_or_dir: str, **kwargs):
         for library in depends_libraries:
             import_library(library)
 
-    os._exit(0)
+    enabled_services = config.getdefault("core/cli", "enabled_services", None)
+    assert enabled_services is not None
+    if isinstance(enabled_services, str):
+        enabled_services = [enabled_services]
+    assert all(
+        fastapi_service in registered_fastapi for fastapi_service in enabled_services
+    )
+    fastapi_instances = [
+        registered_fastapi.get(fastapi_service)["obj"](config)
+        for fastapi_service in enabled_services
+    ]
+    app = FastAPI()
+
+    for fastapi_instance in fastapi_instances:
+        fastapi_instance.start()
+        app.include_router(fastapi_instance.router)
+
+    uvicorn.run(app, host="0.0.0.0", port=5000, log_level="info")
 
 
 def cli_main():

@@ -5,11 +5,13 @@ import os
 import torch
 import torch.nn as nn
 import hashlib
+import numpy as np
 from PIL import Image
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 import safetensors
 from diffusers.utils import numpy_to_pil
+from diffusers.utils import export_to_video
 from unitorch.cli import WriterMixin, WriterOutputs
 from unitorch.cli import (
     add_default_section_for_init,
@@ -47,26 +49,34 @@ class DiffusionTargets(TensorsTargets):
 
 
 class DiffusionProcessor:
-    def __init__(self, image_folder: Optional[str] = None):
-        assert image_folder is not None
-        self.image_folder = image_folder
-        if not os.path.exists(image_folder):
-            os.makedirs(self.image_folder, exist_ok=True)
+    def __init__(self, output_folder: Optional[str] = None):
+        assert output_folder is not None
+        self.output_folder = output_folder
+        if not os.path.exists(output_folder):
+            os.makedirs(self.output_folder, exist_ok=True)
 
     @classmethod
     @add_default_section_for_init("core/process/diffusers")
     def from_core_configure(cls, config, **kwargs):
         pass
 
-    def save(self, image: Image.Image):
+    def save_image(self, image: Image.Image):
         md5 = hashlib.md5()
         md5.update(image.tobytes())
         name = md5.hexdigest() + ".jpg"
-        image.save(f"{self.image_folder}/{name}")
+        image.save(f"{self.output_folder}/{name}")
         return name
 
-    @register_process("core/postprocess/diffusion")
-    def _diffusion(
+    def save_video(self, video: List[np.ndarray]):
+        md5 = hashlib.md5()
+        for image in video:
+            md5.update(image.tobytes())
+        name = md5.hexdigest() + ".mp4"
+        export_to_video(video_frames=video, video_name=f"{self.output_folder}/{name}")
+        return name
+
+    @register_process("core/postprocess/diffusion/image")
+    def _diffusion_image(
         self,
         outputs: DiffusionOutputs,
     ):
@@ -74,7 +84,18 @@ class DiffusionProcessor:
         assert results.shape[0] == 0 or results.shape[0] == outputs.outputs.shape[0]
         images = outputs.outputs.numpy()
         images = numpy_to_pil(images)
-        results["diffusion"] = [self.save(image) for image in images]
+        results["diffusion"] = [self.save_image(image) for image in images]
+        return WriterOutputs(results)
+
+    @register_process("core/postprocess/diffusion/video")
+    def _diffusion_video(
+        self,
+        outputs: DiffusionOutputs,
+    ):
+        results = outputs.to_pandas()
+        assert results.shape[0] == 0 or results.shape[0] == outputs.outputs.shape[0]
+        videos = outputs.outputs.numpy()
+        results["diffusion"] = [self.save_video(video) for video in videos]
         return WriterOutputs(results)
 
 

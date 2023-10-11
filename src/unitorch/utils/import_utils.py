@@ -101,3 +101,16 @@ except importlib_metadata.PackageNotFoundError:
 
 def is_bitsandbytes_available():
     return _bitsandbytes_available or is_offline_debug_mode()
+
+
+# auto_gptq
+_auto_gptq_available = importlib.util.find_spec("auto_gptq") is not None
+try:
+    _auto_gptq_version = importlib_metadata.version("auto_gptq")
+    logging.debug(f"Successfully imported auto_gptq version {_auto_gptq_version}")
+except importlib_metadata.PackageNotFoundError:
+    _auto_gptq_available = False
+
+
+def is_auto_gptq_available():
+    return _auto_gptq_available or is_offline_debug_mode()
