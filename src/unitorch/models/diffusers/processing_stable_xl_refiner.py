@@ -146,7 +146,8 @@ class StableXLRefinerProcessor:
         max_seq_length: Optional[int] = None,
     ):
         if isinstance(image, str):
-            image = Image.open(image).convert("RGB")
+            image = Image.open(image)
+        image = image.convert("RGB")
 
         original_size = image.size
         image = self.vision_resize(image)
@@ -295,7 +296,8 @@ class StableXLRefinerProcessor:
         max_seq_length: Optional[int] = None,
     ):
         if isinstance(image, str):
-            image = Image.open(image).convert("RGB")
+            image = Image.open(image)
+        image = image.convert("RGB")
         pixel_values = self.vae_image_processor.preprocess(image)[0]
 
         text_inputs = self.text2image_inputs(
@@ -330,10 +332,12 @@ class StableXLRefinerProcessor:
         max_seq_length: Optional[int] = None,
     ):
         if isinstance(image, str):
-            image = Image.open(image).convert("RGB")
+            image = Image.open(image)
+        image = image.convert("RGB")
 
         if isinstance(mask_image, str):
-            mask_image = Image.open(mask_image).convert("L")
+            mask_image = Image.open(mask_image)
+        mask_image = mask_image.convert("L")
 
         pixel_values = self.vae_image_processor.preprocess(image)[0]
         pixel_masks = self.vae_image_processor.preprocess(mask_image)[0]

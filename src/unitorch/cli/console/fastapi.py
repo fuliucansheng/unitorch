@@ -18,7 +18,7 @@ from unitorch.cli import (
     registered_fastapi,
     init_registered_module,
 )
-import unitorch.cli.pipelines.fastapi
+import unitorch.cli.fastapi
 
 
 @fire.decorators.SetParseFn(str)

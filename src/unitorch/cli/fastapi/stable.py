@@ -6,7 +6,6 @@ import torch
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 from PIL import Image
-from pydantic import BaseModel
 from unitorch.cli import CoreConfigureParser, GenericFastAPI
 from unitorch.cli import register_fastapi
 from unitorch.cli.pipelines.stable import StableForText2ImageGenerationPipeline

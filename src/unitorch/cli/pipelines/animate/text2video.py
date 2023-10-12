@@ -2,42 +2,39 @@
 # Licensed under the MIT License.
 
 import torch
+import hashlib
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
-from torch.cuda.amp import autocast
-
+from diffusers.utils import numpy_to_pil
+from diffusers.utils import export_to_video
 from unitorch.models.diffusers import (
     AnimateForText2VideoGeneration as _AnimateForText2VideoGeneration,
-    AnimateForImage2VideoGeneration as _AnimateForImage2VideoGeneration,
 )
+from unitorch.models.diffusers import StableProcessor
+
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.cli import (
     cached_path,
     add_default_section_for_init,
     add_default_section_for_function,
-    register_model,
 )
-from unitorch.cli.models import DiffusionOutputs, LossOutputs
-from unitorch.cli.models import diffusion_model_decorator
 from unitorch.cli.models.diffusers import pretrained_diffusers_infos, load_weight
 
 
-@register_model("core/model/diffusers/text2video/animate", diffusion_model_decorator)
-class AnimateForText2VideoGeneration(_AnimateForText2VideoGeneration):
+class AnimateForText2VideoGenerationPipeline(_AnimateForText2VideoGeneration):
     def __init__(
         self,
         config_path: str,
         text_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
+        vocab_path: str,
+        merge_path: str,
         quant_config_path: Optional[str] = None,
-        image_size: Optional[int] = None,
-        in_channels: Optional[int] = None,
-        out_channels: Optional[int] = None,
-        num_train_timesteps: Optional[int] = 1000,
-        num_infer_timesteps: Optional[int] = 50,
-        freeze_vae_encoder: Optional[bool] = True,
-        freeze_text_encoder: Optional[bool] = True,
-        seed: Optional[int] = 1123,
+        max_seq_length: Optional[int] = 77,
+        pad_token: Optional[str] = "<|endoftext|>",
+        weight_path: Optional[Union[str, List[str]]] = None,
+        state_dict: Optional[Dict[str, Any]] = None,
+        device: Optional[Union[str, int]] = "cpu",
     ):
         super().__init__(
             config_path=config_path,
@@ -45,20 +42,24 @@ class AnimateForText2VideoGeneration(_AnimateForText2VideoGeneration):
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
             quant_config_path=quant_config_path,
-            image_size=image_size,
-            in_channels=in_channels,
-            out_channels=out_channels,
-            num_train_timesteps=num_train_timesteps,
-            num_infer_timesteps=num_infer_timesteps,
-            freeze_vae_encoder=freeze_vae_encoder,
-            freeze_text_encoder=freeze_text_encoder,
-            seed=seed,
         )
+        self.processor = StableProcessor(
+            vocab_path=vocab_path,
+            merge_path=merge_path,
+            vae_config_path=vae_config_path,
+            max_seq_length=max_seq_length,
+            pad_token=pad_token,
+        )
+        self._device = "cpu" if device == "cpu" else int(device)
+
+        self.from_pretrained(weight_path, state_dict=state_dict)
+        self.to(device=self._device)
+        self.eval()
 
     @classmethod
-    @add_default_section_for_init("core/model/diffusers/text2video/animate")
+    @add_default_section_for_init("core/pipeline/animate/text2video")
     def from_core_configure(cls, config, **kwargs):
-        config.set_default_section("core/model/diffusers/text2video/animate")
+        config.set_default_section("core/pipeline/animate/text2video")
         pretrained_name = config.getoption("pretrained_name", "stable-v1.5-animate-v2")
         pretrain_infos = nested_dict_value(pretrained_diffusers_infos, pretrained_name)
 
@@ -90,36 +91,28 @@ class AnimateForText2VideoGeneration(_AnimateForText2VideoGeneration):
         )
         scheduler_config_path = cached_path(scheduler_config_path)
 
+        vocab_path = config.getoption("vocab_path", None)
+        vocab_path = pop_value(
+            vocab_path,
+            nested_dict_value(pretrain_infos, "text", "vocab"),
+        )
+        vocab_path = cached_path(vocab_path)
+
+        merge_path = config.getoption("merge_path", None)
+        merge_path = pop_value(
+            merge_path,
+            nested_dict_value(pretrain_infos, "text", "merge"),
+        )
+        merge_path = cached_path(merge_path)
+
         quant_config_path = config.getoption("quant_config_path", None)
         if quant_config_path is not None:
             quant_config_path = cached_path(quant_config_path)
 
-        image_size = config.getoption("image_size", None)
-        in_channels = config.getoption("in_channels", None)
-        out_channels = config.getoption("out_channels", None)
-        num_train_timesteps = config.getoption("num_train_timesteps", 1000)
-        num_infer_timesteps = config.getoption("num_infer_timesteps", 50)
-        freeze_vae_encoder = config.getoption("freeze_vae_encoder", True)
-        freeze_text_encoder = config.getoption("freeze_text_encoder", True)
-        seed = config.getoption("seed", 1123)
-
-        inst = cls(
-            config_path=config_path,
-            text_config_path=text_config_path,
-            vae_config_path=vae_config_path,
-            scheduler_config_path=scheduler_config_path,
-            quant_config_path=quant_config_path,
-            image_size=image_size,
-            in_channels=in_channels,
-            out_channels=out_channels,
-            num_train_timesteps=num_train_timesteps,
-            num_infer_timesteps=num_infer_timesteps,
-            freeze_vae_encoder=freeze_vae_encoder,
-            freeze_text_encoder=freeze_text_encoder,
-            seed=seed,
-        )
-
+        max_seq_length = config.getoption("max_seq_length", 77)
+        pad_token = config.getoption("pad_token", "<|endoftext|>")
         weight_path = config.getoption("pretrained_weight_path", None)
+        device = config.getoption("device", "cpu")
 
         state_dict = None
         if weight_path is None and pretrain_infos is not None:
@@ -133,36 +126,49 @@ class AnimateForText2VideoGeneration(_AnimateForText2VideoGeneration):
                 load_weight(nested_dict_value(pretrain_infos, "vae", "weight"), "vae."),
             ]
 
-        inst.from_pretrained(weight_path, state_dict=state_dict)
+        inst = cls(
+            config_path=config_path,
+            text_config_path=text_config_path,
+            vae_config_path=vae_config_path,
+            scheduler_config_path=scheduler_config_path,
+            vocab_path=vocab_path,
+            merge_path=merge_path,
+            quant_config_path=quant_config_path,
+            pad_token=pad_token,
+            max_seq_length=max_seq_length,
+            weight_path=weight_path,
+            state_dict=state_dict,
+            device=device,
+        )
         return inst
 
-    def forward(
+    @torch.no_grad()
+    @add_default_section_for_function("core/pipeline/animate/text2video")
+    def __call__(
         self,
-    ):
-        raise NotImplementedError
-
-    @add_default_section_for_function("core/model/diffusers/text2video/animate")
-    @autocast()
-    def generate(
-        self,
-        input_ids: torch.Tensor,
-        negative_input_ids: torch.Tensor,
-        attention_mask: Optional[torch.Tensor] = None,
-        negative_attention_mask: Optional[torch.Tensor] = None,
+        text: str,
         height: Optional[int] = 512,
         width: Optional[int] = 512,
-        num_frames: Optional[int] = 16,
         guidance_scale: Optional[float] = 7.5,
+        num_timesteps: Optional[int] = 50,
     ):
-        outputs = super().generate(
-            input_ids=input_ids,
-            negative_input_ids=negative_input_ids,
-            attention_mask=attention_mask,
-            negative_attention_mask=negative_attention_mask,
+        inputs = self.processor.text2image_inputs(text)
+        inputs = {k: v.unsqueeze(0) if v is not None else v for k, v in inputs.items()}
+        inputs = {
+            k: v.to(device=self._device) if v is not None else v
+            for k, v in inputs.items()
+        }
+        self.scheduler.set_timesteps(num_inference_steps=num_timesteps)
+        outputs = self.generate(
+            **inputs,
             height=height,
             width=width,
-            num_frames=num_frames,
             guidance_scale=guidance_scale,
         )
-
-        return DiffusionOutputs(outputs=outputs.frames)
+        video = outputs.frames.cpu().numpy()[0]
+        md5 = hashlib.md5()
+        for image in video:
+            md5.update(image.tobytes())
+        name = md5.hexdigest() + ".mp4"
+        export_to_video(video_frames=video, video_name=name)
+        return name

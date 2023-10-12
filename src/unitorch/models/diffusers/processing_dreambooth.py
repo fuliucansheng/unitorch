@@ -78,7 +78,8 @@ class DreamboothProcessor(HfTextClassificationProcessor):
         max_seq_length: Optional[int] = None,
     ):
         if isinstance(image, str):
-            image = Image.open(image).convert("RGB")
+            image = Image.open(image)
+        image = image.convert("RGB")
         prompt_outputs = self.classification(prompt, max_seq_length=max_seq_length)
         pixel_values = self.vision_processor(image)
 
@@ -87,7 +88,8 @@ class DreamboothProcessor(HfTextClassificationProcessor):
                 class_prompt, max_seq_length=max_seq_length
             )
             if isinstance(class_image, str):
-                class_image = Image.open(class_image).convert("RGB")
+                class_image = Image.open(class_image)
+            class_image = class_image.convert("RGB")
             class_pixel_values = self.vision_processor(class_image)
             return GenericOutputs(
                 input_ids=prompt_outputs.input_ids,

@@ -98,7 +98,8 @@ class StableXLProcessor:
         max_seq_length: Optional[int] = None,
     ):
         if isinstance(image, str):
-            image = Image.open(image).convert("RGB")
+            image = Image.open(image)
+        image = image.convert("RGB")
 
         original_size = image.size
         image = self.vision_resize(image)
@@ -173,15 +174,16 @@ class StableXLProcessor:
 
     def image2image_inputs(
         self,
-        image: Union[Image.Image, str],
         prompt: str,
+        image: Union[Image.Image, str],
         prompt2: Optional[str] = None,
         negative_prompt: Optional[str] = "",
         negative_prompt2: Optional[str] = None,
         max_seq_length: Optional[int] = None,
     ):
         if isinstance(image, str):
-            image = Image.open(image).convert("RGB")
+            image = Image.open(image)
+        image = image.convert("RGB")
 
         pixel_values = self.vae_image_processor.preprocess(image)[0]
 
@@ -200,19 +202,21 @@ class StableXLProcessor:
 
     def inpainting_inputs(
         self,
+        prompt: str,
         image: Union[Image.Image, str],
         mask_image: Union[Image.Image, str],
-        prompt: str,
         prompt2: Optional[str] = None,
         negative_prompt: Optional[str] = "",
         negative_prompt2: Optional[str] = None,
         max_seq_length: Optional[int] = None,
     ):
         if isinstance(image, str):
-            image = Image.open(image).convert("RGB")
+            image = Image.open(image)
+        image = image.convert("RGB")
 
         if isinstance(mask_image, str):
-            mask_image = Image.open(mask_image).convert("L")
+            mask_image = Image.open(mask_image)
+        mask_image = mask_image.convert("L")
 
         pixel_values = self.vae_image_processor.preprocess(image)[0]
         pixel_masks = self.vae_image_processor.preprocess(mask_image)[0]

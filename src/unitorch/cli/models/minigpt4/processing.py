@@ -36,6 +36,9 @@ class MiniGPT4Blip2LlamaProcessor(_MiniGPT4Blip2LlamaProcessor):
         max_prefix_seq_length: Optional[int] = 64,
         max_suffix_seq_length: Optional[int] = 128,
         max_gen_seq_length: Optional[int] = 128,
+        weight_path: Optional[Union[str, List[str]]] = None,
+        state_dict: Optional[Dict[str, Any]] = None,
+        device: Optional[Union[str, int]] = "cpu",
     ):
         """
         Initializes a MiniGPT4Blip2LlamaProcessor instance.

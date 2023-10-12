@@ -18,11 +18,13 @@ from unitorch.cli import (
     registered_webui,
     init_registered_module,
 )
-import unitorch.cli.pipelines.webui
+import unitorch.cli.webui
+
 
 def start_webui_process(pid, webui_name: str, config: CoreConfigureParser):
     webui_instance = registered_webui.get(webui_name)["obj"](config)
     webui_instance.start()
+
 
 @fire.decorators.SetParseFn(str)
 def webui(config_path_or_dir: str, **kwargs):
@@ -75,9 +77,14 @@ def webui(config_path_or_dir: str, **kwargs):
     webui_processes = []
     for enabled_webui in enabled_webuis:
         webui_processes.append(
-            spawn(start_webui_process, args=(enabled_webui, config), join=False, daemon=True,)
+            spawn(
+                start_webui_process,
+                args=(enabled_webui, config),
+                join=False,
+                daemon=True,
+            )
         )
-    
+
     for webui_process in webui_processes:
         webui_process.join()
 

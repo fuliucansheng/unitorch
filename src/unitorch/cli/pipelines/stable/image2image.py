@@ -2,10 +2,11 @@
 # Licensed under the MIT License.
 
 import torch
+from PIL import Image
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from diffusers.utils import numpy_to_pil
 from unitorch.models.diffusers import (
-    StableForText2ImageGeneration as _StableForText2ImageGeneration,
+    StableForImage2ImageGeneration as _StableForImage2ImageGeneration,
 )
 from unitorch.models.diffusers import StableProcessor
 
@@ -18,7 +19,7 @@ from unitorch.cli import (
 from unitorch.cli.models.diffusers import pretrained_diffusers_infos
 
 
-class StableForText2ImageGenerationPipeline(_StableForText2ImageGeneration):
+class StableForImage2ImageGenerationPipeline(_StableForImage2ImageGeneration):
     def __init__(
         self,
         config_path: str,
@@ -55,9 +56,9 @@ class StableForText2ImageGenerationPipeline(_StableForText2ImageGeneration):
         self.eval()
 
     @classmethod
-    @add_default_section_for_init("core/pipeline/stable/text2image")
+    @add_default_section_for_init("core/pipeline/stable/image2image")
     def from_core_configure(cls, config, **kwargs):
-        config.set_default_section("core/pipeline/stable/text2image")
+        config.set_default_section("core/pipeline/stable/image2image")
         pretrained_name = config.getoption("pretrained_name", "stable-v1.5")
         pretrain_infos = nested_dict_value(pretrained_diffusers_infos, pretrained_name)
 
@@ -127,24 +128,24 @@ class StableForText2ImageGenerationPipeline(_StableForText2ImageGeneration):
             vocab_path=vocab_path,
             merge_path=merge_path,
             quant_config_path=quant_config_path,
-            pad_token=pad_token,
             max_seq_length=max_seq_length,
+            pad_token=pad_token,
             weight_path=weight_path,
             device=device,
         )
         return inst
 
     @torch.no_grad()
-    @add_default_section_for_function("core/pipeline/stable/text2image")
+    @add_default_section_for_function("core/pipeline/stable/image2image")
     def __call__(
         self,
         text: str,
-        height: Optional[int] = 512,
-        width: Optional[int] = 512,
+        image: Image.Image,
+        strength: Optional[float] = 0.8,
         guidance_scale: Optional[float] = 7.5,
         num_timesteps: Optional[int] = 50,
     ):
-        inputs = self.processor.text2image_inputs(text)
+        inputs = self.processor.image2image_inputs(text, image=image)
         inputs = {k: v.unsqueeze(0) if v is not None else v for k, v in inputs.items()}
         inputs = {
             k: v.to(device=self._device) if v is not None else v
@@ -153,8 +154,7 @@ class StableForText2ImageGenerationPipeline(_StableForText2ImageGeneration):
         self.scheduler.set_timesteps(num_inference_steps=num_timesteps)
         outputs = self.generate(
             **inputs,
-            height=height,
-            width=width,
+            strength=strength,
             guidance_scale=guidance_scale,
         )
         images = numpy_to_pil(outputs.images.cpu().numpy())

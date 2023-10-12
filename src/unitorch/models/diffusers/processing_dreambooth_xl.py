@@ -8,6 +8,7 @@ import numpy as np
 from PIL import Image
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from transformers import CLIPTokenizer
+from torchvision.transforms.functional import crop
 from torchvision.transforms import (
     Resize,
     CenterCrop,
@@ -100,7 +101,8 @@ class DreamboothXLProcessor(HfTextClassificationProcessor):
         max_seq_length: Optional[int] = None,
     ):
         if isinstance(image, str):
-            image = Image.open(image).convert("RGB")
+            image = Image.open(image)
+        image = image.convert("RGB")
         prompt2 = prompt2 or prompt
         prompt_outputs = self.text_processor1.classification(
             prompt, max_seq_length=max_seq_length
@@ -131,7 +133,8 @@ class DreamboothXLProcessor(HfTextClassificationProcessor):
 
         if class_prompt is not None:
             if isinstance(class_image, str):
-                class_image = Image.open(class_image).convert("RGB")
+                class_image = Image.open(class_image)
+            class_image = class_image.convert("RGB")
             class_prompt2 = class_prompt2 or class_prompt
             class_prompt_outputs = self.text_processor1.classification(
                 class_prompt, max_seq_length=max_seq_length

@@ -81,9 +81,11 @@ class ControlNetProcessor(HfTextClassificationProcessor):
         max_seq_length: Optional[int] = None,
     ):
         if isinstance(image, str):
-            image = Image.open(image).convert("RGB")
+            image = Image.open(image)
+        image = image.convert("RGB")
         if isinstance(condition_image, str):
-            condition_image = Image.open(condition_image).convert("RGB")
+            condition_image = Image.open(condition_image)
+        condition_image = condition_image.convert("RGB")
 
         pixel_values = self.vision_processor(image)
         condition_pixel_values = self.condition_vision_processor(condition_image)
@@ -105,7 +107,8 @@ class ControlNetProcessor(HfTextClassificationProcessor):
         max_seq_length: Optional[int] = None,
     ):
         if isinstance(condition_image, str):
-            condition_image = Image.open(condition_image).convert("RGB")
+            condition_image = Image.open(condition_image)
+        condition_image = condition_image.convert("RGB")
 
         condition_pixel_values = self.condition_image_processor.preprocess(
             condition_image
@@ -133,7 +136,8 @@ class ControlNetProcessor(HfTextClassificationProcessor):
         max_seq_length: Optional[int] = None,
     ):
         if isinstance(image, str):
-            image = Image.open(image).convert("RGB")
+            image = Image.open(image)
+        image = image.convert("RGB")
 
         pixel_values = self.vae_image_processor.preprocess(image)[0]
 
@@ -159,10 +163,12 @@ class ControlNetProcessor(HfTextClassificationProcessor):
         max_seq_length: Optional[int] = None,
     ):
         if isinstance(image, str):
-            image = Image.open(image).convert("RGB")
+            image = Image.open(image)
+        image = image.convert("RGB")
 
         if isinstance(mask_image, str):
-            mask_image = Image.open(mask_image).convert("L")
+            mask_image = Image.open(mask_image)
+        mask_image = mask_image.convert("L")
 
         pixel_values = self.vae_image_processor.preprocess(image)[0]
         pixel_masks = self.vae_mask_image_processor.preprocess(mask_image)[0]
