@@ -26,7 +26,7 @@ class MiniGPT4WebUI(GenericWebUI):
         self.config.set_default_section("core/webui/minigpt4")
 
         iface = gr.Interface(
-            fn=self.serve, inputs=["textbox", gr.Image(type="pil")], outputs="image"
+            fn=self.serve, inputs=["textbox", gr.Image(type="pil")], outputs="textbox"
         )
         iface.launch(server_name=self.host, server_port=self.port)
 

@@ -5,13 +5,13 @@ import os
 import torch
 import torch.nn as nn
 import hashlib
+import tempfile
 import numpy as np
 from PIL import Image
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 import safetensors
-from diffusers.utils import numpy_to_pil
-from diffusers.utils import export_to_video
+from diffusers.utils import numpy_to_pil, pt_to_pil
 from unitorch.cli import WriterMixin, WriterOutputs
 from unitorch.cli import (
     add_default_section_for_init,
@@ -35,6 +35,37 @@ def load_weight(
         state_dict = torch.load(path, map_location="cpu")
     state_dict = {f"{prefix}{k}": v for k, v in state_dict.items()}
     return state_dict
+
+
+def numpy2vid(video, mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]):
+    mean = np.array(mean).reshape(1, -1, 1, 1, 1)
+    std = np.array(std).reshape(1, -1, 1, 1, 1)
+    # unnormalize back to [0,1]
+    video = video * std + mean
+    video = np.clip(video, 0, 1)
+    # prepare the final outputs
+    i, c, f, h, w = video.shape
+    images = np.transpose(video, (2, 3, 0, 4, 1)).reshape(f, h, i * w, c)
+    images = np.split(images, f, axis=0)
+    images = [(image.squeeze(0) * 255).astype("uint8") for image in images]  # f h w c
+    return images
+
+
+def export_to_video(
+    video_frames: List[np.ndarray], output_video_path: str = None
+) -> str:
+    import cv2
+
+    if output_video_path is None:
+        output_video_path = tempfile.NamedTemporaryFile(suffix=".mp4").name
+
+    fourcc = cv2.VideoWriter_fourcc(*"avc1")
+    h, w, c = video_frames[0].shape
+    video_writer = cv2.VideoWriter(output_video_path, fourcc, fps=8, frameSize=(w, h))
+    for i in range(len(video_frames)):
+        img = cv2.cvtColor(video_frames[i], cv2.COLOR_RGB2BGR)
+        video_writer.write(img)
+    return output_video_path
 
 
 @dataclass
@@ -64,15 +95,17 @@ class DiffusionProcessor:
         md5 = hashlib.md5()
         md5.update(image.tobytes())
         name = md5.hexdigest() + ".jpg"
-        image.save(f"{self.output_folder}/{name}")
+        output_path = f"{self.output_folder}/{name}"
+        image.save(output_path)
         return name
 
-    def save_video(self, video: List[np.ndarray]):
+    def save_video(self, video):
         md5 = hashlib.md5()
         for image in video:
             md5.update(image.tobytes())
         name = md5.hexdigest() + ".mp4"
-        export_to_video(video_frames=video, video_name=f"{self.output_folder}/{name}")
+        output_path = f"{self.output_folder}/{name}"
+        export_to_video(video, output_path)
         return name
 
     @register_process("core/postprocess/diffusion/image")
@@ -95,6 +128,7 @@ class DiffusionProcessor:
         results = outputs.to_pandas()
         assert results.shape[0] == 0 or results.shape[0] == outputs.outputs.shape[0]
         videos = outputs.outputs.numpy()
+        videos = [numpy2vid(video) for video in videos]
         results["diffusion"] = [self.save_video(video) for video in videos]
         return WriterOutputs(results)
 

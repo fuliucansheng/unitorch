@@ -2,6 +2,7 @@
 # Licensed under the MIT License.
 
 import json
+import numpy as np
 import torch
 import torch.nn.functional as F
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
@@ -189,10 +190,10 @@ class AnimateForText2VideoGeneration(GenericAnimateModel):
             num_frames=num_frames,
             num_inference_steps=self.num_infer_timesteps,
             guidance_scale=guidance_scale,
-            output_type="np.array",
+            output_type="pt",
         ).frames
 
-        return GenericOutputs(frames=torch.from_numpy(frames))
+        return GenericOutputs(frames=frames)
 
 
 class AnimateForImage2VideoGeneration(GenericAnimateModel):

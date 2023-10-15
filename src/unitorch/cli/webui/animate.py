@@ -27,7 +27,9 @@ class AnimateText2VideoWebUI(GenericWebUI):
         )
         self.config.set_default_section("core/webui/animate/text2video")
 
-        iface = gr.Interface(fn=self.serve, inputs="textbox", outputs=gr.Video())
+        iface = gr.Interface(
+            fn=self.serve, inputs=["textbox", "textbox"], outputs=gr.Video()
+        )
         iface.launch(server_name=self.host, server_port=self.port)
 
     def stop(self, **kwargs):
@@ -37,9 +39,10 @@ class AnimateText2VideoWebUI(GenericWebUI):
     def serve(
         self,
         text: str,
+        negative_text: str,
         height: int = 512,
         width: int = 512,
     ):
         assert self._model is not None
-        video = self._model(text, height, width)
+        video = self._model(text, negative_text, height, width)
         return video

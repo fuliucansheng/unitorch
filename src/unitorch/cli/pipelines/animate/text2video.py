@@ -5,7 +5,9 @@ import torch
 import hashlib
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from diffusers.utils import numpy_to_pil
-from diffusers.utils import export_to_video
+from diffusers.pipelines.text_to_video_synthesis.pipeline_text_to_video_synth import (
+    tensor2vid,
+)
 from unitorch.models.diffusers import (
     AnimateForText2VideoGeneration as _AnimateForText2VideoGeneration,
 )
@@ -17,6 +19,7 @@ from unitorch.cli import (
     add_default_section_for_init,
     add_default_section_for_function,
 )
+from unitorch.cli.models.diffusion_utils import export_to_video
 from unitorch.cli.models.diffusers import pretrained_diffusers_infos, load_weight
 
 
@@ -147,28 +150,26 @@ class AnimateForText2VideoGenerationPipeline(_AnimateForText2VideoGeneration):
     def __call__(
         self,
         text: str,
+        negative_text: str,
         height: Optional[int] = 512,
         width: Optional[int] = 512,
         guidance_scale: Optional[float] = 7.5,
-        num_timesteps: Optional[int] = 50,
+        num_timesteps: Optional[int] = 25,
     ):
-        inputs = self.processor.text2image_inputs(text)
+        inputs = self.processor.text2image_inputs(text, negative_text)
         inputs = {k: v.unsqueeze(0) if v is not None else v for k, v in inputs.items()}
         inputs = {
             k: v.to(device=self._device) if v is not None else v
             for k, v in inputs.items()
         }
         self.scheduler.set_timesteps(num_inference_steps=num_timesteps)
+        self.num_inference_steps = num_timesteps
         outputs = self.generate(
             **inputs,
             height=height,
             width=width,
             guidance_scale=guidance_scale,
         )
-        video = outputs.frames.cpu().numpy()[0]
-        md5 = hashlib.md5()
-        for image in video:
-            md5.update(image.tobytes())
-        name = md5.hexdigest() + ".mp4"
-        export_to_video(video_frames=video, video_name=name)
+        frames = tensor2vid(outputs.frames)
+        name = export_to_video(frames)
         return name

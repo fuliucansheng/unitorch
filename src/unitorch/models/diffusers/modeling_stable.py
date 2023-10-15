@@ -64,6 +64,7 @@ class GenericStableModel(GenericModel, QuantizationMixin):
         "^conv_norm_out.*": "unet.",
         "^conv_out.*": "unet.",
         "^time_embedding.*": "unet.",
+        "^class_embedding.*": "unet.",
         "^up_blocks.*": "unet.",
         "^mid_block.*": "unet.",
         "^down_blocks.*": "unet.",
