@@ -7,7 +7,6 @@ from unitorch.loss import (
     BCELoss as _BCELoss,
     LMLoss as _LMLoss,
     MSELoss as _MSELoss,
-    ProphetnetLoss as _ProphetnetLoss,
 )
 from unitorch.cli import add_default_section_for_init, register_loss
 from unitorch.cli.models import (
@@ -132,35 +131,5 @@ class MSELoss(_MSELoss):
         return super().forward(
             input=outputs,
             target=targets,
-            sample_weight=weights if weights.numel() > 0 else None,
-        )
-
-
-@register_loss("core/loss/prophetnet")
-class ProphetnetLoss(_ProphetnetLoss):
-    def __init__(
-        self,
-    ):
-        super().__init__()
-
-    @classmethod
-    @add_default_section_for_init("core/loss/prophetnet")
-    def from_core_configure(cls, config, **kwargs):
-        pass
-
-    def forward(
-        self,
-        outputs: GenerationOutputs,
-        targets: GenerationTargets,
-    ):
-        outputs = outputs.sequences
-        masks = targets.masks
-        weights = targets.sample_weight
-        targets = targets.refs
-
-        return super().forward(
-            input=outputs,
-            target=targets,
-            masks=masks if masks.numel() > 0 else None,
             sample_weight=weights if weights.numel() > 0 else None,
         )

@@ -218,7 +218,6 @@ import unitorch.models.mbart
 import unitorch.models.mt5
 import unitorch.models.pegasus
 import unitorch.models.peft
-import unitorch.models.prophetnet
 import unitorch.models.roberta
 import unitorch.models.swin
 import unitorch.models.t5
@@ -226,4 +225,3 @@ import unitorch.models.visualbert
 import unitorch.models.vit
 import unitorch.models.xlm_roberta
 import unitorch.models.xpegasus
-import unitorch.models.xprophetnet

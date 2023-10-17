@@ -4,7 +4,6 @@
 import torch
 import torch.nn as nn
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
-from unitorch.loss.prophetnet import ProphetnetLoss
 from unitorch.loss.ranking import ListMLELoss, ApproxNDCGLoss, ApproxMRRLoss
 
 

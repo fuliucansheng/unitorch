@@ -28,7 +28,6 @@ nav:
       - MT5: models/mt5.md
       - Peft: models/peft.md
       - Pegasus: models/pegasus.md
-      - ProphetNet: models/prophetnet.md
       - Roberta: models/roberta.md
       - Swin: models/swin.md
       - T5: models/t5.md
@@ -36,7 +35,6 @@ nav:
       - ViT: models/vit.md
       - XLMRoberta: models/xlm_roberta.md
       - XPegasus: models/xpegasus.md
-      - XProphetNet: models/xprophetnet.md
   - Commands:
     - Configuration: configuration.md
     - Examples:
@@ -80,7 +78,6 @@ nav:
       - MT5: cli/models/mt5.md
       - Peft: cli/models/peft.md
       - Pegasus: cli/models/pegasus.md
-      - ProphetNet: cli/models/prophetnet.md
       - Roberta: cli/models/roberta.md
       - Swin: cli/models/swin.md
       - T5: cli/models/t5.md
@@ -88,7 +85,6 @@ nav:
       - ViT: cli/models/vit.md
       - XLMRoberta: cli/models/xlm_roberta.md
       - XPegasus: cli/models/xpegasus.md
-      - XProphetNet: cli/models/xprophetnet.md
   # - Benchmarks: benchmarks/index.md
   # - Labs: labs/index.md
 
