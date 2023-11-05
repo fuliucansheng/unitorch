@@ -82,6 +82,7 @@ class StableXLRefinerForImage2ImageGenerationPipeline(
         if enable_cpu_offload and self._device != "cpu":
             self.pipeline.enable_model_cpu_offload(self._device)
             self.refiner_pipeline.enable_model_cpu_offload(self._device)
+            self.to(torch.half)
         else:
             self.to(device=self._device)
 
@@ -265,6 +266,8 @@ class StableXLRefinerForImage2ImageGenerationPipeline(
 
         weight_path = config.getoption("pretrained_weight_path", None)
         device = config.getoption("device", "cpu")
+        enable_cpu_offload = config.getoption("enable_cpu_offload", True)
+        enable_xformers = config.getoption("enable_xformers", True)
 
         state_dict = None
         if weight_path is None and pretrain_infos is not None:
@@ -332,6 +335,8 @@ class StableXLRefinerForImage2ImageGenerationPipeline(
             weight_path=weight_path,
             state_dict=state_dict,
             device=device,
+            enable_cpu_offload=enable_cpu_offload,
+            enable_xformers=enable_xformers,
         )
         return inst
 

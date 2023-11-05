@@ -59,6 +59,7 @@ class StableForImageResolutionPipeline(_StableForImageResolution):
 
         if enable_cpu_offload and self._device != "cpu":
             self.pipeline.enable_model_cpu_offload(self._device)
+            self.to(torch.half)
         else:
             self.to(device=self._device)
 
@@ -123,6 +124,8 @@ class StableForImageResolutionPipeline(_StableForImageResolution):
         pad_token = config.getoption("pad_token", "<|endoftext|>")
         weight_path = config.getoption("pretrained_weight_path", None)
         device = config.getoption("device", "cpu")
+        enable_cpu_offload = config.getoption("enable_cpu_offload", True)
+        enable_xformers = config.getoption("enable_xformers", True)
 
         if weight_path is None and pretrain_infos is not None:
             weight_path = [
@@ -143,6 +146,8 @@ class StableForImageResolutionPipeline(_StableForImageResolution):
             pad_token=pad_token,
             weight_path=weight_path,
             device=device,
+            enable_cpu_offload=enable_cpu_offload,
+            enable_xformers=enable_xformers,
         )
         return inst
 

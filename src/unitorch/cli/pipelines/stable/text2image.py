@@ -58,6 +58,7 @@ class StableForText2ImageGenerationPipeline(_StableForText2ImageGeneration):
 
         if enable_cpu_offload and self._device != "cpu":
             self.pipeline.enable_model_cpu_offload(self._device)
+            self.to(torch.half)
         else:
             self.to(device=self._device)
 
@@ -122,6 +123,8 @@ class StableForText2ImageGenerationPipeline(_StableForText2ImageGeneration):
         pad_token = config.getoption("pad_token", "<|endoftext|>")
         weight_path = config.getoption("pretrained_weight_path", None)
         device = config.getoption("device", "cpu")
+        enable_cpu_offload = config.getoption("enable_cpu_offload", True)
+        enable_xformers = config.getoption("enable_xformers", True)
 
         if weight_path is None and pretrain_infos is not None:
             weight_path = [
@@ -142,6 +145,8 @@ class StableForText2ImageGenerationPipeline(_StableForText2ImageGeneration):
             max_seq_length=max_seq_length,
             weight_path=weight_path,
             device=device,
+            enable_cpu_offload=enable_cpu_offload,
+            enable_xformers=enable_xformers,
         )
         return inst
 
