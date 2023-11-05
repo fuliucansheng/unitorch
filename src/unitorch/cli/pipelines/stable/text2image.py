@@ -4,6 +4,7 @@
 import torch
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from diffusers.utils import numpy_to_pil
+from unitorch import is_xformers_available
 from unitorch.models.diffusers import (
     StableForText2ImageGeneration as _StableForText2ImageGeneration,
 )
@@ -33,6 +34,8 @@ class StableForText2ImageGenerationPipeline(_StableForText2ImageGeneration):
         weight_path: Optional[Union[str, List[str]]] = None,
         state_dict: Optional[Dict[str, Any]] = None,
         device: Optional[Union[str, int]] = "cpu",
+        enable_cpu_offload: Optional[bool] = False,
+        enable_xformers: Optional[bool] = False,
     ):
         super().__init__(
             config_path=config_path,
@@ -51,8 +54,16 @@ class StableForText2ImageGenerationPipeline(_StableForText2ImageGeneration):
         self._device = "cpu" if device == "cpu" else int(device)
 
         self.from_pretrained(weight_path, state_dict=state_dict)
-        self.to(device=self._device)
         self.eval()
+
+        if enable_cpu_offload and self._device != "cpu":
+            self.pipeline.enable_model_cpu_offload(self._device)
+        else:
+            self.to(device=self._device)
+
+        if enable_xformers:
+            assert is_xformers_available(), "Please install xformers first."
+            self.pipeline.enable_xformers_memory_efficient_attention()
 
     @classmethod
     @add_default_section_for_init("core/pipeline/stable/text2image")
@@ -143,6 +154,7 @@ class StableForText2ImageGenerationPipeline(_StableForText2ImageGeneration):
         width: Optional[int] = 512,
         guidance_scale: Optional[float] = 7.5,
         num_timesteps: Optional[int] = 50,
+        seed: Optional[int] = 1123,
     ):
         inputs = self.processor.text2image_inputs(text)
         inputs = {k: v.unsqueeze(0) if v is not None else v for k, v in inputs.items()}
@@ -151,6 +163,7 @@ class StableForText2ImageGenerationPipeline(_StableForText2ImageGeneration):
             for k, v in inputs.items()
         }
         self.scheduler.set_timesteps(num_inference_steps=num_timesteps)
+        self.seed = seed
         outputs = self.generate(
             **inputs,
             height=height,

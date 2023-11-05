@@ -89,7 +89,7 @@ class ControlNetXLProcessor:
         self.vae_mask_image_processor = VaeImageProcessor(
             vae_scale_factor=vae_scale_factor
         )
-        self.condition_image_processor = VaeImageProcessor(
+        self.vae_condition_image_processor = VaeImageProcessor(
             vae_scale_factor=vae_scale_factor,
             do_convert_rgb=True,
             do_normalize=False,
@@ -164,7 +164,7 @@ class ControlNetXLProcessor:
             condition_image = Image.open(condition_image)
         condition_image = condition_image.convert("RGB")
 
-        condition_pixel_values = self.condition_image_processor.preprocess(
+        condition_pixel_values = self.vae_condition_image_processor.preprocess(
             condition_image
         )[0]
 

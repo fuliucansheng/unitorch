@@ -405,5 +405,3 @@ class StableXLRefinerForImage2ImageGeneration(GenericModel, QuantizationMixin):
 
 class StableXLRefinerForImageInpainting(GenericModel, QuantizationMixin):
     pass
-
-    pass

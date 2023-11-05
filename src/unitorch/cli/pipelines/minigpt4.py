@@ -35,6 +35,8 @@ class MiniGPT4Blip2LlamaForGenerationPipeline(_MiniGPT4Blip2LlamaForGeneration):
         state_dict: Optional[Dict[str, Any]] = None,
         device: Optional[Union[str, int]] = "cpu",
     ):
+        if device == "cpu":
+            quant_config_path = None
         super().__init__(
             blip2_config_path=blip2_config_path,
             llama_config_path=llama_config_path,

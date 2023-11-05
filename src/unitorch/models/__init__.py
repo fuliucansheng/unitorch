@@ -139,11 +139,9 @@ class CheckpointMixin:
         )  # Calculate the percentage of loaded keys
         logging.debug(f"Non load keys in pretrain weights: {list(non_load_keys)}")
         logging.debug(
-            f"{type(self).__name__} model missed keys: {list(self_state_dict.keys() - load_keys)}"
+            f"{type(self).__name__} missed keys: {list(self_state_dict.keys() - load_keys)}"
         )
-        logging.info(
-            f"{type(self).__name__} model loaded weights ({int(load_percent)}%)"
-        )
+        logging.info(f"{type(self).__name__} loaded weights ({int(load_percent)}%)")
 
 
 class GenericModel(nn.Module, CheckpointMixin):

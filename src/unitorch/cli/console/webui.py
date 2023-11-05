@@ -21,11 +21,6 @@ from unitorch.cli import (
 import unitorch.cli.webui
 
 
-def start_webui_process(pid, webui_name: str, config: CoreConfigureParser):
-    webui_instance = registered_webui.get(webui_name)["obj"](config)
-    webui_instance.start()
-
-
 @fire.decorators.SetParseFn(str)
 def webui(config_path_or_dir: str, **kwargs):
     config_file = kwargs.pop("config_file", "config.ini")
@@ -74,19 +69,20 @@ def webui(config_path_or_dir: str, **kwargs):
         enabled_webuis = [enabled_webuis]
     assert all(enabled_webui in registered_webui for enabled_webui in enabled_webuis)
 
-    webui_processes = []
-    for enabled_webui in enabled_webuis:
-        webui_processes.append(
-            spawn(
-                start_webui_process,
-                args=(enabled_webui, config),
-                join=False,
-                daemon=True,
-            )
-        )
+    webui_instance = lambda webui_name, config: registered_webui.get(webui_name)["obj"](
+        config
+    )
 
-    for webui_process in webui_processes:
-        webui_process.join()
+    webuis = [webui_instance(enabled_webui, config) for enabled_webui in enabled_webuis]
+
+    demo_webui = gr.TabbedInterface(
+        [webui.iface for webui in webuis], [webui.name for webui in webuis]
+    )
+
+    config.set_default_section("core/cli")
+    host = config.getoption("host", "0.0.0.0")
+    port = config.getoption("port", 7860)
+    demo_webui.launch(server_name=host, server_port=port)
 
     os._exit(0)
 

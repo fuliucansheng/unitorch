@@ -13,6 +13,11 @@ pretrained_bert_infos = {
         "vocab": "https://huggingface.co/bert-base-uncased/resolve/main/vocab.txt",
         "weight": "https://huggingface.co/bert-base-uncased/resolve/main/pytorch_model.bin",
     },
+    "distilbert-base-uncased": {
+        "config": "https://huggingface.co/distilbert-base-uncased/resolve/main/config.json",
+        "vocab": "https://huggingface.co/distilbert-base-uncased/resolve/main/vocab.txt",
+        "weight": "https://huggingface.co/distilbert-base-uncased/resolve/main/pytorch_model.bin",
+    },
     "bert-base-multilingual-uncased": {
         "config": "https://huggingface.co/bert-base-multilingual-uncased/resolve/main/config.json",
         "vocab": "https://huggingface.co/bert-base-multilingual-uncased/resolve/main/vocab.txt",

@@ -5,6 +5,7 @@ import torch
 from PIL import Image
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from diffusers.utils import numpy_to_pil
+from unitorch import is_xformers_available
 from unitorch.models.diffusers import (
     StableXLRefinerForImageInpainting as _StableXLRefinerForImageInpainting,
 )
@@ -44,6 +45,8 @@ class StableXLRefinerForImageInpaintingPipeline(_StableXLRefinerForImageInpainti
         weight_path: Optional[Union[str, List[str]]] = None,
         state_dict: Optional[Dict[str, Any]] = None,
         device: Optional[Union[str, int]] = "cpu",
+        enable_cpu_offload: Optional[bool] = False,
+        enable_xformers: Optional[bool] = False,
     ):
         super().__init__(
             config_path=config_path,
@@ -72,8 +75,18 @@ class StableXLRefinerForImageInpaintingPipeline(_StableXLRefinerForImageInpainti
         self._device = "cpu" if device == "cpu" else int(device)
 
         self.from_pretrained(weight_path, state_dict=state_dict)
-        self.to(device=self._device)
         self.eval()
+
+        if enable_cpu_offload and self._device != "cpu":
+            self.pipeline.enable_model_cpu_offload(self._device)
+            self.refiner_pipeline.enable_model_cpu_offload(self._device)
+        else:
+            self.to(device=self._device)
+
+        if enable_xformers:
+            assert is_xformers_available(), "Please install xformers first."
+            self.pipeline.enable_xformers_memory_efficient_attention()
+            self.refiner_pipeline.enable_xformers_memory_efficient_attention()
 
     @classmethod
     @add_default_section_for_init("core/pipeline/stable_xl_refiner/inpainting")
@@ -330,6 +343,7 @@ class StableXLRefinerForImageInpaintingPipeline(_StableXLRefinerForImageInpainti
         strength: Optional[float] = 0.8,
         guidance_scale: Optional[float] = 7.5,
         num_timesteps: Optional[int] = 50,
+        seed: Optional[int] = 1123,
     ):
         inputs = self.processor.inpainting_inputs(
             text, image=image, mask_image=mask_image
@@ -340,6 +354,7 @@ class StableXLRefinerForImageInpaintingPipeline(_StableXLRefinerForImageInpainti
             for k, v in inputs.items()
         }
         self.scheduler.set_timesteps(num_inference_steps=num_timesteps)
+        self.seed = seed
         outputs = self.generate(
             **inputs,
             strength=strength,

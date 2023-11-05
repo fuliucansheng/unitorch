@@ -5,6 +5,7 @@ import torch
 import hashlib
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from diffusers.utils import numpy_to_pil
+from unitorch import is_xformers_available
 from diffusers.pipelines.text_to_video_synthesis.pipeline_text_to_video_synth import (
     tensor2vid,
 )
@@ -38,6 +39,8 @@ class AnimateForText2VideoGenerationPipeline(_AnimateForText2VideoGeneration):
         weight_path: Optional[Union[str, List[str]]] = None,
         state_dict: Optional[Dict[str, Any]] = None,
         device: Optional[Union[str, int]] = "cpu",
+        enable_cpu_offload: Optional[bool] = False,
+        enable_xformers: Optional[bool] = False,
     ):
         super().__init__(
             config_path=config_path,
@@ -56,8 +59,16 @@ class AnimateForText2VideoGenerationPipeline(_AnimateForText2VideoGeneration):
         self._device = "cpu" if device == "cpu" else int(device)
 
         self.from_pretrained(weight_path, state_dict=state_dict)
-        self.to(device=self._device)
         self.eval()
+
+        if enable_cpu_offload and self._device != "cpu":
+            self.pipeline.enable_model_cpu_offload(self._device)
+        else:
+            self.to(device=self._device)
+
+        if enable_xformers:
+            assert is_xformers_available(), "Please install xformers first."
+            self.pipeline.enable_xformers_memory_efficient_attention()
 
     @classmethod
     @add_default_section_for_init("core/pipeline/animate/text2video")

@@ -131,18 +131,45 @@ pretrained_diffusers_infos = {
 
 from unitorch.cli.models.diffusion_utils import load_weight
 
-import unitorch.cli.models.diffusers.modeling_controlnet
-import unitorch.cli.models.diffusers.modeling_controlnet_xl
-import unitorch.cli.models.diffusers.modeling_dreambooth
-import unitorch.cli.models.diffusers.modeling_dreambooth_xl
-import unitorch.cli.models.diffusers.modeling_stable
-import unitorch.cli.models.diffusers.modeling_stable_xl
-import unitorch.cli.models.diffusers.modeling_stable_xl_refiner
+from unitorch.cli.models.diffusers.modeling_stable import (
+    StableForText2ImageGeneration,
+    StableForImage2ImageGeneration,
+    StableForImageInpainting,
+    StableForImageResolution,
+)
+from unitorch.cli.models.diffusers.modeling_stable_xl import (
+    StableXLForText2ImageGeneration,
+    StableXLForImage2ImageGeneration,
+    StableXLForImageInpainting,
+)
+from unitorch.cli.models.diffusers.modeling_stable_xl_refiner import (
+    StableXLRefinerForText2ImageGeneration,
+)
+from unitorch.cli.models.diffusers.modeling_dreambooth import (
+    DreamboothForText2ImageGeneration,
+)
+from unitorch.cli.models.diffusers.modeling_dreambooth_xl import (
+    DreamboothXLForText2ImageGeneration,
+)
+from unitorch.cli.models.diffusers.modeling_controlnet import (
+    ControlNetForText2ImageGeneration,
+    ControlNetForImage2ImageGeneration,
+    ControlNetForImageInpainting,
+)
+from unitorch.cli.models.diffusers.modeling_controlnet_xl import (
+    ControlNetXLForText2ImageGeneration,
+    ControlNetXLForImage2ImageGeneration,
+    ControlNetXLForImageInpainting,
+)
+
+from unitorch.cli.models.diffusers.processing_stable import StableProcessor
+from unitorch.cli.models.diffusers.processing_stable_xl import StableXLProcessor
+from unitorch.cli.models.diffusers.processing_stable_xl_refiner import (
+    StableXLRefinerProcessor,
+)
+from unitorch.cli.models.diffusers.processing_dreambooth import DreamboothProcessor
+from unitorch.cli.models.diffusers.processing_dreambooth_xl import DreamboothXLProcessor
+from unitorch.cli.models.diffusers.processing_controlnet import ControlNetProcessor
+from unitorch.cli.models.diffusers.processing_controlnet_xl import ControlNetXLProcessor
+
 import unitorch.cli.models.diffusers.modeling_animate
-import unitorch.cli.models.diffusers.processing_controlnet
-import unitorch.cli.models.diffusers.processing_controlnet_xl
-import unitorch.cli.models.diffusers.processing_dreambooth
-import unitorch.cli.models.diffusers.processing_dreambooth_xl
-import unitorch.cli.models.diffusers.processing_stable
-import unitorch.cli.models.diffusers.processing_stable_xl
-import unitorch.cli.models.diffusers.processing_stable_xl_refiner

@@ -96,6 +96,9 @@ from unitorch.utils import (
     is_accelerate_available,
     is_megatron_available,
     is_diffusers_available,
+    is_safetensors_available,
+    is_xformers_available,
+    is_opencv_available,
     is_torch_available,
     is_torch2_available,
 )

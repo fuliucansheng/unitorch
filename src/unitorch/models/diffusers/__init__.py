@@ -36,6 +36,11 @@ if is_diffusers_available():
         ControlNetXLForImage2ImageGeneration,
         ControlNetXLForImageInpainting,
     )
+    from unitorch.models.diffusers.modeling_multicontrolnet import (
+        MultiControlNetForText2ImageGeneration,
+        MultiControlNetForImage2ImageGeneration,
+        MultiControlNetForImageInpainting,
+    )
     from unitorch.models.diffusers.modeling_animate import (
         AnimateForText2VideoGeneration,
         AnimateForImage2VideoGeneration,
@@ -49,3 +54,6 @@ if is_diffusers_available():
     from unitorch.models.diffusers.processing_dreambooth_xl import DreamboothXLProcessor
     from unitorch.models.diffusers.processing_controlnet import ControlNetProcessor
     from unitorch.models.diffusers.processing_controlnet_xl import ControlNetXLProcessor
+    from unitorch.models.diffusers.processing_multicontrolnet import (
+        MultiControlNetProcessor,
+    )

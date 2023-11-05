@@ -5,6 +5,7 @@ import io
 import torch
 import gradio as gr
 from PIL import Image
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from unitorch.cli import CoreConfigureParser, GenericWebUI
 from unitorch.cli import register_webui
 from unitorch.cli.pipelines.stable_xl_refiner import (
@@ -18,34 +19,83 @@ from unitorch.cli.pipelines.stable_xl_refiner import (
 class StableXLRefinerText2ImageWebUI(GenericWebUI):
     def __init__(self, config: CoreConfigureParser):
         self.config = config
-        self._model = None
-        config.set_default_section("core/webui/stable_xl_refiner/text2image")
-        self.host = config.getoption("host", "0.0.0.0")
-        self.port = config.getoption("port", 7881)
+        self._pipe = None
+        self._status = "stopped"
+        self._iface = gr.Blocks()
+        with self._iface:
+            with gr.Row():
+                pretrained_name = gr.Dropdown(
+                    ["stable-xl-base-refiner-1.0"],
+                    value="stable-xl-base-refiner-1.0",
+                    label="Pretrain Checkpoint Name",
+                )
+                status = gr.Textbox(label="Model Status")
+                click_start = gr.Button(value="Start")
+                click_stop = gr.Button(value="Stop")
+                click_start.click(
+                    self.start, inputs=[pretrained_name], outputs=[status]
+                )
+                click_stop.click(self.stop, outputs=[status])
+            prompt = gr.Textbox(label="Input Prompt")
+            image = gr.Image(type="pil", label="Output Image")
+            height = gr.Slider(512, 1024, value=1024, label="Image Height")
+            width = gr.Slider(512, 1024, value=1024, label="Image Width")
+            submit = gr.Button(text="Submit")
+            submit.click(self.serve, inputs=[prompt, height, width], outputs=[image])
 
-    def start(self, **kwargs):
-        self._model = (
-            StableXLRefinerForText2ImageGenerationPipeline.from_core_configure(
-                self.config
-            )
+    @property
+    def name(self):
+        return "StableXLRefinerText2Image"
+
+    @property
+    def iface(self):
+        return self._iface
+
+    @property
+    def status(self):
+        return self._status == "running"
+
+    def start(self, pretrained_name, **kwargs):
+        if self._status == "running":
+            self.stop()
+        self.config.set(
+            "core/pipeline/stable_xl_refiner/text2image",
+            "pretrained_name",
+            pretrained_name,
         )
-        self.config.set_default_section("core/webui/stable_xl_refiner/text2image")
-
-        iface = gr.Interface(fn=self.serve, inputs="textbox", outputs="image")
-        iface.launch(server_name=self.host, server_port=self.port)
+        self._pipe = StableXLRefinerForText2ImageGenerationPipeline.from_core_configure(
+            self.config
+        )
+        self._status = "running"
+        return self._status
 
     def stop(self, **kwargs):
-        del self._model
-        self._model = None
+        self._pipe.to("cpu")
+        del self._pipe
+        gc.collect()
+        torch.cuda.empty_cache()
+        self._pipe = None
+        self._status = "stopped"
+        return self._status
 
     def serve(
         self,
         text: str,
-        height: int = 1024,
-        width: int = 1024,
+        height: Optional[int] = 1024,
+        width: Optional[int] = 1024,
+        guidance_scale: Optional[float] = 7.5,
+        num_timesteps: Optional[int] = 50,
+        seed: Optional[int] = 1123,
     ):
-        assert self._model is not None
-        image = self._model(text, height, width)
+        assert self._pipe is not None
+        image = self._pipe(
+            text,
+            height=height,
+            width=width,
+            guidance_scale=guidance_scale,
+            num_timesteps=num_timesteps,
+            seed=seed,
+        )
         return image
 
 
@@ -53,35 +103,73 @@ class StableXLRefinerText2ImageWebUI(GenericWebUI):
 class StableXLRefinerImage2ImageWebUI(GenericWebUI):
     def __init__(self, config: CoreConfigureParser):
         self.config = config
-        self._model = None
-        config.set_default_section("core/webui/stable_xl_refiner/image2image")
-        self.host = config.getoption("host", "0.0.0.0")
-        self.port = config.getoption("port", 7882)
+        self._pipe = None
+        self._status = "stopped"
+        self._iface = gr.Blocks()
+        with self._iface:
+            with gr.Row():
+                pretrained_name = gr.Dropdown(
+                    ["stable-xl-base-refiner-1.0"],
+                    value="stable-xl-base-refiner-1.0",
+                    label="Pretrain Checkpoint Name",
+                )
+                status = gr.Textbox(label="Model Status")
+                click_start = gr.Button(value="Start")
+                click_stop = gr.Button(value="Stop")
+                click_start.click(
+                    self.start, inputs=[pretrained_name], outputs=[status]
+                )
+                click_stop.click(self.stop, outputs=[status])
+            prompt = gr.Textbox(label="Input Prompt")
+            raw_image = gr.Image(type="pil", label="Input Image")
+            image = gr.Image(type="pil", label="Output Image")
+            submit = gr.Button(text="Submit")
+            submit.click(self.serve, inputs=[prompt, raw_image], outputs=[image])
 
-    def start(self, **kwargs):
-        self._model = (
+    @property
+    def name(self):
+        return "StableXLRefinerImage2Image"
+
+    @property
+    def iface(self):
+        return self._iface
+
+    @property
+    def status(self):
+        return self._status == "running"
+
+    def start(self, pretrained_name, **kwargs):
+        if self._status == "running":
+            self.stop()
+        self.config.set(
+            "core/pipeline/stable_xl_refiner/image2image",
+            "pretrained_name",
+            pretrained_name,
+        )
+        self._pipe = (
             StableXLRefinerForImage2ImageGenerationPipeline.from_core_configure(
                 self.config
             )
         )
-        self.config.set_default_section("core/webui/stable_xl_refiner/image2image")
-
-        iface = gr.Interface(
-            fn=self.serve, inputs=["textbox", gr.Image(type="pil")], outputs="image"
-        )
-        iface.launch(server_name=self.host, server_port=self.port)
+        self._status = "running"
+        return self._status
 
     def stop(self, **kwargs):
-        del self._model
-        self._model = None
+        self._pipe.to("cpu")
+        del self._pipe
+        gc.collect()
+        torch.cuda.empty_cache()
+        self._pipe = None
+        self._status = "stopped"
+        return self._status
 
     def serve(
         self,
         text: str,
         image: Image.Image,
     ):
-        assert self._model is not None
-        image = self._model(text, image)
+        assert self._pipe is not None
+        image = self._pipe(text, image)
         return image
 
 
@@ -89,27 +177,66 @@ class StableXLRefinerImage2ImageWebUI(GenericWebUI):
 class StableXLRefinerImageInpaintingWebUI(GenericWebUI):
     def __init__(self, config: CoreConfigureParser):
         self.config = config
-        self._model = None
-        config.set_default_section("core/webui/stable_xl_refiner/inpainting")
-        self.host = config.getoption("host", "0.0.0.0")
-        self.port = config.getoption("port", 7883)
+        self._pipe = None
+        self._status = "stopped"
+        self._iface = gr.Blocks()
+        with self._iface:
+            with gr.Row():
+                pretrained_name = gr.Dropdown(
+                    ["stable-xl-base-1.0"],
+                    value="stable-xl-base-refiner-1.0",
+                    label="Pretrain Checkpoint Name",
+                )
+                status = gr.Textbox(label="Model Status")
+                click_start = gr.Button(value="Start")
+                click_stop = gr.Button(value="Stop")
+                click_start.click(
+                    self.start, inputs=[pretrained_name], outputs=[status]
+                )
+                click_stop.click(self.stop, outputs=[status])
+            prompt = gr.Textbox(label="Input Prompt")
+            raw_image = gr.Image(type="pil", label="Input Image")
+            raw_image_mask = gr.Image(type="pil", label="Input Mask Image")
+            image = gr.Image(type="pil", label="Output Image")
+            submit = gr.Button(text="Submit")
+            submit.click(
+                self.serve, inputs=[prompt, raw_image, raw_image_mask], outputs=[image]
+            )
 
-    def start(self, **kwargs):
-        self._model = StableXLRefinerForImageInpaintingPipeline.from_core_configure(
+    @property
+    def name(self):
+        return "StableXLRefinerImageInpainting"
+
+    @property
+    def iface(self):
+        return self._iface
+
+    @property
+    def status(self):
+        return self._status == "running"
+
+    def start(self, pretrained_name, **kwargs):
+        if self._status == "running":
+            self.stop()
+        self.config.set(
+            "core/pipeline/stable_xl_refiner/inpainting",
+            "pretrained_name",
+            pretrained_name,
+        )
+        self._pipe = StableXLRefinerForImageInpaintingPipeline.from_core_configure(
             self.config
         )
-        self.config.set_default_section("core/webui/stable_xl_refiner/inpainting")
-
-        iface = gr.Interface(
-            fn=self.serve,
-            inputs=["textbox", gr.Image(type="pil"), gr.Image(type="pil")],
-            outputs="image",
-        )
-        iface.launch(server_name=self.host, server_port=self.port)
+        self._status = "running"
+        return self._status
 
     def stop(self, **kwargs):
-        del self._model
-        self._model = None
+        self._pipe.to("cpu")
+        del self._pipe
+        gc.collect()
+        torch.cuda.empty_cache()
+        self._pipe = None
+        self._status = "stopped"
+        return self._status
 
     def serve(
         self,
@@ -117,6 +244,6 @@ class StableXLRefinerImageInpaintingWebUI(GenericWebUI):
         image: Image.Image,
         mask_image: Image.Image,
     ):
-        assert self._model is not None
-        image = self._model(text, image, mask_image)
+        assert self._pipe is not None
+        image = self._pipe(text, image, mask_image)
         return image

@@ -73,6 +73,45 @@ def is_diffusers_available():
     return _diffusers_available or is_offline_debug_mode()
 
 
+# safetensors
+_safetensors_available = importlib.util.find_spec("safetensors") is not None
+try:
+    _safetensors_version = importlib_metadata.version("safetensors")
+    logging.debug(f"Successfully imported safetensors version {_safetensors_version}")
+except importlib_metadata.PackageNotFoundError:
+    _safetensors_available = False
+
+
+def is_safetensors_available():
+    return _safetensors_available or is_offline_debug_mode()
+
+
+# xformers
+_xformers_available = importlib.util.find_spec("xformers") is not None
+try:
+    _xformers_version = importlib_metadata.version("xformers")
+    logging.debug(f"Successfully imported xformers version {_xformers_version}")
+except importlib_metadata.PackageNotFoundError:
+    _xformers_available = False
+
+
+def is_xformers_available():
+    return _xformers_available or is_offline_debug_mode()
+
+
+# opencv
+_opencv_available = importlib.util.find_spec("cv2") is not None
+try:
+    _opencv_version = importlib_metadata.version("cv2")
+    logging.debug(f"Successfully imported opencv version {_opencv_version}")
+except importlib_metadata.PackageNotFoundError:
+    _opencv_available = False
+
+
+def is_opencv_available():
+    return _opencv_available or is_offline_debug_mode()
+
+
 # torch
 _torch_available = importlib.util.find_spec("torch") is not None
 try:

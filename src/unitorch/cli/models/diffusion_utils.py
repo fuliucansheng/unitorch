@@ -10,8 +10,8 @@ import numpy as np
 from PIL import Image
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
-import safetensors
 from diffusers.utils import numpy_to_pil, pt_to_pil
+from unitorch import is_safetensors_available, is_opencv_available
 from unitorch.cli import WriterMixin, WriterOutputs
 from unitorch.cli import (
     add_default_section_for_init,
@@ -28,6 +28,9 @@ def load_weight(
     prefix: Optional[str] = "",
 ):
     if path.endswith(".safetensors"):
+        assert is_safetensors_available(), "Please install safetensors first."
+        import safetensors
+
         path = cached_path(path)
         state_dict = safetensors.torch.load_file(path)
     else:
@@ -54,6 +57,7 @@ def numpy2vid(video, mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]):
 def export_to_video(
     video_frames: List[np.ndarray], output_video_path: str = None
 ) -> str:
+    assert is_opencv_available(), "Please install python3-opencv first."
     import cv2
 
     if output_video_path is None:
