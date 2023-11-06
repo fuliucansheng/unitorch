@@ -32,7 +32,7 @@ class MiniGPT4WebUI(GenericWebUI):
             prompt = gr.Textbox(label="Input Prompt")
             image = gr.Image(type="pil", label="Input Image")
             caption = gr.Textbox(label="Output Caption")
-            submit = gr.Button(text="Submit")
+            submit = gr.Button(value="Submit")
             submit.click(self.serve, inputs=[prompt, image], outputs=[caption])
 
     @property

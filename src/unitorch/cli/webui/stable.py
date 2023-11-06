@@ -42,7 +42,7 @@ class StableText2ImageWebUI(GenericWebUI):
             image = gr.Image(type="pil", label="Output Image")
             height = gr.Slider(512, 768, value=512, label="Image Height")
             width = gr.Slider(512, 768, value=512, label="Image Width")
-            submit = gr.Button(text="Submit")
+            submit = gr.Button(value="Submit")
             submit.click(self.serve, inputs=[prompt, height, width], outputs=[image])
 
     @property
@@ -125,7 +125,7 @@ class StableImage2ImageWebUI(GenericWebUI):
             prompt = gr.Textbox(label="Input Prompt")
             raw_image = gr.Image(type="pil", label="Input Image")
             image = gr.Image(type="pil", label="Output Image")
-            submit = gr.Button(text="Submit")
+            submit = gr.Button(value="Submit")
             submit.click(self.serve, inputs=[prompt, raw_image], outputs=[image])
 
     @property
@@ -196,7 +196,7 @@ class StableImageInpaintingWebUI(GenericWebUI):
             raw_image = gr.Image(type="pil", label="Input Image")
             raw_image_mask = gr.Image(type="pil", label="Input Mask Image")
             image = gr.Image(type="pil", label="Output Image")
-            submit = gr.Button(text="Submit")
+            submit = gr.Button(value="Submit")
             submit.click(
                 self.serve, inputs=[prompt, raw_image, raw_image_mask], outputs=[image]
             )
@@ -267,7 +267,7 @@ class StableImageResolutionWebUI(GenericWebUI):
             prompt = gr.Textbox(label="Input Prompt")
             raw_image = gr.Image(type="pil", label="Input Image")
             image = gr.Image(type="pil", label="Output Image")
-            submit = gr.Button(text="Submit")
+            submit = gr.Button(value="Submit")
             submit.click(self.serve, inputs=[prompt, raw_image], outputs=[image])
 
     @property

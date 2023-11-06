@@ -39,7 +39,7 @@ class AnimateText2VideoWebUI(GenericWebUI):
             video = gr.Video(type="pil", label="Output Video")
             height = gr.Slider(512, 768, value=512, label="Video Height")
             width = gr.Slider(512, 768, value=512, label="Video Width")
-            submit = gr.Button(text="Submit")
+            submit = gr.Button(value="Submit")
             submit.click(
                 self.serve,
                 inputs=[prompt, negative_prompt, height, width],

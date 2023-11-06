@@ -34,7 +34,7 @@ rl = ["trl>=0.7.2"]
 quantization = ["bitsandbytes>=0.41.1"]
 docs = ["mkdocstrings[python]>=0.18", "mkdocs-material", "markdown-exec", "mkdocs-gen-files", "mkdocs-coverage"]
 fastapi = ["fastapi>=0.103.1"]
-webui = ["gradio>=3.44.3", "gradio_client>=0.5.0"]
+webui = ["gradio>=4.1.1", "gradio_client>=0.7.0"]
 all = ["unitorch[deepspeed,diffusers,rl,quantization,fastapi,webui]"]
 
 [project.scripts]
