@@ -65,7 +65,7 @@ class StableXLForImageInpaintingPipeline(_StableXLForImageInpainting):
         else:
             self.to(device=self._device)
 
-        if enable_xformers:
+        if enable_xformers and self._device != "cpu":
             assert is_xformers_available(), "Please install xformers first."
             self.pipeline.enable_xformers_memory_efficient_attention()
 
