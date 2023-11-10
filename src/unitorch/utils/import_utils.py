@@ -102,7 +102,7 @@ def is_xformers_available():
 # opencv
 _opencv_available = importlib.util.find_spec("cv2") is not None
 try:
-    _opencv_version = importlib_metadata.version("cv2")
+    _opencv_version = importlib_metadata.version("opencv-python")
     logging.debug(f"Successfully imported opencv version {_opencv_version}")
 except importlib_metadata.PackageNotFoundError:
     _opencv_available = False
