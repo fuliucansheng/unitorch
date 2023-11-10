@@ -65,8 +65,10 @@ class AnimateForText2VideoGenerationPipeline(_AnimateForText2VideoGeneration):
 
         if enable_cpu_offload and self._device != "cpu":
             self.pipeline.enable_model_cpu_offload(self._device)
+            self.pipeline.unet.to(torch.half)
             self.to(torch.half)
         else:
+            self.pipeline.unet.to(device=self._device)
             self.to(device=self._device)
 
         if enable_xformers and self._device != "cpu":
