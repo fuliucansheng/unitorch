@@ -151,15 +151,21 @@ class StableXLForText2ImageGenerationPipeline(_StableXLForText2ImageGeneration):
         if weight_path is None and pretrain_infos is not None:
             state_dict = [
                 load_weight(
-                    nested_dict_value(pretrain_infos, "unet", "weight"), "unet."
+                    nested_dict_value(pretrain_infos, "unet", "weight"),
+                    prefix_keys={"": "unet."},
                 ),
                 load_weight(
-                    nested_dict_value(pretrain_infos, "text", "weight"), "text."
+                    nested_dict_value(pretrain_infos, "text", "weight"),
+                    prefix_keys={"": "text."},
                 ),
                 load_weight(
-                    nested_dict_value(pretrain_infos, "text2", "weight"), "text2."
+                    nested_dict_value(pretrain_infos, "text2", "weight"),
+                    prefix_keys={"": "text2."},
                 ),
-                load_weight(nested_dict_value(pretrain_infos, "vae", "weight"), "vae."),
+                load_weight(
+                    nested_dict_value(pretrain_infos, "vae", "weight"),
+                    prefix_keys={"": "vae."},
+                ),
             ]
 
         inst = cls(

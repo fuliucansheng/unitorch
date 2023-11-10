@@ -151,7 +151,7 @@ class ControlNetXLForText2ImageGeneration(_ControlNetXLForText2ImageGeneration):
                 load_weight(nested_dict_value(pretrain_infos, "vae", "weight")),
                 load_weight(
                     nested_dict_value(pretrain_infos, "controlnet", "weight"),
-                    prefix="controlnet.",
+                    prefix_keys={"": "controlnet."},
                 ),
             ]
         elif weight_path is not None:
@@ -337,7 +337,7 @@ class ControlNetXLForImage2ImageGeneration(_ControlNetXLForImage2ImageGeneration
                 load_weight(nested_dict_value(pretrain_infos, "vae", "weight")),
                 load_weight(
                     nested_dict_value(pretrain_infos, "controlnet", "weight"),
-                    prefix="controlnet.",
+                    prefix_keys={"": "controlnet."},
                 ),
             ]
         elif weight_path is not None:
@@ -506,7 +506,7 @@ class ControlNetXLForImageInpainting(_ControlNetXLForImageInpainting):
                 load_weight(nested_dict_value(pretrain_infos, "vae", "weight")),
                 load_weight(
                     nested_dict_value(pretrain_infos, "controlnet", "weight"),
-                    prefix="controlnet.",
+                    prefix_keys={"": "controlnet."},
                 ),
             ]
         elif weight_path is not None:

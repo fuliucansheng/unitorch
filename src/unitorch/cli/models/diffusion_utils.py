@@ -2,6 +2,7 @@
 # Licensed under the MIT License.
 
 import os
+import re
 import torch
 import torch.nn as nn
 import hashlib
@@ -25,7 +26,8 @@ from unitorch.cli import cached_path
 
 def load_weight(
     path,
-    prefix: Optional[str] = "",
+    replace_keys: Optional[Dict] = dict(),
+    prefix_keys: Optional[Dict] = dict(),
 ):
     if path.endswith(".safetensors"):
         assert is_safetensors_available(), "Please install safetensors first."
@@ -36,8 +38,20 @@ def load_weight(
     else:
         path = cached_path(path)
         state_dict = torch.load(path, map_location="cpu")
-    state_dict = {f"{prefix}{k}": v for k, v in state_dict.items()}
-    return state_dict
+
+    results = dict()
+    for key, value in list(state_dict.items()):
+        for rkey, prefix in prefix_keys.items():
+            if re.match(rkey, key):
+                key = prefix + key
+                break
+
+        for rkey, nkey in replace_keys.items():
+            key = re.sub(rkey, nkey, key)
+
+        results[key] = value
+
+    return results
 
 
 def numpy2vid(video, mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]):

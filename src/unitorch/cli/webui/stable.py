@@ -31,7 +31,7 @@ class StableText2ImageWebUI(GenericWebUI):
                     value="stable-v1.5",
                     label="Pretrain Checkpoint Name",
                 )
-                status = gr.Textbox(label="Model Status")
+                status = gr.Textbox(label="Model Status", value=self._status)
                 click_start = gr.Button(value="Start")
                 click_stop = gr.Button(value="Stop")
                 click_start.click(
@@ -115,7 +115,7 @@ class StableImage2ImageWebUI(GenericWebUI):
                     value="stable-v1.5-nitrosocke-ghibli",
                     label="Pretrain Checkpoint Name",
                 )
-                status = gr.Textbox(label="Model Status")
+                status = gr.Textbox(label="Model Status", value=self._status)
                 click_start = gr.Button(value="Start")
                 click_stop = gr.Button(value="Stop")
                 click_start.click(
@@ -185,7 +185,7 @@ class StableImageInpaintingWebUI(GenericWebUI):
                     value="stable-v1.5-inpainting",
                     label="Pretrain Checkpoint Name",
                 )
-                status = gr.Textbox(label="Model Status")
+                status = gr.Textbox(label="Model Status", value=self._status)
                 click_start = gr.Button(value="Start")
                 click_stop = gr.Button(value="Stop")
                 click_start.click(
@@ -257,7 +257,7 @@ class StableImageResolutionWebUI(GenericWebUI):
                     value="stable-v1.5-x4-upscaler",
                     label="Pretrain Checkpoint Name",
                 )
-                status = gr.Textbox(label="Model Status")
+                status = gr.Textbox(label="Model Status", value=self._status)
                 click_start = gr.Button(value="Start")
                 click_stop = gr.Button(value="Stop")
                 click_start.click(

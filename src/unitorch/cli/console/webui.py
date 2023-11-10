@@ -82,7 +82,8 @@ def webui(config_path_or_dir: str, **kwargs):
     config.set_default_section("core/cli")
     host = config.getoption("host", "0.0.0.0")
     port = config.getoption("port", 7860)
-    demo_webui.launch(server_name=host, server_port=port)
+    share = config.getoption("share", False)
+    demo_webui.launch(server_name=host, server_port=port, share=share)
 
     os._exit(0)
 

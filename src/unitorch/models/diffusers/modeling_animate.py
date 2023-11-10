@@ -9,10 +9,12 @@ from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 import diffusers.schedulers as schedulers
 from transformers import CLIPTextConfig, CLIPTextModel
 from diffusers.schedulers import SchedulerMixin
-from diffusers.models import AutoencoderKL
-from unitorch.models.diffusers.modeling_animate_utils import (
-    TextToVideoAnimateDiffPipeline,
-    UNet3DConditionModel,
+from diffusers.models import AutoencoderKL, UNet2DConditionModel
+from diffusers.models.unet_motion_model import MotionAdapter
+from diffusers.image_processor import PipelineImageInput, VaeImageProcessor
+from diffusers.pipelines.animatediff.pipeline_animatediff import (
+    AnimateDiffPipeline as AnimateText2VideoPipeline,
+    AnimateDiffPipelineOutput,
 )
 from unitorch.models import (
     GenericModel,
@@ -51,6 +53,7 @@ class GenericAnimateModel(GenericModel, QuantizationMixin):
     def __init__(
         self,
         config_path: str,
+        motion_config_path: str,
         text_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
@@ -77,7 +80,10 @@ class GenericAnimateModel(GenericModel, QuantizationMixin):
             config_dict.update({"in_channels": in_channels})
         if out_channels is not None:
             config_dict.update({"out_channels": out_channels})
-        self.unet = UNet3DConditionModel.from_config(config_dict)
+        self.unet = UNet2DConditionModel.from_config(config_dict)
+
+        motion_config_dict = json.load(open(motion_config_path))
+        self.motion = MotionAdapter.from_config(motion_config_dict)
 
         text_config = CLIPTextConfig.from_json_file(text_config_path)
         self.text = CLIPTextModel(text_config)
@@ -114,6 +120,7 @@ class AnimateForText2VideoGeneration(GenericAnimateModel):
     def __init__(
         self,
         config_path: str,
+        motion_config_path: str,
         text_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
@@ -129,6 +136,7 @@ class AnimateForText2VideoGeneration(GenericAnimateModel):
     ):
         super().__init__(
             config_path=config_path,
+            motion_config_path=motion_config_path,
             text_config_path=text_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
@@ -143,14 +151,13 @@ class AnimateForText2VideoGeneration(GenericAnimateModel):
             seed=seed,
         )
 
-        self.pipeline = TextToVideoAnimateDiffPipeline(
+        self.pipeline = AnimateText2VideoPipeline(
             vae=self.vae,
             text_encoder=self.text,
             unet=self.unet,
+            motion_adapter=self.motion,
             scheduler=self.scheduler,
             tokenizer=None,
-            safety_checker=None,
-            feature_extractor=None,
         )
         self.pipeline.set_progress_bar_config(disable=True)
 
@@ -180,6 +187,7 @@ class AnimateForText2VideoGeneration(GenericAnimateModel):
         )[0]
 
         frames = self.pipeline(
+            prompt=None,
             prompt_embeds=prompt_embeds,
             negative_prompt_embeds=negative_prompt_embeds,
             generator=torch.Generator(device=self.pipeline.device).manual_seed(

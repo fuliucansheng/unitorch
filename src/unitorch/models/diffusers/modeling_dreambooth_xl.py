@@ -128,6 +128,18 @@ class DreamboothXLForText2ImageGeneration(GenericModel, QuantizationMixin):
                 param.requires_grad = False
             self.enable_lora(lora_r=lora_r)
 
+        self.scheduler.set_timesteps(num_inference_steps=self.num_infer_timesteps)
+        self.pipeline = StableDiffusionXLPipeline(
+            vae=self.vae,
+            text_encoder=self.text,
+            text_encoder_2=self.text2,
+            unet=self.unet,
+            scheduler=self.scheduler,
+            tokenizer=None,
+            tokenizer_2=None,
+        )
+        self.pipeline.set_progress_bar_config(disable=True)
+
     def enable_lora(self, lora_r: Optional[int] = 4):
         lora_attn_procs = {}
         for name, attn_processor in self.unet.attn_processors.items():
@@ -172,18 +184,6 @@ class DreamboothXLForText2ImageGeneration(GenericModel, QuantizationMixin):
             lora_attn_procs[name] = module
 
         self.unet.set_attn_processor(lora_attn_procs)
-
-        self.scheduler.set_timesteps(num_inference_steps=self.num_infer_timesteps)
-        self.pipeline = StableDiffusionXLPipeline(
-            vae=self.vae,
-            text_encoder=self.text,
-            text_encoder_2=self.text2,
-            unet=self.unet,
-            scheduler=self.scheduler,
-            tokenizer=None,
-            tokenizer_2=None,
-        )
-        self.pipeline.set_progress_bar_config(disable=True)
 
     def forward(
         self,

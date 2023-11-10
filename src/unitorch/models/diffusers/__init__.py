@@ -45,6 +45,7 @@ if is_diffusers_available():
         AnimateForText2VideoGeneration,
         AnimateForImage2VideoGeneration,
     )
+    from unitorch.models.diffusers.modeling_blip2 import Blip2ForText2ImageGeneration
     from unitorch.models.diffusers.processing_stable import StableProcessor
     from unitorch.models.diffusers.processing_stable_xl import StableXLProcessor
     from unitorch.models.diffusers.processing_stable_xl_refiner import (
@@ -57,3 +58,4 @@ if is_diffusers_available():
     from unitorch.models.diffusers.processing_multicontrolnet import (
         MultiControlNetProcessor,
     )
+    from unitorch.models.diffusers.processing_blip2 import Blip2Processor

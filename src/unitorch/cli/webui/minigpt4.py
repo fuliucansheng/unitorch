@@ -3,6 +3,7 @@
 
 import io
 import torch
+import gc
 import gradio as gr
 from PIL import Image
 from unitorch.cli import CoreConfigureParser, GenericWebUI
@@ -20,9 +21,11 @@ class MiniGPT4WebUI(GenericWebUI):
         with self._iface:
             with gr.Row():
                 pretrained_name = gr.Dropdown(
-                    ["minigpt4-7b", "minigpt4-13b"], label="Pretrain Checkpoint Name"
+                    ["minigpt4-7b", "minigpt4-13b"],
+                    value="minigpt4-7b",
+                    label="Pretrain Checkpoint Name",
                 )
-                status = gr.Textbox(label="Model Status")
+                status = gr.Textbox(label="Model Status", value=self._status)
                 click_start = gr.Button(value="Start")
                 click_stop = gr.Button(value="Stop")
                 click_start.click(

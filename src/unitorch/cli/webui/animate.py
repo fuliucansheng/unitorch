@@ -3,6 +3,7 @@
 
 import io
 import torch
+import gc
 import gradio as gr
 from PIL import Image
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
@@ -23,11 +24,16 @@ class AnimateText2VideoWebUI(GenericWebUI):
         with self._iface:
             with gr.Row():
                 pretrained_name = gr.Dropdown(
-                    ["stable-v1.5-animate-v2"],
-                    value="stable-v1.5-animate-v2",
+                    [
+                        "stable-v1.5-realistic-animate-v1.5",
+                        "stable-v1.5-realistic-animate-v1.5.2",
+                        "stable-v1.5-realistic-animate-v1.5.2-zoom-in",
+                        "stable-v1.5-realistic-animate-v1.5.2-zoom-out",
+                    ],
+                    value="stable-v1.5-realistic-animate-v1.5",
                     label="Pretrain Checkpoint Name",
                 )
-                status = gr.Textbox(label="Model Status")
+                status = gr.Textbox(label="Model Status", value=self._status)
                 click_start = gr.Button(value="Start")
                 click_stop = gr.Button(value="Stop")
                 click_start.click(

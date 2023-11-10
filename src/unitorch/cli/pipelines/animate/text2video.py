@@ -28,6 +28,7 @@ class AnimateForText2VideoGenerationPipeline(_AnimateForText2VideoGeneration):
     def __init__(
         self,
         config_path: str,
+        motion_config_path: str,
         text_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
@@ -44,6 +45,7 @@ class AnimateForText2VideoGenerationPipeline(_AnimateForText2VideoGeneration):
     ):
         super().__init__(
             config_path=config_path,
+            motion_config_path=motion_config_path,
             text_config_path=text_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
@@ -75,7 +77,9 @@ class AnimateForText2VideoGenerationPipeline(_AnimateForText2VideoGeneration):
     @add_default_section_for_init("core/pipeline/animate/text2video")
     def from_core_configure(cls, config, **kwargs):
         config.set_default_section("core/pipeline/animate/text2video")
-        pretrained_name = config.getoption("pretrained_name", "stable-v1.5-animate-v2")
+        pretrained_name = config.getoption(
+            "pretrained_name", "stable-v1.5-realistic-animate-v1.5"
+        )
         pretrain_infos = nested_dict_value(pretrained_diffusers_infos, pretrained_name)
 
         config_path = config.getoption("config_path", None)
@@ -84,6 +88,13 @@ class AnimateForText2VideoGenerationPipeline(_AnimateForText2VideoGeneration):
             nested_dict_value(pretrain_infos, "unet", "config"),
         )
         config_path = cached_path(config_path)
+
+        motion_config_path = config.getoption("motion_config_path", None)
+        motion_config_path = pop_value(
+            motion_config_path,
+            nested_dict_value(pretrain_infos, "motion", "config"),
+        )
+        motion_config_path = cached_path(motion_config_path)
 
         text_config_path = config.getoption("text_config_path", None)
         text_config_path = pop_value(
@@ -133,16 +144,26 @@ class AnimateForText2VideoGenerationPipeline(_AnimateForText2VideoGeneration):
         if weight_path is None and pretrain_infos is not None:
             state_dict = [
                 load_weight(
-                    nested_dict_value(pretrain_infos, "unet", "weight"), "unet."
+                    nested_dict_value(pretrain_infos, "unet", "weight"),
+                    prefix_keys={"": "unet."},
                 ),
                 load_weight(
-                    nested_dict_value(pretrain_infos, "text", "weight"), "text."
+                    nested_dict_value(pretrain_infos, "motion", "weight"),
+                    prefix_keys={"": "motion."},
                 ),
-                load_weight(nested_dict_value(pretrain_infos, "vae", "weight"), "vae."),
+                load_weight(
+                    nested_dict_value(pretrain_infos, "text", "weight"),
+                    prefix_keys={"": "text."},
+                ),
+                load_weight(
+                    nested_dict_value(pretrain_infos, "vae", "weight"),
+                    prefix_keys={"": "vae."},
+                ),
             ]
 
         inst = cls(
             config_path=config_path,
+            motion_config_path=motion_config_path,
             text_config_path=text_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,

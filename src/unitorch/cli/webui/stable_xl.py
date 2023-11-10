@@ -3,6 +3,7 @@
 
 import io
 import torch
+import gc
 import gradio as gr
 from PIL import Image
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
@@ -29,7 +30,7 @@ class StableXLText2ImageWebUI(GenericWebUI):
                     value="stable-xl-base-1.0",
                     label="Pretrain Checkpoint Name",
                 )
-                status = gr.Textbox(label="Model Status")
+                status = gr.Textbox(label="Model Status", value=self._status)
                 click_start = gr.Button(value="Start")
                 click_stop = gr.Button(value="Stop")
                 click_start.click(
@@ -111,7 +112,7 @@ class StableXLImage2ImageWebUI(GenericWebUI):
                     value="stable-xl-base-1.0",
                     label="Pretrain Checkpoint Name",
                 )
-                status = gr.Textbox(label="Model Status")
+                status = gr.Textbox(label="Model Status", value=self._status)
                 click_start = gr.Button(value="Start")
                 click_stop = gr.Button(value="Stop")
                 click_start.click(
@@ -181,7 +182,7 @@ class StableXLImageInpaintingWebUI(GenericWebUI):
                     value="stable-xl-base-1.0",
                     label="Pretrain Checkpoint Name",
                 )
-                status = gr.Textbox(label="Model Status")
+                status = gr.Textbox(label="Model Status", value=self._status)
                 click_start = gr.Button(value="Start")
                 click_stop = gr.Button(value="Stop")
                 click_start.click(

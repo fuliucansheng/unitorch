@@ -66,6 +66,24 @@ __hf_hub_stable_xl_controlnet_dict__ = lambda name: {
     },
 }
 
+__hf_hub_animate_dict__ = {
+    "unet": {
+        "config": f"https://huggingface.co/SG161222/Realistic_Vision_V5.1_noVAE/resolve/main/unet/config.json",
+        "weight": f"https://huggingface.co/SG161222/Realistic_Vision_V5.1_noVAE/resolve/main/unet/diffusion_pytorch_model.safetensors",
+    },
+    "text": {
+        "config": f"https://huggingface.co/SG161222/Realistic_Vision_V5.1_noVAE/resolve/main/text_encoder/config.json",
+        "vocab": f"https://huggingface.co/SG161222/Realistic_Vision_V5.1_noVAE/resolve/main/tokenizer/vocab.json",
+        "merge": f"https://huggingface.co/SG161222/Realistic_Vision_V5.1_noVAE/resolve/main/tokenizer/merges.txt",
+        "weight": f"https://huggingface.co/SG161222/Realistic_Vision_V5.1_noVAE/resolve/main/text_encoder/model.safetensors",
+    },
+    "vae": {
+        "config": f"https://huggingface.co/SG161222/Realistic_Vision_V5.1_noVAE/resolve/main/vae/config.json",
+        "weight": f"https://huggingface.co/SG161222/Realistic_Vision_V5.1_noVAE/resolve/main/vae/diffusion_pytorch_model.safetensors",
+    },
+    "scheduler": f"https://huggingface.co/SG161222/Realistic_Vision_V5.1_noVAE/resolve/main/scheduler/scheduler_config.json",
+}
+
 pretrained_diffusers_infos = {
     "stable-v1.5": __hf_hub_stable_v1_5_dict__("runwayml/stable-diffusion-v1-5"),
     "stable-v1.5-nitrosocke-ghibli": __hf_hub_stable_v1_5_dict__(
@@ -86,14 +104,54 @@ pretrained_diffusers_infos = {
     "stable-v1.5-controlnet-inpainting": __hf_hub_stable_v1_5_controlnet_dict__(
         "lllyasviel/control_v11p_sd15_inpaint"
     ),
-    "stable-v1.5-animate-v2": {
-        **__hf_hub_stable_v1_5_dict__("runwayml/stable-diffusion-v1-5"),
+    "stable-v1.5-blipdiffuion": {
+        **__hf_hub_stable_v1_5_dict__("salesforce/blipdiffusion"),
         **{
-            "unet": {
-                "config": f"https://huggingface.co/itsadarshms/animatediff-v2-stable-diffusion-1.5/resolve/main/unet/config.json",
-                "weight": f"https://huggingface.co/itsadarshms/animatediff-v2-stable-diffusion-1.5/resolve/main/unet/diffusion_pytorch_model.safetensors",
+            "qformer": {
+                "config": f"https://huggingface.co/salesforce/blipdiffusion/resolve/main/qformer/config.json",
+                "weight": f"https://huggingface.co/salesforce/blipdiffusion/resolve/main/qformer/pytorch_model.bin",
             },
-            "scheduler": f"https://huggingface.co/itsadarshms/animatediff-v2-stable-diffusion-1.5/resolve/main/scheduler/scheduler_config.json",
+            "vision_encoder": {
+                "config": f"https://huggingface.co/salesforce/blipdiffusion/resolve/main/vision_encoder/config.json",
+                "weight": f"https://huggingface.co/salesforce/blipdiffusion/resolve/main/vision_encoder/pytorch_model.bin",
+            },
+            "vision_config": "https://huggingface.co/salesforce/blipdiffusion/resolve/main/image_processor/preprocessor_config.json",
+        },
+    },
+    "stable-v1.5-realistic-animate-v1.5": {
+        **__hf_hub_animate_dict__,
+        **{
+            "motion": {
+                "config": f"https://huggingface.co/guoyww/animatediff-motion-adapter-v1-5/resolve/main/config.json",
+                "weight": f"https://huggingface.co/guoyww/animatediff-motion-adapter-v1-5/resolve/main/diffusion_pytorch_model.safetensors",
+            },
+        },
+    },
+    "stable-v1.5-realistic-animate-v1.5.2": {
+        **__hf_hub_animate_dict__,
+        **{
+            "motion": {
+                "config": f"https://huggingface.co/guoyww/animatediff-motion-adapter-v1-5-2/resolve/main/config.json",
+                "weight": f"https://huggingface.co/guoyww/animatediff-motion-adapter-v1-5-2/resolve/main/diffusion_pytorch_model.safetensors",
+            },
+        },
+    },
+    "stable-v1.5-realistic-animate-v1.5.2-zoom-in": {
+        **__hf_hub_animate_dict__,
+        **{
+            "motion": {
+                "config": f"https://huggingface.co/guoyww/animatediff-motion-adapter-v1-5-2/resolve/main/config.json",
+                "weight": f"https://huggingface.co/guoyww/animatediff-motion-lora-zoom-in/resolve/main/diffusion_pytorch_model.safetensors",
+            },
+        },
+    },
+    "stable-v1.5-realistic-animate-v1.5.2-zoom-out": {
+        **__hf_hub_animate_dict__,
+        **{
+            "motion": {
+                "config": f"https://huggingface.co/guoyww/animatediff-motion-adapter-v1-5-2/resolve/main/config.json",
+                "weight": f"https://huggingface.co/guoyww/animatediff-motion-lora-zoom-out/resolve/main/diffusion_pytorch_model.safetensors",
+            },
         },
     },
     "stable-v2": __hf_hub_stable_v2_dict__("stabilityai/stable-diffusion-2"),
@@ -161,6 +219,9 @@ from unitorch.cli.models.diffusers.modeling_controlnet_xl import (
     ControlNetXLForImage2ImageGeneration,
     ControlNetXLForImageInpainting,
 )
+from unitorch.cli.models.diffusers.modeling_blip2 import (
+    Blip2ForText2ImageGeneration,
+)
 
 from unitorch.cli.models.diffusers.processing_stable import StableProcessor
 from unitorch.cli.models.diffusers.processing_stable_xl import StableXLProcessor
@@ -171,5 +232,6 @@ from unitorch.cli.models.diffusers.processing_dreambooth import DreamboothProces
 from unitorch.cli.models.diffusers.processing_dreambooth_xl import DreamboothXLProcessor
 from unitorch.cli.models.diffusers.processing_controlnet import ControlNetProcessor
 from unitorch.cli.models.diffusers.processing_controlnet_xl import ControlNetXLProcessor
+from unitorch.cli.models.diffusers.processing_blip2 import Blip2Processor
 
 import unitorch.cli.models.diffusers.modeling_animate

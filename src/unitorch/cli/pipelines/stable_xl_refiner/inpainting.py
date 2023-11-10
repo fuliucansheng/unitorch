@@ -271,42 +271,48 @@ class StableXLRefinerForImageInpaintingPipeline(_StableXLRefinerForImageInpainti
         if weight_path is None and pretrain_infos is not None:
             state_dict = [
                 load_weight(
-                    nested_dict_value(pretrain_infos, "unet", "weight"), "unet."
+                    nested_dict_value(pretrain_infos, "unet", "weight"),
+                    prefix_keys={"": "unet."},
                 ),
                 load_weight(
-                    nested_dict_value(pretrain_infos, "text", "weight"), "text."
+                    nested_dict_value(pretrain_infos, "text", "weight"),
+                    prefix_keys={"": "text."},
                 ),
                 load_weight(
-                    nested_dict_value(pretrain_infos, "text2", "weight"), "text2."
+                    nested_dict_value(pretrain_infos, "text2", "weight"),
+                    prefix_keys={"": "text2."},
                 ),
-                load_weight(nested_dict_value(pretrain_infos, "vae", "weight"), "vae."),
+                load_weight(
+                    nested_dict_value(pretrain_infos, "vae", "weight"),
+                    prefix_keys={"": "vae."},
+                ),
             ]
             if nested_dict_value(pretrain_infos, "refiner_unet", "weight") is not None:
                 state_dict.append(
                     load_weight(
                         nested_dict_value(pretrain_infos, "refiner_unet", "weight"),
-                        "refiner_unet.",
+                        prefix_keys={"": "refiner_unet."},
                     )
                 )
             if nested_dict_value(pretrain_infos, "refiner_text", "weight") is not None:
                 state_dict.append(
                     load_weight(
                         nested_dict_value(pretrain_infos, "refiner_text", "weight"),
-                        "refiner_text.",
+                        prefix_keys={"": "refiner_text."},
                     )
                 )
             if nested_dict_value(pretrain_infos, "refiner_text2", "weight") is not None:
                 state_dict.append(
                     load_weight(
                         nested_dict_value(pretrain_infos, "refiner_text2", "weight"),
-                        "refiner_text2.",
+                        prefix_keys={"": "refiner_text2."},
                     )
                 )
             if nested_dict_value(pretrain_infos, "refiner_vae", "weight") is not None:
                 state_dict.append(
                     load_weight(
                         nested_dict_value(pretrain_infos, "refiner_vae", "weight"),
-                        "refiner_vae.",
+                        prefix_keys={"": "refiner_vae."},
                     )
                 )
 
