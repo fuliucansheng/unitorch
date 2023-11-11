@@ -11,7 +11,7 @@ import numpy as np
 from PIL import Image
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
-from diffusers.utils import numpy_to_pil, pt_to_pil
+from diffusers.utils import numpy_to_pil, pt_to_pil, export_to_gif
 from unitorch import is_safetensors_available, is_opencv_available
 from unitorch.cli import WriterMixin, WriterOutputs
 from unitorch.cli import (
@@ -55,6 +55,7 @@ def load_weight(
 
 
 def numpy2vid(video, mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]):
+    batch_size, channels, num_frames, height, width = video.shape
     mean = np.array(mean).reshape(1, -1, 1, 1, 1)
     std = np.array(std).reshape(1, -1, 1, 1, 1)
     # unnormalize back to [0,1]
@@ -117,6 +118,15 @@ class DiffusionProcessor:
         image.save(output_path)
         return name
 
+    def save_gif(self, images: List[Image.Image]):
+        md5 = hashlib.md5()
+        for image in images:
+            md5.update(image.tobytes())
+        name = md5.hexdigest() + ".gif"
+        output_path = f"{self.output_folder}/{name}"
+        export_to_gif(images, output_path)
+        return name
+
     def save_video(self, video):
         md5 = hashlib.md5()
         for image in video:
@@ -136,6 +146,18 @@ class DiffusionProcessor:
         images = outputs.outputs.numpy()
         images = numpy_to_pil(images)
         results["diffusion"] = [self.save_image(image) for image in images]
+        return WriterOutputs(results)
+
+    @register_process("core/postprocess/diffusion/gif")
+    def _diffusion_gif(
+        self,
+        outputs: DiffusionOutputs,
+    ):
+        results = outputs.to_pandas()
+        assert results.shape[0] == 0 or results.shape[0] == outputs.outputs.shape[0]
+        images = outputs.outputs.numpy()
+        images = numpy_to_pil(images)
+        results["diffusion"] = [self.save_gif(images)]
         return WriterOutputs(results)
 
     @register_process("core/postprocess/diffusion/video")

@@ -15,14 +15,15 @@ from unitorch.cli.pipelines.minigpt4 import MiniGPT4Blip2LlamaForGenerationPipel
 class MiniGPT4WebUI(GenericWebUI):
     def __init__(self, config: CoreConfigureParser):
         self.config = config
-        self._pipe = None
-        self._status = "stopped"
+        self._pipe = None if not hasattr(self, "_pipe") else self._pipe
+        self._status = "stopped" if self._pipe is None else "running"
+        self._name = "minigpt4-7b"
         self._iface = gr.Blocks()
         with self._iface:
             with gr.Row():
                 pretrained_name = gr.Dropdown(
                     ["minigpt4-7b", "minigpt4-13b"],
-                    value="minigpt4-7b",
+                    value=self._name,
                     label="Pretrain Checkpoint Name",
                 )
                 status = gr.Textbox(label="Model Status", value=self._status)
@@ -54,6 +55,7 @@ class MiniGPT4WebUI(GenericWebUI):
         if self._status == "running":
             self.stop()
         self.config.set("core/pipeline/minigpt4", "pretrained_name", pretrained_name)
+        self._name = pretrained_name
         self._pipe = MiniGPT4Blip2LlamaForGenerationPipeline.from_core_configure(
             self.config
         )
@@ -65,8 +67,8 @@ class MiniGPT4WebUI(GenericWebUI):
         del self._pipe
         gc.collect()
         torch.cuda.empty_cache()
-        self._pipe = None
-        self._status = "stopped"
+        self._pipe = None if not hasattr(self, "_pipe") else self._pipe
+        self._status = "stopped" if self._pipe is None else "running"
         return self._status
 
     def serve(

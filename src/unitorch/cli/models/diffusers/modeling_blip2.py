@@ -146,11 +146,6 @@ class Blip2ForText2ImageGeneration(_Blip2ForText2ImageGeneration):
 
         state_dict = None
         if weight_path is None and pretrain_infos is not None:
-            weight_path = [
-                cached_path(nested_dict_value(pretrain_infos, "unet", "weight")),
-                cached_path(nested_dict_value(pretrain_infos, "text", "weight")),
-                cached_path(nested_dict_value(pretrain_infos, "vae", "weight")),
-            ]
             state_dict = [
                 load_weight(
                     nested_dict_value(pretrain_infos, "unet", "weight"),

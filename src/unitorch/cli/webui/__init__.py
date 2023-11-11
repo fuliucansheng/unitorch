@@ -2,6 +2,7 @@
 # Licensed under the MIT License.
 
 import unitorch.cli.webui.animate
+import unitorch.cli.webui.blip2
 import unitorch.cli.webui.stable
 import unitorch.cli.webui.stable_xl
 import unitorch.cli.webui.stable_xl_refiner

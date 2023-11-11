@@ -288,9 +288,6 @@ class Blip2ForText2ImageGeneration(GenericModel, QuantizationMixin):
             feature_extractor=None,
         )
         self.pipeline.set_progress_bar_config(disable=True)
-        self.pipeline.enable_model_cpu_offload(0)
-        self.to(torch.half)
-        self.pipeline.enable_xformers_memory_efficient_attention()
 
     def enable_lora(self, lora_r: Optional[int] = 4):
         lora_attn_procs = {}

@@ -20,14 +20,15 @@ from unitorch.cli.pipelines.stable_xl import (
 class StableXLText2ImageWebUI(GenericWebUI):
     def __init__(self, config: CoreConfigureParser):
         self.config = config
-        self._pipe = None
-        self._status = "stopped"
+        self._pipe = None if not hasattr(self, "_pipe") else self._pipe
+        self._status = "stopped" if self._pipe is None else "running"
+        self._name = "stable-xl-base-1.0"
         self._iface = gr.Blocks()
         with self._iface:
             with gr.Row():
                 pretrained_name = gr.Dropdown(
                     ["stable-xl-base-1.0"],
-                    value="stable-xl-base-1.0",
+                    value=self._name,
                     label="Pretrain Checkpoint Name",
                 )
                 status = gr.Textbox(label="Model Status", value=self._status)
@@ -62,6 +63,7 @@ class StableXLText2ImageWebUI(GenericWebUI):
         self.config.set(
             "core/pipeline/stable_xl/text2image", "pretrained_name", pretrained_name
         )
+        self._name = pretrained_name
         self._pipe = StableXLForText2ImageGenerationPipeline.from_core_configure(
             self.config
         )
@@ -73,8 +75,8 @@ class StableXLText2ImageWebUI(GenericWebUI):
         del self._pipe
         gc.collect()
         torch.cuda.empty_cache()
-        self._pipe = None
-        self._status = "stopped"
+        self._pipe = None if not hasattr(self, "_pipe") else self._pipe
+        self._status = "stopped" if self._pipe is None else "running"
         return self._status
 
     def serve(
@@ -102,14 +104,15 @@ class StableXLText2ImageWebUI(GenericWebUI):
 class StableXLImage2ImageWebUI(GenericWebUI):
     def __init__(self, config: CoreConfigureParser):
         self.config = config
-        self._pipe = None
-        self._status = "stopped"
+        self._pipe = None if not hasattr(self, "_pipe") else self._pipe
+        self._status = "stopped" if self._pipe is None else "running"
+        self._name = "stable-xl-base-1.0"
         self._iface = gr.Blocks()
         with self._iface:
             with gr.Row():
                 pretrained_name = gr.Dropdown(
                     ["stable-xl-base-1.0"],
-                    value="stable-xl-base-1.0",
+                    value=self._name,
                     label="Pretrain Checkpoint Name",
                 )
                 status = gr.Textbox(label="Model Status", value=self._status)
@@ -143,6 +146,7 @@ class StableXLImage2ImageWebUI(GenericWebUI):
         self.config.set(
             "core/pipeline/stable_xl/image2image", "pretrained_name", pretrained_name
         )
+        self._name = pretrained_name
         self._pipe = StableXLForImage2ImageGenerationPipeline.from_core_configure(
             self.config
         )
@@ -154,8 +158,8 @@ class StableXLImage2ImageWebUI(GenericWebUI):
         del self._pipe
         gc.collect()
         torch.cuda.empty_cache()
-        self._pipe = None
-        self._status = "stopped"
+        self._pipe = None if not hasattr(self, "_pipe") else self._pipe
+        self._status = "stopped" if self._pipe is None else "running"
         return self._status
 
     def serve(
@@ -172,14 +176,15 @@ class StableXLImage2ImageWebUI(GenericWebUI):
 class StableXLImageInpaintingWebUI(GenericWebUI):
     def __init__(self, config: CoreConfigureParser):
         self.config = config
-        self._pipe = None
-        self._status = "stopped"
+        self._pipe = None if not hasattr(self, "_pipe") else self._pipe
+        self._status = "stopped" if self._pipe is None else "running"
+        self._name = "stable-xl-base-1.0"
         self._iface = gr.Blocks()
         with self._iface:
             with gr.Row():
                 pretrained_name = gr.Dropdown(
                     ["stable-xl-base-1.0"],
-                    value="stable-xl-base-1.0",
+                    value=self._name,
                     label="Pretrain Checkpoint Name",
                 )
                 status = gr.Textbox(label="Model Status", value=self._status)
@@ -216,6 +221,7 @@ class StableXLImageInpaintingWebUI(GenericWebUI):
         self.config.set(
             "core/pipeline/stable_xl/inpainting", "pretrained_name", pretrained_name
         )
+        self._name = pretrained_name
         self._pipe = StableXLForImageInpaintingPipeline.from_core_configure(self.config)
         self._status = "running"
         return self._status
@@ -225,8 +231,8 @@ class StableXLImageInpaintingWebUI(GenericWebUI):
         del self._pipe
         gc.collect()
         torch.cuda.empty_cache()
-        self._pipe = None
-        self._status = "stopped"
+        self._pipe = None if not hasattr(self, "_pipe") else self._pipe
+        self._status = "stopped" if self._pipe is None else "running"
         return self._status
 
     def serve(

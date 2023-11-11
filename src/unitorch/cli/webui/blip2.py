@@ -9,28 +9,21 @@ from PIL import Image
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from unitorch.cli import CoreConfigureParser, GenericWebUI
 from unitorch.cli import register_webui
-from unitorch.cli.pipelines.animate import (
-    AnimateForText2VideoGenerationPipeline,
-)
+from unitorch.cli.pipelines.blip2 import Blip2ForText2ImageGenerationPipeline
 
 
-@register_webui("core/webui/animate/text2video")
-class AnimateText2VideoWebUI(GenericWebUI):
+@register_webui("core/webui/blip2/text2image")
+class Blip2Text2ImageWebUI(GenericWebUI):
     def __init__(self, config: CoreConfigureParser):
         self.config = config
         self._pipe = None if not hasattr(self, "_pipe") else self._pipe
         self._status = "stopped" if self._pipe is None else "running"
-        self._name = "stable-v1.5-realistic-animate-v1.5"
+        self._name = "stable-v1.5-blipdiffuion"
         self._iface = gr.Blocks()
         with self._iface:
             with gr.Row():
                 pretrained_name = gr.Dropdown(
-                    [
-                        "stable-v1.5-realistic-animate-v1.5",
-                        "stable-v1.5-realistic-animate-v1.5.2",
-                        "stable-v1.5-realistic-animate-v1.5.2-zoom-in",
-                        "stable-v1.5-realistic-animate-v1.5.2-zoom-out",
-                    ],
+                    ["stable-v1.5-blipdiffuion"],
                     value=self._name,
                     label="Pretrain Checkpoint Name",
                 )
@@ -42,20 +35,21 @@ class AnimateText2VideoWebUI(GenericWebUI):
                 )
                 click_stop.click(self.stop, outputs=[status])
             prompt = gr.Textbox(label="Input Prompt")
-            negative_prompt = gr.Textbox(label="Input Negative Prompt")
-            video = gr.Video(type="pil", label="Output Video")
-            height = gr.Slider(512, 768, value=512, label="Video Height")
-            width = gr.Slider(512, 768, value=512, label="Video Width")
+            refer_prompt = gr.Textbox(label="Input Reference Prompt")
+            refer_image = gr.Image(type="pil", label="Input Reference Image")
+            image = gr.Image(type="pil", label="Output Image")
+            height = gr.Slider(512, 768, value=512, label="Image Height")
+            width = gr.Slider(512, 768, value=512, label="Image Width")
             submit = gr.Button(value="Submit")
             submit.click(
                 self.serve,
-                inputs=[prompt, negative_prompt, height, width],
-                outputs=[video],
+                inputs=[prompt, refer_prompt, refer_image, height, width],
+                outputs=[image],
             )
 
     @property
     def name(self):
-        return "StableText2Video"
+        return "Blip2Text2Image"
 
     @property
     def iface(self):
@@ -69,10 +63,10 @@ class AnimateText2VideoWebUI(GenericWebUI):
         if self._status == "running":
             self.stop()
         self.config.set(
-            "core/pipeline/animate/text2video", "pretrained_name", pretrained_name
+            "core/pipeline/blip2/text2image", "pretrained_name", pretrained_name
         )
         self._name = pretrained_name
-        self._pipe = AnimateForText2VideoGenerationPipeline.from_core_configure(
+        self._pipe = Blip2ForText2ImageGenerationPipeline.from_core_configure(
             self.config
         )
         self._status = "running"
@@ -90,15 +84,23 @@ class AnimateText2VideoWebUI(GenericWebUI):
     def serve(
         self,
         text: str,
-        negative_text: str,
+        refer_text: str,
+        refer_image: Image.Image,
         height: Optional[int] = 512,
         width: Optional[int] = 512,
+        guidance_scale: Optional[float] = 7.5,
+        num_timesteps: Optional[int] = 50,
+        seed: Optional[int] = 1123,
     ):
         assert self._pipe is not None
-        video = self._pipe(
+        image = self._pipe(
             text,
-            negative_text,
+            refer_text,
+            refer_image,
             height=height,
             width=width,
+            guidance_scale=guidance_scale,
+            num_timesteps=num_timesteps,
+            seed=seed,
         )
-        return video
+        return image

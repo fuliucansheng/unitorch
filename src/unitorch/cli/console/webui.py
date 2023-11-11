@@ -83,7 +83,11 @@ def webui(config_path_or_dir: str, **kwargs):
     host = config.getoption("host", "0.0.0.0")
     port = config.getoption("port", 7860)
     share = config.getoption("share", False)
-    demo_webui.launch(server_name=host, server_port=port, share=share,)
+    demo_webui.launch(
+        server_name=host,
+        server_port=port,
+        share=share,
+    )
 
     os._exit(0)
 

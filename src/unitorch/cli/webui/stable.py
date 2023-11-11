@@ -21,14 +21,15 @@ from unitorch.cli.pipelines.stable import (
 class StableText2ImageWebUI(GenericWebUI):
     def __init__(self, config: CoreConfigureParser):
         self.config = config
-        self._pipe = None
-        self._status = "stopped"
+        self._pipe = None if not hasattr(self, "_pipe") else self._pipe
+        self._status = "stopped" if self._pipe is None else "running"
+        self._name = "stable-v1.5"
         self._iface = gr.Blocks()
         with self._iface:
             with gr.Row():
                 pretrained_name = gr.Dropdown(
                     ["stable-v1.5", "stable-v2", "stable-v2.1"],
-                    value="stable-v1.5",
+                    value=self._name,
                     label="Pretrain Checkpoint Name",
                 )
                 status = gr.Textbox(label="Model Status", value=self._status)
@@ -63,8 +64,9 @@ class StableText2ImageWebUI(GenericWebUI):
         self.config.set(
             "core/pipeline/stable/text2image", "pretrained_name", pretrained_name
         )
-        if pretrained_name in ["stable-v2", "stable-v2.1"]:
+        if pretrained_name.startswith("stable-v2"):
             self.config.set("core/pipeline/stable/text2image", "pad_token", "!")
+        self._name = pretrained_name
         self._pipe = StableForText2ImageGenerationPipeline.from_core_configure(
             self.config
         )
@@ -76,8 +78,8 @@ class StableText2ImageWebUI(GenericWebUI):
         del self._pipe
         gc.collect()
         torch.cuda.empty_cache()
-        self._pipe = None
-        self._status = "stopped"
+        self._pipe = None if not hasattr(self, "_pipe") else self._pipe
+        self._status = "stopped" if self._pipe is None else "running"
         return self._status
 
     def serve(
@@ -105,14 +107,15 @@ class StableText2ImageWebUI(GenericWebUI):
 class StableImage2ImageWebUI(GenericWebUI):
     def __init__(self, config: CoreConfigureParser):
         self.config = config
-        self._pipe = None
-        self._status = "stopped"
+        self._pipe = None if not hasattr(self, "_pipe") else self._pipe
+        self._status = "stopped" if self._pipe is None else "running"
+        self._name = "stable-v1.5-nitrosocke-ghibli"
         self._iface = gr.Blocks()
         with self._iface:
             with gr.Row():
                 pretrained_name = gr.Dropdown(
                     ["stable-v1.5-nitrosocke-ghibli"],
-                    value="stable-v1.5-nitrosocke-ghibli",
+                    value=self._name,
                     label="Pretrain Checkpoint Name",
                 )
                 status = gr.Textbox(label="Model Status", value=self._status)
@@ -146,6 +149,9 @@ class StableImage2ImageWebUI(GenericWebUI):
         self.config.set(
             "core/pipeline/stable/image2image", "pretrained_name", pretrained_name
         )
+        if pretrained_name.startswith("stable-v2"):
+            self.config.set("core/pipeline/stable/image2image", "pad_token", "!")
+        self._name = pretrained_name
         self._pipe = StableForImage2ImageGenerationPipeline.from_core_configure(
             self.config
         )
@@ -157,8 +163,8 @@ class StableImage2ImageWebUI(GenericWebUI):
         del self._pipe
         gc.collect()
         torch.cuda.empty_cache()
-        self._pipe = None
-        self._status = "stopped"
+        self._pipe = None if not hasattr(self, "_pipe") else self._pipe
+        self._status = "stopped" if self._pipe is None else "running"
         return self._status
 
     def serve(
@@ -175,14 +181,15 @@ class StableImage2ImageWebUI(GenericWebUI):
 class StableImageInpaintingWebUI(GenericWebUI):
     def __init__(self, config: CoreConfigureParser):
         self.config = config
-        self._pipe = None
-        self._status = "stopped"
+        self._pipe = None if not hasattr(self, "_pipe") else self._pipe
+        self._status = "stopped" if self._pipe is None else "running"
+        self._name = "stable-v1.5-inpainting"
         self._iface = gr.Blocks()
         with self._iface:
             with gr.Row():
                 pretrained_name = gr.Dropdown(
                     ["stable-v1.5-inpainting"],
-                    value="stable-v1.5-inpainting",
+                    value=self._name,
                     label="Pretrain Checkpoint Name",
                 )
                 status = gr.Textbox(label="Model Status", value=self._status)
@@ -219,6 +226,9 @@ class StableImageInpaintingWebUI(GenericWebUI):
         self.config.set(
             "core/pipeline/stable/inpainting", "pretrained_name", pretrained_name
         )
+        if pretrained_name.startswith("stable-v2"):
+            self.config.set("core/pipeline/stable/inpainting", "pad_token", "!")
+        self._name = pretrained_name
         self._pipe = StableForImageInpaintingPipeline.from_core_configure(self.config)
         self._status = "running"
         return self._status
@@ -228,8 +238,8 @@ class StableImageInpaintingWebUI(GenericWebUI):
         del self._pipe
         gc.collect()
         torch.cuda.empty_cache()
-        self._pipe = None
-        self._status = "stopped"
+        self._pipe = None if not hasattr(self, "_pipe") else self._pipe
+        self._status = "stopped" if self._pipe is None else "running"
         return self._status
 
     def serve(
@@ -247,14 +257,15 @@ class StableImageInpaintingWebUI(GenericWebUI):
 class StableImageResolutionWebUI(GenericWebUI):
     def __init__(self, config: CoreConfigureParser):
         self.config = config
-        self._pipe = None
-        self._status = "stopped"
+        self._pipe = None if not hasattr(self, "_pipe") else self._pipe
+        self._status = "stopped" if self._pipe is None else "running"
+        self._name = "stable-v1.5-x4-upscaler"
         self._iface = gr.Blocks()
         with self._iface:
             with gr.Row():
                 pretrained_name = gr.Dropdown(
                     ["stable-v1.5-x4-upscaler"],
-                    value="stable-v1.5-x4-upscaler",
+                    value=self._name,
                     label="Pretrain Checkpoint Name",
                 )
                 status = gr.Textbox(label="Model Status", value=self._status)
@@ -288,6 +299,9 @@ class StableImageResolutionWebUI(GenericWebUI):
         self.config.set(
             "core/pipeline/stable/resolution", "pretrained_name", pretrained_name
         )
+        if pretrained_name.startswith("stable-v2"):
+            self.config.set("core/pipeline/stable/resolution", "pad_token", "!")
+        self._name = pretrained_name
         self._pipe = StableForImageResolutionPipeline.from_core_configure(self.config)
         self._status = "running"
         return self._status
@@ -297,8 +311,8 @@ class StableImageResolutionWebUI(GenericWebUI):
         del self._pipe
         gc.collect()
         torch.cuda.empty_cache()
-        self._pipe = None
-        self._status = "stopped"
+        self._pipe = None if not hasattr(self, "_pipe") else self._pipe
+        self._status = "stopped" if self._pipe is None else "running"
         return self._status
 
     def serve(

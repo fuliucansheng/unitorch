@@ -1,7 +1,8 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
-import unitorch.cli.webui.animate
+import unitorch.cli.pipelines.animate
+import unitorch.cli.pipelines.blip2
 import unitorch.cli.pipelines.stable
 import unitorch.cli.pipelines.stable_xl
 import unitorch.cli.pipelines.stable_xl_refiner
