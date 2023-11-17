@@ -33,6 +33,7 @@ class ControlNetXLForText2ImageGeneration(_ControlNetXLForText2ImageGeneration):
         self,
         config_path: str,
         text_config_path: str,
+        text2_config_path: str,
         vae_config_path: str,
         controlnet_config_path: str,
         scheduler_config_path: str,
@@ -50,6 +51,7 @@ class ControlNetXLForText2ImageGeneration(_ControlNetXLForText2ImageGeneration):
         super().__init__(
             config_path=config_path,
             text_config_path=text_config_path,
+            text2_config_path=text2_config_path,
             vae_config_path=vae_config_path,
             controlnet_config_path=controlnet_config_path,
             scheduler_config_path=scheduler_config_path,
@@ -87,6 +89,13 @@ class ControlNetXLForText2ImageGeneration(_ControlNetXLForText2ImageGeneration):
             nested_dict_value(pretrain_infos, "text", "config"),
         )
         text_config_path = cached_path(text_config_path)
+
+        text2_config_path = config.getoption("text2_config_path", None)
+        text2_config_path = pop_value(
+            text2_config_path,
+            nested_dict_value(pretrain_infos, "text2", "config"),
+        )
+        text2_config_path = cached_path(text2_config_path)
 
         vae_config_path = config.getoption("vae_config_path", None)
         vae_config_path = pop_value(
@@ -126,6 +135,7 @@ class ControlNetXLForText2ImageGeneration(_ControlNetXLForText2ImageGeneration):
         inst = cls(
             config_path=config_path,
             text_config_path=text_config_path,
+            text2_config_path=text2_config_path,
             vae_config_path=vae_config_path,
             controlnet_config_path=controlnet_config_path,
             scheduler_config_path=scheduler_config_path,
@@ -146,9 +156,22 @@ class ControlNetXLForText2ImageGeneration(_ControlNetXLForText2ImageGeneration):
         state_dict = None
         if weight_path is None and pretrain_infos is not None:
             state_dict = [
-                load_weight(nested_dict_value(pretrain_infos, "unet", "weight")),
-                load_weight(nested_dict_value(pretrain_infos, "text", "weight")),
-                load_weight(nested_dict_value(pretrain_infos, "vae", "weight")),
+                load_weight(
+                    nested_dict_value(pretrain_infos, "unet", "weight"),
+                    prefix_keys={"": "unet."},
+                ),
+                load_weight(
+                    nested_dict_value(pretrain_infos, "text", "weight"),
+                    prefix_keys={"": "text."},
+                ),
+                load_weight(
+                    nested_dict_value(pretrain_infos, "text2", "weight"),
+                    prefix_keys={"": "text2."},
+                ),
+                load_weight(
+                    nested_dict_value(pretrain_infos, "vae", "weight"),
+                    prefix_keys={"": "vae."},
+                ),
                 load_weight(
                     nested_dict_value(pretrain_infos, "controlnet", "weight"),
                     prefix_keys={"": "controlnet."},
@@ -219,6 +242,7 @@ class ControlNetXLForImage2ImageGeneration(_ControlNetXLForImage2ImageGeneration
         self,
         config_path: str,
         text_config_path: str,
+        text2_config_path: str,
         vae_config_path: str,
         controlnet_config_path: str,
         scheduler_config_path: str,
@@ -236,6 +260,7 @@ class ControlNetXLForImage2ImageGeneration(_ControlNetXLForImage2ImageGeneration
         super().__init__(
             config_path=config_path,
             text_config_path=text_config_path,
+            text2_config_path=text2_config_path,
             vae_config_path=vae_config_path,
             controlnet_config_path=controlnet_config_path,
             scheduler_config_path=scheduler_config_path,
@@ -273,6 +298,13 @@ class ControlNetXLForImage2ImageGeneration(_ControlNetXLForImage2ImageGeneration
             nested_dict_value(pretrain_infos, "text", "config"),
         )
         text_config_path = cached_path(text_config_path)
+
+        text2_config_path = config.getoption("text2_config_path", None)
+        text2_config_path = pop_value(
+            text2_config_path,
+            nested_dict_value(pretrain_infos, "text2", "config"),
+        )
+        text2_config_path = cached_path(text2_config_path)
 
         vae_config_path = config.getoption("vae_config_path", None)
         vae_config_path = pop_value(
@@ -312,6 +344,7 @@ class ControlNetXLForImage2ImageGeneration(_ControlNetXLForImage2ImageGeneration
         inst = cls(
             config_path=config_path,
             text_config_path=text_config_path,
+            text2_config_path=text2_config_path,
             vae_config_path=vae_config_path,
             controlnet_config_path=controlnet_config_path,
             scheduler_config_path=scheduler_config_path,
@@ -332,9 +365,22 @@ class ControlNetXLForImage2ImageGeneration(_ControlNetXLForImage2ImageGeneration
         state_dict = None
         if weight_path is None and pretrain_infos is not None:
             state_dict = [
-                load_weight(nested_dict_value(pretrain_infos, "unet", "weight")),
-                load_weight(nested_dict_value(pretrain_infos, "text", "weight")),
-                load_weight(nested_dict_value(pretrain_infos, "vae", "weight")),
+                load_weight(
+                    nested_dict_value(pretrain_infos, "unet", "weight"),
+                    prefix_keys={"": "unet."},
+                ),
+                load_weight(
+                    nested_dict_value(pretrain_infos, "text", "weight"),
+                    prefix_keys={"": "text."},
+                ),
+                load_weight(
+                    nested_dict_value(pretrain_infos, "text2", "weight"),
+                    prefix_keys={"": "text2."},
+                ),
+                load_weight(
+                    nested_dict_value(pretrain_infos, "vae", "weight"),
+                    prefix_keys={"": "vae."},
+                ),
                 load_weight(
                     nested_dict_value(pretrain_infos, "controlnet", "weight"),
                     prefix_keys={"": "controlnet."},
@@ -388,6 +434,7 @@ class ControlNetXLForImageInpainting(_ControlNetXLForImageInpainting):
         self,
         config_path: str,
         text_config_path: str,
+        text2_config_path: str,
         vae_config_path: str,
         controlnet_config_path: str,
         scheduler_config_path: str,
@@ -405,6 +452,7 @@ class ControlNetXLForImageInpainting(_ControlNetXLForImageInpainting):
         super().__init__(
             config_path=config_path,
             text_config_path=text_config_path,
+            text2_config_path=text2_config_path,
             vae_config_path=vae_config_path,
             controlnet_config_path=controlnet_config_path,
             scheduler_config_path=scheduler_config_path,
@@ -442,6 +490,13 @@ class ControlNetXLForImageInpainting(_ControlNetXLForImageInpainting):
             nested_dict_value(pretrain_infos, "text", "config"),
         )
         text_config_path = cached_path(text_config_path)
+
+        text2_config_path = config.getoption("text2_config_path", None)
+        text2_config_path = pop_value(
+            text2_config_path,
+            nested_dict_value(pretrain_infos, "text2", "config"),
+        )
+        text2_config_path = cached_path(text2_config_path)
 
         vae_config_path = config.getoption("vae_config_path", None)
         vae_config_path = pop_value(
@@ -481,6 +536,7 @@ class ControlNetXLForImageInpainting(_ControlNetXLForImageInpainting):
         inst = cls(
             config_path=config_path,
             text_config_path=text_config_path,
+            text2_config_path=text2_config_path,
             vae_config_path=vae_config_path,
             controlnet_config_path=controlnet_config_path,
             scheduler_config_path=scheduler_config_path,
@@ -501,9 +557,22 @@ class ControlNetXLForImageInpainting(_ControlNetXLForImageInpainting):
         state_dict = None
         if weight_path is None and pretrain_infos is not None:
             state_dict = [
-                load_weight(nested_dict_value(pretrain_infos, "unet", "weight")),
-                load_weight(nested_dict_value(pretrain_infos, "text", "weight")),
-                load_weight(nested_dict_value(pretrain_infos, "vae", "weight")),
+                load_weight(
+                    nested_dict_value(pretrain_infos, "unet", "weight"),
+                    prefix_keys={"": "unet."},
+                ),
+                load_weight(
+                    nested_dict_value(pretrain_infos, "text", "weight"),
+                    prefix_keys={"": "text."},
+                ),
+                load_weight(
+                    nested_dict_value(pretrain_infos, "text2", "weight"),
+                    prefix_keys={"": "text2."},
+                ),
+                load_weight(
+                    nested_dict_value(pretrain_infos, "vae", "weight"),
+                    prefix_keys={"": "vae."},
+                ),
                 load_weight(
                     nested_dict_value(pretrain_infos, "controlnet", "weight"),
                     prefix_keys={"": "controlnet."},

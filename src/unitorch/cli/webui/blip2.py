@@ -14,16 +14,20 @@ from unitorch.cli.pipelines.blip2 import Blip2ForText2ImageGenerationPipeline
 
 @register_webui("core/webui/blip2/text2image")
 class Blip2Text2ImageWebUI(GenericWebUI):
+    supported_pretrained_names = [
+        "stable-v1.5-blipdiffuion",
+    ]
+
     def __init__(self, config: CoreConfigureParser):
         self.config = config
         self._pipe = None if not hasattr(self, "_pipe") else self._pipe
         self._status = "stopped" if self._pipe is None else "running"
-        self._name = "stable-v1.5-blipdiffuion"
+        self._name = self.supported_pretrained_names[0]
         self._iface = gr.Blocks()
         with self._iface:
             with gr.Row():
                 pretrained_name = gr.Dropdown(
-                    ["stable-v1.5-blipdiffuion"],
+                    self.supported_pretrained_names,
                     value=self._name,
                     label="Pretrain Checkpoint Name",
                 )

@@ -18,16 +18,21 @@ from unitorch.cli.pipelines.stable_xl import (
 
 @register_webui("core/webui/stable_xl/text2image")
 class StableXLText2ImageWebUI(GenericWebUI):
+    supported_pretrained_names = [
+        "stable-xl-base-1.0",
+        "stable-xl-dreamshaper-xl-1.0",
+    ]
+
     def __init__(self, config: CoreConfigureParser):
         self.config = config
         self._pipe = None if not hasattr(self, "_pipe") else self._pipe
         self._status = "stopped" if self._pipe is None else "running"
-        self._name = "stable-xl-base-1.0"
+        self._name = self.supported_pretrained_names[0]
         self._iface = gr.Blocks()
         with self._iface:
             with gr.Row():
                 pretrained_name = gr.Dropdown(
-                    ["stable-xl-base-1.0"],
+                    self.supported_pretrained_names,
                     value=self._name,
                     label="Pretrain Checkpoint Name",
                 )
@@ -102,16 +107,21 @@ class StableXLText2ImageWebUI(GenericWebUI):
 
 @register_webui("core/webui/stable_xl/image2image")
 class StableXLImage2ImageWebUI(GenericWebUI):
+    supported_pretrained_names = [
+        "stable-xl-base-1.0",
+        "stable-xl-dreamshaper-xl-1.0",
+    ]
+
     def __init__(self, config: CoreConfigureParser):
         self.config = config
         self._pipe = None if not hasattr(self, "_pipe") else self._pipe
         self._status = "stopped" if self._pipe is None else "running"
-        self._name = "stable-xl-base-1.0"
+        self._name = self.supported_pretrained_names[0]
         self._iface = gr.Blocks()
         with self._iface:
             with gr.Row():
                 pretrained_name = gr.Dropdown(
-                    ["stable-xl-base-1.0"],
+                    self.supported_pretrained_names,
                     value=self._name,
                     label="Pretrain Checkpoint Name",
                 )
@@ -174,16 +184,21 @@ class StableXLImage2ImageWebUI(GenericWebUI):
 
 @register_webui("core/webui/stable_xl/inpainting")
 class StableXLImageInpaintingWebUI(GenericWebUI):
+    supported_pretrained_names = [
+        "stable-xl-base-1.0",
+        "stable-xl-dreamshaper-xl-1.0",
+    ]
+
     def __init__(self, config: CoreConfigureParser):
         self.config = config
         self._pipe = None if not hasattr(self, "_pipe") else self._pipe
         self._status = "stopped" if self._pipe is None else "running"
-        self._name = "stable-xl-base-1.0"
+        self._name = self.supported_pretrained_names[0]
         self._iface = gr.Blocks()
         with self._iface:
             with gr.Row():
                 pretrained_name = gr.Dropdown(
-                    ["stable-xl-base-1.0"],
+                    self.supported_pretrained_names,
                     value=self._name,
                     label="Pretrain Checkpoint Name",
                 )

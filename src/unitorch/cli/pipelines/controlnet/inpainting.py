@@ -7,9 +7,9 @@ from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from diffusers.utils import numpy_to_pil
 from unitorch import is_xformers_available
 from unitorch.models.diffusers import (
-    StableForImage2ImageGeneration as _StableForImage2ImageGeneration,
+    ControlNetForImageInpainting as _ControlNetForImageInpainting,
 )
-from unitorch.models.diffusers import StableProcessor
+from unitorch.models.diffusers import ControlNetProcessor
 
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.cli import (
@@ -20,12 +20,13 @@ from unitorch.cli import (
 from unitorch.cli.models.diffusers import pretrained_diffusers_infos, load_weight
 
 
-class StableForImage2ImageGenerationPipeline(_StableForImage2ImageGeneration):
+class ControlNetForImageInpaintingPipeline(_ControlNetForImageInpainting):
     def __init__(
         self,
         config_path: str,
         text_config_path: str,
         vae_config_path: str,
+        controlnet_config_path: str,
         scheduler_config_path: str,
         vocab_path: str,
         merge_path: str,
@@ -42,10 +43,11 @@ class StableForImage2ImageGenerationPipeline(_StableForImage2ImageGeneration):
             config_path=config_path,
             text_config_path=text_config_path,
             vae_config_path=vae_config_path,
+            controlnet_config_path=controlnet_config_path,
             scheduler_config_path=scheduler_config_path,
             quant_config_path=quant_config_path,
         )
-        self.processor = StableProcessor(
+        self.processor = ControlNetProcessor(
             vocab_path=vocab_path,
             merge_path=merge_path,
             vae_config_path=vae_config_path,
@@ -68,10 +70,12 @@ class StableForImage2ImageGenerationPipeline(_StableForImage2ImageGeneration):
             self.pipeline.enable_xformers_memory_efficient_attention()
 
     @classmethod
-    @add_default_section_for_init("core/pipeline/stable/image2image")
+    @add_default_section_for_init("core/pipeline/controlnet/inpainting")
     def from_core_configure(cls, config, **kwargs):
-        config.set_default_section("core/pipeline/stable/image2image")
-        pretrained_name = config.getoption("pretrained_name", "stable-v1.5")
+        config.set_default_section("core/pipeline/controlnet/inpainting")
+        pretrained_name = config.getoption(
+            "pretrained_name", "stable-v1.5-controlnet-canny"
+        )
         pretrain_infos = nested_dict_value(pretrained_diffusers_infos, pretrained_name)
 
         config_path = config.getoption("config_path", None)
@@ -94,6 +98,13 @@ class StableForImage2ImageGenerationPipeline(_StableForImage2ImageGeneration):
             nested_dict_value(pretrain_infos, "vae", "config"),
         )
         vae_config_path = cached_path(vae_config_path)
+
+        controlnet_config_path = config.getoption("controlnet_config_path", None)
+        controlnet_config_path = pop_value(
+            controlnet_config_path,
+            nested_dict_value(pretrain_infos, "controlnet", "config"),
+        )
+        controlnet_config_path = cached_path(controlnet_config_path)
 
         scheduler_config_path = config.getoption("scheduler_config_path", None)
         scheduler_config_path = pop_value(
@@ -133,18 +144,23 @@ class StableForImage2ImageGenerationPipeline(_StableForImage2ImageGeneration):
                 load_weight(nested_dict_value(pretrain_infos, "unet", "weight")),
                 load_weight(nested_dict_value(pretrain_infos, "text", "weight")),
                 load_weight(nested_dict_value(pretrain_infos, "vae", "weight")),
+                load_weight(
+                    nested_dict_value(pretrain_infos, "controlnet", "weight"),
+                    prefix_keys={"": "controlnet."},
+                ),
             ]
 
         inst = cls(
             config_path=config_path,
             text_config_path=text_config_path,
             vae_config_path=vae_config_path,
+            controlnet_config_path=controlnet_config_path,
             scheduler_config_path=scheduler_config_path,
             vocab_path=vocab_path,
             merge_path=merge_path,
             quant_config_path=quant_config_path,
-            max_seq_length=max_seq_length,
             pad_token=pad_token,
+            max_seq_length=max_seq_length,
             weight_path=weight_path,
             state_dict=state_dict,
             device=device,
@@ -154,17 +170,23 @@ class StableForImage2ImageGenerationPipeline(_StableForImage2ImageGeneration):
         return inst
 
     @torch.no_grad()
-    @add_default_section_for_function("core/pipeline/stable/image2image")
+    @add_default_section_for_function("core/pipeline/controlnet/inpainting")
     def __call__(
         self,
         text: str,
-        image: Image.Image,
-        strength: Optional[float] = 0.8,
+        image: Union[Image.Image, str],
+        mask_image: Union[Image.Image, str],
+        condition_image: Union[Image.Image, str],
         guidance_scale: Optional[float] = 7.5,
         num_timesteps: Optional[int] = 50,
         seed: Optional[int] = 1123,
     ):
-        inputs = self.processor.image2image_inputs(text, image=image)
+        inputs = self.processor.inpainting_inputs(
+            image=image,
+            mask_image=mask_image,
+            condition_image=condition_image,
+            prompt=text,
+        )
         inputs = {k: v.unsqueeze(0) if v is not None else v for k, v in inputs.items()}
         inputs = {
             k: v.to(device=self._device) if v is not None else v
@@ -174,7 +196,6 @@ class StableForImage2ImageGenerationPipeline(_StableForImage2ImageGeneration):
         self.seed = seed
         outputs = self.generate(
             **inputs,
-            strength=strength,
             guidance_scale=guidance_scale,
         )
         images = numpy_to_pil(outputs.images.cpu().numpy())

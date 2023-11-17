@@ -16,7 +16,7 @@ from unitorch.cli import (
     add_default_section_for_init,
     add_default_section_for_function,
 )
-from unitorch.cli.models.diffusers import pretrained_diffusers_infos
+from unitorch.cli.models.diffusers import pretrained_diffusers_infos, load_weight
 
 
 class StableForText2ImageGenerationPipeline(_StableForText2ImageGeneration):
@@ -126,11 +126,12 @@ class StableForText2ImageGenerationPipeline(_StableForText2ImageGeneration):
         enable_cpu_offload = config.getoption("enable_cpu_offload", True)
         enable_xformers = config.getoption("enable_xformers", True)
 
+        state_dict = None
         if weight_path is None and pretrain_infos is not None:
-            weight_path = [
-                cached_path(nested_dict_value(pretrain_infos, "unet", "weight")),
-                cached_path(nested_dict_value(pretrain_infos, "text", "weight")),
-                cached_path(nested_dict_value(pretrain_infos, "vae", "weight")),
+            state_dict = [
+                load_weight(nested_dict_value(pretrain_infos, "unet", "weight")),
+                load_weight(nested_dict_value(pretrain_infos, "text", "weight")),
+                load_weight(nested_dict_value(pretrain_infos, "vae", "weight")),
             ]
 
         inst = cls(
@@ -144,6 +145,7 @@ class StableForText2ImageGenerationPipeline(_StableForText2ImageGeneration):
             pad_token=pad_token,
             max_seq_length=max_seq_length,
             weight_path=weight_path,
+            state_dict=state_dict,
             device=device,
             enable_cpu_offload=enable_cpu_offload,
             enable_xformers=enable_xformers,

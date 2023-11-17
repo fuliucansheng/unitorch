@@ -63,6 +63,7 @@ class DreamboothXLForText2ImageGeneration(GenericModel, QuantizationMixin):
         self,
         config_path: str,
         text_config_path: str,
+        text2_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
         quant_config_path: Optional[str] = None,
@@ -98,6 +99,9 @@ class DreamboothXLForText2ImageGeneration(GenericModel, QuantizationMixin):
         text_config = CLIPTextConfig.from_json_file(text_config_path)
         self.text = CLIPTextModel(text_config)
 
+        text_config2 = CLIPTextConfig.from_json_file(text2_config_path)
+        self.text2 = CLIPTextModelWithProjection(text_config2)
+
         vae_config_dict = json.load(open(vae_config_path))
         self.vae = AutoencoderKL.from_config(vae_config_dict)
 
@@ -117,6 +121,9 @@ class DreamboothXLForText2ImageGeneration(GenericModel, QuantizationMixin):
 
         if freeze_text_encoder:
             for param in self.text.parameters():
+                param.requires_grad = False
+
+            for param in self.text2.parameters():
                 param.requires_grad = False
 
         if quant_config_path is not None:

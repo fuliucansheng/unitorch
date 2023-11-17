@@ -13,16 +13,21 @@ from unitorch.cli.pipelines.minigpt4 import MiniGPT4Blip2LlamaForGenerationPipel
 
 @register_webui("core/webui/minigpt4")
 class MiniGPT4WebUI(GenericWebUI):
+    supported_pretrained_names = [
+        "minigpt4-7b",
+        "minigpt4-13b",
+    ]
+
     def __init__(self, config: CoreConfigureParser):
         self.config = config
         self._pipe = None if not hasattr(self, "_pipe") else self._pipe
         self._status = "stopped" if self._pipe is None else "running"
-        self._name = "minigpt4-7b"
+        self._name = self.supported_pretrained_names[0]
         self._iface = gr.Blocks()
         with self._iface:
             with gr.Row():
                 pretrained_name = gr.Dropdown(
-                    ["minigpt4-7b", "minigpt4-13b"],
+                    self.supported_pretrained_names,
                     value=self._name,
                     label="Pretrain Checkpoint Name",
                 )

@@ -118,6 +118,9 @@ class GenericControlNetXLModel(GenericModel, QuantizationMixin):
             for param in self.text.parameters():
                 param.requires_grad = False
 
+            for param in self.text2.parameters():
+                param.requires_grad = False
+
         if freeze_unet_encoder:
             for param in self.unet.parameters():
                 param.requires_grad = False

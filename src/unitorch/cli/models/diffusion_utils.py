@@ -156,8 +156,8 @@ class DiffusionProcessor:
         results = outputs.to_pandas()
         assert results.shape[0] == 0 or results.shape[0] == outputs.outputs.shape[0]
         images = outputs.outputs.numpy()
-        images = numpy_to_pil(images)
-        results["diffusion"] = [self.save_gif(images)]
+        images = [numpy_to_pil(image) for image in images]
+        results["diffusion"] = [self.save_gif(image) for image in images]
         return WriterOutputs(results)
 
     @register_process("core/postprocess/diffusion/video")

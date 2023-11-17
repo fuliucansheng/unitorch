@@ -7,6 +7,7 @@ import fire
 import logging
 import importlib
 import gradio as gr
+import pkg_resources
 import unitorch.cli
 from torch.multiprocessing import spawn
 from transformers.utils import is_remote_url
@@ -76,7 +77,11 @@ def webui(config_path_or_dir: str, **kwargs):
     webuis = [webui_instance(enabled_webui, config) for enabled_webui in enabled_webuis]
 
     demo_webui = gr.TabbedInterface(
-        [webui.iface for webui in webuis], [webui.name for webui in webuis]
+        interface_list=[webui.iface for webui in webuis],
+        tab_names=[webui.name for webui in webuis],
+        theme="sudeepshouche/minimalist",
+        title="Unitorch WebUI",
+        css="footer {visibility: hidden}",
     )
 
     config.set_default_section("core/cli")
@@ -87,6 +92,7 @@ def webui(config_path_or_dir: str, **kwargs):
         server_name=host,
         server_port=port,
         share=share,
+        favicon_path=pkg_resources.resource_filename("unitorch", "cli/assets/icon.png"),
     )
 
     os._exit(0)

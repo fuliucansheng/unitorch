@@ -28,6 +28,7 @@ class DreamboothXLForText2ImageGeneration(_DreamboothXLForText2ImageGeneration):
         self,
         config_path: str,
         text_config_path: str,
+        text2_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
         quant_config_path: Optional[str] = None,
@@ -46,6 +47,7 @@ class DreamboothXLForText2ImageGeneration(_DreamboothXLForText2ImageGeneration):
         super().__init__(
             config_path=config_path,
             text_config_path=text_config_path,
+            text2_config_path=text2_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
             quant_config_path=quant_config_path,
@@ -83,6 +85,13 @@ class DreamboothXLForText2ImageGeneration(_DreamboothXLForText2ImageGeneration):
         )
         text_config_path = cached_path(text_config_path)
 
+        text2_config_path = config.getoption("text2_config_path", None)
+        text2_config_path = pop_value(
+            text2_config_path,
+            nested_dict_value(pretrain_infos, "text2", "config"),
+        )
+        text2_config_path = cached_path(text2_config_path)
+
         vae_config_path = config.getoption("vae_config_path", None)
         vae_config_path = pop_value(
             vae_config_path,
@@ -116,6 +125,7 @@ class DreamboothXLForText2ImageGeneration(_DreamboothXLForText2ImageGeneration):
         inst = cls(
             config_path=config_path,
             text_config_path=text_config_path,
+            text2_config_path=text2_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
             quant_config_path=quant_config_path,

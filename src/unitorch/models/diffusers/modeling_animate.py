@@ -9,7 +9,7 @@ from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 import diffusers.schedulers as schedulers
 from transformers import CLIPTextConfig, CLIPTextModel
 from diffusers.schedulers import SchedulerMixin
-from diffusers.models import AutoencoderKL, UNet2DConditionModel
+from diffusers.models import AutoencoderKL, UNet2DConditionModel, UNetMotionModel
 from diffusers.models.unet_motion_model import MotionAdapter
 from diffusers.image_processor import PipelineImageInput, VaeImageProcessor
 from diffusers.pipelines.animatediff.pipeline_animatediff import (
@@ -165,6 +165,24 @@ class AnimateForText2VideoGeneration(GenericAnimateModel):
         self,
     ):
         raise NotImplementedError
+
+    def train(self, mode=True):
+        if not mode:
+            self.pipeline.unet = UNetMotionModel.from_unet2d(self.unet, self.motion)
+            self.pipeline.unet.to(device=self.pipeline.device)
+            self.unet.eval()
+            self.motion.eval()
+            self.vae.eval()
+            self.text.eval()
+        else:
+            self.unet.train()
+            self.motion.train()
+            self.vae.train()
+            self.text.train()
+
+    def to(self, *args, **kwargs):
+        self.pipeline.unet.to(*args, **kwargs)
+        return super().to(*args, **kwargs)
 
     def generate(
         self,

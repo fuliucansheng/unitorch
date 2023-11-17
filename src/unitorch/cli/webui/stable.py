@@ -19,16 +19,28 @@ from unitorch.cli.pipelines.stable import (
 
 @register_webui("core/webui/stable/text2image")
 class StableText2ImageWebUI(GenericWebUI):
+    supported_pretrained_names = [
+        "stable-v1.5",
+        "stable-v1.5-realistic-v5.1-no-vae",
+        "stable-v1.5-realistic-v5.1",
+        "stable-v1.5-cyber-realistic",
+        "stable-v1.5-majicmix-realistic-v6",
+        "stable-v1.5-chilloutmix",
+        "stable-v1.5-dreamshaper-8",
+        "stable-v2",
+        "stable-v2.1",
+    ]
+
     def __init__(self, config: CoreConfigureParser):
         self.config = config
         self._pipe = None if not hasattr(self, "_pipe") else self._pipe
         self._status = "stopped" if self._pipe is None else "running"
-        self._name = "stable-v1.5"
+        self._name = self.supported_pretrained_names[0]
         self._iface = gr.Blocks()
         with self._iface:
             with gr.Row():
                 pretrained_name = gr.Dropdown(
-                    ["stable-v1.5", "stable-v2", "stable-v2.1"],
+                    self.supported_pretrained_names,
                     value=self._name,
                     label="Pretrain Checkpoint Name",
                 )
@@ -105,16 +117,20 @@ class StableText2ImageWebUI(GenericWebUI):
 
 @register_webui("core/webui/stable/image2image")
 class StableImage2ImageWebUI(GenericWebUI):
+    supported_pretrained_names = [
+        "stable-v1.5-nitrosocke-ghibli",
+    ]
+
     def __init__(self, config: CoreConfigureParser):
         self.config = config
         self._pipe = None if not hasattr(self, "_pipe") else self._pipe
         self._status = "stopped" if self._pipe is None else "running"
-        self._name = "stable-v1.5-nitrosocke-ghibli"
+        self._name = self.supported_pretrained_names[0]
         self._iface = gr.Blocks()
         with self._iface:
             with gr.Row():
                 pretrained_name = gr.Dropdown(
-                    ["stable-v1.5-nitrosocke-ghibli"],
+                    self.supported_pretrained_names,
                     value=self._name,
                     label="Pretrain Checkpoint Name",
                 )
@@ -179,16 +195,22 @@ class StableImage2ImageWebUI(GenericWebUI):
 
 @register_webui("core/webui/stable/inpainting")
 class StableImageInpaintingWebUI(GenericWebUI):
+    supported_pretrained_names = [
+        "stable-v1.5-inpainting",
+        "stable-v1.5-deliberate-v2-inpainting",
+        "stable-v1.5-dreamshaper-8-inpainting",
+    ]
+
     def __init__(self, config: CoreConfigureParser):
         self.config = config
         self._pipe = None if not hasattr(self, "_pipe") else self._pipe
         self._status = "stopped" if self._pipe is None else "running"
-        self._name = "stable-v1.5-inpainting"
+        self._name = self.supported_pretrained_names[0]
         self._iface = gr.Blocks()
         with self._iface:
             with gr.Row():
                 pretrained_name = gr.Dropdown(
-                    ["stable-v1.5-inpainting"],
+                    self.supported_pretrained_names,
                     value=self._name,
                     label="Pretrain Checkpoint Name",
                 )
@@ -255,16 +277,20 @@ class StableImageInpaintingWebUI(GenericWebUI):
 
 @register_webui("core/webui/stable/resolution")
 class StableImageResolutionWebUI(GenericWebUI):
+    supported_pretrained_names = [
+        "stable-v1.5-x4-upscaler",
+    ]
+
     def __init__(self, config: CoreConfigureParser):
         self.config = config
         self._pipe = None if not hasattr(self, "_pipe") else self._pipe
         self._status = "stopped" if self._pipe is None else "running"
-        self._name = "stable-v1.5-x4-upscaler"
+        self._name = self.supported_pretrained_names[0]
         self._iface = gr.Blocks()
         with self._iface:
             with gr.Row():
                 pretrained_name = gr.Dropdown(
-                    ["stable-v1.5-x4-upscaler"],
+                    self.supported_pretrained_names,
                     value=self._name,
                     label="Pretrain Checkpoint Name",
                 )
