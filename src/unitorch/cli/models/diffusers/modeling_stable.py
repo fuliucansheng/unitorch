@@ -20,7 +20,7 @@ from unitorch.cli import (
 )
 from unitorch.cli.models import DiffusionOutputs, LossOutputs
 from unitorch.cli.models import diffusion_model_decorator
-from unitorch.cli.models.diffusers import pretrained_diffusers_infos
+from unitorch.cli.models.diffusers import pretrained_diffusers_infos, load_weight
 
 
 @register_model("core/model/diffusers/text2image/stable", diffusion_model_decorator)
@@ -131,14 +131,15 @@ class StableForText2ImageGeneration(_StableForText2ImageGeneration):
 
         weight_path = config.getoption("pretrained_weight_path", None)
 
+        state_dict = None
         if weight_path is None and pretrain_infos is not None:
-            weight_path = [
-                cached_path(nested_dict_value(pretrain_infos, "unet", "weight")),
-                cached_path(nested_dict_value(pretrain_infos, "text", "weight")),
-                cached_path(nested_dict_value(pretrain_infos, "vae", "weight")),
+            state_dict = [
+                load_weight(nested_dict_value(pretrain_infos, "unet", "weight")),
+                load_weight(nested_dict_value(pretrain_infos, "text", "weight")),
+                load_weight(nested_dict_value(pretrain_infos, "vae", "weight")),
             ]
 
-        inst.from_pretrained(weight_path)
+        inst.from_pretrained(weight_path, state_dict=state_dict)
         return inst
 
     @autocast()
