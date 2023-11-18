@@ -3,6 +3,7 @@
 
 import unitorch.cli.pipelines.animate
 import unitorch.cli.pipelines.blip2
+import unitorch.cli.pipelines.blip2controlnet
 import unitorch.cli.pipelines.stable
 import unitorch.cli.pipelines.stable_xl
 import unitorch.cli.pipelines.stable_xl_refiner

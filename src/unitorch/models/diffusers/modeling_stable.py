@@ -288,8 +288,8 @@ class StableForText2ImageGeneration(GenericStableModel):
         negative_input_ids: torch.Tensor,
         attention_mask: Optional[torch.Tensor] = None,
         negative_attention_mask: Optional[torch.Tensor] = None,
-        height: Optional[int] = 1024,
-        width: Optional[int] = 1024,
+        height: Optional[int] = 512,
+        width: Optional[int] = 512,
         guidance_scale: Optional[float] = 7.5,
     ):
         prompt_embeds = self.text(

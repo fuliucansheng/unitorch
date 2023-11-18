@@ -133,7 +133,7 @@ pretrained_diffusers_infos = {
     "stable-v1.5-controlnet-inpainting": __hf_hub_stable_v1_5_controlnet_dict__(
         "lllyasviel/control_v11p_sd15_inpaint"
     ),
-    "stable-v1.5-blipdiffuion": {
+    "stable-v1.5-blipdiffusion": {
         **__hf_hub_stable_v1_5_dict__("salesforce/blipdiffusion"),
         **{
             "qformer": {
@@ -145,6 +145,24 @@ pretrained_diffusers_infos = {
                 "weight": f"https://huggingface.co/salesforce/blipdiffusion/resolve/main/vision_encoder/pytorch_model.bin",
             },
             "vision_config": "https://huggingface.co/salesforce/blipdiffusion/resolve/main/image_processor/preprocessor_config.json",
+        },
+    },
+    "stable-v1.5-blipdiffusion-controlnet": {
+        **__hf_hub_stable_v1_5_dict__("salesforce/blipdiffusion-controlnet"),
+        **{
+            "qformer": {
+                "config": f"https://huggingface.co/salesforce/blipdiffusion-controlnet/resolve/main/qformer/config.json",
+                "weight": f"https://huggingface.co/salesforce/blipdiffusion-controlnet/resolve/main/qformer/pytorch_model.bin",
+            },
+            "vision_encoder": {
+                "config": f"https://huggingface.co/salesforce/blipdiffusion-controlnet/resolve/main/vision_encoder/config.json",
+                "weight": f"https://huggingface.co/salesforce/blipdiffusion-controlnet/resolve/main/vision_encoder/pytorch_model.bin",
+            },
+            "vision_config": "https://huggingface.co/salesforce/blipdiffusion-controlnet/resolve/main/image_processor/preprocessor_config.json",
+            "controlnet": {
+                "config": f"https://huggingface.co/salesforce/blipdiffusion-controlnet/resolve/main/controlnet/config.json",
+                "weight": f"https://huggingface.co/salesforce/blipdiffusion-controlnet/resolve/main/controlnet/diffusion_pytorch_model.bin",
+            },
         },
     },
     "stable-v1.5-realistic-animate-v1.5": {

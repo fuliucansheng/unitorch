@@ -78,6 +78,12 @@ class Blip2Processor(HfImageClassificationProcessor, HfTextClassificationProcess
         else:
             self.vae_image_processor = None
 
+        self.vae_condition_image_processor = VaeImageProcessor(
+            vae_scale_factor=vae_scale_factor,
+            do_convert_rgb=True,
+            do_normalize=False,
+        )
+
     def text2image(
         self,
     ):
@@ -90,13 +96,16 @@ class Blip2Processor(HfImageClassificationProcessor, HfTextClassificationProcess
         refer_image: Union[Image.Image, str],
         negative_prompt: Optional[str] = "",
         max_seq_length: Optional[int] = None,
+        max_qtokens: Optional[int] = 16,
     ):
         if isinstance(refer_image, str):
             refer_image = Image.open(refer_image).convert("RGB")
+
+        max_seq_length = max_seq_length or self.max_seq_length
         prompt_outputs = HfTextClassificationProcessor.classification(
             self,
             text=prompt,
-            max_seq_length=61,
+            max_seq_length=max_seq_length - max_qtokens,
         )
         refer_prompt_outputs = self.refer_text_processor.classification(
             text=refer_prompt,
@@ -119,4 +128,41 @@ class Blip2Processor(HfImageClassificationProcessor, HfTextClassificationProcess
             refer_input_ids=refer_prompt_outputs.input_ids,
             refer_attention_mask=refer_prompt_outputs.attention_mask,
             refer_pixel_values=refer_image_outputs.pixel_values,
+        )
+
+    def text2image_controlnet_inputs(
+        self,
+        prompt: str,
+        condition_image: Union[Image.Image, str],
+        refer_prompt: str,
+        refer_image: Union[Image.Image, str],
+        negative_prompt: Optional[str] = "",
+        max_seq_length: Optional[int] = None,
+        max_qtokens: Optional[int] = 16,
+    ):
+        if isinstance(condition_image, str):
+            condition_image = Image.open(condition_image)
+
+        text2image_inputs = self.text2image_inputs(
+            prompt=prompt,
+            refer_prompt=refer_prompt,
+            refer_image=refer_image,
+            negative_prompt=negative_prompt,
+            max_seq_length=max_seq_length,
+            max_qtokens=max_qtokens,
+        )
+
+        condition_pixel_values = self.vae_condition_image_processor.preprocess(
+            condition_image
+        )[0]
+
+        return GenericOutputs(
+            input_ids=text2image_inputs.input_ids,
+            attention_mask=text2image_inputs.attention_mask,
+            negative_input_ids=text2image_inputs.negative_input_ids,
+            negative_attention_mask=text2image_inputs.negative_attention_mask,
+            refer_input_ids=text2image_inputs.refer_input_ids,
+            refer_attention_mask=text2image_inputs.refer_attention_mask,
+            refer_pixel_values=text2image_inputs.refer_pixel_values,
+            condition_pixel_values=condition_pixel_values,
         )

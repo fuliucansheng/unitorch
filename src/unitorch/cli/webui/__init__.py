@@ -1,6 +1,7 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
+import unitorch.cli.webui.image_utils
 import unitorch.cli.webui.animate
 import unitorch.cli.webui.blip2
 import unitorch.cli.webui.controlnet
