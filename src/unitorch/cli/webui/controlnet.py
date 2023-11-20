@@ -54,6 +54,11 @@ class ControlNetText2ImageWebUI(GenericWebUI):
                 outputs=[image],
             )
 
+            self._iface.load(
+                fn=lambda: gr.update(value=self._name), outputs=[pretrained_name]
+            )
+            self._iface.load(fn=lambda: gr.update(value=self._status), outputs=[status])
+
     @property
     def name(self):
         return "ControlNetText2Image"
@@ -148,6 +153,11 @@ class ControlNetImage2ImageWebUI(GenericWebUI):
                 self.serve, inputs=[prompt, raw_image, condition_image], outputs=[image]
             )
 
+            self._iface.load(
+                fn=lambda: gr.update(value=self._name), outputs=[pretrained_name]
+            )
+            self._iface.load(fn=lambda: gr.update(value=self._status), outputs=[status])
+
     @property
     def name(self):
         return "ControlNetImage2Image"
@@ -232,6 +242,11 @@ class ControlNetImageInpaintingWebUI(GenericWebUI):
                 inputs=[prompt, raw_image, raw_image_mask, condition_image],
                 outputs=[image],
             )
+
+            self._iface.load(
+                fn=lambda: gr.update(value=self._name), outputs=[pretrained_name]
+            )
+            self._iface.load(fn=lambda: gr.update(value=self._status), outputs=[status])
 
     @property
     def name(self):

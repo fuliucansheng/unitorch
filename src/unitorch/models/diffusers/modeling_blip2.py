@@ -183,6 +183,45 @@ class Blip2QFormerModelV2(Blip2QFormerModel):
 
 
 class Blip2ForText2ImageGeneration(GenericModel, QuantizationMixin):
+    """
+    Blip2ForText2ImageGeneration is a class that represents a model for text-to-image generation using the Blip2 architecture.
+
+    Args:
+        config_path (str): The path to the configuration file for the Blip2 model.
+        text_config_path (str): The path to the configuration file for the text model.
+        qformer_config_path (str): The path to the configuration file for the qformer model.
+        vae_config_path (str): The path to the configuration file for the VAE model.
+        scheduler_config_path (str): The path to the configuration file for the scheduler.
+        quant_config_path (Optional[str]): The path to the configuration file for quantization (default: None).
+        image_size (Optional[int]): The size of the input image (default: None).
+        in_channels (Optional[int]): The number of input channels (default: None).
+        out_channels (Optional[int]): The number of output channels (default: None).
+        num_train_timesteps (Optional[int]): The number of training timesteps (default: 1000).
+        num_infer_timesteps (Optional[int]): The number of inference timesteps (default: 50).
+        freeze_vae_encoder (Optional[bool]): Whether to freeze the VAE encoder (default: True).
+        freeze_text_encoder (Optional[bool]): Whether to freeze the text encoder (default: True).
+        snr_gamma (Optional[float]): The SNR gamma value (default: 5.0).
+        prior_loss_weight (Optional[float]): The weight for the prior loss (default: 1.0).
+        lora_r (Optional[int]): The value of lora_r (default: None).
+        seed (Optional[int]): The random seed (default: 1123).
+
+    Attributes:
+        unet (UNet2DConditionModel): The UNet model.
+        text (ContextCLIPTextModel): The text model.
+        qformer (Blip2QFormerModelV2): The qformer model.
+        vae (AutoencoderKL): The VAE model.
+        scheduler (SchedulerMixin): The scheduler.
+        vae_scale_factor (int): The scale factor for the VAE.
+        quant_config (QuantizationConfig): The quantization configuration.
+        pipeline (StableDiffusionPipeline): The diffusion pipeline.
+
+    Methods:
+        enable_lora: Enables LoRA attention.
+        forward: Performs forward pass (not implemented).
+        generate: Generates images based on input prompts.
+
+    """
+
     prefix_keys_in_state_dict = {
         # unet weights
         "^conv_in.*": "unet.",
@@ -294,6 +333,13 @@ class Blip2ForText2ImageGeneration(GenericModel, QuantizationMixin):
         self.pipeline.set_progress_bar_config(disable=True)
 
     def enable_lora(self, lora_r: Optional[int] = 4):
+        """
+        Enables LoRA attention in the UNet model.
+
+        Args:
+            lora_r (Optional[int]): The value of lora_r (default: 4).
+
+        """
         lora_attn_procs = {}
         for name, attn_processor in self.unet.attn_processors.items():
             cross_attention_dim = (
@@ -341,6 +387,13 @@ class Blip2ForText2ImageGeneration(GenericModel, QuantizationMixin):
     def forward(
         self,
     ):
+        """
+        Performs a forward pass through the model.
+
+        Raises:
+            NotImplementedError: This method is not implemented.
+
+        """
         raise NotImplementedError
 
     def generate(
@@ -357,6 +410,26 @@ class Blip2ForText2ImageGeneration(GenericModel, QuantizationMixin):
         ctx_begin_pos: Optional[int] = 2,
         guidance_scale: Optional[float] = 7.5,
     ):
+        """
+        Generates images based on input prompts.
+
+        Args:
+            input_ids (torch.Tensor): The input IDs.
+            negative_input_ids (torch.Tensor): The negative input IDs.
+            refer_input_ids (torch.Tensor): The reference input IDs.
+            refer_pixel_values (torch.Tensor): The reference pixel values.
+            attention_mask (Optional[torch.Tensor]): The attention mask (default: None).
+            negative_attention_mask (Optional[torch.Tensor]): The negative attention mask (default: None).
+            refer_attention_mask (Optional[torch.Tensor]): The reference attention mask (default: None).
+            height (Optional[int]): The height of the generated images (default: 512).
+            width (Optional[int]): The width of the generated images (default: 512).
+            ctx_begin_pos (Optional[int]): The context begin position (default: 2).
+            guidance_scale (Optional[float]): The guidance scale (default: 7.5).
+
+        Returns:
+            GenericOutputs: The generated images.
+
+        """
         batch_size = input_ids.shape[0]
         qformer_embeds = self.qformer(
             refer_input_ids,
@@ -391,6 +464,45 @@ class Blip2ForText2ImageGeneration(GenericModel, QuantizationMixin):
 
 
 class Blip2ControlNetForText2ImageGeneration(GenericModel, QuantizationMixin):
+    """
+    Blip2ControlNetForText2ImageGeneration is a class that represents a control network for text-to-image generation using the Blip2 model.
+
+    Args:
+        config_path (str): The path to the configuration file for the Blip2 model.
+        text_config_path (str): The path to the configuration file for the text model.
+        qformer_config_path (str): The path to the configuration file for the qformer model.
+        vae_config_path (str): The path to the configuration file for the VAE model.
+        controlnet_config_path (str): The path to the configuration file for the control network model.
+        scheduler_config_path (str): The path to the configuration file for the scheduler model.
+        quant_config_path (Optional[str]): The path to the configuration file for quantization (default: None).
+        image_size (Optional[int]): The size of the input image (default: None).
+        in_channels (Optional[int]): The number of input channels (default: None).
+        out_channels (Optional[int]): The number of output channels (default: None).
+        num_train_timesteps (Optional[int]): The number of training timesteps (default: 1000).
+        num_infer_timesteps (Optional[int]): The number of inference timesteps (default: 50).
+        freeze_vae_encoder (Optional[bool]): Whether to freeze the VAE encoder (default: True).
+        freeze_text_encoder (Optional[bool]): Whether to freeze the text encoder (default: True).
+        snr_gamma (Optional[float]): The SNR gamma value (default: 5.0).
+        prior_loss_weight (Optional[float]): The weight for the prior loss (default: 1.0).
+        lora_r (Optional[int]): The LORA rank (default: None).
+        seed (Optional[int]): The random seed (default: 1123).
+
+    Attributes:
+        unet (UNet2DConditionModel): The UNet model.
+        text (ContextCLIPTextModel): The text model.
+        qformer (Blip2QFormerModelV2): The qformer model.
+        vae (AutoencoderKL): The VAE model.
+        controlnet (ControlNetModel): The control network model.
+        scheduler (SchedulerMixin): The scheduler model.
+        vae_scale_factor (int): The scale factor for the VAE.
+
+    Methods:
+        enable_lora(lora_r: Optional[int] = 4): Enables LoRA attention for the UNet model.
+        forward(): Performs the forward pass of the model.
+        generate(input_ids: torch.Tensor, negative_input_ids: torch.Tensor, refer_input_ids: torch.Tensor, refer_pixel_values: torch.Tensor, condition_pixel_values: torch.Tensor, attention_mask: Optional[torch.Tensor] = None, negative_attention_mask: Optional[torch.Tensor] = None, refer_attention_mask: Optional[torch.Tensor] = None, height: Optional[int] = 512, width: Optional[int] = 512, ctx_begin_pos: Optional[int] = 2, guidance_scale: Optional[float] = 7.5): Generates images based on the input prompts.
+
+    """
+
     prefix_keys_in_state_dict = {
         # unet weights
         "^conv_in.*": "unet.",
@@ -437,6 +549,29 @@ class Blip2ControlNetForText2ImageGeneration(GenericModel, QuantizationMixin):
         lora_r: Optional[int] = None,
         seed: Optional[int] = 1123,
     ):
+        """
+        Initializes the Blip2 model.
+
+        Args:
+            config_path (str): The path to the configuration file.
+            text_config_path (str): The path to the text configuration file.
+            qformer_config_path (str): The path to the qformer configuration file.
+            vae_config_path (str): The path to the VAE configuration file.
+            controlnet_config_path (str): The path to the controlnet configuration file.
+            scheduler_config_path (str): The path to the scheduler configuration file.
+            quant_config_path (str, optional): The path to the quantization configuration file. Defaults to None.
+            image_size (int, optional): The size of the image. Defaults to None.
+            in_channels (int, optional): The number of input channels. Defaults to None.
+            out_channels (int, optional): The number of output channels. Defaults to None.
+            num_train_timesteps (int, optional): The number of training timesteps. Defaults to 1000.
+            num_infer_timesteps (int, optional): The number of inference timesteps. Defaults to 50.
+            freeze_vae_encoder (bool, optional): Whether to freeze the VAE encoder. Defaults to True.
+            freeze_text_encoder (bool, optional): Whether to freeze the text encoder. Defaults to True.
+            snr_gamma (float, optional): The SNR gamma value. Defaults to 5.0.
+            prior_loss_weight (float, optional): The weight of the prior loss. Defaults to 1.0.
+            lora_r (int, optional): The LORA R value. Defaults to None.
+            seed (int, optional): The seed value. Defaults to 1123.
+        """
         super().__init__()
         self.seed = seed
         self.num_train_timesteps = num_train_timesteps
@@ -445,6 +580,7 @@ class Blip2ControlNetForText2ImageGeneration(GenericModel, QuantizationMixin):
         self.snr_gamma = snr_gamma
         self.prior_loss_weight = prior_loss_weight
 
+        # Load configuration files
         config_dict = json.load(open(config_path))
         if image_size is not None:
             config_dict.update({"sample_size": image_size})
@@ -476,18 +612,22 @@ class Blip2ControlNetForText2ImageGeneration(GenericModel, QuantizationMixin):
 
         self.vae_scale_factor = 2 ** (len(self.vae.config.block_out_channels) - 1)
 
+        # Freeze VAE encoder if specified
         if freeze_vae_encoder:
             for param in self.vae.parameters():
                 param.requires_grad = False
 
+        # Freeze text encoder if specified
         if freeze_text_encoder:
             for param in self.text.parameters():
                 param.requires_grad = False
 
+        # Load quantization configuration if specified
         if quant_config_path is not None:
             self.quant_config = QuantizationConfig.from_json_file(quant_config_path)
             self.quantize(self.quant_config, ignore_modules=["lm_head", "unet", "vae"])
 
+        # Enable LORA if specified
         if lora_r is not None:
             for param in self.unet.parameters():
                 param.requires_grad = False
@@ -507,6 +647,15 @@ class Blip2ControlNetForText2ImageGeneration(GenericModel, QuantizationMixin):
         self.pipeline.set_progress_bar_config(disable=True)
 
     def enable_lora(self, lora_r: Optional[int] = 4):
+        """
+        Enable LoRA (Local Rank Attention) for the UNet model.
+
+        Args:
+            lora_r (Optional[int]): The rank parameter for LoRA. Defaults to 4.
+
+        Returns:
+            None
+        """
         lora_attn_procs = {}
         for name, attn_processor in self.unet.attn_processors.items():
             cross_attention_dim = (
@@ -554,6 +703,12 @@ class Blip2ControlNetForText2ImageGeneration(GenericModel, QuantizationMixin):
     def forward(
         self,
     ):
+        """
+        Performs the forward pass of the model.
+
+        Raises:
+            NotImplementedError: This method should be implemented in a subclass.
+        """
         raise NotImplementedError
 
     def generate(
@@ -571,6 +726,27 @@ class Blip2ControlNetForText2ImageGeneration(GenericModel, QuantizationMixin):
         ctx_begin_pos: Optional[int] = 2,
         guidance_scale: Optional[float] = 7.5,
     ):
+        """
+        Generates images based on the given input_ids, negative_input_ids, refer_input_ids,
+        refer_pixel_values, condition_pixel_values, and other optional parameters.
+
+        Args:
+            input_ids (torch.Tensor): The input tensor representing the prompt.
+            negative_input_ids (torch.Tensor): The input tensor representing the negative prompt.
+            refer_input_ids (torch.Tensor): The input tensor representing the reference prompt.
+            refer_pixel_values (torch.Tensor): The tensor representing the pixel values of the reference image.
+            condition_pixel_values (torch.Tensor): The tensor representing the pixel values of the condition image.
+            attention_mask (Optional[torch.Tensor], optional): The attention mask tensor. Defaults to None.
+            negative_attention_mask (Optional[torch.Tensor], optional): The attention mask tensor for negative_input_ids. Defaults to None.
+            refer_attention_mask (Optional[torch.Tensor], optional): The attention mask tensor for refer_input_ids. Defaults to None.
+            height (Optional[int], optional): The height of the generated images. Defaults to 512.
+            width (Optional[int], optional): The width of the generated images. Defaults to 512.
+            ctx_begin_pos (Optional[int], optional): The beginning position of the context embeddings. Defaults to 2.
+            guidance_scale (Optional[float], optional): The scale factor for guidance. Defaults to 7.5.
+
+        Returns:
+            GenericOutputs: The generated images.
+        """
         batch_size = input_ids.shape[0]
         qformer_embeds = self.qformer(
             refer_input_ids,

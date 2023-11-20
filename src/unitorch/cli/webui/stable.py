@@ -58,6 +58,11 @@ class StableText2ImageWebUI(GenericWebUI):
             submit = gr.Button(value="Submit")
             submit.click(self.serve, inputs=[prompt, height, width], outputs=[image])
 
+            self._iface.load(
+                fn=lambda: gr.update(value=self._name), outputs=[pretrained_name]
+            )
+            self._iface.load(fn=lambda: gr.update(value=self._status), outputs=[status])
+
     @property
     def name(self):
         return "StableText2Image"
@@ -147,6 +152,11 @@ class StableImage2ImageWebUI(GenericWebUI):
             submit = gr.Button(value="Submit")
             submit.click(self.serve, inputs=[prompt, raw_image], outputs=[image])
 
+            self._iface.load(
+                fn=lambda: gr.update(value=self._name), outputs=[pretrained_name]
+            )
+            self._iface.load(fn=lambda: gr.update(value=self._status), outputs=[status])
+
     @property
     def name(self):
         return "StableImage2Image"
@@ -230,6 +240,11 @@ class StableImageInpaintingWebUI(GenericWebUI):
                 self.serve, inputs=[prompt, raw_image, raw_image_mask], outputs=[image]
             )
 
+            self._iface.load(
+                fn=lambda: gr.update(value=self._name), outputs=[pretrained_name]
+            )
+            self._iface.load(fn=lambda: gr.update(value=self._status), outputs=[status])
+
     @property
     def name(self):
         return "StableImageInpainting"
@@ -306,6 +321,11 @@ class StableImageResolutionWebUI(GenericWebUI):
             image = gr.Image(type="pil", label="Output Image")
             submit = gr.Button(value="Submit")
             submit.click(self.serve, inputs=[prompt, raw_image], outputs=[image])
+
+            self._iface.load(
+                fn=lambda: gr.update(value=self._name), outputs=[pretrained_name]
+            )
+            self._iface.load(fn=lambda: gr.update(value=self._status), outputs=[status])
 
     @property
     def name(self):

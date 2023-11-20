@@ -117,6 +117,26 @@ class GenericAnimateModel(GenericModel, QuantizationMixin):
 
 
 class AnimateForText2VideoGeneration(GenericAnimateModel):
+    """
+    AnimateForText2VideoGeneration is a class that represents a model for generating animated videos from text prompts.
+
+    Args:
+        config_path (str): The path to the configuration file.
+        motion_config_path (str): The path to the motion configuration file.
+        text_config_path (str): The path to the text configuration file.
+        vae_config_path (str): The path to the VAE (Variational Autoencoder) configuration file.
+        scheduler_config_path (str): The path to the scheduler configuration file.
+        quant_config_path (str, optional): The path to the quantization configuration file. Defaults to None.
+        image_size (int, optional): The size of the input images. Defaults to None.
+        in_channels (int, optional): The number of input channels. Defaults to None.
+        out_channels (int, optional): The number of output channels. Defaults to None.
+        num_train_timesteps (int, optional): The number of training timesteps. Defaults to 1000.
+        num_infer_timesteps (int, optional): The number of inference timesteps. Defaults to 50.
+        freeze_vae_encoder (bool, optional): Whether to freeze the VAE encoder. Defaults to True.
+        freeze_text_encoder (bool, optional): Whether to freeze the text encoder. Defaults to True.
+        seed (int, optional): The random seed. Defaults to 1123.
+    """
+
     def __init__(
         self,
         config_path: str,
@@ -134,6 +154,25 @@ class AnimateForText2VideoGeneration(GenericAnimateModel):
         freeze_text_encoder: Optional[bool] = True,
         seed: Optional[int] = 1123,
     ):
+        """
+        Initializes the AnimateModel object.
+
+        Args:
+            config_path (str): The path to the main configuration file.
+            motion_config_path (str): The path to the motion configuration file.
+            text_config_path (str): The path to the text configuration file.
+            vae_config_path (str): The path to the VAE configuration file.
+            scheduler_config_path (str): The path to the scheduler configuration file.
+            quant_config_path (str, optional): The path to the quantization configuration file. Defaults to None.
+            image_size (int, optional): The size of the input images. Defaults to None.
+            in_channels (int, optional): The number of input channels. Defaults to None.
+            out_channels (int, optional): The number of output channels. Defaults to None.
+            num_train_timesteps (int, optional): The number of training timesteps. Defaults to 1000.
+            num_infer_timesteps (int, optional): The number of inference timesteps. Defaults to 50.
+            freeze_vae_encoder (bool, optional): Whether to freeze the VAE encoder. Defaults to True.
+            freeze_text_encoder (bool, optional): Whether to freeze the text encoder. Defaults to True.
+            seed (int, optional): The random seed. Defaults to 1123.
+        """
         super().__init__(
             config_path=config_path,
             motion_config_path=motion_config_path,
@@ -164,9 +203,24 @@ class AnimateForText2VideoGeneration(GenericAnimateModel):
     def forward(
         self,
     ):
+        """
+        Performs the forward pass of the model.
+
+        Raises:
+            NotImplementedError: This method should be implemented in a subclass.
+        """
         raise NotImplementedError
 
     def train(self, mode=True):
+        """
+        Trains the model.
+
+        Args:
+            mode (bool): If True, sets the model to training mode. If False, sets the model to evaluation mode.
+
+        Returns:
+            None
+        """
         if not mode:
             self.pipeline.unet = UNetMotionModel.from_unet2d(self.unet, self.motion)
             self.pipeline.unet.to(device=self.pipeline.device)
@@ -181,6 +235,16 @@ class AnimateForText2VideoGeneration(GenericAnimateModel):
             self.text.train()
 
     def to(self, *args, **kwargs):
+        """
+        Moves the model parameters and buffers to the specified device.
+
+        Args:
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+
+        Returns:
+            The model with the parameters and buffers moved to the specified device.
+        """
         self.pipeline.unet.to(*args, **kwargs)
         return super().to(*args, **kwargs)
 
@@ -195,6 +259,22 @@ class AnimateForText2VideoGeneration(GenericAnimateModel):
         num_frames: Optional[int] = 16,
         guidance_scale: Optional[float] = 7.5,
     ):
+        """
+        Generates animated frames based on the given input_ids and negative_input_ids.
+
+        Args:
+            input_ids (torch.Tensor): The input tensor representing the prompt.
+            negative_input_ids (torch.Tensor): The input tensor representing the negative prompt.
+            attention_mask (Optional[torch.Tensor], optional): The attention mask tensor. Defaults to None.
+            negative_attention_mask (Optional[torch.Tensor], optional): The attention mask tensor for the negative prompt. Defaults to None.
+            height (Optional[int], optional): The height of the generated frames. Defaults to 512.
+            width (Optional[int], optional): The width of the generated frames. Defaults to 512.
+            num_frames (Optional[int], optional): The number of frames to generate. Defaults to 16.
+            guidance_scale (Optional[float], optional): The scale factor for guidance. Defaults to 7.5.
+
+        Returns:
+            GenericOutputs: The generated frames.
+        """
         prompt_embeds = self.text(
             input_ids,
             # attention_mask,

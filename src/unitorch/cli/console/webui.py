@@ -65,6 +65,7 @@ def webui(config_path_or_dir: str, **kwargs):
             import_library(library)
 
     enabled_webuis = config.getdefault("core/cli", "enabled_webuis", None)
+    single_webui = config.getdefault("core/cli", "single_webui", False)
     assert enabled_webuis is not None
     if isinstance(enabled_webuis, str):
         enabled_webuis = [enabled_webuis]
@@ -76,13 +77,20 @@ def webui(config_path_or_dir: str, **kwargs):
 
     webuis = [webui_instance(enabled_webui, config) for enabled_webui in enabled_webuis]
 
-    demo_webui = gr.TabbedInterface(
-        interface_list=[webui.iface for webui in webuis],
-        tab_names=[webui.name for webui in webuis],
-        theme="sudeepshouche/minimalist",
-        title="Unitorch WebUI",
-        css="footer {visibility: hidden}",
-    )
+    if single_webui:
+        assert (
+            len(webuis) == 1
+        ), "single_webui can only be used when there is only one webui enabled"
+        webuis = webuis[0]
+        demo_webui = webuis.iface
+    else:
+        demo_webui = gr.TabbedInterface(
+            interface_list=[webui.iface for webui in webuis],
+            tab_names=[webui.name for webui in webuis],
+            theme="sudeepshouche/minimalist",
+            title="Unitorch WebUI",
+            css="footer {visibility: hidden}",
+        )
 
     config.set_default_section("core/cli")
     host = config.getoption("host", "0.0.0.0")

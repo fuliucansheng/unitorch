@@ -44,6 +44,11 @@ class MiniGPT4WebUI(GenericWebUI):
             submit = gr.Button(value="Submit")
             submit.click(self.serve, inputs=[prompt, image], outputs=[caption])
 
+            self._iface.load(
+                fn=lambda: gr.update(value=self._name), outputs=[pretrained_name]
+            )
+            self._iface.load(fn=lambda: gr.update(value=self._status), outputs=[status])
+
     @property
     def name(self):
         return "MiniGPT4"

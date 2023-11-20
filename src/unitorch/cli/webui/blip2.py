@@ -54,6 +54,11 @@ class Blip2Text2ImageWebUI(GenericWebUI):
                 outputs=[image],
             )
 
+            self._iface.load(
+                fn=lambda: gr.update(value=self._name), outputs=[pretrained_name]
+            )
+            self._iface.load(fn=lambda: gr.update(value=self._status), outputs=[status])
+
     @property
     def name(self):
         return "Blip2Text2Image"
@@ -152,6 +157,11 @@ class Blip2ControlNetText2ImageWebUI(GenericWebUI):
                 inputs=[prompt, cond_image, refer_prompt, refer_image, height, width],
                 outputs=[image],
             )
+
+            self._iface.load(
+                fn=lambda: gr.update(value=self._name), outputs=[pretrained_name]
+            )
+            self._iface.load(fn=lambda: gr.update(value=self._status), outputs=[status])
 
     @property
     def name(self):

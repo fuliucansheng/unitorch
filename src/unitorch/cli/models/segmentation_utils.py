@@ -4,6 +4,7 @@
 import os
 import torch
 import hashlib
+import numpy as np
 import torch.nn as nn
 from PIL import Image
 from dataclasses import dataclass
@@ -29,8 +30,8 @@ class SegmentationTargets(ListTensorsTargets):
 
 
 class SegmentationProcessor:
-    def __init__(self):
-        pass
+    def __init__(self, mask_threshold: float = None):
+        self.mask_threshold = mask_threshold
 
     @classmethod
     @add_default_section_for_init("core/process/segmentation")
@@ -44,9 +45,16 @@ class SegmentationProcessor:
     ):
         results = outputs.to_pandas()
         assert results.shape[0] == 0 or results.shape[0] == len(outputs.masks)
-        results["pixel_class"] = [
-            m.numpy().argmax(-1).reshape(-1).tolist() for m in outputs.masks
-        ]
+        mask0 = outputs.masks[0].numpy()
+        if mask0.shape[-1] == 1 or mask0.ndim == 2 and self.mask_threshold is not None:
+            results["pixel_class"] = [
+                (m.numpy() > self.mask_threshold).astype(np.int16).reshape(-1).tolist()
+                for m in outputs.masks
+            ]
+        else:
+            results["pixel_class"] = [
+                m.numpy().argmax(-1).reshape(-1).tolist() for m in outputs.masks
+            ]
         return WriterOutputs(results)
 
 

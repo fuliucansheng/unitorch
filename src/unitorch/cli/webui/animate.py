@@ -55,6 +55,11 @@ class AnimateText2VideoWebUI(GenericWebUI):
                 outputs=[video],
             )
 
+            self._iface.load(
+                fn=lambda: gr.update(value=self._name), outputs=[pretrained_name]
+            )
+            self._iface.load(fn=lambda: gr.update(value=self._status), outputs=[status])
+
     @property
     def name(self):
         return "StableText2Video"

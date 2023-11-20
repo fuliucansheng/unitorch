@@ -188,5 +188,14 @@ def controlnet(
     pass
 
 
+def animate_motion(
+    config_file: str,
+    checkpoint_file: str,
+    output_checkpoint_file: str,
+    base_checkpoint_file: str,
+):
+    pass
+
+
 if __name__ == "__main__":
     fire.Fire()

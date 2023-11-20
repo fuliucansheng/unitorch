@@ -235,6 +235,29 @@ class GenericControlNetXLModel(GenericModel, QuantizationMixin):
 
 
 class ControlNetXLForText2ImageGeneration(GenericControlNetXLModel):
+    """
+    ControlNetXL model for text-to-image generation.
+
+    Args:
+        config_path (str): Path to the model configuration file.
+        text_config_path (str): Path to the text model configuration file.
+        text2_config_path (str): Path to the second text model configuration file.
+        vae_config_path (str): Path to the VAE model configuration file.
+        controlnet_config_path (str): Path to the ControlNet model configuration file.
+        scheduler_config_path (str): Path to the scheduler configuration file.
+        quant_config_path (Optional[str]): Path to the quantization configuration file (default: None).
+        image_size (Optional[int]): Size of the input image (default: None).
+        in_channels (Optional[int]): Number of input channels (default: None).
+        out_channels (Optional[int]): Number of output channels (default: None).
+        num_train_timesteps (Optional[int]): Number of training timesteps (default: 1000).
+        num_infer_timesteps (Optional[int]): Number of inference timesteps (default: 50).
+        freeze_vae_encoder (Optional[bool]): Whether to freeze the VAE encoder (default: True).
+        freeze_text_encoder (Optional[bool]): Whether to freeze the text encoder (default: True).
+        freeze_unet_encoder (Optional[bool]): Whether to freeze the UNet encoder (default: True).
+        lora_r (Optional[int]): Lora parameter (default: None).
+        seed (Optional[int]): Random seed (default: 1123).
+    """
+
     def __init__(
         self,
         config_path: str,
@@ -296,6 +319,21 @@ class ControlNetXLForText2ImageGeneration(GenericControlNetXLModel):
         attention_mask: Optional[torch.Tensor] = None,
         attention2_mask: Optional[torch.Tensor] = None,
     ):
+        """
+        Forward pass of the model.
+
+        Args:
+            input_ids (torch.Tensor): Input IDs.
+            input2_ids (torch.Tensor): Second input IDs.
+            add_time_ids (torch.Tensor): Additional time IDs.
+            pixel_values (torch.Tensor): Pixel values.
+            condition_pixel_values (torch.Tensor): Condition pixel values.
+            attention_mask (Optional[torch.Tensor]): Attention mask (default: None).
+            attention2_mask (Optional[torch.Tensor]): Second attention mask (default: None).
+
+        Returns:
+            torch.Tensor: Loss value.
+        """
         prompt_outputs = self.text(
             input_ids,
             # attention_mask,
@@ -375,6 +413,26 @@ class ControlNetXLForText2ImageGeneration(GenericControlNetXLModel):
         width: Optional[int] = 1024,
         guidance_scale: Optional[float] = 5.0,
     ):
+        """
+        Generate images using the model.
+
+        Args:
+            condition_pixel_values (torch.Tensor): Condition pixel values.
+            input_ids (torch.Tensor): Input IDs.
+            input2_ids (torch.Tensor): Second input IDs.
+            negative_input_ids (torch.Tensor): Negative input IDs.
+            negative_input2_ids (torch.Tensor): Negative second input IDs.
+            attention_mask (Optional[torch.Tensor]): Attention mask (default: None).
+            attention2_mask (Optional[torch.Tensor]): Second attention mask (default: None).
+            negative_attention_mask (Optional[torch.Tensor]): Negative attention mask (default: None).
+            negative_attention2_mask (Optional[torch.Tensor]): Negative second attention mask (default: None).
+            height (Optional[int]): Height of the generated images (default: 1024).
+            width (Optional[int]): Width of the generated images (default: 1024).
+            guidance_scale (Optional[float]): Scale for guidance (default: 5.0).
+
+        Returns:
+            GenericOutputs: Generated images.
+        """
         outputs = self.get_prompt_embeds(
             input_ids=input_ids,
             input2_ids=input2_ids,
