@@ -191,13 +191,13 @@ pretrained_stable_extensions_infos = {
     "stable-xl-controlnet-depth-small": __hf_hub_controlnet_dict__(
         "diffusers/controlnet-depth-sdxl-1.0-small"
     ),
-    "stable-xl-controlnet-t2i-adapter-canny": __hf_hub_controlnet_safetensors_dict__(
+    "stable-xl-t2i-adapter-canny": __hf_hub_controlnet_safetensors_dict__(
         "TencentARC/t2i-adapter-canny-sdxl-1.0"
     ),
-    "stable-xl-controlnet-t2i-adapter-sketch": __hf_hub_controlnet_safetensors_dict__(
+    "stable-xl-t2i-adapter-sketch": __hf_hub_controlnet_safetensors_dict__(
         "TencentARC/t2i-adapter-sketch-sdxl-1.0"
     ),
-    "stable-xl-controlnet-t2i-adapter-openpose": __hf_hub_controlnet_safetensors_dict__(
+    "stable-xl-t2i-adapter-openpose": __hf_hub_controlnet_safetensors_dict__(
         "TencentARC/t2i-adapter-openpose-sdxl-1.0"
     ),
     "stable-xl-refiner-1.0": {
