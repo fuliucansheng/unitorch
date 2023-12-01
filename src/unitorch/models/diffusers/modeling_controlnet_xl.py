@@ -456,7 +456,7 @@ class ControlNetXLForText2ImageGeneration(GenericControlNetXLModel):
             height=height,
             width=width,
             guidance_scale=guidance_scale,
-            controlnet_conditioning_scale=controlnet_conditioning_scale,
+            controlnet_conditioning_scale=float(controlnet_conditioning_scale),
             output_type="np.array",
         ).images
 
@@ -558,7 +558,7 @@ class ControlNetXLForImage2ImageGeneration(GenericControlNetXLModel):
             ),
             strength=strength,
             guidance_scale=guidance_scale,
-            controlnet_conditioning_scale=controlnet_conditioning_scale,
+            controlnet_conditioning_scale=float(controlnet_conditioning_scale),
             output_type="np.array",
         ).images
 
@@ -662,7 +662,7 @@ class ControlNetXLForImageInpainting(GenericControlNetXLModel):
             ),
             strength=strength,
             guidance_scale=guidance_scale,
-            controlnet_conditioning_scale=controlnet_conditioning_scale,
+            controlnet_conditioning_scale=float(controlnet_conditioning_scale),
             output_type="np.array",
         ).images
 

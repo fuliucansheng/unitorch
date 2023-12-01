@@ -308,7 +308,7 @@ class ControlNetForText2ImageGeneration(GenericControlNetModel):
             height=height,
             width=width,
             guidance_scale=guidance_scale,
-            controlnet_conditioning_scale=controlnet_conditioning_scale,
+            controlnet_conditioning_scale=float(controlnet_conditioning_scale),
             output_type="np.array",
         ).images
 
@@ -402,7 +402,7 @@ class ControlNetForImage2ImageGeneration(GenericControlNetModel):
             ),
             strength=strength,
             guidance_scale=guidance_scale,
-            controlnet_conditioning_scale=controlnet_conditioning_scale,
+            controlnet_conditioning_scale=float(controlnet_conditioning_scale),
             output_type="np.array",
         ).images
 
@@ -498,7 +498,7 @@ class ControlNetForImageInpainting(GenericControlNetModel):
             ),
             strength=strength,
             guidance_scale=guidance_scale,
-            controlnet_conditioning_scale=controlnet_conditioning_scale,
+            controlnet_conditioning_scale=float(controlnet_conditioning_scale),
             output_type="np.array",
         ).images
 

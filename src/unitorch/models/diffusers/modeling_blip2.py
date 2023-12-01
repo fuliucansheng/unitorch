@@ -776,7 +776,7 @@ class Blip2ControlNetForText2ImageGeneration(GenericModel, QuantizationMixin):
             height=height,
             width=width,
             guidance_scale=guidance_scale,
-            controlnet_conditioning_scale=controlnet_conditioning_scale,
+            controlnet_conditioning_scale=float(controlnet_conditioning_scale),
             output_type="np.array",
         ).images
 
