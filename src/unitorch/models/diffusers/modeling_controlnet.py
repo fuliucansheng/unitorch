@@ -287,6 +287,7 @@ class ControlNetForText2ImageGeneration(GenericControlNetModel):
         height: Optional[int] = 512,
         width: Optional[int] = 512,
         guidance_scale: Optional[float] = 7.5,
+        controlnet_conditioning_scale: Optional[float] = 1.0,
     ):
         prompt_embeds = self.text(
             input_ids,
@@ -307,6 +308,7 @@ class ControlNetForText2ImageGeneration(GenericControlNetModel):
             height=height,
             width=width,
             guidance_scale=guidance_scale,
+            controlnet_conditioning_scale=controlnet_conditioning_scale,
             output_type="np.array",
         ).images
 
@@ -379,6 +381,7 @@ class ControlNetForImage2ImageGeneration(GenericControlNetModel):
         negative_attention_mask: Optional[torch.Tensor] = None,
         strength: Optional[float] = 0.8,
         guidance_scale: Optional[float] = 7.5,
+        controlnet_conditioning_scale: Optional[float] = 1.0,
     ):
         prompt_embeds = self.text(
             input_ids,
@@ -399,6 +402,7 @@ class ControlNetForImage2ImageGeneration(GenericControlNetModel):
             ),
             strength=strength,
             guidance_scale=guidance_scale,
+            controlnet_conditioning_scale=controlnet_conditioning_scale,
             output_type="np.array",
         ).images
 
@@ -472,6 +476,7 @@ class ControlNetForImageInpainting(GenericControlNetModel):
         negative_attention_mask: Optional[torch.Tensor] = None,
         strength: Optional[float] = 0.8,
         guidance_scale: Optional[float] = 7.5,
+        controlnet_conditioning_scale: Optional[float] = 1.0,
     ):
         prompt_embeds = self.text(
             input_ids,
@@ -493,6 +498,7 @@ class ControlNetForImageInpainting(GenericControlNetModel):
             ),
             strength=strength,
             guidance_scale=guidance_scale,
+            controlnet_conditioning_scale=controlnet_conditioning_scale,
             output_type="np.array",
         ).images
 

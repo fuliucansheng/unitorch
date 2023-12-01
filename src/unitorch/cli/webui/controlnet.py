@@ -2,6 +2,7 @@
 # Licensed under the MIT License.
 
 import io
+import re
 import torch
 import gc
 import gradio as gr
@@ -9,27 +10,41 @@ from PIL import Image
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from unitorch.cli import CoreConfigureParser, GenericWebUI
 from unitorch.cli import register_webui
+from unitorch.cli.models.diffusers import pretrained_diffusers_infos
 from unitorch.cli.pipelines.controlnet import (
     ControlNetForText2ImageGenerationPipeline,
     ControlNetForImage2ImageGenerationPipeline,
     ControlNetForImageInpaintingPipeline,
 )
+from unitorch.cli.webui import matched_pretrained_names
 
 
 @register_webui("core/webui/controlnet/text2image")
 class ControlNetText2ImageWebUI(GenericWebUI):
-    supported_pretrained_names = [
-        "stable-v1.5-controlnet-canny",
+    match_patterns = [
+        "^stable-v1.5.*controlnet",
+        "^stable-v2.*controlnet",
+        "^stable-v2.1.*controlnet",
     ]
+    block_patterns = [
+        ".*blipdiffusion",
+        ".*inpainting",
+    ]
+    pretrained_names = list(pretrained_diffusers_infos.keys())
+    supported_pretrained_names = matched_pretrained_names(
+        pretrained_names, match_patterns, block_patterns
+    )
 
     def __init__(self, config: CoreConfigureParser):
         self.config = config
         self._pipe = None if not hasattr(self, "_pipe") else self._pipe
         self._status = "stopped" if self._pipe is None else "running"
+        if len(self.supported_pretrained_names) == 0:
+            raise ValueError("No supported pretrained models found.")
         self._name = self.supported_pretrained_names[0]
         self._iface = gr.Blocks()
         with self._iface:
-            with gr.Row():
+            with gr.Row(variant="panel"):
                 pretrained_name = gr.Dropdown(
                     self.supported_pretrained_names,
                     value=self._name,
@@ -42,17 +57,48 @@ class ControlNetText2ImageWebUI(GenericWebUI):
                     self.start, inputs=[pretrained_name], outputs=[status]
                 )
                 click_stop.click(self.stop, outputs=[status])
-            prompt = gr.Textbox(label="Input Prompt")
-            condition_image = gr.Image(type="pil", label="Input Condition Image")
-            image = gr.Image(type="pil", label="Output Image")
-            height = gr.Slider(512, 768, value=512, label="Image Height")
-            width = gr.Slider(512, 768, value=512, label="Image Width")
-            submit = gr.Button(value="Submit")
-            submit.click(
-                self.serve,
-                inputs=[prompt, condition_image, height, width],
-                outputs=[image],
-            )
+
+            with gr.Row(variant="panel"):
+                with gr.Column():
+                    condition_image = gr.Image(
+                        type="pil", label="Input Condition Image"
+                    )
+                    prompt = gr.Textbox(label="Input Prompt")
+                    height = gr.Slider(512, 1024, value=512, label="Image Height")
+                    width = gr.Slider(512, 1024, value=512, label="Image Width")
+                    guidance_scale = gr.Slider(
+                        0, 10, value=7.5, label="Guidance Scale", step=0.1
+                    )
+                    controlnet_conditioning_scale = gr.Slider(
+                        0,
+                        10,
+                        value=1.0,
+                        label="ControlNet Conditioning Scale",
+                        step=0.1,
+                    )
+                    steps = gr.Slider(
+                        0, 1000, value=50, label="Diffusion Steps", step=1
+                    )
+                    seed = gr.Slider(
+                        0, 999999999999, value=42, label="Magic Number", step=1
+                    )
+                    submit = gr.Button(value="Submit")
+
+                image = gr.Image(type="pil", label="Output Image")
+                submit.click(
+                    self.serve,
+                    inputs=[
+                        prompt,
+                        condition_image,
+                        height,
+                        width,
+                        guidance_scale,
+                        controlnet_conditioning_scale,
+                        steps,
+                        seed,
+                    ],
+                    outputs=[image],
+                )
 
             self._iface.load(
                 fn=lambda: gr.update(value=self._name), outputs=[pretrained_name]
@@ -102,6 +148,7 @@ class ControlNetText2ImageWebUI(GenericWebUI):
         height: Optional[int] = 512,
         width: Optional[int] = 512,
         guidance_scale: Optional[float] = 7.5,
+        controlnet_conditioning_scale: Optional[float] = 1.0,
         num_timesteps: Optional[int] = 50,
         seed: Optional[int] = 1123,
     ):
@@ -112,6 +159,7 @@ class ControlNetText2ImageWebUI(GenericWebUI):
             height=height,
             width=width,
             guidance_scale=guidance_scale,
+            controlnet_conditioning_scale=controlnet_conditioning_scale,
             num_timesteps=num_timesteps,
             seed=seed,
         )
@@ -120,18 +168,29 @@ class ControlNetText2ImageWebUI(GenericWebUI):
 
 @register_webui("core/webui/controlnet/image2image")
 class ControlNetImage2ImageWebUI(GenericWebUI):
-    supported_pretrained_names = [
-        "stable-v1.5-controlnet-canny",
+    match_patterns = [
+        "^stable-v1.5.*controlnet",
+        "^stable-v2.*controlnet",
+        "^stable-v2.1.*controlnet",
     ]
+    block_patterns = [
+        ".*blipdiffusion",
+    ]
+    pretrained_names = list(pretrained_diffusers_infos.keys())
+    supported_pretrained_names = matched_pretrained_names(
+        pretrained_names, match_patterns, block_patterns
+    )
 
     def __init__(self, config: CoreConfigureParser):
         self.config = config
         self._pipe = None if not hasattr(self, "_pipe") else self._pipe
         self._status = "stopped" if self._pipe is None else "running"
+        if len(self.supported_pretrained_names) == 0:
+            raise ValueError("No supported pretrained models found.")
         self._name = self.supported_pretrained_names[0]
         self._iface = gr.Blocks()
         with self._iface:
-            with gr.Row():
+            with gr.Row(variant="panel"):
                 pretrained_name = gr.Dropdown(
                     self.supported_pretrained_names,
                     value=self._name,
@@ -144,14 +203,48 @@ class ControlNetImage2ImageWebUI(GenericWebUI):
                     self.start, inputs=[pretrained_name], outputs=[status]
                 )
                 click_stop.click(self.stop, outputs=[status])
-            prompt = gr.Textbox(label="Input Prompt")
-            raw_image = gr.Image(type="pil", label="Input Image")
-            condition_image = gr.Image(type="pil", label="Input Condition Image")
-            image = gr.Image(type="pil", label="Output Image")
-            submit = gr.Button(value="Submit")
-            submit.click(
-                self.serve, inputs=[prompt, raw_image, condition_image], outputs=[image]
-            )
+
+            with gr.Row(variant="panel"):
+                with gr.Column():
+                    with gr.Row():
+                        raw_image = gr.Image(type="pil", label="Input Image")
+                        condition_image = gr.Image(
+                            type="pil", label="Input Condition Image"
+                        )
+                    prompt = gr.Textbox(label="Input Prompt")
+                    strength = gr.Slider(0, 1, value=0.8, label="Strength", step=0.01)
+                    guidance_scale = gr.Slider(
+                        0, 10, value=7.5, label="Guidance Scale", step=0.1
+                    )
+                    controlnet_conditioning_scale = gr.Slider(
+                        0,
+                        10,
+                        value=1.0,
+                        label="ControlNet Conditioning Scale",
+                        step=0.1,
+                    )
+                    steps = gr.Slider(
+                        0, 1000, value=50, label="Diffusion Steps", step=1
+                    )
+                    seed = gr.Slider(
+                        0, 999999999999, value=42, label="Magic Number", step=1
+                    )
+                    submit = gr.Button(value="Submit")
+                image = gr.Image(type="pil", label="Output Image")
+                submit.click(
+                    self.serve,
+                    inputs=[
+                        prompt,
+                        raw_image,
+                        condition_image,
+                        strength,
+                        guidance_scale,
+                        controlnet_conditioning_scale,
+                        steps,
+                        seed,
+                    ],
+                    outputs=[image],
+                )
 
             self._iface.load(
                 fn=lambda: gr.update(value=self._name), outputs=[pretrained_name]
@@ -199,26 +292,51 @@ class ControlNetImage2ImageWebUI(GenericWebUI):
         text: str,
         image: Image.Image,
         condition_image: Image.Image,
+        strength: Optional[float] = 0.8,
+        guidance_scale: Optional[float] = 7.5,
+        controlnet_conditioning_scale: Optional[float] = 1.0,
+        num_timesteps: Optional[int] = 50,
+        seed: Optional[int] = 1123,
     ):
         assert self._pipe is not None
-        image = self._pipe(text, image, condition_image)
+        image = self._pipe(
+            text,
+            image,
+            condition_image,
+            strength=strength,
+            guidance_scale=guidance_scale,
+            controlnet_conditioning_scale=controlnet_conditioning_scale,
+            num_timesteps=num_timesteps,
+            seed=seed,
+        )
         return image
 
 
 @register_webui("core/webui/controlnet/inpainting")
 class ControlNetImageInpaintingWebUI(GenericWebUI):
-    supported_pretrained_names = [
-        "stable-v1.5-controlnet-canny",
+    match_patterns = [
+        "^stable-v1.5.*controlnet.*inpainting",
+        "^stable-v2.*controlnet.*inpainting",
+        "^stable-v2.1.*controlnet.*inpainting",
     ]
+    block_patterns = [
+        ".*blipdiffusion",
+    ]
+    pretrained_names = list(pretrained_diffusers_infos.keys())
+    supported_pretrained_names = matched_pretrained_names(
+        pretrained_names, match_patterns, block_patterns
+    )
 
     def __init__(self, config: CoreConfigureParser):
         self.config = config
         self._pipe = None if not hasattr(self, "_pipe") else self._pipe
         self._status = "stopped" if self._pipe is None else "running"
+        if len(self.supported_pretrained_names) == 0:
+            raise ValueError("No supported pretrained models found.")
         self._name = self.supported_pretrained_names[0]
         self._iface = gr.Blocks()
         with self._iface:
-            with gr.Row():
+            with gr.Row(variant="panel"):
                 pretrained_name = gr.Dropdown(
                     self.supported_pretrained_names,
                     value=self._name,
@@ -231,17 +349,52 @@ class ControlNetImageInpaintingWebUI(GenericWebUI):
                     self.start, inputs=[pretrained_name], outputs=[status]
                 )
                 click_stop.click(self.stop, outputs=[status])
-            prompt = gr.Textbox(label="Input Prompt")
-            raw_image = gr.Image(type="pil", label="Input Image")
-            raw_image_mask = gr.Image(type="pil", label="Input Mask Image")
-            condition_image = gr.Image(type="pil", label="Input Condition Image")
-            image = gr.Image(type="pil", label="Output Image")
-            submit = gr.Button(value="Submit")
-            submit.click(
-                self.serve,
-                inputs=[prompt, raw_image, raw_image_mask, condition_image],
-                outputs=[image],
-            )
+
+            with gr.Row(variant="panel"):
+                with gr.Column():
+                    with gr.Row():
+                        raw_image = gr.Image(type="pil", label="Input Image")
+                        raw_image_mask = gr.Image(type="pil", label="Input Mask Image")
+                        condition_image = gr.Image(
+                            type="pil", label="Input Condition Image"
+                        )
+
+                    prompt = gr.Textbox(label="Input Prompt")
+                    strength = gr.Slider(0, 1, value=0.8, label="Strength", step=0.01)
+                    guidance_scale = gr.Slider(
+                        0, 10, value=7.5, label="Guidance Scale", step=0.1
+                    )
+                    controlnet_conditioning_scale = gr.Slider(
+                        0,
+                        10,
+                        value=1.0,
+                        label="ControlNet Conditioning Scale",
+                        step=0.1,
+                    )
+                    steps = gr.Slider(
+                        0, 1000, value=50, label="Diffusion Steps", step=1
+                    )
+                    seed = gr.Slider(
+                        0, 999999999999, value=42, label="Magic Number", step=1
+                    )
+                    submit = gr.Button(value="Submit")
+                image = gr.Image(type="pil", label="Output Image")
+
+                submit.click(
+                    self.serve,
+                    inputs=[
+                        prompt,
+                        raw_image,
+                        raw_image_mask,
+                        condition_image,
+                        strength,
+                        guidance_scale,
+                        controlnet_conditioning_scale,
+                        steps,
+                        seed,
+                    ],
+                    outputs=[image],
+                )
 
             self._iface.load(
                 fn=lambda: gr.update(value=self._name), outputs=[pretrained_name]
@@ -290,7 +443,22 @@ class ControlNetImageInpaintingWebUI(GenericWebUI):
         image: Image.Image,
         mask_image: Image.Image,
         condition_image: Image.Image,
+        strength: Optional[float] = 0.8,
+        guidance_scale: Optional[float] = 7.5,
+        controlnet_conditioning_scale: Optional[float] = 1.0,
+        num_timesteps: Optional[int] = 50,
+        seed: Optional[int] = 1123,
     ):
         assert self._pipe is not None
-        image = self._pipe(text, image, mask_image, condition_image)
+        image = self._pipe(
+            text,
+            image,
+            mask_image,
+            condition_image,
+            strength=strength,
+            guidance_scale=guidance_scale,
+            controlnet_conditioning_scale=controlnet_conditioning_scale,
+            num_timesteps=num_timesteps,
+            seed=seed,
+        )
         return image

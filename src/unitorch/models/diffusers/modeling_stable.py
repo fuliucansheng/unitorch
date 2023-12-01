@@ -6,13 +6,20 @@ import torch
 import torch.nn.functional as F
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 import diffusers.schedulers as schedulers
-from transformers import CLIPTextConfig, CLIPTextModel
+from transformers import (
+    CLIPTextConfig,
+    CLIPTextModel,
+    CLIPVisionConfig,
+    CLIPVisionModelWithProjection,
+)
 from diffusers.schedulers import SchedulerMixin
 from diffusers.models.attention_processor import LoRAAttnProcessor, LoRAAttnProcessor2_0
 from diffusers.models import (
     UNet2DModel,
     UNet2DConditionModel,
     AutoencoderKL,
+    AutoencoderKLTemporalDecoder,
+    UNetSpatioTemporalConditionModel,
 )
 from diffusers.pipelines import (
     StableDiffusionPipeline,
@@ -20,6 +27,7 @@ from diffusers.pipelines import (
     StableDiffusionInpaintPipeline,
     StableDiffusionUpscalePipeline,
     StableDiffusionDepth2ImgPipeline,
+    StableVideoDiffusionPipeline,
 )
 from unitorch.models import (
     GenericModel,

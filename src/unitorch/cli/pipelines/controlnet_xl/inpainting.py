@@ -225,6 +225,7 @@ class ControlNetXLForImageInpaintingPipeline(_ControlNetXLForImageInpainting):
         mask_image: Union[Image.Image, str],
         condition_image: Union[Image.Image, str],
         guidance_scale: Optional[float] = 7.5,
+        controlnet_conditioning_scale: Optional[float] = 0.5,
         num_timesteps: Optional[int] = 50,
         seed: Optional[int] = 1123,
     ):
@@ -244,6 +245,7 @@ class ControlNetXLForImageInpaintingPipeline(_ControlNetXLForImageInpainting):
         outputs = self.generate(
             **inputs,
             guidance_scale=guidance_scale,
+            controlnet_conditioning_scale=controlnet_conditioning_scale,
         )
         images = numpy_to_pil(outputs.images.cpu().numpy())
         return images[0]

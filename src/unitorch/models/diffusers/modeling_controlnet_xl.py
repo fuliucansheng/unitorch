@@ -412,6 +412,7 @@ class ControlNetXLForText2ImageGeneration(GenericControlNetXLModel):
         height: Optional[int] = 1024,
         width: Optional[int] = 1024,
         guidance_scale: Optional[float] = 5.0,
+        controlnet_conditioning_scale: Optional[float] = 0.5,
     ):
         """
         Generate images using the model.
@@ -455,6 +456,7 @@ class ControlNetXLForText2ImageGeneration(GenericControlNetXLModel):
             height=height,
             width=width,
             guidance_scale=guidance_scale,
+            controlnet_conditioning_scale=controlnet_conditioning_scale,
             output_type="np.array",
         ).images
 
@@ -531,8 +533,8 @@ class ControlNetXLForImage2ImageGeneration(GenericControlNetXLModel):
         negative_attention_mask: Optional[torch.Tensor] = None,
         negative_attention2_mask: Optional[torch.Tensor] = None,
         strength: Optional[float] = 0.99,
-        controlnet_conditioning_scale: Optional[float] = 0.5,
         guidance_scale: Optional[float] = 7.5,
+        controlnet_conditioning_scale: Optional[float] = 0.5,
     ):
         outputs = self.get_prompt_embeds(
             input_ids=input_ids,
@@ -555,8 +557,8 @@ class ControlNetXLForImage2ImageGeneration(GenericControlNetXLModel):
                 self.seed
             ),
             strength=strength,
-            controlnet_conditioning_scale=controlnet_conditioning_scale,
             guidance_scale=guidance_scale,
+            controlnet_conditioning_scale=controlnet_conditioning_scale,
             output_type="np.array",
         ).images
 
@@ -635,6 +637,7 @@ class ControlNetXLForImageInpainting(GenericControlNetXLModel):
         negative_attention2_mask: Optional[torch.Tensor] = None,
         strength: Optional[float] = 0.8,
         guidance_scale: Optional[float] = 7.5,
+        controlnet_conditioning_scale: Optional[float] = 0.5,
     ):
         outputs = self.get_prompt_embeds(
             input_ids=input_ids,
@@ -659,6 +662,7 @@ class ControlNetXLForImageInpainting(GenericControlNetXLModel):
             ),
             strength=strength,
             guidance_scale=guidance_scale,
+            controlnet_conditioning_scale=controlnet_conditioning_scale,
             output_type="np.array",
         ).images
 

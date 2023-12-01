@@ -9,36 +9,45 @@ from PIL import Image
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from unitorch.cli import CoreConfigureParser, GenericWebUI
 from unitorch.cli import register_webui
+from unitorch.cli.models.diffusers import pretrained_diffusers_infos
 from unitorch.cli.pipelines.stable import (
     StableForText2ImageGenerationPipeline,
     StableForImage2ImageGenerationPipeline,
     StableForImageInpaintingPipeline,
     StableForImageResolutionPipeline,
 )
+from unitorch.cli.webui import matched_pretrained_names
 
 
 @register_webui("core/webui/stable/text2image")
 class StableText2ImageWebUI(GenericWebUI):
-    supported_pretrained_names = [
-        "stable-v1.5",
-        "stable-v1.5-realistic-v5.1-no-vae",
-        "stable-v1.5-realistic-v5.1",
-        "stable-v1.5-cyber-realistic",
-        "stable-v1.5-majicmix-realistic-v6",
-        "stable-v1.5-chilloutmix",
-        "stable-v1.5-dreamshaper-8",
-        "stable-v2",
-        "stable-v2.1",
+    match_patterns = [
+        "^stable-v1.5",
+        "^stable-v2",
+        "^stable-v2.1",
     ]
+    block_patterns = [
+        ".*blipdiffusion",
+        ".*controlnet",
+        ".*animate",
+        ".*inpainting",
+        ".*upscaler",
+    ]
+    pretrained_names = list(pretrained_diffusers_infos.keys())
+    supported_pretrained_names = matched_pretrained_names(
+        pretrained_names, match_patterns, block_patterns
+    )
 
     def __init__(self, config: CoreConfigureParser):
         self.config = config
         self._pipe = None if not hasattr(self, "_pipe") else self._pipe
         self._status = "stopped" if self._pipe is None else "running"
+        if len(self.supported_pretrained_names) == 0:
+            raise ValueError("No supported pretrained models found.")
         self._name = self.supported_pretrained_names[0]
         self._iface = gr.Blocks()
         with self._iface:
-            with gr.Row():
+            with gr.Row(variant="panel"):
                 pretrained_name = gr.Dropdown(
                     self.supported_pretrained_names,
                     value=self._name,
@@ -51,12 +60,28 @@ class StableText2ImageWebUI(GenericWebUI):
                     self.start, inputs=[pretrained_name], outputs=[status]
                 )
                 click_stop.click(self.stop, outputs=[status])
-            prompt = gr.Textbox(label="Input Prompt")
-            image = gr.Image(type="pil", label="Output Image")
-            height = gr.Slider(512, 768, value=512, label="Image Height")
-            width = gr.Slider(512, 768, value=512, label="Image Width")
-            submit = gr.Button(value="Submit")
-            submit.click(self.serve, inputs=[prompt, height, width], outputs=[image])
+
+            with gr.Row(variant="panel"):
+                with gr.Column():
+                    prompt = gr.Textbox(label="Input Prompt")
+                    height = gr.Slider(512, 1024, value=512, label="Image Height")
+                    width = gr.Slider(512, 1024, value=512, label="Image Width")
+                    guidance_scale = gr.Slider(
+                        0, 10, value=7.5, label="Guidance Scale", step=0.1
+                    )
+                    steps = gr.Slider(
+                        0, 1000, value=50, label="Diffusion Steps", step=1
+                    )
+                    seed = gr.Slider(
+                        0, 999999999999, value=42, label="Magic Number", step=1
+                    )
+                    submit = gr.Button(value="Submit")
+                image = gr.Image(type="pil", label="Output Image")
+                submit.click(
+                    self.serve,
+                    inputs=[prompt, height, width, guidance_scale, steps, seed],
+                    outputs=[image],
+                )
 
             self._iface.load(
                 fn=lambda: gr.update(value=self._name), outputs=[pretrained_name]
@@ -122,18 +147,32 @@ class StableText2ImageWebUI(GenericWebUI):
 
 @register_webui("core/webui/stable/image2image")
 class StableImage2ImageWebUI(GenericWebUI):
-    supported_pretrained_names = [
-        "stable-v1.5-nitrosocke-ghibli",
+    match_patterns = [
+        "^stable-v1.5",
+        "^stable-v2",
+        "^stable-v2.1",
     ]
+    block_patterns = [
+        ".*blipdiffusion",
+        ".*controlnet",
+        ".*animate",
+        ".*upscaler",
+    ]
+    pretrained_names = list(pretrained_diffusers_infos.keys())
+    supported_pretrained_names = matched_pretrained_names(
+        pretrained_names, match_patterns, block_patterns
+    )
 
     def __init__(self, config: CoreConfigureParser):
         self.config = config
         self._pipe = None if not hasattr(self, "_pipe") else self._pipe
         self._status = "stopped" if self._pipe is None else "running"
+        if len(self.supported_pretrained_names) == 0:
+            raise ValueError("No supported pretrained models found.")
         self._name = self.supported_pretrained_names[0]
         self._iface = gr.Blocks()
         with self._iface:
-            with gr.Row():
+            with gr.Row(variant="panel"):
                 pretrained_name = gr.Dropdown(
                     self.supported_pretrained_names,
                     value=self._name,
@@ -146,11 +185,28 @@ class StableImage2ImageWebUI(GenericWebUI):
                     self.start, inputs=[pretrained_name], outputs=[status]
                 )
                 click_stop.click(self.stop, outputs=[status])
-            prompt = gr.Textbox(label="Input Prompt")
-            raw_image = gr.Image(type="pil", label="Input Image")
-            image = gr.Image(type="pil", label="Output Image")
-            submit = gr.Button(value="Submit")
-            submit.click(self.serve, inputs=[prompt, raw_image], outputs=[image])
+
+            with gr.Row(variant="panel"):
+                with gr.Column():
+                    raw_image = gr.Image(type="pil", label="Input Image")
+                    prompt = gr.Textbox(label="Input Prompt")
+                    strength = gr.Slider(0, 1, value=0.8, label="Strength", step=0.01)
+                    guidance_scale = gr.Slider(
+                        0, 10, value=7.5, label="Guidance Scale", step=0.1
+                    )
+                    steps = gr.Slider(
+                        0, 1000, value=50, label="Diffusion Steps", step=1
+                    )
+                    seed = gr.Slider(
+                        0, 999999999999, value=42, label="Magic Number", step=1
+                    )
+                    submit = gr.Button(value="Submit")
+                image = gr.Image(type="pil", label="Output Image")
+                submit.click(
+                    self.serve,
+                    inputs=[prompt, raw_image, strength, guidance_scale, steps, seed],
+                    outputs=[image],
+                )
 
             self._iface.load(
                 fn=lambda: gr.update(value=self._name), outputs=[pretrained_name]
@@ -197,28 +253,51 @@ class StableImage2ImageWebUI(GenericWebUI):
         self,
         text: str,
         image: Image.Image,
+        strength: Optional[float] = 0.8,
+        guidance_scale: Optional[float] = 7.5,
+        num_timesteps: Optional[int] = 50,
+        seed: Optional[int] = 1123,
     ):
         assert self._pipe is not None
-        image = self._pipe(text, image)
+        image = self._pipe(
+            text,
+            image,
+            strength=strength,
+            guidance_scale=guidance_scale,
+            num_timesteps=num_timesteps,
+            seed=seed,
+        )
         return image
 
 
 @register_webui("core/webui/stable/inpainting")
 class StableImageInpaintingWebUI(GenericWebUI):
-    supported_pretrained_names = [
-        "stable-v1.5-inpainting",
-        "stable-v1.5-deliberate-v2-inpainting",
-        "stable-v1.5-dreamshaper-8-inpainting",
+    match_patterns = [
+        "^stable-v1.5.*inpainting",
+        "^stable-v2.*inpainting",
+        "^stable-v2.1.*inpainting",
     ]
+    block_patterns = [
+        ".*blipdiffusion",
+        ".*controlnet",
+        ".*animate",
+        ".*upscaler",
+    ]
+    pretrained_names = list(pretrained_diffusers_infos.keys())
+    supported_pretrained_names = matched_pretrained_names(
+        pretrained_names, match_patterns, block_patterns
+    )
 
     def __init__(self, config: CoreConfigureParser):
         self.config = config
         self._pipe = None if not hasattr(self, "_pipe") else self._pipe
         self._status = "stopped" if self._pipe is None else "running"
+        if len(self.supported_pretrained_names) == 0:
+            raise ValueError("No supported pretrained models found.")
         self._name = self.supported_pretrained_names[0]
         self._iface = gr.Blocks()
         with self._iface:
-            with gr.Row():
+            with gr.Row(variant="panel"):
                 pretrained_name = gr.Dropdown(
                     self.supported_pretrained_names,
                     value=self._name,
@@ -231,14 +310,39 @@ class StableImageInpaintingWebUI(GenericWebUI):
                     self.start, inputs=[pretrained_name], outputs=[status]
                 )
                 click_stop.click(self.stop, outputs=[status])
-            prompt = gr.Textbox(label="Input Prompt")
-            raw_image = gr.Image(type="pil", label="Input Image")
-            raw_image_mask = gr.Image(type="pil", label="Input Mask Image")
-            image = gr.Image(type="pil", label="Output Image")
-            submit = gr.Button(value="Submit")
-            submit.click(
-                self.serve, inputs=[prompt, raw_image, raw_image_mask], outputs=[image]
-            )
+
+            with gr.Row(variant="panel"):
+                with gr.Column():
+                    with gr.Row():
+                        raw_image = gr.Image(type="pil", label="Input Image")
+                        raw_image_mask = gr.Image(type="pil", label="Input Mask Image")
+                    prompt = gr.Textbox(label="Input Prompt")
+                    strength = gr.Slider(0, 1, value=0.8, label="Strength", step=0.01)
+                    guidance_scale = gr.Slider(
+                        0, 10, value=7.5, label="Guidance Scale", step=0.1
+                    )
+                    steps = gr.Slider(
+                        0, 1000, value=50, label="Diffusion Steps", step=1
+                    )
+                    seed = gr.Slider(
+                        0, 999999999999, value=42, label="Magic Number", step=1
+                    )
+                    submit = gr.Button(value="Submit")
+                image = gr.Image(type="pil", label="Output Image")
+
+                submit.click(
+                    self.serve,
+                    inputs=[
+                        prompt,
+                        raw_image,
+                        raw_image_mask,
+                        strength,
+                        guidance_scale,
+                        steps,
+                        seed,
+                    ],
+                    outputs=[image],
+                )
 
             self._iface.load(
                 fn=lambda: gr.update(value=self._name), outputs=[pretrained_name]
@@ -284,26 +388,51 @@ class StableImageInpaintingWebUI(GenericWebUI):
         text: str,
         image: Image.Image,
         mask_image: Image.Image,
+        strength: Optional[float] = 0.8,
+        guidance_scale: Optional[float] = 7.5,
+        num_timesteps: Optional[int] = 50,
+        seed: Optional[int] = 1123,
     ):
         assert self._pipe is not None
-        image = self._pipe(text, image, mask_image)
+        image = self._pipe(
+            text,
+            image,
+            mask_image,
+            strength=strength,
+            guidance_scale=guidance_scale,
+            num_timesteps=num_timesteps,
+            seed=seed,
+        )
         return image
 
 
 @register_webui("core/webui/stable/resolution")
 class StableImageResolutionWebUI(GenericWebUI):
-    supported_pretrained_names = [
-        "stable-v1.5-x4-upscaler",
+    match_patterns = [
+        "^stable-v1.5.*upscaler",
+        "^stable-v2.*upscaler",
+        "^stable-v2.1.*upscaler",
     ]
+    block_patterns = [
+        ".*blipdiffusion",
+        ".*controlnet",
+        ".*animate",
+    ]
+    pretrained_names = list(pretrained_diffusers_infos.keys())
+    supported_pretrained_names = matched_pretrained_names(
+        pretrained_names, match_patterns, block_patterns
+    )
 
     def __init__(self, config: CoreConfigureParser):
         self.config = config
         self._pipe = None if not hasattr(self, "_pipe") else self._pipe
         self._status = "stopped" if self._pipe is None else "running"
+        if len(self.supported_pretrained_names) == 0:
+            raise ValueError("No supported pretrained models found.")
         self._name = self.supported_pretrained_names[0]
         self._iface = gr.Blocks()
         with self._iface:
-            with gr.Row():
+            with gr.Row(variant="panel"):
                 pretrained_name = gr.Dropdown(
                     self.supported_pretrained_names,
                     value=self._name,
@@ -316,11 +445,39 @@ class StableImageResolutionWebUI(GenericWebUI):
                     self.start, inputs=[pretrained_name], outputs=[status]
                 )
                 click_stop.click(self.stop, outputs=[status])
-            prompt = gr.Textbox(label="Input Prompt")
-            raw_image = gr.Image(type="pil", label="Input Image")
-            image = gr.Image(type="pil", label="Output Image")
-            submit = gr.Button(value="Submit")
-            submit.click(self.serve, inputs=[prompt, raw_image], outputs=[image])
+
+            with gr.Row(variant="panel"):
+                with gr.Column():
+                    raw_image = gr.Image(type="pil", label="Input Image")
+                    prompt = gr.Textbox(label="Input Prompt")
+                    guidance_scale = gr.Slider(
+                        0, 10, value=9.0, label="Guidance Scale", step=0.1
+                    )
+                    noise_level = gr.Slider(
+                        0, 100, value=20, label="Strength", step=0.1
+                    )
+                    steps = gr.Slider(
+                        0, 1000, value=50, label="Diffusion Steps", step=1
+                    )
+                    seed = gr.Slider(
+                        0, 999999999999, value=42, label="Magic Number", step=1
+                    )
+                    submit = gr.Button(value="Submit")
+
+                image = gr.Image(type="pil", label="Output Image")
+
+                submit.click(
+                    self.serve,
+                    inputs=[
+                        prompt,
+                        raw_image,
+                        guidance_scale,
+                        noise_level,
+                        steps,
+                        seed,
+                    ],
+                    outputs=[image],
+                )
 
             self._iface.load(
                 fn=lambda: gr.update(value=self._name), outputs=[pretrained_name]
@@ -365,7 +522,18 @@ class StableImageResolutionWebUI(GenericWebUI):
         self,
         text: str,
         image: Image.Image,
+        guidance_scale: Optional[float] = 7.5,
+        noise_level: Optional[float] = 20,
+        num_timesteps: Optional[int] = 50,
+        seed: Optional[int] = 1123,
     ):
         assert self._pipe is not None
-        image = self._pipe(text, image)
+        image = self._pipe(
+            text,
+            image,
+            guidance_scale=guidance_scale,
+            noise_level=noise_level,
+            num_timesteps=num_timesteps,
+            seed=seed,
+        )
         return image

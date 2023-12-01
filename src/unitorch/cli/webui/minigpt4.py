@@ -22,10 +22,12 @@ class MiniGPT4WebUI(GenericWebUI):
         self.config = config
         self._pipe = None if not hasattr(self, "_pipe") else self._pipe
         self._status = "stopped" if self._pipe is None else "running"
+        if len(self.supported_pretrained_names) == 0:
+            raise ValueError("No supported pretrained models found.")
         self._name = self.supported_pretrained_names[0]
         self._iface = gr.Blocks()
         with self._iface:
-            with gr.Row():
+            with gr.Row(variant="panel"):
                 pretrained_name = gr.Dropdown(
                     self.supported_pretrained_names,
                     value=self._name,
@@ -38,11 +40,16 @@ class MiniGPT4WebUI(GenericWebUI):
                     self.start, inputs=[pretrained_name], outputs=[status]
                 )
                 click_stop.click(self.stop, outputs=[status])
-            prompt = gr.Textbox(label="Input Prompt")
-            image = gr.Image(type="pil", label="Input Image")
-            caption = gr.Textbox(label="Output Caption")
-            submit = gr.Button(value="Submit")
-            submit.click(self.serve, inputs=[prompt, image], outputs=[caption])
+
+            with gr.Row(variant="panel"):
+                with gr.Column():
+                    image = gr.Image(type="pil", label="Input Image")
+                    prompt = gr.Textbox(label="Input Prompt")
+                    submit = gr.Button(value="Submit")
+
+                caption = gr.Textbox(label="Output Caption")
+
+                submit.click(self.serve, inputs=[prompt, image], outputs=[caption])
 
             self._iface.load(
                 fn=lambda: gr.update(value=self._name), outputs=[pretrained_name]

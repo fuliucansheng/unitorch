@@ -219,6 +219,7 @@ class ControlNetXLForText2ImageGeneration(_ControlNetXLForText2ImageGeneration):
         height: Optional[int] = 1024,
         width: Optional[int] = 1024,
         guidance_scale: Optional[float] = 7.5,
+        controlnet_conditioning_scale: Optional[float] = 0.5,
     ):
         outputs = super().generate(
             input_ids=input_ids,
@@ -229,6 +230,7 @@ class ControlNetXLForText2ImageGeneration(_ControlNetXLForText2ImageGeneration):
             height=height,
             width=width,
             guidance_scale=guidance_scale,
+            controlnet_conditioning_scale=controlnet_conditioning_scale,
         )
 
         return DiffusionOutputs(outputs=outputs.images)
@@ -412,6 +414,7 @@ class ControlNetXLForImage2ImageGeneration(_ControlNetXLForImage2ImageGeneration
         negative_attention_mask: Optional[torch.Tensor] = None,
         strength: Optional[float] = 0.8,
         guidance_scale: Optional[float] = 7.5,
+        controlnet_conditioning_scale: Optional[float] = 0.5,
     ):
         outputs = super().generate(
             input_ids=input_ids,
@@ -422,6 +425,7 @@ class ControlNetXLForImage2ImageGeneration(_ControlNetXLForImage2ImageGeneration
             negative_attention_mask=negative_attention_mask,
             strength=strength,
             guidance_scale=guidance_scale,
+            controlnet_conditioning_scale=controlnet_conditioning_scale,
         )
         return DiffusionOutputs(outputs=outputs.images)
 
@@ -605,6 +609,7 @@ class ControlNetXLForImageInpainting(_ControlNetXLForImageInpainting):
         negative_attention_mask: Optional[torch.Tensor] = None,
         strength: Optional[float] = 0.8,
         guidance_scale: Optional[float] = 7.5,
+        controlnet_conditioning_scale: Optional[float] = 0.5,
     ):
         outputs = super().generate(
             input_ids=input_ids,
@@ -616,5 +621,6 @@ class ControlNetXLForImageInpainting(_ControlNetXLForImageInpainting):
             negative_attention_mask=negative_attention_mask,
             strength=strength,
             guidance_scale=guidance_scale,
+            controlnet_conditioning_scale=controlnet_conditioning_scale,
         )
         return DiffusionOutputs(outputs=outputs.images)

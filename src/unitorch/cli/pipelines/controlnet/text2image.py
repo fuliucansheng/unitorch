@@ -178,6 +178,7 @@ class ControlNetForText2ImageGenerationPipeline(_ControlNetForText2ImageGenerati
         height: Optional[int] = 512,
         width: Optional[int] = 512,
         guidance_scale: Optional[float] = 7.5,
+        controlnet_conditioning_scale: Optional[float] = 1.0,
         num_timesteps: Optional[int] = 50,
         seed: Optional[int] = 1123,
     ):
@@ -197,6 +198,7 @@ class ControlNetForText2ImageGenerationPipeline(_ControlNetForText2ImageGenerati
             height=height,
             width=width,
             guidance_scale=guidance_scale,
+            controlnet_conditioning_scale=controlnet_conditioning_scale,
         )
         images = numpy_to_pil(outputs.images.cpu().numpy())
         return images[0]

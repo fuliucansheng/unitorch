@@ -9,26 +9,37 @@ from PIL import Image
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from unitorch.cli import CoreConfigureParser, GenericWebUI
 from unitorch.cli import register_webui
+from unitorch.cli.models.diffusers import pretrained_diffusers_infos
 from unitorch.cli.pipelines.blip2 import Blip2ForText2ImageGenerationPipeline
 from unitorch.cli.pipelines.blip2controlnet import (
     Blip2ControlNetForText2ImageGenerationPipeline,
 )
+from unitorch.cli.webui import matched_pretrained_names
 
 
 @register_webui("core/webui/blip2/text2image")
 class Blip2Text2ImageWebUI(GenericWebUI):
-    supported_pretrained_names = [
-        "stable-v1.5-blipdiffusion",
+    match_patterns = [
+        "^stable-v1.5-blipdiffusion",
     ]
+    block_patterns = [
+        ".*controlnet",
+    ]
+    pretrained_names = list(pretrained_diffusers_infos.keys())
+    supported_pretrained_names = matched_pretrained_names(
+        pretrained_names, match_patterns, block_patterns
+    )
 
     def __init__(self, config: CoreConfigureParser):
         self.config = config
         self._pipe = None if not hasattr(self, "_pipe") else self._pipe
         self._status = "stopped" if self._pipe is None else "running"
+        if len(self.supported_pretrained_names) == 0:
+            raise ValueError("No supported pretrained models found.")
         self._name = self.supported_pretrained_names[0]
         self._iface = gr.Blocks()
         with self._iface:
-            with gr.Row():
+            with gr.Row(variant="panel"):
                 pretrained_name = gr.Dropdown(
                     self.supported_pretrained_names,
                     value=self._name,
@@ -41,18 +52,40 @@ class Blip2Text2ImageWebUI(GenericWebUI):
                     self.start, inputs=[pretrained_name], outputs=[status]
                 )
                 click_stop.click(self.stop, outputs=[status])
-            prompt = gr.Textbox(label="Input Prompt")
-            refer_prompt = gr.Textbox(label="Input Reference Prompt")
-            refer_image = gr.Image(type="pil", label="Input Reference Image")
-            image = gr.Image(type="pil", label="Output Image")
-            height = gr.Slider(512, 768, value=512, label="Image Height")
-            width = gr.Slider(512, 768, value=512, label="Image Width")
-            submit = gr.Button(value="Submit")
-            submit.click(
-                self.serve,
-                inputs=[prompt, refer_prompt, refer_image, height, width],
-                outputs=[image],
-            )
+
+            with gr.Row(variant="panel"):
+                with gr.Column():
+                    refer_image = gr.Image(type="pil", label="Input Reference Image")
+                    refer_prompt = gr.Textbox(label="Input Reference Prompt")
+                    prompt = gr.Textbox(label="Input Prompt")
+                    height = gr.Slider(512, 1024, value=512, label="Image Height")
+                    width = gr.Slider(512, 1024, value=512, label="Image Width")
+                    guidance_scale = gr.Slider(
+                        0, 10, value=7.5, label="Guidance Scale", step=0.1
+                    )
+                    steps = gr.Slider(
+                        0, 1000, value=50, label="Diffusion Steps", step=1
+                    )
+                    seed = gr.Slider(
+                        0, 999999999999, value=42, label="Magic Number", step=1
+                    )
+                    submit = gr.Button(value="Submit")
+
+                image = gr.Image(type="pil", label="Output Image")
+                submit.click(
+                    self.serve,
+                    inputs=[
+                        prompt,
+                        refer_prompt,
+                        refer_image,
+                        height,
+                        width,
+                        guidance_scale,
+                        steps,
+                        seed,
+                    ],
+                    outputs=[image],
+                )
 
             self._iface.load(
                 fn=lambda: gr.update(value=self._name), outputs=[pretrained_name]
@@ -120,18 +153,24 @@ class Blip2Text2ImageWebUI(GenericWebUI):
 
 @register_webui("core/webui/blip2controlnet/text2image")
 class Blip2ControlNetText2ImageWebUI(GenericWebUI):
-    supported_pretrained_names = [
-        "stable-v1.5-blipdiffusion-controlnet",
+    match_patterns = [
+        "^stable-v1.5-blipdiffusion.*controlnet",
     ]
+    pretrained_names = list(pretrained_diffusers_infos.keys())
+    supported_pretrained_names = matched_pretrained_names(
+        pretrained_names, match_patterns
+    )
 
     def __init__(self, config: CoreConfigureParser):
         self.config = config
         self._pipe = None if not hasattr(self, "_pipe") else self._pipe
         self._status = "stopped" if self._pipe is None else "running"
+        if len(self.supported_pretrained_names) == 0:
+            raise ValueError("No supported pretrained models found.")
         self._name = self.supported_pretrained_names[0]
         self._iface = gr.Blocks()
         with self._iface:
-            with gr.Row():
+            with gr.Row(variant="panel"):
                 pretrained_name = gr.Dropdown(
                     self.supported_pretrained_names,
                     value=self._name,
@@ -144,19 +183,55 @@ class Blip2ControlNetText2ImageWebUI(GenericWebUI):
                     self.start, inputs=[pretrained_name], outputs=[status]
                 )
                 click_stop.click(self.stop, outputs=[status])
-            prompt = gr.Textbox(label="Input Prompt")
-            cond_image = gr.Image(type="pil", label="Input Condition Image")
-            refer_prompt = gr.Textbox(label="Input Reference Prompt")
-            refer_image = gr.Image(type="pil", label="Input Reference Image")
-            image = gr.Image(type="pil", label="Output Image")
-            height = gr.Slider(512, 768, value=512, label="Image Height")
-            width = gr.Slider(512, 768, value=512, label="Image Width")
-            submit = gr.Button(value="Submit")
-            submit.click(
-                self.serve,
-                inputs=[prompt, cond_image, refer_prompt, refer_image, height, width],
-                outputs=[image],
-            )
+
+            with gr.Row(variant="panel"):
+                with gr.Column():
+                    with gr.Row():
+                        with gr.Column():
+                            refer_image = gr.Image(
+                                type="pil", label="Input Reference Image"
+                            )
+                            refer_prompt = gr.Textbox(label="Input Reference Prompt")
+                        cond_image = gr.Image(type="pil", label="Input Condition Image")
+                    prompt = gr.Textbox(label="Input Prompt")
+                    height = gr.Slider(512, 1024, value=512, label="Image Height")
+                    width = gr.Slider(512, 1024, value=512, label="Image Width")
+                    guidance_scale = gr.Slider(
+                        0, 10, value=7.5, label="Guidance Scale", step=0.1
+                    )
+                    controlnet_conditioning_scale = gr.Slider(
+                        0,
+                        10,
+                        value=1.0,
+                        label="ControlNet Conditioning Scale",
+                        step=0.1,
+                    )
+                    steps = gr.Slider(
+                        0, 1000, value=50, label="Diffusion Steps", step=1
+                    )
+                    seed = gr.Slider(
+                        0, 999999999999, value=42, label="Magic Number", step=1
+                    )
+                    submit = gr.Button(value="Submit")
+
+                image = gr.Image(type="pil", label="Output Image")
+
+                submit.click(
+                    self.serve,
+                    inputs=[
+                        prompt,
+                        cond_image,
+                        refer_prompt,
+                        refer_image,
+                        height,
+                        width,
+                        guidance_scale,
+                        controlnet_conditioning_scale,
+                        steps,
+                        seed,
+                    ],
+                    outputs=[image],
+                )
 
             self._iface.load(
                 fn=lambda: gr.update(value=self._name), outputs=[pretrained_name]
@@ -206,6 +281,7 @@ class Blip2ControlNetText2ImageWebUI(GenericWebUI):
         height: Optional[int] = 512,
         width: Optional[int] = 512,
         guidance_scale: Optional[float] = 7.5,
+        controlnet_conditioning_scale: Optional[float] = 1.0,
         num_timesteps: Optional[int] = 50,
         seed: Optional[int] = 1123,
     ):
@@ -218,6 +294,7 @@ class Blip2ControlNetText2ImageWebUI(GenericWebUI):
             height=height,
             width=width,
             guidance_scale=guidance_scale,
+            controlnet_conditioning_scale=controlnet_conditioning_scale,
             num_timesteps=num_timesteps,
             seed=seed,
         )

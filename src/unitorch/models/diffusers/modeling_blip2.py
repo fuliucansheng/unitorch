@@ -725,6 +725,7 @@ class Blip2ControlNetForText2ImageGeneration(GenericModel, QuantizationMixin):
         width: Optional[int] = 512,
         ctx_begin_pos: Optional[int] = 2,
         guidance_scale: Optional[float] = 7.5,
+        controlnet_conditioning_scale: Optional[float] = 1.0,
     ):
         """
         Generates images based on the given input_ids, negative_input_ids, refer_input_ids,
@@ -775,6 +776,7 @@ class Blip2ControlNetForText2ImageGeneration(GenericModel, QuantizationMixin):
             height=height,
             width=width,
             guidance_scale=guidance_scale,
+            controlnet_conditioning_scale=controlnet_conditioning_scale,
             output_type="np.array",
         ).images
 

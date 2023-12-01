@@ -9,28 +9,38 @@ from PIL import Image
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from unitorch.cli import CoreConfigureParser, GenericWebUI
 from unitorch.cli import register_webui
+from unitorch.cli.models.diffusers import pretrained_diffusers_infos
 from unitorch.cli.pipelines.stable_xl_refiner import (
     StableXLRefinerForText2ImageGenerationPipeline,
     StableXLRefinerForImage2ImageGenerationPipeline,
     StableXLRefinerForImageInpaintingPipeline,
 )
+from unitorch.cli.webui import matched_pretrained_names
 
 
 @register_webui("core/webui/stable_xl_refiner/text2image")
 class StableXLRefinerText2ImageWebUI(GenericWebUI):
-    supported_pretrained_names = [
-        "stable-xl-base-refiner-1.0",
-        "stable-xl-dreamshaper-xl-1.0-refiner",
+    match_patterns = [
+        "^stable-xl.*refiner",
     ]
+    block_patterns = [
+        ".*controlnet",
+    ]
+    pretrained_names = list(pretrained_diffusers_infos.keys())
+    supported_pretrained_names = matched_pretrained_names(
+        pretrained_names, match_patterns, block_patterns
+    )
 
     def __init__(self, config: CoreConfigureParser):
         self.config = config
         self._pipe = None if not hasattr(self, "_pipe") else self._pipe
         self._status = "stopped" if self._pipe is None else "running"
+        if len(self.supported_pretrained_names) == 0:
+            raise ValueError("No supported pretrained models found.")
         self._name = self.supported_pretrained_names[0]
         self._iface = gr.Blocks()
         with self._iface:
-            with gr.Row():
+            with gr.Row(variant="panel"):
                 pretrained_name = gr.Dropdown(
                     self.supported_pretrained_names,
                     value=self._name,
@@ -43,12 +53,29 @@ class StableXLRefinerText2ImageWebUI(GenericWebUI):
                     self.start, inputs=[pretrained_name], outputs=[status]
                 )
                 click_stop.click(self.stop, outputs=[status])
-            prompt = gr.Textbox(label="Input Prompt")
-            image = gr.Image(type="pil", label="Output Image")
-            height = gr.Slider(512, 1024, value=1024, label="Image Height")
-            width = gr.Slider(512, 1024, value=1024, label="Image Width")
-            submit = gr.Button(value="Submit")
-            submit.click(self.serve, inputs=[prompt, height, width], outputs=[image])
+
+            with gr.Row(variant="panel"):
+                with gr.Column():
+                    prompt = gr.Textbox(label="Input Prompt")
+                    height = gr.Slider(512, 1024, value=1024, label="Image Height")
+                    width = gr.Slider(512, 1024, value=1024, label="Image Width")
+                    guidance_scale = gr.Slider(
+                        0, 10, value=7.5, label="Guidance Scale", step=0.1
+                    )
+                    steps = gr.Slider(
+                        0, 1000, value=50, label="Diffusion Steps", step=1
+                    )
+                    seed = gr.Slider(
+                        0, 999999999999, value=42, label="Magic Number", step=1
+                    )
+                    submit = gr.Button(value="Submit")
+
+                image = gr.Image(type="pil", label="Output Image")
+                submit.click(
+                    self.serve,
+                    inputs=[prompt, height, width, guidance_scale, steps, seed],
+                    outputs=[image],
+                )
 
             self._iface.load(
                 fn=lambda: gr.update(value=self._name), outputs=[pretrained_name]
@@ -114,19 +141,27 @@ class StableXLRefinerText2ImageWebUI(GenericWebUI):
 
 @register_webui("core/webui/stable_xl_refiner/image2image")
 class StableXLRefinerImage2ImageWebUI(GenericWebUI):
-    supported_pretrained_names = [
-        "stable-xl-base-refiner-1.0",
-        "stable-xl-dreamshaper-xl-1.0-refiner",
+    match_patterns = [
+        "^stable-xl.*refiner",
     ]
+    block_patterns = [
+        ".*controlnet",
+    ]
+    pretrained_names = list(pretrained_diffusers_infos.keys())
+    supported_pretrained_names = matched_pretrained_names(
+        pretrained_names, match_patterns, block_patterns
+    )
 
     def __init__(self, config: CoreConfigureParser):
         self.config = config
         self._pipe = None if not hasattr(self, "_pipe") else self._pipe
         self._status = "stopped" if self._pipe is None else "running"
+        if len(self.supported_pretrained_names) == 0:
+            raise ValueError("No supported pretrained models found.")
         self._name = self.supported_pretrained_names[0]
         self._iface = gr.Blocks()
         with self._iface:
-            with gr.Row():
+            with gr.Row(variant="panel"):
                 pretrained_name = gr.Dropdown(
                     self.supported_pretrained_names,
                     value=self._name,
@@ -139,11 +174,25 @@ class StableXLRefinerImage2ImageWebUI(GenericWebUI):
                     self.start, inputs=[pretrained_name], outputs=[status]
                 )
                 click_stop.click(self.stop, outputs=[status])
-            prompt = gr.Textbox(label="Input Prompt")
-            raw_image = gr.Image(type="pil", label="Input Image")
-            image = gr.Image(type="pil", label="Output Image")
-            submit = gr.Button(value="Submit")
-            submit.click(self.serve, inputs=[prompt, raw_image], outputs=[image])
+
+            with gr.Row(variant="panel"):
+                with gr.Column():
+                    raw_image = gr.Image(type="pil", label="Input Image")
+                    prompt = gr.Textbox(label="Input Prompt")
+                    strength = gr.Slider(0, 1, value=0.8, label="Strength", step=0.01)
+                    guidance_scale = gr.Slider(
+                        0, 10, value=7.5, label="Guidance Scale", step=0.1
+                    )
+                    steps = gr.Slider(
+                        0, 1000, value=50, label="Diffusion Steps", step=1
+                    )
+                    seed = gr.Slider(
+                        0, 999999999999, value=42, label="Magic Number", step=1
+                    )
+                    submit = gr.Button(value="Submit")
+                image = gr.Image(type="pil", label="Output Image")
+
+                submit.click(self.serve, inputs=[prompt, raw_image], outputs=[image])
 
             self._iface.load(
                 fn=lambda: gr.update(value=self._name), outputs=[pretrained_name]
@@ -192,27 +241,46 @@ class StableXLRefinerImage2ImageWebUI(GenericWebUI):
         self,
         text: str,
         image: Image.Image,
+        strength: Optional[float] = 0.8,
+        guidance_scale: Optional[float] = 7.5,
+        num_timesteps: Optional[int] = 50,
+        seed: Optional[int] = 1123,
     ):
         assert self._pipe is not None
-        image = self._pipe(text, image)
+        image = self._pipe(
+            text,
+            image,
+            strength=strength,
+            guidance_scale=guidance_scale,
+            num_timesteps=num_timesteps,
+            seed=seed,
+        )
         return image
 
 
 @register_webui("core/webui/stable_xl_refiner/inpainting")
 class StableXLRefinerImageInpaintingWebUI(GenericWebUI):
-    supported_pretrained_names = [
-        "stable-xl-base-refiner-1.0",
-        "stable-xl-dreamshaper-xl-1.0-refiner",
+    match_patterns = [
+        "^stable-xl.*refiner",
     ]
+    block_patterns = [
+        ".*controlnet",
+    ]
+    pretrained_names = list(pretrained_diffusers_infos.keys())
+    supported_pretrained_names = matched_pretrained_names(
+        pretrained_names, match_patterns, block_patterns
+    )
 
     def __init__(self, config: CoreConfigureParser):
         self.config = config
         self._pipe = None if not hasattr(self, "_pipe") else self._pipe
         self._status = "stopped" if self._pipe is None else "running"
+        if len(self.supported_pretrained_names) == 0:
+            raise ValueError("No supported pretrained models found.")
         self._name = self.supported_pretrained_names[0]
         self._iface = gr.Blocks()
         with self._iface:
-            with gr.Row():
+            with gr.Row(variant="panel"):
                 pretrained_name = gr.Dropdown(
                     self.supported_pretrained_names,
                     value=self._name,
@@ -225,14 +293,39 @@ class StableXLRefinerImageInpaintingWebUI(GenericWebUI):
                     self.start, inputs=[pretrained_name], outputs=[status]
                 )
                 click_stop.click(self.stop, outputs=[status])
-            prompt = gr.Textbox(label="Input Prompt")
-            raw_image = gr.Image(type="pil", label="Input Image")
-            raw_image_mask = gr.Image(type="pil", label="Input Mask Image")
-            image = gr.Image(type="pil", label="Output Image")
-            submit = gr.Button(value="Submit")
-            submit.click(
-                self.serve, inputs=[prompt, raw_image, raw_image_mask], outputs=[image]
-            )
+
+            with gr.Row(variant="panel"):
+                with gr.Column():
+                    with gr.Row():
+                        raw_image = gr.Image(type="pil", label="Input Image")
+                        raw_image_mask = gr.Image(type="pil", label="Input Mask Image")
+                    prompt = gr.Textbox(label="Input Prompt")
+                    strength = gr.Slider(0, 1, value=0.8, label="Strength", step=0.01)
+                    guidance_scale = gr.Slider(
+                        0, 10, value=7.5, label="Guidance Scale", step=0.1
+                    )
+                    steps = gr.Slider(
+                        0, 1000, value=50, label="Diffusion Steps", step=1
+                    )
+                    seed = gr.Slider(
+                        0, 999999999999, value=42, label="Magic Number", step=1
+                    )
+                    submit = gr.Button(value="Submit")
+                image = gr.Image(type="pil", label="Output Image")
+
+                submit.click(
+                    self.serve,
+                    inputs=[
+                        prompt,
+                        raw_image,
+                        raw_image_mask,
+                        strength,
+                        guidance_scale,
+                        steps,
+                        seed,
+                    ],
+                    outputs=[image],
+                )
 
             self._iface.load(
                 fn=lambda: gr.update(value=self._name), outputs=[pretrained_name]
@@ -280,7 +373,19 @@ class StableXLRefinerImageInpaintingWebUI(GenericWebUI):
         text: str,
         image: Image.Image,
         mask_image: Image.Image,
+        strength: Optional[float] = 0.8,
+        guidance_scale: Optional[float] = 7.5,
+        num_timesteps: Optional[int] = 50,
+        seed: Optional[int] = 1123,
     ):
         assert self._pipe is not None
-        image = self._pipe(text, image, mask_image)
+        image = self._pipe(
+            text,
+            image,
+            mask_image,
+            strength=strength,
+            guidance_scale=guidance_scale,
+            num_timesteps=num_timesteps,
+            seed=seed,
+        )
         return image

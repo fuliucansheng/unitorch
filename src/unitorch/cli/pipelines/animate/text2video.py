@@ -188,8 +188,10 @@ class AnimateForText2VideoGenerationPipeline(_AnimateForText2VideoGeneration):
         negative_text: str,
         height: Optional[int] = 512,
         width: Optional[int] = 512,
+        num_frames: Optional[int] = 16,
         guidance_scale: Optional[float] = 7.5,
         num_timesteps: Optional[int] = 25,
+        seed: Optional[int] = 1123,
     ):
         inputs = self.processor.text2image_inputs(text, negative_text)
         inputs = {k: v.unsqueeze(0) if v is not None else v for k, v in inputs.items()}
@@ -199,10 +201,12 @@ class AnimateForText2VideoGenerationPipeline(_AnimateForText2VideoGeneration):
         }
         self.scheduler.set_timesteps(num_inference_steps=num_timesteps)
         self.num_inference_steps = num_timesteps
+        self.seed = seed
         outputs = self.generate(
             **inputs,
             height=height,
             width=width,
+            num_frames=num_frames,
             guidance_scale=guidance_scale,
         )
         frames = tensor2vid(outputs.frames)
