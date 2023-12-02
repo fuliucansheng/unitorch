@@ -24,6 +24,7 @@ class StableXLText2ImageWebUI(GenericWebUI):
     block_patterns = [
         ".*controlnet",
         ".*refiner",
+        ".*adapter",
     ]
     pretrained_names = list(pretrained_diffusers_infos.keys())
     supported_pretrained_names = matched_pretrained_names(
@@ -179,6 +180,7 @@ class StableXLImage2ImageWebUI(GenericWebUI):
     block_patterns = [
         ".*controlnet",
         ".*refiner",
+        ".*adapter",
     ]
     pretrained_names = list(pretrained_diffusers_infos.keys())
     supported_pretrained_names = matched_pretrained_names(
@@ -334,6 +336,7 @@ class StableXLImageInpaintingWebUI(GenericWebUI):
     block_patterns = [
         ".*controlnet",
         ".*refiner",
+        ".*adapter",
     ]
     pretrained_names = list(pretrained_diffusers_infos.keys())
     supported_pretrained_names = matched_pretrained_names(
