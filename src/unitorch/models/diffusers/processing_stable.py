@@ -27,6 +27,7 @@ class StableProcessor(HfTextClassificationProcessor):
         self,
         vocab_path: str,
         merge_path: str,
+        vision_config_path: Optional[str] = None,
         vae_config_path: Optional[str] = None,
         max_seq_length: Optional[int] = 77,
         position_start_id: Optional[int] = 0,

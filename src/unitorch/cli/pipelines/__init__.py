@@ -1,6 +1,18 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
+from diffusers.schedulers import (
+    DPMSolverMultistepScheduler,
+    DPMSolverSDEScheduler,
+    UniPCMultistepScheduler,
+)
+
+Schedulers = {
+    "DPM++": DPMSolverMultistepScheduler,
+    "DPM++SDE": DPMSolverSDEScheduler,
+    "UniPC++": UniPCMultistepScheduler,
+}
+
 import unitorch.cli.pipelines.animate
 import unitorch.cli.pipelines.blip2
 import unitorch.cli.pipelines.blip2controlnet

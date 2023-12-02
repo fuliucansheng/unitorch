@@ -22,6 +22,7 @@ from unitorch.cli import (
 )
 from unitorch.cli.models.diffusion_utils import export_to_video
 from unitorch.cli.models.diffusers import pretrained_diffusers_infos, load_weight
+from unitorch.cli.pipelines import Schedulers
 
 
 class AnimateForText2VideoGenerationPipeline(_AnimateForText2VideoGeneration):
@@ -192,6 +193,13 @@ class AnimateForText2VideoGenerationPipeline(_AnimateForText2VideoGeneration):
         guidance_scale: Optional[float] = 7.5,
         num_timesteps: Optional[int] = 25,
         seed: Optional[int] = 1123,
+        scheduler: Optional[str] = None,
+        freeu_params: Optional[Tuple[float, float, float, float]] = (
+            0.9,
+            0.2,
+            1.2,
+            1.4,
+        ),
     ):
         inputs = self.processor.text2image_inputs(text, negative_text)
         inputs = {k: v.unsqueeze(0) if v is not None else v for k, v in inputs.items()}
@@ -199,7 +207,13 @@ class AnimateForText2VideoGenerationPipeline(_AnimateForText2VideoGeneration):
             k: v.to(device=self._device) if v is not None else v
             for k, v in inputs.items()
         }
+        assert scheduler is None or scheduler in Schedulers
+        if scheduler is not None:
+            self.scheduler = Schedulers.get(scheduler).from_config(
+                self.scheduler.config
+            )
         self.scheduler.set_timesteps(num_inference_steps=num_timesteps)
+        self.pipeline.enable_freeu(*freeu_params)
         self.num_inference_steps = num_timesteps
         self.seed = seed
         outputs = self.generate(

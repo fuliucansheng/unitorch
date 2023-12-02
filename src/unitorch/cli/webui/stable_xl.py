@@ -29,6 +29,7 @@ class StableXLText2ImageWebUI(GenericWebUI):
     supported_pretrained_names = matched_pretrained_names(
         pretrained_names, match_patterns, block_patterns
     )
+    supported_schedulers = ["DPM++", "DPM++SDE", "UniPC++"]
 
     def __init__(self, config: CoreConfigureParser):
         self.config = config
@@ -67,12 +68,39 @@ class StableXLText2ImageWebUI(GenericWebUI):
                     seed = gr.Slider(
                         0, 999999999999, value=42, label="Magic Number", step=1
                     )
+                    scheduler = gr.Radio(self.supported_schedulers, label="Sampler")
+                    with gr.Row(variant="panel"):
+                        freeu_s1 = gr.Slider(
+                            0, 10, value=0.9, label="FreeU S1", step=0.1
+                        )
+                        freeu_s2 = gr.Slider(
+                            0, 10, value=0.2, label="FreeU S2", step=0.1
+                        )
+                        freeu_b1 = gr.Slider(
+                            0, 10, value=1.2, label="FreeU B1", step=0.1
+                        )
+                        freeu_b2 = gr.Slider(
+                            0, 10, value=1.4, label="FreeU B2", step=0.1
+                        )
+
                     submit = gr.Button(value="Submit")
 
                 image = gr.Image(type="pil", label="Output Image")
                 submit.click(
                     self.serve,
-                    inputs=[prompt, height, width, guidance_scale, steps, seed],
+                    inputs=[
+                        prompt,
+                        height,
+                        width,
+                        guidance_scale,
+                        steps,
+                        seed,
+                        scheduler,
+                        freeu_s1,
+                        freeu_s2,
+                        freeu_b1,
+                        freeu_b2,
+                    ],
                     outputs=[image],
                 )
 
@@ -123,6 +151,11 @@ class StableXLText2ImageWebUI(GenericWebUI):
         guidance_scale: Optional[float] = 7.5,
         num_timesteps: Optional[int] = 50,
         seed: Optional[int] = 1123,
+        scheduler: Optional[str] = None,
+        freeu_s1: Optional[float] = 0.9,
+        freeu_s2: Optional[float] = 0.2,
+        freeu_b1: Optional[float] = 1.2,
+        freeu_b2: Optional[float] = 1.4,
     ):
         assert self._pipe is not None
         image = self._pipe(
@@ -132,6 +165,8 @@ class StableXLText2ImageWebUI(GenericWebUI):
             guidance_scale=guidance_scale,
             num_timesteps=num_timesteps,
             seed=seed,
+            scheduler=scheduler,
+            freeu_params=(freeu_s1, freeu_s2, freeu_b1, freeu_b2),
         )
         return image
 
@@ -149,6 +184,7 @@ class StableXLImage2ImageWebUI(GenericWebUI):
     supported_pretrained_names = matched_pretrained_names(
         pretrained_names, match_patterns, block_patterns
     )
+    supported_schedulers = ["DPM++", "DPM++SDE", "UniPC++"]
 
     def __init__(self, config: CoreConfigureParser):
         self.config = config
@@ -187,12 +223,39 @@ class StableXLImage2ImageWebUI(GenericWebUI):
                     seed = gr.Slider(
                         0, 999999999999, value=42, label="Magic Number", step=1
                     )
+                    scheduler = gr.Radio(self.supported_schedulers, label="Sampler")
+                    with gr.Row(variant="panel"):
+                        freeu_s1 = gr.Slider(
+                            0, 10, value=0.9, label="FreeU S1", step=0.1
+                        )
+                        freeu_s2 = gr.Slider(
+                            0, 10, value=0.2, label="FreeU S2", step=0.1
+                        )
+                        freeu_b1 = gr.Slider(
+                            0, 10, value=1.2, label="FreeU B1", step=0.1
+                        )
+                        freeu_b2 = gr.Slider(
+                            0, 10, value=1.4, label="FreeU B2", step=0.1
+                        )
+
                     submit = gr.Button(value="Submit")
                 image = gr.Image(type="pil", label="Output Image")
 
                 submit.click(
                     self.serve,
-                    inputs=[prompt, raw_image, strength, guidance_scale, steps, seed],
+                    inputs=[
+                        prompt,
+                        raw_image,
+                        strength,
+                        guidance_scale,
+                        steps,
+                        seed,
+                        scheduler,
+                        freeu_s1,
+                        freeu_s2,
+                        freeu_b1,
+                        freeu_b2,
+                    ],
                     outputs=[image],
                 )
 
@@ -243,6 +306,11 @@ class StableXLImage2ImageWebUI(GenericWebUI):
         guidance_scale: Optional[float] = 7.5,
         num_timesteps: Optional[int] = 50,
         seed: Optional[int] = 1123,
+        scheduler: Optional[str] = None,
+        freeu_s1: Optional[float] = 0.9,
+        freeu_s2: Optional[float] = 0.2,
+        freeu_b1: Optional[float] = 1.2,
+        freeu_b2: Optional[float] = 1.4,
     ):
         assert self._pipe is not None
         image = self._pipe(
@@ -252,6 +320,8 @@ class StableXLImage2ImageWebUI(GenericWebUI):
             guidance_scale=guidance_scale,
             num_timesteps=num_timesteps,
             seed=seed,
+            scheduler=scheduler,
+            freeu_params=(freeu_s1, freeu_s2, freeu_b1, freeu_b2),
         )
         return image
 
@@ -269,6 +339,7 @@ class StableXLImageInpaintingWebUI(GenericWebUI):
     supported_pretrained_names = matched_pretrained_names(
         pretrained_names, match_patterns, block_patterns
     )
+    supported_schedulers = ["DPM++", "DPM++SDE", "UniPC++"]
 
     def __init__(self, config: CoreConfigureParser):
         self.config = config
@@ -309,6 +380,21 @@ class StableXLImageInpaintingWebUI(GenericWebUI):
                     seed = gr.Slider(
                         0, 999999999999, value=42, label="Magic Number", step=1
                     )
+                    scheduler = gr.Radio(self.supported_schedulers, label="Sampler")
+                    with gr.Row(variant="panel"):
+                        freeu_s1 = gr.Slider(
+                            0, 10, value=0.9, label="FreeU S1", step=0.1
+                        )
+                        freeu_s2 = gr.Slider(
+                            0, 10, value=0.2, label="FreeU S2", step=0.1
+                        )
+                        freeu_b1 = gr.Slider(
+                            0, 10, value=1.2, label="FreeU B1", step=0.1
+                        )
+                        freeu_b2 = gr.Slider(
+                            0, 10, value=1.4, label="FreeU B2", step=0.1
+                        )
+
                     submit = gr.Button(value="Submit")
                 image = gr.Image(type="pil", label="Output Image")
                 submit.click(
@@ -321,6 +407,11 @@ class StableXLImageInpaintingWebUI(GenericWebUI):
                         guidance_scale,
                         steps,
                         seed,
+                        scheduler,
+                        freeu_s1,
+                        freeu_s2,
+                        freeu_b1,
+                        freeu_b2,
                     ],
                     outputs=[image],
                 )
@@ -371,6 +462,11 @@ class StableXLImageInpaintingWebUI(GenericWebUI):
         guidance_scale: Optional[float] = 7.5,
         num_timesteps: Optional[int] = 50,
         seed: Optional[int] = 1123,
+        scheduler: Optional[str] = None,
+        freeu_s1: Optional[float] = 0.9,
+        freeu_s2: Optional[float] = 0.2,
+        freeu_b1: Optional[float] = 1.2,
+        freeu_b2: Optional[float] = 1.4,
     ):
         assert self._pipe is not None
         image = self._pipe(
@@ -381,5 +477,7 @@ class StableXLImageInpaintingWebUI(GenericWebUI):
             guidance_scale=guidance_scale,
             num_timesteps=num_timesteps,
             seed=seed,
+            scheduler=scheduler,
+            freeu_params=(freeu_s1, freeu_s2, freeu_b1, freeu_b2),
         )
         return image
