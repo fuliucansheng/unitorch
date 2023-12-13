@@ -25,4 +25,5 @@ import unitorch.cli.webui.controlnet_xl
 import unitorch.cli.webui.stable
 import unitorch.cli.webui.stable_xl
 import unitorch.cli.webui.stable_xl_refiner
+import unitorch.cli.webui.llama
 import unitorch.cli.webui.minigpt4

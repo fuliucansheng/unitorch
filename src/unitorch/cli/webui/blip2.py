@@ -216,12 +216,11 @@ class Blip2ControlNetText2ImageWebUI(GenericWebUI):
             with gr.Row(variant="panel"):
                 with gr.Column():
                     with gr.Row():
-                        with gr.Column():
-                            refer_image = gr.Image(
+                        refer_image = gr.Image(
                                 type="pil", label="Input Reference Image"
-                            )
-                            refer_prompt = gr.Textbox(label="Input Reference Prompt")
+                        )
                         cond_image = gr.Image(type="pil", label="Input Condition Image")
+                    refer_prompt = gr.Textbox(label="Input Reference Prompt")
                     prompt = gr.Textbox(label="Input Prompt")
                     height = gr.Slider(512, 1024, value=512, label="Image Height")
                     width = gr.Slider(512, 1024, value=512, label="Image Width")

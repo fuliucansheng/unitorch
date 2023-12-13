@@ -64,7 +64,7 @@ class AnimateText2VideoWebUI(GenericWebUI):
                         0, 10, value=7.5, label="Guidance Scale", step=0.1
                     )
                     num_frames = gr.Slider(
-                        1, 30, value=16, label="Number of Video Frames", step=1
+                        1, 30, value=16, label="Video Frames", step=1
                     )
                     steps = gr.Slider(
                         0, 1000, value=25, label="Diffusion Steps", step=1

@@ -40,6 +40,38 @@ pretrained_llama_infos = {
             for i in range(1, 4)
         ],
     },
+    "llama2-7b": {
+        "config": "https://huggingface.co/NousResearch/Llama-2-7b-hf/resolve/main/config.json",
+        "vocab": "https://huggingface.co/NousResearch/Llama-2-7b-hf/resolve/main/tokenizer.model",
+        "weight": [
+            f"https://huggingface.co/NousResearch/Llama-2-7b-hf/resolve/main/pytorch_model-{str(i).rjust(5, '0')}-of-00003.bin"
+            for i in range(1, 4)
+        ],
+    },
+    "llama2-chat-7b": {
+        "config": "https://huggingface.co/NousResearch/Llama-2-7b-chat-hf/resolve/main/config.json",
+        "vocab": "https://huggingface.co/NousResearch/Llama-2-7b-chat-hf/resolve/main/tokenizer.model",
+        "weight": [
+            f"https://huggingface.co/NousResearch/Llama-2-7b-chat-hf/resolve/main/pytorch_model-{str(i).rjust(5, '0')}-of-00003.bin"
+            for i in range(1, 4)
+        ],
+    },
+    "llama2-13b": {
+        "config": "https://huggingface.co/NousResearch/Llama-2-13b-hf/resolve/main/config.json",
+        "vocab": "https://huggingface.co/NousResearch/Llama-2-13b-hf/resolve/main/tokenizer.model",
+        "weight": [
+            f"https://huggingface.co/NousResearch/Llama-2-13b-hf/resolve/main/pytorch_model-{str(i).rjust(5, '0')}-of-00006.bin"
+            for i in range(1, 7)
+        ],
+    },
+    "llama2-chat-13b": {
+        "config": "https://huggingface.co/NousResearch/Llama-2-13b-chat-hf/resolve/main/config.json",
+        "vocab": "https://huggingface.co/NousResearch/Llama-2-13b-chat-hf/resolve/main/tokenizer.model",
+        "weight": [
+            f"https://huggingface.co/NousResearch/Llama-2-13b-chat-hf/resolve/main/pytorch_model-{str(i).rjust(5, '0')}-of-00003.bin"
+            for i in range(1, 4)
+        ],
+    },
     "open-llama-3b": {
         "config": "https://huggingface.co/openlm-research/open_llama_3b/resolve/main/config.json",
         "vocab": "https://huggingface.co/openlm-research/open_llama_3b/resolve/main/tokenizer.model",
