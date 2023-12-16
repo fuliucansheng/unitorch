@@ -195,4 +195,4 @@ class MiniGPT4Blip2LlamaForGenerationPipeline(_MiniGPT4Blip2LlamaForGeneration):
         elif isinstance(decoded[0], str):
             decoded = list(map(cleanup_string, decoded))
 
-        return decoded[0]
+        return decoded[0].strip()

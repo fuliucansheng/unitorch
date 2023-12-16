@@ -17,7 +17,7 @@ from unitorch.cli import (
 )
 from unitorch.cli.models import DiffusionOutputs, LossOutputs
 from unitorch.cli.models import diffusion_model_decorator
-from unitorch.cli.models.diffusers import pretrained_diffusers_infos
+from unitorch.cli.models.diffusers import pretrained_diffusers_infos, load_weight
 
 
 @register_model(

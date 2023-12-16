@@ -142,6 +142,15 @@ pretrained_stable_infos = {
         "stabilityai/stable-diffusion-xl-base-1.0"
     ),
     "stable-xl-dreamshaper": __hf_hub_stable_xl_dict__("Lykon/dreamshaper-xl-1-0"),
+    "stable-xl-dreamshaper-fp16": {
+        **__hf_hub_stable_xl_dict__("Lykon/dreamshaper-xl-1-0"),
+        **{
+            "vae": {
+                "config": "https://huggingface.co/madebyollin/sdxl-vae-fp16-fix/resolve/main/config.json",
+                "weight": "https://huggingface.co/madebyollin/sdxl-vae-fp16-fix/resolve/main/diffusion_pytorch_model.safetensors",
+            },
+        }
+    },
     "stable-turbo-xl": __hf_hub_stable_xl_dict__("stabilityai/sdxl-turbo"),
 }
 

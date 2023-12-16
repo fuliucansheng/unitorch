@@ -146,5 +146,5 @@ class LlamaForGenerationPipeline(_LlamaForGeneration):
         )
         decoded = self.processor.detokenize(outputs.sequences)
 
-        return decoded[0]
+        return decoded[0].strip()
 

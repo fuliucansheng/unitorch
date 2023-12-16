@@ -128,7 +128,7 @@ class DreamboothXLProcessor(HfTextClassificationProcessor):
         pixel_values = self.vision_processor(image)
 
         add_time_ids = (
-            original_size + crop_top_left + [self.image_size, self.image_size]
+            original_size + crop_top_left + (self.image_size, self.image_size)
         )
 
         if class_prompt is not None:
@@ -162,7 +162,7 @@ class DreamboothXLProcessor(HfTextClassificationProcessor):
             class_add_time_ids = (
                 class_original_size
                 + class_crop_top_left
-                + [self.image_size, self.image_size]
+                + (self.image_size, self.image_size)
             )
             return GenericOutputs(
                 pixel_values=pixel_values,
