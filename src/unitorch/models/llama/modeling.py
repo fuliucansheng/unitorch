@@ -78,7 +78,7 @@ class LlamaForClassification(GenericModel, QuantizationMixin):
         return logits
 
 
-class LlamaForPretrain(GenericModel):
+class LlamaForPretrain(GenericModel, QuantizationMixin):
     def __init__(
         self,
         config_path: str,

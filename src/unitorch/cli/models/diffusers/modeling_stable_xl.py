@@ -66,7 +66,7 @@ class StableXLForText2ImageGeneration(_StableXLForText2ImageGeneration):
     @add_default_section_for_init("core/model/diffusers/text2image/stable_xl")
     def from_core_configure(cls, config, **kwargs):
         config.set_default_section("core/model/diffusers/text2image/stable_xl")
-        pretrained_name = config.getoption("pretrained_name", "stable-xl-base-1.0")
+        pretrained_name = config.getoption("pretrained_name", "stable-xl-base")
         pretrain_infos = nested_dict_value(pretrained_diffusers_infos, pretrained_name)
 
         config_path = config.getoption("config_path", None)
@@ -257,7 +257,7 @@ class StableXLForImage2ImageGeneration(_StableXLForImage2ImageGeneration):
     @add_default_section_for_init("core/model/diffusers/image2image/stable_xl")
     def from_core_configure(cls, config, **kwargs):
         config.set_default_section("core/model/diffusers/image2image/stable_xl")
-        pretrained_name = config.getoption("pretrained_name", "stable-xl-base-1.0")
+        pretrained_name = config.getoption("pretrained_name", "stable-xl-base")
         pretrain_infos = nested_dict_value(pretrained_diffusers_infos, pretrained_name)
 
         config_path = config.getoption("config_path", None)
@@ -430,7 +430,7 @@ class StableXLForImageInpainting(_StableXLForImageInpainting):
     @add_default_section_for_init("core/model/diffusers/inpainting/stable_xl")
     def from_core_configure(cls, config, **kwargs):
         config.set_default_section("core/model/diffusers/inpainting/stable_xl")
-        pretrained_name = config.getoption("pretrained_name", "stable-xl-base-1.0")
+        pretrained_name = config.getoption("pretrained_name", "stable-xl-base")
         pretrain_infos = nested_dict_value(pretrained_diffusers_infos, pretrained_name)
 
         config_path = config.getoption("config_path", None)

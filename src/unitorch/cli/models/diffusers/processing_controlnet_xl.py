@@ -47,7 +47,7 @@ class ControlNetXLProcessor(_ControlNetXLProcessor):
     def from_core_configure(cls, config, **kwargs):
         config.set_default_section("core/process/diffusers/controlnet_xl")
         pretrained_name = config.getoption(
-            "pretrained_name", "stable-xl-base-1.0-controlnet-canny"
+            "pretrained_name", "stable-xl-base-controlnet-canny"
         )
         pretrain_infos = nested_dict_value(pretrained_diffusers_infos, pretrained_name)
 

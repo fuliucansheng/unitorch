@@ -17,7 +17,7 @@ from unitorch.models.quantization import quantize_model
 from unitorch.models.peft import PeftModelForSequenceClassification, GenericPeftModel
 
 
-class LlamaLoraForClassification(GenericPeftModel, QuantizationMixin):
+class LlamaLoraForClassification(GenericPeftModel):
     prefix_keys_in_state_dict = {
         "^(?!peft_model\.base_model\.model\.).*": "peft_model.base_model."
     }

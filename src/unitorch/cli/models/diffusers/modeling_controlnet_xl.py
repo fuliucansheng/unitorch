@@ -72,7 +72,7 @@ class ControlNetXLForText2ImageGeneration(_ControlNetXLForText2ImageGeneration):
     def from_core_configure(cls, config, **kwargs):
         config.set_default_section("core/model/diffusers/text2image/controlnet_xl")
         pretrained_name = config.getoption(
-            "pretrained_name", "stable-xl-base-1.0-controlnet-canny"
+            "pretrained_name", "stable-xl-base-controlnet-canny"
         )
         pretrain_infos = nested_dict_value(pretrained_diffusers_infos, pretrained_name)
 
@@ -283,7 +283,7 @@ class ControlNetXLForImage2ImageGeneration(_ControlNetXLForImage2ImageGeneration
     def from_core_configure(cls, config, **kwargs):
         config.set_default_section("core/model/diffusers/image2image/controlnet_xl")
         pretrained_name = config.getoption(
-            "pretrained_name", "stable-xl-base-1.0-controlnet-depth-small"
+            "pretrained_name", "stable-xl-base-controlnet-depth-small"
         )
         pretrain_infos = nested_dict_value(pretrained_diffusers_infos, pretrained_name)
 
@@ -477,7 +477,7 @@ class ControlNetXLForImageInpainting(_ControlNetXLForImageInpainting):
     def from_core_configure(cls, config, **kwargs):
         config.set_default_section("core/model/diffusers/inpainting/controlnet_xl")
         pretrained_name = config.getoption(
-            "pretrained_name", "stable-xl-base-1.0-controlnet-depth-small"
+            "pretrained_name", "stable-xl-base-controlnet-depth-small"
         )
         pretrain_infos = nested_dict_value(pretrained_diffusers_infos, pretrained_name)
 

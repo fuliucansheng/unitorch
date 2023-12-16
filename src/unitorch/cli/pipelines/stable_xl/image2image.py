@@ -74,7 +74,7 @@ class StableXLForImage2ImageGenerationPipeline(_StableXLForImage2ImageGeneration
     @add_default_section_for_init("core/pipeline/stable_xl/image2image")
     def from_core_configure(cls, config, **kwargs):
         config.set_default_section("core/pipeline/stable_xl/image2image")
-        pretrained_name = config.getoption("pretrained_name", "stable-xl-base-1.0")
+        pretrained_name = config.getoption("pretrained_name", "stable-xl-base")
         pretrain_infos = nested_dict_value(pretrained_diffusers_infos, pretrained_name)
 
         config_path = config.getoption("config_path", None)
