@@ -149,7 +149,7 @@ pretrained_stable_infos = {
                 "config": "https://huggingface.co/madebyollin/sdxl-vae-fp16-fix/resolve/main/config.json",
                 "weight": "https://huggingface.co/madebyollin/sdxl-vae-fp16-fix/resolve/main/diffusion_pytorch_model.safetensors",
             },
-        }
+        },
     },
     "stable-turbo-xl": __hf_hub_stable_xl_dict__("stabilityai/sdxl-turbo"),
 }

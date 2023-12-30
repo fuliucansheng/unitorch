@@ -17,6 +17,7 @@ from unitorch.cli import (
 )
 from unitorch.cli.models.llama import pretrained_llama_infos
 
+
 class LlamaForGenerationPipeline(_LlamaForGeneration):
     def __init__(
         self,
@@ -55,9 +56,7 @@ class LlamaForGenerationPipeline(_LlamaForGeneration):
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
             config_path,
-            nested_dict_value(
-                pretrained_llama_infos, pretrained_name, "config"
-            ),
+            nested_dict_value(pretrained_llama_infos, pretrained_name, "config"),
         )
         config_path = cached_path(config_path)
 
@@ -147,4 +146,3 @@ class LlamaForGenerationPipeline(_LlamaForGeneration):
         decoded = self.processor.detokenize(outputs.sequences)
 
         return decoded[0].strip()
-

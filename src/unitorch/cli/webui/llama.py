@@ -76,9 +76,7 @@ class LlamaWebUI(GenericWebUI):
             self.stop()
         self.config.set("core/pipeline/llama", "pretrained_name", pretrained_name)
         self._name = pretrained_name
-        self._pipe = LlamaForGenerationPipeline.from_core_configure(
-            self.config
-        )
+        self._pipe = LlamaForGenerationPipeline.from_core_configure(self.config)
         self._status = "running"
         return self._status
 

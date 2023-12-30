@@ -217,7 +217,7 @@ class Blip2ControlNetText2ImageWebUI(GenericWebUI):
                 with gr.Column():
                     with gr.Row():
                         refer_image = gr.Image(
-                                type="pil", label="Input Reference Image"
+                            type="pil", label="Input Reference Image"
                         )
                         cond_image = gr.Image(type="pil", label="Input Condition Image")
                     refer_prompt = gr.Textbox(label="Input Reference Prompt")

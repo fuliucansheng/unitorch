@@ -69,7 +69,7 @@ class SamProcessor:
         scores: torch.Tensor,
         original_sizes: Union[torch.Tensor, List[Tuple[int, int]]],
         reshaped_input_sizes: Union[torch.Tensor, List[Tuple[int, int]]],
-        input_boxes: Optional[torch.Tensor] = None,
+        input_boxes: torch.Tensor,
         mask_threshold: Optional[float] = 0.0,
         pred_iou_thresh: Optional[float] = 0.88,
         stability_score_thresh: Optional[float] = 0.95,
