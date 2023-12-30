@@ -124,7 +124,7 @@ class SamPipeline(_SamForSegmentation):
         )[0]
         if len(processed_masks) == 0:
             return None
-        first_mask = processed_masks[0][0, 0].permute(0, 1)
+        first_mask = processed_masks[0, 0].permute(0, 1)
         first_mask = first_mask.cpu().to(torch.uint8) * 255
         mask_image = Image.fromarray(np.array(first_mask))
         return mask_image
