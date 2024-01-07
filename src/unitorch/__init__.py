@@ -19,7 +19,7 @@ def get_cache_home():
 
 
 ### version
-VERSION = "0.0.0.8"
+VERSION = "0.0.0.9"
 
 ### is offline mode
 UNITORCH_OFFLINE = os.environ.get("UNITORCH_OFFLINE", "0").upper()
@@ -115,7 +115,6 @@ import unitorch.score
 import unitorch.models
 import unitorch.modules
 import unitorch.optim
-import unitorch.rl
 import unitorch.scheduler
 import unitorch.score
 import unitorch.tasks

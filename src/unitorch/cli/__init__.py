@@ -285,7 +285,6 @@ import unitorch.cli.datasets
 import unitorch.cli.loss
 import unitorch.cli.models
 import unitorch.cli.optim
-import unitorch.cli.rl
 import unitorch.cli.scheduler
 import unitorch.cli.score
 import unitorch.cli.tasks
