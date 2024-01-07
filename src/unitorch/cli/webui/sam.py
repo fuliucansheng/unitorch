@@ -5,7 +5,8 @@ import io
 import torch
 import gc
 import gradio as gr
-from PIL import Image
+from typing import List, Tuple
+from PIL import Image, ImageDraw
 from unitorch.cli import CoreConfigureParser, GenericWebUI
 from unitorch.cli import register_webui
 from unitorch.cli.pipelines.sam import SamPipeline
@@ -39,10 +40,21 @@ class SamWebUI(GenericWebUI):
                 click_stop.click(self.stop, outputs=[status])
 
             with gr.Row(variant="panel"):
-                input_image = gr.Image(type="pil", label="Input Image")
+                origin_input_image = gr.State(None)
+                click_points = gr.State([])
+                with gr.Column():
+                    input_image = gr.Image(type="pil", label="Input Image", interactive=True)
+                    submit = gr.Button(value="Submit")
                 image = gr.Image(type="pil", label="Output Image")
 
-                input_image.select(self.serve, inputs=[input_image], outputs=[image])
+                input_image.upload(
+                        lambda image: image.copy() if image is not None else None,
+                        inputs=[input_image],
+                        outputs=[origin_input_image],
+                    )
+                input_image.select(self.add_click_points, inputs=[origin_input_image, click_points], outputs=[input_image, click_points])
+                submit.click(self.serve, inputs=[origin_input_image, click_points], outputs=[image])
+
 
             self._iface.load(
                 fn=lambda: gr.update(value=self._name), outputs=[pretrained_name]
@@ -79,12 +91,26 @@ class SamWebUI(GenericWebUI):
         self._status = "stopped" if self._pipe is None else "running"
         return self._status
 
+    def add_click_points(self, image, click_points, evt: gr.SelectData):
+        x, y = evt.index[0], evt.index[1]
+        click_points = click_points + [(x, y)]
+        new_image = image.copy()
+        draw = ImageDraw.Draw(new_image)
+        point_color = (255, 0, 0)
+        radius = 10
+        for point in click_points:
+            x, y = point
+            draw.ellipse(
+                (x - radius, y - radius, x + radius, y + radius), fill=point_color
+            )
+
+        return new_image, click_points
+
     def serve(
         self,
         image: Image.Image,
-        evt: gr.SelectData,
+        click_points: List[Tuple[int, int]] = [(0, 0)],
     ):
         assert self._pipe is not None
-        x, y = evt.index[0], evt.index[1]
-        result = self._pipe(image, points=[(x, y)])
+        result = self._pipe(image, points=click_points)
         return result
