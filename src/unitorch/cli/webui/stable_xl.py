@@ -58,6 +58,7 @@ class StableXLText2ImageWebUI(GenericWebUI):
             with gr.Row(variant="panel"):
                 with gr.Column():
                     prompt = gr.Textbox(label="Input Prompt")
+                    negative_prompt = gr.Textbox(label="Input Negative Prompt")
                     height = gr.Slider(512, 1024, value=1024, label="Image Height")
                     width = gr.Slider(512, 1024, value=1024, label="Image Width")
                     guidance_scale = gr.Slider(
@@ -91,6 +92,7 @@ class StableXLText2ImageWebUI(GenericWebUI):
                     self.serve,
                     inputs=[
                         prompt,
+                        negative_prompt,
                         height,
                         width,
                         guidance_scale,
@@ -147,6 +149,7 @@ class StableXLText2ImageWebUI(GenericWebUI):
     def serve(
         self,
         text: str,
+        neg_text: Optional[str] = "",
         height: Optional[int] = 1024,
         width: Optional[int] = 1024,
         guidance_scale: Optional[float] = 7.5,
@@ -161,6 +164,7 @@ class StableXLText2ImageWebUI(GenericWebUI):
         assert self._pipe is not None
         image = self._pipe(
             text,
+            neg_text=neg_text,
             height=height,
             width=width,
             guidance_scale=guidance_scale,
@@ -215,6 +219,7 @@ class StableXLImage2ImageWebUI(GenericWebUI):
                 with gr.Column():
                     raw_image = gr.Image(type="pil", label="Input Image")
                     prompt = gr.Textbox(label="Input Prompt")
+                    negative_prompt = gr.Textbox(label="Input Negative Prompt")
                     strength = gr.Slider(0, 1, value=0.8, label="Strength", step=0.01)
                     guidance_scale = gr.Slider(
                         0, 10, value=7.5, label="Guidance Scale", step=0.1
@@ -248,6 +253,7 @@ class StableXLImage2ImageWebUI(GenericWebUI):
                     inputs=[
                         prompt,
                         raw_image,
+                        negative_prompt,
                         strength,
                         guidance_scale,
                         steps,
@@ -304,6 +310,7 @@ class StableXLImage2ImageWebUI(GenericWebUI):
         self,
         text: str,
         image: Image.Image,
+        neg_text: Optional[str] = "",
         strength: Optional[float] = 0.8,
         guidance_scale: Optional[float] = 7.5,
         num_timesteps: Optional[int] = 50,
@@ -318,6 +325,7 @@ class StableXLImage2ImageWebUI(GenericWebUI):
         image = self._pipe(
             text,
             image,
+            neg_text=neg_text,
             strength=strength,
             guidance_scale=guidance_scale,
             num_timesteps=num_timesteps,
@@ -373,6 +381,7 @@ class StableXLImageInpaintingWebUI(GenericWebUI):
                         raw_image = gr.Image(type="pil", label="Input Image")
                         raw_image_mask = gr.Image(type="pil", label="Input Mask Image")
                     prompt = gr.Textbox(label="Input Prompt")
+                    negative_prompt = gr.Textbox(label="Input Negative Prompt")
                     strength = gr.Slider(0, 1, value=0.8, label="Strength", step=0.01)
                     guidance_scale = gr.Slider(
                         0, 10, value=7.5, label="Guidance Scale", step=0.1
@@ -406,6 +415,7 @@ class StableXLImageInpaintingWebUI(GenericWebUI):
                         prompt,
                         raw_image,
                         raw_image_mask,
+                        negative_prompt,
                         strength,
                         guidance_scale,
                         steps,
@@ -461,6 +471,7 @@ class StableXLImageInpaintingWebUI(GenericWebUI):
         text: str,
         image: Image.Image,
         mask_image: Image.Image,
+        neg_text: Optional[str] = "",
         strength: Optional[float] = 0.8,
         guidance_scale: Optional[float] = 7.5,
         num_timesteps: Optional[int] = 50,
@@ -476,6 +487,7 @@ class StableXLImageInpaintingWebUI(GenericWebUI):
             text,
             image,
             mask_image,
+            neg_text=neg_text,
             strength=strength,
             guidance_scale=guidance_scale,
             num_timesteps=num_timesteps,

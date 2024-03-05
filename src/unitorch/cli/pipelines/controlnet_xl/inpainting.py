@@ -225,6 +225,7 @@ class ControlNetXLForImageInpaintingPipeline(_ControlNetXLForImageInpainting):
         image: Union[Image.Image, str],
         mask_image: Union[Image.Image, str],
         condition_image: Union[Image.Image, str],
+        neg_text: Optional[str] = "",
         guidance_scale: Optional[float] = 7.5,
         controlnet_conditioning_scale: Optional[float] = 0.5,
         num_timesteps: Optional[int] = 50,
@@ -242,6 +243,7 @@ class ControlNetXLForImageInpaintingPipeline(_ControlNetXLForImageInpainting):
             mask_image=mask_image,
             condition_image=condition_image,
             prompt=text,
+            negative_prompt=neg_text,
         )
         inputs = {k: v.unsqueeze(0) if v is not None else v for k, v in inputs.items()}
         inputs = {

@@ -353,6 +353,7 @@ class StableXLRefinerForImage2ImageGenerationPipeline(
         self,
         text: str,
         image: Image.Image,
+        neg_text: Optional[str] = "",
         strength: Optional[float] = 0.8,
         guidance_scale: Optional[float] = 7.5,
         num_timesteps: Optional[int] = 50,
@@ -365,7 +366,7 @@ class StableXLRefinerForImage2ImageGenerationPipeline(
             1.4,
         ),
     ):
-        inputs = self.processor.image2image_inputs(text, image=image)
+        inputs = self.processor.image2image_inputs(text, image=image, negative_prompt=neg_text,)
         inputs = {k: v.unsqueeze(0) if v is not None else v for k, v in inputs.items()}
         inputs = {
             k: v.to(device=self._device) if v is not None else v

@@ -45,6 +45,30 @@ __hf_hub_stable_v2_1_safetensors_dict__ = __hf_hub_stable_v1_5_safetensors_dict_
 __hf_hub_stable_xl_dict__ = lambda name: {
     "unet": {
         "config": f"https://huggingface.co/{name}/resolve/main/unet/config.json",
+        "weight": f"https://huggingface.co/{name}/resolve/main/unet/diffusion_pytorch_model.bin",
+    },
+    "text": {
+        "config": f"https://huggingface.co/{name}/resolve/main/text_encoder/config.json",
+        "vocab": f"https://huggingface.co/{name}/resolve/main/tokenizer/vocab.json",
+        "merge": f"https://huggingface.co/{name}/resolve/main/tokenizer/merges.txt",
+        "weight": f"https://huggingface.co/{name}/resolve/main/text_encoder/pytorch_model.bin",
+    },
+    "text2": {
+        "config": f"https://huggingface.co/{name}/resolve/main/text_encoder_2/config.json",
+        "vocab": f"https://huggingface.co/{name}/resolve/main/tokenizer_2/vocab.json",
+        "merge": f"https://huggingface.co/{name}/resolve/main/tokenizer_2/merges.txt",
+        "weight": f"https://huggingface.co/{name}/resolve/main/text_encoder_2/pytorch_model.bin",
+    },
+    "vae": {
+        "config": f"https://huggingface.co/{name}/resolve/main/vae/config.json",
+        "weight": f"https://huggingface.co/{name}/resolve/main/vae/diffusion_pytorch_model.bin",
+    },
+    "scheduler": f"https://huggingface.co/{name}/resolve/main/scheduler/scheduler_config.json",
+}
+
+__hf_hub_stable_xl_safetensors_dict__ = lambda name: {
+    "unet": {
+        "config": f"https://huggingface.co/{name}/resolve/main/unet/config.json",
         "weight": f"https://huggingface.co/{name}/resolve/main/unet/diffusion_pytorch_model.fp16.safetensors",
     },
     "text": {
@@ -101,6 +125,13 @@ __hf_hub_stable_xl_controlnet_dict__ = (
     }
 )
 
+__hf_hub_stable_xl_safetensors_controlnet_dict__ = (
+    lambda name, base="stabilityai/stable-diffusion-xl-base-1.0": {
+        **__hf_hub_stable_xl_safetensors_dict__(base),
+        **__hf_hub_controlnet_dict__(name),
+    }
+)
+
 pretrained_stable_infos = {
     "stable-v1.5": __hf_hub_stable_v1_5_dict__("runwayml/stable-diffusion-v1-5"),
     "stable-v1.5-realistic-v5.1-no-vae": __hf_hub_stable_v1_5_safetensors_dict__(
@@ -138,12 +169,12 @@ pretrained_stable_infos = {
     ),
     "stable-v2": __hf_hub_stable_v2_dict__("stabilityai/stable-diffusion-2"),
     "stable-v2.1": __hf_hub_stable_v2_1_dict__("stabilityai/stable-diffusion-2-1"),
-    "stable-xl-base": __hf_hub_stable_xl_dict__(
+    "stable-xl-base": __hf_hub_stable_xl_safetensors_dict__(
         "stabilityai/stable-diffusion-xl-base-1.0"
     ),
-    "stable-xl-dreamshaper": __hf_hub_stable_xl_dict__("Lykon/dreamshaper-xl-1-0"),
+    "stable-xl-dreamshaper": __hf_hub_stable_xl_safetensors_dict__("Lykon/dreamshaper-xl-1-0"),
     "stable-xl-dreamshaper-fp16": {
-        **__hf_hub_stable_xl_dict__("Lykon/dreamshaper-xl-1-0"),
+        **__hf_hub_stable_xl_safetensors_dict__("Lykon/dreamshaper-xl-1-0"),
         **{
             "vae": {
                 "config": "https://huggingface.co/madebyollin/sdxl-vae-fp16-fix/resolve/main/config.json",
@@ -151,7 +182,12 @@ pretrained_stable_infos = {
             },
         },
     },
-    "stable-turbo-xl": __hf_hub_stable_xl_dict__("stabilityai/sdxl-turbo"),
+    "stable-turbo-xl": __hf_hub_stable_xl_safetensors_dict__("stabilityai/sdxl-turbo"),
+    "stable-xl-realism-v30": __hf_hub_stable_xl_dict__("stablediffusionapi/realism-engine-sdxl-v30"),
+    "stable-xl-opendalle-v1.1": __hf_hub_stable_xl_safetensors_dict__("dataautogpt3/OpenDalleV1.1"),
+    "stable-xl-realvis-v3.0": __hf_hub_stable_xl_safetensors_dict__("SG161222/RealVisXL_V3.0"),
+    "stable-xl-juggernaut-v8": __hf_hub_stable_xl_dict__("stablediffusionapi/juggernaut-xl-v8"),
+    "stable-xl-playground-v2-aesthetic": __hf_hub_stable_xl_safetensors_dict__("playgroundai/playground-v2-1024px-aesthetic"),
 }
 
 pretrained_stable_extensions_infos = {

@@ -44,7 +44,10 @@ class SamWebUI(GenericWebUI):
                 click_points = gr.State([])
                 with gr.Column():
                     input_image = gr.Image(type="pil", label="Input Image", interactive=True)
-                    submit = gr.Button(value="Submit")
+                    mask_threshold = gr.Slider(-20, 20, value=0.1, label="Mask Threshold", step=0.1)
+                    with gr.Row():
+                        reset = gr.Button(value="Reset Image")
+                        submit = gr.Button(value="Submit")
                 image = gr.Image(type="pil", label="Output Image")
 
                 input_image.upload(
@@ -53,7 +56,12 @@ class SamWebUI(GenericWebUI):
                         outputs=[origin_input_image],
                     )
                 input_image.select(self.add_click_points, inputs=[origin_input_image, click_points], outputs=[input_image, click_points])
-                submit.click(self.serve, inputs=[origin_input_image, click_points], outputs=[image])
+                reset.click(
+                        lambda x: (x, []),
+                        inputs=[origin_input_image],
+                        outputs=[input_image, click_points],
+                    )
+                submit.click(self.serve, inputs=[origin_input_image, click_points, mask_threshold], outputs=[image])
 
 
             self._iface.load(
@@ -110,7 +118,8 @@ class SamWebUI(GenericWebUI):
         self,
         image: Image.Image,
         click_points: List[Tuple[int, int]] = [(0, 0)],
+        mask_threshold: float = 0.1,
     ):
         assert self._pipe is not None
-        result = self._pipe(image, points=click_points)
+        result = self._pipe(image, points=click_points, mask_threshold=mask_threshold,)
         return result

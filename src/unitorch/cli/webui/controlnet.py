@@ -65,6 +65,7 @@ class ControlNetText2ImageWebUI(GenericWebUI):
                         type="pil", label="Input Condition Image"
                     )
                     prompt = gr.Textbox(label="Input Prompt")
+                    negative_prompt = gr.Textbox(label="Input Negative Prompt")
                     height = gr.Slider(512, 1024, value=512, label="Image Height")
                     width = gr.Slider(512, 1024, value=512, label="Image Width")
                     guidance_scale = gr.Slider(
@@ -106,6 +107,7 @@ class ControlNetText2ImageWebUI(GenericWebUI):
                     inputs=[
                         prompt,
                         condition_image,
+                        negative_prompt,
                         height,
                         width,
                         guidance_scale,
@@ -166,6 +168,7 @@ class ControlNetText2ImageWebUI(GenericWebUI):
         self,
         text: str,
         condition_image: Image.Image,
+        neg_text: Optional[str] = "",
         height: Optional[int] = 512,
         width: Optional[int] = 512,
         guidance_scale: Optional[float] = 7.5,
@@ -182,6 +185,7 @@ class ControlNetText2ImageWebUI(GenericWebUI):
         image = self._pipe(
             text,
             condition_image=condition_image,
+            neg_text=neg_text,
             height=height,
             width=width,
             guidance_scale=guidance_scale,
@@ -241,6 +245,7 @@ class ControlNetImage2ImageWebUI(GenericWebUI):
                             type="pil", label="Input Condition Image"
                         )
                     prompt = gr.Textbox(label="Input Prompt")
+                    negative_prompt = gr.Textbox(label="Input Negative Prompt")
                     strength = gr.Slider(0, 1, value=0.8, label="Strength", step=0.01)
                     guidance_scale = gr.Slider(
                         0, 10, value=7.5, label="Guidance Scale", step=0.1
@@ -281,6 +286,7 @@ class ControlNetImage2ImageWebUI(GenericWebUI):
                         prompt,
                         raw_image,
                         condition_image,
+                        negative_prompt,
                         strength,
                         guidance_scale,
                         controlnet_conditioning_scale,
@@ -341,6 +347,7 @@ class ControlNetImage2ImageWebUI(GenericWebUI):
         text: str,
         image: Image.Image,
         condition_image: Image.Image,
+        neg_text: Optional[str] = "",
         strength: Optional[float] = 0.8,
         guidance_scale: Optional[float] = 7.5,
         controlnet_conditioning_scale: Optional[float] = 1.0,
@@ -357,6 +364,7 @@ class ControlNetImage2ImageWebUI(GenericWebUI):
             text,
             image,
             condition_image,
+            neg_text=neg_text,
             strength=strength,
             guidance_scale=guidance_scale,
             controlnet_conditioning_scale=controlnet_conditioning_scale,
@@ -417,6 +425,7 @@ class ControlNetImageInpaintingWebUI(GenericWebUI):
                         )
 
                     prompt = gr.Textbox(label="Input Prompt")
+                    negative_prompt = gr.Textbox(label="Input Negative Prompt")
                     strength = gr.Slider(0, 1, value=0.8, label="Strength", step=0.01)
                     guidance_scale = gr.Slider(
                         0, 10, value=7.5, label="Guidance Scale", step=0.1
@@ -459,6 +468,7 @@ class ControlNetImageInpaintingWebUI(GenericWebUI):
                         raw_image,
                         raw_image_mask,
                         condition_image,
+                        negative_prompt,
                         strength,
                         guidance_scale,
                         controlnet_conditioning_scale,
@@ -520,6 +530,7 @@ class ControlNetImageInpaintingWebUI(GenericWebUI):
         image: Image.Image,
         mask_image: Image.Image,
         condition_image: Image.Image,
+        neg_text: Optional[str] = "",
         strength: Optional[float] = 0.8,
         guidance_scale: Optional[float] = 7.5,
         controlnet_conditioning_scale: Optional[float] = 1.0,
@@ -537,6 +548,7 @@ class ControlNetImageInpaintingWebUI(GenericWebUI):
             image,
             mask_image,
             condition_image,
+            neg_text=neg_text,
             strength=strength,
             guidance_scale=guidance_scale,
             controlnet_conditioning_scale=controlnet_conditioning_scale,

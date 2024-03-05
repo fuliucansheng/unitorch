@@ -160,6 +160,7 @@ class StableForImageResolutionPipeline(_StableForImageResolution):
         self,
         text: str,
         image: Image.Image,
+        neg_text: Optional[str] = "",
         guidance_scale: Optional[float] = 9.0,
         noise_level: Optional[int] = 20,
         num_timesteps: Optional[int] = 50,
@@ -172,7 +173,7 @@ class StableForImageResolutionPipeline(_StableForImageResolution):
             1.4,
         ),
     ):
-        inputs = self.processor.resolution_inputs(text, image=image)
+        inputs = self.processor.resolution_inputs(text, image=image, negative_prompt=neg_text,)
         inputs = {k: v.unsqueeze(0) if v is not None else v for k, v in inputs.items()}
         inputs = {
             k: v.to(device=self._device) if v is not None else v

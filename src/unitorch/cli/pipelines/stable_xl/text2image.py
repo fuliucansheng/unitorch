@@ -193,6 +193,7 @@ class StableXLForText2ImageGenerationPipeline(_StableXLForText2ImageGeneration):
     def __call__(
         self,
         text: str,
+        neg_text: Optional[str] = "",
         height: Optional[int] = 1024,
         width: Optional[int] = 1024,
         guidance_scale: Optional[float] = 7.5,
@@ -206,7 +207,7 @@ class StableXLForText2ImageGenerationPipeline(_StableXLForText2ImageGeneration):
             1.4,
         ),
     ):
-        inputs = self.processor.text2image_inputs(text)
+        inputs = self.processor.text2image_inputs(text, negative_prompt=neg_text,)
         inputs = {k: v.unsqueeze(0) if v is not None else v for k, v in inputs.items()}
         inputs = {
             k: v.to(device=self._device) if v is not None else v

@@ -352,6 +352,7 @@ class StableXLRefinerForImageInpaintingPipeline(_StableXLRefinerForImageInpainti
         text: str,
         image: Image.Image,
         mask_image: Image.Image,
+        neg_text: Optional[str] = "",
         strength: Optional[float] = 0.8,
         guidance_scale: Optional[float] = 7.5,
         num_timesteps: Optional[int] = 50,
@@ -365,7 +366,7 @@ class StableXLRefinerForImageInpaintingPipeline(_StableXLRefinerForImageInpainti
         ),
     ):
         inputs = self.processor.inpainting_inputs(
-            text, image=image, mask_image=mask_image
+            text, image=image, mask_image=mask_image, negative_prompt=neg_text,
         )
         inputs = {k: v.unsqueeze(0) if v is not None else v for k, v in inputs.items()}
         inputs = {

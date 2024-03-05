@@ -223,8 +223,9 @@ class ControlNetXLForText2ImageGenerationPipeline(_ControlNetXLForText2ImageGene
         self,
         text: str,
         condition_image: Union[Image.Image, str],
-        height: Optional[int] = 512,
-        width: Optional[int] = 512,
+        neg_text: Optional[str] = "",
+        height: Optional[int] = 1024,
+        width: Optional[int] = 1024,
         guidance_scale: Optional[float] = 7.5,
         controlnet_conditioning_scale: Optional[float] = 0.5,
         num_timesteps: Optional[int] = 50,
@@ -240,6 +241,7 @@ class ControlNetXLForText2ImageGenerationPipeline(_ControlNetXLForText2ImageGene
         inputs = self.processor.text2image_inputs(
             condition_image=condition_image,
             prompt=text,
+            negative_prompt=neg_text,
         )
         inputs = {k: v.unsqueeze(0) if v is not None else v for k, v in inputs.items()}
         inputs = {

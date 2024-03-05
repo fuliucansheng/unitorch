@@ -177,6 +177,7 @@ class ControlNetForImage2ImageGenerationPipeline(_ControlNetForImage2ImageGenera
         text: str,
         image: Union[Image.Image, str],
         condition_image: Union[Image.Image, str],
+        neg_text: Optional[str] = "",
         guidance_scale: Optional[float] = 7.5,
         controlnet_conditioning_scale: Optional[float] = 1.0,
         num_timesteps: Optional[int] = 50,
@@ -193,6 +194,7 @@ class ControlNetForImage2ImageGenerationPipeline(_ControlNetForImage2ImageGenera
             image=image,
             condition_image=condition_image,
             prompt=text,
+            negative_prompt=neg_text,
         )
         inputs = {k: v.unsqueeze(0) if v is not None else v for k, v in inputs.items()}
         inputs = {
