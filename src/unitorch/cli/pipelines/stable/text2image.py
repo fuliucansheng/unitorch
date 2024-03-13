@@ -172,7 +172,10 @@ class StableForText2ImageGenerationPipeline(_StableForText2ImageGeneration):
             1.4,
         ),
     ):
-        inputs = self.processor.text2image_inputs(text, negative_prompt=neg_text,)
+        inputs = self.processor.text2image_inputs(
+            text,
+            negative_prompt=neg_text,
+        )
         inputs = {k: v.unsqueeze(0) if v is not None else v for k, v in inputs.items()}
         inputs = {
             k: v.to(device=self._device) if v is not None else v

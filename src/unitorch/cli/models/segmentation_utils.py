@@ -9,6 +9,7 @@ import torch.nn as nn
 from PIL import Image
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from unitorch.utils import numpy_to_pil
 from unitorch.cli import (
     add_default_section_for_init,
     add_default_section_for_function,
@@ -20,7 +21,7 @@ from unitorch.cli.models.modeling_utils import ListTensorsOutputs, ListTensorsTa
 
 @dataclass
 class SegmentationOutputs(ListTensorsOutputs, WriterMixin):
-    outputs: Union[torch.Tensor, List[torch.Tensor]]
+    masks: Union[torch.Tensor, List[torch.Tensor]]
 
 
 @dataclass
@@ -30,13 +31,29 @@ class SegmentationTargets(ListTensorsTargets):
 
 
 class SegmentationProcessor:
-    def __init__(self, mask_threshold: float = None):
+    def __init__(
+        self,
+        mask_threshold: float = None,
+        output_folder: Optional[str] = None,
+    ):
         self.mask_threshold = mask_threshold
+
+        self.output_folder = output_folder
+        if self.output_folder is not None and not os.path.exists(output_folder):
+            os.makedirs(self.output_folder, exist_ok=True)
 
     @classmethod
     @add_default_section_for_init("core/process/segmentation")
     def from_core_configure(cls, config, **kwargs):
         pass
+
+    def save_image(self, image: Image.Image):
+        md5 = hashlib.md5()
+        md5.update(image.tobytes())
+        name = md5.hexdigest() + ".jpg"
+        output_path = f"{self.output_folder}/{name}"
+        image.save(output_path)
+        return name
 
     @register_process("core/postprocess/segmentation")
     def _segmentation(
@@ -46,7 +63,9 @@ class SegmentationProcessor:
         results = outputs.to_pandas()
         assert results.shape[0] == 0 or results.shape[0] == len(outputs.masks)
         mask0 = outputs.masks[0].numpy()
-        if mask0.shape[-1] == 1 or mask0.ndim == 2 and self.mask_threshold is not None:
+        if (
+            mask0.shape[-1] == 1 or mask0.ndim == 2
+        ) and self.mask_threshold is not None:
             results["pixel_class"] = [
                 (m.numpy() > self.mask_threshold).astype(np.int16).reshape(-1).tolist()
                 for m in outputs.masks
@@ -55,6 +74,22 @@ class SegmentationProcessor:
             results["pixel_class"] = [
                 m.numpy().argmax(-1).reshape(-1).tolist() for m in outputs.masks
             ]
+        return WriterOutputs(results)
+
+    @register_process("core/postprocess/segmentation/image")
+    def _diffusion_image(
+        self,
+        outputs: SegmentationOutputs,
+    ):
+        results = outputs.to_pandas()
+        assert results.shape[0] == 0 or results.shape[0] == len(outputs.masks)
+        images = (
+            outputs.masks.numpy()
+            if isinstance(outputs.masks, torch.Tensor)
+            else [m.numpy() for m in outputs.masks]
+        )
+        images = [numpy_to_pil(image) for image in images]
+        results["mask_image"] = [self.save_image(image) for image in images]
         return WriterOutputs(results)
 
 

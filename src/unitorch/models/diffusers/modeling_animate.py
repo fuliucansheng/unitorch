@@ -10,7 +10,7 @@ import diffusers.schedulers as schedulers
 from transformers import CLIPTextConfig, CLIPTextModel
 from diffusers.schedulers import SchedulerMixin
 from diffusers.models import AutoencoderKL, UNet2DConditionModel, UNetMotionModel
-from diffusers.models.unet_motion_model import MotionAdapter
+from diffusers.models.unets.unet_motion_model import MotionAdapter
 from diffusers.image_processor import PipelineImageInput, VaeImageProcessor
 from diffusers.pipelines.animatediff.pipeline_animatediff import (
     AnimateDiffPipeline as AnimateText2VideoPipeline,

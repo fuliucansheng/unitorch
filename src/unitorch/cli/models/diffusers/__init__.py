@@ -172,7 +172,9 @@ pretrained_stable_infos = {
     "stable-xl-base": __hf_hub_stable_xl_safetensors_dict__(
         "stabilityai/stable-diffusion-xl-base-1.0"
     ),
-    "stable-xl-dreamshaper": __hf_hub_stable_xl_safetensors_dict__("Lykon/dreamshaper-xl-1-0"),
+    "stable-xl-dreamshaper": __hf_hub_stable_xl_safetensors_dict__(
+        "Lykon/dreamshaper-xl-1-0"
+    ),
     "stable-xl-dreamshaper-fp16": {
         **__hf_hub_stable_xl_safetensors_dict__("Lykon/dreamshaper-xl-1-0"),
         **{
@@ -183,11 +185,21 @@ pretrained_stable_infos = {
         },
     },
     "stable-turbo-xl": __hf_hub_stable_xl_safetensors_dict__("stabilityai/sdxl-turbo"),
-    "stable-xl-realism-v30": __hf_hub_stable_xl_dict__("stablediffusionapi/realism-engine-sdxl-v30"),
-    "stable-xl-opendalle-v1.1": __hf_hub_stable_xl_safetensors_dict__("dataautogpt3/OpenDalleV1.1"),
-    "stable-xl-realvis-v3.0": __hf_hub_stable_xl_safetensors_dict__("SG161222/RealVisXL_V3.0"),
-    "stable-xl-juggernaut-v8": __hf_hub_stable_xl_dict__("stablediffusionapi/juggernaut-xl-v8"),
-    "stable-xl-playground-v2-aesthetic": __hf_hub_stable_xl_safetensors_dict__("playgroundai/playground-v2-1024px-aesthetic"),
+    "stable-xl-realism-v30": __hf_hub_stable_xl_dict__(
+        "stablediffusionapi/realism-engine-sdxl-v30"
+    ),
+    "stable-xl-opendalle-v1.1": __hf_hub_stable_xl_safetensors_dict__(
+        "dataautogpt3/OpenDalleV1.1"
+    ),
+    "stable-xl-realvis-v3.0": __hf_hub_stable_xl_safetensors_dict__(
+        "SG161222/RealVisXL_V3.0"
+    ),
+    "stable-xl-juggernaut-v8": __hf_hub_stable_xl_dict__(
+        "stablediffusionapi/juggernaut-xl-v8"
+    ),
+    "stable-xl-playground-v2-aesthetic": __hf_hub_stable_xl_safetensors_dict__(
+        "playgroundai/playground-v2-1024px-aesthetic"
+    ),
 }
 
 pretrained_stable_extensions_infos = {

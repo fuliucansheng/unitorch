@@ -210,7 +210,10 @@ class StableXLForImageInpaintingPipeline(_StableXLForImageInpainting):
         ),
     ):
         inputs = self.processor.inpainting_inputs(
-            text, image=image, mask_image=mask_image, negative_prompt=neg_text,
+            text,
+            image=image,
+            mask_image=mask_image,
+            negative_prompt=neg_text,
         )
         inputs = {k: v.unsqueeze(0) if v is not None else v for k, v in inputs.items()}
         inputs = {

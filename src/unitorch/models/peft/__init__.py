@@ -212,11 +212,12 @@ class GenericPeftModel(nn.Module, PeftCheckpointMixin):
         return next(self.parameters()).device
 
 
-from unitorch.models.peft.modeling_bloom_lora import (
+from unitorch.models.peft.modeling_bloom import (
     BloomLoraForClassification,
     BloomLoraForGeneration,
 )
-from unitorch.models.peft.modeling_llama_lora import (
+from unitorch.models.peft.modeling_llama import (
     LlamaLoraForClassification,
     LlamaLoraForGeneration,
 )
+from unitorch.models.peft.modeling_mistral import MistralLoraForGeneration

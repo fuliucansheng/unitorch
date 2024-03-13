@@ -115,5 +115,5 @@ class SamForSegmentation(_SamForSegmentation):
             crops_nms_thresh=self.crops_nms_thresh,
         )
         return SegmentationOutputs(
-            outputs=processed_masks.masks,
+            masks=processed_masks.masks,
         )

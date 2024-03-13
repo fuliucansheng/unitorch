@@ -278,14 +278,14 @@ register_fastapi = partial(
 
 
 # usful function
-from unitorch.cli.writer import WriterMixin, WriterOutputs
+from unitorch.cli.writers import WriterMixin, WriterOutputs
 
 # import cli modules
 import unitorch.cli.datasets
-import unitorch.cli.loss
+import unitorch.cli.losses
 import unitorch.cli.models
-import unitorch.cli.optim
-import unitorch.cli.scheduler
-import unitorch.cli.score
+import unitorch.cli.optims
+import unitorch.cli.schedulers
+import unitorch.cli.scores
 import unitorch.cli.tasks
-import unitorch.cli.writer
+import unitorch.cli.writers

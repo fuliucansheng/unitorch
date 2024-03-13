@@ -42,7 +42,7 @@ def is_offline_debug_mode():
 import logging
 import warnings
 
-UNITORCH_DEBUG_VALUES = {"OFF": 50, "INFO": 20, "DETAIL": 10, "CPU": 10}
+UNITORCH_DEBUG_VALUES = {"OFF": 50, "INFO": 20, "DETAIL": 10, "CPU": 10, "ALL": 0}
 UNITORCH_DEBUG = os.environ.get("UNITORCH_DEBUG", "INFO").upper()
 UNITORCH_DEBUG = (
     UNITORCH_DEBUG if UNITORCH_DEBUG in UNITORCH_DEBUG_VALUES.keys() else "INFO"
@@ -110,13 +110,13 @@ if is_diffusers_available():
 
 # imports from other files
 import unitorch.datasets
-import unitorch.loss
-import unitorch.score
+import unitorch.losses
+import unitorch.scores
 import unitorch.models
 import unitorch.modules
-import unitorch.optim
-import unitorch.scheduler
-import unitorch.score
+import unitorch.optims
+import unitorch.schedulers
+import unitorch.scores
 import unitorch.tasks
 
 # more classes

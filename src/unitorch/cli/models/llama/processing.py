@@ -258,7 +258,7 @@ class LlamaProcessor(_LlamaProcessor):
             decoded = list(map(cleanup_string, decoded))
         else:
             raise ValueError(
-                f"Unsupported type for minigpt4 detokenize: {type(decoded[0])}"
+                f"Unsupported type for llama detokenize: {type(decoded[0])}"
             )
         results["decoded"] = decoded
         return WriterOutputs(results)

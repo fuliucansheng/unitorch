@@ -80,7 +80,7 @@ class SamProcessor(_SamProcessor):
     @register_process("core/postprocess/sam/segmentation")
     def _processing_masks(self, outputs: SegmentationOutputs):
         results = outputs.to_pandas()
-        assert results.shape[0] == 0 or results.shape[0] == len(outputs.outputs)
+        assert results.shape[0] == 0 or results.shape[0] == len(outputs.masks)
         results["mask_image"] = [
             ";".join([self.save(Image.fromarray(_m_.numpy())) for _m_ in m])
             for m in outputs.outputs

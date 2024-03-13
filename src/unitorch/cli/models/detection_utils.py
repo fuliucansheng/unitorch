@@ -14,6 +14,7 @@ from unitorch.cli import WriterMixin, WriterOutputs
 from unitorch.cli.models.modeling_utils import ListTensorsOutputs, ListTensorsTargets
 
 
+@dataclass
 class DetectionOutputs(ListTensorsOutputs, WriterMixin):
     bboxes: Union[torch.Tensor, List[torch.Tensor]]
     scores: Union[torch.Tensor, List[torch.Tensor]]
@@ -21,6 +22,7 @@ class DetectionOutputs(ListTensorsOutputs, WriterMixin):
     features: Optional[Union[torch.Tensor, List[torch.Tensor]]] = torch.empty(0)
 
 
+@dataclass
 class DetectionTargets(ListTensorsTargets):
     bboxes: Union[torch.Tensor, List[torch.Tensor]]
     classes: Union[torch.Tensor, List[torch.Tensor]]

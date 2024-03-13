@@ -208,7 +208,11 @@ class StableXLForImage2ImageGenerationPipeline(_StableXLForImage2ImageGeneration
             1.4,
         ),
     ):
-        inputs = self.processor.image2image_inputs(text, image=image, negative_prompt=neg_text,)
+        inputs = self.processor.image2image_inputs(
+            text,
+            image=image,
+            negative_prompt=neg_text,
+        )
         inputs = {k: v.unsqueeze(0) if v is not None else v for k, v in inputs.items()}
         inputs = {
             k: v.to(device=self._device) if v is not None else v

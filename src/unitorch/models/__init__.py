@@ -213,6 +213,7 @@ import unitorch.models.diffusers
 import unitorch.models.minigpt4
 import unitorch.models.llama
 import unitorch.models.mbart
+import unitorch.models.mistral
 import unitorch.models.mt5
 import unitorch.models.pegasus
 import unitorch.models.peft

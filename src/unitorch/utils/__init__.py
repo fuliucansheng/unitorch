@@ -34,7 +34,12 @@ from unitorch.utils.functional import (
     truncate_sequence_pair,
     nested_dict_value,
 )
-from unitorch.utils.image_utils import make_grid
+from unitorch.utils.image_utils import (
+    make_grid,
+    resize_shortest_edge,
+    image_list_to_tensor,
+    numpy_to_pil,
+)
 from unitorch.utils.import_utils import (
     is_deepspeed_available,
     is_accelerate_available,
