@@ -3,7 +3,6 @@
 
 import torch
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
-from sympy import Segment
 from unitorch.cli.models.segmentation_utils import SegmentationOutputs
 from unitorch.losses import (
     CELoss as _CELoss,

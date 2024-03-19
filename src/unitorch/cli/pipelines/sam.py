@@ -78,6 +78,7 @@ class SamPipeline(_SamForSegmentation):
         return inst
 
     @torch.no_grad()
+    @add_default_section_for_function("core/pipeline/sam")
     def __call__(
         self,
         image: Union[Image.Image, str],

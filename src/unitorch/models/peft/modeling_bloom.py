@@ -15,6 +15,10 @@ class BloomLoraForClassification(GenericPeftModel):
     prefix_keys_in_state_dict = {
         "^(?!peft_model\.base_model\.model\.).*": "peft_model.base_model.model."
     }
+    replace_keys_in_state_dict = {
+        "query_key_value.weight": "query_key_value.base_layer.weight",
+        "query_key_value.bias": "query_key_value.base_layer.bias",
+    }
 
     def __init__(
         self,
@@ -76,6 +80,10 @@ class BloomLoraForClassification(GenericPeftModel):
 class BloomLoraForGeneration(GenericPeftModel):
     prefix_keys_in_state_dict = {
         "^(?!peft_model\.base_model\.model\.).*": "peft_model.base_model.model.transformer."
+    }
+    replace_keys_in_state_dict = {
+        "query_key_value.weight": "query_key_value.base_layer.weight",
+        "query_key_value.bias": "query_key_value.base_layer.bias",
     }
 
     def __init__(

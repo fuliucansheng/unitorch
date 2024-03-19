@@ -151,7 +151,7 @@ class PeftMistralLoraWebUI(GenericWebUI):
 
     @property
     def name(self):
-        return "Mistral"
+        return "Peft-Mistral"
 
     @property
     def iface(self):

@@ -81,7 +81,13 @@ class MistralLoraForGenerationPipeline(_MistralLoraForGeneration):
         if quant_config_path is not None:
             quant_config_path = cached_path(quant_config_path)
 
-        lora_r = config.getoption("lora_r", 16)
+        lora_r = config.getoption("lora_r", None)
+        lora_r = pop_value(
+            lora_r,
+            nested_dict_value(pretrained_peft_infos, pretrained_name, "lora", "rank"),
+            16,
+            check_none=False,
+        )
         lora_alpha = config.getoption("lora_alpha", 32)
         lora_dropout = config.getoption("lora_dropout", 0.05)
         fan_in_fan_out = config.getoption("fan_in_fan_out", True)
@@ -101,7 +107,7 @@ class MistralLoraForGenerationPipeline(_MistralLoraForGeneration):
         )
         lora_weight_path = pop_value(
             pretrained_lora_weight_path,
-            nested_dict_value(pretrained_peft_infos, pretrained_name, "lora_weight"),
+            nested_dict_value(pretrained_peft_infos, pretrained_name, "lora", "weight"),
             check_none=False,
         )
         if lora_weight_path is not None:
@@ -127,6 +133,7 @@ class MistralLoraForGenerationPipeline(_MistralLoraForGeneration):
         return inst
 
     @torch.no_grad()
+    @add_default_section_for_function("core/pipeline/peft/mistral/lora")
     def __call__(
         self,
         prompt: str,

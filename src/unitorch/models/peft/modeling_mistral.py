@@ -37,10 +37,12 @@ class MistralLoraForGeneration(GenericPeftModel):
         fan_in_fan_out: Optional[bool] = True,
         target_modules: Optional[Union[List[str], str]] = ["q_proj", "v_proj"],
         gradient_checkpointing: Optional[bool] = False,
+        pad_token_id: Optional[int] = 0,
     ):
         super().__init__()
         self.config = MistralConfig.from_json_file(config_path)
         self.config.gradient_checkpointing = gradient_checkpointing
+        self.config.pad_token_id = pad_token_id
         self.peft_config = LoraConfig(
             r=lora_r,
             lora_alpha=lora_alpha,

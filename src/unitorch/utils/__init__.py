@@ -40,6 +40,7 @@ from unitorch.utils.image_utils import (
     image_list_to_tensor,
     numpy_to_pil,
 )
+from unitorch.utils.video_utils import tensor2vid
 from unitorch.utils.import_utils import (
     is_deepspeed_available,
     is_accelerate_available,

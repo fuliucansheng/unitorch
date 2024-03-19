@@ -129,6 +129,7 @@ class MiniGPT4Blip2LlamaForGenerationPipeline(_MiniGPT4Blip2LlamaForGeneration):
         return inst
 
     @torch.no_grad()
+    @add_default_section_for_function("core/pipeline/minigpt4")
     def __call__(
         self,
         prompt: str,

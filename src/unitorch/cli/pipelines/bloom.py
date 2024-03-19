@@ -85,6 +85,7 @@ class BloomForGenerationPipeline(_BloomForGeneration):
         return inst
 
     @torch.no_grad()
+    @add_default_section_for_function("core/pipeline/bloom")
     def __call__(
         self,
         prompt: str,

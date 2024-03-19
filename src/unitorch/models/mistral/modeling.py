@@ -29,6 +29,7 @@ class MistralForGeneration(GenericModel, QuantizationMixin):
         config_path: str,
         quant_config_path: Optional[str] = None,
         gradient_checkpointing: Optional[bool] = False,
+        pad_token_id: Optional[int] = 0,
     ):
         """
         Mistral model for text generation tasks.
@@ -40,6 +41,7 @@ class MistralForGeneration(GenericModel, QuantizationMixin):
         super().__init__()
         self.config = MistralConfig.from_json_file(config_path)
         self.config.gradient_checkpointing = gradient_checkpointing
+        self.config.pad_token_id = pad_token_id
         self.model = MistralForCausalLM(self.config)
         self.init_weights()
 

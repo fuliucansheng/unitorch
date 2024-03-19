@@ -5,39 +5,45 @@ import re
 import torch
 from PIL import Image
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
-from unitorch.models.mistral import (
-    MistralForGeneration as _MistralForGeneration,
+from unitorch.models.peft.modeling_bloom import (
+    BloomLoraForGeneration as _BloomLoraForGeneration,
 )
-from unitorch.models.mistral import MistralProcessor
+from unitorch.models.bloom import BloomProcessor
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.cli import (
     cached_path,
     add_default_section_for_init,
     add_default_section_for_function,
 )
-from unitorch.cli.models.mistral import pretrained_mistral_infos
+from unitorch.cli.models.peft import pretrained_peft_infos
 
 
-class MistralForGenerationPipeline(_MistralForGeneration):
+class BloomLoraForGenerationPipeline(_BloomLoraForGeneration):
     def __init__(
         self,
         config_path: str,
-        vocab_path: str,
-        quant_config_path: Optional[str] = None,
+        tokenizer_file: str,
+        lora_r: Optional[int] = 16,
+        lora_alpha: Optional[int] = 32,
+        lora_dropout: Optional[float] = 0.05,
+        fan_in_fan_out: Optional[bool] = True,
+        target_modules: Optional[Union[List[str], str]] = ["query_key_value"],
         max_seq_length: Optional[int] = 512,
         max_gen_seq_length: Optional[int] = 512,
         weight_path: Optional[Union[str, List[str]]] = None,
         state_dict: Optional[Dict[str, Any]] = None,
         device: Optional[Union[str, int]] = "cpu",
     ):
-        if device == "cpu":
-            quant_config_path = None
         super().__init__(
             config_path=config_path,
-            quant_config_path=quant_config_path,
+            lora_r=lora_r,
+            lora_alpha=lora_alpha,
+            lora_dropout=lora_dropout,
+            fan_in_fan_out=fan_in_fan_out,
+            target_modules=target_modules,
         )
-        self.processor = MistralProcessor(
-            vocab_file=vocab_path,
+        self.processor = BloomProcessor(
+            tokenizer_file=tokenizer_file,
             max_seq_length=max_seq_length,
             max_gen_seq_length=max_gen_seq_length,
         )
@@ -48,43 +54,67 @@ class MistralForGenerationPipeline(_MistralForGeneration):
         self.eval()
 
     @classmethod
-    @add_default_section_for_init("core/pipeline/mistral")
+    @add_default_section_for_init("core/pipeline/peft/bloom/lora")
     def from_core_configure(cls, config, **kwargs):
-        config.set_default_section("core/pipeline/mistral")
-        pretrained_name = config.getoption("pretrained_name", "default-mistral")
+        config.set_default_section("core/pipeline/peft/bloom/lora")
+        pretrained_name = config.getoption("pretrained_name", "default-bloom")
 
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
             config_path,
-            nested_dict_value(pretrained_mistral_infos, pretrained_name, "config"),
+            nested_dict_value(pretrained_peft_infos, pretrained_name, "config"),
         )
         config_path = cached_path(config_path)
 
-        vocab_path = config.getoption("vocab_path", None)
-        vocab_path = pop_value(
-            vocab_path,
-            nested_dict_value(pretrained_mistral_infos, pretrained_name, "vocab"),
+        tokenizer_file = config.getoption("tokenizer_file", None)
+        tokenizer_file = pop_value(
+            tokenizer_file,
+            nested_dict_value(pretrained_peft_infos, pretrained_name, "tokenizer"),
         )
-        vocab_path = cached_path(vocab_path)
+        tokenizer_file = cached_path(tokenizer_file)
 
-        quant_config_path = config.getoption("quant_config_path", None)
-        if quant_config_path is not None:
-            quant_config_path = cached_path(quant_config_path)
-
+        lora_r = config.getoption("lora_r", None)
+        lora_r = pop_value(
+            lora_r,
+            nested_dict_value(pretrained_peft_infos, pretrained_name, "lora", "rank"),
+            16,
+            check_none=False,
+        )
+        lora_alpha = config.getoption("lora_alpha", 32)
+        lora_dropout = config.getoption("lora_dropout", 0.05)
+        fan_in_fan_out = config.getoption("fan_in_fan_out", True)
+        target_modules = config.getoption("target_modules", ["query_key_value"])
         max_seq_length = config.getoption("max_seq_length", 512)
         max_gen_seq_length = config.getoption("max_gen_seq_length", 512)
         device = config.getoption("device", "cpu")
         pretrained_weight_path = config.getoption("pretrained_weight_path", None)
         weight_path = pop_value(
             pretrained_weight_path,
-            nested_dict_value(pretrained_mistral_infos, pretrained_name, "weight"),
+            nested_dict_value(pretrained_peft_infos, pretrained_name, "weight"),
             check_none=False,
         )
 
+        pretrained_lora_weight_path = config.getoption(
+            "pretrained_lora_weight_path", None
+        )
+        lora_weight_path = pop_value(
+            pretrained_lora_weight_path,
+            nested_dict_value(pretrained_peft_infos, pretrained_name, "lora", "weight"),
+            check_none=False,
+        )
+        if lora_weight_path is not None:
+            if isinstance(weight_path, str):
+                weight_path = [weight_path]
+            weight_path.append(lora_weight_path)
+
         inst = cls(
             config_path,
-            vocab_path=vocab_path,
-            quant_config_path=quant_config_path,
+            tokenizer_file=tokenizer_file,
+            lora_r=lora_r,
+            lora_alpha=lora_alpha,
+            lora_dropout=lora_dropout,
+            fan_in_fan_out=fan_in_fan_out,
+            target_modules=target_modules,
             max_seq_length=max_seq_length,
             max_gen_seq_length=max_gen_seq_length,
             weight_path=weight_path,
@@ -94,7 +124,7 @@ class MistralForGenerationPipeline(_MistralForGeneration):
         return inst
 
     @torch.no_grad()
-    @add_default_section_for_function("core/pipeline/mistral")
+    @add_default_section_for_function("core/pipeline/peft/bloom/lora")
     def __call__(
         self,
         prompt: str,

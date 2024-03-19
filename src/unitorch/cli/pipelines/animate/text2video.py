@@ -6,9 +6,7 @@ import hashlib
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from diffusers.utils import numpy_to_pil
 from unitorch import is_xformers_available
-from diffusers.pipelines.text_to_video_synthesis.pipeline_text_to_video_synth import (
-    tensor2vid,
-)
+from unitorch.utils import tensor2vid
 from unitorch.models.diffusers import (
     AnimateForText2VideoGeneration as _AnimateForText2VideoGeneration,
 )

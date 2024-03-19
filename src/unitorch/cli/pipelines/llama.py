@@ -94,6 +94,7 @@ class LlamaForGenerationPipeline(_LlamaForGeneration):
         return inst
 
     @torch.no_grad()
+    @add_default_section_for_function("core/pipeline/llama")
     def __call__(
         self,
         prompt: str,
