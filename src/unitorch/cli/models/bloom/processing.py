@@ -198,6 +198,66 @@ class BloomProcessor(_BloomProcessor):
             refs=outputs.input_ids_label,
             masks=outputs.attention_mask_label,
         )
+    
+    @register_process("core/process/bloom/instruction/generation/inputs")
+    def _instruction_generation_inputs(
+        self,
+        instruction: str,
+        input: str,
+        max_seq_length: Optional[int] = None,
+    ):
+        """
+        Preprocess the input text for generation tasks.
+
+        Args:
+            text (str): The input text.
+            max_seq_length (int, optional): The maximum sequence length. Defaults to None.
+
+        Returns:
+            TensorsInputs: The processed input tensors.
+        """
+        outputs = super().instruction_generation_inputs(
+            instruction=instruction,
+            input=input,
+            max_seq_length=max_seq_length,
+        )
+        return TensorsInputs(input_ids=outputs.input_ids)
+
+    @register_process("core/process/bloom/instruction/generation")
+    def _instruction_generation(
+        self,
+        instruction: str,
+        input: str,
+        output: Optional[str] = None,
+        max_seq_length: Optional[int] = None,
+        max_gen_seq_length: Optional[int] = None,
+    ):
+        """
+        Preprocess the input and target texts for generation tasks.
+
+        Args:
+            input (str): The input text.
+            output (str, optional): The paired input text. Defaults to None.
+            max_seq_length (int, optional): The maximum sequence length. Defaults to None.
+            max_gen_seq_length (int, optional): The maximum generation sequence length. Defaults to None.
+
+        Returns:
+            Tuple[TensorsInputs, GenerationTargets]: The processed input tensors and generation targets.
+        """
+        outputs = super().instruction_generation(
+            instruction=instruction,
+            input=input,
+            output=output,
+            max_seq_length=max_seq_length,
+            max_gen_seq_length=max_gen_seq_length,
+        )
+        return TensorsInputs(
+            input_ids=outputs.input_ids,
+            attention_mask=outputs.attention_mask,
+        ), GenerationTargets(
+            refs=outputs.input_ids_label,
+            masks=outputs.attention_mask_label,
+        )
 
     @register_process("core/process/bloom/pretrain")
     def _pretrain(
