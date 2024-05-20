@@ -5,10 +5,10 @@ import torch
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from torch.cuda.amp import autocast
 
-from unitorch.models.diffusers import (
-    ControlNetForText2ImageGeneration as _ControlNetForText2ImageGeneration,
-    ControlNetForImage2ImageGeneration as _ControlNetForImage2ImageGeneration,
-    ControlNetForImageInpainting as _ControlNetForImageInpainting,
+from unitorch.models.peft.diffusers import (
+    ControlNetLoraForText2ImageGeneration as _ControlNetLoraForText2ImageGeneration,
+    ControlNetLoraForImage2ImageGeneration as _ControlNetLoraForImage2ImageGeneration,
+    ControlNetLoraForImageInpainting as _ControlNetLoraForImageInpainting,
 )
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.cli import (
@@ -25,8 +25,10 @@ from unitorch.cli.models.diffusers import (
 )
 
 
-@register_model("core/model/diffusers/text2image/controlnet", diffusion_model_decorator)
-class ControlNetForText2ImageGeneration(_ControlNetForText2ImageGeneration):
+@register_model(
+    "core/model/peft/diffusers/text2image/controlnet", diffusion_model_decorator
+)
+class ControlNetLoraForText2ImageGeneration(_ControlNetLoraForText2ImageGeneration):
     def __init__(
         self,
         config_path: str,
@@ -40,9 +42,7 @@ class ControlNetForText2ImageGeneration(_ControlNetForText2ImageGeneration):
         out_channels: Optional[int] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
-        freeze_vae_encoder: Optional[bool] = True,
-        freeze_text_encoder: Optional[bool] = True,
-        freeze_unet_encoder: Optional[bool] = True,
+        lora_r: Optional[int] = 16,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
@@ -57,16 +57,14 @@ class ControlNetForText2ImageGeneration(_ControlNetForText2ImageGeneration):
             out_channels=out_channels,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
-            freeze_vae_encoder=freeze_vae_encoder,
-            freeze_text_encoder=freeze_text_encoder,
-            freeze_unet_encoder=freeze_unet_encoder,
+            lora_r=lora_r,
             seed=seed,
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/diffusers/text2image/controlnet")
+    @add_default_section_for_init("core/model/peft/diffusers/text2image/controlnet")
     def from_core_configure(cls, config, **kwargs):
-        config.set_default_section("core/model/diffusers/text2image/controlnet")
+        config.set_default_section("core/model/peft/diffusers/text2image/controlnet")
         pretrained_name = config.getoption(
             "pretrained_name", "stable-v1.5-controlnet-canny"
         )
@@ -116,9 +114,7 @@ class ControlNetForText2ImageGeneration(_ControlNetForText2ImageGeneration):
         out_channels = config.getoption("out_channels", None)
         num_train_timesteps = config.getoption("num_train_timesteps", 1000)
         num_infer_timesteps = config.getoption("num_infer_timesteps", 50)
-        freeze_vae_encoder = config.getoption("freeze_vae_encoder", True)
-        freeze_text_encoder = config.getoption("freeze_text_encoder", True)
-        freeze_unet_encoder = config.getoption("freeze_unet_encoder", True)
+        lora_r = config.getoption("lora_r", 16)
         seed = config.getoption("seed", 1123)
 
         inst = cls(
@@ -133,9 +129,7 @@ class ControlNetForText2ImageGeneration(_ControlNetForText2ImageGeneration):
             out_channels=out_channels,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
-            freeze_vae_encoder=freeze_vae_encoder,
-            freeze_text_encoder=freeze_text_encoder,
-            freeze_unet_encoder=freeze_unet_encoder,
+            lora_r=lora_r,
             seed=seed,
         )
 
@@ -146,6 +140,12 @@ class ControlNetForText2ImageGeneration(_ControlNetForText2ImageGeneration):
             state_dict = [
                 load_weight(
                     nested_dict_value(pretrain_infos, "unet", "weight"),
+                    replace_keys={
+                        "to_k.": "to_k.base_layer.",
+                        "to_q.": "to_q.base_layer.",
+                        "to_v.": "to_v.base_layer.",
+                        "to_out.0.": "to_out.0.base_layer.",
+                    },
                 ),
                 load_weight(nested_dict_value(pretrain_infos, "text", "weight")),
                 load_weight(nested_dict_value(pretrain_infos, "vae", "weight")),
@@ -156,6 +156,16 @@ class ControlNetForText2ImageGeneration(_ControlNetForText2ImageGeneration):
             ]
         elif weight_path is not None:
             state_dict = load_weight(weight_path)
+
+        pretrained_lora_weight_path = config.getoption(
+            "pretrained_lora_weight_path", None
+        )
+        if pretrained_lora_weight_path is not None:
+            lora_state_dict = load_weight(pretrained_lora_weight_path)
+            if state_dict is not None:
+                state_dict.append(lora_state_dict)
+            else:
+                state_dict = lora_state_dict
 
         if state_dict is not None:
             inst.from_pretrained(state_dict=state_dict)
@@ -178,7 +188,7 @@ class ControlNetForText2ImageGeneration(_ControlNetForText2ImageGeneration):
         )
         return LossOutputs(loss=loss)
 
-    @add_default_section_for_function("core/model/diffusers/text2image/controlnet")
+    @add_default_section_for_function("core/model/peft/diffusers/text2image/controlnet")
     @autocast()
     def generate(
         self,
@@ -208,9 +218,9 @@ class ControlNetForText2ImageGeneration(_ControlNetForText2ImageGeneration):
 
 
 @register_model(
-    "core/model/diffusers/image2image/controlnet", diffusion_model_decorator
+    "core/model/peft/diffusers/image2image/controlnet", diffusion_model_decorator
 )
-class ControlNetForImage2ImageGeneration(_ControlNetForImage2ImageGeneration):
+class ControlNetLoraForImage2ImageGeneration(_ControlNetLoraForImage2ImageGeneration):
     def __init__(
         self,
         config_path: str,
@@ -224,9 +234,7 @@ class ControlNetForImage2ImageGeneration(_ControlNetForImage2ImageGeneration):
         out_channels: Optional[int] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
-        freeze_vae_encoder: Optional[bool] = True,
-        freeze_text_encoder: Optional[bool] = True,
-        freeze_unet_encoder: Optional[bool] = True,
+        lora_r: Optional[int] = 16,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
@@ -241,16 +249,14 @@ class ControlNetForImage2ImageGeneration(_ControlNetForImage2ImageGeneration):
             out_channels=out_channels,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
-            freeze_vae_encoder=freeze_vae_encoder,
-            freeze_text_encoder=freeze_text_encoder,
-            freeze_unet_encoder=freeze_unet_encoder,
+            lora_r=lora_r,
             seed=seed,
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/diffusers/image2image/controlnet")
+    @add_default_section_for_init("core/model/peft/diffusers/image2image/controlnet")
     def from_core_configure(cls, config, **kwargs):
-        config.set_default_section("core/model/diffusers/image2image/controlnet")
+        config.set_default_section("core/model/peft/diffusers/image2image/controlnet")
         pretrained_name = config.getoption(
             "pretrained_name", "stable-v1.5-controlnet-canny"
         )
@@ -300,9 +306,7 @@ class ControlNetForImage2ImageGeneration(_ControlNetForImage2ImageGeneration):
         out_channels = config.getoption("out_channels", None)
         num_train_timesteps = config.getoption("num_train_timesteps", 1000)
         num_infer_timesteps = config.getoption("num_infer_timesteps", 50)
-        freeze_vae_encoder = config.getoption("freeze_vae_encoder", True)
-        freeze_text_encoder = config.getoption("freeze_text_encoder", True)
-        freeze_unet_encoder = config.getoption("freeze_unet_encoder", True)
+        lora_r = config.getoption("lora_r", 16)
         seed = config.getoption("seed", 1123)
 
         inst = cls(
@@ -317,9 +321,7 @@ class ControlNetForImage2ImageGeneration(_ControlNetForImage2ImageGeneration):
             out_channels=out_channels,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
-            freeze_vae_encoder=freeze_vae_encoder,
-            freeze_text_encoder=freeze_text_encoder,
-            freeze_unet_encoder=freeze_unet_encoder,
+            lora_r=lora_r,
             seed=seed,
         )
 
@@ -328,7 +330,15 @@ class ControlNetForImage2ImageGeneration(_ControlNetForImage2ImageGeneration):
         state_dict = None
         if weight_path is None and pretrain_infos is not None:
             state_dict = [
-                load_weight(nested_dict_value(pretrain_infos, "unet", "weight")),
+                load_weight(
+                    nested_dict_value(pretrain_infos, "unet", "weight"),
+                    replace_keys={
+                        "to_k.": "to_k.base_layer.",
+                        "to_q.": "to_q.base_layer.",
+                        "to_v.": "to_v.base_layer.",
+                        "to_out.0.": "to_out.0.base_layer.",
+                    },
+                ),
                 load_weight(nested_dict_value(pretrain_infos, "text", "weight")),
                 load_weight(nested_dict_value(pretrain_infos, "vae", "weight")),
                 load_weight(
@@ -338,6 +348,16 @@ class ControlNetForImage2ImageGeneration(_ControlNetForImage2ImageGeneration):
             ]
         elif weight_path is not None:
             state_dict = load_weight(weight_path)
+
+        pretrained_lora_weight_path = config.getoption(
+            "pretrained_lora_weight_path", None
+        )
+        if pretrained_lora_weight_path is not None:
+            lora_state_dict = load_weight(pretrained_lora_weight_path)
+            if state_dict is not None:
+                state_dict.append(lora_state_dict)
+            else:
+                state_dict = lora_state_dict
 
         if state_dict is not None:
             inst.from_pretrained(state_dict=state_dict)
@@ -350,7 +370,9 @@ class ControlNetForImage2ImageGeneration(_ControlNetForImage2ImageGeneration):
     ):
         raise NotImplementedError
 
-    @add_default_section_for_function("core/model/diffusers/image2image/controlnet")
+    @add_default_section_for_function(
+        "core/model/peft/diffusers/image2image/controlnet"
+    )
     @autocast()
     def generate(
         self,
@@ -378,8 +400,10 @@ class ControlNetForImage2ImageGeneration(_ControlNetForImage2ImageGeneration):
         return DiffusionOutputs(outputs=outputs.images)
 
 
-@register_model("core/model/diffusers/inpainting/controlnet", diffusion_model_decorator)
-class ControlNetForImageInpainting(_ControlNetForImageInpainting):
+@register_model(
+    "core/model/peft/diffusers/inpainting/controlnet", diffusion_model_decorator
+)
+class ControlNetLoraForImageInpainting(_ControlNetLoraForImageInpainting):
     def __init__(
         self,
         config_path: str,
@@ -393,9 +417,7 @@ class ControlNetForImageInpainting(_ControlNetForImageInpainting):
         out_channels: Optional[int] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
-        freeze_vae_encoder: Optional[bool] = True,
-        freeze_text_encoder: Optional[bool] = True,
-        freeze_unet_encoder: Optional[bool] = True,
+        lora_r: Optional[int] = 16,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
@@ -410,16 +432,14 @@ class ControlNetForImageInpainting(_ControlNetForImageInpainting):
             out_channels=out_channels,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
-            freeze_vae_encoder=freeze_vae_encoder,
-            freeze_text_encoder=freeze_text_encoder,
-            freeze_unet_encoder=freeze_unet_encoder,
+            lora_r=lora_r,
             seed=seed,
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/diffusers/inpainting/controlnet")
+    @add_default_section_for_init("core/model/peft/diffusers/inpainting/controlnet")
     def from_core_configure(cls, config, **kwargs):
-        config.set_default_section("core/model/diffusers/inpainting/controlnet")
+        config.set_default_section("core/model/peft/diffusers/inpainting/controlnet")
         pretrained_name = config.getoption(
             "pretrained_name", "stable-v1.5-controlnet-inpainting"
         )
@@ -469,9 +489,7 @@ class ControlNetForImageInpainting(_ControlNetForImageInpainting):
         out_channels = config.getoption("out_channels", None)
         num_train_timesteps = config.getoption("num_train_timesteps", 1000)
         num_infer_timesteps = config.getoption("num_infer_timesteps", 50)
-        freeze_vae_encoder = config.getoption("freeze_vae_encoder", True)
-        freeze_text_encoder = config.getoption("freeze_text_encoder", True)
-        freeze_unet_encoder = config.getoption("freeze_unet_encoder", True)
+        lora_r = config.getoption("lora_r", 16)
         seed = config.getoption("seed", 1123)
 
         inst = cls(
@@ -486,9 +504,7 @@ class ControlNetForImageInpainting(_ControlNetForImageInpainting):
             out_channels=out_channels,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
-            freeze_vae_encoder=freeze_vae_encoder,
-            freeze_text_encoder=freeze_text_encoder,
-            freeze_unet_encoder=freeze_unet_encoder,
+            lora_r=lora_r,
             seed=seed,
         )
 
@@ -497,7 +513,15 @@ class ControlNetForImageInpainting(_ControlNetForImageInpainting):
         state_dict = None
         if weight_path is None and pretrain_infos is not None:
             state_dict = [
-                load_weight(nested_dict_value(pretrain_infos, "unet", "weight")),
+                load_weight(
+                    nested_dict_value(pretrain_infos, "unet", "weight"),
+                    replace_keys={
+                        "to_k.": "to_k.base_layer.",
+                        "to_q.": "to_q.base_layer.",
+                        "to_v.": "to_v.base_layer.",
+                        "to_out.0.": "to_out.0.base_layer.",
+                    },
+                ),
                 load_weight(nested_dict_value(pretrain_infos, "text", "weight")),
                 load_weight(nested_dict_value(pretrain_infos, "vae", "weight")),
                 load_weight(
@@ -507,6 +531,16 @@ class ControlNetForImageInpainting(_ControlNetForImageInpainting):
             ]
         elif weight_path is not None:
             state_dict = load_weight(weight_path)
+
+        pretrained_lora_weight_path = config.getoption(
+            "pretrained_lora_weight_path", None
+        )
+        if pretrained_lora_weight_path is not None:
+            lora_state_dict = load_weight(pretrained_lora_weight_path)
+            if state_dict is not None:
+                state_dict.append(lora_state_dict)
+            else:
+                state_dict = lora_state_dict
 
         if state_dict is not None:
             inst.from_pretrained(state_dict=state_dict)
@@ -519,7 +553,7 @@ class ControlNetForImageInpainting(_ControlNetForImageInpainting):
     ):
         raise NotImplementedError
 
-    @add_default_section_for_function("core/model/diffusers/inpainting/controlnet")
+    @add_default_section_for_function("core/model/peft/diffusers/inpainting/controlnet")
     @autocast()
     def generate(
         self,

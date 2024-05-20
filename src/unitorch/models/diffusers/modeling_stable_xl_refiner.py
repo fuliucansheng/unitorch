@@ -7,7 +7,6 @@ import torch.nn.functional as F
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 import safetensors
 import diffusers.schedulers as schedulers
-from diffusers.models.attention_processor import LoRAAttnProcessor, LoRAAttnProcessor2_0
 from transformers import CLIPTextConfig, CLIPTextModel, CLIPTextModelWithProjection
 from diffusers.schedulers import SchedulerMixin
 from diffusers.models import (

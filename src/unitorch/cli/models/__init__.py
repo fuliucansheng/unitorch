@@ -81,7 +81,6 @@ import unitorch.cli.models.bria
 import unitorch.cli.models.clip
 import unitorch.cli.models.deberta
 import unitorch.cli.models.detr
-import unitorch.cli.models.minigpt4
 import unitorch.cli.models.llama
 import unitorch.cli.models.mbart
 import unitorch.cli.models.mistral

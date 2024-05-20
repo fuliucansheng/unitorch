@@ -6,6 +6,7 @@ import torch
 import torch.nn.functional as F
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 import diffusers.schedulers as schedulers
+from peft import LoraConfig
 import diffusers.pipelines.stable_video_diffusion as stable_video_diffusion
 from transformers import (
     CLIPTextConfig,
@@ -14,6 +15,7 @@ from transformers import (
     CLIPVisionModelWithProjection,
 )
 from diffusers.schedulers import SchedulerMixin
+from diffusers.models.attention_processor import LoRAAttnProcessor, LoRAAttnProcessor2_0
 from diffusers.models import (
     UNet2DModel,
     UNet2DConditionModel,
@@ -30,11 +32,11 @@ from diffusers.pipelines import (
     StableVideoDiffusionPipeline,
 )
 from unitorch.models import (
-    GenericModel,
     GenericOutputs,
     QuantizationConfig,
     QuantizationMixin,
 )
+from unitorch.models.peft import GenericPeftModel
 
 stable_video_diffusion.pipeline_stable_video_diffusion.tensor2vid = (
     lambda video, *args, **kwargs: video
@@ -69,7 +71,7 @@ def compute_snr(timesteps, noise_scheduler):
     return snr
 
 
-class GenericStableModel(GenericModel, QuantizationMixin):
+class GenericStableLoraModel(GenericPeftModel, QuantizationMixin):
     prefix_keys_in_state_dict = {
         # unet weights
         "^conv_in.*": "unet.",
@@ -108,9 +110,8 @@ class GenericStableModel(GenericModel, QuantizationMixin):
         out_channels: Optional[int] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
-        freeze_vae_encoder: Optional[bool] = True,
-        freeze_text_encoder: Optional[bool] = True,
         snr_gamma: Optional[float] = 5.0,
+        lora_r: Optional[int] = 16,
         seed: Optional[int] = 1123,
     ):
         super().__init__()
@@ -145,22 +146,24 @@ class GenericStableModel(GenericModel, QuantizationMixin):
 
         self.vae_scale_factor = 2 ** (len(self.vae.config.block_out_channels) - 1)
 
-        if freeze_vae_encoder:
-            for param in self.vae.parameters():
-                param.requires_grad = False
-
-        if freeze_text_encoder:
-            for param in self.text.parameters():
-                param.requires_grad = False
-
         if quant_config_path is not None:
             self.quant_config = QuantizationConfig.from_json_file(quant_config_path)
             self.quantize(self.quant_config, ignore_modules=["lm_head", "unet", "vae"])
 
+        for param in self.parameters():
+            param.requires_grad = False
+        lora_config = LoraConfig(
+            r=lora_r,
+            lora_alpha=lora_r,
+            init_lora_weights="gaussian",
+            target_modules=["to_k", "to_q", "to_v", "to_out.0"],
+        )
+        self.unet.add_adapter(lora_config)
+
         self.scheduler.set_timesteps(num_inference_steps=self.num_infer_timesteps)
 
 
-class StableForText2ImageGeneration(GenericStableModel):
+class StableLoraForText2ImageGeneration(GenericStableLoraModel):
     def __init__(
         self,
         config_path: str,
@@ -173,9 +176,8 @@ class StableForText2ImageGeneration(GenericStableModel):
         out_channels: Optional[int] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
-        freeze_vae_encoder: Optional[bool] = True,
-        freeze_text_encoder: Optional[bool] = True,
         snr_gamma: Optional[float] = 5.0,
+        lora_r: Optional[int] = 16,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
@@ -189,9 +191,8 @@ class StableForText2ImageGeneration(GenericStableModel):
             out_channels=out_channels,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
-            freeze_vae_encoder=freeze_vae_encoder,
-            freeze_text_encoder=freeze_text_encoder,
             snr_gamma=snr_gamma,
+            lora_r=lora_r,
             seed=seed,
         )
 
@@ -293,7 +294,7 @@ class StableForText2ImageGeneration(GenericStableModel):
         return GenericOutputs(images=torch.from_numpy(images))
 
 
-class StableForImage2ImageGeneration(GenericStableModel):
+class StableLoraForImage2ImageGeneration(GenericStableLoraModel):
     def __init__(
         self,
         config_path: str,
@@ -306,9 +307,8 @@ class StableForImage2ImageGeneration(GenericStableModel):
         out_channels: Optional[int] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
-        freeze_vae_encoder: Optional[bool] = True,
-        freeze_text_encoder: Optional[bool] = True,
         snr_gamma: Optional[float] = 5.0,
+        lora_r: Optional[int] = 16,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
@@ -322,9 +322,8 @@ class StableForImage2ImageGeneration(GenericStableModel):
             out_channels=out_channels,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
-            freeze_vae_encoder=freeze_vae_encoder,
-            freeze_text_encoder=freeze_text_encoder,
             snr_gamma=snr_gamma,
+            lora_r=lora_r,
             seed=seed,
         )
 
@@ -378,7 +377,7 @@ class StableForImage2ImageGeneration(GenericStableModel):
         return GenericOutputs(images=torch.from_numpy(images))
 
 
-class StableForImageInpainting(GenericStableModel):
+class StableLoraForImageInpainting(GenericStableLoraModel):
     def __init__(
         self,
         config_path: str,
@@ -391,9 +390,8 @@ class StableForImageInpainting(GenericStableModel):
         out_channels: Optional[int] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
-        freeze_vae_encoder: Optional[bool] = True,
-        freeze_text_encoder: Optional[bool] = True,
         snr_gamma: Optional[float] = 5.0,
+        lora_r: Optional[int] = 16,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
@@ -407,9 +405,8 @@ class StableForImageInpainting(GenericStableModel):
             out_channels=out_channels,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
-            freeze_vae_encoder=freeze_vae_encoder,
-            freeze_text_encoder=freeze_text_encoder,
             snr_gamma=snr_gamma,
+            lora_r=lora_r,
             seed=seed,
         )
 
@@ -465,7 +462,7 @@ class StableForImageInpainting(GenericStableModel):
         return GenericOutputs(images=torch.from_numpy(images))
 
 
-class StableForImageResolution(GenericStableModel):
+class StableLoraForImageResolution(GenericStableLoraModel):
     def __init__(
         self,
         config_path: str,
@@ -478,9 +475,8 @@ class StableForImageResolution(GenericStableModel):
         out_channels: Optional[int] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
-        freeze_vae_encoder: Optional[bool] = True,
-        freeze_text_encoder: Optional[bool] = True,
         snr_gamma: Optional[float] = 5.0,
+        lora_r: Optional[int] = 16,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
@@ -494,9 +490,8 @@ class StableForImageResolution(GenericStableModel):
             out_channels=out_channels,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
-            freeze_vae_encoder=freeze_vae_encoder,
-            freeze_text_encoder=freeze_text_encoder,
             snr_gamma=snr_gamma,
+            lora_r=lora_r,
             seed=seed,
         )
 
@@ -549,77 +544,3 @@ class StableForImageResolution(GenericStableModel):
         ).images
 
         return GenericOutputs(images=torch.from_numpy(images))
-
-
-class StableForImage2VideoGeneration(GenericModel):
-    def __init__(
-        self,
-        config_path: str,
-        vision_config_path: str,
-        vae_config_path: str,
-        scheduler_config_path: str,
-        quant_config_path: Optional[str] = None,
-        image_size: Optional[int] = None,
-        in_channels: Optional[int] = None,
-        out_channels: Optional[int] = None,
-        num_train_timesteps: Optional[int] = 1000,
-        num_infer_timesteps: Optional[int] = 50,
-        freeze_vae_encoder: Optional[bool] = True,
-        freeze_text_encoder: Optional[bool] = True,
-        snr_gamma: Optional[float] = 5.0,
-        seed: Optional[int] = 1123,
-    ):
-        super().__init__()
-
-        config_dict = json.load(open(config_path))
-        if image_size is not None:
-            config_dict.update({"sample_size": image_size})
-        if in_channels is not None:
-            config_dict.update({"in_channels": in_channels})
-        if out_channels is not None:
-            config_dict.update({"out_channels": out_channels})
-        self.unet = UNetSpatioTemporalConditionModel.from_config(config_dict)
-
-        vision_config = CLIPVisionConfig.from_json_file(vision_config_path)
-        self.vision = CLIPVisionModelWithProjection(vision_config)
-
-        vae_config_dict = json.load(open(vae_config_path))
-        self.vae = AutoencoderKLTemporalDecoder.from_config(vae_config_dict)
-
-        scheduler_config_dict = json.load(open(scheduler_config_path))
-        scheduler_class_name = scheduler_config_dict.get("_class_name", "DDPMScheduler")
-        assert hasattr(schedulers, scheduler_class_name)
-        scheduler_class = getattr(schedulers, scheduler_class_name)
-        assert issubclass(scheduler_class, SchedulerMixin)
-        scheduler_config_dict["num_train_timesteps"] = num_train_timesteps
-        self.scheduler = scheduler_class.from_config(scheduler_config_dict)
-
-        self.vae_scale_factor = 2 ** (len(self.vae.config.block_out_channels) - 1)
-
-        self.pipeline = StableVideoDiffusionPipeline(
-            vae=self.vae,
-            image_encoder=self.vision,
-            unet=self.unet,
-            scheduler=self.scheduler,
-            low_res_scheduler=self.scheduler,
-            tokenizer=None,
-            safety_checker=None,
-            feature_extractor=None,
-        )
-        self.pipeline.set_progress_bar_config(disable=True)
-
-    def forward(
-        self,
-    ):
-        raise NotImplementedError
-
-    def generate(
-        self,
-        pixel_values: torch.Tensor,
-    ):
-        frames = self.pipeline(
-            image=pixel_values,
-            output_type="pt",
-        ).frames
-
-        return GenericOutputs(frames=frames)

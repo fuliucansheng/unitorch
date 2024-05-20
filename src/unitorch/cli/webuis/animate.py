@@ -15,21 +15,18 @@ from unitorch.cli.pipelines.animate import (
 )
 from unitorch.cli.webuis import matched_pretrained_names
 
-
-@register_webui("core/webui/animate/text2video")
 class AnimateText2VideoWebUI(GenericWebUI):
     match_patterns = [
         "^stable-v1.5.*animate",
     ]
     block_patterns = [
-        ".*blipdiffusion",
         ".*controlnet",
     ]
     pretrained_names = list(pretrained_diffusers_infos.keys())
     supported_pretrained_names = matched_pretrained_names(
         pretrained_names, match_patterns, block_patterns
     )
-    supported_schedulers = ["DPM++", "DPM++SDE", "UniPC++"]
+    supported_schedulers = ["DPM++SDE", "UniPC++"]
 
     def __init__(self, config: CoreConfigureParser):
         self.config = config
@@ -88,7 +85,7 @@ class AnimateText2VideoWebUI(GenericWebUI):
                         )
                     submit = gr.Button(value="Submit")
 
-                video = gr.Video(type="pil", label="Output Video")
+                video = gr.Video(label="Output Video")
                 submit.click(
                     self.serve,
                     inputs=[
@@ -116,7 +113,7 @@ class AnimateText2VideoWebUI(GenericWebUI):
 
     @property
     def name(self):
-        return "AnimateText2Video"
+        return "Text2Video"
 
     @property
     def iface(self):
@@ -178,3 +175,32 @@ class AnimateText2VideoWebUI(GenericWebUI):
             freeu_params=(freeu_s1, freeu_s2, freeu_b1, freeu_b2),
         )
         return video
+
+@register_webui("core/webui/animate")
+class AnimateWebUI(GenericWebUI):
+    def __init__(self, config: CoreConfigureParser):
+        webuis = [
+            AnimateText2VideoWebUI(config),
+        ]
+        self._iface = gr.TabbedInterface(
+            [webui.iface for webui in webuis],
+            tab_names=[webui.name for webui in webuis],
+        )
+
+    @property
+    def name(self):
+        return "Animate"
+
+    @property
+    def iface(self):
+        return self._iface
+
+    @property
+    def status(self):
+        return self._status == "running"
+
+    def start(self):
+        pass
+
+    def stop(self):
+        pass

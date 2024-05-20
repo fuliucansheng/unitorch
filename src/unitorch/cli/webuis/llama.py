@@ -12,7 +12,7 @@ from unitorch.cli.pipelines.llama import LlamaForGenerationPipeline
 
 
 @register_webui("core/webui/llama")
-class LlamaWebUI(GenericWebUI):
+class LlamaGenerationWebUI(GenericWebUI):
     supported_pretrained_names = [
         "llama-7b",
         "llama-13b",

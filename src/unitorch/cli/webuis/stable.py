@@ -19,7 +19,6 @@ from unitorch.cli.pipelines.stable import (
 from unitorch.cli.webuis import matched_pretrained_names
 
 
-@register_webui("core/webui/stable/text2image")
 class StableText2ImageWebUI(GenericWebUI):
     match_patterns = [
         "^stable-v1.5",
@@ -27,7 +26,6 @@ class StableText2ImageWebUI(GenericWebUI):
         "^stable-v2.1",
     ]
     block_patterns = [
-        ".*blipdiffusion",
         ".*controlnet",
         ".*animate",
         ".*inpainting",
@@ -37,7 +35,7 @@ class StableText2ImageWebUI(GenericWebUI):
     supported_pretrained_names = matched_pretrained_names(
         pretrained_names, match_patterns, block_patterns
     )
-    supported_schedulers = ["DPM++", "DPM++SDE", "UniPC++"]
+    supported_schedulers = ["DPM++SDE", "UniPC++"]
 
     def __init__(self, config: CoreConfigureParser):
         self.config = config
@@ -120,7 +118,7 @@ class StableText2ImageWebUI(GenericWebUI):
 
     @property
     def name(self):
-        return "StableText2Image"
+        return "Text2Image"
 
     @property
     def iface(self):
@@ -184,7 +182,6 @@ class StableText2ImageWebUI(GenericWebUI):
         return image
 
 
-@register_webui("core/webui/stable/image2image")
 class StableImage2ImageWebUI(GenericWebUI):
     match_patterns = [
         "^stable-v1.5",
@@ -192,7 +189,6 @@ class StableImage2ImageWebUI(GenericWebUI):
         "^stable-v2.1",
     ]
     block_patterns = [
-        ".*blipdiffusion",
         ".*controlnet",
         ".*animate",
         ".*upscaler",
@@ -201,7 +197,7 @@ class StableImage2ImageWebUI(GenericWebUI):
     supported_pretrained_names = matched_pretrained_names(
         pretrained_names, match_patterns, block_patterns
     )
-    supported_schedulers = ["DPM++", "DPM++SDE", "UniPC++"]
+    supported_schedulers = ["DPM++SDE", "UniPC++"]
 
     def __init__(self, config: CoreConfigureParser):
         self.config = config
@@ -284,7 +280,7 @@ class StableImage2ImageWebUI(GenericWebUI):
 
     @property
     def name(self):
-        return "StableImage2Image"
+        return "Image2Image"
 
     @property
     def iface(self):
@@ -348,7 +344,6 @@ class StableImage2ImageWebUI(GenericWebUI):
         return image
 
 
-@register_webui("core/webui/stable/inpainting")
 class StableImageInpaintingWebUI(GenericWebUI):
     match_patterns = [
         "^stable-v1.5.*inpainting",
@@ -356,7 +351,6 @@ class StableImageInpaintingWebUI(GenericWebUI):
         "^stable-v2.1.*inpainting",
     ]
     block_patterns = [
-        ".*blipdiffusion",
         ".*controlnet",
         ".*animate",
         ".*upscaler",
@@ -365,7 +359,7 @@ class StableImageInpaintingWebUI(GenericWebUI):
     supported_pretrained_names = matched_pretrained_names(
         pretrained_names, match_patterns, block_patterns
     )
-    supported_schedulers = ["DPM++", "DPM++SDE", "UniPC++"]
+    supported_schedulers = ["DPM++SDE", "UniPC++"]
 
     def __init__(self, config: CoreConfigureParser):
         self.config = config
@@ -452,7 +446,7 @@ class StableImageInpaintingWebUI(GenericWebUI):
 
     @property
     def name(self):
-        return "StableImageInpainting"
+        return "ImageInpainting"
 
     @property
     def iface(self):
@@ -516,7 +510,6 @@ class StableImageInpaintingWebUI(GenericWebUI):
         return image
 
 
-@register_webui("core/webui/stable/resolution")
 class StableImageResolutionWebUI(GenericWebUI):
     match_patterns = [
         "^stable-v1.5.*upscaler",
@@ -524,7 +517,6 @@ class StableImageResolutionWebUI(GenericWebUI):
         "^stable-v2.1.*upscaler",
     ]
     block_patterns = [
-        ".*blipdiffusion",
         ".*controlnet",
         ".*animate",
     ]
@@ -532,7 +524,7 @@ class StableImageResolutionWebUI(GenericWebUI):
     supported_pretrained_names = matched_pretrained_names(
         pretrained_names, match_patterns, block_patterns
     )
-    supported_schedulers = ["DPM++", "DPM++SDE", "UniPC++"]
+    supported_schedulers = ["DPM++SDE", "UniPC++"]
 
     def __init__(self, config: CoreConfigureParser):
         self.config = config
@@ -619,7 +611,7 @@ class StableImageResolutionWebUI(GenericWebUI):
 
     @property
     def name(self):
-        return "StableImageResolution"
+        return "ImageResolution"
 
     @property
     def iface(self):
@@ -679,3 +671,31 @@ class StableImageResolutionWebUI(GenericWebUI):
             freeu_params=(freeu_s1, freeu_s2, freeu_b1, freeu_b2),
         )
         return image
+
+@register_webui("core/webui/stable")
+class StableWebUI(GenericWebUI):
+    def __init__(self, config: CoreConfigureParser):
+        webuis = [
+            StableText2ImageWebUI(config),
+            StableImage2ImageWebUI(config),
+            StableImageInpaintingWebUI(config),
+            StableImageResolutionWebUI(config),
+        ]
+        self._iface = gr.TabbedInterface(
+            [webui.iface for webui in webuis],
+            tab_names=[webui.name for webui in webuis],
+        )
+
+    def start(self):
+        pass
+    
+    def stop(self):
+        pass
+
+    @property
+    def name(self):
+        return "Stable"
+
+    @property
+    def iface(self):
+        return self._iface

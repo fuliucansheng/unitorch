@@ -41,7 +41,6 @@ class DreamboothXLForText2ImageGeneration(_DreamboothXLForText2ImageGeneration):
         freeze_text_encoder: Optional[bool] = True,
         snr_gamma: Optional[float] = 5.0,
         prior_loss_weight: Optional[float] = 1.0,
-        lora_r: Optional[int] = None,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
@@ -60,7 +59,6 @@ class DreamboothXLForText2ImageGeneration(_DreamboothXLForText2ImageGeneration):
             freeze_text_encoder=freeze_text_encoder,
             snr_gamma=snr_gamma,
             prior_loss_weight=prior_loss_weight,
-            lora_r=lora_r,
             seed=seed,
         )
 
@@ -119,7 +117,6 @@ class DreamboothXLForText2ImageGeneration(_DreamboothXLForText2ImageGeneration):
         freeze_text_encoder = config.getoption("freeze_text_encoder", True)
         snr_gamma = config.getoption("snr_gamma", 5.0)
         prior_loss_weight = config.getoption("prior_loss_weight", 1.0)
-        lora_r = config.getoption("lora_r", None)
         seed = config.getoption("seed", 1123)
 
         inst = cls(
@@ -138,7 +135,6 @@ class DreamboothXLForText2ImageGeneration(_DreamboothXLForText2ImageGeneration):
             freeze_text_encoder=freeze_text_encoder,
             snr_gamma=snr_gamma,
             prior_loss_weight=prior_loss_weight,
-            lora_r=lora_r,
             seed=seed,
         )
 

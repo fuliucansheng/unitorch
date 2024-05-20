@@ -18,7 +18,6 @@ from unitorch.cli.pipelines.controlnet_xl import (
 from unitorch.cli.webuis import matched_pretrained_names
 
 
-@register_webui("core/webui/controlnet_xl/text2image")
 class ControlNetXLText2ImageWebUI(GenericWebUI):
     match_patterns = [
         "^stable-xl.*controlnet",
@@ -27,7 +26,7 @@ class ControlNetXLText2ImageWebUI(GenericWebUI):
     supported_pretrained_names = matched_pretrained_names(
         pretrained_names, match_patterns
     )
-    supported_schedulers = ["DPM++", "DPM++SDE", "UniPC++"]
+    supported_schedulers = ["DPM++SDE", "UniPC++"]
 
     def __init__(self, config: CoreConfigureParser):
         self.config = config
@@ -123,7 +122,7 @@ class ControlNetXLText2ImageWebUI(GenericWebUI):
 
     @property
     def name(self):
-        return "ControlNetXLText2Image"
+        return "Text2Image"
 
     @property
     def iface(self):
@@ -198,7 +197,7 @@ class ControlNetXLImage2ImageWebUI(GenericWebUI):
     supported_pretrained_names = matched_pretrained_names(
         pretrained_names, match_patterns
     )
-    supported_schedulers = ["DPM++", "DPM++SDE", "UniPC++"]
+    supported_schedulers = ["DPM++SDE", "UniPC++"]
 
     def __init__(self, config: CoreConfigureParser):
         self.config = config
@@ -294,7 +293,7 @@ class ControlNetXLImage2ImageWebUI(GenericWebUI):
 
     @property
     def name(self):
-        return "ControlNetXLImage2Image"
+        return "Image2Image"
 
     @property
     def iface(self):
@@ -362,7 +361,6 @@ class ControlNetXLImage2ImageWebUI(GenericWebUI):
         return image
 
 
-@register_webui("core/webui/controlnet_xl/inpainting")
 class ControlNetXLImageInpaintingWebUI(GenericWebUI):
     match_patterns = [
         "^stable-xl.*controlnet",
@@ -371,7 +369,7 @@ class ControlNetXLImageInpaintingWebUI(GenericWebUI):
     supported_pretrained_names = matched_pretrained_names(
         pretrained_names, match_patterns
     )
-    supported_schedulers = ["DPM++", "DPM++SDE", "UniPC++"]
+    supported_schedulers = ["DPM++SDE", "UniPC++"]
 
     def __init__(self, config: CoreConfigureParser):
         self.config = config
@@ -470,7 +468,7 @@ class ControlNetXLImageInpaintingWebUI(GenericWebUI):
 
     @property
     def name(self):
-        return "ControlNetXLImageInpainting"
+        return "ImageInpainting"
 
     @property
     def iface(self):
@@ -536,3 +534,30 @@ class ControlNetXLImageInpaintingWebUI(GenericWebUI):
             freeu_params=(freeu_s1, freeu_s2, freeu_b1, freeu_b2),
         )
         return image
+
+@register_webui("core/webui/controlnet_xl")
+class ControlNetXLWebUI(GenericWebUI):
+    def __init__(self, config: CoreConfigureParser):
+        webuis = [
+            ControlNetXLText2ImageWebUI(config),
+            ControlNetXLImage2ImageWebUI(config),
+            ControlNetXLImageInpaintingWebUI(config),
+        ]
+        self._iface = gr.TabbedInterface(
+            [webui.iface for webui in webuis],
+            tab_names=[webui.name for webui in webuis],
+        )
+
+    def start(self):
+        pass
+    
+    def stop(self):
+        pass
+
+    @property
+    def name(self):
+        return "ControlNetXL"
+
+    @property
+    def iface(self):
+        return self._iface

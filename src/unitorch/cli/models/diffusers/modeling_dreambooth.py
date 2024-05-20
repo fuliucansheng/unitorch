@@ -38,7 +38,6 @@ class DreamboothForText2ImageGeneration(_DreamboothForText2ImageGeneration):
         freeze_text_encoder: Optional[bool] = True,
         snr_gamma: Optional[float] = 5.0,
         prior_loss_weight: Optional[float] = 1.0,
-        lora_r: Optional[int] = None,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
@@ -56,7 +55,6 @@ class DreamboothForText2ImageGeneration(_DreamboothForText2ImageGeneration):
             freeze_text_encoder=freeze_text_encoder,
             snr_gamma=snr_gamma,
             prior_loss_weight=prior_loss_weight,
-            lora_r=lora_r,
             seed=seed,
         )
 
@@ -108,7 +106,6 @@ class DreamboothForText2ImageGeneration(_DreamboothForText2ImageGeneration):
         freeze_text_encoder = config.getoption("freeze_text_encoder", True)
         snr_gamma = config.getoption("snr_gamma", 5.0)
         prior_loss_weight = config.getoption("prior_loss_weight", 1.0)
-        lora_r = config.getoption("lora_r", None)
         seed = config.getoption("seed", 1123)
 
         inst = cls(
@@ -126,7 +123,6 @@ class DreamboothForText2ImageGeneration(_DreamboothForText2ImageGeneration):
             freeze_text_encoder=freeze_text_encoder,
             snr_gamma=snr_gamma,
             prior_loss_weight=prior_loss_weight,
-            lora_r=lora_r,
             seed=seed,
         )
 
@@ -135,7 +131,9 @@ class DreamboothForText2ImageGeneration(_DreamboothForText2ImageGeneration):
         state_dict = None
         if weight_path is None and pretrain_infos is not None:
             state_dict = [
-                load_weight(nested_dict_value(pretrain_infos, "unet", "weight")),
+                load_weight(
+                    nested_dict_value(pretrain_infos, "unet", "weight"),
+                ),
                 load_weight(nested_dict_value(pretrain_infos, "text", "weight")),
                 load_weight(nested_dict_value(pretrain_infos, "vae", "weight")),
             ]
@@ -171,8 +169,8 @@ class DreamboothForText2ImageGeneration(_DreamboothForText2ImageGeneration):
         negative_input_ids: torch.Tensor,
         attention_mask: Optional[torch.Tensor] = None,
         negative_attention_mask: Optional[torch.Tensor] = None,
-        height: Optional[int] = 1024,
-        width: Optional[int] = 1024,
+        height: Optional[int] = 512,
+        width: Optional[int] = 512,
         guidance_scale: Optional[float] = 7.5,
     ):
         outputs = super().generate(

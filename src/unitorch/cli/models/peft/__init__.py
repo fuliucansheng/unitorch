@@ -6,6 +6,7 @@ pretrained_peft_infos = {}
 import unitorch.cli.models.peft.modeling_bloom
 import unitorch.cli.models.peft.modeling_llama
 import unitorch.cli.models.peft.modeling_mistral
+import unitorch.cli.models.peft.diffusers
 from unitorch.cli.models.peft.modeling_bloom import (
     BloomLoraForClassification,
     BloomLoraForGeneration,

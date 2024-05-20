@@ -7,7 +7,7 @@ import abc
 import logging
 import traceback
 import importlib
-import pkg_resources
+import importlib_resources
 import importlib.metadata as importlib_metadata
 from functools import partial
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
@@ -41,7 +41,9 @@ def cached_path(
     local_files_only: Optional[bool] = False,
 ) -> Optional[str]:
     if not is_remote_url(url_or_filename):
-        pkg_filename = pkg_resources.resource_filename("unitorch", url_or_filename)
+        pkg_filename = os.path.join(
+            importlib_resources.files("unitorch"), url_or_filename
+        )
         if os.path.exists(pkg_filename):
             url_or_filename = pkg_filename
 
@@ -68,6 +70,7 @@ def get_global_config():
 
 
 def set_global_config(config: Union[CoreConfigureParser, str]):
+    global global_config
     if isinstance(config, CoreConfigureParser):
         global_config = config
     elif os.path.exists(config):

@@ -175,8 +175,12 @@ pretrained_stable_infos = {
     "stable-xl-dreamshaper": __hf_hub_stable_xl_safetensors_dict__(
         "Lykon/dreamshaper-xl-1-0"
     ),
-    "stable-xl-dreamshaper-fp16": {
-        **__hf_hub_stable_xl_safetensors_dict__("Lykon/dreamshaper-xl-1-0"),
+    "stable-xl-turbo": __hf_hub_stable_xl_safetensors_dict__("stabilityai/sdxl-turbo"),
+    "stable-xl-realism-v30": __hf_hub_stable_xl_dict__(
+        "stablediffusionapi/realism-engine-sdxl-v30"
+    ),
+    "stable-xl-realism-v30-fp16": {
+        **__hf_hub_stable_xl_dict__("stablediffusionapi/realism-engine-sdxl-v30"),
         **{
             "vae": {
                 "config": "https://huggingface.co/madebyollin/sdxl-vae-fp16-fix/resolve/main/config.json",
@@ -184,10 +188,6 @@ pretrained_stable_infos = {
             },
         },
     },
-    "stable-turbo-xl": __hf_hub_stable_xl_safetensors_dict__("stabilityai/sdxl-turbo"),
-    "stable-xl-realism-v30": __hf_hub_stable_xl_dict__(
-        "stablediffusionapi/realism-engine-sdxl-v30"
-    ),
     "stable-xl-opendalle-v1.1": __hf_hub_stable_xl_safetensors_dict__(
         "dataautogpt3/OpenDalleV1.1"
     ),
@@ -293,38 +293,6 @@ pretrained_diffusers_infos = {
     "stable-v1.5-x4-upscaler": __hf_hub_stable_v1_5_dict__(
         "stabilityai/stable-diffusion-x4-upscaler"
     ),
-    "stable-v1.5-blipdiffusion": {
-        **__hf_hub_stable_v1_5_dict__("salesforce/blipdiffusion"),
-        **{
-            "qformer": {
-                "config": f"https://huggingface.co/salesforce/blipdiffusion/resolve/main/qformer/config.json",
-                "weight": f"https://huggingface.co/salesforce/blipdiffusion/resolve/main/qformer/pytorch_model.bin",
-            },
-            "vision_encoder": {
-                "config": f"https://huggingface.co/salesforce/blipdiffusion/resolve/main/vision_encoder/config.json",
-                "weight": f"https://huggingface.co/salesforce/blipdiffusion/resolve/main/vision_encoder/pytorch_model.bin",
-            },
-            "vision_config": "https://huggingface.co/salesforce/blipdiffusion/resolve/main/image_processor/preprocessor_config.json",
-        },
-    },
-    "stable-v1.5-blipdiffusion-controlnet": {
-        **__hf_hub_stable_v1_5_dict__("salesforce/blipdiffusion-controlnet"),
-        **{
-            "qformer": {
-                "config": f"https://huggingface.co/salesforce/blipdiffusion-controlnet/resolve/main/qformer/config.json",
-                "weight": f"https://huggingface.co/salesforce/blipdiffusion-controlnet/resolve/main/qformer/pytorch_model.bin",
-            },
-            "vision_encoder": {
-                "config": f"https://huggingface.co/salesforce/blipdiffusion-controlnet/resolve/main/vision_encoder/config.json",
-                "weight": f"https://huggingface.co/salesforce/blipdiffusion-controlnet/resolve/main/vision_encoder/pytorch_model.bin",
-            },
-            "vision_config": "https://huggingface.co/salesforce/blipdiffusion-controlnet/resolve/main/image_processor/preprocessor_config.json",
-            "controlnet": {
-                "config": f"https://huggingface.co/salesforce/blipdiffusion-controlnet/resolve/main/controlnet/config.json",
-                "weight": f"https://huggingface.co/salesforce/blipdiffusion-controlnet/resolve/main/controlnet/diffusion_pytorch_model.bin",
-            },
-        },
-    },
 }
 
 from unitorch.cli.models.diffusion_utils import load_weight
@@ -359,10 +327,6 @@ from unitorch.cli.models.diffusers.modeling_controlnet_xl import (
     ControlNetXLForImage2ImageGeneration,
     ControlNetXLForImageInpainting,
 )
-from unitorch.cli.models.diffusers.modeling_blip2 import (
-    Blip2ForText2ImageGeneration,
-)
-
 from unitorch.cli.models.diffusers.processing_stable import StableProcessor
 from unitorch.cli.models.diffusers.processing_stable_xl import StableXLProcessor
 from unitorch.cli.models.diffusers.processing_stable_xl_refiner import (
@@ -372,6 +336,5 @@ from unitorch.cli.models.diffusers.processing_dreambooth import DreamboothProces
 from unitorch.cli.models.diffusers.processing_dreambooth_xl import DreamboothXLProcessor
 from unitorch.cli.models.diffusers.processing_controlnet import ControlNetProcessor
 from unitorch.cli.models.diffusers.processing_controlnet_xl import ControlNetXLProcessor
-from unitorch.cli.models.diffusers.processing_blip2 import Blip2Processor
 
 import unitorch.cli.models.diffusers.modeling_animate

@@ -19,23 +19,8 @@ from unitorch.cli import (
 
 
 @fire.decorators.SetParseFn(str)
-def launch(script_path_or_dir: str, **kwargs):
-    config_file = kwargs.pop("config_file", "config.ini")
-
-    if script_path_or_dir and os.path.isdir(script_path_or_dir):
-        config_path = os.path.join(script_path_or_dir, config_file)
-        sys.path.insert(0, script_path_or_dir)
-        for f in os.listdir(script_path_or_dir):
-            fpath = os.path.normpath(os.path.join(script_path_or_dir, f))
-            if (
-                not f.startswith("_")
-                and not f.startswith(".")
-                and (f.endswith(".py") or os.path.isdir(fpath))
-            ):
-                fname = f[:-3] if f.endswith(".py") else f
-                module = importlib.import_module(f"{fname}")
-    else:
-        config_path = cached_path(script_path_or_dir)
+def launch(config_path: str, **kwargs):
+    config_path = cached_path(config_path)
 
     params = []
     for k, v in kwargs.items():

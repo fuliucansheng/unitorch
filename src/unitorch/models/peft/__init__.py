@@ -221,3 +221,21 @@ from unitorch.models.peft.modeling_llama import (
     LlamaLoraForGeneration,
 )
 from unitorch.models.peft.modeling_mistral import MistralLoraForGeneration
+from unitorch.models.peft.diffusers import (
+    StableLoraForText2ImageGeneration,
+    StableLoraForImage2ImageGeneration,
+    StableLoraForImageInpainting,
+    StableLoraForImageResolution,
+    StableXLLoraForText2ImageGeneration,
+    StableXLLoraForImage2ImageGeneration,
+    StableXLLoraForImageInpainting,
+    ControlNetLoraForText2ImageGeneration,
+    ControlNetLoraForImage2ImageGeneration,
+    ControlNetLoraForImageInpainting,
+    ControlNetXLLoraForText2ImageGeneration,
+    ControlNetXLLoraForImage2ImageGeneration,
+    ControlNetXLLoraForImageInpainting,
+    MultiControlNetLoraForText2ImageGeneration,
+    MultiControlNetLoraForImage2ImageGeneration,
+    MultiControlNetLoraForImageInpainting,
+)

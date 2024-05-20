@@ -14,8 +14,7 @@ from unitorch.cli.models.bloom import pretrained_bloom_infos
 from unitorch.cli.webuis import matched_pretrained_names
 
 
-@register_webui("core/webui/bloom")
-class BloomWebUI(GenericWebUI):
+class BloomGenerationWebUI(GenericWebUI):
     match_patterns = [
         "^bloom",
     ]
@@ -101,8 +100,7 @@ class BloomWebUI(GenericWebUI):
         return result
 
 
-@register_webui("core/webui/peft/bloom/lora")
-class PeftBloomLoraWebUI(GenericWebUI):
+class PeftBloomLoraGenerationWebUI(GenericWebUI):
     match_patterns = [
         "^peft-lora-bloom",
     ]
@@ -188,3 +186,30 @@ class PeftBloomLoraWebUI(GenericWebUI):
         assert self._pipe is not None
         result = self._pipe(text)
         return result
+
+
+@register_webui("core/webui/bloom")
+class BloomWebUI(GenericWebUI):
+    def __init__(self, config: CoreConfigureParser):
+        webuis = [
+            BloomGenerationWebUI(config),
+            PeftBloomLoraGenerationWebUI(config),
+        ]
+        self._iface = gr.TabbedInterface(
+            [webui.iface for webui in webuis],
+            tab_names=[webui.name for webui in webuis],
+        )
+
+    def start(self):
+        pass
+    
+    def stop(self):
+        pass
+
+    @property
+    def name(self):
+        return "Bloom"
+
+    @property
+    def iface(self):
+        return self._iface

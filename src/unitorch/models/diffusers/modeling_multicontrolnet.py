@@ -8,14 +8,6 @@ from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 import diffusers.schedulers as schedulers
 from transformers import CLIPTextConfig, CLIPTextModel
 from diffusers.schedulers import SchedulerMixin
-from diffusers.models.attention_processor import (
-    AttnAddedKVProcessor,
-    AttnAddedKVProcessor2_0,
-    LoRAAttnAddedKVProcessor,
-    LoRAAttnProcessor,
-    LoRAAttnProcessor2_0,
-    SlicedAttnAddedKVProcessor,
-)
 from diffusers.models import (
     ControlNetModel,
     UNet2DModel,
@@ -77,8 +69,7 @@ class GenericMultiControlNetModel(GenericModel, QuantizationMixin):
         num_infer_timesteps: Optional[int] = 50,
         freeze_vae_encoder: Optional[bool] = True,
         freeze_text_encoder: Optional[bool] = True,
-        freeze_unet_encoder: Optional[bool] = True,
-        lora_r: Optional[int] = None,
+        freeze_unet_encoder: Optional[bool] = False,
         seed: Optional[int] = 1123,
     ):
         super().__init__()
@@ -133,57 +124,7 @@ class GenericMultiControlNetModel(GenericModel, QuantizationMixin):
                 ignore_modules=["lm_head", "unet", "vae", "controlnet"],
             )
 
-        if lora_r is not None:
-            for param in self.unet.parameters():
-                param.requires_grad = False
-            self.enable_lora(lora_r=lora_r)
-
         self.scheduler.set_timesteps(num_inference_steps=self.num_infer_timesteps)
-
-    def enable_lora(self, lora_r: Optional[int] = 4):
-        lora_attn_procs = {}
-        for name, attn_processor in self.unet.attn_processors.items():
-            cross_attention_dim = (
-                None
-                if name.endswith("attn1.processor")
-                else self.unet.config.cross_attention_dim
-            )
-            if name.startswith("mid_block"):
-                hidden_size = self.unet.config.block_out_channels[-1]
-            elif name.startswith("up_blocks"):
-                block_id = int(name[len("up_blocks.")])
-                hidden_size = list(reversed(self.unet.config.block_out_channels))[
-                    block_id
-                ]
-            elif name.startswith("down_blocks"):
-                block_id = int(name[len("down_blocks.")])
-                hidden_size = self.unet.config.block_out_channels[block_id]
-
-            if isinstance(
-                attn_processor,
-                (
-                    AttnAddedKVProcessor,
-                    SlicedAttnAddedKVProcessor,
-                    AttnAddedKVProcessor2_0,
-                ),
-            ):
-                lora_attn_processor_class = LoRAAttnAddedKVProcessor
-            else:
-                lora_attn_processor_class = (
-                    LoRAAttnProcessor2_0
-                    if hasattr(F, "scaled_dot_product_attention")
-                    else LoRAAttnProcessor
-                )
-
-            module = lora_attn_processor_class(
-                hidden_size=hidden_size,
-                cross_attention_dim=cross_attention_dim,
-                rank=lora_r,
-            )
-
-            lora_attn_procs[name] = module
-
-        self.unet.set_attn_processor(lora_attn_procs)
 
 
 class MultiControlNetForText2ImageGeneration(GenericMultiControlNetModel):
@@ -202,8 +143,7 @@ class MultiControlNetForText2ImageGeneration(GenericMultiControlNetModel):
         num_infer_timesteps: Optional[int] = 50,
         freeze_vae_encoder: Optional[bool] = True,
         freeze_text_encoder: Optional[bool] = True,
-        freeze_unet_encoder: Optional[bool] = True,
-        lora_r: Optional[int] = None,
+        freeze_unet_encoder: Optional[bool] = False,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
@@ -221,7 +161,6 @@ class MultiControlNetForText2ImageGeneration(GenericMultiControlNetModel):
             freeze_vae_encoder=freeze_vae_encoder,
             freeze_text_encoder=freeze_text_encoder,
             freeze_unet_encoder=freeze_unet_encoder,
-            lora_r=lora_r,
             seed=seed,
         )
         self.pipeline = StableDiffusionControlNetPipeline(
@@ -335,8 +274,7 @@ class MultiControlNetForImage2ImageGeneration(GenericMultiControlNetModel):
         num_infer_timesteps: Optional[int] = 50,
         freeze_vae_encoder: Optional[bool] = True,
         freeze_text_encoder: Optional[bool] = True,
-        freeze_unet_encoder: Optional[bool] = True,
-        lora_r: Optional[int] = None,
+        freeze_unet_encoder: Optional[bool] = False,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
@@ -354,7 +292,6 @@ class MultiControlNetForImage2ImageGeneration(GenericMultiControlNetModel):
             freeze_vae_encoder=freeze_vae_encoder,
             freeze_text_encoder=freeze_text_encoder,
             freeze_unet_encoder=freeze_unet_encoder,
-            lora_r=lora_r,
             seed=seed,
         )
         self.pipeline = StableDiffusionControlNetImg2ImgPipeline(
@@ -427,8 +364,7 @@ class MultiControlNetForImageInpainting(GenericMultiControlNetModel):
         num_infer_timesteps: Optional[int] = 50,
         freeze_vae_encoder: Optional[bool] = True,
         freeze_text_encoder: Optional[bool] = True,
-        freeze_unet_encoder: Optional[bool] = True,
-        lora_r: Optional[int] = None,
+        freeze_unet_encoder: Optional[bool] = False,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
@@ -446,7 +382,6 @@ class MultiControlNetForImageInpainting(GenericMultiControlNetModel):
             freeze_vae_encoder=freeze_vae_encoder,
             freeze_text_encoder=freeze_text_encoder,
             freeze_unet_encoder=freeze_unet_encoder,
-            lora_r=lora_r,
             seed=seed,
         )
         self.pipeline = StableDiffusionControlNetInpaintPipeline(

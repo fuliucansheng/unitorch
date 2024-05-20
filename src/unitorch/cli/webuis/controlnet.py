@@ -19,7 +19,6 @@ from unitorch.cli.pipelines.controlnet import (
 from unitorch.cli.webuis import matched_pretrained_names
 
 
-@register_webui("core/webui/controlnet/text2image")
 class ControlNetText2ImageWebUI(GenericWebUI):
     match_patterns = [
         "^stable-v1.5.*controlnet",
@@ -27,14 +26,13 @@ class ControlNetText2ImageWebUI(GenericWebUI):
         "^stable-v2.1.*controlnet",
     ]
     block_patterns = [
-        ".*blipdiffusion",
         ".*inpainting",
     ]
     pretrained_names = list(pretrained_diffusers_infos.keys())
     supported_pretrained_names = matched_pretrained_names(
         pretrained_names, match_patterns, block_patterns
     )
-    supported_schedulers = ["DPM++", "DPM++SDE", "UniPC++"]
+    supported_schedulers = ["DPM++SDE", "UniPC++"]
 
     def __init__(self, config: CoreConfigureParser):
         self.config = config
@@ -130,7 +128,7 @@ class ControlNetText2ImageWebUI(GenericWebUI):
 
     @property
     def name(self):
-        return "ControlNetText2Image"
+        return "Text2Image"
 
     @property
     def iface(self):
@@ -198,21 +196,18 @@ class ControlNetText2ImageWebUI(GenericWebUI):
         return image
 
 
-@register_webui("core/webui/controlnet/image2image")
 class ControlNetImage2ImageWebUI(GenericWebUI):
     match_patterns = [
         "^stable-v1.5.*controlnet",
         "^stable-v2.*controlnet",
         "^stable-v2.1.*controlnet",
     ]
-    block_patterns = [
-        ".*blipdiffusion",
-    ]
+    block_patterns = []
     pretrained_names = list(pretrained_diffusers_infos.keys())
     supported_pretrained_names = matched_pretrained_names(
         pretrained_names, match_patterns, block_patterns
     )
-    supported_schedulers = ["DPM++", "DPM++SDE", "UniPC++"]
+    supported_schedulers = ["DPM++SDE", "UniPC++"]
 
     def __init__(self, config: CoreConfigureParser):
         self.config = config
@@ -308,7 +303,7 @@ class ControlNetImage2ImageWebUI(GenericWebUI):
 
     @property
     def name(self):
-        return "ControlNetImage2Image"
+        return "Image2Image"
 
     @property
     def iface(self):
@@ -376,21 +371,18 @@ class ControlNetImage2ImageWebUI(GenericWebUI):
         return image
 
 
-@register_webui("core/webui/controlnet/inpainting")
 class ControlNetImageInpaintingWebUI(GenericWebUI):
     match_patterns = [
         "^stable-v1.5.*controlnet.*inpainting",
         "^stable-v2.*controlnet.*inpainting",
         "^stable-v2.1.*controlnet.*inpainting",
     ]
-    block_patterns = [
-        ".*blipdiffusion",
-    ]
+    block_patterns = []
     pretrained_names = list(pretrained_diffusers_infos.keys())
     supported_pretrained_names = matched_pretrained_names(
         pretrained_names, match_patterns, block_patterns
     )
-    supported_schedulers = ["DPM++", "DPM++SDE", "UniPC++"]
+    supported_schedulers = ["DPM++SDE", "UniPC++"]
 
     def __init__(self, config: CoreConfigureParser):
         self.config = config
@@ -490,7 +482,7 @@ class ControlNetImageInpaintingWebUI(GenericWebUI):
 
     @property
     def name(self):
-        return "ControlNetImageInpainting"
+        return "ImageInpainting"
 
     @property
     def iface(self):
@@ -558,3 +550,30 @@ class ControlNetImageInpaintingWebUI(GenericWebUI):
             freeu_params=(freeu_s1, freeu_s2, freeu_b1, freeu_b2),
         )
         return image
+
+@register_webui("core/webui/controlnet")
+class ControlNetWebUI(GenericWebUI):
+    def __init__(self, config: CoreConfigureParser):
+        webuis = [
+            ControlNetText2ImageWebUI(config),
+            ControlNetImage2ImageWebUI(config),
+            ControlNetImageInpaintingWebUI(config),
+        ]
+        self._iface = gr.TabbedInterface(
+            [webui.iface for webui in webuis],
+            tab_names=[webui.name for webui in webuis],
+        )
+
+    def start(self):
+        pass
+    
+    def stop(self):
+        pass
+
+    @property
+    def name(self):
+        return "ControlNet"
+
+    @property
+    def iface(self):
+        return self._iface

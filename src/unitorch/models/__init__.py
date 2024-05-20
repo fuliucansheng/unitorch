@@ -210,7 +210,6 @@ import unitorch.models.bloom
 import unitorch.models.clip
 import unitorch.models.deberta
 import unitorch.models.diffusers
-import unitorch.models.minigpt4
 import unitorch.models.llama
 import unitorch.models.mbart
 import unitorch.models.mistral

@@ -1,8 +1,8 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
-from itertools import repeat
 import collections.abc
+from itertools import repeat
 
 
 def _ntuple(n):

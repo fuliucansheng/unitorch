@@ -34,7 +34,6 @@ class CoreConfigureParser(configparser.ConfigParser):
         self._freeze_section = None
 
         self._default_section = self.getdefault("core/config", "default_section", None)
-        self._freeze_section = self.getdefault("core/config", "freeze_section", None)
 
     def _getdefault(self, section, option, value=None):
         if not self.has_section(section):
@@ -87,35 +86,27 @@ class CoreConfigureParser(configparser.ConfigParser):
         except (SyntaxError, ValueError):
             return value
 
-    def set_freeze_section(self, section):
-        self._freeze_section = section
-
     def set_default_section(self, section):
         self._default_section = section
 
     def getdefault(self, section, option, value=None):
-        value = self._getdefault(section, option, value)
-
-        if self._freeze_section:
-            value = self._getdefault(self._freeze_section, option, value)
-
-        return value
+        return self._getdefault(section, option, value)
 
     def getoption(self, option, value=None):
         return self.getdefault(self._default_section, option, value)
 
-    def print(self):
-        print("#" * 30, "Config Info".center(20, " "), "#" * 30)
+    def logging(self):
+        logging.info("#" * 30, "Config Info".center(20, " "), "#" * 30)
         for sec, item in self.items():
             for k, v in item.items():
-                print(
+                logging.info(
                     sec.rjust(10, " "),
                     ":".center(5, " "),
                     k.ljust(30, " "),
                     ":".center(5, " "),
                     str(v).ljust(30, " "),
                 )
-        print("#" * 30, "Config Info End".center(20, " "), "#" * 30)
+        logging.info("#" * 30, "Config Info End".center(20, " "), "#" * 30)
 
     def save(self, save_path="./config.ini"):
         self.write(open(save_path, "w"))

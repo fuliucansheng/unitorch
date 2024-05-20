@@ -19,7 +19,7 @@ def get_cache_home():
 
 
 ### version
-VERSION = "0.0.0.10"
+VERSION = "0.0.0.11"
 
 ### is offline mode
 UNITORCH_OFFLINE = os.environ.get("UNITORCH_OFFLINE", "0").upper()
@@ -37,6 +37,9 @@ UNITORCH_OFFLINE_DEBUG = os.environ.get("UNITORCH_OFFLINE_DEBUG", "0").upper()
 def is_offline_debug_mode():
     return UNITORCH_OFFLINE_DEBUG in UNITORCH_OFFLINE_DEBUG_VALUES
 
+
+# before setup logging
+import sklearn
 
 # logging & warning setting
 import logging

@@ -14,8 +14,7 @@ from unitorch.cli.models.mistral import pretrained_mistral_infos
 from unitorch.cli.webuis import matched_pretrained_names
 
 
-@register_webui("core/webui/mistral")
-class MistralWebUI(GenericWebUI):
+class MistralGenerationWebUI(GenericWebUI):
     match_patterns = [
         "^mistral",
     ]
@@ -101,8 +100,7 @@ class MistralWebUI(GenericWebUI):
         return result
 
 
-@register_webui("core/webui/peft/mistral/lora")
-class PeftMistralLoraWebUI(GenericWebUI):
+class PeftMistralLoraGenerationWebUI(GenericWebUI):
     match_patterns = [
         "^peft-lora-mistral",
     ]
@@ -188,3 +186,29 @@ class PeftMistralLoraWebUI(GenericWebUI):
         assert self._pipe is not None
         result = self._pipe(text)
         return result
+
+@register_webui("core/webui/mistral")
+class MistralWebUI(GenericWebUI):
+    def __init__(self, config: CoreConfigureParser):
+        webuis = [
+            MistralGenerationWebUI(config),
+            PeftMistralLoraGenerationWebUI(config),
+        ]
+        self._iface = gr.TabbedInterface(
+            [webui.iface for webui in webuis],
+            tab_names=[webui.name for webui in webuis],
+        )
+
+    def start(self):
+        pass
+    
+    def stop(self):
+        pass
+
+    @property
+    def name(self):
+        return "Mistral"
+
+    @property
+    def iface(self):
+        return self._iface

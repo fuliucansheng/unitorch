@@ -24,7 +24,6 @@ nav:
       - Diffusers: models/diffusers.md
       - Llama: models/llama.md
       - MBart: models/mbart.md
-      - MiniGPT4: models/minigpt4.md
       - MT5: models/mt5.md
       - Peft: models/peft.md
       - Pegasus: models/pegasus.md
@@ -74,7 +73,6 @@ nav:
       - Diffusers: cli/models/diffusers.md
       - Llama: cli/models/llama.md
       - MBart: cli/models/mbart.md
-      - MiniGPT4: cli/models/minigpt4.md
       - MT5: cli/models/mt5.md
       - Peft: cli/models/peft.md
       - Pegasus: cli/models/pegasus.md

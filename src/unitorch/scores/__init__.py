@@ -58,7 +58,6 @@ def remove_strings_ignore_tokens(inputs: Any, ignore_tokens: Optional[Set[str]])
 
 pearsonr = lambda y_true, y_pred: np.corrcoef(y_true, y_pred)[0, 1]
 
-
 from unitorch.scores.bleu import bleu_score
 from unitorch.scores.rouge import rouge1_score, rouge2_score, rougel_score
 from unitorch.scores.map import map_score, map50_score

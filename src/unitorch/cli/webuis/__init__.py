@@ -19,7 +19,6 @@ def matched_pretrained_names(
 
 import unitorch.cli.webuis.image_utils
 import unitorch.cli.webuis.animate
-import unitorch.cli.webuis.blip2
 import unitorch.cli.webuis.bloom
 import unitorch.cli.webuis.stable
 import unitorch.cli.webuis.controlnet
@@ -27,6 +26,5 @@ import unitorch.cli.webuis.stable_xl
 import unitorch.cli.webuis.stable_xl_refiner
 import unitorch.cli.webuis.controlnet_xl
 import unitorch.cli.webuis.llama
-import unitorch.cli.webuis.minigpt4
 import unitorch.cli.webuis.mistral
 import unitorch.cli.webuis.sam

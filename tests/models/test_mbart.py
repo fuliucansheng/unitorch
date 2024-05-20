@@ -4,7 +4,6 @@
 import os
 import torch
 import unitorch
-import pkg_resources
 from absl.testing import absltest, parameterized
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from unitorch import set_seed

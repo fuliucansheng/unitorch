@@ -40,7 +40,6 @@ class StableXLForText2ImageGeneration(_StableXLForText2ImageGeneration):
         freeze_vae_encoder: Optional[bool] = True,
         freeze_text_encoder: Optional[bool] = True,
         snr_gamma: Optional[float] = 5.0,
-        lora_r: Optional[int] = None,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
@@ -58,7 +57,6 @@ class StableXLForText2ImageGeneration(_StableXLForText2ImageGeneration):
             freeze_vae_encoder=freeze_vae_encoder,
             freeze_text_encoder=freeze_text_encoder,
             snr_gamma=snr_gamma,
-            lora_r=lora_r,
             seed=seed,
         )
 
@@ -116,7 +114,6 @@ class StableXLForText2ImageGeneration(_StableXLForText2ImageGeneration):
         freeze_vae_encoder = config.getoption("freeze_vae_encoder", True)
         freeze_text_encoder = config.getoption("freeze_text_encoder", True)
         snr_gamma = config.getoption("snr_gamma", 5.0)
-        lora_r = config.getoption("lora_r", None)
         seed = config.getoption("seed", 1123)
 
         inst = cls(
@@ -134,7 +131,6 @@ class StableXLForText2ImageGeneration(_StableXLForText2ImageGeneration):
             freeze_vae_encoder=freeze_vae_encoder,
             freeze_text_encoder=freeze_text_encoder,
             snr_gamma=snr_gamma,
-            lora_r=lora_r,
             seed=seed,
         )
 

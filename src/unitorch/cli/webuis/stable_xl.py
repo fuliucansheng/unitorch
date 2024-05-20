@@ -18,9 +18,8 @@ from unitorch.cli.pipelines.stable_xl import (
 from unitorch.cli.webuis import matched_pretrained_names
 
 
-@register_webui("core/webui/stable_xl/text2image")
 class StableXLText2ImageWebUI(GenericWebUI):
-    match_patterns = ["^stable-xl", "^stable-turbo-xl"]
+    match_patterns = ["^stable-xl"]
     block_patterns = [
         ".*controlnet",
         ".*refiner",
@@ -30,7 +29,7 @@ class StableXLText2ImageWebUI(GenericWebUI):
     supported_pretrained_names = matched_pretrained_names(
         pretrained_names, match_patterns, block_patterns
     )
-    supported_schedulers = ["DPM++", "DPM++SDE", "UniPC++"]
+    supported_schedulers = ["DPM++SDE", "UniPC++"]
 
     def __init__(self, config: CoreConfigureParser):
         self.config = config
@@ -114,7 +113,7 @@ class StableXLText2ImageWebUI(GenericWebUI):
 
     @property
     def name(self):
-        return "StableXLText2Image"
+        return "Text2Image"
 
     @property
     def iface(self):
@@ -176,7 +175,6 @@ class StableXLText2ImageWebUI(GenericWebUI):
         return image
 
 
-@register_webui("core/webui/stable_xl/image2image")
 class StableXLImage2ImageWebUI(GenericWebUI):
     match_patterns = [
         "^stable-xl",
@@ -190,7 +188,7 @@ class StableXLImage2ImageWebUI(GenericWebUI):
     supported_pretrained_names = matched_pretrained_names(
         pretrained_names, match_patterns, block_patterns
     )
-    supported_schedulers = ["DPM++", "DPM++SDE", "UniPC++"]
+    supported_schedulers = ["DPM++SDE", "UniPC++"]
 
     def __init__(self, config: CoreConfigureParser):
         self.config = config
@@ -274,7 +272,7 @@ class StableXLImage2ImageWebUI(GenericWebUI):
 
     @property
     def name(self):
-        return "StableXLImage2Image"
+        return "Image2Image"
 
     @property
     def iface(self):
@@ -336,7 +334,6 @@ class StableXLImage2ImageWebUI(GenericWebUI):
         return image
 
 
-@register_webui("core/webui/stable_xl/inpainting")
 class StableXLImageInpaintingWebUI(GenericWebUI):
     match_patterns = [
         "^stable-xl",
@@ -350,7 +347,7 @@ class StableXLImageInpaintingWebUI(GenericWebUI):
     supported_pretrained_names = matched_pretrained_names(
         pretrained_names, match_patterns, block_patterns
     )
-    supported_schedulers = ["DPM++", "DPM++SDE", "UniPC++"]
+    supported_schedulers = ["DPM++SDE", "UniPC++"]
 
     def __init__(self, config: CoreConfigureParser):
         self.config = config
@@ -436,7 +433,7 @@ class StableXLImageInpaintingWebUI(GenericWebUI):
 
     @property
     def name(self):
-        return "StableXLImageInpainting"
+        return "ImageInpainting"
 
     @property
     def iface(self):
@@ -496,3 +493,30 @@ class StableXLImageInpaintingWebUI(GenericWebUI):
             freeu_params=(freeu_s1, freeu_s2, freeu_b1, freeu_b2),
         )
         return image
+
+@register_webui("core/webui/stable_xl")
+class StableXLWebUI(GenericWebUI):
+    def __init__(self, config: CoreConfigureParser):
+        webuis = [
+            StableXLText2ImageWebUI(config),
+            StableXLImage2ImageWebUI(config),
+            StableXLImageInpaintingWebUI(config),
+        ]
+        self._iface = gr.TabbedInterface(
+            [webui.iface for webui in webuis],
+            tab_names=[webui.name for webui in webuis],
+        )
+
+    def start(self):
+        pass
+    
+    def stop(self):
+        pass
+
+    @property
+    def name(self):
+        return "StableXL"
+
+    @property
+    def iface(self):
+        return self._iface

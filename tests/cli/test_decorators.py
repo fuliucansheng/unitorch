@@ -3,7 +3,7 @@
 
 import torch
 import unitorch
-import pkg_resources
+import importlib_resources
 from absl.testing import absltest, parameterized
 from unitorch.cli import CoreConfigureParser
 from unitorch.cli import (
