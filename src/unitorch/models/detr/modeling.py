@@ -67,7 +67,9 @@ class DetrForDetection(GenericModel):
         if self.enable_auxiliary_loss:
             aux_weight_dict = {}
             for i in range(config.decoder_layers - 1):
-                aux_weight_dict.update({k + f"_{i}": v for k, v in weight_dict.items()})
+                aux_weight_dict.update(
+                    {k + f"_{i}": v for k, v in self.weight_dict.items()}
+                )
             self.weight_dict.update(aux_weight_dict)
 
     @property
@@ -123,7 +125,13 @@ class DetrForDetection(GenericModel):
             )
             outputs_loss["auxiliary_outputs"] = auxiliary_outputs
         xyxy2xywh = lambda x: torch.stack(
-            [x[..., 0], x[..., 1], x[..., 2] - x[..., 0], x[..., 3] - x[..., 1]], -1
+            [
+                (x[..., 0] + x[..., 2]) / 2,
+                (x[..., 1] + x[..., 3]) / 2,
+                x[..., 2] - x[..., 0],
+                x[..., 3] - x[..., 1],
+            ],
+            -1,
         )
         bboxes = [xyxy2xywh(bbox) for bbox in bboxes]
         labels = [{"class_labels": c, "boxes": b} for b, c in zip(bboxes, classes)]
@@ -140,6 +148,7 @@ class DetrForDetection(GenericModel):
         self,
         images: Union[List[torch.Tensor], torch.Tensor],
         norm_bboxes: Optional[bool] = False,
+        threshold: Optional[float] = 0.5,
     ):
         image_sizes = [(img.size(-2), img.size(-1)) for img in images]
         if not isinstance(images, torch.Tensor):
@@ -157,7 +166,13 @@ class DetrForDetection(GenericModel):
 
         scores, classes = list(zip(*[p.max(-1) for p in logits]))
         xywh2xyxy = lambda x: torch.stack(
-            [x[..., 0], x[..., 1], x[..., 0] + x[..., 2], x[..., 1] + x[..., 3]], -1
+            [
+                x[..., 0] - x[..., 2] / 2,
+                x[..., 1] - x[..., 3] / 2,
+                x[..., 0] + x[..., 2] / 2,
+                x[..., 1] + x[..., 3] / 2,
+            ],
+            -1,
         )
         pred_boxes = [xywh2xyxy(bbox) for bbox in pred_boxes]
         if not norm_bboxes:
@@ -173,9 +188,9 @@ class DetrForDetection(GenericModel):
             zip(
                 *[
                     (
-                        b[c != self.config.num_labels],
-                        s[c != self.config.num_labels],
-                        c[c != self.config.num_labels],
+                        b[(c != self.config.num_labels) & (s > threshold)],
+                        s[(c != self.config.num_labels) & (s > threshold)],
+                        c[(c != self.config.num_labels) & (s > threshold)],
                     )
                     for b, s, c in zip(bboxes, scores, classes)
                 ]

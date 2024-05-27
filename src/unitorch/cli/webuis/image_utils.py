@@ -26,9 +26,9 @@ class ImageCannyWebUI(GenericWebUI):
                 canny_image = gr.Image(type="pil", label="Output Canny Image")
 
                 submit.click(
-                        self.canny,
-                        inputs=[image, height, width],
-                        outputs=[canny_image],
+                    self.canny,
+                    inputs=[image, height, width],
+                    outputs=[canny_image],
                 )
 
     @property
@@ -79,9 +79,9 @@ class ImageBlendWebUI(GenericWebUI):
                 blend_image = gr.Image(type="pil", label="Output Blend Image")
 
                 submit.click(
-                        self.blend,
-                        inputs=[image1, image2, alpha, height, width],
-                        outputs=[blend_image],
+                    self.blend,
+                    inputs=[image1, image2, alpha, height, width],
+                    outputs=[blend_image],
                 )
 
     @property
@@ -115,6 +115,7 @@ class ImageBlendWebUI(GenericWebUI):
         image = Image.blend(image1, image2, alpha)
         return image
 
+
 class ImageInvertWebUI(GenericWebUI):
     def __init__(self, config: CoreConfigureParser):
         self.config = config
@@ -130,9 +131,9 @@ class ImageInvertWebUI(GenericWebUI):
                 invert_image = gr.Image(type="pil", label="Output Invert Image")
 
                 submit.click(
-                        self.invert,
-                        inputs=[image, height, width],
-                        outputs=[invert_image],
+                    self.invert,
+                    inputs=[image, height, width],
+                    outputs=[invert_image],
                 )
 
     @property
@@ -162,6 +163,7 @@ class ImageInvertWebUI(GenericWebUI):
         image = image.resize((height, width))
         image = ImageOps.invert(image)
         return image
+
 
 @register_webui("core/webui/image")
 class ImageWebUI(GenericWebUI):

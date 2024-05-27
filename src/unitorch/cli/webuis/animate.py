@@ -15,6 +15,7 @@ from unitorch.cli.pipelines.animate import (
 )
 from unitorch.cli.webuis import matched_pretrained_names
 
+
 class AnimateText2VideoWebUI(GenericWebUI):
     match_patterns = [
         "^stable-v1.5.*animate",
@@ -175,6 +176,7 @@ class AnimateText2VideoWebUI(GenericWebUI):
             freeu_params=(freeu_s1, freeu_s2, freeu_b1, freeu_b2),
         )
         return video
+
 
 @register_webui("core/webui/animate")
 class AnimateWebUI(GenericWebUI):

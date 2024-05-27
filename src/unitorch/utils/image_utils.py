@@ -105,7 +105,7 @@ def numpy_to_pil(images):
     """
     Convert a numpy image or a batch of images to a PIL image.
     """
-    if images.ndim == 3:
+    if images.ndim <= 3:
         # single image
         images = (images * 255).round().astype("uint8")
         if images.shape[-1] == 1:

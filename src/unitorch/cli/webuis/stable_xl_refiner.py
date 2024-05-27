@@ -501,6 +501,7 @@ class StableXLRefinerImageInpaintingWebUI(GenericWebUI):
         )
         return image
 
+
 @register_webui("core/webui/stable_xl_refiner")
 class StableXLRefinerWebUI(GenericWebUI):
     def __init__(self, config: CoreConfigureParser):
@@ -516,7 +517,7 @@ class StableXLRefinerWebUI(GenericWebUI):
 
     def start(self):
         pass
-    
+
     def stop(self):
         pass
 

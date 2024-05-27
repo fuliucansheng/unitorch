@@ -200,6 +200,7 @@ from unitorch.models.processing_utils import (
 )
 from unitorch.models.modeling_ema import ExponentialMovingAverage
 from unitorch.models.quantization import QuantizationConfig, QuantizationMixin
+from unitorch.models.onnx import GenericOnnxModel
 
 # import models
 import unitorch.models.bart
@@ -207,13 +208,16 @@ import unitorch.models.beit
 import unitorch.models.bert
 import unitorch.models.blip
 import unitorch.models.bloom
+import unitorch.models.chinese_clip
 import unitorch.models.clip
 import unitorch.models.deberta
 import unitorch.models.diffusers
 import unitorch.models.llama
+import unitorch.models.mask2former
 import unitorch.models.mbart
 import unitorch.models.mistral
 import unitorch.models.mt5
+import unitorch.models.onnx
 import unitorch.models.pegasus
 import unitorch.models.peft
 import unitorch.models.roberta

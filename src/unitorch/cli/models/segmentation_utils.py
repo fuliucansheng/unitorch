@@ -22,6 +22,7 @@ from unitorch.cli.models.modeling_utils import ListTensorsOutputs, ListTensorsTa
 @dataclass
 class SegmentationOutputs(ListTensorsOutputs, WriterMixin):
     masks: Union[torch.Tensor, List[torch.Tensor]]
+    classes: Union[torch.Tensor, List[torch.Tensor]] = torch.empty(0)
 
 
 @dataclass
@@ -76,20 +77,52 @@ class SegmentationProcessor:
             ]
         return WriterOutputs(results)
 
-    @register_process("core/postprocess/segmentation/image")
-    def _diffusion_image(
+    @register_process("core/postprocess/segmentation/mask")
+    def _segmentation_mask(
         self,
         outputs: SegmentationOutputs,
     ):
         results = outputs.to_pandas()
         assert results.shape[0] == 0 or results.shape[0] == len(outputs.masks)
-        images = (
-            outputs.masks.numpy()
-            if isinstance(outputs.masks, torch.Tensor)
-            else [m.numpy() for m in outputs.masks]
-        )
-        images = [numpy_to_pil(image) for image in images]
-        results["mask_image"] = [self.save_image(image) for image in images]
+        if self.mask_threshold is not None:
+            masks = [
+                (m.numpy() < self.mask_threshold).astype(np.int16)
+                for m in outputs.masks
+            ]
+        else:
+            masks = [m.numpy() for m in outputs.masks]
+        results["mask_image"] = [self.save_image(numpy_to_pil(mask)) for mask in masks]
+        return WriterOutputs(results)
+
+    @register_process("core/postprocess/segmentation/class_mask")
+    def _segmentation_class_mask(
+        self,
+        outputs: SegmentationOutputs,
+    ):
+        results = outputs.to_pandas()
+        assert results.shape[0] == 0 or results.shape[0] == len(outputs.masks)
+        assert all([m.ndim == 3 for m in outputs.masks])
+        if self.mask_threshold is not None:
+            masks = [
+                (m.numpy() < self.mask_threshold).astype(np.int16)
+                for m in outputs.masks
+            ]
+        else:
+            masks = [m.numpy() for m in outputs.masks]
+        classes = [c.numpy() for c in outputs.classes]
+        classes = [c if c.ndim == 1 else c.argmax(-1) for c in classes]
+        results["mask_images"] = [
+            ";".join(
+                [
+                    self.save_image(numpy_to_pil(_mask_image))
+                    for _mask_image in _mask_images
+                ]
+            )
+            for _mask_images in masks
+        ]
+        results["mask_classes"] = [
+            ";".join([str(_class) for _class in _classes]) for _classes in classes
+        ]
         return WriterOutputs(results)
 
 

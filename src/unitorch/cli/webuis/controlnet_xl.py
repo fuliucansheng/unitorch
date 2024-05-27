@@ -535,6 +535,7 @@ class ControlNetXLImageInpaintingWebUI(GenericWebUI):
         )
         return image
 
+
 @register_webui("core/webui/controlnet_xl")
 class ControlNetXLWebUI(GenericWebUI):
     def __init__(self, config: CoreConfigureParser):
@@ -550,7 +551,7 @@ class ControlNetXLWebUI(GenericWebUI):
 
     def start(self):
         pass
-    
+
     def stop(self):
         pass
 

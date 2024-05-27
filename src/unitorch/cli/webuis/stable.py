@@ -672,6 +672,7 @@ class StableImageResolutionWebUI(GenericWebUI):
         )
         return image
 
+
 @register_webui("core/webui/stable")
 class StableWebUI(GenericWebUI):
     def __init__(self, config: CoreConfigureParser):
@@ -688,7 +689,7 @@ class StableWebUI(GenericWebUI):
 
     def start(self):
         pass
-    
+
     def stop(self):
         pass
 

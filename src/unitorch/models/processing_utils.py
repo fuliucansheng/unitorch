@@ -350,7 +350,7 @@ class HfImageClassificationProcessor:
         if self.rescale_factor is not None:
             image = self.vision_processor.rescale(
                 image,
-                scale=self.rescale_factor,
+                self.rescale_factor,
             )
 
         if self.image_mean is not None and self.image_std is not None:

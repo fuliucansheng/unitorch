@@ -13,6 +13,7 @@ Schedulers = {
 
 import unitorch.cli.pipelines.animate
 import unitorch.cli.pipelines.bloom
+import unitorch.cli.pipelines.detr
 import unitorch.cli.pipelines.peft
 import unitorch.cli.pipelines.stable
 import unitorch.cli.pipelines.stable_xl

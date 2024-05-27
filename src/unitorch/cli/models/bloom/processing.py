@@ -198,7 +198,7 @@ class BloomProcessor(_BloomProcessor):
             refs=outputs.input_ids_label,
             masks=outputs.attention_mask_label,
         )
-    
+
     @register_process("core/process/bloom/instruction/generation/inputs")
     def _instruction_generation_inputs(
         self,

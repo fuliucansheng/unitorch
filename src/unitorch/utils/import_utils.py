@@ -150,3 +150,16 @@ except importlib_metadata.PackageNotFoundError:
 
 def is_auto_gptq_available():
     return _auto_gptq_available or is_offline_debug_mode()
+
+
+# onnxruntime
+_onnxruntime_available = importlib.util.find_spec("onnxruntime") is not None
+try:
+    _onnxruntime_version = importlib_metadata.version("onnxruntime")
+    logging.debug(f"Successfully imported onnxruntime version {_onnxruntime_version}")
+except importlib_metadata.PackageNotFoundError:
+    _onnxruntime_available = False
+
+
+def is_onnxruntime_available():
+    return _onnxruntime_available or is_offline_debug_mode()

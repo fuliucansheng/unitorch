@@ -202,7 +202,7 @@ class BloomWebUI(GenericWebUI):
 
     def start(self):
         pass
-    
+
     def stop(self):
         pass
 

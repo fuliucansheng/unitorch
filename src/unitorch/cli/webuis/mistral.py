@@ -187,6 +187,7 @@ class PeftMistralLoraGenerationWebUI(GenericWebUI):
         result = self._pipe(text)
         return result
 
+
 @register_webui("core/webui/mistral")
 class MistralWebUI(GenericWebUI):
     def __init__(self, config: CoreConfigureParser):
@@ -201,7 +202,7 @@ class MistralWebUI(GenericWebUI):
 
     def start(self):
         pass
-    
+
     def stop(self):
         pass
 

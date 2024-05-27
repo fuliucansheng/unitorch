@@ -42,37 +42,70 @@ class SamWebUI(GenericWebUI):
             with gr.Row(variant="panel"):
                 origin_input_image = gr.State(None)
                 click_points = gr.State([])
-                with gr.Column():
-                    input_image = gr.Image(
+                boxes_points = gr.State([])
+                with gr.Tab("Click"):
+                    input_image_click = gr.Image(
                         type="pil", label="Input Image", interactive=True
                     )
-                    mask_threshold = gr.Slider(
+                    mask_threshold_click = gr.Slider(
                         -20, 20, value=0.0, label="Mask Threshold", step=0.1
                     )
                     with gr.Row():
-                        reset = gr.Button(value="Reset Image")
-                        submit = gr.Button(value="Submit")
+                        input_click_reset = gr.Button(value="Reset Image")
+                        input_click_submit = gr.Button(value="Submit")
+
+                with gr.Tab("Box"):
+                    input_image_box = gr.Image(
+                        type="pil", label="Input Image", interactive=True
+                    )
+                    mask_threshold_box = gr.Slider(
+                        -20, 20, value=0.0, label="Mask Threshold", step=0.1
+                    )
+                    with gr.Row():
+                        input_box_reset = gr.Button(value="Reset Image")
+                        input_box_submit = gr.Button(value="Submit")
 
                 image = gr.Image(type="pil", label="Output Image")
 
-                input_image.upload(
+                input_image_click.upload(
                     lambda image: image.copy() if image is not None else None,
-                    inputs=[input_image],
+                    inputs=[input_image_click],
                     outputs=[origin_input_image],
                 )
-                input_image.select(
+                input_image_click.select(
                     self.add_click_points,
                     inputs=[origin_input_image, click_points],
-                    outputs=[input_image, click_points],
+                    outputs=[input_image_click, click_points],
                 )
-                reset.click(
+                input_click_reset.click(
                     lambda x: (x, []),
                     inputs=[origin_input_image],
-                    outputs=[input_image, click_points],
+                    outputs=[input_image_click, click_points],
                 )
-                submit.click(
-                    self.serve,
-                    inputs=[origin_input_image, click_points, mask_threshold],
+                input_click_submit.click(
+                    self.serve_click,
+                    inputs=[origin_input_image, click_points, mask_threshold_click],
+                    outputs=[image],
+                )
+
+                input_image_box.upload(
+                    lambda image: image.copy() if image is not None else None,
+                    inputs=[input_image_box],
+                    outputs=[origin_input_image],
+                )
+                input_image_box.select(
+                    self.add_click_points,
+                    [origin_input_image, boxes_points],
+                    [input_image_box, boxes_points],
+                )
+                input_box_reset.click(
+                    lambda x: (x, []),
+                    inputs=[origin_input_image],
+                    outputs=[input_image_box, boxes_points],
+                )
+                input_box_submit.click(
+                    self.serve_box,
+                    inputs=[origin_input_image, boxes_points, mask_threshold_box],
                     outputs=[image],
                 )
 
@@ -117,7 +150,7 @@ class SamWebUI(GenericWebUI):
         new_image = image.copy()
         draw = ImageDraw.Draw(new_image)
         point_color = (255, 0, 0)
-        radius = 10
+        radius = 3
         for point in click_points:
             x, y = point
             draw.ellipse(
@@ -126,12 +159,34 @@ class SamWebUI(GenericWebUI):
 
         return new_image, click_points
 
-    def serve(
+    def serve_click(
         self,
         image: Image.Image,
         click_points: List[Tuple[int, int]] = [(0, 0)],
-        mask_threshold: float = 0.0,
+        mask_threshold: float = 0.5,
     ):
         assert self._pipe is not None
-        result = self._pipe(image, points=click_points, mask_threshold=mask_threshold,)
+        result = self._pipe(
+            image,
+            points=click_points,
+            mask_threshold=mask_threshold,
+        )
+        return result
+
+    def serve_box(
+        self,
+        image: Image.Image,
+        boxes_points: List[Tuple[int, int]] = [(0, 0)],
+        mask_threshold: float = 0.5,
+    ):
+        assert self._pipe is not None
+        x1 = min([point[0] for point in boxes_points])
+        y1 = min([point[1] for point in boxes_points])
+        x2 = max([point[0] for point in boxes_points])
+        y2 = max([point[1] for point in boxes_points])
+        result = self._pipe(
+            image,
+            boxes=[[(x1, y1, x2, y2)]],
+            mask_threshold=mask_threshold,
+        )
         return result

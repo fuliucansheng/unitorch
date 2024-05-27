@@ -20,6 +20,7 @@ def matched_pretrained_names(
 import unitorch.cli.webuis.image_utils
 import unitorch.cli.webuis.animate
 import unitorch.cli.webuis.bloom
+import unitorch.cli.webuis.detr
 import unitorch.cli.webuis.stable
 import unitorch.cli.webuis.controlnet
 import unitorch.cli.webuis.stable_xl

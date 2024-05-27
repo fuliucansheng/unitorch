@@ -78,10 +78,12 @@ import unitorch.cli.models.beit
 import unitorch.cli.models.blip
 import unitorch.cli.models.bloom
 import unitorch.cli.models.bria
+import unitorch.cli.models.chinese_clip
 import unitorch.cli.models.clip
 import unitorch.cli.models.deberta
 import unitorch.cli.models.detr
 import unitorch.cli.models.llama
+import unitorch.cli.models.mask2former
 import unitorch.cli.models.mbart
 import unitorch.cli.models.mistral
 import unitorch.cli.models.mt5
