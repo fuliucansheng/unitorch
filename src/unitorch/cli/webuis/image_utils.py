@@ -11,7 +11,7 @@ from unitorch.cli import CoreConfigureParser, GenericWebUI
 from unitorch.cli import register_webui
 
 
-class ImageCannyWebUI(GenericWebUI):
+class CannyWebUI(GenericWebUI):
     def __init__(self, config: CoreConfigureParser):
         self.config = config
         self._status = "running"
@@ -20,14 +20,12 @@ class ImageCannyWebUI(GenericWebUI):
             with gr.Row(variant="panel"):
                 with gr.Column():
                     image = gr.Image(type="pil", label="Input Image")
-                    height = gr.Slider(512, 1024, value=512, label="Image Height")
-                    width = gr.Slider(512, 1024, value=512, label="Image Width")
                     submit = gr.Button(value="Submit")
-                canny_image = gr.Image(type="pil", label="Output Canny Image")
+                canny_image = gr.Image(type="pil", label="Canny Image")
 
                 submit.click(
                     self.canny,
-                    inputs=[image, height, width],
+                    inputs=[image],
                     outputs=[canny_image],
                 )
 
@@ -39,10 +37,6 @@ class ImageCannyWebUI(GenericWebUI):
     def iface(self):
         return self._iface
 
-    @property
-    def status(self):
-        return self._status == "running"
-
     def start(self):
         pass
 
@@ -52,16 +46,13 @@ class ImageCannyWebUI(GenericWebUI):
     def canny(
         self,
         image: Image.Image,
-        height: Optional[int] = 512,
-        width: Optional[int] = 512,
     ):
-        image = image.resize((height, width))
         image = image.convert("L")
         image = image.filter(ImageFilter.FIND_EDGES)
         return image
 
 
-class ImageBlendWebUI(GenericWebUI):
+class BlendWebUI(GenericWebUI):
     def __init__(self, config: CoreConfigureParser):
         self.config = config
         self._status = "running"
@@ -116,7 +107,7 @@ class ImageBlendWebUI(GenericWebUI):
         return image
 
 
-class ImageInvertWebUI(GenericWebUI):
+class InvertWebUI(GenericWebUI):
     def __init__(self, config: CoreConfigureParser):
         self.config = config
         self._status = "running"
@@ -144,10 +135,6 @@ class ImageInvertWebUI(GenericWebUI):
     def iface(self):
         return self._iface
 
-    @property
-    def status(self):
-        return self._status == "running"
-
     def start(self):
         pass
 
@@ -169,9 +156,9 @@ class ImageInvertWebUI(GenericWebUI):
 class ImageWebUI(GenericWebUI):
     def __init__(self, config: CoreConfigureParser):
         webuis = [
-            ImageCannyWebUI(config),
-            ImageBlendWebUI(config),
-            ImageInvertWebUI(config),
+            CannyWebUI(config),
+            BlendWebUI(config),
+            InvertWebUI(config),
         ]
         self._iface = gr.TabbedInterface(
             [webui.iface for webui in webuis],
@@ -185,10 +172,6 @@ class ImageWebUI(GenericWebUI):
     @property
     def iface(self):
         return self._iface
-
-    @property
-    def status(self):
-        return self._status == "running"
 
     def start(self):
         pass

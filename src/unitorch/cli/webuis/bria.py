@@ -9,12 +9,12 @@ from typing import List, Tuple
 from PIL import Image, ImageDraw
 from unitorch.cli import CoreConfigureParser, GenericWebUI
 from unitorch.cli import register_webui
-from unitorch.cli.pipelines.detr import DetrPipeline
+from unitorch.cli.pipelines.bria import BRIAPipeline
 
 
-@register_webui("core/webui/detr")
-class DetrWebUI(GenericWebUI):
-    supported_pretrained_names = ["detr-resnet-50"]
+@register_webui("core/webui/bria")
+class BRIAWebUI(GenericWebUI):
+    supported_pretrained_names = ["-"]
 
     def __init__(self, config: CoreConfigureParser):
         self.config = config
@@ -66,7 +66,7 @@ class DetrWebUI(GenericWebUI):
 
     @property
     def name(self):
-        return "DETR"
+        return "BRIA"
 
     @property
     def iface(self):
@@ -79,9 +79,8 @@ class DetrWebUI(GenericWebUI):
     def start(self, pretrained_name, **kwargs):
         if self._status == "running":
             self.stop()
-        self.config.set("core/pipeline/detr", "pretrained_name", pretrained_name)
         self._name = pretrained_name
-        self._pipe = DetrPipeline.from_core_configure(self.config)
+        self._pipe = BRIAPipeline.from_core_configure(self.config)
         self._status = "running"
         return self._status
 

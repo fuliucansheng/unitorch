@@ -33,7 +33,7 @@ class ControlNetXLProcessor:
         position_start_id: Optional[int] = 0,
         pad_token1: Optional[str] = "<|endoftext|>",
         pad_token2: Optional[str] = "!",
-        image_size: Optional[int] = 512,
+        image_size: Optional[int] = 1024,
     ):
         tokenizer1 = CLIPTokenizer(
             vocab_file=vocab1_path,

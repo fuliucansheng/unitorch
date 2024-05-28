@@ -17,15 +17,23 @@ def matched_pretrained_names(
     return blacked
 
 
+from unitorch.cli.webuis.image_utils import CannyWebUI
+from unitorch.cli.webuis.dpt import DPTWebUI
+
+
 import unitorch.cli.webuis.image_utils
 import unitorch.cli.webuis.animate
 import unitorch.cli.webuis.bloom
+import unitorch.cli.webuis.bria
 import unitorch.cli.webuis.detr
+import unitorch.cli.webuis.dpt
 import unitorch.cli.webuis.stable
-import unitorch.cli.webuis.controlnet
 import unitorch.cli.webuis.stable_xl
 import unitorch.cli.webuis.stable_xl_refiner
+import unitorch.cli.webuis.controlnet
 import unitorch.cli.webuis.controlnet_xl
+import unitorch.cli.webuis.multicontrolnet
+import unitorch.cli.webuis.multicontrolnet_xl
 import unitorch.cli.webuis.llama
 import unitorch.cli.webuis.mistral
 import unitorch.cli.webuis.sam

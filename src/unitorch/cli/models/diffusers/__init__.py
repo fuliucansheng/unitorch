@@ -104,6 +104,30 @@ __hf_hub_controlnet_safetensors_dict__ = lambda name: {
     }
 }
 
+__hf_hub_multicontrolnet_dict__ = lambda *names: {
+    "controlnet": {
+        "config": [
+            f"https://huggingface.co/{name}/resolve/main/config.json" for name in names
+        ],
+        "weight": [
+            f"https://huggingface.co/{name}/resolve/main/diffusion_pytorch_model.bin"
+            for name in names
+        ],
+    }
+}
+
+__hf_hub_multicontrolnet_safetensors_dict__ = lambda *names: {
+    "controlnet": {
+        "config": [
+            f"https://huggingface.co/{name}/resolve/main/config.json" for name in names
+        ],
+        "weight": [
+            f"https://huggingface.co/{name}/resolve/main/diffusion_pytorch_model.safetensors"
+            for name in names
+        ],
+    }
+}
+
 __hf_hub_stable_v1_5_controlnet_dict__ = (
     lambda name, base="runwayml/stable-diffusion-v1-5": {
         **__hf_hub_stable_v1_5_dict__(base),
@@ -164,9 +188,6 @@ pretrained_stable_infos = {
     "stable-v1.5-deliberate-v2-inpainting": __hf_hub_stable_v1_5_dict__(
         "5w4n/deliberate-v2-inpainting"
     ),
-    "stable-v1.5-dreambooth-cat-toy": __hf_hub_stable_v1_5_dict__(
-        "sd-dreambooth-library/cat-toy"
-    ),
     "stable-v2": __hf_hub_stable_v2_dict__("stabilityai/stable-diffusion-2"),
     "stable-v2.1": __hf_hub_stable_v2_1_dict__("stabilityai/stable-diffusion-2-1"),
     "stable-xl-base": __hf_hub_stable_xl_safetensors_dict__(
@@ -215,6 +236,10 @@ pretrained_stable_extensions_infos = {
     "stable-v1.5-controlnet-inpainting": __hf_hub_controlnet_dict__(
         "lllyasviel/control_v11p_sd15_inpaint"
     ),
+    "stable-v1.5-multicontrolnet-canny-depth": __hf_hub_multicontrolnet_dict__(
+        "lllyasviel/sd-controlnet-canny",
+        "lllyasviel/control_v11f1p_sd15_depth",
+    ),
     "stable-v1.5-animate-v1.5": {
         "motion": {
             "config": f"https://huggingface.co/guoyww/animatediff-motion-adapter-v1-5/resolve/main/config.json",
@@ -245,8 +270,18 @@ pretrained_stable_extensions_infos = {
     "stable-xl-controlnet-softedge-dexined": __hf_hub_controlnet_dict__(
         "SargeZT/controlnet-sd-xl-1.0-softedge-dexined"
     ),
+    "stable-xl-controlnet-depth": __hf_hub_controlnet_dict__(
+        "diffusers/controlnet-depth-sdxl-1.0"
+    ),
+    "stable-xl-controlnet-softedge": __hf_hub_controlnet_dict__(
+        "diffusers/controlnet-softedge-sdxl-1.0"
+    ),
     "stable-xl-controlnet-depth-small": __hf_hub_controlnet_dict__(
         "diffusers/controlnet-depth-sdxl-1.0-small"
+    ),
+    "stable-xl-multicontrolnet-canny-depth": __hf_hub_multicontrolnet_dict__(
+        "diffusers/controlnet-canny-sdxl-1.0",
+        "diffusers/controlnet-depth-sdxl-1.0",
     ),
     "stable-xl-t2i-adapter-canny": __hf_hub_controlnet_safetensors_dict__(
         "TencentARC/t2i-adapter-canny-sdxl-1.0"
@@ -327,6 +362,11 @@ from unitorch.cli.models.diffusers.modeling_controlnet_xl import (
     ControlNetXLForImage2ImageGeneration,
     ControlNetXLForImageInpainting,
 )
+from unitorch.cli.models.diffusers.modeling_multicontrolnet import (
+    MultiControlNetForText2ImageGeneration,
+    MultiControlNetForImage2ImageGeneration,
+    MultiControlNetForImageInpainting,
+)
 from unitorch.cli.models.diffusers.processing_stable import StableProcessor
 from unitorch.cli.models.diffusers.processing_stable_xl import StableXLProcessor
 from unitorch.cli.models.diffusers.processing_stable_xl_refiner import (
@@ -336,5 +376,8 @@ from unitorch.cli.models.diffusers.processing_dreambooth import DreamboothProces
 from unitorch.cli.models.diffusers.processing_dreambooth_xl import DreamboothXLProcessor
 from unitorch.cli.models.diffusers.processing_controlnet import ControlNetProcessor
 from unitorch.cli.models.diffusers.processing_controlnet_xl import ControlNetXLProcessor
+from unitorch.cli.models.diffusers.processing_multicontrolnet import (
+    MultiControlNetProcessor,
+)
 
 import unitorch.cli.models.diffusers.modeling_animate

@@ -82,6 +82,7 @@ import unitorch.cli.models.chinese_clip
 import unitorch.cli.models.clip
 import unitorch.cli.models.deberta
 import unitorch.cli.models.detr
+import unitorch.cli.models.dpt
 import unitorch.cli.models.llama
 import unitorch.cli.models.mask2former
 import unitorch.cli.models.mbart

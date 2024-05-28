@@ -2,36 +2,31 @@
 # Licensed under the MIT License.
 
 import io
-import re
 import torch
 import gc
 import gradio as gr
 from PIL import Image
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from unitorch.utils import pop_value, nested_dict_value
 from unitorch.cli import CoreConfigureParser, GenericWebUI
 from unitorch.cli import register_webui
 from unitorch.cli.models.diffusers import pretrained_diffusers_infos
-from unitorch.cli.pipelines.controlnet import (
-    ControlNetForText2ImageGenerationPipeline,
-    ControlNetForImage2ImageGenerationPipeline,
-    ControlNetForImageInpaintingPipeline,
+from unitorch.cli.pipelines.multicontrolnet_xl import (
+    MultiControlNetXLForText2ImageGenerationPipeline,
+    MultiControlNetXLForImage2ImageGenerationPipeline,
+    MultiControlNetXLForImageInpaintingPipeline,
 )
 from unitorch.cli.webuis import matched_pretrained_names
 from unitorch.cli.webuis import CannyWebUI, DPTWebUI
 
 
-class ControlNetText2ImageWebUI(GenericWebUI):
+class MultiControlNetXLText2ImageWebUI(GenericWebUI):
     match_patterns = [
-        "^stable-v1.5.*controlnet",
-        "^stable-v2.*controlnet",
-        "^stable-v2.1.*controlnet",
-    ]
-    block_patterns = [
-        ".*inpainting",
+        "^stable-xl.*multicontrolnet",
     ]
     pretrained_names = list(pretrained_diffusers_infos.keys())
     supported_pretrained_names = matched_pretrained_names(
-        pretrained_names, match_patterns, block_patterns
+        pretrained_names, match_patterns
     )
     supported_schedulers = ["DPM++SDE", "UniPC++"]
 
@@ -42,6 +37,7 @@ class ControlNetText2ImageWebUI(GenericWebUI):
         if len(self.supported_pretrained_names) == 0:
             raise ValueError("No supported pretrained models found.")
         self._name = self.supported_pretrained_names[0]
+        self._num_controlnets = 0
         self._iface = gr.Blocks()
         with self._iface:
             with gr.Row(variant="panel"):
@@ -60,23 +56,49 @@ class ControlNetText2ImageWebUI(GenericWebUI):
 
             with gr.Row(variant="panel"):
                 with gr.Column():
-                    condition_image = gr.Image(
-                        type="pil", label="Input Condition Image"
-                    )
                     prompt = gr.Textbox(label="Input Prompt")
                     negative_prompt = gr.Textbox(label="Input Negative Prompt")
-                    height = gr.Slider(512, 1024, value=512, label="Image Height")
-                    width = gr.Slider(512, 1024, value=512, label="Image Width")
+                    height = gr.Slider(512, 1024, value=1024, label="Image Height")
+                    width = gr.Slider(512, 1024, value=1024, label="Image Width")
                     guidance_scale = gr.Slider(
                         0, 10, value=7.5, label="Guidance Scale", step=0.1
                     )
-                    controlnet_conditioning_scale = gr.Slider(
-                        0,
-                        10,
-                        value=1.0,
-                        label="ControlNet Conditioning Scale",
-                        step=0.1,
-                    )
+                    with gr.Row(variant="panel"):
+                        with gr.Tab("ControlNet 1"):
+                            condition_image1 = gr.Image(
+                                type="pil", label="Input Condition Image"
+                            )
+                            conditioning_scale1 = gr.Slider(
+                                0, 10, value=1.0, label="Conditioning Scale", step=0.1
+                            )
+                        with gr.Tab("ControlNet 2"):
+                            condition_image2 = gr.Image(
+                                type="pil", label="Input Condition Image"
+                            )
+                            conditioning_scale2 = gr.Slider(
+                                0, 10, value=1.0, label="Conditioning Scale", step=0.1
+                            )
+                        with gr.Tab("ControlNet 3"):
+                            condition_image3 = gr.Image(
+                                type="pil", label="Input Condition Image"
+                            )
+                            conditioning_scale3 = gr.Slider(
+                                0, 10, value=1.0, label="Conditioning Scale", step=0.1
+                            )
+                        with gr.Tab("ControlNet 4"):
+                            condition_image4 = gr.Image(
+                                type="pil", label="Input Condition Image"
+                            )
+                            conditioning_scale4 = gr.Slider(
+                                0, 10, value=1.0, label="Conditioning Scale", step=0.1
+                            )
+                        with gr.Tab("ControlNet 5"):
+                            condition_image5 = gr.Image(
+                                type="pil", label="Input Condition Image"
+                            )
+                            conditioning_scale5 = gr.Slider(
+                                0, 10, value=1.0, label="Conditioning Scale", step=0.1
+                            )
                     steps = gr.Slider(
                         0, 1000, value=50, label="Diffusion Steps", step=1
                     )
@@ -105,12 +127,20 @@ class ControlNetText2ImageWebUI(GenericWebUI):
                     self.serve,
                     inputs=[
                         prompt,
-                        condition_image,
+                        condition_image1,
+                        condition_image2,
+                        condition_image3,
+                        condition_image4,
+                        condition_image5,
                         negative_prompt,
                         height,
                         width,
                         guidance_scale,
-                        controlnet_conditioning_scale,
+                        conditioning_scale1,
+                        conditioning_scale2,
+                        conditioning_scale3,
+                        conditioning_scale4,
+                        conditioning_scale5,
                         steps,
                         seed,
                         scheduler,
@@ -143,15 +173,22 @@ class ControlNetText2ImageWebUI(GenericWebUI):
         if self._status == "running":
             self.stop()
         self.config.set(
-            "core/pipeline/controlnet/text2image", "pretrained_name", pretrained_name
+            "core/pipeline/multicontrolnet_xl/text2image",
+            "pretrained_name",
+            pretrained_name,
         )
-        if pretrained_name.startswith("stable-v2"):
-            self.config.set("core/pipeline/controlnet/text2image", "pad_token", "!")
         self._name = pretrained_name
-        self._pipe = ControlNetForText2ImageGenerationPipeline.from_core_configure(
-            self.config
+        self._pipe = (
+            MultiControlNetXLForText2ImageGenerationPipeline.from_core_configure(
+                self.config
+            )
         )
         self._status = "running"
+        self._num_controlnets = len(
+            nested_dict_value(
+                pretrained_diffusers_infos, pretrained_name, "controlnet", "config"
+            )
+        )
         return self._status
 
     def stop(self, **kwargs):
@@ -161,17 +198,26 @@ class ControlNetText2ImageWebUI(GenericWebUI):
         torch.cuda.empty_cache()
         self._pipe = None if not hasattr(self, "_pipe") else self._pipe
         self._status = "stopped" if self._pipe is None else "running"
+        self._num_controlnets = 0
         return self._status
 
     def serve(
         self,
         text: str,
-        condition_image: Image.Image,
+        condition_image1: Optional[Image.Image] = None,
+        condition_image2: Optional[Image.Image] = None,
+        condition_image3: Optional[Image.Image] = None,
+        condition_image4: Optional[Image.Image] = None,
+        condition_image5: Optional[Image.Image] = None,
         neg_text: Optional[str] = "",
-        height: Optional[int] = 512,
-        width: Optional[int] = 512,
+        height: Optional[int] = 1024,
+        width: Optional[int] = 1024,
         guidance_scale: Optional[float] = 7.5,
-        controlnet_conditioning_scale: Optional[float] = 1.0,
+        conditioning_scale1: Optional[float] = 0.5,
+        conditioning_scale2: Optional[float] = 0.5,
+        conditioning_scale3: Optional[float] = 0.5,
+        conditioning_scale4: Optional[float] = 0.5,
+        conditioning_scale5: Optional[float] = 0.5,
         num_timesteps: Optional[int] = 50,
         seed: Optional[int] = 1123,
         scheduler: Optional[str] = None,
@@ -183,12 +229,24 @@ class ControlNetText2ImageWebUI(GenericWebUI):
         assert self._pipe is not None
         image = self._pipe(
             text,
-            condition_image=condition_image,
+            condition_image=[
+                condition_image1,
+                condition_image2,
+                condition_image3,
+                condition_image4,
+                condition_image5,
+            ][: self._num_controlnets],
             neg_text=neg_text,
             height=height,
             width=width,
             guidance_scale=guidance_scale,
-            controlnet_conditioning_scale=controlnet_conditioning_scale,
+            controlnet_conditioning_scale=[
+                conditioning_scale1,
+                conditioning_scale2,
+                conditioning_scale3,
+                conditioning_scale4,
+                conditioning_scale5,
+            ][: self._num_controlnets],
             num_timesteps=num_timesteps,
             seed=seed,
             scheduler=scheduler,
@@ -197,16 +255,14 @@ class ControlNetText2ImageWebUI(GenericWebUI):
         return image
 
 
-class ControlNetImage2ImageWebUI(GenericWebUI):
+@register_webui("core/webui/multicontrolnet_xl/image2image")
+class MultiControlNetXLImage2ImageWebUI(GenericWebUI):
     match_patterns = [
-        "^stable-v1.5.*controlnet",
-        "^stable-v2.*controlnet",
-        "^stable-v2.1.*controlnet",
+        "^stable-xl.*multicontrolnet",
     ]
-    block_patterns = []
     pretrained_names = list(pretrained_diffusers_infos.keys())
     supported_pretrained_names = matched_pretrained_names(
-        pretrained_names, match_patterns, block_patterns
+        pretrained_names, match_patterns
     )
     supported_schedulers = ["DPM++SDE", "UniPC++"]
 
@@ -217,6 +273,7 @@ class ControlNetImage2ImageWebUI(GenericWebUI):
         if len(self.supported_pretrained_names) == 0:
             raise ValueError("No supported pretrained models found.")
         self._name = self.supported_pretrained_names[0]
+        self._num_controlnets = 0
         self._iface = gr.Blocks()
         with self._iface:
             with gr.Row(variant="panel"):
@@ -235,24 +292,49 @@ class ControlNetImage2ImageWebUI(GenericWebUI):
 
             with gr.Row(variant="panel"):
                 with gr.Column():
-                    with gr.Row():
-                        raw_image = gr.Image(type="pil", label="Input Image")
-                        condition_image = gr.Image(
-                            type="pil", label="Input Condition Image"
-                        )
+                    raw_image = gr.Image(type="pil", label="Input Image")
                     prompt = gr.Textbox(label="Input Prompt")
                     negative_prompt = gr.Textbox(label="Input Negative Prompt")
                     strength = gr.Slider(0, 1, value=0.8, label="Strength", step=0.01)
                     guidance_scale = gr.Slider(
                         0, 10, value=7.5, label="Guidance Scale", step=0.1
                     )
-                    controlnet_conditioning_scale = gr.Slider(
-                        0,
-                        10,
-                        value=1.0,
-                        label="ControlNet Conditioning Scale",
-                        step=0.1,
-                    )
+                    with gr.Row(variant="panel"):
+                        with gr.Tab("ControlNet 1"):
+                            condition_image1 = gr.Image(
+                                type="pil", label="Input Condition Image"
+                            )
+                            conditioning_scale1 = gr.Slider(
+                                0, 10, value=1.0, label="Conditioning Scale", step=0.1
+                            )
+                        with gr.Tab("ControlNet 2"):
+                            condition_image2 = gr.Image(
+                                type="pil", label="Input Condition Image"
+                            )
+                            conditioning_scale2 = gr.Slider(
+                                0, 10, value=1.0, label="Conditioning Scale", step=0.1
+                            )
+                        with gr.Tab("ControlNet 3"):
+                            condition_image3 = gr.Image(
+                                type="pil", label="Input Condition Image"
+                            )
+                            conditioning_scale3 = gr.Slider(
+                                0, 10, value=1.0, label="Conditioning Scale", step=0.1
+                            )
+                        with gr.Tab("ControlNet 4"):
+                            condition_image4 = gr.Image(
+                                type="pil", label="Input Condition Image"
+                            )
+                            conditioning_scale4 = gr.Slider(
+                                0, 10, value=1.0, label="Conditioning Scale", step=0.1
+                            )
+                        with gr.Tab("ControlNet 5"):
+                            condition_image5 = gr.Image(
+                                type="pil", label="Input Condition Image"
+                            )
+                            conditioning_scale5 = gr.Slider(
+                                0, 10, value=1.0, label="Conditioning Scale", step=0.1
+                            )
                     steps = gr.Slider(
                         0, 1000, value=50, label="Diffusion Steps", step=1
                     )
@@ -281,11 +363,19 @@ class ControlNetImage2ImageWebUI(GenericWebUI):
                     inputs=[
                         prompt,
                         raw_image,
-                        condition_image,
+                        condition_image1,
+                        condition_image2,
+                        condition_image3,
+                        condition_image4,
+                        condition_image5,
                         negative_prompt,
                         strength,
                         guidance_scale,
-                        controlnet_conditioning_scale,
+                        conditioning_scale1,
+                        conditioning_scale2,
+                        conditioning_scale3,
+                        conditioning_scale4,
+                        conditioning_scale5,
                         steps,
                         seed,
                         scheduler,
@@ -318,15 +408,22 @@ class ControlNetImage2ImageWebUI(GenericWebUI):
         if self._status == "running":
             self.stop()
         self.config.set(
-            "core/pipeline/controlnet/image2image", "pretrained_name", pretrained_name
+            "core/pipeline/multicontrolnet_xl/image2image",
+            "pretrained_name",
+            pretrained_name,
         )
-        if pretrained_name.startswith("stable-v2"):
-            self.config.set("core/pipeline/controlnet/image2image", "pad_token", "!")
         self._name = pretrained_name
-        self._pipe = ControlNetForImage2ImageGenerationPipeline.from_core_configure(
-            self.config
+        self._pipe = (
+            MultiControlNetXLForImage2ImageGenerationPipeline.from_core_configure(
+                self.config
+            )
         )
         self._status = "running"
+        self._num_controlnets = len(
+            nested_dict_value(
+                pretrained_diffusers_infos, pretrained_name, "controlnet", "config"
+            )
+        )
         return self._status
 
     def stop(self, **kwargs):
@@ -336,17 +433,26 @@ class ControlNetImage2ImageWebUI(GenericWebUI):
         torch.cuda.empty_cache()
         self._pipe = None if not hasattr(self, "_pipe") else self._pipe
         self._status = "stopped" if self._pipe is None else "running"
+        self._num_controlnets = 0
         return self._status
 
     def serve(
         self,
         text: str,
         image: Image.Image,
-        condition_image: Image.Image,
+        condition_image1: Optional[Image.Image] = None,
+        condition_image2: Optional[Image.Image] = None,
+        condition_image3: Optional[Image.Image] = None,
+        condition_image4: Optional[Image.Image] = None,
+        condition_image5: Optional[Image.Image] = None,
         neg_text: Optional[str] = "",
         strength: Optional[float] = 0.8,
         guidance_scale: Optional[float] = 7.5,
-        controlnet_conditioning_scale: Optional[float] = 1.0,
+        conditioning_scale1: Optional[float] = 0.5,
+        conditioning_scale2: Optional[float] = 0.5,
+        conditioning_scale3: Optional[float] = 0.5,
+        conditioning_scale4: Optional[float] = 0.5,
+        conditioning_scale5: Optional[float] = 0.5,
         num_timesteps: Optional[int] = 50,
         seed: Optional[int] = 1123,
         scheduler: Optional[str] = None,
@@ -359,11 +465,23 @@ class ControlNetImage2ImageWebUI(GenericWebUI):
         image = self._pipe(
             text,
             image,
-            condition_image,
+            condition_images=[
+                condition_image1,
+                condition_image2,
+                condition_image3,
+                condition_image4,
+                condition_image5,
+            ][: self._num_controlnets],
             neg_text=neg_text,
             strength=strength,
             guidance_scale=guidance_scale,
-            controlnet_conditioning_scale=controlnet_conditioning_scale,
+            controlnet_conditioning_scale=[
+                conditioning_scale1,
+                conditioning_scale2,
+                conditioning_scale3,
+                conditioning_scale4,
+                conditioning_scale5,
+            ][: self._num_controlnets],
             num_timesteps=num_timesteps,
             seed=seed,
             scheduler=scheduler,
@@ -372,16 +490,13 @@ class ControlNetImage2ImageWebUI(GenericWebUI):
         return image
 
 
-class ControlNetImageInpaintingWebUI(GenericWebUI):
+class MultiControlNetXLImageInpaintingWebUI(GenericWebUI):
     match_patterns = [
-        "^stable-v1.5.*controlnet",
-        "^stable-v2.*controlnet",
-        "^stable-v2.1.*controlnet",
+        "^stable-xl.*multicontrolnet",
     ]
-    block_patterns = []
     pretrained_names = list(pretrained_diffusers_infos.keys())
     supported_pretrained_names = matched_pretrained_names(
-        pretrained_names, match_patterns, block_patterns
+        pretrained_names, match_patterns
     )
     supported_schedulers = ["DPM++SDE", "UniPC++"]
 
@@ -392,6 +507,7 @@ class ControlNetImageInpaintingWebUI(GenericWebUI):
         if len(self.supported_pretrained_names) == 0:
             raise ValueError("No supported pretrained models found.")
         self._name = self.supported_pretrained_names[0]
+        self._num_controlnets = 0
         self._iface = gr.Blocks()
         with self._iface:
             with gr.Row(variant="panel"):
@@ -413,9 +529,6 @@ class ControlNetImageInpaintingWebUI(GenericWebUI):
                     with gr.Row():
                         raw_image = gr.Image(type="pil", label="Input Image")
                         raw_image_mask = gr.Image(type="pil", label="Input Mask Image")
-                        condition_image = gr.Image(
-                            type="pil", label="Input Condition Image"
-                        )
 
                     prompt = gr.Textbox(label="Input Prompt")
                     negative_prompt = gr.Textbox(label="Input Negative Prompt")
@@ -423,13 +536,42 @@ class ControlNetImageInpaintingWebUI(GenericWebUI):
                     guidance_scale = gr.Slider(
                         0, 10, value=7.5, label="Guidance Scale", step=0.1
                     )
-                    controlnet_conditioning_scale = gr.Slider(
-                        0,
-                        10,
-                        value=1.0,
-                        label="ControlNet Conditioning Scale",
-                        step=0.1,
-                    )
+                    with gr.Row(variant="panel"):
+                        with gr.Tab("ControlNet 1"):
+                            condition_image1 = gr.Image(
+                                type="pil", label="Input Condition Image"
+                            )
+                            conditioning_scale1 = gr.Slider(
+                                0, 10, value=1.0, label="Conditioning Scale", step=0.1
+                            )
+                        with gr.Tab("ControlNet 2"):
+                            condition_image2 = gr.Image(
+                                type="pil", label="Input Condition Image"
+                            )
+                            conditioning_scale2 = gr.Slider(
+                                0, 10, value=1.0, label="Conditioning Scale", step=0.1
+                            )
+                        with gr.Tab("ControlNet 3"):
+                            condition_image3 = gr.Image(
+                                type="pil", label="Input Condition Image"
+                            )
+                            conditioning_scale3 = gr.Slider(
+                                0, 10, value=1.0, label="Conditioning Scale", step=0.1
+                            )
+                        with gr.Tab("ControlNet 4"):
+                            condition_image4 = gr.Image(
+                                type="pil", label="Input Condition Image"
+                            )
+                            conditioning_scale4 = gr.Slider(
+                                0, 10, value=1.0, label="Conditioning Scale", step=0.1
+                            )
+                        with gr.Tab("ControlNet 5"):
+                            condition_image5 = gr.Image(
+                                type="pil", label="Input Condition Image"
+                            )
+                            conditioning_scale5 = gr.Slider(
+                                0, 10, value=1.0, label="Conditioning Scale", step=0.1
+                            )
                     steps = gr.Slider(
                         0, 1000, value=50, label="Diffusion Steps", step=1
                     )
@@ -460,11 +602,18 @@ class ControlNetImageInpaintingWebUI(GenericWebUI):
                         prompt,
                         raw_image,
                         raw_image_mask,
-                        condition_image,
+                        condition_image1,
+                        condition_image2,
+                        condition_image3,
+                        condition_image4,
+                        condition_image5,
                         negative_prompt,
-                        strength,
                         guidance_scale,
-                        controlnet_conditioning_scale,
+                        conditioning_scale1,
+                        conditioning_scale2,
+                        conditioning_scale3,
+                        conditioning_scale4,
+                        conditioning_scale5,
                         steps,
                         seed,
                         scheduler,
@@ -497,15 +646,20 @@ class ControlNetImageInpaintingWebUI(GenericWebUI):
         if self._status == "running":
             self.stop()
         self.config.set(
-            "core/pipeline/controlnet/inpainting", "pretrained_name", pretrained_name
+            "core/pipeline/multicontrolnet_xl/inpainting",
+            "pretrained_name",
+            pretrained_name,
         )
-        if pretrained_name.startswith("stable-v2"):
-            self.config.set("core/pipeline/controlnet/inpainting", "pad_token", "!")
         self._name = pretrained_name
-        self._pipe = ControlNetForImageInpaintingPipeline.from_core_configure(
+        self._pipe = MultiControlNetXLForImageInpaintingPipeline.from_core_configure(
             self.config
         )
         self._status = "running"
+        self._num_controlnets = len(
+            nested_dict_value(
+                pretrained_diffusers_infos, pretrained_name, "controlnet", "config"
+            )
+        )
         return self._status
 
     def stop(self, **kwargs):
@@ -515,6 +669,7 @@ class ControlNetImageInpaintingWebUI(GenericWebUI):
         torch.cuda.empty_cache()
         self._pipe = None if not hasattr(self, "_pipe") else self._pipe
         self._status = "stopped" if self._pipe is None else "running"
+        self._num_controlnets = 0
         return self._status
 
     def serve(
@@ -522,11 +677,19 @@ class ControlNetImageInpaintingWebUI(GenericWebUI):
         text: str,
         image: Image.Image,
         mask_image: Image.Image,
-        condition_image: Image.Image,
+        condition_image1: Optional[Image.Image] = None,
+        condition_image2: Optional[Image.Image] = None,
+        condition_image3: Optional[Image.Image] = None,
+        condition_image4: Optional[Image.Image] = None,
+        condition_image5: Optional[Image.Image] = None,
         neg_text: Optional[str] = "",
         strength: Optional[float] = 0.8,
         guidance_scale: Optional[float] = 7.5,
-        controlnet_conditioning_scale: Optional[float] = 1.0,
+        conditioning_scale1: Optional[float] = 0.5,
+        conditioning_scale2: Optional[float] = 0.5,
+        conditioning_scale3: Optional[float] = 0.5,
+        conditioning_scale4: Optional[float] = 0.5,
+        conditioning_scale5: Optional[float] = 0.5,
         num_timesteps: Optional[int] = 50,
         seed: Optional[int] = 1123,
         scheduler: Optional[str] = None,
@@ -540,11 +703,23 @@ class ControlNetImageInpaintingWebUI(GenericWebUI):
             text,
             image,
             mask_image,
-            condition_image,
+            condition_images=[
+                condition_image1,
+                condition_image2,
+                condition_image3,
+                condition_image4,
+                condition_image5,
+            ][: self._num_controlnets],
             neg_text=neg_text,
             strength=strength,
             guidance_scale=guidance_scale,
-            controlnet_conditioning_scale=controlnet_conditioning_scale,
+            controlnet_conditioning_scale=[
+                conditioning_scale1,
+                conditioning_scale2,
+                conditioning_scale3,
+                conditioning_scale4,
+                conditioning_scale5,
+            ][: self._num_controlnets],
             num_timesteps=num_timesteps,
             seed=seed,
             scheduler=scheduler,
@@ -553,13 +728,13 @@ class ControlNetImageInpaintingWebUI(GenericWebUI):
         return image
 
 
-@register_webui("core/webui/controlnet")
-class ControlNetWebUI(GenericWebUI):
+@register_webui("core/webui/multicontrolnet_xl")
+class MultiControlNetXLWebUI(GenericWebUI):
     def __init__(self, config: CoreConfigureParser):
         webuis = [
-            ControlNetText2ImageWebUI(config),
-            ControlNetImage2ImageWebUI(config),
-            ControlNetImageInpaintingWebUI(config),
+            MultiControlNetXLText2ImageWebUI(config),
+            MultiControlNetXLImage2ImageWebUI(config),
+            MultiControlNetXLImageInpaintingWebUI(config),
             CannyWebUI(config),
             DPTWebUI(config),
         ]
@@ -576,7 +751,7 @@ class ControlNetWebUI(GenericWebUI):
 
     @property
     def name(self):
-        return "ControlNet"
+        return "MultiControlNetXL"
 
     @property
     def iface(self):

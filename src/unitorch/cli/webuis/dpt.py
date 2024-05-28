@@ -9,12 +9,12 @@ from typing import List, Tuple
 from PIL import Image, ImageDraw
 from unitorch.cli import CoreConfigureParser, GenericWebUI
 from unitorch.cli import register_webui
-from unitorch.cli.pipelines.detr import DetrPipeline
+from unitorch.cli.pipelines.dpt import DPTPipeline
 
 
-@register_webui("core/webui/detr")
-class DetrWebUI(GenericWebUI):
-    supported_pretrained_names = ["detr-resnet-50"]
+@register_webui("core/webui/dpt")
+class DPTWebUI(GenericWebUI):
+    supported_pretrained_names = ["dpt-large"]
 
     def __init__(self, config: CoreConfigureParser):
         self.config = config
@@ -44,18 +44,13 @@ class DetrWebUI(GenericWebUI):
                     input_image = gr.Image(
                         type="pil", label="Input Image", interactive=True
                     )
-                    mask_threshold = gr.Slider(
-                        0, 1, value=0.5, label="Mask Threshold", step=0.01
-                    )
-                    with gr.Row():
-                        reset = gr.Button(value="Reset Image")
-                        submit = gr.Button(value="Submit")
+                    submit = gr.Button(value="Submit")
 
                 image = gr.Image(type="pil", label="Output Image")
 
                 submit.click(
                     self.serve,
-                    inputs=[input_image, mask_threshold],
+                    inputs=[input_image],
                     outputs=[image],
                 )
 
@@ -66,7 +61,7 @@ class DetrWebUI(GenericWebUI):
 
     @property
     def name(self):
-        return "DETR"
+        return "DPT"
 
     @property
     def iface(self):
@@ -79,9 +74,9 @@ class DetrWebUI(GenericWebUI):
     def start(self, pretrained_name, **kwargs):
         if self._status == "running":
             self.stop()
-        self.config.set("core/pipeline/detr", "pretrained_name", pretrained_name)
+        self.config.set("core/pipeline/dpt", "pretrained_name", pretrained_name)
         self._name = pretrained_name
-        self._pipe = DetrPipeline.from_core_configure(self.config)
+        self._pipe = DPTPipeline.from_core_configure(self.config)
         self._status = "running"
         return self._status
 
@@ -97,11 +92,9 @@ class DetrWebUI(GenericWebUI):
     def serve(
         self,
         image: Image.Image,
-        mask_threshold: float = 0.5,
     ):
         assert self._pipe is not None
         result = self._pipe(
             image,
-            threshold=mask_threshold,
         )
         return result

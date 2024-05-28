@@ -11,6 +11,7 @@ from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from collections import OrderedDict
 from transformers.utils import is_remote_url, ModelOutput as GenericOutputs
 from unitorch import hf_cached_path
+from unitorch.utils import is_diffusers_available
 
 
 class CheckpointMixin:
@@ -211,7 +212,7 @@ import unitorch.models.bloom
 import unitorch.models.chinese_clip
 import unitorch.models.clip
 import unitorch.models.deberta
-import unitorch.models.diffusers
+import unitorch.models.dpt
 import unitorch.models.llama
 import unitorch.models.mask2former
 import unitorch.models.mbart
@@ -227,3 +228,6 @@ import unitorch.models.visualbert
 import unitorch.models.vit
 import unitorch.models.xlm_roberta
 import unitorch.models.xpegasus
+
+if is_diffusers_available():
+    import unitorch.models.diffusers

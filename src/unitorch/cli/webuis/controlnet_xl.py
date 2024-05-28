@@ -16,6 +16,7 @@ from unitorch.cli.pipelines.controlnet_xl import (
     ControlNetXLForImageInpaintingPipeline,
 )
 from unitorch.cli.webuis import matched_pretrained_names
+from unitorch.cli.webuis import CannyWebUI, DPTWebUI
 
 
 class ControlNetXLText2ImageWebUI(GenericWebUI):
@@ -188,7 +189,6 @@ class ControlNetXLText2ImageWebUI(GenericWebUI):
         return image
 
 
-@register_webui("core/webui/controlnet_xl/image2image")
 class ControlNetXLImage2ImageWebUI(GenericWebUI):
     match_patterns = [
         "^stable-xl.*controlnet",
@@ -543,6 +543,8 @@ class ControlNetXLWebUI(GenericWebUI):
             ControlNetXLText2ImageWebUI(config),
             ControlNetXLImage2ImageWebUI(config),
             ControlNetXLImageInpaintingWebUI(config),
+            CannyWebUI(config),
+            DPTWebUI(config),
         ]
         self._iface = gr.TabbedInterface(
             [webui.iface for webui in webuis],

@@ -83,6 +83,9 @@ def webui(config_path: str, **kwargs):
     host = config.getoption("host", "0.0.0.0")
     port = config.getoption("port", 7860)
     share = config.getoption("share", False)
+    ssl_keyfile = config.getoption("ssl_keyfile", None)
+    ssl_certfile = config.getoption("ssl_certfile", None)
+    ssl_verify = config.getoption("ssl_verify", True)
     demo_webui.launch(
         server_name=host,
         server_port=port,
@@ -90,6 +93,9 @@ def webui(config_path: str, **kwargs):
         favicon_path=os.path.join(
             importlib_resources.files("unitorch"), "cli/assets/icon.png"
         ),
+        ssl_keyfile=ssl_keyfile,
+        ssl_certfile=ssl_certfile,
+        ssl_verify=ssl_verify,
     )
 
     os._exit(0)
