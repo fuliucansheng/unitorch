@@ -5,6 +5,7 @@ from PIL import Image
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.diffusers import StableProcessor as _StableProcessor
+from unitorch.models.diffusers import StableVideoProcessor as _StableVideoProcessor
 from unitorch.cli import (
     cached_path,
     add_default_section_for_init,
@@ -14,7 +15,7 @@ from unitorch.cli import (
 from unitorch.cli.models import (
     TensorsInputs,
 )
-from unitorch.cli.models.diffusers import pretrained_diffusers_infos
+from unitorch.cli.models.diffusers import pretrained_stable_infos
 
 
 class StableProcessor(_StableProcessor):
@@ -47,7 +48,7 @@ class StableProcessor(_StableProcessor):
     def from_core_configure(cls, config, **kwargs):
         config.set_default_section("core/process/diffusers/stable")
         pretrained_name = config.getoption("pretrained_name", "stable-v1.5")
-        pretrain_infos = nested_dict_value(pretrained_diffusers_infos, pretrained_name)
+        pretrain_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
 
         vocab_path = config.getoption("vocab_path", None)
         vocab_path = pop_value(
@@ -121,18 +122,18 @@ class StableProcessor(_StableProcessor):
         negative_prompt: Optional[str] = "",
         max_seq_length: Optional[int] = None,
     ):
-        outputs = super().image2image_inputs(
+        text_outputs = super().text2image_inputs(
             prompt=prompt,
-            image=image,
             negative_prompt=negative_prompt,
             max_seq_length=max_seq_length,
         )
+        image_outputs = super().image2image_inputs(image=image)
         return TensorsInputs(
-            input_ids=outputs.input_ids,
-            attention_mask=outputs.attention_mask,
-            pixel_values=outputs.pixel_values,
-            negative_input_ids=outputs.negative_input_ids,
-            negative_attention_mask=outputs.negative_attention_mask,
+            input_ids=text_outputs.input_ids,
+            attention_mask=text_outputs.attention_mask,
+            pixel_values=image_outputs.pixel_values,
+            negative_input_ids=text_outputs.negative_input_ids,
+            negative_attention_mask=text_outputs.negative_attention_mask,
         )
 
     @register_process("core/process/diffusers/stable/inpainting/inputs")
@@ -144,20 +145,22 @@ class StableProcessor(_StableProcessor):
         negative_prompt: Optional[str] = "",
         max_seq_length: Optional[int] = None,
     ):
-        outputs = super().inpainting_inputs(
+        text_outputs = super().text2image_inputs(
             prompt=prompt,
-            image=image,
-            mask_image=mask_image,
             negative_prompt=negative_prompt,
             max_seq_length=max_seq_length,
         )
+        image_outputs = super().inpainting_inputs(
+            image=image,
+            mask_image=mask_image,
+        )
         return TensorsInputs(
-            input_ids=outputs.input_ids,
-            attention_mask=outputs.attention_mask,
-            pixel_values=outputs.pixel_values,
-            pixel_masks=outputs.pixel_masks,
-            negative_input_ids=outputs.negative_input_ids,
-            negative_attention_mask=outputs.negative_attention_mask,
+            input_ids=text_outputs.input_ids,
+            attention_mask=text_outputs.attention_mask,
+            pixel_values=image_outputs.pixel_values,
+            pixel_masks=image_outputs.pixel_masks,
+            negative_input_ids=text_outputs.negative_input_ids,
+            negative_attention_mask=text_outputs.negative_attention_mask,
         )
 
     @register_process("core/process/diffusers/stable/resolution/inputs")
@@ -168,16 +171,16 @@ class StableProcessor(_StableProcessor):
         negative_prompt: Optional[str] = "",
         max_seq_length: Optional[int] = None,
     ):
-        outputs = super().resolution_inputs(
+        text_outputs = super().text2image_inputs(
             prompt=prompt,
-            image=image,
             negative_prompt=negative_prompt,
             max_seq_length=max_seq_length,
         )
+        image_outputs = super().resolution_inputs(image=image)
         return TensorsInputs(
-            input_ids=outputs.input_ids,
-            attention_mask=outputs.attention_mask,
-            pixel_values=outputs.pixel_values,
-            negative_input_ids=outputs.negative_input_ids,
-            negative_attention_mask=outputs.negative_attention_mask,
+            input_ids=text_outputs.input_ids,
+            attention_mask=text_outputs.attention_mask,
+            pixel_values=image_outputs.pixel_values,
+            negative_input_ids=text_outputs.negative_input_ids,
+            negative_attention_mask=text_outputs.negative_attention_mask,
         )

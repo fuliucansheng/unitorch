@@ -9,10 +9,12 @@ import diffusers.schedulers as schedulers
 from transformers import CLIPTextConfig, CLIPTextModel, CLIPTextModelWithProjection
 from diffusers.schedulers import SchedulerMixin
 from diffusers.models import (
+    ControlNetModel,
     UNet2DModel,
     UNet2DConditionModel,
     AutoencoderKL,
 )
+from diffusers.pipelines.controlnet import MultiControlNetModel
 from diffusers.pipelines import (
     DDPMPipeline,
     StableDiffusionXLPipeline,
@@ -60,6 +62,7 @@ class GenericStableXLModel(GenericModel, QuantizationMixin):
         text2_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
+        controlnet_config_path: Union[str, List[str]] = None,
         quant_config_path: Optional[str] = None,
         image_size: Optional[int] = None,
         in_channels: Optional[int] = None,
@@ -68,6 +71,7 @@ class GenericStableXLModel(GenericModel, QuantizationMixin):
         num_infer_timesteps: Optional[int] = 50,
         freeze_vae_encoder: Optional[bool] = True,
         freeze_text_encoder: Optional[bool] = True,
+        freeze_unet_encoder: Optional[bool] = False,
         snr_gamma: Optional[float] = 5.0,
         seed: Optional[int] = 1123,
     ):
@@ -95,6 +99,23 @@ class GenericStableXLModel(GenericModel, QuantizationMixin):
         vae_config_dict = json.load(open(vae_config_path))
         self.vae = AutoencoderKL.from_config(vae_config_dict)
 
+        if isinstance(controlnet_config_path, list):
+            controlnets = []
+            for _controlnet_config_path in controlnet_config_path:
+                controlnet_config_dict = json.load(open(_controlnet_config_path))
+                controlnets.append(ControlNetModel.from_config(controlnet_config_dict))
+            self.num_controlnets = len(controlnets)
+            self.controlnet = MultiControlNetModel(
+                controlnets=controlnets,
+            )
+        elif isinstance(controlnet_config_path, str):
+            controlnet_config_dict = json.load(open(controlnet_config_path))
+            self.controlnet = ControlNetModel.from_config(controlnet_config_dict)
+            self.num_controlnets = 1
+        else:
+            self.controlnet = None
+            self.num_controlnets = 0
+
         scheduler_config_dict = json.load(open(scheduler_config_path))
         scheduler_class_name = scheduler_config_dict.get("_class_name", "DDPMScheduler")
         assert hasattr(schedulers, scheduler_class_name)
@@ -113,11 +134,64 @@ class GenericStableXLModel(GenericModel, QuantizationMixin):
             for param in self.text2.parameters():
                 param.requires_grad = False
 
+        if freeze_unet_encoder:
+            for param in self.unet.parameters():
+                param.requires_grad = False
+
         if quant_config_path is not None:
             self.quant_config = QuantizationConfig.from_json_file(quant_config_path)
             self.quantize(self.quant_config, ignore_modules=["lm_head", "unet", "vae"])
 
         self.scheduler.set_timesteps(num_inference_steps=self.num_infer_timesteps)
+
+    def get_prompt_outputs(
+        self,
+        input_ids: torch.Tensor,
+        input2_ids: torch.Tensor,
+        negative_input_ids: torch.Tensor,
+        negative_input2_ids: torch.Tensor,
+        attention_mask: Optional[torch.Tensor] = None,
+        attention2_mask: Optional[torch.Tensor] = None,
+        negative_attention_mask: Optional[torch.Tensor] = None,
+        negative_attention2_mask: Optional[torch.Tensor] = None,
+    ):
+        outputs = self.text(
+            input_ids,
+            # attention_mask,
+            output_hidden_states=True,
+        )
+        prompt_embeds = outputs.hidden_states[-2]
+        negative_outputs = self.text(
+            negative_input_ids,
+            # negative_attention_mask,
+            output_hidden_states=True,
+        )
+        negative_prompt_embeds = negative_outputs.hidden_states[-2]
+        prompt2_outputs = self.text2(
+            input2_ids,
+            # attention2_mask,
+            output_hidden_states=True,
+        )
+        prompt2_embeds = prompt2_outputs.hidden_states[-2]
+        negative_prompt2_outputs = self.text2(
+            negative_input2_ids,
+            # negative_attention2_mask,
+            output_hidden_states=True,
+        )
+        negative_prompt2_embeds = negative_prompt2_outputs.hidden_states[-2]
+
+        prompt_embeds = torch.concat([prompt_embeds, prompt2_embeds], dim=-1)
+        negative_prompt_embeds = torch.concat(
+            [negative_prompt_embeds, negative_prompt2_embeds], dim=-1
+        )
+        pooled_prompt_embeds = prompt2_outputs[0]
+        negative_pooled_prompt_embeds = negative_prompt2_outputs[0]
+        return GenericOutputs(
+            prompt_embeds=prompt_embeds,
+            negative_prompt_embeds=negative_prompt_embeds,
+            pooled_prompt_embeds=pooled_prompt_embeds,
+            negative_pooled_prompt_embeds=negative_pooled_prompt_embeds,
+        )
 
 
 class StableXLForText2ImageGeneration(GenericStableXLModel):
@@ -177,12 +251,12 @@ class StableXLForText2ImageGeneration(GenericStableXLModel):
         attention_mask: Optional[torch.Tensor] = None,
         attention2_mask: Optional[torch.Tensor] = None,
     ):
-        prompt_outputs = self.text(
+        outputs = self.text(
             input_ids,
             # attention_mask,
             output_hidden_states=True,
         )
-        prompt_embeds = prompt_outputs.hidden_states[-2]
+        prompt_embeds = outputs.hidden_states[-2]
         prompt2_outputs = self.text2(
             input2_ids,
             # attention2_mask,
@@ -258,42 +332,22 @@ class StableXLForText2ImageGeneration(GenericStableXLModel):
         width: Optional[int] = 1024,
         guidance_scale: Optional[float] = 5.0,
     ):
-        prompt_outputs = self.text(
-            input_ids,
-            # attention_mask,
-            output_hidden_states=True,
+        outputs = self.get_prompt_outputs(
+            input_ids=input_ids,
+            input2_ids=input2_ids,
+            negative_input_ids=negative_input_ids,
+            negative_input2_ids=negative_input2_ids,
+            attention_mask=attention_mask,
+            attention2_mask=attention2_mask,
+            negative_attention_mask=negative_attention_mask,
+            negative_attention2_mask=negative_attention2_mask,
         )
-        prompt_embeds = prompt_outputs.hidden_states[-2]
-        negative_prompt_outputs = self.text(
-            negative_input_ids,
-            # negative_attention_mask,
-            output_hidden_states=True,
-        )
-        negative_prompt_embeds = negative_prompt_outputs.hidden_states[-2]
-        prompt2_outputs = self.text2(
-            input2_ids,
-            # attention2_mask,
-            output_hidden_states=True,
-        )
-        prompt2_embeds = prompt2_outputs.hidden_states[-2]
-        negative_prompt2_outputs = self.text2(
-            negative_input2_ids,
-            # negative_attention2_mask,
-            output_hidden_states=True,
-        )
-        negative_prompt2_embeds = negative_prompt2_outputs.hidden_states[-2]
-        prompt_embeds = torch.concat([prompt_embeds, prompt2_embeds], dim=-1)
-        negative_prompt_embeds = torch.concat(
-            [negative_prompt_embeds, negative_prompt2_embeds], dim=-1
-        )
-        pooled_prompt_embeds = prompt2_outputs[0]
-        negative_pooled_prompt_embeds = negative_prompt2_outputs[0]
 
         images = self.pipeline(
-            prompt_embeds=prompt_embeds,
-            negative_prompt_embeds=negative_prompt_embeds,
-            pooled_prompt_embeds=pooled_prompt_embeds,
-            negative_pooled_prompt_embeds=negative_pooled_prompt_embeds,
+            prompt_embeds=outputs.prompt_embeds,
+            negative_prompt_embeds=outputs.negative_prompt_embeds,
+            pooled_prompt_embeds=outputs.pooled_prompt_embeds,
+            negative_pooled_prompt_embeds=outputs.negative_pooled_prompt_embeds,
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),
@@ -373,43 +427,23 @@ class StableXLForImage2ImageGeneration(GenericStableXLModel):
         strength: Optional[float] = 0.8,
         guidance_scale: Optional[float] = 7.5,
     ):
-        prompt_outputs = self.text(
-            input_ids,
-            # attention_mask,
-            output_hidden_states=True,
+        outputs = self.get_prompt_outputs(
+            input_ids=input_ids,
+            input2_ids=input2_ids,
+            negative_input_ids=negative_input_ids,
+            negative_input2_ids=negative_input2_ids,
+            attention_mask=attention_mask,
+            attention2_mask=attention2_mask,
+            negative_attention_mask=negative_attention_mask,
+            negative_attention2_mask=negative_attention2_mask,
         )
-        prompt_embeds = prompt_outputs.hidden_states[-2]
-        negative_prompt_outputs = self.text(
-            negative_input_ids,
-            # negative_attention_mask,
-            output_hidden_states=True,
-        )
-        negative_prompt_embeds = negative_prompt_outputs.hidden_states[-2]
-        prompt2_outputs = self.text2(
-            input2_ids,
-            # attention2_mask,
-            output_hidden_states=True,
-        )
-        prompt2_embeds = prompt2_outputs.hidden_states[-2]
-        negative_prompt2_outputs = self.text2(
-            negative_input2_ids,
-            # negative_attention2_mask,
-            output_hidden_states=True,
-        )
-        negative_prompt2_embeds = negative_prompt2_outputs.hidden_states[-2]
-        prompt_embeds = torch.concat([prompt_embeds, prompt2_embeds], dim=-1)
-        negative_prompt_embeds = torch.concat(
-            [negative_prompt_embeds, negative_prompt2_embeds], dim=-1
-        )
-        pooled_prompt_embeds = prompt2_outputs[0]
-        negative_pooled_prompt_embeds = negative_prompt2_outputs[0]
 
         images = self.pipeline(
             image=pixel_values,
-            prompt_embeds=prompt_embeds,
-            negative_prompt_embeds=negative_prompt_embeds,
-            pooled_prompt_embeds=pooled_prompt_embeds,
-            negative_pooled_prompt_embeds=negative_pooled_prompt_embeds,
+            prompt_embeds=outputs.prompt_embeds,
+            negative_prompt_embeds=outputs.negative_prompt_embeds,
+            pooled_prompt_embeds=outputs.pooled_prompt_embeds,
+            negative_pooled_prompt_embeds=outputs.negative_pooled_prompt_embeds,
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),
@@ -489,44 +523,24 @@ class StableXLForImageInpainting(GenericStableXLModel):
         strength: Optional[float] = 1.0,
         guidance_scale: Optional[float] = 7.5,
     ):
-        prompt_outputs = self.text(
-            input_ids,
-            # attention_mask,
-            output_hidden_states=True,
+        outputs = self.get_prompt_outputs(
+            input_ids=input_ids,
+            input2_ids=input2_ids,
+            negative_input_ids=negative_input_ids,
+            negative_input2_ids=negative_input2_ids,
+            attention_mask=attention_mask,
+            attention2_mask=attention2_mask,
+            negative_attention_mask=negative_attention_mask,
+            negative_attention2_mask=negative_attention2_mask,
         )
-        prompt_embeds = prompt_outputs.hidden_states[-2]
-        negative_prompt_outputs = self.text(
-            negative_input_ids,
-            # negative_attention_mask,
-            output_hidden_states=True,
-        )
-        negative_prompt_embeds = negative_prompt_outputs.hidden_states[-2]
-        prompt2_outputs = self.text2(
-            input2_ids,
-            # attention2_mask,
-            output_hidden_states=True,
-        )
-        prompt2_embeds = prompt2_outputs.hidden_states[-2]
-        negative_prompt2_outputs = self.text2(
-            negative_input2_ids,
-            # negative_attention2_mask,
-            output_hidden_states=True,
-        )
-        negative_prompt2_embeds = negative_prompt2_outputs.hidden_states[-2]
-        prompt_embeds = torch.concat([prompt_embeds, prompt2_embeds], dim=-1)
-        negative_prompt_embeds = torch.concat(
-            [negative_prompt_embeds, negative_prompt2_embeds], dim=-1
-        )
-        pooled_prompt_embeds = prompt2_outputs[0]
-        negative_pooled_prompt_embeds = negative_prompt2_outputs[0]
 
         images = self.pipeline(
             image=pixel_values,
             mask_image=pixel_masks,
-            prompt_embeds=prompt_embeds,
-            negative_prompt_embeds=negative_prompt_embeds,
-            pooled_prompt_embeds=pooled_prompt_embeds,
-            negative_pooled_prompt_embeds=negative_pooled_prompt_embeds,
+            prompt_embeds=outputs.prompt_embeds,
+            negative_prompt_embeds=outputs.negative_prompt_embeds,
+            pooled_prompt_embeds=outputs.pooled_prompt_embeds,
+            negative_pooled_prompt_embeds=outputs.negative_pooled_prompt_embeds,
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),

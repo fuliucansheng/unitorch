@@ -68,12 +68,12 @@ class BlipForPretrain(_BlipForPretrain):
         """
         config.set_default_section("core/model/pretrain/blip")
         pretrained_name = config.getoption("pretrained_name", "default-blip")
+
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
             config_path,
             nested_dict_value(pretrained_blip_infos, pretrained_name, "config"),
         )
-
         config_path = cached_path(config_path)
 
         projection_dim = config.getoption("projection_dim", 512)
@@ -95,7 +95,6 @@ class BlipForPretrain(_BlipForPretrain):
             check_none=False,
         )
         if weight_path is not None:
-            weight_path = cached_path(weight_path)
             inst.from_pretrained(weight_path)
 
         return inst
@@ -201,7 +200,6 @@ class BlipForClassification(_BlipForClassification):
             check_none=False,
         )
         if weight_path is not None:
-            weight_path = cached_path(weight_path)
             inst.from_pretrained(weight_path)
 
         return inst
@@ -307,7 +305,6 @@ class BlipForTextClassification(_BlipForTextClassification):
             check_none=False,
         )
         if weight_path is not None:
-            weight_path = cached_path(weight_path)
             inst.from_pretrained(weight_path)
 
         return inst
@@ -410,7 +407,6 @@ class BlipForImageClassification(_BlipForImageClassification):
             check_none=False,
         )
         if weight_path is not None:
-            weight_path = cached_path(weight_path)
             inst.from_pretrained(weight_path)
 
         return inst
@@ -489,7 +485,6 @@ class BlipForImageCaption(_BlipForImageCaption):
             check_none=False,
         )
         if weight_path is not None:
-            weight_path = cached_path(weight_path)
             inst.from_pretrained(weight_path)
 
         return inst

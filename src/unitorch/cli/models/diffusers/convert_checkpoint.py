@@ -188,30 +188,5 @@ def controlnet(
     pass
 
 
-def animate_motion(
-    config_file: str,
-    checkpoint_file: str,
-    output_checkpoint_file: str,
-    base_checkpoint_file: str,
-):
-    base_checkpoint_file = cached_path(base_checkpoint_file)
-    state_dict = load_weight(base_checkpoint_file)
-    lora_state_dict = load_weight(checkpoint_file)
-    for k, v in lora_state_dict.items():
-        if "lora.down" in k:
-            continue
-        up, down = v, lora_state_dict.get(k.replace("_lora.up", "_lora.down"))
-        new_k = (
-            k.replace("_lora.up", "")
-            .replace("unet.", "")
-            .replace("processor.", "")
-            .replace("to_out", "to_out.0")
-        )
-        new_v = torch.matmul(up, down)
-        state_dict[new_k] += new_v
-
-    torch.save(state_dict, output_checkpoint_file)
-
-
 if __name__ == "__main__":
     fire.Fire()

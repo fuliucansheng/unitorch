@@ -7,6 +7,7 @@ import json
 import torch
 import logging
 import torch.nn as nn
+import safetensors
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from collections import OrderedDict
 from transformers.utils import is_remote_url, ModelOutput as GenericOutputs
@@ -40,7 +41,11 @@ class CheckpointMixin:
         weight_path = os.path.join(ckpt_dir, weight_name)
         if not os.path.exists(weight_path):
             return
-        state_dict = torch.load(weight_path, map_location="cpu")
+
+        if weight_path.endswith(".safetensors"):
+            state_dict = safetensors.torch.load_file(weight_path)
+        else:
+            state_dict = torch.load(weight_path, map_location="cpu")
         self.load_state_dict(state_dict)
         logging.info(
             f"{type(self).__name__} model load weight from checkpoint {weight_path}"
@@ -66,7 +71,10 @@ class CheckpointMixin:
             weight_name = self.checkpoint_name
         state_dict = self.state_dict()
         weight_path = os.path.join(ckpt_dir, weight_name)
-        torch.save(state_dict, weight_path)
+        if weight_path.endswith(".safetensors"):
+            safetensors.torch.save_file(state_dict, weight_path)
+        else:
+            torch.save(state_dict, weight_path)
         logging.info(f"{type(self).__name__} model save checkpoint to {weight_path}")
 
     def from_pretrained(
@@ -98,7 +106,9 @@ class CheckpointMixin:
             for path in weight_path:
                 logging.debug(f"Loading weights from {path}")
             state_dicts += [
-                torch.load(hf_cached_path(path), map_location="cpu")
+                safetensors.torch.load_file(hf_cached_path(path))
+                if path.endswith(".safetensors")
+                else torch.load(hf_cached_path(path), map_location="cpu")
                 for path in weight_path
             ]
 

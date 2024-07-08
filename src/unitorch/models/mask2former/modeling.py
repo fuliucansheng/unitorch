@@ -19,13 +19,6 @@ from unitorch.models import GenericModel, GenericOutputs
 
 
 class Mask2FormerForSegmentation(GenericModel):
-    prefix_keys_in_state_dict = {
-        # "^mask_decoder.*": "sam.",
-        # "^vision_encoder.*": "sam.",
-        # "^prompt_encoder.*": "sam.",
-        # "^shared_image_embedding.*": "sam.",
-    }
-
     def __init__(
         self,
         config_path: str,

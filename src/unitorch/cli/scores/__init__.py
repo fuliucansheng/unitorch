@@ -442,8 +442,10 @@ class MSEScore(Score):
 class BleuScore(Score):
     def __init__(
         self,
+        ignore_tokens: Optional[List[int]] = [0, 1],
     ):
         super().__init__()
+        self.ignore_tokens = ignore_tokens
 
     @classmethod
     @add_default_section_for_init("core/score/bleu")
@@ -462,7 +464,7 @@ class BleuScore(Score):
         return bleu_score(
             targets.long(),
             outputs.long(),
-            ignore_tokens=[0, 1],
+            ignore_tokens=self.ignore_tokens,
         )
 
 

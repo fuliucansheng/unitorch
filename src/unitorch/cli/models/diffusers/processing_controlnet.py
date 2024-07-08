@@ -4,7 +4,7 @@
 from PIL import Image
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from unitorch.utils import pop_value, nested_dict_value
-from unitorch.models.diffusers import ControlNetProcessor as _ControlNetProcessor
+from unitorch.models.diffusers import StableProcessor as _StableProcessor
 from unitorch.cli import (
     cached_path,
     add_default_section_for_init,
@@ -14,10 +14,10 @@ from unitorch.cli import (
 from unitorch.cli.models import (
     TensorsInputs,
 )
-from unitorch.cli.models.diffusers import pretrained_diffusers_infos
+from unitorch.cli.models.diffusers import pretrained_stable_infos
 
 
-class ControlNetProcessor(_ControlNetProcessor):
+class ControlNetProcessor(_StableProcessor):
     def __init__(
         self,
         vocab_path: str,
@@ -40,10 +40,8 @@ class ControlNetProcessor(_ControlNetProcessor):
     @add_default_section_for_init("core/process/diffusers/controlnet")
     def from_core_configure(cls, config, **kwargs):
         config.set_default_section("core/process/diffusers/controlnet")
-        pretrained_name = config.getoption(
-            "pretrained_name", "stable-v1.5-controlnet-canny"
-        )
-        pretrain_infos = nested_dict_value(pretrained_diffusers_infos, pretrained_name)
+        pretrained_name = config.getoption("pretrained_name", "stable-v1.5")
+        pretrain_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
 
         vocab_path = config.getoption("vocab_path", None)
         vocab_path = pop_value(
@@ -83,14 +81,14 @@ class ControlNetProcessor(_ControlNetProcessor):
         outputs = super().text2image(
             prompt=prompt,
             image=image,
-            condition_image=condition_image,
             max_seq_length=max_seq_length,
         )
+        control_outputs = super().controlnet_inputs(condition_image)
 
         return TensorsInputs(
             input_ids=outputs.input_ids,
             pixel_values=outputs.pixel_values,
-            condition_pixel_values=outputs.condition_pixel_values,
+            condition_pixel_values=control_outputs.pixel_values,
             attention_mask=outputs.attention_mask,
         )
 
@@ -102,18 +100,18 @@ class ControlNetProcessor(_ControlNetProcessor):
         negative_prompt: Optional[str] = "",
         max_seq_length: Optional[int] = None,
     ):
-        outputs = super().text2image_inputs(
+        text_outputs = super().text2image_inputs(
             prompt=prompt,
-            condition_image=condition_image,
             negative_prompt=negative_prompt,
             max_seq_length=max_seq_length,
         )
+        control_outputs = super().controlnet_inputs(condition_image)
         return TensorsInputs(
-            input_ids=outputs.input_ids,
-            negative_input_ids=outputs.negative_input_ids,
-            condition_pixel_values=outputs.condition_pixel_values,
-            attention_mask=outputs.attention_mask,
-            negative_attention_mask=outputs.negative_attention_mask,
+            input_ids=text_outputs.input_ids,
+            negative_input_ids=text_outputs.negative_input_ids,
+            condition_pixel_values=control_outputs.pixel_values,
+            attention_mask=text_outputs.attention_mask,
+            negative_attention_mask=text_outputs.negative_attention_mask,
         )
 
     @register_process("core/process/diffusers/controlnet/image2image/inputs")
@@ -125,24 +123,26 @@ class ControlNetProcessor(_ControlNetProcessor):
         negative_prompt: Optional[str] = "",
         max_seq_length: Optional[int] = None,
     ):
-        outputs = super().image2image_inputs(
+        text_outputs = super().text2image_inputs(
             prompt=prompt,
-            condition_image=condition_image,
-            image=image,
             negative_prompt=negative_prompt,
             max_seq_length=max_seq_length,
         )
+
+        image_outputs = super().image2image_inputs(image=image)
+        control_outputs = super().controlnet_inputs(condition_image)
         return TensorsInputs(
-            input_ids=outputs.input_ids,
-            negative_input_ids=outputs.negative_input_ids,
-            pixel_values=outputs.pixel_values,
-            condition_pixel_values=outputs.condition_pixel_values,
-            attention_mask=outputs.attention_mask,
-            negative_attention_mask=outputs.negative_attention_mask,
+            input_ids=text_outputs.input_ids,
+            negative_input_ids=text_outputs.negative_input_ids,
+            pixel_values=image_outputs.pixel_values,
+            condition_pixel_values=control_outputs.pixel_values,
+            attention_mask=text_outputs.attention_mask,
+            negative_attention_mask=text_outputs.negative_attention_mask,
         )
 
     @register_process("core/process/diffusers/controlnet/inpainting/inputs")
     def _inpainting_inputs(
+        self,
         prompt: str,
         condition_image: Union[Image.Image, str],
         image: Union[Image.Image, str],
@@ -150,19 +150,22 @@ class ControlNetProcessor(_ControlNetProcessor):
         negative_prompt: Optional[str] = "",
         max_seq_length: Optional[int] = None,
     ):
-        outputs = super().inpainting_inputs(
+        text_outputs = super().text2image_inputs(
             prompt=prompt,
-            condition_image=condition_image,
-            image=image,
-            mask_image=mask_image,
             negative_prompt=negative_prompt,
             max_seq_length=max_seq_length,
         )
+        image_outputs = super().inpainting_inputs(
+            image=image,
+            mask_image=mask_image,
+        )
+        control_outputs = super().controlnet_inputs(condition_image)
         return TensorsInputs(
-            input_ids=outputs.input_ids,
-            negative_input_ids=outputs.negative_input_ids,
-            pixel_values=outputs.pixel_values,
-            condition_pixel_values=outputs.condition_pixel_values,
-            attention_mask=outputs.attention_mask,
-            negative_attention_mask=outputs.negative_attention_mask,
+            input_ids=text_outputs.input_ids,
+            negative_input_ids=text_outputs.negative_input_ids,
+            pixel_values=image_outputs.pixel_values,
+            pixel_masks=image_outputs.pixel_masks,
+            condition_pixel_values=control_outputs.pixel_values,
+            attention_mask=text_outputs.attention_mask,
+            negative_attention_mask=text_outputs.negative_attention_mask,
         )

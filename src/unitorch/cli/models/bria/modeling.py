@@ -40,7 +40,6 @@ class BRIAForSegmentation(_BRIAForSegmentation):
         )
         weight_path = config.getoption("pretrained_weight_path", None)
         if weight_path is not None:
-            weight_path = cached_path(weight_path)
             inst.from_pretrained(weight_path)
 
         return inst

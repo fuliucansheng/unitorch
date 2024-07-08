@@ -2,7 +2,6 @@
 # Licensed under the MIT License.
 
 import re
-from turtle import forward
 import torch
 import numpy as np
 from PIL import Image, ImageDraw
@@ -20,7 +19,7 @@ from unitorch.cli import (
 from unitorch.cli.models.dpt import pretrained_dpt_infos
 
 
-class DPTPipeline(_DPTForDepthEstimation):
+class DPTForDepthEstimationPipeline(_DPTForDepthEstimation):
     def __init__(
         self,
         config_path: str,
@@ -43,26 +42,37 @@ class DPTPipeline(_DPTForDepthEstimation):
 
     @classmethod
     @add_default_section_for_init("core/pipeline/dpt")
-    def from_core_configure(cls, config, **kwargs):
+    def from_core_configure(
+        cls,
+        config,
+        pretrained_name: Optional[str] = "default-dpt",
+        config_path: Optional[str] = None,
+        vision_config_path: Optional[str] = None,
+        pretrained_weight_path: Optional[str] = None,
+        device: Optional[str] = "cpu",
+        **kwargs,
+    ):
         config.set_default_section("core/pipeline/dpt")
 
-        pretrained_name = config.getoption("pretrained_name", "default-dpt")
-        config_path = config.getoption("config_path", None)
+        pretrained_name = config.getoption("pretrained_name", pretrained_name)
+        config_path = config.getoption("config_path", config_path)
         config_path = pop_value(
             config_path,
             nested_dict_value(pretrained_dpt_infos, pretrained_name, "config"),
         )
         config_path = cached_path(config_path)
 
-        vision_config_path = config.getoption("vision_config_path", None)
+        vision_config_path = config.getoption("vision_config_path", vision_config_path)
         vision_config_path = pop_value(
             vision_config_path,
             nested_dict_value(pretrained_dpt_infos, pretrained_name, "vision_config"),
         )
         vision_config_path = cached_path(vision_config_path)
 
-        device = config.getoption("device", "cpu")
-        pretrained_weight_path = config.getoption("pretrained_weight_path", None)
+        device = config.getoption("device", device)
+        pretrained_weight_path = config.getoption(
+            "pretrained_weight_path", pretrained_weight_path
+        )
         weight_path = pop_value(
             pretrained_weight_path,
             nested_dict_value(pretrained_dpt_infos, pretrained_name, "weight"),

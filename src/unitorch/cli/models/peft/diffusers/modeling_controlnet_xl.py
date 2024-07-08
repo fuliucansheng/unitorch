@@ -20,7 +20,8 @@ from unitorch.cli import (
 from unitorch.cli.models import DiffusionOutputs, LossOutputs
 from unitorch.cli.models import diffusion_model_decorator
 from unitorch.cli.models.diffusers import (
-    pretrained_diffusers_infos,
+    pretrained_stable_infos,
+    pretrained_stable_extensions_infos,
     load_weight,
 )
 
@@ -67,10 +68,15 @@ class ControlNetXLLoraForText2ImageGeneration(_ControlNetXLLoraForText2ImageGene
     @add_default_section_for_init("core/model/peft/diffusers/text2image/controlnet_xl")
     def from_core_configure(cls, config, **kwargs):
         config.set_default_section("core/model/peft/diffusers/text2image/controlnet_xl")
-        pretrained_name = config.getoption(
-            "pretrained_name", "stable-xl-base-controlnet-canny"
+        pretrained_name = config.getoption("pretrained_name", "stable-xl-base")
+        pretrain_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
+
+        pretrained_controlnet_name = config.getoption(
+            "pretrained_controlnet_name", "stable-xl-controlnet-canny"
         )
-        pretrain_infos = nested_dict_value(pretrained_diffusers_infos, pretrained_name)
+        pretrain_controlnet_infos = nested_dict_value(
+            pretrained_stable_extensions_infos, pretrained_controlnet_name
+        )
 
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
@@ -103,7 +109,7 @@ class ControlNetXLLoraForText2ImageGeneration(_ControlNetXLLoraForText2ImageGene
         controlnet_config_path = config.getoption("controlnet_config_path", None)
         controlnet_config_path = pop_value(
             controlnet_config_path,
-            nested_dict_value(pretrain_infos, "controlnet", "config"),
+            nested_dict_value(pretrain_controlnet_infos, "controlnet", "config"),
         )
         controlnet_config_path = cached_path(controlnet_config_path)
 
@@ -171,7 +177,9 @@ class ControlNetXLLoraForText2ImageGeneration(_ControlNetXLLoraForText2ImageGene
                     prefix_keys={"": "vae."},
                 ),
                 load_weight(
-                    nested_dict_value(pretrain_infos, "controlnet", "weight"),
+                    nested_dict_value(
+                        pretrain_controlnet_infos, "controlnet", "weight"
+                    ),
                     prefix_keys={"": "controlnet."},
                 ),
             ]
@@ -292,10 +300,15 @@ class ControlNetXLLoraForImage2ImageGeneration(
         config.set_default_section(
             "core/model/peft/diffusers/image2image/controlnet_xl"
         )
-        pretrained_name = config.getoption(
-            "pretrained_name", "stable-xl-base-controlnet-depth-small"
+        pretrained_name = config.getoption("pretrained_name", "stable-xl-base")
+        pretrain_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
+
+        pretrained_controlnet_name = config.getoption(
+            "pretrained_controlnet_name", "stable-xl-controlnet-canny"
         )
-        pretrain_infos = nested_dict_value(pretrained_diffusers_infos, pretrained_name)
+        pretrain_controlnet_infos = nested_dict_value(
+            pretrained_stable_extensions_infos, pretrained_controlnet_name
+        )
 
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
@@ -328,7 +341,7 @@ class ControlNetXLLoraForImage2ImageGeneration(
         controlnet_config_path = config.getoption("controlnet_config_path", None)
         controlnet_config_path = pop_value(
             controlnet_config_path,
-            nested_dict_value(pretrain_infos, "controlnet", "config"),
+            nested_dict_value(pretrain_controlnet_infos, "controlnet", "config"),
         )
         controlnet_config_path = cached_path(controlnet_config_path)
 
@@ -396,7 +409,9 @@ class ControlNetXLLoraForImage2ImageGeneration(
                     prefix_keys={"": "vae."},
                 ),
                 load_weight(
-                    nested_dict_value(pretrain_infos, "controlnet", "weight"),
+                    nested_dict_value(
+                        pretrain_controlnet_infos, "controlnet", "weight"
+                    ),
                     prefix_keys={"": "controlnet."},
                 ),
             ]
@@ -496,10 +511,15 @@ class ControlNetXLLoraForImageInpainting(_ControlNetXLLoraForImageInpainting):
     @add_default_section_for_init("core/model/peft/diffusers/inpainting/controlnet_xl")
     def from_core_configure(cls, config, **kwargs):
         config.set_default_section("core/model/peft/diffusers/inpainting/controlnet_xl")
-        pretrained_name = config.getoption(
-            "pretrained_name", "stable-xl-base-controlnet-depth-small"
+        pretrained_name = config.getoption("pretrained_name", "stable-xl-base")
+        pretrain_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
+
+        pretrained_controlnet_name = config.getoption(
+            "pretrained_controlnet_name", "stable-xl-controlnet-canny"
         )
-        pretrain_infos = nested_dict_value(pretrained_diffusers_infos, pretrained_name)
+        pretrain_controlnet_infos = nested_dict_value(
+            pretrained_stable_extensions_infos, pretrained_controlnet_name
+        )
 
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
@@ -532,7 +552,7 @@ class ControlNetXLLoraForImageInpainting(_ControlNetXLLoraForImageInpainting):
         controlnet_config_path = config.getoption("controlnet_config_path", None)
         controlnet_config_path = pop_value(
             controlnet_config_path,
-            nested_dict_value(pretrain_infos, "controlnet", "config"),
+            nested_dict_value(pretrain_controlnet_infos, "controlnet", "config"),
         )
         controlnet_config_path = cached_path(controlnet_config_path)
 
@@ -600,7 +620,9 @@ class ControlNetXLLoraForImageInpainting(_ControlNetXLLoraForImageInpainting):
                     prefix_keys={"": "vae."},
                 ),
                 load_weight(
-                    nested_dict_value(pretrain_infos, "controlnet", "weight"),
+                    nested_dict_value(
+                        pretrain_controlnet_infos, "controlnet", "weight"
+                    ),
                     prefix_keys={"": "controlnet."},
                 ),
             ]

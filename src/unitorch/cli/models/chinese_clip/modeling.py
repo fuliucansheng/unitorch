@@ -93,7 +93,6 @@ class ChineseClipForPretrain(_ChineseClipForPretrain):
             check_none=False,
         )
         if weight_path is not None:
-            weight_path = cached_path(weight_path)
             inst.from_pretrained(weight_path)
 
         return inst
@@ -201,7 +200,6 @@ class ChineseClipForClassification(_ChineseClipForClassification):
             check_none=False,
         )
         if weight_path is not None:
-            weight_path = cached_path(weight_path)
             inst.from_pretrained(weight_path)
 
         return inst
@@ -309,7 +307,6 @@ class ChineseClipForTextClassification(_ChineseClipForTextClassification):
             check_none=False,
         )
         if weight_path is not None:
-            weight_path = cached_path(weight_path)
             inst.from_pretrained(weight_path)
 
         return inst
@@ -414,7 +411,6 @@ class ChineseClipForImageClassification(_ChineseClipForImageClassification):
             check_none=False,
         )
         if weight_path is not None:
-            weight_path = cached_path(weight_path)
             inst.from_pretrained(weight_path)
 
         return inst

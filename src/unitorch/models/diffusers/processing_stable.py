@@ -7,7 +7,7 @@ import json
 import numpy as np
 from PIL import Image
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
-from transformers import CLIPTokenizer
+from transformers import CLIPTokenizer, CLIPImageProcessor
 from torchvision.transforms import (
     Resize,
     CenterCrop,
@@ -19,7 +19,11 @@ from torchvision.transforms import (
     RandomHorizontalFlip,
 )
 from diffusers.image_processor import VaeImageProcessor
-from unitorch.models import HfTextClassificationProcessor, GenericOutputs
+from unitorch.models import (
+    HfTextClassificationProcessor,
+    HfImageClassificationProcessor,
+    GenericOutputs,
+)
 
 
 class StableProcessor(HfTextClassificationProcessor):
@@ -27,7 +31,6 @@ class StableProcessor(HfTextClassificationProcessor):
         self,
         vocab_path: str,
         merge_path: str,
-        vision_config_path: Optional[str] = None,
         vae_config_path: Optional[str] = None,
         max_seq_length: Optional[int] = 77,
         position_start_id: Optional[int] = 0,
@@ -62,6 +65,14 @@ class StableProcessor(HfTextClassificationProcessor):
             ]
         )
 
+        self.condition_vision_processor = Compose(
+            [
+                Resize(image_size),
+                CenterCrop(image_size),
+                ToTensor(),
+            ]
+        )
+
         if vae_config_path is not None:
             vae_config_dict = json.load(open(vae_config_path))
             vae_scale_factor = 2 ** (
@@ -70,8 +81,18 @@ class StableProcessor(HfTextClassificationProcessor):
             self.vae_image_processor = VaeImageProcessor(
                 vae_scale_factor=vae_scale_factor
             )
+            self.vae_mask_image_processor = VaeImageProcessor(
+                vae_scale_factor=vae_scale_factor
+            )
+            self.vae_condition_image_processor = VaeImageProcessor(
+                vae_scale_factor=vae_scale_factor,
+                do_convert_rgb=True,
+                do_normalize=False,
+            )
         else:
             self.vae_image_processor = None
+            self.vae_mask_image_processor = None
+            self.vae_condition_image_processor = None
 
     def text2image(
         self,
@@ -114,10 +135,7 @@ class StableProcessor(HfTextClassificationProcessor):
 
     def image2image_inputs(
         self,
-        prompt: str,
         image: Union[Image.Image, str],
-        negative_prompt: Optional[str] = "",
-        max_seq_length: Optional[int] = None,
     ):
         if isinstance(image, str):
             image = Image.open(image)
@@ -125,24 +143,12 @@ class StableProcessor(HfTextClassificationProcessor):
 
         pixel_values = self.vae_image_processor.preprocess(image)[0]
 
-        text_inputs = self.text2image_inputs(
-            prompt,
-            negative_prompt=negative_prompt,
-            max_seq_length=max_seq_length,
-        )
-
-        return GenericOutputs(
-            pixel_values=pixel_values,
-            **text_inputs,
-        )
+        return GenericOutputs(pixel_values=pixel_values)
 
     def inpainting_inputs(
         self,
-        prompt: str,
         image: Union[Image.Image, str],
         mask_image: Union[Image.Image, str],
-        negative_prompt: Optional[str] = "",
-        max_seq_length: Optional[int] = None,
     ):
         if isinstance(image, str):
             image = Image.open(image)
@@ -156,24 +162,14 @@ class StableProcessor(HfTextClassificationProcessor):
         pixel_masks = self.vae_image_processor.preprocess(mask_image)[0]
         pixel_masks = (pixel_masks + 1) / 2
 
-        text_inputs = self.text2image_inputs(
-            prompt,
-            negative_prompt=negative_prompt,
-            max_seq_length=max_seq_length,
-        )
-
         return GenericOutputs(
             pixel_values=pixel_values,
             pixel_masks=pixel_masks,
-            **text_inputs,
         )
 
     def resolution_inputs(
         self,
-        prompt: str,
         image: Union[Image.Image, str],
-        negative_prompt: Optional[str] = "",
-        max_seq_length: Optional[int] = None,
     ):
         if isinstance(image, str):
             image = Image.open(image)
@@ -181,13 +177,64 @@ class StableProcessor(HfTextClassificationProcessor):
 
         pixel_values = self.vae_image_processor.preprocess(image)[0]
 
-        text_inputs = self.text2image_inputs(
-            prompt,
-            negative_prompt=negative_prompt,
-            max_seq_length=max_seq_length,
+        return GenericOutputs(pixel_values=pixel_values)
+
+    def controlnet(self, image: Union[Image.Image, str]):
+        if isinstance(image, str):
+            image = Image.open(image)
+        image = image.convert("RGB")
+
+        pixel_values = self.condition_vision_processor(image)
+        return GenericOutputs(pixel_values=pixel_values)
+
+    def controlnet_inputs(self, image: Union[Image.Image, str]):
+        if isinstance(image, str):
+            image = Image.open(image)
+        image = image.convert("RGB")
+
+        pixel_values = self.vae_condition_image_processor.preprocess(image)[0]
+        return GenericOutputs(pixel_values=pixel_values)
+
+    def controlnets_inputs(
+        self,
+        images: List[Union[Image.Image, str]],
+    ):
+        pixel_values = []
+        for image in images:
+            if isinstance(image, str):
+                image = Image.open(image)
+            image = image.convert("RGB")
+
+            pixel_values.append(self.vae_condition_image_processor.preprocess(image)[0])
+
+        return GenericOutputs(pixel_values=torch.stack(pixel_values, dim=0))
+
+
+class StableVideoProcessor(HfImageClassificationProcessor):
+    def __init__(
+        self,
+        vision_config_path: str,
+        vae_config_path: str,
+    ):
+        vision_processor = CLIPImageProcessor.from_json_file(vision_config_path)
+        super().__init__(
+            vision_processor=vision_processor,
         )
+        vae_config_dict = json.load(open(vae_config_path))
+        vae_scale_factor = 2 ** (len(vae_config_dict.get("block_out_channels", [])) - 1)
+        self.vae_image_processor = VaeImageProcessor(vae_scale_factor=vae_scale_factor)
+
+    def image2video_inputs(
+        self,
+        image: Union[Image.Image, str],
+        vae_image: Union[Image.Image, str],
+    ):
+        pixel_outputs = self.classification(
+            image=image.resize((224, 224), Image.BICUBIC),
+        )
+        vae_pixel_values = self.vae_image_processor.preprocess(vae_image)[0]
 
         return GenericOutputs(
-            pixel_values=pixel_values,
-            **text_inputs,
+            pixel_values=pixel_outputs.pixel_values,
+            vae_pixel_values=vae_pixel_values,
         )

@@ -64,6 +64,7 @@ class BlipProcessor(_BlipProcessor):
         """
         config.set_default_section("core/process/blip")
         pretrained_name = config.getoption("pretrained_name", "default-blip")
+
         vocab_path = config.getoption("vocab_path", None)
         vocab_path = pop_value(
             vocab_path,
@@ -76,7 +77,6 @@ class BlipProcessor(_BlipProcessor):
             vision_config_path,
             nested_dict_value(pretrained_blip_infos, pretrained_name, "vision_config"),
         )
-
         vision_config_path = cached_path(vision_config_path)
 
         return {

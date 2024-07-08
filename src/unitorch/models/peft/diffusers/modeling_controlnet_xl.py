@@ -120,7 +120,7 @@ class GenericControlNetXLLoraModel(GenericPeftModel, QuantizationMixin):
 
         self.scheduler.set_timesteps(num_inference_steps=self.num_infer_timesteps)
 
-    def get_prompt_embeds(
+    def get_prompt_outputs(
         self,
         input_ids: torch.Tensor,
         input2_ids: torch.Tensor,
@@ -361,7 +361,7 @@ class ControlNetXLLoraForText2ImageGeneration(GenericControlNetXLLoraModel):
         Returns:
             GenericOutputs: Generated images.
         """
-        outputs = self.get_prompt_embeds(
+        outputs = self.get_prompt_outputs(
             input_ids=input_ids,
             input2_ids=input2_ids,
             negative_input_ids=negative_input_ids,
@@ -457,7 +457,7 @@ class ControlNetXLLoraForImage2ImageGeneration(GenericControlNetXLLoraModel):
         guidance_scale: Optional[float] = 7.5,
         controlnet_conditioning_scale: Optional[float] = 0.5,
     ):
-        outputs = self.get_prompt_embeds(
+        outputs = self.get_prompt_outputs(
             input_ids=input_ids,
             input2_ids=input2_ids,
             negative_input_ids=negative_input_ids,
@@ -554,7 +554,7 @@ class ControlNetXLLoraForImageInpainting(GenericControlNetXLLoraModel):
         guidance_scale: Optional[float] = 7.5,
         controlnet_conditioning_scale: Optional[float] = 0.5,
     ):
-        outputs = self.get_prompt_embeds(
+        outputs = self.get_prompt_outputs(
             input_ids=input_ids,
             input2_ids=input2_ids,
             negative_input_ids=negative_input_ids,

@@ -1,14 +1,26 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
+import json
+import logging
 import torch
 from PIL import Image
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from diffusers.utils import numpy_to_pil
 from unitorch import is_xformers_available
-from unitorch.models.diffusers import (
-    StableForImageResolution as _StableForImageResolution,
+from diffusers.models import ControlNetModel
+from diffusers.pipelines import (
+    StableDiffusionPipeline,
+    StableDiffusionImg2ImgPipeline,
+    StableDiffusionInpaintPipeline,
+    StableDiffusionUpscalePipeline,
+    StableDiffusionDepth2ImgPipeline,
+    StableVideoDiffusionPipeline,
+    StableDiffusionControlNetPipeline,
+    StableDiffusionControlNetImg2ImgPipeline,
+    StableDiffusionControlNetInpaintPipeline,
 )
+from unitorch.models.diffusers import GenericStableModel
 from unitorch.models.diffusers import StableProcessor
 
 from unitorch.utils import pop_value, nested_dict_value
@@ -17,11 +29,15 @@ from unitorch.cli import (
     add_default_section_for_init,
     add_default_section_for_function,
 )
-from unitorch.cli.models.diffusers import pretrained_diffusers_infos, load_weight
+from unitorch.cli.models.diffusers import (
+    pretrained_stable_infos,
+    pretrained_stable_extensions_infos,
+    load_weight,
+)
 from unitorch.cli.pipelines import Schedulers
 
 
-class StableForImageResolutionPipeline(_StableForImageResolution):
+class StableForImageResolutionPipeline(GenericStableModel):
     def __init__(
         self,
         config_path: str,
@@ -57,74 +73,84 @@ class StableForImageResolutionPipeline(_StableForImageResolution):
 
         self.from_pretrained(weight_path, state_dict=state_dict)
         self.eval()
+        self.to(device=self._device)
 
-        if enable_cpu_offload and self._device != "cpu":
-            self.pipeline.enable_model_cpu_offload(self._device)
-            self.to(torch.half)
-        else:
-            self.to(device=self._device)
-
-        if enable_xformers and self._device != "cpu":
-            assert is_xformers_available(), "Please install xformers first."
-            self.pipeline.enable_xformers_memory_efficient_attention()
+        self._enable_cpu_offload = enable_cpu_offload
+        self._enable_xformers = enable_xformers
 
     @classmethod
     @add_default_section_for_init("core/pipeline/stable/resolution")
-    def from_core_configure(cls, config, **kwargs):
+    def from_core_configure(
+        cls,
+        config,
+        pretrained_name: Optional[str] = "stable-v1.5",
+        config_path: Optional[str] = None,
+        text_config_path: Optional[str] = None,
+        vae_config_path: Optional[str] = None,
+        scheduler_config_path: Optional[str] = None,
+        vocab_path: Optional[str] = None,
+        merge_path: Optional[str] = None,
+        quant_config_path: Optional[str] = None,
+        pretrained_weight_path: Optional[str] = None,
+        device: Optional[str] = "cpu",
+        **kwargs,
+    ):
         config.set_default_section("core/pipeline/stable/resolution")
-        pretrained_name = config.getoption("pretrained_name", "stable-v1.5")
-        pretrain_infos = nested_dict_value(pretrained_diffusers_infos, pretrained_name)
+        pretrained_name = config.getoption("pretrained_name", pretrained_name)
+        pretrain_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
 
-        config_path = config.getoption("config_path", None)
+        config_path = config.getoption("config_path", config_path)
         config_path = pop_value(
             config_path,
             nested_dict_value(pretrain_infos, "unet", "config"),
         )
         config_path = cached_path(config_path)
 
-        text_config_path = config.getoption("text_config_path", None)
+        text_config_path = config.getoption("text_config_path", text_config_path)
         text_config_path = pop_value(
             text_config_path,
             nested_dict_value(pretrain_infos, "text", "config"),
         )
         text_config_path = cached_path(text_config_path)
 
-        vae_config_path = config.getoption("vae_config_path", None)
+        vae_config_path = config.getoption("vae_config_path", vae_config_path)
         vae_config_path = pop_value(
             vae_config_path,
             nested_dict_value(pretrain_infos, "vae", "config"),
         )
         vae_config_path = cached_path(vae_config_path)
 
-        scheduler_config_path = config.getoption("scheduler_config_path", None)
+        scheduler_config_path = config.getoption(
+            "scheduler_config_path", scheduler_config_path
+        )
         scheduler_config_path = pop_value(
             scheduler_config_path,
             nested_dict_value(pretrain_infos, "scheduler"),
         )
         scheduler_config_path = cached_path(scheduler_config_path)
 
-        vocab_path = config.getoption("vocab_path", None)
+        vocab_path = config.getoption("vocab_path", vocab_path)
         vocab_path = pop_value(
             vocab_path,
             nested_dict_value(pretrain_infos, "text", "vocab"),
         )
         vocab_path = cached_path(vocab_path)
 
-        merge_path = config.getoption("merge_path", None)
+        merge_path = config.getoption("merge_path", merge_path)
         merge_path = pop_value(
             merge_path,
             nested_dict_value(pretrain_infos, "text", "merge"),
         )
         merge_path = cached_path(merge_path)
 
-        quant_config_path = config.getoption("quant_config_path", None)
+        quant_config_path = config.getoption("quant_config_path", quant_config_path)
         if quant_config_path is not None:
             quant_config_path = cached_path(quant_config_path)
 
         max_seq_length = config.getoption("max_seq_length", 77)
         pad_token = config.getoption("pad_token", "<|endoftext|>")
-        weight_path = config.getoption("pretrained_weight_path", None)
-        device = config.getoption("device", "cpu")
+        weight_path = config.getoption("pretrained_weight_path", pretrained_weight_path)
+        device = config.getoption("device", device)
         enable_cpu_offload = config.getoption("enable_cpu_offload", True)
         enable_xformers = config.getoption("enable_xformers", True)
 
@@ -144,8 +170,8 @@ class StableForImageResolutionPipeline(_StableForImageResolution):
             vocab_path=vocab_path,
             merge_path=merge_path,
             quant_config_path=quant_config_path,
-            max_seq_length=max_seq_length,
             pad_token=pad_token,
+            max_seq_length=max_seq_length,
             weight_path=weight_path,
             state_dict=state_dict,
             device=device,
@@ -161,7 +187,7 @@ class StableForImageResolutionPipeline(_StableForImageResolution):
         text: str,
         image: Image.Image,
         neg_text: Optional[str] = "",
-        guidance_scale: Optional[float] = 9.0,
+        guidance_scale: Optional[float] = 7.5,
         noise_level: Optional[int] = 20,
         num_timesteps: Optional[int] = 50,
         seed: Optional[int] = 1123,
@@ -173,28 +199,70 @@ class StableForImageResolutionPipeline(_StableForImageResolution):
             1.4,
         ),
     ):
-        inputs = self.processor.resolution_inputs(
+        text_inputs = self.processor.text2image_inputs(
             text,
-            image=image,
             negative_prompt=neg_text,
         )
-        inputs = {k: v.unsqueeze(0) if v is not None else v for k, v in inputs.items()}
-        inputs = {
-            k: v.to(device=self._device) if v is not None else v
-            for k, v in inputs.items()
-        }
+        image_inputs = self.processor.image2image_inputs(image)
+
         assert scheduler is None or scheduler in Schedulers
         if scheduler is not None:
             self.scheduler = Schedulers.get(scheduler).from_config(
                 self.scheduler.config
             )
         self.scheduler.set_timesteps(num_inference_steps=num_timesteps)
+
+        self.pipeline = StableDiffusionUpscalePipeline(
+            vae=self.vae,
+            text_encoder=self.text,
+            unet=self.unet,
+            scheduler=self.scheduler,
+            low_res_scheduler=self.scheduler,
+            tokenizer=None,
+            safety_checker=None,
+            feature_extractor=None,
+        )
+        inputs = {**text_inputs, **image_inputs}
+        self.pipeline.set_progress_bar_config(disable=True)
         self.pipeline.enable_freeu(*freeu_params)
         self.seed = seed
-        outputs = self.generate(
-            **inputs,
+
+        inputs = {k: v.unsqueeze(0) if v is not None else v for k, v in inputs.items()}
+        inputs = {
+            k: v.to(device=self._device) if v is not None else v
+            for k, v in inputs.items()
+        }
+
+        prompt_embeds = self.text(
+            inputs.get("input_ids"),
+            # attention_mask,
+        )[0]
+        negative_prompt_embeds = self.text(
+            inputs.get("negative_input_ids"),
+            # negative_attention_mask,
+        )[0]
+
+        if self._enable_cpu_offload and self._device != "cpu":
+            self.pipeline.enable_model_cpu_offload(self._device)
+        else:
+            self.to(device=self._device)
+
+        if self._enable_xformers and self._device != "cpu":
+            assert is_xformers_available(), "Please install xformers first."
+            self.pipeline.enable_xformers_memory_efficient_attention()
+
+        outputs = self.pipeline(
+            image=inputs["pixel_values"],
+            prompt_embeds=prompt_embeds,
+            negative_prompt_embeds=negative_prompt_embeds,
+            generator=torch.Generator(device=self.pipeline.device).manual_seed(
+                self.seed
+            ),
             guidance_scale=guidance_scale,
             noise_level=noise_level,
+            output_type="np.array",
         )
-        images = numpy_to_pil(outputs.images.cpu().numpy())
+
+        images = torch.from_numpy(outputs.images)
+        images = numpy_to_pil(images.cpu().numpy())
         return images[0]

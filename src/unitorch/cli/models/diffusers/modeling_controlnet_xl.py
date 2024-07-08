@@ -20,7 +20,8 @@ from unitorch.cli import (
 from unitorch.cli.models import DiffusionOutputs, LossOutputs
 from unitorch.cli.models import diffusion_model_decorator
 from unitorch.cli.models.diffusers import (
-    pretrained_diffusers_infos,
+    pretrained_stable_infos,
+    pretrained_stable_extensions_infos,
     load_weight,
 )
 
@@ -71,10 +72,15 @@ class ControlNetXLForText2ImageGeneration(_ControlNetXLForText2ImageGeneration):
     @add_default_section_for_init("core/model/diffusers/text2image/controlnet_xl")
     def from_core_configure(cls, config, **kwargs):
         config.set_default_section("core/model/diffusers/text2image/controlnet_xl")
-        pretrained_name = config.getoption(
-            "pretrained_name", "stable-xl-base-controlnet-canny"
+        pretrained_name = config.getoption("pretrained_name", "stable-xl-base")
+        pretrain_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
+
+        pretrained_controlnet_name = config.getoption(
+            "pretrained_controlnet_name", "stable-xl-controlnet-canny"
         )
-        pretrain_infos = nested_dict_value(pretrained_diffusers_infos, pretrained_name)
+        pretrain_controlnet_infos = nested_dict_value(
+            pretrained_stable_extensions_infos, pretrained_controlnet_name
+        )
 
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
@@ -107,7 +113,7 @@ class ControlNetXLForText2ImageGeneration(_ControlNetXLForText2ImageGeneration):
         controlnet_config_path = config.getoption("controlnet_config_path", None)
         controlnet_config_path = pop_value(
             controlnet_config_path,
-            nested_dict_value(pretrain_infos, "controlnet", "config"),
+            nested_dict_value(pretrain_controlnet_infos, "controlnet", "config"),
         )
         controlnet_config_path = cached_path(controlnet_config_path)
 
@@ -173,7 +179,9 @@ class ControlNetXLForText2ImageGeneration(_ControlNetXLForText2ImageGeneration):
                     prefix_keys={"": "vae."},
                 ),
                 load_weight(
-                    nested_dict_value(pretrain_infos, "controlnet", "weight"),
+                    nested_dict_value(
+                        pretrain_controlnet_infos, "controlnet", "weight"
+                    ),
                     prefix_keys={"": "controlnet."},
                 ),
             ]
@@ -282,10 +290,15 @@ class ControlNetXLForImage2ImageGeneration(_ControlNetXLForImage2ImageGeneration
     @add_default_section_for_init("core/model/diffusers/image2image/controlnet_xl")
     def from_core_configure(cls, config, **kwargs):
         config.set_default_section("core/model/diffusers/image2image/controlnet_xl")
-        pretrained_name = config.getoption(
-            "pretrained_name", "stable-xl-base-controlnet-depth-small"
+        pretrained_name = config.getoption("pretrained_name", "stable-xl-base")
+        pretrain_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
+
+        pretrained_controlnet_name = config.getoption(
+            "pretrained_controlnet_name", "stable-xl-controlnet-canny"
         )
-        pretrain_infos = nested_dict_value(pretrained_diffusers_infos, pretrained_name)
+        pretrain_controlnet_infos = nested_dict_value(
+            pretrained_stable_extensions_infos, pretrained_controlnet_name
+        )
 
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
@@ -318,7 +331,7 @@ class ControlNetXLForImage2ImageGeneration(_ControlNetXLForImage2ImageGeneration
         controlnet_config_path = config.getoption("controlnet_config_path", None)
         controlnet_config_path = pop_value(
             controlnet_config_path,
-            nested_dict_value(pretrain_infos, "controlnet", "config"),
+            nested_dict_value(pretrain_controlnet_infos, "controlnet", "config"),
         )
         controlnet_config_path = cached_path(controlnet_config_path)
 
@@ -384,7 +397,9 @@ class ControlNetXLForImage2ImageGeneration(_ControlNetXLForImage2ImageGeneration
                     prefix_keys={"": "vae."},
                 ),
                 load_weight(
-                    nested_dict_value(pretrain_infos, "controlnet", "weight"),
+                    nested_dict_value(
+                        pretrain_controlnet_infos, "controlnet", "weight"
+                    ),
                     prefix_keys={"": "controlnet."},
                 ),
             ]
@@ -407,22 +422,30 @@ class ControlNetXLForImage2ImageGeneration(_ControlNetXLForImage2ImageGeneration
     def generate(
         self,
         input_ids: torch.Tensor,
+        input2_ids: torch.Tensor,
         negative_input_ids: torch.Tensor,
+        negative_input2_ids: torch.Tensor,
         pixel_values: torch.Tensor,
         condition_pixel_values: torch.Tensor,
         attention_mask: Optional[torch.Tensor] = None,
+        attention2_mask: Optional[torch.Tensor] = None,
         negative_attention_mask: Optional[torch.Tensor] = None,
+        negative_attention2_mask: Optional[torch.Tensor] = None,
         strength: Optional[float] = 0.8,
         guidance_scale: Optional[float] = 7.5,
         controlnet_conditioning_scale: Optional[float] = 0.5,
     ):
         outputs = super().generate(
             input_ids=input_ids,
+            input2_ids=input2_ids,
             negative_input_ids=negative_input_ids,
+            negative_input2_ids=negative_input2_ids,
             pixel_values=pixel_values,
             condition_pixel_values=condition_pixel_values,
             attention_mask=attention_mask,
+            attention2_mask=attention2_mask,
             negative_attention_mask=negative_attention_mask,
+            negative_attention2_mask=negative_attention2_mask,
             strength=strength,
             guidance_scale=guidance_scale,
             controlnet_conditioning_scale=controlnet_conditioning_scale,
@@ -476,10 +499,15 @@ class ControlNetXLForImageInpainting(_ControlNetXLForImageInpainting):
     @add_default_section_for_init("core/model/diffusers/inpainting/controlnet_xl")
     def from_core_configure(cls, config, **kwargs):
         config.set_default_section("core/model/diffusers/inpainting/controlnet_xl")
-        pretrained_name = config.getoption(
-            "pretrained_name", "stable-xl-base-controlnet-depth-small"
+        pretrained_name = config.getoption("pretrained_name", "stable-xl-base")
+        pretrain_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
+
+        pretrained_controlnet_name = config.getoption(
+            "pretrained_controlnet_name", "stable-xl-controlnet-canny"
         )
-        pretrain_infos = nested_dict_value(pretrained_diffusers_infos, pretrained_name)
+        pretrain_controlnet_infos = nested_dict_value(
+            pretrained_stable_extensions_infos, pretrained_controlnet_name
+        )
 
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
@@ -512,7 +540,7 @@ class ControlNetXLForImageInpainting(_ControlNetXLForImageInpainting):
         controlnet_config_path = config.getoption("controlnet_config_path", None)
         controlnet_config_path = pop_value(
             controlnet_config_path,
-            nested_dict_value(pretrain_infos, "controlnet", "config"),
+            nested_dict_value(pretrain_controlnet_infos, "controlnet", "config"),
         )
         controlnet_config_path = cached_path(controlnet_config_path)
 
@@ -578,7 +606,9 @@ class ControlNetXLForImageInpainting(_ControlNetXLForImageInpainting):
                     prefix_keys={"": "vae."},
                 ),
                 load_weight(
-                    nested_dict_value(pretrain_infos, "controlnet", "weight"),
+                    nested_dict_value(
+                        pretrain_controlnet_infos, "controlnet", "weight"
+                    ),
                     prefix_keys={"": "controlnet."},
                 ),
             ]
@@ -601,24 +631,32 @@ class ControlNetXLForImageInpainting(_ControlNetXLForImageInpainting):
     def generate(
         self,
         input_ids: torch.Tensor,
+        input2_ids: torch.Tensor,
         negative_input_ids: torch.Tensor,
+        negative_input2_ids: torch.Tensor,
         pixel_values: torch.Tensor,
         pixel_masks: torch.Tensor,
         condition_pixel_values: torch.Tensor,
         attention_mask: Optional[torch.Tensor] = None,
+        attention2_mask: Optional[torch.Tensor] = None,
         negative_attention_mask: Optional[torch.Tensor] = None,
+        negative_attention2_mask: Optional[torch.Tensor] = None,
         strength: Optional[float] = 0.8,
         guidance_scale: Optional[float] = 7.5,
         controlnet_conditioning_scale: Optional[float] = 0.5,
     ):
         outputs = super().generate(
             input_ids=input_ids,
+            input2_ids=input2_ids,
             negative_input_ids=negative_input_ids,
+            negative_input2_ids=negative_input2_ids,
             pixel_values=pixel_values,
             pixel_masks=pixel_masks,
             condition_pixel_values=condition_pixel_values,
             attention_mask=attention_mask,
+            attention2_mask=attention2_mask,
             negative_attention_mask=negative_attention_mask,
+            negative_attention2_mask=negative_attention2_mask,
             strength=strength,
             guidance_scale=guidance_scale,
             controlnet_conditioning_scale=controlnet_conditioning_scale,

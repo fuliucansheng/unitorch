@@ -9,79 +9,82 @@ from typing import List, Tuple
 from PIL import Image, ImageDraw
 from unitorch.cli import CoreConfigureParser, GenericWebUI
 from unitorch.cli import register_webui
-from unitorch.cli.pipelines.bria import BRIAPipeline
+from unitorch.cli.pipelines.bria import BRIAForSegmentationPipeline
+from unitorch.cli.webuis import (
+    matched_pretrained_names,
+    create_element,
+    create_accordion,
+    create_row,
+    create_column,
+    create_group,
+    create_tab,
+    create_tabs,
+    create_blocks,
+    create_pretrain_layout,
+    create_freeu_layout,
+)
+from unitorch.cli.webuis import SimpleWebUI
 
 
 @register_webui("core/webui/bria")
-class BRIAWebUI(GenericWebUI):
+class BRIAWebUI(SimpleWebUI):
     supported_pretrained_names = ["-"]
 
     def __init__(self, config: CoreConfigureParser):
-        self.config = config
         self._pipe = None if not hasattr(self, "_pipe") else self._pipe
-        self._status = "stopped" if self._pipe is None else "running"
+        self._status = "Stopped" if self._pipe is None else "Running"
         if len(self.supported_pretrained_names) == 0:
             raise ValueError("No supported pretrained models found.")
         self._name = self.supported_pretrained_names[0]
-        self._iface = gr.Blocks()
-        with self._iface:
-            with gr.Row(variant="panel"):
-                pretrained_name = gr.Dropdown(
-                    self.supported_pretrained_names,
-                    value=self._name,
-                    label="Pretrain Checkpoint Name",
-                )
-                status = gr.Textbox(label="Model Status", value=self._status)
-                click_start = gr.Button(value="Start")
-                click_stop = gr.Button(value="Stop")
-                click_start.click(
-                    self.start, inputs=[pretrained_name], outputs=[status]
-                )
-                click_stop.click(self.stop, outputs=[status])
 
-            with gr.Row(variant="panel"):
-                with gr.Column():
-                    input_image = gr.Image(
-                        type="pil", label="Input Image", interactive=True
-                    )
-                    mask_threshold = gr.Slider(
-                        0, 1, value=0.5, label="Mask Threshold", step=0.01
-                    )
-                    with gr.Row():
-                        reset = gr.Button(value="Reset Image")
-                        submit = gr.Button(value="Submit")
+        # Create the elements
+        pretrain_layout_group = create_pretrain_layout(
+            self.supported_pretrained_names, self._name
+        )
+        name, status, start, stop, pretrain_layout = (
+            pretrain_layout_group.name,
+            pretrain_layout_group.status,
+            pretrain_layout_group.start,
+            pretrain_layout_group.stop,
+            pretrain_layout_group.layout,
+        )
 
-                image = gr.Image(type="pil", label="Output Image")
+        input_image = create_element("image", "Input Image")
+        mask_threshold = create_element(
+            "slider", "Mask Threshold", default=0.5, min_value=0, max_value=1, step=0.01
+        )
+        segment = create_element("button", "Segment")
+        output_image = create_element("image", "Output Image")
 
-                submit.click(
-                    self.serve,
-                    inputs=[input_image, mask_threshold],
-                    outputs=[image],
-                )
+        # Create the blocks
+        left = create_column(input_image, mask_threshold, segment)
+        right = create_column(output_image)
+        iface = create_blocks(pretrain_layout, create_row(left, right))
 
-            self._iface.load(
-                fn=lambda: gr.update(value=self._name), outputs=[pretrained_name]
-            )
-            self._iface.load(fn=lambda: gr.update(value=self._status), outputs=[status])
+        # Create the events
+        iface.__enter__()
 
-    @property
-    def name(self):
-        return "BRIA"
+        start.click(self.start, inputs=[name], outputs=[status])
+        stop.click(self.stop, outputs=[status])
+        segment.click(
+            self.serve, inputs=[input_image, mask_threshold], outputs=[output_image]
+        )
 
-    @property
-    def iface(self):
-        return self._iface
+        iface.load(
+            fn=lambda: [gr.update(value=self._name), gr.update(value=self._status)],
+            outputs=[name, status],
+        )
 
-    @property
-    def status(self):
-        return self._status == "running"
+        iface.__exit__()
+
+        super().__init__(config, iname="BRIA", iface=iface)
 
     def start(self, pretrained_name, **kwargs):
-        if self._status == "running":
+        if self._status == "Running":
             self.stop()
         self._name = pretrained_name
-        self._pipe = BRIAPipeline.from_core_configure(self.config)
-        self._status = "running"
+        self._pipe = BRIAForSegmentationPipeline.from_core_configure(self._config)
+        self._status = "Running"
         return self._status
 
     def stop(self, **kwargs):
@@ -90,7 +93,7 @@ class BRIAWebUI(GenericWebUI):
         gc.collect()
         torch.cuda.empty_cache()
         self._pipe = None if not hasattr(self, "_pipe") else self._pipe
-        self._status = "stopped" if self._pipe is None else "running"
+        self._status = "Stopped" if self._pipe is None else "Running"
         return self._status
 
     def serve(

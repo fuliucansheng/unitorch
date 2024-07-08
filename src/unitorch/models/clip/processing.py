@@ -21,9 +21,9 @@ from unitorch.models import (
 class ClipProcessor(HfImageClassificationProcessor, HfTextClassificationProcessor):
     def __init__(
         self,
-        vocab_path: str,
-        merge_path: str,
-        vision_config_path: str,
+        vocab_path: Optional[str] = None,
+        merge_path: Optional[str] = None,
+        vision_config_path: Optional[str] = None,
         max_seq_length: Optional[int] = 128,
         position_start_id: Optional[int] = 0,
     ):
@@ -37,16 +37,24 @@ class ClipProcessor(HfImageClassificationProcessor, HfTextClassificationProcesso
             max_seq_length (int, optional): The maximum sequence length for text inputs. Defaults to 128.
             position_start_id (int, optional): The starting position ID for positional embeddings. Defaults to 0.
         """
-        vision_processor = CLIPImageProcessor.from_json_file(vision_config_path)
+        if vision_config_path is not None:
+            vision_processor = CLIPImageProcessor.from_json_file(vision_config_path)
+        else:
+            vision_processor = CLIPImageProcessor.from_pretrained(
+                "openai/clip-vit-base-patch32"
+            )
         HfImageClassificationProcessor.__init__(
             self,
             vision_processor=vision_processor,
         )
 
-        tokenizer = CLIPTokenizer(
-            vocab_file=vocab_path,
-            merges_file=merge_path,
-        )
+        if vocab_path is not None and merge_path is not None:
+            tokenizer = CLIPTokenizer(
+                vocab_file=vocab_path,
+                merges_file=merge_path,
+            )
+        else:
+            tokenizer = CLIPTokenizer.from_pretrained("openai/clip-vit-base-patch32")
         tokenizer.cls_token = tokenizer.bos_token
         tokenizer.sep_token = tokenizer.eos_token
         HfTextClassificationProcessor.__init__(

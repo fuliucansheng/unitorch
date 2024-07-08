@@ -32,7 +32,6 @@ from unitorch.utils import (
     GENERATE_FINISHED,
 )
 from unitorch.models import GenericOutputs
-from unitorch.utils import ActiveGPUJob
 from unitorch.cli import (
     cached_path,
     register_task,
@@ -313,13 +312,8 @@ class DeepspeedTask:
         train_sampler = DistributedSkipSampler if self.n_gpu > 1 else RandomSkipSampler
         dev_sampler = DistributedSampler if self.n_gpu > 1 else SequentialSampler
 
-        if gpu_mode:
-            with ActiveGPUJob() as _:
-                dataset_train = self.datasets.get("train")
-                dataset_dev = self.datasets.get("dev")
-        else:
-            dataset_train = self.datasets.get("train")
-            dataset_dev = self.datasets.get("dev")
+        dataset_train = self.datasets.get("train")
+        dataset_dev = self.datasets.get("dev")
 
         iter_train = DataLoader(
             dataset_train,
@@ -491,7 +485,6 @@ class DeepspeedTask:
         dev_batch_size: Optional[int] = 128,
         pin_memory: Optional[bool] = True,
         num_workers: Optional[int] = 4,
-        gpu_mode: Optional[bool] = False,
     ):
         """
         Evaluate the model.
@@ -525,11 +518,7 @@ class DeepspeedTask:
             global_rank = dist.get_rank()
 
         dev_sampler = DistributedSampler if self.n_gpu > 1 else SequentialSampler
-        if gpu_mode:
-            with ActiveGPUJob() as _:
-                dataset_dev = self.datasets.get("dev")
-        else:
-            dataset_dev = self.datasets.get("dev")
+        dataset_dev = self.datasets.get("dev")
         iter_dev = DataLoader(
             dataset_dev,
             sampler=dev_sampler(dataset_dev)
@@ -543,7 +532,7 @@ class DeepspeedTask:
         )
 
         results = infer(self.model.module if self.n_gpu > 1 else self.model, iter_dev)
-        if self.local_rank in [-1, 0]:
+        if global_rank in [-1, 0]:
             monitor(
                 outputs=results.outputs,
                 targets=results.targets,
@@ -564,7 +553,6 @@ class DeepspeedTask:
         output_header: Optional[List] = None,
         output_path: Optional[str] = "./cache/predict.txt",
         postprocess_workers: Optional[int] = 2,
-        gpu_mode: Optional[bool] = False,
     ):
         """
         Perform inference using the trained model.
@@ -580,7 +568,6 @@ class DeepspeedTask:
             output_header (optional): The header for the output file. Defaults to None.
             output_path (optional): The path to save the output file. Defaults to "./cache/predict.txt".
             postprocess_workers (optional): The number of worker processes for post-processing. Defaults to 2.
-            gpu_mode (optional): Whether to make GPU active. Defaults to False.
         """
         assert self.n_gpu <= 1
         assert writer is not None
@@ -610,11 +597,7 @@ class DeepspeedTask:
         else:
             sampler = SequentialSkipSampler
 
-        if gpu_mode:
-            with ActiveGPUJob() as _:
-                dataset_test = self.datasets.get("test")
-        else:
-            dataset_test = self.datasets.get("test")
+        dataset_test = self.datasets.get("test")
 
         iter_test = DataLoader(
             dataset_test,
@@ -627,11 +610,6 @@ class DeepspeedTask:
             num_workers=num_workers,
             collate_fn=collate_fn,
         )
-
-        if skip_step > 0:
-            output_file = open(output_path, "a")
-        else:
-            output_file = open(output_path, "w")
 
         if skip_step > 0 and hasattr(dataset_test, "set_skip_step"):
             dataset_test.set_skip_step(skip_step)

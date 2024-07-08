@@ -21,6 +21,10 @@ class LlamaLoraForClassification(GenericPeftModel):
     prefix_keys_in_state_dict = {
         "^(?!peft_model\.base_model\.model\.).*": "peft_model.base_model."
     }
+    replace_keys_in_state_dict = {
+        "q_proj.weight": "q_proj.base_layer.weight",
+        "v_proj.weight": "v_proj.base_layer.weight",
+    }
 
     def __init__(
         self,

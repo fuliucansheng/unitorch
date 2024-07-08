@@ -93,7 +93,7 @@ def set_seed(seed: int):
 
 
 # useful functions
-from unitorch.utils import cached_path as hf_cached_path
+from unitorch.utils import cached_path as hf_cached_path, read_file, read_json_file
 from unitorch.utils import (
     is_deepspeed_available,
     is_accelerate_available,

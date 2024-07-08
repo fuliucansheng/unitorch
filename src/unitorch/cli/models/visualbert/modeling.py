@@ -79,7 +79,6 @@ class VisualBertForClassification(_VisualBertForClassification):
             check_none=False,
         )
         if weight_path is not None:
-            weight_path = cached_path(weight_path)
             inst.from_pretrained(weight_path)
 
         return inst
@@ -177,7 +176,6 @@ class VisualBertForPretrain(_VisualBertForPretrain):
             check_none=False,
         )
         if weight_path is not None:
-            weight_path = cached_path(weight_path)
             inst.from_pretrained(weight_path)
 
         return inst

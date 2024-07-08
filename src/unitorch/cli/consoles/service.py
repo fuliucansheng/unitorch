@@ -28,7 +28,7 @@ def _sigterm_handler(signo, frame):
 
 def daemonize(pid_file, name):
     if os.path.exists(pid_file):
-        raise RuntimeError(f"unitorch-service {name} already running")
+        raise RuntimeError(f"unitorch-service {name} already Running")
     pid = os.fork()
     if pid > 0:
         # sys.exit(0)

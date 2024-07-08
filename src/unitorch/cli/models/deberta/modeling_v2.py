@@ -76,7 +76,6 @@ class DebertaV2ForClassification(_DebertaV2ForClassification):
             check_none=False,
         )
         if weight_path is not None:
-            weight_path = cached_path(weight_path)
             inst.from_pretrained(weight_path)
 
         return inst

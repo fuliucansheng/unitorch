@@ -7,7 +7,6 @@ import torch.nn.functional as F
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 import diffusers.schedulers as schedulers
 from peft import LoraConfig
-import diffusers.pipelines.stable_video_diffusion as stable_video_diffusion
 from transformers import (
     CLIPTextConfig,
     CLIPTextModel,
@@ -15,7 +14,6 @@ from transformers import (
     CLIPVisionModelWithProjection,
 )
 from diffusers.schedulers import SchedulerMixin
-from diffusers.models.attention_processor import LoRAAttnProcessor, LoRAAttnProcessor2_0
 from diffusers.models import (
     UNet2DModel,
     UNet2DConditionModel,
@@ -37,10 +35,6 @@ from unitorch.models import (
     QuantizationMixin,
 )
 from unitorch.models.peft import GenericPeftModel
-
-stable_video_diffusion.pipeline_stable_video_diffusion.tensor2vid = (
-    lambda video, *args, **kwargs: video
-)
 
 
 def compute_snr(timesteps, noise_scheduler):

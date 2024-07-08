@@ -8,22 +8,6 @@ pretrained_llama_infos = {
         "config": "https://huggingface.co/huggyllama/llama-7b/resolve/main/config.json",
         "vocab": "https://huggingface.co/huggyllama/llama-7b/resolve/main/tokenizer.model",
     },
-    "llama-7b-hf": {
-        "config": "https://huggingface.co/decapoda-research/llama-7b-hf/resolve/main/config.json",
-        "vocab": "https://huggingface.co/decapoda-research/llama-7b-hf/resolve/main/tokenizer.model",
-        "weight": [
-            f"https://huggingface.co/decapoda-research/llama-7b-hf/resolve/main/pytorch_model-{str(i).rjust(5, '0')}-of-00033.bin"
-            for i in range(1, 34)
-        ],
-    },
-    "llama-13b-hf": {
-        "config": "https://huggingface.co/decapoda-research/llama-13b-hf/resolve/main/config.json",
-        "vocab": "https://huggingface.co/decapoda-research/llama-13b-hf/resolve/main/tokenizer.model",
-        "weight": [
-            f"https://huggingface.co/decapoda-research/llama-13b-hf/resolve/main/pytorch_model-{str(i).rjust(5, '0')}-of-00041.bin"
-            for i in range(0, 42)
-        ],
-    },
     "llama-7b": {
         "config": "https://huggingface.co/huggyllama/llama-7b/resolve/main/config.json",
         "vocab": "https://huggingface.co/huggyllama/llama-7b/resolve/main/tokenizer.model",
@@ -91,6 +75,14 @@ pretrained_llama_infos = {
         "weight": [
             f"https://huggingface.co/openlm-research/open_llama_13b/resolve/main/pytorch_model-{str(i).rjust(5, '0')}-of-00003.bin"
             for i in range(1, 4)
+        ],
+    },
+    "llama3-8b-instruct": {
+        "config": "https://huggingface.co/unsloth/llama-3-8b-Instruct/resolve/main/config.json",
+        "vocab": "https://huggingface.co/unsloth/llama-3-8b-Instruct/resolve/main/tokenizer.model",
+        "weight": [
+            f"https://huggingface.co/unsloth/llama-3-8b-Instruct/resolve/main/pytorch_model-{str(i).rjust(5, '0')}-of-00004.bin"
+            for i in range(1, 5)
         ],
     },
 }

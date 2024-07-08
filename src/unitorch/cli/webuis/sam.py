@@ -9,130 +9,156 @@ from typing import List, Tuple
 from PIL import Image, ImageDraw
 from unitorch.cli import CoreConfigureParser, GenericWebUI
 from unitorch.cli import register_webui
-from unitorch.cli.pipelines.sam import SamPipeline
+from unitorch.cli.models.sam import pretrained_sam_infos
+from unitorch.cli.pipelines.sam import SamForSegmentationPipeline
+from unitorch.cli.webuis import (
+    matched_pretrained_names,
+    create_element,
+    create_accordion,
+    create_row,
+    create_column,
+    create_group,
+    create_tab,
+    create_tabs,
+    create_blocks,
+    create_pretrain_layout,
+    create_freeu_layout,
+)
+from unitorch.cli.webuis import SimpleWebUI
 
 
 @register_webui("core/webui/sam")
-class SamWebUI(GenericWebUI):
-    supported_pretrained_names = ["sam-vit-base", "sam-vit-large", "sam-vit-huge"]
+class SamWebUI(SimpleWebUI):
+    pretrained_names = list(pretrained_sam_infos.keys())
+    supported_pretrained_names = matched_pretrained_names(
+        pretrained_names,
+        "^sam-",
+    )
 
     def __init__(self, config: CoreConfigureParser):
-        self.config = config
+        self._config = config
         self._pipe = None if not hasattr(self, "_pipe") else self._pipe
-        self._status = "stopped" if self._pipe is None else "running"
+        self._status = "Stopped" if self._pipe is None else "Running"
         if len(self.supported_pretrained_names) == 0:
             raise ValueError("No supported pretrained models found.")
         self._name = self.supported_pretrained_names[0]
-        self._iface = gr.Blocks()
-        with self._iface:
-            with gr.Row(variant="panel"):
-                pretrained_name = gr.Dropdown(
-                    self.supported_pretrained_names,
-                    value=self._name,
-                    label="Pretrain Checkpoint Name",
-                )
-                status = gr.Textbox(label="Model Status", value=self._status)
-                click_start = gr.Button(value="Start")
-                click_stop = gr.Button(value="Stop")
-                click_start.click(
-                    self.start, inputs=[pretrained_name], outputs=[status]
-                )
-                click_stop.click(self.stop, outputs=[status])
 
-            with gr.Row(variant="panel"):
-                origin_input_image = gr.State(None)
-                click_points = gr.State([])
-                boxes_points = gr.State([])
-                with gr.Tab("Click"):
-                    input_image_click = gr.Image(
-                        type="pil", label="Input Image", interactive=True
-                    )
-                    mask_threshold_click = gr.Slider(
-                        -20, 20, value=0.0, label="Mask Threshold", step=0.1
-                    )
-                    with gr.Row():
-                        input_click_reset = gr.Button(value="Reset Image")
-                        input_click_submit = gr.Button(value="Submit")
+        # create elements
+        pretrain_layout_group = create_pretrain_layout(
+            self.supported_pretrained_names, self._name
+        )
+        name, status, start, stop, pretrain_layout = (
+            pretrain_layout_group.name,
+            pretrain_layout_group.status,
+            pretrain_layout_group.start,
+            pretrain_layout_group.stop,
+            pretrain_layout_group.layout,
+        )
 
-                with gr.Tab("Box"):
-                    input_image_box = gr.Image(
-                        type="pil", label="Input Image", interactive=True
-                    )
-                    mask_threshold_box = gr.Slider(
-                        -20, 20, value=0.0, label="Mask Threshold", step=0.1
-                    )
-                    with gr.Row():
-                        input_box_reset = gr.Button(value="Reset Image")
-                        input_box_submit = gr.Button(value="Submit")
+        input_image_click = create_element("image", "Input Image")
+        mask_threshold_click = create_element(
+            "slider", "Mask Threshold", default=0, min_value=-20, max_value=20, step=0.1
+        )
+        input_click_reset = create_element("button", "Reset")
+        input_click_segment = create_element("button", "Segment")
+        input_image_box = create_element("image", "Input Image")
+        mask_threshold_box = create_element(
+            "slider", "Mask Threshold", default=0, min_value=-20, max_value=20, step=0.1
+        )
+        input_box_reset = create_element("button", "Reset")
+        input_box_segment = create_element("button", "Segment")
+        output_image = create_element("image", "Output Image")
 
-                image = gr.Image(type="pil", label="Output Image")
+        # create blocks
+        click = create_tab(
+            create_column(
+                input_image_click,
+                mask_threshold_click,
+                create_row(input_click_reset, input_click_segment),
+            ),
+            name="Click",
+        )
+        box = create_tab(
+            create_column(
+                input_image_box,
+                mask_threshold_box,
+                create_row(input_box_reset, input_box_segment),
+            ),
+            name="Box",
+        )
+        left = create_tabs(click, box)
+        right = create_column(output_image)
+        iface = create_blocks(pretrain_layout, create_row(left, right))
 
-                input_image_click.upload(
-                    lambda image: image.copy() if image is not None else None,
-                    inputs=[input_image_click],
-                    outputs=[origin_input_image],
-                )
-                input_image_click.select(
-                    self.add_click_points,
-                    inputs=[origin_input_image, click_points],
-                    outputs=[input_image_click, click_points],
-                )
-                input_click_reset.click(
-                    lambda x: (x, []),
-                    inputs=[origin_input_image],
-                    outputs=[input_image_click, click_points],
-                )
-                input_click_submit.click(
-                    self.serve_click,
-                    inputs=[origin_input_image, click_points, mask_threshold_click],
-                    outputs=[image],
-                )
+        # create events
+        iface.__enter__()
 
-                input_image_box.upload(
-                    lambda image: image.copy() if image is not None else None,
-                    inputs=[input_image_box],
-                    outputs=[origin_input_image],
-                )
-                input_image_box.select(
-                    self.add_click_points,
-                    [origin_input_image, boxes_points],
-                    [input_image_box, boxes_points],
-                )
-                input_box_reset.click(
-                    lambda x: (x, []),
-                    inputs=[origin_input_image],
-                    outputs=[input_image_box, boxes_points],
-                )
-                input_box_submit.click(
-                    self.serve_box,
-                    inputs=[origin_input_image, boxes_points, mask_threshold_box],
-                    outputs=[image],
-                )
+        start.click(self.start, inputs=[name], outputs=[status])
+        stop.click(self.stop, outputs=[status])
 
-            self._iface.load(
-                fn=lambda: gr.update(value=self._name), outputs=[pretrained_name]
-            )
-            self._iface.load(fn=lambda: gr.update(value=self._status), outputs=[status])
+        origin_input_image = gr.State(None)
+        click_points = gr.State([])
+        boxes_points = gr.State([])
+        input_image_click.upload(
+            lambda image: image.copy() if image is not None else None,
+            inputs=[input_image_click],
+            outputs=[origin_input_image],
+        )
+        input_image_click.select(
+            self.add_click_points,
+            inputs=[origin_input_image, click_points],
+            outputs=[input_image_click, click_points],
+        )
+        input_click_reset.click(
+            lambda x: (x, []),
+            inputs=[origin_input_image],
+            outputs=[input_image_click, click_points],
+        )
+        input_click_segment.click(
+            self.serve_click,
+            inputs=[origin_input_image, click_points, mask_threshold_click],
+            outputs=[output_image],
+        )
 
-    @property
-    def name(self):
-        return "SAM"
+        input_image_box.upload(
+            lambda image: image.copy() if image is not None else None,
+            inputs=[input_image_box],
+            outputs=[origin_input_image],
+        )
+        input_image_box.select(
+            self.add_click_points,
+            [origin_input_image, boxes_points],
+            [input_image_box, boxes_points],
+        )
+        input_box_reset.click(
+            lambda x: (x, []),
+            inputs=[origin_input_image],
+            outputs=[input_image_box, boxes_points],
+        )
+        input_box_segment.click(
+            self.serve_box,
+            inputs=[origin_input_image, boxes_points, mask_threshold_box],
+            outputs=[output_image],
+        )
 
-    @property
-    def iface(self):
-        return self._iface
+        iface.load(
+            fn=lambda: [gr.update(value=self._name), gr.update(value=self._status)],
+            outputs=[name, status],
+        )
 
-    @property
-    def status(self):
-        return self._status == "running"
+        iface.__exit__()
+
+        super().__init__(config, iname="SAM", iface=iface)
 
     def start(self, pretrained_name, **kwargs):
-        if self._status == "running":
+        if self._status == "Running":
             self.stop()
-        self.config.set("core/pipeline/sam", "pretrained_name", pretrained_name)
         self._name = pretrained_name
-        self._pipe = SamPipeline.from_core_configure(self.config)
-        self._status = "running"
+        self._pipe = SamForSegmentationPipeline.from_core_configure(
+            self._config,
+            pretrained_name=pretrained_name,
+        )
+        self._status = "Running"
         return self._status
 
     def stop(self, **kwargs):
@@ -141,7 +167,7 @@ class SamWebUI(GenericWebUI):
         gc.collect()
         torch.cuda.empty_cache()
         self._pipe = None if not hasattr(self, "_pipe") else self._pipe
-        self._status = "stopped" if self._pipe is None else "running"
+        self._status = "Stopped" if self._pipe is None else "Running"
         return self._status
 
     def add_click_points(self, image, click_points, evt: gr.SelectData):

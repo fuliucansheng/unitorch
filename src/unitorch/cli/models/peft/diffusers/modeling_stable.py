@@ -20,7 +20,11 @@ from unitorch.cli import (
 )
 from unitorch.cli.models import DiffusionOutputs, LossOutputs
 from unitorch.cli.models import diffusion_model_decorator
-from unitorch.cli.models.diffusers import pretrained_diffusers_infos, load_weight
+from unitorch.cli.models.diffusers import (
+    pretrained_stable_infos,
+    pretrained_stable_extensions_infos,
+    load_weight,
+)
 
 
 @register_model(
@@ -64,7 +68,7 @@ class StableLoraForText2ImageGeneration(_StableLoraForText2ImageGeneration):
     def from_core_configure(cls, config, **kwargs):
         config.set_default_section("core/model/peft/diffusers/text2image/stable")
         pretrained_name = config.getoption("pretrained_name", "stable-v1.5")
-        pretrain_infos = nested_dict_value(pretrained_diffusers_infos, pretrained_name)
+        pretrain_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
 
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
@@ -237,7 +241,7 @@ class StableLoraForImage2ImageGeneration(_StableLoraForImage2ImageGeneration):
         pretrained_name = config.getoption(
             "pretrained_name", "stable-v1.5-nitrosocke-ghibli"
         )
-        pretrain_infos = nested_dict_value(pretrained_diffusers_infos, pretrained_name)
+        pretrain_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
 
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
@@ -398,7 +402,7 @@ class StableLoraForImageInpainting(_StableLoraForImageInpainting):
     def from_core_configure(cls, config, **kwargs):
         config.set_default_section("core/model/peft/diffusers/inpainting/stable")
         pretrained_name = config.getoption("pretrained_name", "stable-v1.5-inpainting")
-        pretrain_infos = nested_dict_value(pretrained_diffusers_infos, pretrained_name)
+        pretrain_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
 
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
@@ -561,7 +565,7 @@ class StableLoraForImageResolution(_StableLoraForImageResolution):
     def from_core_configure(cls, config, **kwargs):
         config.set_default_section("core/model/peft/diffusers/resolution/stable")
         pretrained_name = config.getoption("pretrained_name", "stable-v1.5-x4-upscaler")
-        pretrain_infos = nested_dict_value(pretrained_diffusers_infos, pretrained_name)
+        pretrain_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
 
         config_path = config.getoption("config_path", None)
         config_path = pop_value(

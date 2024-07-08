@@ -3,10 +3,14 @@
 
 pretrained_peft_infos = {}
 
+from unitorch.utils import is_diffusers_available
+
 import unitorch.cli.models.peft.modeling_bloom
 import unitorch.cli.models.peft.modeling_llama
 import unitorch.cli.models.peft.modeling_mistral
-import unitorch.cli.models.peft.diffusers
+
+if is_diffusers_available():
+    import unitorch.cli.models.peft.diffusers
 from unitorch.cli.models.peft.modeling_bloom import (
     BloomLoraForClassification,
     BloomLoraForGeneration,

@@ -93,7 +93,6 @@ class ClipForPretrain(_ClipForPretrain):
             check_none=False,
         )
         if weight_path is not None:
-            weight_path = cached_path(weight_path)
             inst.from_pretrained(weight_path)
 
         return inst
@@ -199,7 +198,6 @@ class ClipForClassification(_ClipForClassification):
             check_none=False,
         )
         if weight_path is not None:
-            weight_path = cached_path(weight_path)
             inst.from_pretrained(weight_path)
 
         return inst
@@ -305,7 +303,6 @@ class ClipForTextClassification(_ClipForTextClassification):
             check_none=False,
         )
         if weight_path is not None:
-            weight_path = cached_path(weight_path)
             inst.from_pretrained(weight_path)
 
         return inst
@@ -408,7 +405,6 @@ class ClipForImageClassification(_ClipForImageClassification):
             check_none=False,
         )
         if weight_path is not None:
-            weight_path = cached_path(weight_path)
             inst.from_pretrained(weight_path)
 
         return inst

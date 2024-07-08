@@ -11,6 +11,7 @@ import importlib_resources
 import unitorch.cli
 from torch.multiprocessing import spawn
 from transformers.utils import is_remote_url
+from unitorch.utils import read_file
 from unitorch.cli import CoreConfigureParser
 from unitorch.cli import (
     import_library,
@@ -71,13 +72,14 @@ def webui(config_path: str, **kwargs):
     else:
         demo_webui = gr.TabbedInterface(
             interface_list=[webui.iface for webui in webuis],
-            tab_names=[webui.name for webui in webuis],
-            theme="sudeepshouche/minimalist",
+            tab_names=[webui.iname for webui in webuis],
             title="Unitorch WebUI",
-            css=os.path.join(
-                importlib_resources.files("unitorch"), "cli/assets/style.css"
-            ),
         )
+    demo_webui.title = "Unitorch WebUI"
+    demo_webui.theme_css = read_file(
+        os.path.join(importlib_resources.files("unitorch"), "cli/assets/style.css")
+    )
+    demo_webui.css = demo_webui.theme_css
 
     config.set_default_section("core/cli")
     host = config.getoption("host", "0.0.0.0")

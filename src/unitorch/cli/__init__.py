@@ -2,6 +2,7 @@
 # Licensed under the MIT License.
 
 import os
+import re
 import sys
 import abc
 import logging
@@ -28,6 +29,22 @@ def import_library(library):
     return is_load_success
 
 
+# extenstions
+UNITORCH_EXTENSTIONS = os.environ.get("UNITORCH_EXTENSTIONS", "")
+UNITORCH_EXTENSTIONS = [
+    e.strip() for e in re.split(r"[,;]", UNITORCH_EXTENSTIONS) if len(e.strip()) > 0
+]
+
+
+def set_pkg_extensions(extensions: List[str]):
+    global UNITORCH_EXTENSTIONS
+    UNITORCH_EXTENSTIONS += extensions
+
+
+def get_pkg_extensions():
+    return UNITORCH_EXTENSTIONS
+
+
 def cached_path(
     url_or_filename,
     cache_dir: Optional[str] = None,
@@ -41,11 +58,12 @@ def cached_path(
     local_files_only: Optional[bool] = False,
 ) -> Optional[str]:
     if not is_remote_url(url_or_filename):
-        pkg_filename = os.path.join(
-            importlib_resources.files("unitorch"), url_or_filename
-        )
-        if os.path.exists(pkg_filename):
-            url_or_filename = pkg_filename
+        pkgs = ["unitorch"] + get_pkg_extensions()
+        for pkg in pkgs:
+            pkg_filename = os.path.join(importlib_resources.files(pkg), url_or_filename)
+            if os.path.exists(pkg_filename):
+                url_or_filename = pkg_filename
+                break
 
     return hf_cached_path(
         url_or_filename,
@@ -236,7 +254,17 @@ register_service = partial(
 
 # webui module
 class GenericWebUI(metaclass=abc.ABCMeta):
+    ignore_elements = []
+
     def __init__(self, config: CoreConfigureParser):
+        pass
+
+    @property
+    def iname(self):
+        pass
+
+    @property
+    def iface(self):
         pass
 
     @abc.abstractmethod
@@ -260,7 +288,7 @@ class GenericFastAPI(metaclass=abc.ABCMeta):
     def __init__(self, config: CoreConfigureParser):
         pass
 
-    @abc.abstractproperty
+    @property
     def router(self):
         pass
 

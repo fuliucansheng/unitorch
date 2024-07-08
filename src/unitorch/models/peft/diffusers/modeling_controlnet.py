@@ -113,7 +113,7 @@ class GenericControlNetLoraModel(GenericPeftModel, QuantizationMixin):
             init_lora_weights="gaussian",
             target_modules=["to_k", "to_q", "to_v", "to_out.0"],
         )
-        self.unet.add_adapter(unet_lora_config)
+        self.unet.add_adapter(lora_config)
 
         self.scheduler.set_timesteps(num_inference_steps=self.num_infer_timesteps)
 

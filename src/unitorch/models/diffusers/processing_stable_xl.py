@@ -12,6 +12,7 @@ from torchvision.transforms import (
     Resize,
     CenterCrop,
     RandomCrop,
+    Lambda,
     ToTensor,
     Normalize,
     Compose,
@@ -25,26 +26,27 @@ from unitorch.models import HfTextClassificationProcessor, GenericOutputs
 class StableXLProcessor:
     def __init__(
         self,
-        vocab1_path: str,
-        merge1_path: str,
+        vocab_path: str,
+        merge_path: str,
         vocab2_path: str,
         merge2_path: str,
         vae_config_path: Optional[str] = None,
         max_seq_length: Optional[int] = 77,
         position_start_id: Optional[int] = 0,
-        pad_token1: Optional[str] = "<|endoftext|>",
+        pad_token: Optional[str] = "<|endoftext|>",
         pad_token2: Optional[str] = "!",
         image_size: Optional[int] = 512,
         center_crop: Optional[bool] = False,
+        random_flip: Optional[bool] = False,
     ):
         tokenizer1 = CLIPTokenizer(
-            vocab_file=vocab1_path,
-            merges_file=merge1_path,
+            vocab_file=vocab_path,
+            merges_file=merge_path,
         )
 
         tokenizer1.cls_token = tokenizer1.bos_token
         tokenizer1.sep_token = tokenizer1.eos_token
-        tokenizer1.pad_token = pad_token1
+        tokenizer1.pad_token = pad_token
 
         self.text_processor1 = HfTextClassificationProcessor(
             tokenizer=tokenizer1,
@@ -68,16 +70,21 @@ class StableXLProcessor:
         )
 
         self.image_size = image_size
-        self.center_crop = center_crop
-        self.vision_resize = Resize(image_size)
-        self.vision_crop = (
-            CenterCrop(image_size) if center_crop else RandomCrop(image_size)
-        )
-        self.vision_flip = RandomHorizontalFlip(p=1.0)
         self.vision_processor = Compose(
             [
+                Resize(image_size),
+                CenterCrop(image_size) if center_crop else RandomCrop(image_size),
+                RandomHorizontalFlip() if random_flip else Lambda(lambda x: x),
                 ToTensor(),
                 Normalize([0.5], [0.5]),
+            ]
+        )
+
+        self.condition_vision_processor = Compose(
+            [
+                Resize(image_size),
+                CenterCrop(image_size),
+                ToTensor(),
             ]
         )
 
@@ -89,6 +96,18 @@ class StableXLProcessor:
             self.vae_image_processor = VaeImageProcessor(
                 vae_scale_factor=vae_scale_factor
             )
+            self.vae_mask_image_processor = VaeImageProcessor(
+                vae_scale_factor=vae_scale_factor
+            )
+            self.vae_condition_image_processor = VaeImageProcessor(
+                vae_scale_factor=vae_scale_factor,
+                do_convert_rgb=True,
+                do_normalize=False,
+            )
+        else:
+            self.vae_image_processor = None
+            self.vae_mask_image_processor = None
+            self.vae_condition_image_processor = None
 
     def text2image(
         self,
@@ -100,27 +119,8 @@ class StableXLProcessor:
         if isinstance(image, str):
             image = Image.open(image)
         image = image.convert("RGB")
-
-        original_size = image.size
-        image = self.vision_resize(image)
-        if self.center_crop:
-            y1 = max(0, int(round((image.height - self.image_size) / 2.0)))
-            x1 = max(0, int(round((image.width - self.image_size) / 2.0)))
-            image = self.vision_crop(image)
-        else:
-            y1, x1, h, w = self.vision_crop.get_params(
-                image, (self.image_size, self.image_size)
-            )
-            image = crop(image, y1, x1, h, w)
-        if self.vision_flip:
-            x1 = image.width - x1
-            image = self.vision_flip(image)
-        crop_top_left = (y1, x1)
         pixel_values = self.vision_processor(image)
-
-        add_time_ids = (
-            original_size + crop_top_left + (self.image_size, self.image_size)
-        )
+        add_time_ids = image.size + (0, 0) + (self.image_size, self.image_size)
 
         prompt2 = prompt2 or prompt
         prompt_outputs = self.text_processor1.classification(
@@ -174,12 +174,7 @@ class StableXLProcessor:
 
     def image2image_inputs(
         self,
-        prompt: str,
         image: Union[Image.Image, str],
-        prompt2: Optional[str] = None,
-        negative_prompt: Optional[str] = "",
-        negative_prompt2: Optional[str] = None,
-        max_seq_length: Optional[int] = None,
     ):
         if isinstance(image, str):
             image = Image.open(image)
@@ -187,28 +182,14 @@ class StableXLProcessor:
 
         pixel_values = self.vae_image_processor.preprocess(image)[0]
 
-        text_inputs = self.text2image_inputs(
-            prompt=prompt,
-            prompt2=prompt2,
-            negative_prompt=negative_prompt,
-            negative_prompt2=negative_prompt2,
-            max_seq_length=max_seq_length,
-        )
-
         return GenericOutputs(
             pixel_values=pixel_values,
-            **text_inputs,
         )
 
     def inpainting_inputs(
         self,
-        prompt: str,
         image: Union[Image.Image, str],
         mask_image: Union[Image.Image, str],
-        prompt2: Optional[str] = None,
-        negative_prompt: Optional[str] = "",
-        negative_prompt2: Optional[str] = None,
-        max_seq_length: Optional[int] = None,
     ):
         if isinstance(image, str):
             image = Image.open(image)
@@ -222,16 +203,37 @@ class StableXLProcessor:
         pixel_masks = self.vae_image_processor.preprocess(mask_image)[0]
         pixel_masks = (pixel_masks + 1) / 2
 
-        text_inputs = self.text2image_inputs(
-            prompt=prompt,
-            prompt2=prompt2,
-            negative_prompt=negative_prompt,
-            negative_prompt2=negative_prompt2,
-            max_seq_length=max_seq_length,
-        )
-
         return GenericOutputs(
             pixel_values=pixel_values,
             pixel_masks=pixel_masks,
-            **text_inputs,
         )
+
+    def controlnet(self, image: Union[Image.Image, str]):
+        if isinstance(image, str):
+            image = Image.open(image)
+        image = image.convert("RGB")
+
+        pixel_values = self.condition_vision_processor(image)
+        return GenericOutputs(pixel_values=pixel_values)
+
+    def controlnet_inputs(self, image: Union[Image.Image, str]):
+        if isinstance(image, str):
+            image = Image.open(image)
+        image = image.convert("RGB")
+
+        pixel_values = self.vae_condition_image_processor.preprocess(image)[0]
+        return GenericOutputs(pixel_values=pixel_values)
+
+    def controlnets_inputs(
+        self,
+        images: List[Union[Image.Image, str]],
+    ):
+        pixel_values = []
+        for image in images:
+            if isinstance(image, str):
+                image = Image.open(image)
+            image = image.convert("RGB")
+
+            pixel_values.append(self.vae_condition_image_processor.preprocess(image)[0])
+
+        return GenericOutputs(pixel_values=torch.stack(pixel_values, dim=0))

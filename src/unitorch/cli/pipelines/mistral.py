@@ -49,32 +49,44 @@ class MistralForGenerationPipeline(_MistralForGeneration):
 
     @classmethod
     @add_default_section_for_init("core/pipeline/mistral")
-    def from_core_configure(cls, config, **kwargs):
+    def from_core_configure(
+        cls,
+        config,
+        pretrained_name: Optional[str] = "default-mistral",
+        config_path: Optional[str] = None,
+        vocab_path: Optional[str] = None,
+        quant_config_path: Optional[str] = None,
+        pretrained_weight_path: Optional[str] = None,
+        device: Optional[str] = "cpu",
+        **kwargs,
+    ):
         config.set_default_section("core/pipeline/mistral")
-        pretrained_name = config.getoption("pretrained_name", "default-mistral")
+        pretrained_name = config.getoption("pretrained_name", pretrained_name)
 
-        config_path = config.getoption("config_path", None)
+        config_path = config.getoption("config_path", config_path)
         config_path = pop_value(
             config_path,
             nested_dict_value(pretrained_mistral_infos, pretrained_name, "config"),
         )
         config_path = cached_path(config_path)
 
-        vocab_path = config.getoption("vocab_path", None)
+        vocab_path = config.getoption("vocab_path", vocab_path)
         vocab_path = pop_value(
             vocab_path,
             nested_dict_value(pretrained_mistral_infos, pretrained_name, "vocab"),
         )
         vocab_path = cached_path(vocab_path)
 
-        quant_config_path = config.getoption("quant_config_path", None)
+        quant_config_path = config.getoption("quant_config_path", quant_config_path)
         if quant_config_path is not None:
             quant_config_path = cached_path(quant_config_path)
 
         max_seq_length = config.getoption("max_seq_length", 512)
         max_gen_seq_length = config.getoption("max_gen_seq_length", 512)
-        device = config.getoption("device", "cpu")
-        pretrained_weight_path = config.getoption("pretrained_weight_path", None)
+        device = config.getoption("device", device)
+        pretrained_weight_path = config.getoption(
+            "pretrained_weight_path", pretrained_weight_path
+        )
         weight_path = pop_value(
             pretrained_weight_path,
             nested_dict_value(pretrained_mistral_infos, pretrained_name, "weight"),

@@ -2,7 +2,6 @@
 # Licensed under the MIT License.
 
 import re
-from turtle import forward
 import torch
 import numpy as np
 from PIL import Image, ImageDraw
@@ -19,7 +18,7 @@ from unitorch.cli import (
 )
 
 
-class BRIAPipeline(_BRIAForSegmentation):
+class BRIAForSegmentationPipeline(_BRIAForSegmentation):
     def __init__(
         self,
         in_channels: Optional[int] = 3,
@@ -44,14 +43,20 @@ class BRIAPipeline(_BRIAForSegmentation):
 
     @classmethod
     @add_default_section_for_init("core/pipeline/bria")
-    def from_core_configure(cls, config, **kwargs):
+    def from_core_configure(
+        cls,
+        config,
+        pretrained_weight_path: Optional[str] = None,
+        device: Optional[str] = "cpu",
+        **kwargs,
+    ):
         config.set_default_section("core/pipeline/bria")
 
         in_channels = config.getoption("in_channels", 3)
         out_channels = config.getoption("out_channels", 1)
         image_size = config.getoption("image_size", 1024)
-        device = config.getoption("device", "cpu")
-        weight_path = config.getoption("pretrained_weight_path", None)
+        device = config.getoption("device", device)
+        weight_path = config.getoption("pretrained_weight_path", pretrained_weight_path)
 
         inst = cls(
             in_channels=in_channels,

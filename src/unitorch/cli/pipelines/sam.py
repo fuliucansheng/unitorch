@@ -19,7 +19,7 @@ from unitorch.cli import (
 from unitorch.cli.models.sam import pretrained_sam_infos
 
 
-class SamPipeline(_SamForSegmentation):
+class SamForSegmentationPipeline(_SamForSegmentation):
     def __init__(
         self,
         config_path: str,
@@ -42,26 +42,37 @@ class SamPipeline(_SamForSegmentation):
 
     @classmethod
     @add_default_section_for_init("core/pipeline/sam")
-    def from_core_configure(cls, config, **kwargs):
+    def from_core_configure(
+        cls,
+        config,
+        pretrained_name: Optional[str] = "default-sam",
+        config_path: Optional[str] = None,
+        vision_config_path: Optional[str] = None,
+        pretrained_weight_path: Optional[str] = None,
+        device: Optional[str] = "cpu",
+        **kwargs,
+    ):
         config.set_default_section("core/pipeline/sam")
-        pretrained_name = config.getoption("pretrained_name", "default-sam")
+        pretrained_name = config.getoption("pretrained_name", pretrained_name)
 
-        config_path = config.getoption("config_path", None)
+        config_path = config.getoption("config_path", config_path)
         config_path = pop_value(
             config_path,
             nested_dict_value(pretrained_sam_infos, pretrained_name, "config"),
         )
         config_path = cached_path(config_path)
 
-        vision_config_path = config.getoption("vision_config_path", None)
+        vision_config_path = config.getoption("vision_config_path", vision_config_path)
         vision_config_path = pop_value(
             vision_config_path,
             nested_dict_value(pretrained_sam_infos, pretrained_name, "vision_config"),
         )
         vision_config_path = cached_path(vision_config_path)
 
-        device = config.getoption("device", "cpu")
-        pretrained_weight_path = config.getoption("pretrained_weight_path", None)
+        device = config.getoption("device", device)
+        pretrained_weight_path = config.getoption(
+            "pretrained_weight_path", pretrained_weight_path
+        )
         weight_path = pop_value(
             pretrained_weight_path,
             nested_dict_value(pretrained_sam_infos, pretrained_name, "weight"),

@@ -352,32 +352,15 @@ def cached_path(
     return output_path
 
 
-class ActiveGPUJob:
-    def __init__(self):
-        self.jobs = None
+def read_file(file, lines=False):
+    result = open(file, "r").read()
+    if lines:
+        result = result.split("\n")
+        if result[-1] == "":
+            result = result[:-1]
+    return result
 
-    @staticmethod
-    def __gpu_job__(pid):
-        tensor = torch.rand(10240, 10240).cuda()
 
-        while True:
-            _ = torch.matmul(tensor, tensor)
-            time.sleep(1)
-
-    def start(self):
-        self.jobs = spawn(self.__gpu_job__, join=False)
-
-    def stop(self):
-        if self.jobs is None:
-            return
-
-        # Terminate all the child processes of the spawned process.
-        for _pid in self.jobs.pids():
-            os.kill(int(_pid), signal.SIGTERM)
-
-    def __enter__(self):
-        self.start()
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.stop()
+def read_json_file(file):
+    with open(file, "r") as f:
+        return json.load(f)

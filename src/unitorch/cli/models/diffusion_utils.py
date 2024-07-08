@@ -8,6 +8,7 @@ import torch.nn as nn
 import hashlib
 import tempfile
 import numpy as np
+import safetensors
 from PIL import Image
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
@@ -29,15 +30,17 @@ def load_weight(
     replace_keys: Optional[Dict] = dict(),
     prefix_keys: Optional[Dict] = dict(),
 ):
-    if path.endswith(".safetensors"):
-        assert is_safetensors_available(), "Please install safetensors first."
-        import safetensors
+    if isinstance(path, str):
+        path = [path]
 
-        path = cached_path(path)
-        state_dict = safetensors.torch.load_file(path)
-    else:
-        path = cached_path(path)
-        state_dict = torch.load(path, map_location="cpu")
+    state_dict = dict()
+    for p in path:
+        if p.endswith(".safetensors"):
+            p = cached_path(p)
+            state_dict = {**state_dict, **safetensors.torch.load_file(p)}
+        else:
+            p = cached_path(p)
+            state_dict = {**state_dict, **torch.load(p, map_location="cpu")}
 
     results = dict()
     for key, value in list(state_dict.items()):
