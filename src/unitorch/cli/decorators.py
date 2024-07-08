@@ -2,7 +2,6 @@
 # Licensed under the MIT License.
 
 import inspect
-import gradio as gr
 import logging
 from unitorch.cli import get_global_config
 
@@ -90,47 +89,48 @@ def add_default_section_for_function(
     return add_func
 
 
-def save_and_load_latest_state(init_func):
-    dtypes = [
-        gr.Dropdown,
-        gr.Slider,
-        gr.Checkbox,
-        gr.Radio,
-        gr.Textbox,
-        gr.Image,
-        gr.Gallery,
-        gr.Audio,
-        gr.Video,
-        gr.File,
-    ]
-    states = {}
+# import gradio as gr
+# def save_and_load_latest_state(init_func):
+#     dtypes = [
+#         gr.Dropdown,
+#         gr.Slider,
+#         gr.Checkbox,
+#         gr.Radio,
+#         gr.Textbox,
+#         gr.Image,
+#         gr.Gallery,
+#         gr.Audio,
+#         gr.Video,
+#         gr.File,
+#     ]
+#     states = {}
 
-    def save_state(v, i):
-        states[i] = v
+#     def save_state(v, i):
+#         states[i] = v
 
-    def load_state(i):
-        return states.get(i, None)
+#     def load_state(i):
+#         return states.get(i, None)
 
-    def actual_func(*args, **kwargs):
-        inst = init_func(*args, **kwargs)
-        iface = inst.iface
-        ignore_elements = inst.ignore_elements
-        ignore_indexes = [element._id for element in ignore_elements]
-        with iface:
-            indexes = []
+#     def actual_func(*args, **kwargs):
+#         inst = init_func(*args, **kwargs)
+#         iface = inst.iface
+#         ignore_elements = inst.ignore_elements
+#         ignore_indexes = [element._id for element in ignore_elements]
+#         with iface:
+#             indexes = []
 
-            for index, block in iface.blocks.items():
-                if (
-                    any([isinstance(block, dtype) for dtype in dtypes])
-                    and index not in ignore_indexes
-                ):
-                    indexes.append(index)
+#             for index, block in iface.blocks.items():
+#                 if (
+#                     any([isinstance(block, dtype) for dtype in dtypes])
+#                     and index not in ignore_indexes
+#                 ):
+#                     indexes.append(index)
 
-            for index in indexes:
-                block = iface.blocks[index]
-                block.change(
-                    fn=lambda x: save_state(x, f"blockid-{index}"), inputs=[block]
-                )
-                iface.load(fn=lambda: load_state(f"blockid-{index}"), outputs=[block])
+#             for index in indexes:
+#                 block = iface.blocks[index]
+#                 block.change(
+#                     fn=lambda x: save_state(x, f"blockid-{index}"), inputs=[block]
+#                 )
+#                 iface.load(fn=lambda: load_state(f"blockid-{index}"), outputs=[block])
 
-    return actual_func
+#     return actual_func
