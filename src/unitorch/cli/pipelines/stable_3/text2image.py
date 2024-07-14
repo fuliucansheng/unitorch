@@ -321,7 +321,6 @@ class Stable3ForText2ImageGenerationPipeline(GenericStable3Model):
                             "weight",
                         )
                     ),
-                    strict=True,
                 )
                 controlnet.to(device=self._device)
                 logging.info(f"Loading controlnet from {checkpoint}")

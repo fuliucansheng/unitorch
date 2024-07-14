@@ -349,7 +349,6 @@ class StableXLForText2ImageGenerationPipeline(GenericStableXLModel):
                             "weight",
                         )
                     ),
-                    strict=True,
                 )
                 adapter.to(device=self._device)
                 logging.info(f"Loading adapter from {checkpoint}")
