@@ -3,7 +3,6 @@
 
 from unitorch.models.llama.modeling import (
     LlamaForClassification,
-    LlamaForPretrain,
     LlamaForGeneration,
 )
 from unitorch.models.llama.processing import LlamaProcessor

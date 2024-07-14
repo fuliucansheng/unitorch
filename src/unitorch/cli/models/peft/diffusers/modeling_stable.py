@@ -28,7 +28,7 @@ from unitorch.cli.models.diffusers import (
 
 
 @register_model(
-    "core/model/peft/diffusers/text2image/stable", diffusion_model_decorator
+    "core/model/peft/lora/diffusers/text2image/stable", diffusion_model_decorator
 )
 class StableLoraForText2ImageGeneration(_StableLoraForText2ImageGeneration):
     def __init__(
@@ -64,37 +64,37 @@ class StableLoraForText2ImageGeneration(_StableLoraForText2ImageGeneration):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/peft/diffusers/text2image/stable")
+    @add_default_section_for_init("core/model/peft/lora/diffusers/text2image/stable")
     def from_core_configure(cls, config, **kwargs):
         config.set_default_section("core/model/peft/diffusers/text2image/stable")
         pretrained_name = config.getoption("pretrained_name", "stable-v1.5")
-        pretrain_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
+        pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
 
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
             config_path,
-            nested_dict_value(pretrain_infos, "unet", "config"),
+            nested_dict_value(pretrained_infos, "unet", "config"),
         )
         config_path = cached_path(config_path)
 
         text_config_path = config.getoption("text_config_path", None)
         text_config_path = pop_value(
             text_config_path,
-            nested_dict_value(pretrain_infos, "text", "config"),
+            nested_dict_value(pretrained_infos, "text", "config"),
         )
         text_config_path = cached_path(text_config_path)
 
         vae_config_path = config.getoption("vae_config_path", None)
         vae_config_path = pop_value(
             vae_config_path,
-            nested_dict_value(pretrain_infos, "vae", "config"),
+            nested_dict_value(pretrained_infos, "vae", "config"),
         )
         vae_config_path = cached_path(vae_config_path)
 
         scheduler_config_path = config.getoption("scheduler_config_path", None)
         scheduler_config_path = pop_value(
             scheduler_config_path,
-            nested_dict_value(pretrain_infos, "scheduler"),
+            nested_dict_value(pretrained_infos, "scheduler"),
         )
         scheduler_config_path = cached_path(scheduler_config_path)
 
@@ -130,10 +130,10 @@ class StableLoraForText2ImageGeneration(_StableLoraForText2ImageGeneration):
         weight_path = config.getoption("pretrained_weight_path", None)
 
         state_dict = None
-        if weight_path is None and pretrain_infos is not None:
+        if weight_path is None and pretrained_infos is not None:
             state_dict = [
                 load_weight(
-                    nested_dict_value(pretrain_infos, "unet", "weight"),
+                    nested_dict_value(pretrained_infos, "unet", "weight"),
                     replace_keys={
                         "to_k.": "to_k.base_layer.",
                         "to_q.": "to_q.base_layer.",
@@ -141,8 +141,8 @@ class StableLoraForText2ImageGeneration(_StableLoraForText2ImageGeneration):
                         "to_out.0.": "to_out.0.base_layer.",
                     },
                 ),
-                load_weight(nested_dict_value(pretrain_infos, "text", "weight")),
-                load_weight(nested_dict_value(pretrain_infos, "vae", "weight")),
+                load_weight(nested_dict_value(pretrained_infos, "text", "weight")),
+                load_weight(nested_dict_value(pretrained_infos, "vae", "weight")),
             ]
         elif weight_path is not None:
             state_dict = load_weight(weight_path)
@@ -161,7 +161,7 @@ class StableLoraForText2ImageGeneration(_StableLoraForText2ImageGeneration):
             inst.from_pretrained(state_dict=state_dict)
         return inst
 
-    @autocast()
+    # @autocast()
     def forward(
         self,
         pixel_values: torch.Tensor,
@@ -175,8 +175,10 @@ class StableLoraForText2ImageGeneration(_StableLoraForText2ImageGeneration):
         )
         return LossOutputs(loss=loss)
 
-    @add_default_section_for_function("core/model/peft/diffusers/text2image/stable")
-    @autocast()
+    @add_default_section_for_function(
+        "core/model/peft/lora/diffusers/text2image/stable"
+    )
+    # @autocast()
     def generate(
         self,
         input_ids: torch.Tensor,
@@ -201,7 +203,7 @@ class StableLoraForText2ImageGeneration(_StableLoraForText2ImageGeneration):
 
 
 @register_model(
-    "core/model/peft/diffusers/image2image/stable", diffusion_model_decorator
+    "core/model/peft/lora/diffusers/image2image/stable", diffusion_model_decorator
 )
 class StableLoraForImage2ImageGeneration(_StableLoraForImage2ImageGeneration):
     def __init__(
@@ -235,39 +237,39 @@ class StableLoraForImage2ImageGeneration(_StableLoraForImage2ImageGeneration):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/peft/diffusers/image2image/stable")
+    @add_default_section_for_init("core/model/peft/lora/diffusers/image2image/stable")
     def from_core_configure(cls, config, **kwargs):
-        config.set_default_section("core/model/peft/diffusers/image2image/stable")
+        config.set_default_section("core/model/peft/lora/diffusers/image2image/stable")
         pretrained_name = config.getoption(
             "pretrained_name", "stable-v1.5-nitrosocke-ghibli"
         )
-        pretrain_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
+        pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
 
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
             config_path,
-            nested_dict_value(pretrain_infos, "unet", "config"),
+            nested_dict_value(pretrained_infos, "unet", "config"),
         )
         config_path = cached_path(config_path)
 
         text_config_path = config.getoption("text_config_path", None)
         text_config_path = pop_value(
             text_config_path,
-            nested_dict_value(pretrain_infos, "text", "config"),
+            nested_dict_value(pretrained_infos, "text", "config"),
         )
         text_config_path = cached_path(text_config_path)
 
         vae_config_path = config.getoption("vae_config_path", None)
         vae_config_path = pop_value(
             vae_config_path,
-            nested_dict_value(pretrain_infos, "vae", "config"),
+            nested_dict_value(pretrained_infos, "vae", "config"),
         )
         vae_config_path = cached_path(vae_config_path)
 
         scheduler_config_path = config.getoption("scheduler_config_path", None)
         scheduler_config_path = pop_value(
             scheduler_config_path,
-            nested_dict_value(pretrain_infos, "scheduler"),
+            nested_dict_value(pretrained_infos, "scheduler"),
         )
         scheduler_config_path = cached_path(scheduler_config_path)
 
@@ -301,10 +303,10 @@ class StableLoraForImage2ImageGeneration(_StableLoraForImage2ImageGeneration):
         weight_path = config.getoption("pretrained_weight_path", None)
 
         state_dict = None
-        if weight_path is None and pretrain_infos is not None:
+        if weight_path is None and pretrained_infos is not None:
             state_dict = [
                 load_weight(
-                    nested_dict_value(pretrain_infos, "unet", "weight"),
+                    nested_dict_value(pretrained_infos, "unet", "weight"),
                     replace_keys={
                         "to_k.": "to_k.base_layer.",
                         "to_q.": "to_q.base_layer.",
@@ -312,8 +314,8 @@ class StableLoraForImage2ImageGeneration(_StableLoraForImage2ImageGeneration):
                         "to_out.0.": "to_out.0.base_layer.",
                     },
                 ),
-                load_weight(nested_dict_value(pretrain_infos, "text", "weight")),
-                load_weight(nested_dict_value(pretrain_infos, "vae", "weight")),
+                load_weight(nested_dict_value(pretrained_infos, "text", "weight")),
+                load_weight(nested_dict_value(pretrained_infos, "vae", "weight")),
             ]
         elif weight_path is not None:
             state_dict = load_weight(weight_path)
@@ -332,14 +334,16 @@ class StableLoraForImage2ImageGeneration(_StableLoraForImage2ImageGeneration):
             inst.from_pretrained(state_dict=state_dict)
         return inst
 
-    @autocast()
+    # @autocast()
     def forward(
         self,
     ):
         raise NotImplementedError
 
-    @add_default_section_for_function("core/model/peft/diffusers/image2image/stable")
-    @autocast()
+    @add_default_section_for_function(
+        "core/model/peft/lora/diffusers/image2image/stable"
+    )
+    # @autocast()
     def generate(
         self,
         input_ids: torch.Tensor,
@@ -364,7 +368,7 @@ class StableLoraForImage2ImageGeneration(_StableLoraForImage2ImageGeneration):
 
 
 @register_model(
-    "core/model/peft/diffusers/inpainting/stable", diffusion_model_decorator
+    "core/model/peft/lora/diffusers/inpainting/stable", diffusion_model_decorator
 )
 class StableLoraForImageInpainting(_StableLoraForImageInpainting):
     def __init__(
@@ -398,37 +402,37 @@ class StableLoraForImageInpainting(_StableLoraForImageInpainting):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/peft/diffusers/inpainting/stable")
+    @add_default_section_for_init("core/model/peft/lora/diffusers/inpainting/stable")
     def from_core_configure(cls, config, **kwargs):
-        config.set_default_section("core/model/peft/diffusers/inpainting/stable")
+        config.set_default_section("core/model/peft/lora/diffusers/inpainting/stable")
         pretrained_name = config.getoption("pretrained_name", "stable-v1.5-inpainting")
-        pretrain_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
+        pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
 
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
             config_path,
-            nested_dict_value(pretrain_infos, "unet", "config"),
+            nested_dict_value(pretrained_infos, "unet", "config"),
         )
         config_path = cached_path(config_path)
 
         text_config_path = config.getoption("text_config_path", None)
         text_config_path = pop_value(
             text_config_path,
-            nested_dict_value(pretrain_infos, "text", "config"),
+            nested_dict_value(pretrained_infos, "text", "config"),
         )
         text_config_path = cached_path(text_config_path)
 
         vae_config_path = config.getoption("vae_config_path", None)
         vae_config_path = pop_value(
             vae_config_path,
-            nested_dict_value(pretrain_infos, "vae", "config"),
+            nested_dict_value(pretrained_infos, "vae", "config"),
         )
         vae_config_path = cached_path(vae_config_path)
 
         scheduler_config_path = config.getoption("scheduler_config_path", None)
         scheduler_config_path = pop_value(
             scheduler_config_path,
-            nested_dict_value(pretrain_infos, "scheduler"),
+            nested_dict_value(pretrained_infos, "scheduler"),
         )
         scheduler_config_path = cached_path(scheduler_config_path)
 
@@ -462,10 +466,10 @@ class StableLoraForImageInpainting(_StableLoraForImageInpainting):
         weight_path = config.getoption("pretrained_weight_path", None)
 
         state_dict = None
-        if weight_path is None and pretrain_infos is not None:
+        if weight_path is None and pretrained_infos is not None:
             state_dict = [
                 load_weight(
-                    nested_dict_value(pretrain_infos, "unet", "weight"),
+                    nested_dict_value(pretrained_infos, "unet", "weight"),
                     replace_keys={
                         "to_k.": "to_k.base_layer.",
                         "to_q.": "to_q.base_layer.",
@@ -473,8 +477,8 @@ class StableLoraForImageInpainting(_StableLoraForImageInpainting):
                         "to_out.0.": "to_out.0.base_layer.",
                     },
                 ),
-                load_weight(nested_dict_value(pretrain_infos, "text", "weight")),
-                load_weight(nested_dict_value(pretrain_infos, "vae", "weight")),
+                load_weight(nested_dict_value(pretrained_infos, "text", "weight")),
+                load_weight(nested_dict_value(pretrained_infos, "vae", "weight")),
             ]
         elif weight_path is not None:
             state_dict = load_weight(weight_path)
@@ -493,14 +497,16 @@ class StableLoraForImageInpainting(_StableLoraForImageInpainting):
             inst.from_pretrained(state_dict=state_dict)
         return inst
 
-    @autocast()
+    # @autocast()
     def forward(
         self,
     ):
         raise NotImplementedError
 
-    @add_default_section_for_function("core/model/peft/diffusers/inpainting/stable")
-    @autocast()
+    @add_default_section_for_function(
+        "core/model/peft/lora/diffusers/inpainting/stable"
+    )
+    # @autocast()
     def generate(
         self,
         input_ids: torch.Tensor,
@@ -527,7 +533,7 @@ class StableLoraForImageInpainting(_StableLoraForImageInpainting):
 
 
 @register_model(
-    "core/model/peft/diffusers/resolution/stable", diffusion_model_decorator
+    "core/model/peft/lora/diffusers/resolution/stable", diffusion_model_decorator
 )
 class StableLoraForImageResolution(_StableLoraForImageResolution):
     def __init__(
@@ -561,37 +567,37 @@ class StableLoraForImageResolution(_StableLoraForImageResolution):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/peft/diffusers/resolution/stable")
+    @add_default_section_for_init("core/model/peft/lora/diffusers/resolution/stable")
     def from_core_configure(cls, config, **kwargs):
-        config.set_default_section("core/model/peft/diffusers/resolution/stable")
+        config.set_default_section("core/model/peft/lora/diffusers/resolution/stable")
         pretrained_name = config.getoption("pretrained_name", "stable-v1.5-x4-upscaler")
-        pretrain_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
+        pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
 
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
             config_path,
-            nested_dict_value(pretrain_infos, "unet", "config"),
+            nested_dict_value(pretrained_infos, "unet", "config"),
         )
         config_path = cached_path(config_path)
 
         text_config_path = config.getoption("text_config_path", None)
         text_config_path = pop_value(
             text_config_path,
-            nested_dict_value(pretrain_infos, "text", "config"),
+            nested_dict_value(pretrained_infos, "text", "config"),
         )
         text_config_path = cached_path(text_config_path)
 
         vae_config_path = config.getoption("vae_config_path", None)
         vae_config_path = pop_value(
             vae_config_path,
-            nested_dict_value(pretrain_infos, "vae", "config"),
+            nested_dict_value(pretrained_infos, "vae", "config"),
         )
         vae_config_path = cached_path(vae_config_path)
 
         scheduler_config_path = config.getoption("scheduler_config_path", None)
         scheduler_config_path = pop_value(
             scheduler_config_path,
-            nested_dict_value(pretrain_infos, "scheduler"),
+            nested_dict_value(pretrained_infos, "scheduler"),
         )
         scheduler_config_path = cached_path(scheduler_config_path)
 
@@ -625,10 +631,10 @@ class StableLoraForImageResolution(_StableLoraForImageResolution):
         weight_path = config.getoption("pretrained_weight_path", None)
 
         state_dict = None
-        if weight_path is None and pretrain_infos is not None:
+        if weight_path is None and pretrained_infos is not None:
             state_dict = [
                 load_weight(
-                    nested_dict_value(pretrain_infos, "unet", "weight"),
+                    nested_dict_value(pretrained_infos, "unet", "weight"),
                     replace_keys={
                         "to_k.": "to_k.base_layer.",
                         "to_q.": "to_q.base_layer.",
@@ -636,8 +642,8 @@ class StableLoraForImageResolution(_StableLoraForImageResolution):
                         "to_out.0.": "to_out.0.base_layer.",
                     },
                 ),
-                load_weight(nested_dict_value(pretrain_infos, "text", "weight")),
-                load_weight(nested_dict_value(pretrain_infos, "vae", "weight")),
+                load_weight(nested_dict_value(pretrained_infos, "text", "weight")),
+                load_weight(nested_dict_value(pretrained_infos, "vae", "weight")),
             ]
         elif weight_path is not None:
             state_dict = load_weight(weight_path)
@@ -656,14 +662,16 @@ class StableLoraForImageResolution(_StableLoraForImageResolution):
             inst.from_pretrained(state_dict=state_dict)
         return inst
 
-    @autocast()
+    # @autocast()
     def forward(
         self,
     ):
         raise NotImplementedError
 
-    @add_default_section_for_function("core/model/peft/diffusers/resolution/stable")
-    @autocast()
+    @add_default_section_for_function(
+        "core/model/peft/lora/diffusers/resolution/stable"
+    )
+    # @autocast()
     def generate(
         self,
         input_ids: torch.Tensor,

@@ -25,6 +25,7 @@ class LlamaLoraForClassification(GenericPeftModel):
         "q_proj.weight": "q_proj.base_layer.weight",
         "v_proj.weight": "v_proj.base_layer.weight",
     }
+    modules_to_save_checkpoints = ["lora", "classifier"]
 
     def __init__(
         self,
@@ -37,6 +38,7 @@ class LlamaLoraForClassification(GenericPeftModel):
         target_modules: Optional[Union[List[str], str]] = ["q_proj", "v_proj"],
         num_classes: Optional[int] = 1,
         hidden_dropout_prob: Optional[float] = 0.1,
+        freeze_classifer: Optional[bool] = True,
         gradient_checkpointing: Optional[bool] = False,
     ):
         super().__init__()
@@ -57,6 +59,9 @@ class LlamaLoraForClassification(GenericPeftModel):
         self.peft_model = PeftModelForSequenceClassification(model, self.peft_config)
         self.dropout = nn.Dropout(hidden_dropout_prob)
         self.classifier = nn.Linear(self.config.hidden_size, num_classes)
+        if freeze_classifer:
+            for param in self.classifier.parameters():
+                param.requires_grad = False
         self.init_weights()
 
     def forward(
@@ -91,6 +96,10 @@ class LlamaLoraForGeneration(GenericPeftModel):
     prefix_keys_in_state_dict = {
         "^(?!peft_model\.base_model\.model\.model\.)model\.": "peft_model.base_model.model.",
         "^lm_head.": "peft_model.base_model.model.",
+    }
+    replace_keys_in_state_dict = {
+        "q_proj.weight": "q_proj.base_layer.weight",
+        "v_proj.weight": "v_proj.base_layer.weight",
     }
 
     def __init__(

@@ -16,13 +16,75 @@ from unitorch.models import (
     QuantizationConfig,
     QuantizationMixin,
 )
+from unitorch.models.peft import PeftWeightLoaderMixin
 
 
-class MistralForGeneration(GenericModel, QuantizationMixin):
+class MistralForClassification(GenericModel, QuantizationMixin, PeftWeightLoaderMixin):
+    replace_keys_in_peft_state_dict = {"peft_model.base_model.": ""}
+
+    def __init__(
+        self,
+        config_path: str,
+        quant_config_path: Optional[str] = None,
+        num_classes: Optional[int] = 1,
+        hidden_dropout_prob: Optional[float] = 0.1,
+        gradient_checkpointing: Optional[bool] = False,
+    ):
+        """
+        Mistral model for classification tasks.
+
+        Args:
+            config_path (str): Path to the model configuration file.
+            num_classes (int, optional): Number of classes for classification. Defaults to 1.
+            hidden_dropout_prob (float, optional): Dropout probability for hidden layers. Defaults to 0.1.
+            gradient_checkpointing (bool, optional): Whether to use gradient checkpointing. Defaults to False.
+        """
+        super().__init__()
+        self.config = MistralConfig.from_json_file(config_path)
+        self.config.gradient_checkpointing = gradient_checkpointing
+        self.model = MistralModel(self.config)
+        self.dropout = nn.Dropout(hidden_dropout_prob)
+        self.classifier = nn.Linear(self.config.hidden_size, num_classes)
+        self.init_weights()
+
+        if quant_config_path is not None:
+            self.quant_config = QuantizationConfig.from_json_file(quant_config_path)
+            self.quantize(self.quant_config, ignore_modules=["lm_head"])
+
+    def forward(
+        self,
+        input_ids: torch.Tensor,
+        attention_mask: Optional[torch.Tensor] = None,
+        position_ids: Optional[torch.Tensor] = None,
+    ):
+        """
+        Forward pass of the classification model.
+
+        Args:
+            input_ids (torch.Tensor): Input tensor of shape (batch_size, sequence_length).
+            attention_mask (torch.Tensor, optional): Attention mask tensor of shape (batch_size, sequence_length). Defaults to None.
+            position_ids (torch.Tensor, optional): Position IDs tensor of shape (batch_size, sequence_length). Defaults to None.
+
+        Returns:
+            torch Output logits.Tensor: tensor of shape (batch_size, num_classes).
+        """
+        outputs = self.model(
+            input_ids,
+            attention_mask=attention_mask,
+            position_ids=position_ids,
+        )[0]
+        pooled_output = outputs[:, -1]
+        pooled_output = self.dropout(pooled_output)
+        logits = self.classifier(pooled_output)
+        return logits
+
+
+class MistralForGeneration(GenericModel, QuantizationMixin, PeftWeightLoaderMixin):
     prefix_keys_in_state_dict = {
-        "^(?!model\.model\.|model\.lm_head\.)model\.": "model.",
-        "^lm_head.": "model.",
+        "^model.": "base_model.",
+        "^lm_head.": "base_model.",
     }
+    replace_keys_in_peft_state_dict = {"peft_model.base_model.model.": "base_model."}
 
     def __init__(
         self,
@@ -42,7 +104,7 @@ class MistralForGeneration(GenericModel, QuantizationMixin):
         self.config = MistralConfig.from_json_file(config_path)
         self.config.gradient_checkpointing = gradient_checkpointing
         self.config.pad_token_id = pad_token_id
-        self.model = MistralForCausalLM(self.config)
+        self.base_model = MistralForCausalLM(self.config)
         self.init_weights()
 
         if quant_config_path is not None:
@@ -66,7 +128,7 @@ class MistralForGeneration(GenericModel, QuantizationMixin):
         Returns:
             torch Output logits.Tensor: tensor of shape (batch_size, sequence_length, vocab_size).
         """
-        outputs = self.model(
+        outputs = self.base_model(
             input_ids=input_ids,
             attention_mask=attention_mask,
             position_ids=position_ids,
@@ -122,7 +184,7 @@ class MistralForGeneration(GenericModel, QuantizationMixin):
             GenericOutputs: Generated sequences and their scores.
         """
         input_seq_length = input_ids.size(1)
-        outputs = self.model.generate(
+        outputs = self.base_model.generate(
             input_ids,
             max_length=max_gen_seq_length + input_seq_length,
             min_length=min_gen_seq_length + input_seq_length,

@@ -5,6 +5,7 @@ import unitorch.cli.models.peft.diffusers.modeling_controlnet_xl
 import unitorch.cli.models.peft.diffusers.modeling_controlnet
 import unitorch.cli.models.peft.diffusers.modeling_stable_xl
 import unitorch.cli.models.peft.diffusers.modeling_stable
+import unitorch.cli.models.peft.diffusers.modeling_adapter_xl
 from unitorch.cli.models.peft.diffusers.modeling_controlnet_xl import (
     ControlNetXLLoraForText2ImageGeneration,
     ControlNetXLLoraForImage2ImageGeneration,
@@ -25,4 +26,7 @@ from unitorch.cli.models.peft.diffusers.modeling_stable import (
     StableLoraForImage2ImageGeneration,
     StableLoraForImageInpainting,
     StableLoraForImageResolution,
+)
+from unitorch.cli.models.peft.diffusers.modeling_adapter_xl import (
+    StableXLAdapterLoraForText2ImageGeneration,
 )

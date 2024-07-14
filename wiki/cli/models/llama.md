@@ -14,13 +14,6 @@
 
 ::: unitorch.cli.models.llama.LlamaForClassification
 
-## LlamaForPretrain
-
-!!! tip
-    **`core/model/pretrain/llama`** is the section for configuration of LlamaForPretrain.
-
-::: unitorch.cli.models.llama.LlamaForPretrain
-
 ## LlamaForGeneration
 
 !!! tip

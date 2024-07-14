@@ -2,6 +2,7 @@
 # Licensed under the MIT License.
 
 import os
+import re
 import warnings
 import logging
 import torch
@@ -13,7 +14,7 @@ from peft import (
     PromptLearningConfig,
     PeftModelForSequenceClassification,
 )
-from unitorch.utils import replace, is_diffusers_available
+from unitorch.utils import replace, load_weight, is_diffusers_available
 from unitorch.models import CheckpointMixin
 
 
@@ -212,6 +213,81 @@ class GenericPeftModel(nn.Module, PeftCheckpointMixin):
         return next(self.parameters()).device
 
 
+class PeftWeightLoaderMixin(nn.Module):
+    replace_keys_in_peft_state_dict = {}
+    prefix_keys_in_peft_state_dict = {}
+    __base_state_dict__ = None
+
+    def load_lora_weights(
+        self,
+        lora_files: Union[str, List[str]],
+        lora_weights: Optional[Union[float, List[float]]] = None,
+        lora_alphas: Optional[Union[float, List[float]]] = None,
+        replace_keys: Optional[Dict] = dict(),
+        prefix_keys: Optional[Dict] = dict(),
+    ):
+        if self.__base_state_dict__ is not None:
+            state_dict = self.__base_state_dict__.copy()
+        else:
+            state_dict = self.state_dict()
+            state_dict = {k: v.cpu() for k, v in state_dict.items()}
+            self.__base_state_dict__ = {k: v.clone() for k, v in state_dict.items()}
+
+        if isinstance(self.replace_keys_in_peft_state_dict, dict):
+            replace_keys = {**self.replace_keys_in_peft_state_dict, **replace_keys}
+
+        if isinstance(self.prefix_keys_in_peft_state_dict, dict):
+            prefix_keys = {**self.prefix_keys_in_peft_state_dict, **prefix_keys}
+
+        if isinstance(lora_files, str):
+            lora_files = [lora_files]
+
+        if lora_weights is None:
+            lora_weights = [1.0] * len(lora_files)
+        elif isinstance(lora_weights, float) or isinstance(lora_weights, int):
+            lora_weights = [lora_weights] * len(lora_files)
+
+        if lora_alphas is None:
+            lora_alphas = [32.0] * len(lora_files)
+        elif isinstance(lora_alphas, float) or isinstance(lora_alphas, int):
+            lora_alphas = [lora_alphas] * len(lora_files)
+
+        assert len(lora_files) == len(lora_weights) and len(lora_files) == len(
+            lora_alphas
+        )
+
+        for lora_file, weight, alpha in zip(lora_files, lora_weights, lora_alphas):
+            lora_state_dict = load_weight(
+                lora_file, replace_keys=replace_keys, prefix_keys=prefix_keys
+            )
+            for key, value in lora_state_dict.items():
+                if "lora_B" in key:
+                    continue
+                if "lora_A" not in key:
+                    if key in state_dict and state_dict[key].shape == value.shape:
+                        state_dict[key] = value
+                    else:
+                        logging.warning(f"Key {key} not found in the model state_dict.")
+                    continue
+                lora_A = value
+                lora_B = lora_state_dict[key.replace("lora_A", "lora_B")]
+                scale = alpha / lora_B.shape[1]
+                key = key.replace("lora_A.default.", "")
+                if key in state_dict:
+                    state_dict[key] += scale * weight * lora_B @ lora_A
+                else:
+                    logging.warning(f"Key {key} not found in the model state_dict.")
+
+            logging.info(f"Load lora weights from {lora_file} done.")
+        self.load_state_dict(state_dict, strict=False)
+
+    def unload_lora_weights(self):
+        if self.__base_state_dict__ is not None:
+            state_dict = {k: v.clone() for k, v in self.__base_state_dict__.items()}
+            self.load_state_dict(state_dict, strict=False)
+            self.__base_state_dict__ = None
+
+
 from unitorch.models.peft.modeling_bloom import (
     BloomLoraForClassification,
     BloomLoraForGeneration,
@@ -220,7 +296,14 @@ from unitorch.models.peft.modeling_llama import (
     LlamaLoraForClassification,
     LlamaLoraForGeneration,
 )
-from unitorch.models.peft.modeling_mistral import MistralLoraForGeneration
+from unitorch.models.peft.modeling_llava import (
+    LlavaMistralClipLoraForClassification,
+    LlavaMistralClipLoraForGeneration,
+)
+from unitorch.models.peft.modeling_mistral import (
+    MistralLoraForClassification,
+    MistralLoraForGeneration,
+)
 
 if is_diffusers_available():
     from unitorch.models.peft.diffusers import (
@@ -237,7 +320,4 @@ if is_diffusers_available():
         ControlNetXLLoraForText2ImageGeneration,
         ControlNetXLLoraForImage2ImageGeneration,
         ControlNetXLLoraForImageInpainting,
-        MultiControlNetLoraForText2ImageGeneration,
-        MultiControlNetLoraForImage2ImageGeneration,
-        MultiControlNetLoraForImageInpainting,
     )

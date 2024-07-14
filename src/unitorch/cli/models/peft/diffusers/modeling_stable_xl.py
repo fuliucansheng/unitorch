@@ -27,7 +27,7 @@ from unitorch.cli.models.diffusers import (
 
 
 @register_model(
-    "core/model/peft/diffusers/text2image/stable_xl", diffusion_model_decorator
+    "core/model/peft/lora/diffusers/text2image/stable_xl", diffusion_model_decorator
 )
 class StableXLLoraForText2ImageGeneration(_StableXLLoraForText2ImageGeneration):
     def __init__(
@@ -65,44 +65,46 @@ class StableXLLoraForText2ImageGeneration(_StableXLLoraForText2ImageGeneration):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/peft/diffusers/text2image/stable_xl")
+    @add_default_section_for_init("core/model/peft/lora/diffusers/text2image/stable_xl")
     def from_core_configure(cls, config, **kwargs):
-        config.set_default_section("core/model/peft/diffusers/text2image/stable_xl")
+        config.set_default_section(
+            "core/model/peft/lora/diffusers/text2image/stable_xl"
+        )
         pretrained_name = config.getoption("pretrained_name", "stable-xl-base")
-        pretrain_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
+        pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
 
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
             config_path,
-            nested_dict_value(pretrain_infos, "unet", "config"),
+            nested_dict_value(pretrained_infos, "unet", "config"),
         )
         config_path = cached_path(config_path)
 
         text_config_path = config.getoption("text_config_path", None)
         text_config_path = pop_value(
             text_config_path,
-            nested_dict_value(pretrain_infos, "text", "config"),
+            nested_dict_value(pretrained_infos, "text", "config"),
         )
         text_config_path = cached_path(text_config_path)
 
         text2_config_path = config.getoption("text2_config_path", None)
         text2_config_path = pop_value(
             text2_config_path,
-            nested_dict_value(pretrain_infos, "text2", "config"),
+            nested_dict_value(pretrained_infos, "text2", "config"),
         )
         text2_config_path = cached_path(text2_config_path)
 
         vae_config_path = config.getoption("vae_config_path", None)
         vae_config_path = pop_value(
             vae_config_path,
-            nested_dict_value(pretrain_infos, "vae", "config"),
+            nested_dict_value(pretrained_infos, "vae", "config"),
         )
         vae_config_path = cached_path(vae_config_path)
 
         scheduler_config_path = config.getoption("scheduler_config_path", None)
         scheduler_config_path = pop_value(
             scheduler_config_path,
-            nested_dict_value(pretrain_infos, "scheduler"),
+            nested_dict_value(pretrained_infos, "scheduler"),
         )
         scheduler_config_path = cached_path(scheduler_config_path)
 
@@ -139,10 +141,10 @@ class StableXLLoraForText2ImageGeneration(_StableXLLoraForText2ImageGeneration):
         weight_path = config.getoption("pretrained_weight_path", None)
 
         state_dict = None
-        if weight_path is None and pretrain_infos is not None:
+        if weight_path is None and pretrained_infos is not None:
             state_dict = [
                 load_weight(
-                    nested_dict_value(pretrain_infos, "unet", "weight"),
+                    nested_dict_value(pretrained_infos, "unet", "weight"),
                     prefix_keys={"": "unet."},
                     replace_keys={
                         "to_k.": "to_k.base_layer.",
@@ -152,15 +154,15 @@ class StableXLLoraForText2ImageGeneration(_StableXLLoraForText2ImageGeneration):
                     },
                 ),
                 load_weight(
-                    nested_dict_value(pretrain_infos, "text", "weight"),
+                    nested_dict_value(pretrained_infos, "text", "weight"),
                     prefix_keys={"": "text."},
                 ),
                 load_weight(
-                    nested_dict_value(pretrain_infos, "text2", "weight"),
+                    nested_dict_value(pretrained_infos, "text2", "weight"),
                     prefix_keys={"": "text2."},
                 ),
                 load_weight(
-                    nested_dict_value(pretrain_infos, "vae", "weight"),
+                    nested_dict_value(pretrained_infos, "vae", "weight"),
                     prefix_keys={"": "vae."},
                 ),
             ]
@@ -201,7 +203,9 @@ class StableXLLoraForText2ImageGeneration(_StableXLLoraForText2ImageGeneration):
         )
         return LossOutputs(loss=loss)
 
-    @add_default_section_for_function("core/model/peft/diffusers/text2image/stable_xl")
+    @add_default_section_for_function(
+        "core/model/peft/lora/diffusers/text2image/stable_xl"
+    )
     # @autocast()
     def generate(
         self,
@@ -235,7 +239,7 @@ class StableXLLoraForText2ImageGeneration(_StableXLLoraForText2ImageGeneration):
 
 
 @register_model(
-    "core/model/peft/diffusers/image2image/stable_xl", diffusion_model_decorator
+    "core/model/peft/lora/diffusers/image2image/stable_xl", diffusion_model_decorator
 )
 class StableXLLoraForImage2ImageGeneration(_StableXLLoraForImage2ImageGeneration):
     def __init__(
@@ -271,44 +275,48 @@ class StableXLLoraForImage2ImageGeneration(_StableXLLoraForImage2ImageGeneration
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/peft/diffusers/image2image/stable_xl")
+    @add_default_section_for_init(
+        "core/model/peft/lora/diffusers/image2image/stable_xl"
+    )
     def from_core_configure(cls, config, **kwargs):
-        config.set_default_section("core/model/peft/diffusers/image2image/stable_xl")
+        config.set_default_section(
+            "core/model/peft/lora/diffusers/image2image/stable_xl"
+        )
         pretrained_name = config.getoption("pretrained_name", "stable-xl-base")
-        pretrain_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
+        pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
 
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
             config_path,
-            nested_dict_value(pretrain_infos, "unet", "config"),
+            nested_dict_value(pretrained_infos, "unet", "config"),
         )
         config_path = cached_path(config_path)
 
         text_config_path = config.getoption("text_config_path", None)
         text_config_path = pop_value(
             text_config_path,
-            nested_dict_value(pretrain_infos, "text", "config"),
+            nested_dict_value(pretrained_infos, "text", "config"),
         )
         text_config_path = cached_path(text_config_path)
 
         text2_config_path = config.getoption("text2_config_path", None)
         text2_config_path = pop_value(
             text2_config_path,
-            nested_dict_value(pretrain_infos, "text2", "config"),
+            nested_dict_value(pretrained_infos, "text2", "config"),
         )
         text2_config_path = cached_path(text2_config_path)
 
         vae_config_path = config.getoption("vae_config_path", None)
         vae_config_path = pop_value(
             vae_config_path,
-            nested_dict_value(pretrain_infos, "vae", "config"),
+            nested_dict_value(pretrained_infos, "vae", "config"),
         )
         vae_config_path = cached_path(vae_config_path)
 
         scheduler_config_path = config.getoption("scheduler_config_path", None)
         scheduler_config_path = pop_value(
             scheduler_config_path,
-            nested_dict_value(pretrain_infos, "scheduler"),
+            nested_dict_value(pretrained_infos, "scheduler"),
         )
         scheduler_config_path = cached_path(scheduler_config_path)
 
@@ -343,10 +351,10 @@ class StableXLLoraForImage2ImageGeneration(_StableXLLoraForImage2ImageGeneration
         weight_path = config.getoption("pretrained_weight_path", None)
 
         state_dict = None
-        if weight_path is None and pretrain_infos is not None:
+        if weight_path is None and pretrained_infos is not None:
             state_dict = [
                 load_weight(
-                    nested_dict_value(pretrain_infos, "unet", "weight"),
+                    nested_dict_value(pretrained_infos, "unet", "weight"),
                     prefix_keys={"": "unet."},
                     replace_keys={
                         "to_k.": "to_k.base_layer.",
@@ -356,15 +364,15 @@ class StableXLLoraForImage2ImageGeneration(_StableXLLoraForImage2ImageGeneration
                     },
                 ),
                 load_weight(
-                    nested_dict_value(pretrain_infos, "text", "weight"),
+                    nested_dict_value(pretrained_infos, "text", "weight"),
                     prefix_keys={"": "text."},
                 ),
                 load_weight(
-                    nested_dict_value(pretrain_infos, "text2", "weight"),
+                    nested_dict_value(pretrained_infos, "text2", "weight"),
                     prefix_keys={"": "text2."},
                 ),
                 load_weight(
-                    nested_dict_value(pretrain_infos, "vae", "weight"),
+                    nested_dict_value(pretrained_infos, "vae", "weight"),
                     prefix_keys={"": "vae."},
                 ),
             ]
@@ -391,7 +399,9 @@ class StableXLLoraForImage2ImageGeneration(_StableXLLoraForImage2ImageGeneration
     ):
         raise NotImplementedError
 
-    @add_default_section_for_function("core/model/peft/diffusers/image2image/stable_xl")
+    @add_default_section_for_function(
+        "core/model/peft/lora/diffusers/image2image/stable_xl"
+    )
     # @autocast()
     def generate(
         self,
@@ -425,7 +435,7 @@ class StableXLLoraForImage2ImageGeneration(_StableXLLoraForImage2ImageGeneration
 
 
 @register_model(
-    "core/model/peft/diffusers/inpainting/stable_xl", diffusion_model_decorator
+    "core/model/peft/lora/diffusers/inpainting/stable_xl", diffusion_model_decorator
 )
 class StableXLLoraForImageInpainting(_StableXLLoraForImageInpainting):
     def __init__(
@@ -461,44 +471,46 @@ class StableXLLoraForImageInpainting(_StableXLLoraForImageInpainting):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/peft/diffusers/inpainting/stable_xl")
+    @add_default_section_for_init("core/model/peft/lora/diffusers/inpainting/stable_xl")
     def from_core_configure(cls, config, **kwargs):
-        config.set_default_section("core/model/peft/diffusers/inpainting/stable_xl")
+        config.set_default_section(
+            "core/model/peft/lora/diffusers/inpainting/stable_xl"
+        )
         pretrained_name = config.getoption("pretrained_name", "stable-xl-base")
-        pretrain_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
+        pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
 
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
             config_path,
-            nested_dict_value(pretrain_infos, "unet", "config"),
+            nested_dict_value(pretrained_infos, "unet", "config"),
         )
         config_path = cached_path(config_path)
 
         text_config_path = config.getoption("text_config_path", None)
         text_config_path = pop_value(
             text_config_path,
-            nested_dict_value(pretrain_infos, "text", "config"),
+            nested_dict_value(pretrained_infos, "text", "config"),
         )
         text_config_path = cached_path(text_config_path)
 
         text2_config_path = config.getoption("text2_config_path", None)
         text2_config_path = pop_value(
             text2_config_path,
-            nested_dict_value(pretrain_infos, "text2", "config"),
+            nested_dict_value(pretrained_infos, "text2", "config"),
         )
         text2_config_path = cached_path(text2_config_path)
 
         vae_config_path = config.getoption("vae_config_path", None)
         vae_config_path = pop_value(
             vae_config_path,
-            nested_dict_value(pretrain_infos, "vae", "config"),
+            nested_dict_value(pretrained_infos, "vae", "config"),
         )
         vae_config_path = cached_path(vae_config_path)
 
         scheduler_config_path = config.getoption("scheduler_config_path", None)
         scheduler_config_path = pop_value(
             scheduler_config_path,
-            nested_dict_value(pretrain_infos, "scheduler"),
+            nested_dict_value(pretrained_infos, "scheduler"),
         )
         scheduler_config_path = cached_path(scheduler_config_path)
 
@@ -533,22 +545,22 @@ class StableXLLoraForImageInpainting(_StableXLLoraForImageInpainting):
         weight_path = config.getoption("pretrained_weight_path", None)
 
         state_dict = None
-        if weight_path is None and pretrain_infos is not None:
+        if weight_path is None and pretrained_infos is not None:
             state_dict = [
                 load_weight(
-                    nested_dict_value(pretrain_infos, "unet", "weight"),
+                    nested_dict_value(pretrained_infos, "unet", "weight"),
                     prefix_keys={"": "unet."},
                 ),
                 load_weight(
-                    nested_dict_value(pretrain_infos, "text", "weight"),
+                    nested_dict_value(pretrained_infos, "text", "weight"),
                     prefix_keys={"": "text."},
                 ),
                 load_weight(
-                    nested_dict_value(pretrain_infos, "text2", "weight"),
+                    nested_dict_value(pretrained_infos, "text2", "weight"),
                     prefix_keys={"": "text2."},
                 ),
                 load_weight(
-                    nested_dict_value(pretrain_infos, "vae", "weight"),
+                    nested_dict_value(pretrained_infos, "vae", "weight"),
                     prefix_keys={"": "vae."},
                 ),
             ]
@@ -575,7 +587,9 @@ class StableXLLoraForImageInpainting(_StableXLLoraForImageInpainting):
     ):
         raise NotImplementedError
 
-    @add_default_section_for_function("core/model/peft/diffusers/inpainting/stable_xl")
+    @add_default_section_for_function(
+        "core/model/peft/lora/diffusers/inpainting/stable_xl"
+    )
     # @autocast()
     def generate(
         self,

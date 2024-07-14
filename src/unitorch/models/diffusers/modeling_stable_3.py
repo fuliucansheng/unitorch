@@ -27,10 +27,11 @@ from unitorch.models import (
     QuantizationConfig,
     QuantizationMixin,
 )
-from unitorch.models.diffusers.modeling_stable import compute_snr
+from unitorch.models.peft import PeftWeightLoaderMixin
+from unitorch.models.diffusers import compute_snr
 
 
-class GenericStable3Model(GenericModel, QuantizationMixin):
+class GenericStable3Model(GenericModel, QuantizationMixin, PeftWeightLoaderMixin):
     prefix_keys_in_state_dict = {
         # vae weights
         "^encoder.*": "vae.",
@@ -54,7 +55,7 @@ class GenericStable3Model(GenericModel, QuantizationMixin):
         text3_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
-        controlnet_config_path: Union[str, List[str]] = None,
+        controlnet_configs_path: Union[str, List[str]] = None,
         quant_config_path: Optional[str] = None,
         image_size: Optional[int] = None,
         in_channels: Optional[int] = None,
@@ -94,10 +95,16 @@ class GenericStable3Model(GenericModel, QuantizationMixin):
         vae_config_dict = json.load(open(vae_config_path))
         self.vae = AutoencoderKL.from_config(vae_config_dict)
 
-        if isinstance(controlnet_config_path, list):
+        if isinstance(controlnet_configs_path, list):
+            if len(controlnet_configs_path) == 0:
+                controlnet_configs_path = None
+            elif len(controlnet_configs_path) == 1:
+                controlnet_configs_path = controlnet_configs_path[0]
+
+        if isinstance(controlnet_configs_path, list):
             controlnets = []
-            for _controlnet_config_path in controlnet_config_path:
-                controlnet_config_dict = json.load(open(_controlnet_config_path))
+            for controlnet_config_path in controlnet_configs_path:
+                controlnet_config_dict = json.load(open(controlnet_config_path))
                 controlnets.append(
                     SD3ControlNetModel.from_config(controlnet_config_dict)
                 )
@@ -105,8 +112,8 @@ class GenericStable3Model(GenericModel, QuantizationMixin):
             self.controlnet = SD3MultiControlNetModel(
                 controlnets=controlnets,
             )
-        elif isinstance(controlnet_config_path, str):
-            controlnet_config_dict = json.load(open(controlnet_config_path))
+        elif isinstance(controlnet_configs_path, str):
+            controlnet_config_dict = json.load(open(controlnet_configs_path))
             self.controlnet = SD3ControlNetModel.from_config(controlnet_config_dict)
             self.num_controlnets = 1
         else:

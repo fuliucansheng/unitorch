@@ -333,40 +333,91 @@ def create_controlnet_layout(
             layout,
         )
 
-    controlnets = [create_controlnet() for _ in range(num_controlnets)]
+    controlnet_groups = [create_controlnet() for _ in range(num_controlnets)]
     tabs = [
-        create_tab(controlnet[-1], name=f"Net {i}")
-        for i, controlnet in enumerate(controlnets)
+        create_tab(controlnet_group[-1], name=f"Net {i}")
+        for i, controlnet_group in enumerate(controlnet_groups)
     ]
     layout = create_accordion(create_tabs(*tabs), name="ControlNets")
     return GenericOutputs(
-        controlnets=[controlnet[0] for controlnet in controlnets], layout=layout
+        controlnets=[controlnet_group[0] for controlnet_group in controlnet_groups],
+        layout=layout,
     )
 
 
-def create_lora_layout(loras: Union[List[str], Dict[str, List[str]]]):
-    def create_lora(loras: List[str]):
-        eles = [
-            create_element("button", label=lora, elem_classes=["group-lora-item"])
-            for lora in loras
-        ]
-        layout = create_row(*eles)
-        return eles, layout
+def create_adapter_layout(
+    adapters: List[str], processes: List[str], num_adapters: Optional[int] = 5
+):
+    def create_adapter():
+        input_image = create_element("image", "Input Image")
+        output_image = create_element("image", "Output Image")
+        checkpoint = create_element("dropdown", "Checkpoint", values=adapters)
+        guidance_scale = create_element(
+            "slider", "Guidance Scale", min_value=0, max_value=2, step=0.1
+        )
+        process = create_element("radio", "Process", values=processes, default=None)
+        layout = create_column(
+            create_row(input_image, output_image),
+            create_row(checkpoint, guidance_scale),
+            create_row(process),
+        )
+        return (
+            GenericOutputs(
+                input_image=input_image,
+                output_image=output_image,
+                checkpoint=checkpoint,
+                guidance_scale=guidance_scale,
+                process=process,
+            ),
+            layout,
+        )
 
-    if isinstance(loras, list):
-        eles, layout = create_lora(loras)
-        layout = create_accordion(layout, name="LORA")
-        return eles, layout
-    if isinstance(loras, dict):
-        groups = [
-            create_tab(create_lora(lora), name=name) for name, lora in loras.items()
-        ]
-        eles = [group[0] for group in groups]
-        tabs = [group[1] for group in groups]
-        layout = create_tabs(*tabs)
-        layout = create_accordion(layout, name="LORA")
-        return eles, layout
-    raise ValueError(f"Unsupported lora type: {type(loras)}")
+    adapter_groups = [create_adapter() for _ in range(num_adapters)]
+    tabs = [
+        create_tab(controlnet_group[-1], name=f"Net {i}")
+        for i, controlnet_group in enumerate(adapter_groups)
+    ]
+    layout = create_accordion(create_tabs(*tabs), name="Adapters")
+    return GenericOutputs(
+        adapters=[adapter_group[0] for adapter_group in adapter_groups],
+        layout=layout,
+    )
+
+
+def create_lora_layout(
+    loras: Union[List[str], Dict[str, List[str]]], num_loras: Optional[int] = 8
+):
+    def create_lora():
+        checkpoint = create_element("dropdown", "Checkpoint", values=loras)
+        weight = create_element(
+            "slider", "Weight", default=1.0, min_value=0, max_value=3, step=0.1
+        )
+        alpha = create_element(
+            "slider", "Alpha", default=32, min_value=0, max_value=128, step=1
+        )
+        url = create_element("text", "URL")
+        file = create_element("file", "File")
+        layout = create_column(
+            create_row(checkpoint, create_column(weight, alpha)),
+            create_row(url),
+            create_row(file),
+        )
+        return (
+            GenericOutputs(
+                checkpoint=checkpoint, weight=weight, alpha=alpha, url=url, file=file
+            ),
+            layout,
+        )
+
+    lora_groups = [create_lora() for _ in range(num_loras)]
+    tabs = [
+        create_tab(lora_group[-1], name=f"LORA {i}")
+        for i, lora_group in enumerate(lora_groups)
+    ]
+    layout = create_accordion(create_tabs(*tabs), name="LORAs")
+    return GenericOutputs(
+        loras=[lora_group[0] for lora_group in lora_groups], layout=layout
+    )
 
 
 def create_freeu_layout():

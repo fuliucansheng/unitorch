@@ -37,7 +37,7 @@ class ControlNetXLForText2ImageGeneration(GenericStableXLModel):
         text_config_path (str): Path to the text model configuration file.
         text2_config_path (str): Path to the second text model configuration file.
         vae_config_path (str): Path to the VAE model configuration file.
-        controlnet_config_path (str): Path to the ControlNet model configuration file.
+        controlnet_configs_path (str): Path to the ControlNet model configuration file.
         scheduler_config_path (str): Path to the scheduler configuration file.
         quant_config_path (Optional[str]): Path to the quantization configuration file (default: None).
         image_size (Optional[int]): Size of the input image (default: None).
@@ -57,7 +57,7 @@ class ControlNetXLForText2ImageGeneration(GenericStableXLModel):
         text_config_path: str,
         text2_config_path: str,
         vae_config_path: str,
-        controlnet_config_path: str,
+        controlnet_configs_path: Union[str, List[str]],
         scheduler_config_path: str,
         quant_config_path: Optional[str] = None,
         image_size: Optional[int] = None,
@@ -75,7 +75,7 @@ class ControlNetXLForText2ImageGeneration(GenericStableXLModel):
             text_config_path=text_config_path,
             text2_config_path=text2_config_path,
             vae_config_path=vae_config_path,
-            controlnet_config_path=controlnet_config_path,
+            controlnet_configs_path=controlnet_configs_path,
             scheduler_config_path=scheduler_config_path,
             quant_config_path=quant_config_path,
             image_size=image_size,
@@ -159,11 +159,10 @@ class ControlNetXLForText2ImageGeneration(GenericStableXLModel):
             timesteps,
         )
 
-        encoder_hidden_states = self.text(input_ids, attention_mask)[0]
         down_block_res_samples, mid_block_res_sample = self.controlnet(
             noise_latents,
             timesteps,
-            encoder_hidden_states=encoder_hidden_states,
+            encoder_hidden_states=prompt_embeds,
             controlnet_cond=condition_pixel_values,
             added_cond_kwargs={
                 "time_ids": add_time_ids,
@@ -276,7 +275,7 @@ class ControlNetXLForImage2ImageGeneration(GenericStableXLModel):
         text_config_path: str,
         text2_config_path: str,
         vae_config_path: str,
-        controlnet_config_path: str,
+        controlnet_configs_path: Union[str, List[str]],
         scheduler_config_path: str,
         quant_config_path: Optional[str] = None,
         image_size: Optional[int] = None,
@@ -294,7 +293,7 @@ class ControlNetXLForImage2ImageGeneration(GenericStableXLModel):
             text_config_path=text_config_path,
             text2_config_path=text2_config_path,
             vae_config_path=vae_config_path,
-            controlnet_config_path=controlnet_config_path,
+            controlnet_configs_path=controlnet_configs_path,
             scheduler_config_path=scheduler_config_path,
             quant_config_path=quant_config_path,
             image_size=image_size,
@@ -390,7 +389,7 @@ class ControlNetXLForImageInpainting(GenericStableXLModel):
         text_config_path: str,
         text2_config_path: str,
         vae_config_path: str,
-        controlnet_config_path: str,
+        controlnet_configs_path: Union[str, List[str]],
         scheduler_config_path: str,
         quant_config_path: Optional[str] = None,
         image_size: Optional[int] = None,
@@ -408,7 +407,7 @@ class ControlNetXLForImageInpainting(GenericStableXLModel):
             text_config_path=text_config_path,
             text2_config_path=text2_config_path,
             vae_config_path=vae_config_path,
-            controlnet_config_path=controlnet_config_path,
+            controlnet_configs_path=controlnet_configs_path,
             scheduler_config_path=scheduler_config_path,
             quant_config_path=quant_config_path,
             image_size=image_size,

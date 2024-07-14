@@ -21,19 +21,6 @@ def is_deepspeed_available():
     return _deepspeed_available or is_offline_debug_mode()
 
 
-# accelerate
-_accelerate_available = importlib.util.find_spec("accelerate") is not None
-try:
-    _accelerate_version = importlib_metadata.version("accelerate")
-    logging.debug(f"Successfully imported accelerate version {_accelerate_version}")
-except importlib_metadata.PackageNotFoundError:
-    _accelerate_available = False
-
-
-def is_accelerate_available():
-    return _accelerate_available or is_offline_debug_mode()
-
-
 # megatron
 _megatron_available = importlib.util.find_spec("megatron") is not None
 try:
@@ -71,19 +58,6 @@ except importlib_metadata.PackageNotFoundError:
 
 def is_diffusers_available():
     return _diffusers_available or is_offline_debug_mode()
-
-
-# safetensors
-_safetensors_available = importlib.util.find_spec("safetensors") is not None
-try:
-    _safetensors_version = importlib_metadata.version("safetensors")
-    logging.debug(f"Successfully imported safetensors version {_safetensors_version}")
-except importlib_metadata.PackageNotFoundError:
-    _safetensors_available = False
-
-
-def is_safetensors_available():
-    return _safetensors_available or is_offline_debug_mode()
 
 
 # xformers

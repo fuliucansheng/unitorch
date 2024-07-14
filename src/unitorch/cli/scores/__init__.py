@@ -472,8 +472,10 @@ class BleuScore(Score):
 class Rouge1Score(Score):
     def __init__(
         self,
+        ignore_tokens: Optional[List[int]] = [0, 1],
     ):
         super().__init__()
+        self.ignore_tokens = ignore_tokens
 
     @classmethod
     @add_default_section_for_init("core/score/rouge1")
@@ -493,7 +495,7 @@ class Rouge1Score(Score):
         return rouge1_score(
             targets.long(),
             outputs.long(),
-            ignore_tokens=[0, 1],
+            ignore_tokens=self.ignore_tokens,
         )["f1"]
 
 
@@ -501,8 +503,10 @@ class Rouge1Score(Score):
 class Rouge2Score(Score):
     def __init__(
         self,
+        ignore_tokens: Optional[List[int]] = [0, 1],
     ):
         super().__init__()
+        self.ignore_tokens = ignore_tokens
 
     @classmethod
     @add_default_section_for_init("core/score/rouge2")
@@ -522,7 +526,7 @@ class Rouge2Score(Score):
         return rouge2_score(
             targets.long(),
             outputs.long(),
-            ignore_tokens=[0, 1],
+            ignore_tokens=self.ignore_tokens,
         )["f1"]
 
 
@@ -530,8 +534,10 @@ class Rouge2Score(Score):
 class RougelScore(Score):
     def __init__(
         self,
+        ignore_tokens: Optional[List[int]] = [0, 1],
     ):
         super().__init__()
+        self.ignore_tokens = ignore_tokens
 
     @classmethod
     @add_default_section_for_init("core/score/rougel")
@@ -551,7 +557,7 @@ class RougelScore(Score):
         return rougel_score(
             targets.long(),
             outputs.long(),
-            ignore_tokens=[0, 1],
+            ignore_tokens=self.ignore_tokens,
         )["f1"]
 
 

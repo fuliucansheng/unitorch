@@ -7,7 +7,6 @@ import json
 import numpy as np
 from unitorch import (
     is_deepspeed_available,
-    is_accelerate_available,
     is_megatron_available,
 )
 

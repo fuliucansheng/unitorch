@@ -96,28 +96,6 @@ class BloomProcessor(_BloomProcessor):
             attention_mask=outputs.attention_mask,
         )
 
-    @register_process("core/process/bloom/prompt")
-    def _prompt(
-        self,
-        text: str,
-        max_seq_length: Optional[int] = None,
-    ):
-        """
-        Generate a prompt using the Bloom model.
-
-        Args:
-            text (str): The input text.
-            max_seq_length (int, optional): The maximum sequence length. Defaults to None.
-
-        Returns:
-            TensorsInputs: The input tensors for prompt generation.
-        """
-        outputs = super().prompt(
-            text=text,
-            max_seq_length=max_seq_length,
-        )
-        return TensorsInputs(input_ids=outputs.input_ids)
-
     @register_process("core/process/bloom/generation/inputs")
     def _generation_inputs(
         self,

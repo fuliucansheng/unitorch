@@ -12,6 +12,7 @@ from unitorch.cli.webuis.utils.layouts import (
     create_blocks,
     create_pretrain_layout,
     create_controlnet_layout,
+    create_adapter_layout,
     create_lora_layout,
     create_freeu_layout,
 )

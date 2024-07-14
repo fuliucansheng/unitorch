@@ -14,13 +14,6 @@
 
 ::: unitorch.cli.models.bloom.BloomForClassification
 
-## BloomForPretrain
-
-!!! tip
-    **`core/model/pretrain/bloom`** is the section for configuration of BloomForPretrain.
-
-::: unitorch.cli.models.bloom.BloomForPretrain
-
 ## BloomForGeneration
 
 !!! tip

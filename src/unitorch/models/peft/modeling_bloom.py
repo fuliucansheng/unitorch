@@ -19,6 +19,7 @@ class BloomLoraForClassification(GenericPeftModel):
         "query_key_value.weight": "query_key_value.base_layer.weight",
         "query_key_value.bias": "query_key_value.base_layer.bias",
     }
+    modules_to_save_checkpoints = ["lora", "classifier"]
 
     def __init__(
         self,
@@ -30,6 +31,7 @@ class BloomLoraForClassification(GenericPeftModel):
         target_modules: Optional[Union[List[str], str]] = ["query_key_value"],
         num_classes: Optional[int] = 1,
         hidden_dropout_prob: Optional[float] = 0.1,
+        freeze_classifer: Optional[bool] = True,
         gradient_checkpointing: Optional[bool] = False,
     ):
         super().__init__()
@@ -47,6 +49,9 @@ class BloomLoraForClassification(GenericPeftModel):
         )
         self.dropout = nn.Dropout(hidden_dropout_prob)
         self.classifier = nn.Linear(self.config.hidden_size, num_classes)
+        if freeze_classifer:
+            for param in self.classifier.parameters():
+                param.requires_grad = False
         self.init_weights()
 
     def forward(

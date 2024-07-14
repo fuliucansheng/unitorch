@@ -8,10 +8,6 @@
 
 ::: unitorch.models.bloom.BloomForClassification
 
-## BloomForPretrain
-
-::: unitorch.models.bloom.BloomForPretrain
-
 ## BloomForGeneration
 
 ::: unitorch.models.bloom.BloomForGeneration

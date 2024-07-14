@@ -43,11 +43,14 @@ pretrained_bloom_infos = {
     },
 }
 
+pretrained_bloom_extensions_infos = {
+    "bloomz-lora-560m-cn": "https://unitorchazureblob.blob.core.windows.net/shares/models/china/slab/pytorch_model.bloom.slab.cn.lora16.bin"
+}
+
 import unitorch.cli.models.bloom.modeling
 import unitorch.cli.models.bloom.processing
 from unitorch.cli.models.bloom.modeling import (
     BloomForClassification,
-    BloomForPretrain,
     BloomForGeneration,
 )
 from unitorch.cli.models.bloom.processing import BloomProcessor

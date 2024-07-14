@@ -12,7 +12,7 @@ pretrained_mistral_infos = {
         "config": "https://huggingface.co/filipealmeida/Mistral-7B-Instruct-v0.1-sharded/resolve/main/config.json",
         "vocab": "https://huggingface.co/filipealmeida/Mistral-7B-Instruct-v0.1-sharded/resolve/main/tokenizer.model",
         "weight": [
-            f"https://huggingface.co/filipealmeida/Mistral-7B-Instruct-v0.1-sharded/resolve/main/model-{str(i).rjust(5, '0')}-of-00008.safetensors"
+            f"https://huggingface.co/filipealmeida/Mistral-7B-Instruct-v0.1-sharded/resolve/main/pytorch_model-{str(i).rjust(5, '0')}-of-00008.bin"
             for i in range(1, 9)
         ],
     },
@@ -26,9 +26,12 @@ pretrained_mistral_infos = {
     },
 }
 
+pretrained_mistral_extensions_infos = {}
+
 import unitorch.cli.models.mistral.modeling
 import unitorch.cli.models.mistral.processing
 from unitorch.cli.models.mistral.modeling import (
+    MistralForClassification,
     MistralForGeneration,
 )
 from unitorch.cli.models.mistral.processing import MistralProcessor

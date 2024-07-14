@@ -12,14 +12,16 @@ from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from transformers import BloomModel, BloomConfig, BloomForCausalLM
 from unitorch.utils.decorators import replace
 from unitorch.models import GenericModel, GenericOutputs
+from unitorch.models.peft import PeftWeightLoaderMixin
 
 
-class BloomForClassification(GenericModel):
+class BloomForClassification(GenericModel, PeftWeightLoaderMixin):
     """
     A classification model based on the Bloom architecture.
     """
 
     prefix_keys_in_state_dict = {"^(?!transformer\.).*": "transformer."}
+    replace_keys_in_peft_state_dict = {"peft_model.base_model.model.": "transformer."}
 
     def __init__(
         self,
@@ -70,78 +72,13 @@ class BloomForClassification(GenericModel):
         return logits
 
 
-class BloomForPretrain(GenericModel):
-    """
-    A pretraining model based on the Bloom architecture.
-    """
-
-    prefix_keys_in_state_dict = {"^(?!transformer\.).*": "transformer."}
-
-    def __init__(
-        self,
-        config_path: str,
-        gradient_checkpointing: Optional[bool] = False,
-    ):
-        """
-        Initializes a new instance of the BloomForPretrain model.
-
-        Args:
-            config_path (str): The path to the configuration file for the Bloom model.
-            gradient_checkpointing (Optional[bool]): Whether to use gradient checkpointing. Defaults to False.
-        """
-        super().__init__()
-        self.config = BloomConfig.from_json_file(config_path)
-        self.config.gradient_checkpointing = gradient_checkpointing
-        self.transformer = BloomModel(self.config)
-        self.lm_head = nn.Linear(
-            self.config.hidden_size, self.config.vocab_size, bias=False
-        )
-        self.init_weights()
-
-    def forward(
-        self,
-        input_ids: torch.Tensor,
-        attention_mask: torch.Tensor,
-        input_ids_label: torch.Tensor,
-        attention_mask_label: torch.Tensor,
-    ) -> torch.Tensor:
-        """
-        Forward pass of the BloomForPretrain model.
-
-        Args:
-            input_ids (torch.Tensor): The input token IDs.
-            attention_mask (torch.Tensor): The attention mask tensor.
-            input_ids_label (torch.Tensor): The input token IDs for the labeled data.
-            attention_mask_label (torch.Tensor): The attention mask tensor for the labeled data.
-
-        Returns:
-            (torch.Tensor):The computed loss value.
-        """
-        outputs = self.transformer(
-            input_ids=input_ids,
-            attention_mask=attention_mask,
-        )
-        predict_logits = self.lm_head(outputs[0])
-        batch_size, seq_len, num_classes = predict_logits.size()
-        logits = predict_logits.contiguous().view(batch_size * seq_len, num_classes)
-        targets = input_ids_label.contiguous().view(-1).long()
-        masks = attention_mask_label.contiguous().view(-1)
-        loss = nn.CrossEntropyLoss(reduction="none")(logits, targets)
-        loss = loss * masks.float()
-        loss = loss.contiguous().view(batch_size, seq_len).sum(1) / torch.max(
-            masks.contiguous().view(batch_size, seq_len).float().sum(1),
-            torch.ones(batch_size).to(masks.device),
-        )
-        loss = torch.mean(loss)
-        return loss
-
-
-class BloomForGeneration(GenericModel):
+class BloomForGeneration(GenericModel, PeftWeightLoaderMixin):
     """
     A generation model based on the Bloom architecture.
     """
 
     prefix_keys_in_state_dict = {"^(?!model\.).*": "model.transformer."}
+    replace_keys_in_peft_state_dict = {"peft_model.base_model.": ""}
 
     def __init__(
         self,

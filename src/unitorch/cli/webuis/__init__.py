@@ -63,6 +63,7 @@ from unitorch.cli.webuis.utils import (
     create_blocks,
     create_pretrain_layout,
     create_controlnet_layout,
+    create_adapter_layout,
     create_lora_layout,
     create_freeu_layout,
 )
@@ -74,6 +75,7 @@ import unitorch.cli.webuis.bria
 import unitorch.cli.webuis.detr
 import unitorch.cli.webuis.dpt
 import unitorch.cli.webuis.llama
+import unitorch.cli.webuis.llava.mistral_clip
 import unitorch.cli.webuis.mistral
 import unitorch.cli.webuis.sam
 

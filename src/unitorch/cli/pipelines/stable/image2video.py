@@ -7,7 +7,6 @@ import torch
 from PIL import Image
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from diffusers.utils import numpy_to_pil
-from unitorch import is_xformers_available
 from diffusers.models import ControlNetModel
 from diffusers.pipelines import (
     StableDiffusionPipeline,
@@ -20,6 +19,8 @@ from diffusers.pipelines import (
     StableDiffusionControlNetImg2ImgPipeline,
     StableDiffusionControlNetInpaintPipeline,
 )
+from unitorch import is_xformers_available
+from unitorch.utils import is_remote_url
 from unitorch.models.diffusers import StableForImage2VideoGeneration
 from unitorch.models.diffusers import StableVideoProcessor
 from unitorch.models.diffusers.modeling_stable import StableVideoDiffusionPipelineV2
@@ -93,26 +94,26 @@ class StableForImage2VideoGenerationPipeline(StableForImage2VideoGeneration):
     ):
         config.set_default_section("core/pipeline/stable/image2video")
         pretrained_name = config.getoption("pretrained_name", pretrained_name)
-        pretrain_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
+        pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
 
         config_path = config.getoption("config_path", config_path)
         config_path = pop_value(
             config_path,
-            nested_dict_value(pretrain_infos, "unet", "config"),
+            nested_dict_value(pretrained_infos, "unet", "config"),
         )
         config_path = cached_path(config_path)
 
         image_config_path = config.getoption("image_config_path", image_config_path)
         image_config_path = pop_value(
             image_config_path,
-            nested_dict_value(pretrain_infos, "image", "config"),
+            nested_dict_value(pretrained_infos, "image", "config"),
         )
         image_config_path = cached_path(image_config_path)
 
         vae_config_path = config.getoption("vae_config_path", vae_config_path)
         vae_config_path = pop_value(
             vae_config_path,
-            nested_dict_value(pretrain_infos, "vae", "config"),
+            nested_dict_value(pretrained_infos, "vae", "config"),
         )
         vae_config_path = cached_path(vae_config_path)
 
@@ -121,7 +122,7 @@ class StableForImage2VideoGenerationPipeline(StableForImage2VideoGeneration):
         )
         scheduler_config_path = pop_value(
             scheduler_config_path,
-            nested_dict_value(pretrain_infos, "scheduler"),
+            nested_dict_value(pretrained_infos, "scheduler"),
         )
         scheduler_config_path = cached_path(scheduler_config_path)
 
@@ -130,7 +131,7 @@ class StableForImage2VideoGenerationPipeline(StableForImage2VideoGeneration):
         )
         image_process_config_path = pop_value(
             image_process_config_path,
-            nested_dict_value(pretrain_infos, "image", "vision_config"),
+            nested_dict_value(pretrained_infos, "image", "vision_config"),
         )
         image_process_config_path = cached_path(image_process_config_path)
 
@@ -144,11 +145,11 @@ class StableForImage2VideoGenerationPipeline(StableForImage2VideoGeneration):
         enable_xformers = config.getoption("enable_xformers", True)
 
         state_dict = None
-        if weight_path is None and pretrain_infos is not None:
+        if weight_path is None and pretrained_infos is not None:
             state_dict = [
-                load_weight(nested_dict_value(pretrain_infos, "unet", "weight")),
-                load_weight(nested_dict_value(pretrain_infos, "image", "weight")),
-                load_weight(nested_dict_value(pretrain_infos, "vae", "weight")),
+                load_weight(nested_dict_value(pretrained_infos, "unet", "weight")),
+                load_weight(nested_dict_value(pretrained_infos, "image", "weight")),
+                load_weight(nested_dict_value(pretrained_infos, "vae", "weight")),
             ]
 
         inst = cls(
@@ -182,6 +183,11 @@ class StableForImage2VideoGenerationPipeline(StableForImage2VideoGeneration):
         num_timesteps: Optional[int] = 50,
         seed: Optional[int] = 1123,
         scheduler: Optional[str] = None,
+        lora_checkpoints: Optional[Union[str, List[str]]] = None,
+        lora_weights: Optional[Union[float, List[float]]] = 1.0,
+        lora_alphas: Optional[Union[float, List[float]]] = 32,
+        lora_urls: Optional[Union[str, List[str]]] = None,
+        lora_files: Optional[Union[str, List[str]]] = None,
     ):
         image = image.convert("RGB")
         inputs = self.processor.image2video_inputs(
@@ -211,6 +217,80 @@ class StableForImage2VideoGenerationPipeline(StableForImage2VideoGeneration):
             k: v.to(device=self._device) if v is not None else v
             for k, v in inputs.items()
         }
+        if isinstance(lora_checkpoints, str):
+            lora_checkpoints = [lora_checkpoints]
+        if isinstance(lora_weights, float):
+            lora_weights = [lora_weights]
+        if isinstance(lora_alphas, float):
+            lora_alphas = [lora_alphas]
+        if isinstance(lora_urls, str):
+            lora_urls = [lora_urls]
+        if isinstance(lora_files, str):
+            lora_files = [lora_files]
+
+        if lora_checkpoints is not None:
+            _lora_checkpoints = list(
+                zip(
+                    *[
+                        (ckpt, weight, alpha)
+                        for ckpt, weight, alpha in zip(
+                            lora_checkpoints, lora_weights, lora_alphas
+                        )
+                        if ckpt is not None
+                    ]
+                )
+            )
+            if len(_lora_checkpoints) == 0:
+                lora_checkpoints = None
+            else:
+                lora_checkpoints, lora_weights, lora_alphas = _lora_checkpoints
+                lora_checkpoints = [
+                    nested_dict_value(pretrained_stable_extensions_infos, ckpt)
+                    for ckpt in lora_checkpoints
+                ]
+        if lora_urls is not None:
+            _lora_urls = list(
+                zip(
+                    *[
+                        (url, weight, alpha)
+                        for url, weight, alpha in zip(
+                            lora_urls, lora_weights, lora_alphas
+                        )
+                        if is_remote_url(url)
+                    ]
+                )
+            )
+            if len(_lora_urls) == 0:
+                lora_urls = None
+            else:
+                lora_urls, lora_weights, lora_alphas = _lora_urls
+        if lora_files is not None:
+            _lora_files = list(
+                zip(
+                    *[
+                        (file, weight, alpha)
+                        for file, weight, alpha in zip(
+                            lora_files, lora_weights, lora_alphas
+                        )
+                        if file is not None
+                    ]
+                )
+            )
+            if len(_lora_files) == 0:
+                lora_files = None
+            else:
+                lora_files, lora_weights, lora_alphas = _lora_files
+
+        lora_files = pop_value(
+            lora_checkpoints,
+            lora_urls,
+            lora_files,
+            check_none=False,
+        )
+        if lora_files is not None:
+            self.load_lora_weights(
+                lora_files, lora_weights=lora_weights, lora_alphas=lora_alphas
+            )
 
         if self._enable_cpu_offload and self._device != "cpu":
             self.pipeline.enable_model_cpu_offload(self._device)
@@ -237,6 +317,7 @@ class StableForImage2VideoGenerationPipeline(StableForImage2VideoGeneration):
             ),
             output_type="pt",
         )
+        self.unload_lora_weights()
 
         frames = tensor2vid(outputs.frames)
         name = export_to_video(frames)

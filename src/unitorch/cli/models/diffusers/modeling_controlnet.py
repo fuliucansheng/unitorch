@@ -33,7 +33,7 @@ class ControlNetForText2ImageGeneration(_ControlNetForText2ImageGeneration):
         config_path: str,
         text_config_path: str,
         vae_config_path: str,
-        controlnet_config_path: str,
+        controlnet_configs_path: Union[str, List[str]],
         scheduler_config_path: str,
         quant_config_path: Optional[str] = None,
         image_size: Optional[int] = None,
@@ -50,7 +50,7 @@ class ControlNetForText2ImageGeneration(_ControlNetForText2ImageGeneration):
             config_path=config_path,
             text_config_path=text_config_path,
             vae_config_path=vae_config_path,
-            controlnet_config_path=controlnet_config_path,
+            controlnet_configs_path=controlnet_configs_path,
             scheduler_config_path=scheduler_config_path,
             quant_config_path=quant_config_path,
             image_size=image_size,
@@ -69,47 +69,61 @@ class ControlNetForText2ImageGeneration(_ControlNetForText2ImageGeneration):
     def from_core_configure(cls, config, **kwargs):
         config.set_default_section("core/model/diffusers/text2image/controlnet")
         pretrained_name = config.getoption("pretrained_name", "stable-v1.5")
-        pretrain_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
+        pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
 
-        pretrained_controlnet_name = config.getoption(
-            "pretrained_controlnet_name", "stable-v1.5-controlnet-canny"
+        pretrained_controlnet_names = config.getoption(
+            "pretrained_controlnet_names", "stable-v1.5-controlnet-canny"
         )
-        pretrain_controlnet_infos = nested_dict_value(
-            pretrained_stable_extensions_infos, pretrained_controlnet_name
-        )
+        if isinstance(pretrained_controlnet_names, str):
+            pretrained_controlnet_names = [pretrained_controlnet_names]
+
+        pretrained_controlnet_infos = [
+            nested_dict_value(
+                pretrained_stable_extensions_infos, pretrained_controlnet_name
+            )
+            for pretrained_controlnet_name in pretrained_controlnet_names
+        ]
 
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
             config_path,
-            nested_dict_value(pretrain_infos, "unet", "config"),
+            nested_dict_value(pretrained_infos, "unet", "config"),
         )
         config_path = cached_path(config_path)
 
         text_config_path = config.getoption("text_config_path", None)
         text_config_path = pop_value(
             text_config_path,
-            nested_dict_value(pretrain_infos, "text", "config"),
+            nested_dict_value(pretrained_infos, "text", "config"),
         )
         text_config_path = cached_path(text_config_path)
 
         vae_config_path = config.getoption("vae_config_path", None)
         vae_config_path = pop_value(
             vae_config_path,
-            nested_dict_value(pretrain_infos, "vae", "config"),
+            nested_dict_value(pretrained_infos, "vae", "config"),
         )
         vae_config_path = cached_path(vae_config_path)
 
-        controlnet_config_path = config.getoption("controlnet_config_path", None)
-        controlnet_config_path = pop_value(
-            controlnet_config_path,
-            nested_dict_value(pretrain_controlnet_infos, "controlnet", "config"),
+        controlnet_configs_path = config.getoption("controlnet_configs_path", None)
+        if isinstance(controlnet_configs_path, str):
+            controlnet_configs_path = [controlnet_configs_path]
+        controlnet_configs_path = pop_value(
+            controlnet_configs_path,
+            [
+                nested_dict_value(pretrained_controlnet_info, "controlnet", "config")
+                for pretrained_controlnet_info in pretrained_controlnet_infos
+            ],
         )
-        controlnet_config_path = cached_path(controlnet_config_path)
+        controlnet_configs_path = [
+            cached_path(controlnet_config_path)
+            for controlnet_config_path in controlnet_configs_path
+        ]
 
         scheduler_config_path = config.getoption("scheduler_config_path", None)
         scheduler_config_path = pop_value(
             scheduler_config_path,
-            nested_dict_value(pretrain_infos, "scheduler"),
+            nested_dict_value(pretrained_infos, "scheduler"),
         )
         scheduler_config_path = cached_path(scheduler_config_path)
 
@@ -131,7 +145,7 @@ class ControlNetForText2ImageGeneration(_ControlNetForText2ImageGeneration):
             config_path=config_path,
             text_config_path=text_config_path,
             vae_config_path=vae_config_path,
-            controlnet_config_path=controlnet_config_path,
+            controlnet_configs_path=controlnet_configs_path,
             scheduler_config_path=scheduler_config_path,
             quant_config_path=quant_config_path,
             image_size=image_size,
@@ -148,29 +162,72 @@ class ControlNetForText2ImageGeneration(_ControlNetForText2ImageGeneration):
         weight_path = config.getoption("pretrained_weight_path", None)
 
         state_dict = None
-        if weight_path is None and pretrain_infos is not None:
+        if weight_path is None and pretrained_infos is not None:
             state_dict = [
                 load_weight(
-                    nested_dict_value(pretrain_infos, "unet", "weight"),
+                    nested_dict_value(pretrained_infos, "unet", "weight"),
                 ),
-                load_weight(nested_dict_value(pretrain_infos, "text", "weight")),
-                load_weight(nested_dict_value(pretrain_infos, "vae", "weight")),
-                load_weight(
-                    nested_dict_value(
-                        pretrain_controlnet_infos, "controlnet", "weight"
-                    ),
-                    prefix_keys={"": "controlnet."},
-                ),
+                load_weight(nested_dict_value(pretrained_infos, "text", "weight")),
+                load_weight(nested_dict_value(pretrained_infos, "vae", "weight")),
             ]
+            if len(pretrained_controlnet_infos) > 1:
+                for i, pretrained_controlnet_info in enumerate(
+                    pretrained_controlnet_infos
+                ):
+                    state_dict.append(
+                        load_weight(
+                            nested_dict_value(
+                                pretrained_controlnet_info, "controlnet", "weight"
+                            ),
+                            prefix_keys={"": f"controlnet.nets.{i}."},
+                        )
+                    )
+            else:
+                state_dict.append(
+                    load_weight(
+                        nested_dict_value(
+                            pretrained_controlnet_infos[0], "controlnet", "weight"
+                        ),
+                        prefix_keys={"": "controlnet."},
+                    )
+                )
         elif weight_path is not None:
             state_dict = load_weight(weight_path)
 
         if state_dict is not None:
             inst.from_pretrained(state_dict=state_dict)
 
+        pretrained_lora_names = config.getoption("pretrained_lora_names", None)
+        pretrained_lora_weights = config.getoption("pretrained_lora_weights", 1.0)
+
+        if isinstance(pretrained_lora_names, str):
+            pretrained_lora_weights_path = nested_dict_value(
+                pretrained_stable_extensions_infos,
+                pretrained_lora_names,
+                "lora",
+                "weight",
+            )
+        elif isinstance(pretrained_lora_names, list):
+            pretrained_lora_weights_path = [
+                nested_dict_value(
+                    pretrained_stable_extensions_infos, name, "lora", "weight"
+                )
+                for name in pretrained_lora_names
+            ]
+        else:
+            pretrained_lora_weights_path = None
+
+        lora_weights_path = config.getoption(
+            "pretrained_lora_weights_path", pretrained_lora_weights_path
+        )
+        if lora_weights_path is not None:
+            inst.load_lora_weights(
+                lora_weights_path, pretrained_lora_weights, replace_keys={}
+            )
+
         return inst
 
-    @autocast()
+    # @autocast()
     def forward(
         self,
         input_ids: torch.Tensor,
@@ -187,7 +244,7 @@ class ControlNetForText2ImageGeneration(_ControlNetForText2ImageGeneration):
         return LossOutputs(loss=loss)
 
     @add_default_section_for_function("core/model/diffusers/text2image/controlnet")
-    @autocast()
+    # @autocast()
     def generate(
         self,
         input_ids: torch.Tensor,
@@ -198,8 +255,12 @@ class ControlNetForText2ImageGeneration(_ControlNetForText2ImageGeneration):
         height: Optional[int] = 512,
         width: Optional[int] = 512,
         guidance_scale: Optional[float] = 7.5,
-        controlnet_conditioning_scale: Optional[float] = 1.0,
+        controlnet_conditioning_scale: Optional[float] = None,
     ):
+        if controlnet_conditioning_scale is None:
+            controlnet_conditioning_scale = (
+                [1.0] * self.num_controlnets if self.num_controlnets > 1 else 1.0
+            )
         outputs = super().generate(
             input_ids=input_ids,
             negative_input_ids=negative_input_ids,
@@ -224,7 +285,7 @@ class ControlNetForImage2ImageGeneration(_ControlNetForImage2ImageGeneration):
         config_path: str,
         text_config_path: str,
         vae_config_path: str,
-        controlnet_config_path: str,
+        controlnet_configs_path: Union[str, List[str]],
         scheduler_config_path: str,
         quant_config_path: Optional[str] = None,
         image_size: Optional[int] = None,
@@ -241,7 +302,7 @@ class ControlNetForImage2ImageGeneration(_ControlNetForImage2ImageGeneration):
             config_path=config_path,
             text_config_path=text_config_path,
             vae_config_path=vae_config_path,
-            controlnet_config_path=controlnet_config_path,
+            controlnet_configs_path=controlnet_configs_path,
             scheduler_config_path=scheduler_config_path,
             quant_config_path=quant_config_path,
             image_size=image_size,
@@ -260,47 +321,61 @@ class ControlNetForImage2ImageGeneration(_ControlNetForImage2ImageGeneration):
     def from_core_configure(cls, config, **kwargs):
         config.set_default_section("core/model/diffusers/image2image/controlnet")
         pretrained_name = config.getoption("pretrained_name", "stable-v1.5")
-        pretrain_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
+        pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
 
-        pretrained_controlnet_name = config.getoption(
-            "pretrained_controlnet_name", "stable-v1.5-controlnet-canny"
+        pretrained_controlnet_names = config.getoption(
+            "pretrained_controlnet_names", "stable-v1.5-controlnet-canny"
         )
-        pretrain_controlnet_infos = nested_dict_value(
-            pretrained_stable_extensions_infos, pretrained_controlnet_name
-        )
+        if isinstance(pretrained_controlnet_names, str):
+            pretrained_controlnet_names = [pretrained_controlnet_names]
+
+        pretrained_controlnet_infos = [
+            nested_dict_value(
+                pretrained_stable_extensions_infos, pretrained_controlnet_name
+            )
+            for pretrained_controlnet_name in pretrained_controlnet_names
+        ]
 
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
             config_path,
-            nested_dict_value(pretrain_infos, "unet", "config"),
+            nested_dict_value(pretrained_infos, "unet", "config"),
         )
         config_path = cached_path(config_path)
 
         text_config_path = config.getoption("text_config_path", None)
         text_config_path = pop_value(
             text_config_path,
-            nested_dict_value(pretrain_infos, "text", "config"),
+            nested_dict_value(pretrained_infos, "text", "config"),
         )
         text_config_path = cached_path(text_config_path)
 
         vae_config_path = config.getoption("vae_config_path", None)
         vae_config_path = pop_value(
             vae_config_path,
-            nested_dict_value(pretrain_infos, "vae", "config"),
+            nested_dict_value(pretrained_infos, "vae", "config"),
         )
         vae_config_path = cached_path(vae_config_path)
 
-        controlnet_config_path = config.getoption("controlnet_config_path", None)
-        controlnet_config_path = pop_value(
-            controlnet_config_path,
-            nested_dict_value(pretrain_controlnet_infos, "controlnet", "config"),
+        controlnet_configs_path = config.getoption("controlnet_configs_path", None)
+        if isinstance(controlnet_configs_path, str):
+            controlnet_configs_path = [controlnet_configs_path]
+        controlnet_configs_path = pop_value(
+            controlnet_configs_path,
+            [
+                nested_dict_value(pretrained_controlnet_info, "controlnet", "config")
+                for pretrained_controlnet_info in pretrained_controlnet_infos
+            ],
         )
-        controlnet_config_path = cached_path(controlnet_config_path)
+        controlnet_configs_path = [
+            cached_path(controlnet_config_path)
+            for controlnet_config_path in controlnet_configs_path
+        ]
 
         scheduler_config_path = config.getoption("scheduler_config_path", None)
         scheduler_config_path = pop_value(
             scheduler_config_path,
-            nested_dict_value(pretrain_infos, "scheduler"),
+            nested_dict_value(pretrained_infos, "scheduler"),
         )
         scheduler_config_path = cached_path(scheduler_config_path)
 
@@ -322,7 +397,7 @@ class ControlNetForImage2ImageGeneration(_ControlNetForImage2ImageGeneration):
             config_path=config_path,
             text_config_path=text_config_path,
             vae_config_path=vae_config_path,
-            controlnet_config_path=controlnet_config_path,
+            controlnet_configs_path=controlnet_configs_path,
             scheduler_config_path=scheduler_config_path,
             quant_config_path=quant_config_path,
             image_size=image_size,
@@ -339,34 +414,78 @@ class ControlNetForImage2ImageGeneration(_ControlNetForImage2ImageGeneration):
         weight_path = config.getoption("pretrained_weight_path", None)
 
         state_dict = None
-        if weight_path is None and pretrain_infos is not None:
+        if weight_path is None and pretrained_infos is not None:
             state_dict = [
-                load_weight(nested_dict_value(pretrain_infos, "unet", "weight")),
-                load_weight(nested_dict_value(pretrain_infos, "text", "weight")),
-                load_weight(nested_dict_value(pretrain_infos, "vae", "weight")),
-                load_weight(
-                    nested_dict_value(
-                        pretrain_controlnet_infos, "controlnet", "weight"
-                    ),
-                    prefix_keys={"": "controlnet."},
-                ),
+                load_weight(nested_dict_value(pretrained_infos, "unet", "weight")),
+                load_weight(nested_dict_value(pretrained_infos, "text", "weight")),
+                load_weight(nested_dict_value(pretrained_infos, "vae", "weight")),
             ]
+            if len(pretrained_controlnet_infos) > 1:
+                for i, pretrained_controlnet_info in enumerate(
+                    pretrained_controlnet_infos
+                ):
+                    state_dict.append(
+                        load_weight(
+                            nested_dict_value(
+                                pretrained_controlnet_info, "controlnet", "weight"
+                            ),
+                            prefix_keys={"": f"controlnet.{i}."},
+                        )
+                    )
+            else:
+                state_dict.append(
+                    load_weight(
+                        nested_dict_value(
+                            pretrained_controlnet_infos[0], "controlnet", "weight"
+                        ),
+                        prefix_keys={"": "controlnet."},
+                    )
+                )
+
         elif weight_path is not None:
             state_dict = load_weight(weight_path)
 
         if state_dict is not None:
             inst.from_pretrained(state_dict=state_dict)
 
+        pretrained_lora_names = config.getoption("pretrained_lora_names", None)
+        pretrained_lora_weights = config.getoption("pretrained_lora_weights", 1.0)
+
+        if isinstance(pretrained_lora_names, str):
+            pretrained_lora_weights_path = nested_dict_value(
+                pretrained_stable_extensions_infos,
+                pretrained_lora_names,
+                "lora",
+                "weight",
+            )
+        elif isinstance(pretrained_lora_names, list):
+            pretrained_lora_weights_path = [
+                nested_dict_value(
+                    pretrained_stable_extensions_infos, name, "lora", "weight"
+                )
+                for name in pretrained_lora_names
+            ]
+        else:
+            pretrained_lora_weights_path = None
+
+        lora_weights_path = config.getoption(
+            "pretrained_lora_weights_path", pretrained_lora_weights_path
+        )
+        if lora_weights_path is not None:
+            inst.load_lora_weights(
+                lora_weights_path, pretrained_lora_weights, replace_keys={}
+            )
+
         return inst
 
-    @autocast()
+    # @autocast()
     def forward(
         self,
     ):
         raise NotImplementedError
 
     @add_default_section_for_function("core/model/diffusers/image2image/controlnet")
-    @autocast()
+    # @autocast()
     def generate(
         self,
         input_ids: torch.Tensor,
@@ -400,7 +519,7 @@ class ControlNetForImageInpainting(_ControlNetForImageInpainting):
         config_path: str,
         text_config_path: str,
         vae_config_path: str,
-        controlnet_config_path: str,
+        controlnet_configs_path: Union[str, List[str]],
         scheduler_config_path: str,
         quant_config_path: Optional[str] = None,
         image_size: Optional[int] = None,
@@ -417,7 +536,7 @@ class ControlNetForImageInpainting(_ControlNetForImageInpainting):
             config_path=config_path,
             text_config_path=text_config_path,
             vae_config_path=vae_config_path,
-            controlnet_config_path=controlnet_config_path,
+            controlnet_configs_path=controlnet_configs_path,
             scheduler_config_path=scheduler_config_path,
             quant_config_path=quant_config_path,
             image_size=image_size,
@@ -436,47 +555,60 @@ class ControlNetForImageInpainting(_ControlNetForImageInpainting):
     def from_core_configure(cls, config, **kwargs):
         config.set_default_section("core/model/diffusers/inpainting/controlnet")
         pretrained_name = config.getoption("pretrained_name", "stable-v1.5")
-        pretrain_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
+        pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
 
-        pretrained_controlnet_name = config.getoption(
-            "pretrained_controlnet_name", "stable-v1.5-controlnet-canny"
+        pretrained_controlnet_names = config.getoption(
+            "pretrained_controlnet_names", "stable-v1.5-controlnet-canny"
         )
-        pretrain_controlnet_infos = nested_dict_value(
-            pretrained_stable_extensions_infos, pretrained_controlnet_name
-        )
+        if isinstance(pretrained_controlnet_names, str):
+            pretrained_controlnet_names = [pretrained_controlnet_names]
+        pretrained_controlnet_infos = [
+            nested_dict_value(
+                pretrained_stable_extensions_infos, pretrained_controlnet_name
+            )
+            for pretrained_controlnet_name in pretrained_controlnet_names
+        ]
 
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
             config_path,
-            nested_dict_value(pretrain_infos, "unet", "config"),
+            nested_dict_value(pretrained_infos, "unet", "config"),
         )
         config_path = cached_path(config_path)
 
         text_config_path = config.getoption("text_config_path", None)
         text_config_path = pop_value(
             text_config_path,
-            nested_dict_value(pretrain_infos, "text", "config"),
+            nested_dict_value(pretrained_infos, "text", "config"),
         )
         text_config_path = cached_path(text_config_path)
 
         vae_config_path = config.getoption("vae_config_path", None)
         vae_config_path = pop_value(
             vae_config_path,
-            nested_dict_value(pretrain_infos, "vae", "config"),
+            nested_dict_value(pretrained_infos, "vae", "config"),
         )
         vae_config_path = cached_path(vae_config_path)
 
-        controlnet_config_path = config.getoption("controlnet_config_path", None)
-        controlnet_config_path = pop_value(
-            controlnet_config_path,
-            nested_dict_value(pretrain_controlnet_infos, "controlnet", "config"),
+        controlnet_configs_path = config.getoption("controlnet_configs_path", None)
+        if isinstance(controlnet_configs_path, str):
+            controlnet_configs_path = [controlnet_configs_path]
+        controlnet_configs_path = pop_value(
+            controlnet_configs_path,
+            [
+                nested_dict_value(pretrained_controlnet_info, "controlnet", "config")
+                for pretrained_controlnet_info in pretrained_controlnet_infos
+            ],
         )
-        controlnet_config_path = cached_path(controlnet_config_path)
+        controlnet_configs_path = [
+            cached_path(controlnet_config_path)
+            for controlnet_config_path in controlnet_configs_path
+        ]
 
         scheduler_config_path = config.getoption("scheduler_config_path", None)
         scheduler_config_path = pop_value(
             scheduler_config_path,
-            nested_dict_value(pretrain_infos, "scheduler"),
+            nested_dict_value(pretrained_infos, "scheduler"),
         )
         scheduler_config_path = cached_path(scheduler_config_path)
 
@@ -498,7 +630,7 @@ class ControlNetForImageInpainting(_ControlNetForImageInpainting):
             config_path=config_path,
             text_config_path=text_config_path,
             vae_config_path=vae_config_path,
-            controlnet_config_path=controlnet_config_path,
+            controlnet_configs_path=controlnet_configs_path,
             scheduler_config_path=scheduler_config_path,
             quant_config_path=quant_config_path,
             image_size=image_size,
@@ -515,34 +647,77 @@ class ControlNetForImageInpainting(_ControlNetForImageInpainting):
         weight_path = config.getoption("pretrained_weight_path", None)
 
         state_dict = None
-        if weight_path is None and pretrain_infos is not None:
+        if weight_path is None and pretrained_infos is not None:
             state_dict = [
-                load_weight(nested_dict_value(pretrain_infos, "unet", "weight")),
-                load_weight(nested_dict_value(pretrain_infos, "text", "weight")),
-                load_weight(nested_dict_value(pretrain_infos, "vae", "weight")),
-                load_weight(
-                    nested_dict_value(
-                        pretrain_controlnet_infos, "controlnet", "weight"
-                    ),
-                    prefix_keys={"": "controlnet."},
-                ),
+                load_weight(nested_dict_value(pretrained_infos, "unet", "weight")),
+                load_weight(nested_dict_value(pretrained_infos, "text", "weight")),
+                load_weight(nested_dict_value(pretrained_infos, "vae", "weight")),
             ]
+            if len(pretrained_controlnet_infos) > 1:
+                for i, pretrained_controlnet_info in enumerate(
+                    pretrained_controlnet_infos
+                ):
+                    state_dict.append(
+                        load_weight(
+                            nested_dict_value(
+                                pretrained_controlnet_info, "controlnet", "weight"
+                            ),
+                            prefix_keys={"": f"controlnet.{i}."},
+                        )
+                    )
+            else:
+                state_dict.append(
+                    load_weight(
+                        nested_dict_value(
+                            pretrained_controlnet_infos[0], "controlnet", "weight"
+                        ),
+                        prefix_keys={"": "controlnet."},
+                    )
+                )
         elif weight_path is not None:
             state_dict = load_weight(weight_path)
 
         if state_dict is not None:
             inst.from_pretrained(state_dict=state_dict)
 
+        pretrained_lora_names = config.getoption("pretrained_lora_names", None)
+        pretrained_lora_weights = config.getoption("pretrained_lora_weights", 1.0)
+
+        if isinstance(pretrained_lora_names, str):
+            pretrained_lora_weights_path = nested_dict_value(
+                pretrained_stable_extensions_infos,
+                pretrained_lora_names,
+                "lora",
+                "weight",
+            )
+        elif isinstance(pretrained_lora_names, list):
+            pretrained_lora_weights_path = [
+                nested_dict_value(
+                    pretrained_stable_extensions_infos, name, "lora", "weight"
+                )
+                for name in pretrained_lora_names
+            ]
+        else:
+            pretrained_lora_weights_path = None
+
+        lora_weights_path = config.getoption(
+            "pretrained_lora_weights_path", pretrained_lora_weights_path
+        )
+        if lora_weights_path is not None:
+            inst.load_lora_weights(
+                lora_weights_path, pretrained_lora_weights, replace_keys={}
+            )
+
         return inst
 
-    @autocast()
+    # @autocast()
     def forward(
         self,
     ):
         raise NotImplementedError
 
     @add_default_section_for_function("core/model/diffusers/inpainting/controlnet")
-    @autocast()
+    # @autocast()
     def generate(
         self,
         input_ids: torch.Tensor,

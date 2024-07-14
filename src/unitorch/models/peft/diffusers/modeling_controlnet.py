@@ -15,6 +15,7 @@ from diffusers.models import (
     UNet2DConditionModel,
     AutoencoderKL,
 )
+from diffusers.pipelines.controlnet import MultiControlNetModel
 from diffusers.pipelines import (
     StableDiffusionControlNetPipeline,
     StableDiffusionControlNetImg2ImgPipeline,
@@ -59,7 +60,7 @@ class GenericControlNetLoraModel(GenericPeftModel, QuantizationMixin):
         config_path: str,
         text_config_path: str,
         vae_config_path: str,
-        controlnet_config_path: str,
+        controlnet_configs_path: Union[str, List[str]],
         scheduler_config_path: str,
         quant_config_path: Optional[str] = None,
         image_size: Optional[int] = None,
@@ -68,6 +69,7 @@ class GenericControlNetLoraModel(GenericPeftModel, QuantizationMixin):
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         lora_r: Optional[int] = 16,
+        lora_alpha: Optional[int] = 32,
         seed: Optional[int] = 1123,
     ):
         super().__init__()
@@ -87,8 +89,23 @@ class GenericControlNetLoraModel(GenericPeftModel, QuantizationMixin):
         self.text = CLIPTextModel(text_config)
         vae_config_dict = json.load(open(vae_config_path))
         self.vae = AutoencoderKL.from_config(vae_config_dict)
-        controlnet_config_dict = json.load(open(controlnet_config_path))
-        self.controlnet = ControlNetModel.from_config(controlnet_config_dict)
+
+        if isinstance(controlnet_configs_path, list):
+            controlnets = []
+            for controlnet_config_path in controlnet_configs_path:
+                controlnet_config_dict = json.load(open(controlnet_config_path))
+                controlnets.append(ControlNetModel.from_config(controlnet_config_dict))
+            self.num_controlnets = len(controlnets)
+            self.controlnet = MultiControlNetModel(
+                controlnets=controlnets,
+            )
+        elif isinstance(controlnet_configs_path, str):
+            controlnet_config_dict = json.load(open(controlnet_configs_path))
+            self.controlnet = ControlNetModel.from_config(controlnet_config_dict)
+            self.num_controlnets = 1
+        else:
+            self.controlnet = None
+            self.num_controlnets = 0
 
         scheduler_config_dict = json.load(open(scheduler_config_path))
         scheduler_class_name = scheduler_config_dict.get("_class_name", "DDPMScheduler")
@@ -109,7 +126,7 @@ class GenericControlNetLoraModel(GenericPeftModel, QuantizationMixin):
             param.requires_grad = False
         lora_config = LoraConfig(
             r=lora_r,
-            lora_alpha=lora_r,
+            lora_alpha=lora_alpha,
             init_lora_weights="gaussian",
             target_modules=["to_k", "to_q", "to_v", "to_out.0"],
         )
@@ -124,7 +141,7 @@ class ControlNetLoraForText2ImageGeneration(GenericControlNetLoraModel):
         config_path: str,
         text_config_path: str,
         vae_config_path: str,
-        controlnet_config_path: str,
+        controlnet_configs_path: Union[str, List[str]],
         scheduler_config_path: str,
         quant_config_path: Optional[str] = None,
         image_size: Optional[int] = None,
@@ -133,13 +150,14 @@ class ControlNetLoraForText2ImageGeneration(GenericControlNetLoraModel):
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         lora_r: Optional[int] = 16,
+        lora_alpha: Optional[int] = 32,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
             config_path=config_path,
             text_config_path=text_config_path,
             vae_config_path=vae_config_path,
-            controlnet_config_path=controlnet_config_path,
+            controlnet_configs_path=controlnet_configs_path,
             scheduler_config_path=scheduler_config_path,
             quant_config_path=quant_config_path,
             image_size=image_size,
@@ -148,6 +166,7 @@ class ControlNetLoraForText2ImageGeneration(GenericControlNetLoraModel):
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             lora_r=lora_r,
+            lora_alpha=lora_alpha,
             seed=seed,
         )
         self.pipeline = StableDiffusionControlNetPipeline(
@@ -253,7 +272,7 @@ class ControlNetLoraForImage2ImageGeneration(GenericControlNetLoraModel):
         config_path: str,
         text_config_path: str,
         vae_config_path: str,
-        controlnet_config_path: str,
+        controlnet_configs_path: Union[str, List[str]],
         scheduler_config_path: str,
         quant_config_path: Optional[str] = None,
         image_size: Optional[int] = None,
@@ -262,13 +281,14 @@ class ControlNetLoraForImage2ImageGeneration(GenericControlNetLoraModel):
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         lora_r: Optional[int] = 16,
+        lora_alpha: Optional[int] = 32,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
             config_path=config_path,
             text_config_path=text_config_path,
             vae_config_path=vae_config_path,
-            controlnet_config_path=controlnet_config_path,
+            controlnet_configs_path=controlnet_configs_path,
             scheduler_config_path=scheduler_config_path,
             quant_config_path=quant_config_path,
             image_size=image_size,
@@ -277,6 +297,7 @@ class ControlNetLoraForImage2ImageGeneration(GenericControlNetLoraModel):
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             lora_r=lora_r,
+            lora_alpha=lora_alpha,
             seed=seed,
         )
         self.pipeline = StableDiffusionControlNetImg2ImgPipeline(
@@ -341,7 +362,7 @@ class ControlNetLoraForImageInpainting(GenericControlNetLoraModel):
         config_path: str,
         text_config_path: str,
         vae_config_path: str,
-        controlnet_config_path: str,
+        controlnet_configs_path: Union[str, List[str]],
         scheduler_config_path: str,
         quant_config_path: Optional[str] = None,
         image_size: Optional[int] = None,
@@ -350,13 +371,14 @@ class ControlNetLoraForImageInpainting(GenericControlNetLoraModel):
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         lora_r: Optional[int] = 16,
+        lora_alpha: Optional[int] = 32,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
             config_path=config_path,
             text_config_path=text_config_path,
             vae_config_path=vae_config_path,
-            controlnet_config_path=controlnet_config_path,
+            controlnet_configs_path=controlnet_configs_path,
             scheduler_config_path=scheduler_config_path,
             quant_config_path=quant_config_path,
             image_size=image_size,
@@ -365,6 +387,7 @@ class ControlNetLoraForImageInpainting(GenericControlNetLoraModel):
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             lora_r=lora_r,
+            lora_alpha=lora_alpha,
             seed=seed,
         )
         self.pipeline = StableDiffusionControlNetInpaintPipeline(

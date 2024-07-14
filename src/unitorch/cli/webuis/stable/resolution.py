@@ -107,6 +107,75 @@ class StableImageResolutionWebUI(SimpleWebUI):
         )
 
         ## extensions
+        lora_layout_group = create_lora_layout(self.supported_lora_names, num_loras=5)
+        loras = lora_layout_group.loras
+        lora_layout = lora_layout_group.layout
+        lora0, lora1, lora2, lora3, lora4 = loras
+        (
+            lora0_checkpoint,
+            lora0_weight,
+            lora0_alpha,
+            lora0_url,
+            lora0_file,
+        ) = (
+            lora0.checkpoint,
+            lora0.weight,
+            lora0.alpha,
+            lora0.url,
+            lora0.file,
+        )
+        (
+            lora1_checkpoint,
+            lora1_weight,
+            lora1_alpha,
+            lora1_url,
+            lora1_file,
+        ) = (
+            lora1.checkpoint,
+            lora1.weight,
+            lora1.alpha,
+            lora1.url,
+            lora1.file,
+        )
+        (
+            lora2_checkpoint,
+            lora2_weight,
+            lora2_alpha,
+            lora2_url,
+            lora2_file,
+        ) = (
+            lora2.checkpoint,
+            lora2.weight,
+            lora2.alpha,
+            lora2.url,
+            lora2.file,
+        )
+        (
+            lora3_checkpoint,
+            lora3_weight,
+            lora3_alpha,
+            lora3_url,
+            lora3_file,
+        ) = (
+            lora3.checkpoint,
+            lora3.weight,
+            lora3.alpha,
+            lora3.url,
+            lora3.file,
+        )
+        (
+            lora4_checkpoint,
+            lora4_weight,
+            lora4_alpha,
+            lora4_url,
+            lora4_file,
+        ) = (
+            lora4.checkpoint,
+            lora4.weight,
+            lora4.alpha,
+            lora4.url,
+            lora4.file,
+        )
         generate = create_element("button", "Generate", variant="primary", scale=2)
         output_image = create_element("image", "Output Image")
 
@@ -126,6 +195,7 @@ class StableImageResolutionWebUI(SimpleWebUI):
             name="Generation",
         )
         left_extension = create_tab(
+            create_row(lora_layout),
             name="Extensions",
         )
         left_settings = create_tab(
@@ -157,6 +227,31 @@ class StableImageResolutionWebUI(SimpleWebUI):
                 s2,
                 b1,
                 b2,
+                lora0_checkpoint,
+                lora0_weight,
+                lora0_alpha,
+                lora0_url,
+                lora0_file,
+                lora1_checkpoint,
+                lora1_weight,
+                lora1_alpha,
+                lora1_url,
+                lora1_file,
+                lora2_checkpoint,
+                lora2_weight,
+                lora2_alpha,
+                lora2_url,
+                lora2_file,
+                lora3_checkpoint,
+                lora3_weight,
+                lora3_alpha,
+                lora3_url,
+                lora3_file,
+                lora4_checkpoint,
+                lora4_weight,
+                lora4_alpha,
+                lora4_url,
+                lora4_file,
             ],
             outputs=[output_image],
         )
@@ -203,6 +298,31 @@ class StableImageResolutionWebUI(SimpleWebUI):
         freeu_s2: Optional[float] = 0.2,
         freeu_b1: Optional[float] = 1.2,
         freeu_b2: Optional[float] = 1.4,
+        lora0_checkpoint: Optional[str] = None,
+        lora0_weight: Optional[float] = 1.0,
+        lora0_alpha: Optional[float] = 32,
+        lora0_url: Optional[str] = None,
+        lora0_file: Optional[str] = None,
+        lora1_checkpoint: Optional[str] = None,
+        lora1_weight: Optional[float] = 1.0,
+        lora1_alpha: Optional[float] = 32,
+        lora1_url: Optional[str] = None,
+        lora1_file: Optional[str] = None,
+        lora2_checkpoint: Optional[str] = None,
+        lora2_weight: Optional[float] = 1.0,
+        lora2_alpha: Optional[float] = 32,
+        lora2_url: Optional[str] = None,
+        lora2_file: Optional[str] = None,
+        lora3_checkpoint: Optional[str] = None,
+        lora3_weight: Optional[float] = 1.0,
+        lora3_alpha: Optional[float] = 32,
+        lora3_url: Optional[str] = None,
+        lora3_file: Optional[str] = None,
+        lora4_checkpoint: Optional[str] = None,
+        lora4_weight: Optional[float] = 1.0,
+        lora4_alpha: Optional[float] = 32,
+        lora4_url: Optional[str] = None,
+        lora4_file: Optional[str] = None,
     ):
         assert self._pipe is not None
         image = self._pipe(
@@ -215,5 +335,40 @@ class StableImageResolutionWebUI(SimpleWebUI):
             seed=seed,
             scheduler=scheduler,
             freeu_params=(freeu_s1, freeu_s2, freeu_b1, freeu_b2),
+            lora_checkpoints=(
+                lora0_checkpoint,
+                lora1_checkpoint,
+                lora2_checkpoint,
+                lora3_checkpoint,
+                lora4_checkpoint,
+            ),
+            lora_weights=(
+                lora0_weight,
+                lora1_weight,
+                lora2_weight,
+                lora3_weight,
+                lora4_weight,
+            ),
+            lora_alphas=(
+                lora0_alpha,
+                lora1_alpha,
+                lora2_alpha,
+                lora3_alpha,
+                lora4_alpha,
+            ),
+            lora_urls=(
+                lora0_url,
+                lora1_url,
+                lora2_url,
+                lora3_url,
+                lora4_url,
+            ),
+            lora_files=(
+                lora0_file,
+                lora1_file,
+                lora2_file,
+                lora3_file,
+                lora4_file,
+            ),
         )
         return image

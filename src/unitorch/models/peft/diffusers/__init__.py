@@ -22,8 +22,6 @@ from unitorch.models.peft.diffusers.modeling_controlnet_xl import (
     ControlNetXLLoraForImage2ImageGeneration,
     ControlNetXLLoraForImageInpainting,
 )
-from unitorch.models.peft.diffusers.modeling_multicontrolnet import (
-    MultiControlNetLoraForText2ImageGeneration,
-    MultiControlNetLoraForImage2ImageGeneration,
-    MultiControlNetLoraForImageInpainting,
+from unitorch.models.peft.diffusers.modeling_adapter_xl import (
+    StableXLAdapterLoraForText2ImageGeneration,
 )
