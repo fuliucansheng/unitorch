@@ -35,7 +35,7 @@ class StableProcessor(HfTextClassificationProcessor):
         max_seq_length: Optional[int] = 77,
         position_start_id: Optional[int] = 0,
         pad_token: Optional[str] = "<|endoftext|>",
-        image_size: Optional[int] = 512,
+        image_size: Optional[Tuple[int, int]] = None,
         center_crop: Optional[bool] = False,
         random_flip: Optional[bool] = False,
     ):
@@ -55,23 +55,40 @@ class StableProcessor(HfTextClassificationProcessor):
             position_start_id=position_start_id,
         )
 
-        self.vision_processor = Compose(
-            [
-                Resize(image_size),
-                CenterCrop(image_size) if center_crop else RandomCrop(image_size),
-                RandomHorizontalFlip() if random_flip else Lambda(lambda x: x),
-                ToTensor(),
-                Normalize([0.5], [0.5]),
-            ]
-        )
+        self.image_size = image_size
 
-        self.condition_vision_processor = Compose(
-            [
-                Resize(image_size),
-                CenterCrop(image_size),
-                ToTensor(),
-            ]
-        )
+        if self.image_size is not None:
+            self.vision_processor = Compose(
+                [
+                    Resize(self.image_size),
+                    CenterCrop(self.image_size)
+                    if center_crop
+                    else RandomCrop(self.image_size),
+                    RandomHorizontalFlip() if random_flip else Lambda(lambda x: x),
+                    ToTensor(),
+                    Normalize([0.5], [0.5]),
+                ]
+            )
+            self.condition_vision_processor = Compose(
+                [
+                    Resize(self.image_size),
+                    CenterCrop(self.image_size),
+                    ToTensor(),
+                ]
+            )
+        else:
+            self.vision_processor = Compose(
+                [
+                    RandomHorizontalFlip() if random_flip else Lambda(lambda x: x),
+                    ToTensor(),
+                    Normalize([0.5], [0.5]),
+                ]
+            )
+            self.condition_vision_processor = Compose(
+                [
+                    ToTensor(),
+                ]
+            )
 
         if vae_config_path is not None:
             vae_config_dict = json.load(open(vae_config_path))
@@ -140,6 +157,8 @@ class StableProcessor(HfTextClassificationProcessor):
         if isinstance(image, str):
             image = Image.open(image)
         image = image.convert("RGB")
+        if self.image_size is not None:
+            image = image.resize(self.image_size)
 
         pixel_values = self.vae_image_processor.preprocess(image)[0]
 
@@ -158,6 +177,10 @@ class StableProcessor(HfTextClassificationProcessor):
             mask_image = Image.open(mask_image)
         mask_image = mask_image.convert("L")
 
+        if self.image_size is not None:
+            image = image.resize(self.image_size)
+            mask_image = mask_image.resize(self.image_size)
+
         pixel_values = self.vae_image_processor.preprocess(image)[0]
         pixel_masks = self.vae_image_processor.preprocess(mask_image)[0]
         pixel_masks = (pixel_masks + 1) / 2
@@ -174,23 +197,22 @@ class StableProcessor(HfTextClassificationProcessor):
         if isinstance(image, str):
             image = Image.open(image)
         image = image.convert("RGB")
+        if self.image_size is not None:
+            image = image.resize(self.image_size)
 
         pixel_values = self.vae_image_processor.preprocess(image)[0]
 
         return GenericOutputs(pixel_values=pixel_values)
 
-    def controlnet(self, image: Union[Image.Image, str]):
+    def controlnet_inputs(
+        self,
+        image: Union[Image.Image, str],
+    ):
         if isinstance(image, str):
             image = Image.open(image)
         image = image.convert("RGB")
-
-        pixel_values = self.condition_vision_processor(image)
-        return GenericOutputs(pixel_values=pixel_values)
-
-    def controlnet_inputs(self, image: Union[Image.Image, str]):
-        if isinstance(image, str):
-            image = Image.open(image)
-        image = image.convert("RGB")
+        if self.image_size is not None:
+            image = image.resize(self.image_size)
 
         pixel_values = self.vae_condition_image_processor.preprocess(image)[0]
         return GenericOutputs(pixel_values=pixel_values)
@@ -204,8 +226,40 @@ class StableProcessor(HfTextClassificationProcessor):
             if isinstance(image, str):
                 image = Image.open(image)
             image = image.convert("RGB")
+            if self.image_size is not None:
+                image = image.resize(self.image_size)
 
             pixel_values.append(self.vae_condition_image_processor.preprocess(image)[0])
+
+        return GenericOutputs(pixel_values=torch.stack(pixel_values, dim=0))
+
+    def adapter_inputs(
+        self,
+        image: Union[Image.Image, str],
+    ):
+        if isinstance(image, str):
+            image = Image.open(image)
+        image = image.convert("RGB")
+        if self.image_size is not None:
+            image = image.resize(self.image_size)
+
+        pixel_values = self.vae_image_processor.preprocess(image)[0]
+
+        return GenericOutputs(pixel_values=pixel_values)
+
+    def adapters_inputs(
+        self,
+        images: List[Union[Image.Image, str]],
+    ):
+        pixel_values = []
+        for image in images:
+            if isinstance(image, str):
+                image = Image.open(image)
+            image = image.convert("RGB")
+            if self.image_size is not None:
+                image = image.resize(self.image_size)
+
+            pixel_values.append(self.vae_image_processor.preprocess(image)[0])
 
         return GenericOutputs(pixel_values=torch.stack(pixel_values, dim=0))
 
@@ -229,9 +283,12 @@ class StableVideoProcessor(HfImageClassificationProcessor):
         image: Union[Image.Image, str],
         vae_image: Union[Image.Image, str],
     ):
-        pixel_outputs = self.classification(
-            image=image.resize((224, 224), Image.BICUBIC),
-        )
+        if isinstance(image, str):
+            image = Image.open(image)
+        image = image.resize((224, 224), Image.BICUBIC)
+        pixel_outputs = self.classification(image=image)
+        if isinstance(vae_image, str):
+            vae_image = Image.open(vae_image)
         vae_pixel_values = self.vae_image_processor.preprocess(vae_image)[0]
 
         return GenericOutputs(

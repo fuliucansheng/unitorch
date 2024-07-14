@@ -5,6 +5,7 @@ import re
 import torch
 from PIL import Image
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from unitorch.utils import is_remote_url
 from unitorch.models.mistral import (
     MistralForGeneration as _MistralForGeneration,
 )
@@ -15,7 +16,10 @@ from unitorch.cli import (
     add_default_section_for_init,
     add_default_section_for_function,
 )
-from unitorch.cli.models.mistral import pretrained_mistral_infos
+from unitorch.cli.models.mistral import (
+    pretrained_mistral_infos,
+    pretrained_mistral_extensions_infos,
+)
 
 
 class MistralForGenerationPipeline(_MistralForGeneration):
@@ -127,8 +131,13 @@ class MistralForGenerationPipeline(_MistralForGeneration):
         temperature: Optional[float] = 1.0,
         top_k: Optional[int] = 50,
         top_p: Optional[float] = 1.0,
+        lora_checkpoints: Optional[Union[str, List[str]]] = None,
+        lora_weights: Optional[Union[float, List[float]]] = 1.0,
+        lora_alphas: Optional[Union[float, List[float]]] = 32,
+        lora_urls: Optional[Union[str, List[str]]] = None,
+        lora_files: Optional[Union[str, List[str]]] = None,
     ):
-        inputs = self.processor.prompt(
+        inputs = self.processor.generation_inputs(
             text=prompt,
             max_seq_length=max_seq_length,
         )
@@ -137,6 +146,80 @@ class MistralForGenerationPipeline(_MistralForGeneration):
             k: v.to(device=self._device) if v is not None else v
             for k, v in inputs.items()
         }
+        if isinstance(lora_checkpoints, str):
+            lora_checkpoints = [lora_checkpoints]
+        if isinstance(lora_weights, float):
+            lora_weights = [lora_weights]
+        if isinstance(lora_alphas, float):
+            lora_alphas = [lora_alphas]
+        if isinstance(lora_urls, str):
+            lora_urls = [lora_urls]
+        if isinstance(lora_files, str):
+            lora_files = [lora_files]
+
+        if lora_checkpoints is not None:
+            _lora_checkpoints = list(
+                zip(
+                    *[
+                        (ckpt, weight, alpha)
+                        for ckpt, weight, alpha in zip(
+                            lora_checkpoints, lora_weights, lora_alphas
+                        )
+                        if ckpt is not None
+                    ]
+                )
+            )
+            if len(_lora_checkpoints) == 0:
+                lora_checkpoints = None
+            else:
+                lora_checkpoints, lora_weights, lora_alphas = _lora_checkpoints
+                lora_checkpoints = [
+                    nested_dict_value(pretrained_mistral_extensions_infos, ckpt)
+                    for ckpt in lora_checkpoints
+                ]
+        if lora_urls is not None:
+            _lora_urls = list(
+                zip(
+                    *[
+                        (url, weight, alpha)
+                        for url, weight, alpha in zip(
+                            lora_urls, lora_weights, lora_alphas
+                        )
+                        if is_remote_url(url)
+                    ]
+                )
+            )
+            if len(_lora_urls) == 0:
+                lora_urls = None
+            else:
+                lora_urls, lora_weights, lora_alphas = _lora_urls
+        if lora_files is not None:
+            _lora_files = list(
+                zip(
+                    *[
+                        (file, weight, alpha)
+                        for file, weight, alpha in zip(
+                            lora_files, lora_weights, lora_alphas
+                        )
+                        if file is not None
+                    ]
+                )
+            )
+            if len(_lora_files) == 0:
+                lora_files = None
+            else:
+                lora_files, lora_weights, lora_alphas = _lora_files
+
+        lora_files = pop_value(
+            lora_checkpoints,
+            lora_urls,
+            lora_files,
+            check_none=False,
+        )
+        if lora_files is not None:
+            self.load_lora_weights(
+                lora_files, lora_weights=lora_weights, lora_alphas=lora_alphas
+            )
         outputs = super().generate(
             input_ids=inputs["input_ids"],
             num_beams=num_beams,
@@ -156,6 +239,7 @@ class MistralForGenerationPipeline(_MistralForGeneration):
             top_k=top_k,
             top_p=top_p,
         )
+        self.unload_lora_weights()
         decoded = self.processor.detokenize(outputs.sequences)
 
         return decoded[0].strip()

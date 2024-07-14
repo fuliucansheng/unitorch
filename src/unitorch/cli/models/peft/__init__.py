@@ -19,4 +19,11 @@ from unitorch.cli.models.peft.modeling_llama import (
     LlamaLoraForClassification,
     LlamaLoraForGeneration,
 )
-from unitorch.cli.models.peft.modeling_mistral import MistralLoraForGeneration
+from unitorch.cli.models.peft.modeling_llava import (
+    LlavaMistralClipLoraForClassification,
+    LlavaMistralClipLoraForGeneration,
+)
+from unitorch.cli.models.peft.modeling_mistral import (
+    MistralLoraForClassification,
+    MistralLoraForGeneration,
+)

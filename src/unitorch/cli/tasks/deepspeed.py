@@ -404,9 +404,7 @@ class DeepspeedTask:
                     optim.zero_grad()
 
                     if use_ema and self.ema_model is not None:
-                        self.ema_model.step(
-                            self.model.module if self.n_gpu > 1 else self.model
-                        )
+                        self.ema_model.step(self.model.module)
 
                 if (step + 1) % log_freq == 0 and global_rank in [-1, 0]:
                     logging.info(
@@ -423,7 +421,7 @@ class DeepspeedTask:
 
                     dev_epoch += 1
                     self.best_score = save_checkpoint(
-                        self.model.module if self.n_gpu > 1 else self.model,
+                        self.model.module,
                         to_ckpt_dir,
                         iter_dev,
                         score_fn,
@@ -445,9 +443,7 @@ class DeepspeedTask:
                 optim.zero_grad()
 
                 if use_ema and self.ema_model is not None:
-                    self.ema_model.step(
-                        self.model.module if self.n_gpu > 1 else self.model
-                    )
+                    self.ema_model.step(self.model.module)
 
             log_loss = 0
 
@@ -461,7 +457,7 @@ class DeepspeedTask:
 
             global_step = 0
             self.best_score = save_checkpoint(
-                self.model.module if self.n_gpu > 1 else self.model,
+                self.model.module,
                 to_ckpt_dir,
                 iter_dev,
                 score_fn,
@@ -531,7 +527,7 @@ class DeepspeedTask:
             collate_fn=collate_fn,
         )
 
-        results = infer(self.model.module if self.n_gpu > 1 else self.model, iter_dev)
+        results = infer(self.model.module, iter_dev)
         if global_rank in [-1, 0]:
             monitor(
                 outputs=results.outputs,

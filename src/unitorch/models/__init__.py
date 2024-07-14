@@ -12,7 +12,7 @@ from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from collections import OrderedDict
 from transformers.utils import is_remote_url, ModelOutput as GenericOutputs
 from unitorch import hf_cached_path
-from unitorch.utils import is_diffusers_available
+from unitorch.utils import replace, load_weight, is_diffusers_available
 
 
 class CheckpointMixin:
@@ -105,12 +105,7 @@ class CheckpointMixin:
                 weight_path = [weight_path]
             for path in weight_path:
                 logging.debug(f"Loading weights from {path}")
-            state_dicts += [
-                safetensors.torch.load_file(hf_cached_path(path))
-                if path.endswith(".safetensors")
-                else torch.load(hf_cached_path(path), map_location="cpu")
-                for path in weight_path
-            ]
+            state_dicts += [load_weight(path) for path in weight_path]
 
         if state_dict:
             state_dicts += state_dict if isinstance(state_dict, list) else [state_dict]
@@ -224,13 +219,13 @@ import unitorch.models.clip
 import unitorch.models.deberta
 import unitorch.models.dpt
 import unitorch.models.llama
+import unitorch.models.llava
 import unitorch.models.mask2former
 import unitorch.models.mbart
 import unitorch.models.mistral
 import unitorch.models.mt5
 import unitorch.models.onnx
 import unitorch.models.pegasus
-import unitorch.models.peft
 import unitorch.models.roberta
 import unitorch.models.swin
 import unitorch.models.t5
@@ -238,6 +233,7 @@ import unitorch.models.visualbert
 import unitorch.models.vit
 import unitorch.models.xlm_roberta
 import unitorch.models.xpegasus
+import unitorch.models.peft
 
 if is_diffusers_available():
     import unitorch.models.diffusers

@@ -45,9 +45,9 @@ class BertForClassification(GenericModel):
 
         Args:
             input_ids (torch.Tensor): The input tensor of token indices.
-            attention_mask (Optional[torch.Tensor], optional): The attention mask tensor. Defaults to None.
-            token_type_ids (Optional[torch.Tensor], optional): The token type IDs tensor. Defaults to None.
-            position_ids (Optional[torch.Tensor], optional): The position IDs tensor. Defaults to None.
+            attention_mask (torch.Tensor optional): The attention mask tensor. Defaults to None.
+            token_type_ids (torch.Tensor optional): The token type IDs tensor. Defaults to None.
+            position_ids (torch.Tensor optional): The position IDs tensor. Defaults to None.
 
         Returns:
             (torch.Tensor):The logits of the model output.

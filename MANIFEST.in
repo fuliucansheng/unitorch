@@ -5,3 +5,5 @@ global-include *.ini
 global-include *.json
 global-include *.model
 global-include *.md
+global-include *.css
+global-include *.js

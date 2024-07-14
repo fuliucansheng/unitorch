@@ -9,7 +9,6 @@ from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.bloom import (
     BloomForClassification as _BloomForClassification,
     BloomForGeneration as _BloomForGeneration,
-    BloomForPretrain as _BloomForPretrain,
 )
 from unitorch.cli import (
     cached_path,
@@ -19,7 +18,10 @@ from unitorch.cli import (
 )
 from unitorch.cli.models import generation_model_decorator
 from unitorch.cli.models import ClassificationOutputs, GenerationOutputs, LossOutputs
-from unitorch.cli.models.bloom import pretrained_bloom_infos
+from unitorch.cli.models.bloom import (
+    pretrained_bloom_infos,
+    pretrained_bloom_extensions_infos,
+)
 
 
 @register_model("core/model/classification/bloom")
@@ -60,6 +62,9 @@ class BloomForClassification(_BloomForClassification):
         """
         config.set_default_section("core/model/classification/bloom")
         pretrained_name = config.getoption("pretrained_name", "default-bloom")
+        pretrained_lora_name = config.getoption(
+            "pretrained_lora_name", "default-bloom-lora"
+        )
         config_path = config.getoption("config_path", None)
         num_classes = config.getoption("num_classes", 1)
 
@@ -82,9 +87,25 @@ class BloomForClassification(_BloomForClassification):
         if weight_path is not None:
             inst.from_pretrained(weight_path)
 
+        pretrained_lora_weight_path = config.getoption(
+            "pretrained_lora_weight_path", None
+        )
+        lora_weight_path = pop_value(
+            pretrained_lora_weight_path,
+            nested_dict_value(pretrained_bloom_extensions_infos, pretrained_lora_name),
+            check_none=False,
+        )
+        pretrained_lora_weight = config.getoption("pretrained_lora_weight", 1.0)
+        pretrained_lora_alpha = config.getoption("pretrained_lora_alpha", 32.0)
+        if lora_weight_path is not None:
+            inst.load_lora_weights(
+                lora_weight_path,
+                lora_weights=pretrained_lora_weight,
+                lora_alphas=pretrained_lora_alpha,
+            )
+
         return inst
 
-    @autocast()
     def forward(
         self,
         input_ids: torch.Tensor,
@@ -105,93 +126,6 @@ class BloomForClassification(_BloomForClassification):
             attention_mask=attention_mask,
         )
         return ClassificationOutputs(outputs=outputs)
-
-
-@register_model("core/model/pretrain/bloom")
-class BloomForPretrain(_BloomForPretrain):
-    """Bloom model for pretraining."""
-
-    def __init__(
-        self,
-        config_path: str,
-        gradient_checkpointing: Optional[bool] = False,
-    ):
-        """
-        Initialize the BloomForPretrain model.
-
-        Args:
-            config_path (str): The path to the model configuration file.
-            gradient_checkpointing (bool, optional): Whether to use gradient checkpointing during training. Defaults to False.
-        """
-        super().__init__(
-            config_path=config_path,
-            gradient_checkpointing=gradient_checkpointing,
-        )
-
-    @classmethod
-    @add_default_section_for_init("core/model/pretrain/bloom")
-    def from_core_configure(cls, config, **kwargs):
-        """
-        Create an instance of BloomForPretrain from the core configuration.
-
-        Args:
-            config (Config): The core configuration object.
-
-        Returns:
-            BloomForPretrain: An instance of BloomForPretrain initialized with the provided configuration.
-        """
-        config.set_default_section("core/model/pretrain/bloom")
-        pretrained_name = config.getoption("pretrained_name", "default-bloom")
-        config_path = config.getoption("config_path", None)
-
-        config_path = pop_value(
-            config_path,
-            nested_dict_value(pretrained_bloom_infos, pretrained_name, "config"),
-        )
-
-        config_path = cached_path(config_path)
-        gradient_checkpointing = config.getoption("gradient_checkpointing", False)
-
-        inst = cls(config_path, gradient_checkpointing)
-        pretrained_weight_path = config.getoption("pretrained_weight_path", None)
-        weight_path = pop_value(
-            pretrained_weight_path,
-            nested_dict_value(pretrained_bloom_infos, pretrained_name, "weight"),
-            check_none=False,
-        )
-
-        if weight_path is not None:
-            inst.from_pretrained(weight_path)
-
-        return inst
-
-    @autocast()
-    def forward(
-        self,
-        input_ids: torch.Tensor,
-        attention_mask: torch.Tensor,
-        input_ids_label: torch.Tensor,
-        attention_mask_label: torch.Tensor,
-    ):
-        """
-        Perform forward pass of the BloomForPretrain model.
-
-        Args:
-            input_ids (torch.Tensor): The input token IDs.
-            attention_mask (torch.Tensor): The attention mask.
-            input_ids_label (torch.Tensor): The input token IDs for the masked language modeling task.
-            attention_mask_label (torch.Tensor): The attention mask for the masked language modeling task.
-
-        Returns:
-            LossOutputs: The loss outputs.
-        """
-        outputs = super().forward(
-            input_ids=input_ids,
-            attention_mask=attention_mask,
-            input_ids_label=input_ids_label,
-            attention_mask_label=attention_mask_label,
-        )
-        return LossOutputs(loss=outputs)
 
 
 @register_model("core/model/generation/bloom", generation_model_decorator)
@@ -229,6 +163,9 @@ class BloomForGeneration(_BloomForGeneration):
         """
         config.set_default_section("core/model/generation/bloom")
         pretrained_name = config.getoption("pretrained_name", "default-bloom")
+        pretrained_lora_name = config.getoption(
+            "pretrained_lora_name", "default-bloom-lora"
+        )
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
             config_path,
@@ -249,9 +186,25 @@ class BloomForGeneration(_BloomForGeneration):
         if weight_path is not None:
             inst.from_pretrained(weight_path)
 
+        pretrained_lora_weight_path = config.getoption(
+            "pretrained_lora_weight_path", None
+        )
+        lora_weight_path = pop_value(
+            pretrained_lora_weight_path,
+            nested_dict_value(pretrained_bloom_extensions_infos, pretrained_lora_name),
+            check_none=False,
+        )
+        pretrained_lora_weight = config.getoption("pretrained_lora_weight", 1.0)
+        pretrained_lora_alpha = config.getoption("pretrained_lora_alpha", 32.0)
+        if lora_weight_path is not None:
+            inst.load_lora_weights(
+                lora_weight_path,
+                lora_weights=pretrained_lora_weight,
+                lora_alphas=pretrained_lora_alpha,
+            )
+
         return inst
 
-    @autocast()
     def forward(
         self,
         input_ids: torch.Tensor,
@@ -275,7 +228,6 @@ class BloomForGeneration(_BloomForGeneration):
 
     @add_default_section_for_function("core/model/generation/bloom")
     @torch.no_grad()
-    @autocast()
     def generate(
         self,
         input_ids: torch.Tensor,

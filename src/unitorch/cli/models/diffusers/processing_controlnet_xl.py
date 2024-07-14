@@ -29,6 +29,9 @@ class ControlNetXLProcessor(_StableXLProcessor):
         position_start_id: Optional[int] = 0,
         pad_token: Optional[str] = "<|endoftext|>",
         pad_token2: Optional[str] = "!",
+        image_size: Optional[Tuple[int, int]] = None,
+        center_crop: Optional[bool] = False,
+        random_flip: Optional[bool] = False,
     ):
         super().__init__(
             vocab_path=vocab_path,
@@ -40,6 +43,9 @@ class ControlNetXLProcessor(_StableXLProcessor):
             position_start_id=position_start_id,
             pad_token=pad_token,
             pad_token2=pad_token2,
+            image_size=image_size,
+            center_crop=center_crop,
+            random_flip=random_flip,
         )
 
     @classmethod
@@ -47,40 +53,40 @@ class ControlNetXLProcessor(_StableXLProcessor):
     def from_core_configure(cls, config, **kwargs):
         config.set_default_section("core/process/diffusers/controlnet_xl")
         pretrained_name = config.getoption("pretrained_name", "stable-xl-base")
-        pretrain_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
+        pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
 
         vocab_path = config.getoption("vocab_path", None)
         vocab_path = pop_value(
             vocab_path,
-            nested_dict_value(pretrain_infos, "text", "vocab"),
+            nested_dict_value(pretrained_infos, "text", "vocab"),
         )
         vocab_path = cached_path(vocab_path)
 
         merge_path = config.getoption("merge_path", None)
         merge_path = pop_value(
             merge_path,
-            nested_dict_value(pretrain_infos, "text", "merge"),
+            nested_dict_value(pretrained_infos, "text", "merge"),
         )
         merge_path = cached_path(merge_path)
 
         vocab2_path = config.getoption("vocab2_path", None)
         vocab2_path = pop_value(
             vocab2_path,
-            nested_dict_value(pretrain_infos, "text2", "vocab"),
+            nested_dict_value(pretrained_infos, "text2", "vocab"),
         )
         vocab2_path = cached_path(vocab2_path)
 
         merge2_path = config.getoption("merge2_path", None)
         merge2_path = pop_value(
             merge2_path,
-            nested_dict_value(pretrain_infos, "text2", "merge"),
+            nested_dict_value(pretrained_infos, "text2", "merge"),
         )
         merge2_path = cached_path(merge2_path)
 
         vae_config_path = config.getoption("vae_config_path", None)
         vae_config_path = pop_value(
             vae_config_path,
-            nested_dict_value(pretrain_infos, "vae", "config"),
+            nested_dict_value(pretrained_infos, "vae", "config"),
         )
         vae_config_path = cached_path(vae_config_path)
 

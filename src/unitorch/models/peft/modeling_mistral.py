@@ -17,6 +17,81 @@ from unitorch.models.quantization import quantize_model
 from unitorch.models.peft import PeftModelForSequenceClassification, GenericPeftModel
 
 
+class MistralLoraForClassification(GenericPeftModel):
+    prefix_keys_in_state_dict = {
+        "^(?!peft_model\.base_model\.model\.).*": "peft_model.base_model."
+    }
+    replace_keys_in_state_dict = {
+        "q_proj.weight": "q_proj.base_layer.weight",
+        "v_proj.weight": "v_proj.base_layer.weight",
+    }
+    modules_to_save_checkpoints = ["lora", "classifier"]
+
+    def __init__(
+        self,
+        config_path: str,
+        quant_config_path: Optional[str] = None,
+        lora_r: Optional[int] = 16,
+        lora_alpha: Optional[int] = 32,
+        lora_dropout: Optional[float] = 0.05,
+        fan_in_fan_out: Optional[bool] = True,
+        target_modules: Optional[Union[List[str], str]] = ["q_proj", "v_proj"],
+        num_classes: Optional[int] = 1,
+        hidden_dropout_prob: Optional[float] = 0.1,
+        freeze_classifer: Optional[bool] = True,
+        gradient_checkpointing: Optional[bool] = False,
+    ):
+        super().__init__()
+        self.config = MistralConfig.from_json_file(config_path)
+        self.config.gradient_checkpointing = gradient_checkpointing
+        self.peft_config = LoraConfig(
+            r=lora_r,
+            lora_alpha=lora_alpha,
+            lora_dropout=lora_dropout,
+            fan_in_fan_out=fan_in_fan_out,
+            target_modules=target_modules,
+        )
+        model = MistralModel(self.config)
+        if quant_config_path is not None:
+            quant_config = QuantizationConfig.from_json_file(quant_config_path)
+            ignore_modules = target_modules + ["lm_head"]
+            model = quantize_model(model, quant_config, ignore_modules=ignore_modules)
+        self.peft_model = PeftModelForSequenceClassification(model, self.peft_config)
+        self.dropout = nn.Dropout(hidden_dropout_prob)
+        self.classifier = nn.Linear(self.config.hidden_size, num_classes)
+        if freeze_classifer:
+            for param in self.classifier.parameters():
+                param.requires_grad = False
+        self.init_weights()
+
+    def forward(
+        self,
+        input_ids: torch.Tensor,
+        attention_mask: Optional[torch.Tensor] = None,
+        position_ids: Optional[torch.Tensor] = None,
+    ):
+        """
+        Forward pass of the classification model.
+
+        Args:
+            input_ids (torch.Tensor): Input tensor of shape (batch_size, sequence_length).
+            attention_mask (torch.Tensor, optional): Attention mask tensor of shape (batch_size, sequence_length). Defaults to None.
+            position_ids (torch.Tensor, optional): Position IDs tensor of shape (batch_size, sequence_length). Defaults to None.
+
+        Returns:
+            torch Output logits.Tensor: tensor of shape (batch_size, num_classes).
+        """
+        outputs = self.peft_model(
+            input_ids,
+            attention_mask=attention_mask,
+            position_ids=position_ids,
+        )[0]
+        pooled_output = outputs[:, -1]
+        pooled_output = self.dropout(pooled_output)
+        logits = self.classifier(pooled_output)
+        return logits
+
+
 class MistralLoraForGeneration(GenericPeftModel):
     prefix_keys_in_state_dict = {
         "^(?!peft_model\.base_model\.model\.model\.)model\.": "peft_model.base_model.model.",

@@ -41,6 +41,11 @@ controlnet_processes = {
     "depth": depth,
 }
 
+adapter_processes = {
+    "canny": canny,
+    "depth": depth,
+}
+
 from unitorch.cli.pipelines.stable_xl.text2image import (
     StableXLForText2ImageGenerationPipeline,
 )

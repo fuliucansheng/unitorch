@@ -87,11 +87,12 @@ pretrained_llama_infos = {
     },
 }
 
+pretrained_llama_extensions_infos = {}
+
 import unitorch.cli.models.llama.modeling
 import unitorch.cli.models.llama.processing
 from unitorch.cli.models.llama.modeling import (
     LlamaForClassification,
-    LlamaForPretrain,
     LlamaForGeneration,
 )
 from unitorch.cli.models.llama.processing import LlamaProcessor

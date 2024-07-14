@@ -461,8 +461,8 @@ class BlipForImageCaption(GenericModel):
 
         Args:
             pixel_values (torch.Tensor): Input pixel values.
-            input_ids (Optional[torch.Tensor], optional): Input token IDs. Defaults to None.
-            attention_mask (Optional[torch.Tensor], optional): Attention mask. Defaults to None.
+            input_ids (torch.Tensor optional): Input token IDs. Defaults to None.
+            attention_mask (torch.Tensor optional): Attention mask. Defaults to None.
 
         Returns:
             (torch.Tensor):Logits for caption generation.
@@ -504,8 +504,8 @@ class BlipForImageCaption(GenericModel):
 
         Args:
             pixel_values (torch.Tensor): Input pixel values.
-            input_ids (Optional[torch.Tensor], optional): Input token IDs. Defaults to None.
-            attention_mask (Optional[torch.Tensor], optional): Attention mask. Defaults to None.
+            input_ids (torch.Tensor optional): Input token IDs. Defaults to None.
+            attention_mask (torch.Tensor optional): Attention mask. Defaults to None.
             num_beams (Optional[int], optional): Number of beams for beam search. Defaults to 5.
             decoder_start_token_id (Optional[int], optional): ID of the start token for decoding. Defaults to 30522.
             decoder_end_token_id (int or List[int], optional): ID of the end token for decoding. Defaults to 2.

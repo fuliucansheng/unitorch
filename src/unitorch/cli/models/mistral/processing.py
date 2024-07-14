@@ -69,27 +69,33 @@ class MistralProcessor(_MistralProcessor):
             "vocab_path": vocab_path,
         }
 
-    @register_process("core/process/mistral/prompt")
-    def _prompt(
+    @register_process("core/process/mistral/classification")
+    def _classification(
         self,
         text: str,
+        text_pair: Optional[str] = None,
         max_seq_length: Optional[int] = None,
     ):
         """
-        Process inputs for prompt-based generation.
+        Process inputs for classification.
 
         Args:
             text (str): The input text.
+            text_pair (str, optional): The second input text for sequence pair classification. Defaults to None.
             max_seq_length (int, optional): The maximum sequence length. Defaults to None.
 
         Returns:
             TensorsInputs: Processed tensors inputs.
         """
-        outputs = super().prompt(
+        outputs = super().classification(
             text=text,
+            text_pair=text_pair,
             max_seq_length=max_seq_length,
         )
-        return TensorsInputs(input_ids=outputs.input_ids)
+        return TensorsInputs(
+            input_ids=outputs.input_ids,
+            attention_mask=outputs.attention_mask,
+        )
 
     @register_process("core/process/mistral/generation/inputs")
     def _generation_inputs(

@@ -18,9 +18,12 @@ from unitorch.models import (
     QuantizationConfig,
     QuantizationMixin,
 )
+from unitorch.models.peft import PeftWeightLoaderMixin
 
 
-class LlamaForClassification(GenericModel, QuantizationMixin):
+class LlamaForClassification(GenericModel, QuantizationMixin, PeftWeightLoaderMixin):
+    replace_keys_in_peft_state_dict = {"peft_model.base_model.": ""}
+
     def __init__(
         self,
         config_path: str,
@@ -78,79 +81,12 @@ class LlamaForClassification(GenericModel, QuantizationMixin):
         return logits
 
 
-class LlamaForPretrain(GenericModel, QuantizationMixin):
-    def __init__(
-        self,
-        config_path: str,
-        quant_config_path: Optional[str] = None,
-        gradient_checkpointing: Optional[bool] = False,
-    ):
-        """
-        Llama model for pretraining tasks.
-
-        Args:
-            config_path (str): Path to the model configuration file.
-            gradient_checkpointing (bool, optional): Whether to use gradient checkpointing. Defaults to False.
-        """
-        super().__init__()
-        self.config = LlamaConfig.from_json_file(config_path)
-        self.config.gradient_checkpointing = gradient_checkpointing
-        self.model = LlamaModel(self.config)
-        self.lm_head = nn.Linear(
-            self.config.hidden_size, self.config.vocab_size, bias=False
-        )
-        self.init_weights()
-
-        if quant_config_path is not None:
-            self.quant_config = QuantizationConfig.from_json_file(quant_config_path)
-            self.quantize(self.quant_config, ignore_modules=["lm_head"])
-
-    def forward(
-        self,
-        input_ids: torch.Tensor,
-        attention_mask: Optional[torch.Tensor] = None,
-        position_ids: Optional[torch.Tensor] = None,
-        input_ids_label: Optional[torch.Tensor] = None,
-        attention_mask_label: Optional[torch.Tensor] = None,
-    ):
-        """
-        Forward pass of the pretraining model.
-
-        Args:
-            input_ids (torch.Tensor, optional): Input tensor of shape (batch_size, sequence_length). Defaults to None.
-            attention_mask (torch.Tensor, optional): Attention mask tensor of shape (batch_size, sequence_length). Defaults to None.
-            position_ids (torch.Tensor, optional): Position IDs tensor of shape (batch_size, sequence_length). Defaults to None.
-            input_ids_label (torch.Tensor, optional): Labeled input tensor of shape (batch_size, sequence_length). Defaults to None.
-            attention_mask_label (torch.Tensor, optional): Labeled attention mask tensor of shape (batch_size, sequence_length). Defaults to None.
-
-        Returns:
-            torch Output loss.Tensor: Loss value.
-        """
-        outputs = self.model(
-            input_ids=input_ids,
-            attention_mask=attention_mask,
-            position_ids=position_ids,
-        )
-        predict_logits = self.lm_head(outputs[0])
-        batch_size, seq_len, num_classes = predict_logits.size()
-        logits = predict_logits.contiguous().view(batch_size * seq_len, num_classes)
-        targets = input_ids_label.contiguous().view(-1).long()
-        masks = attention_mask_label.contiguous().view(-1)
-        loss = nn.CrossEntropyLoss(reduction="none")(logits, targets)
-        loss = loss * masks.float()
-        loss = loss.contiguous().view(batch_size, seq_len).sum(1) / torch.max(
-            masks.contiguous().view(batch_size, seq_len).float().sum(1),
-            torch.ones(batch_size).to(masks.device),
-        )
-        loss = torch.mean(loss)
-        return loss
-
-
-class LlamaForGeneration(GenericModel, QuantizationMixin):
+class LlamaForGeneration(GenericModel, QuantizationMixin, PeftWeightLoaderMixin):
     prefix_keys_in_state_dict = {
-        "^(?!model\.model\.|model\.lm_head\.)model\.": "model.",
-        "^lm_head.": "model.",
+        "^model.": "base_model.",
+        "^lm_head.": "base_model.",
     }
+    replace_keys_in_peft_state_dict = {"peft_model.base_model.model.": "base_model."}
 
     def __init__(
         self,
@@ -168,7 +104,7 @@ class LlamaForGeneration(GenericModel, QuantizationMixin):
         super().__init__()
         self.config = LlamaConfig.from_json_file(config_path)
         self.config.gradient_checkpointing = gradient_checkpointing
-        self.model = LlamaForCausalLM(self.config)
+        self.base_model = LlamaForCausalLM(self.config)
         self.init_weights()
 
         if quant_config_path is not None:
@@ -192,7 +128,7 @@ class LlamaForGeneration(GenericModel, QuantizationMixin):
         Returns:
             torch Output logits.Tensor: tensor of shape (batch_size, sequence_length, vocab_size).
         """
-        outputs = self.model(
+        outputs = self.base_model(
             input_ids=input_ids,
             attention_mask=attention_mask,
             position_ids=position_ids,
@@ -248,7 +184,7 @@ class LlamaForGeneration(GenericModel, QuantizationMixin):
             GenericOutputs: Generated sequences and their scores.
         """
         input_seq_length = input_ids.size(1)
-        outputs = self.model.generate(
+        outputs = self.base_model.generate(
             input_ids,
             max_length=max_gen_seq_length + input_seq_length,
             min_length=min_gen_seq_length + input_seq_length,

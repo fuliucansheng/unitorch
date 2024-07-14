@@ -26,5 +26,6 @@ import unitorch.cli.pipelines.stable
 import unitorch.cli.pipelines.stable_xl
 import unitorch.cli.pipelines.stable_3
 import unitorch.cli.pipelines.llama
+import unitorch.cli.pipelines.llava
 import unitorch.cli.pipelines.mistral
 import unitorch.cli.pipelines.sam

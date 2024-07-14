@@ -8,7 +8,10 @@ from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from torch.cuda.amp import autocast
 from transformers.utils import is_remote_url
 from unitorch.utils import pop_value, nested_dict_value
-from unitorch.models.peft import MistralLoraForGeneration as _MistralLoraForGeneration
+from unitorch.models.peft import (
+    MistralLoraForClassification as _MistralLoraForClassification,
+    MistralLoraForGeneration as _MistralLoraForGeneration,
+)
 from unitorch.cli import (
     cached_path,
     add_default_section_for_init,
@@ -18,6 +21,145 @@ from unitorch.cli import (
 from unitorch.cli.models import generation_model_decorator
 from unitorch.cli.models import ClassificationOutputs, GenerationOutputs, LossOutputs
 from unitorch.cli.models.mistral import pretrained_mistral_infos
+
+
+@register_model("core/model/classification/peft/lora/mistral")
+class MistralLoraForClassification(_MistralLoraForClassification):
+    """MistralLora model for classification tasks."""
+
+    def __init__(
+        self,
+        config_path: str,
+        quant_config_path: Optional[str] = None,
+        lora_r: Optional[int] = 16,
+        lora_alpha: Optional[int] = 32,
+        lora_dropout: Optional[float] = 0.05,
+        fan_in_fan_out: Optional[bool] = True,
+        target_modules: Optional[Union[List[str], str]] = ["q_proj", "v_proj"],
+        num_classes: Optional[int] = 1,
+        gradient_checkpointing: Optional[bool] = False,
+    ):
+        """
+        Initialize the MistralLoraForClassification model.
+
+        Args:
+            config_path (str): The path to the model configuration file.
+            lora_r (int, optional): The number of Lora ranks. Defaults to 16.
+            lora_alpha (int, optional): The Lora alpha value. Defaults to 32.
+            lora_dropout (float, optional): The Lora dropout rate. Defaults to 0.05.
+            fan_in_fan_out (bool, optional): Whether to use fan-in/fan-out weight initialization. Defaults to True.
+            target_modules (Union[List[str], str], optional): The target modules for Lora regularization. Defaults to ["q_proj", "v_proj"].
+            num_classes (int, optional): The number of classes. Defaults to 1.
+            gradient_checkpointing (bool, optional): Whether to use gradient checkpointing during training. Defaults to False.
+        """
+        super().__init__(
+            config_path=config_path,
+            quant_config_path=quant_config_path,
+            lora_r=lora_r,
+            lora_alpha=lora_alpha,
+            lora_dropout=lora_dropout,
+            fan_in_fan_out=fan_in_fan_out,
+            target_modules=target_modules,
+            num_classes=num_classes,
+            gradient_checkpointing=gradient_checkpointing,
+        )
+
+    @classmethod
+    @add_default_section_for_init("core/model/classification/peft/lora/mistral")
+    def from_core_configure(cls, config, **kwargs):
+        """
+        Create an instance of MistralLoraForClassification from a core configuration.
+
+        Args:
+            config: The core configuration.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            MistralLoraForClassification: The initialized MistralLoraForClassification instance.
+        """
+        config.set_default_section("core/model/classification/peft/lora/mistral")
+        pretrained_name = config.getoption("pretrained_name", "default-mistral")
+        config_path = config.getoption("config_path", None)
+        config_path = pop_value(
+            config_path,
+            nested_dict_value(pretrained_mistral_infos, pretrained_name, "config"),
+        )
+        config_path = cached_path(config_path)
+
+        quant_config_path = config.getoption("quant_config_path", None)
+        if quant_config_path is not None:
+            quant_config_path = cached_path(quant_config_path)
+
+        lora_r = config.getoption("lora_r", 16)
+        lora_alpha = config.getoption("lora_alpha", 32)
+        lora_dropout = config.getoption("lora_dropout", 0.05)
+        fan_in_fan_out = config.getoption("fan_in_fan_out", True)
+        target_modules = config.getoption("target_modules", ["q_proj", "v_proj"])
+
+        gradient_checkpointing = config.getoption("gradient_checkpointing", False)
+        num_classes = config.getoption("num_classes", 1)
+
+        inst = cls(
+            config_path,
+            quant_config_path=quant_config_path,
+            lora_r=lora_r,
+            lora_alpha=lora_alpha,
+            lora_dropout=lora_dropout,
+            fan_in_fan_out=fan_in_fan_out,
+            target_modules=target_modules,
+            num_classes=num_classes,
+            gradient_checkpointing=gradient_checkpointing,
+        )
+
+        weight_path = []
+        pretrained_weight_path = config.getoption("pretrained_weight_path", None)
+        pretrained_weight_path = pop_value(
+            pretrained_weight_path,
+            nested_dict_value(pretrained_mistral_infos, pretrained_name, "weight"),
+            check_none=False,
+        )
+        if pretrained_weight_path is not None:
+            if isinstance(pretrained_weight_path, str):
+                weight_path.append(pretrained_weight_path)
+            elif isinstance(pretrained_weight_path, list):
+                weight_path.extend(pretrained_weight_path)
+
+        pretrained_lora_weight_path = config.getoption(
+            "pretrained_lora_weight_path", None
+        )
+        if pretrained_lora_weight_path is not None:
+            weight_path.append(pretrained_lora_weight_path)
+
+        if len(weight_path) > 0:
+            inst.from_pretrained(
+                weight_path=weight_path,
+            )
+
+        return inst
+
+    def forward(
+        self,
+        input_ids: torch.Tensor,
+        attention_mask: Optional[torch.Tensor] = None,
+        position_ids: Optional[torch.Tensor] = None,
+    ):
+        """
+        Perform forward pass of the MistralLoraForClassification model.
+
+        Args:
+            input_ids (torch.Tensor): The input IDs.
+            attention_mask (torch.Tensor, optional): The attention mask.
+            position_ids (torch.Tensor, optional): The position IDs.
+
+        Returns:
+            ClassificationOutputs: The output of the classification task.
+        """
+        outputs = super().forward(
+            input_ids=input_ids,
+            attention_mask=attention_mask,
+            position_ids=position_ids,
+        )
+        return ClassificationOutputs(outputs=outputs)
 
 
 @register_model("core/model/generation/peft/lora/mistral", generation_model_decorator)
@@ -130,7 +272,7 @@ class MistralLoraForGeneration(_MistralLoraForGeneration):
 
     def forward(
         self,
-        input_ids: Optional[torch.Tensor],
+        input_ids: torch.Tensor,
         attention_mask: Optional[torch.Tensor] = None,
         position_ids: Optional[torch.Tensor] = None,
     ):

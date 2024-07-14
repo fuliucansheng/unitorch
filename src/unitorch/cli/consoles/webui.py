@@ -73,7 +73,7 @@ def webui(config_path: str, **kwargs):
         demo_webui = gr.TabbedInterface(
             interface_list=[webui.iface for webui in webuis],
             tab_names=[webui.iname for webui in webuis],
-            title="Unitorch WebUI",
+            title="🔥 Unitorch WebUI",
         )
     demo_webui.title = "Unitorch WebUI"
     demo_webui.theme_css = read_file(

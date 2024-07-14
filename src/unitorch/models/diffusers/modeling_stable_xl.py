@@ -13,6 +13,8 @@ from diffusers.models import (
     UNet2DModel,
     UNet2DConditionModel,
     AutoencoderKL,
+    MultiAdapter,
+    T2IAdapter,
 )
 from diffusers.pipelines.controlnet import MultiControlNetModel
 from diffusers.pipelines import (
@@ -27,10 +29,11 @@ from unitorch.models import (
     QuantizationConfig,
     QuantizationMixin,
 )
-from unitorch.models.diffusers.modeling_stable import compute_snr
+from unitorch.models.peft import PeftWeightLoaderMixin
+from unitorch.models.diffusers import compute_snr
 
 
-class GenericStableXLModel(GenericModel, QuantizationMixin):
+class GenericStableXLModel(GenericModel, QuantizationMixin, PeftWeightLoaderMixin):
     prefix_keys_in_state_dict = {
         # unet weights
         "^add_embedding.*": "unet.",
@@ -62,7 +65,8 @@ class GenericStableXLModel(GenericModel, QuantizationMixin):
         text2_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
-        controlnet_config_path: Union[str, List[str]] = None,
+        controlnet_configs_path: Union[str, List[str]] = None,
+        adapter_configs_path: Union[str, List[str]] = None,
         quant_config_path: Optional[str] = None,
         image_size: Optional[int] = None,
         in_channels: Optional[int] = None,
@@ -99,22 +103,51 @@ class GenericStableXLModel(GenericModel, QuantizationMixin):
         vae_config_dict = json.load(open(vae_config_path))
         self.vae = AutoencoderKL.from_config(vae_config_dict)
 
-        if isinstance(controlnet_config_path, list):
+        if isinstance(controlnet_configs_path, list):
+            if len(controlnet_configs_path) == 0:
+                controlnet_configs_path = None
+            elif len(controlnet_configs_path) == 1:
+                controlnet_configs_path = controlnet_configs_path[0]
+
+        if isinstance(controlnet_configs_path, list):
             controlnets = []
-            for _controlnet_config_path in controlnet_config_path:
-                controlnet_config_dict = json.load(open(_controlnet_config_path))
+            for controlnet_config_path in controlnet_configs_path:
+                controlnet_config_dict = json.load(open(controlnet_config_path))
                 controlnets.append(ControlNetModel.from_config(controlnet_config_dict))
             self.num_controlnets = len(controlnets)
             self.controlnet = MultiControlNetModel(
                 controlnets=controlnets,
             )
-        elif isinstance(controlnet_config_path, str):
-            controlnet_config_dict = json.load(open(controlnet_config_path))
+        elif isinstance(controlnet_configs_path, str):
+            controlnet_config_dict = json.load(open(controlnet_configs_path))
             self.controlnet = ControlNetModel.from_config(controlnet_config_dict)
             self.num_controlnets = 1
         else:
             self.controlnet = None
             self.num_controlnets = 0
+
+        if isinstance(adapter_configs_path, list):
+            if len(adapter_configs_path) == 0:
+                adapter_configs_path = None
+            elif len(adapter_configs_path) == 1:
+                adapter_configs_path = adapter_configs_path[0]
+
+        if isinstance(adapter_configs_path, list):
+            adapters = []
+            for adapter_config_path in adapter_configs_path:
+                adapter_config_dict = json.load(open(adapter_config_path))
+                adapters.append(T2IAdapter.from_config(adapter_config_dict))
+            self.num_adapters = len(adapters)
+            self.adapter = MultiAdapter(
+                adapters=adapters,
+            )
+        elif isinstance(adapter_configs_path, str):
+            adapter_config_dict = json.load(open(adapter_configs_path))
+            self.adapter = T2IAdapter.from_config(adapter_config_dict)
+            self.num_adapters = 1
+        else:
+            self.adapter = None
+            self.num_adapters = 0
 
         scheduler_config_dict = json.load(open(scheduler_config_path))
         scheduler_class_name = scheduler_config_dict.get("_class_name", "DDPMScheduler")

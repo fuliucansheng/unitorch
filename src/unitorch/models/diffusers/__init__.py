@@ -1,6 +1,7 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
+from unitorch.models.diffusers.modeling_stable import compute_snr
 from unitorch.models.diffusers.modeling_stable import (
     GenericStableModel,
     StableForText2ImageGeneration,
@@ -32,6 +33,9 @@ from unitorch.models.diffusers.modeling_controlnet_xl import (
 )
 from unitorch.models.diffusers.modeling_controlnet_3 import (
     ControlNet3ForText2ImageGeneration,
+)
+from unitorch.models.diffusers.modeling_adapter_xl import (
+    StableXLAdapterForText2ImageGeneration,
 )
 from unitorch.models.diffusers.processing_stable import (
     StableProcessor,

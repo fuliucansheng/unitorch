@@ -59,11 +59,17 @@ class SamWebUI(SimpleWebUI):
         mask_threshold_click = create_element(
             "slider", "Mask Threshold", default=0, min_value=-20, max_value=20, step=0.1
         )
+        output_image_type_click = create_element(
+            "radio", "Output Image Type", default="Mask", values=["Mask", "Object"]
+        )
         input_click_reset = create_element("button", "Reset")
         input_click_segment = create_element("button", "Segment")
         input_image_box = create_element("image", "Input Image")
         mask_threshold_box = create_element(
             "slider", "Mask Threshold", default=0, min_value=-20, max_value=20, step=0.1
+        )
+        output_image_type_box = create_element(
+            "radio", "Output Image Type", default="Mask", values=["Mask", "Object"]
         )
         input_box_reset = create_element("button", "Reset")
         input_box_segment = create_element("button", "Segment")
@@ -73,7 +79,7 @@ class SamWebUI(SimpleWebUI):
         click = create_tab(
             create_column(
                 input_image_click,
-                mask_threshold_click,
+                create_row(mask_threshold_click, output_image_type_click),
                 create_row(input_click_reset, input_click_segment),
             ),
             name="Click",
@@ -81,7 +87,7 @@ class SamWebUI(SimpleWebUI):
         box = create_tab(
             create_column(
                 input_image_box,
-                mask_threshold_box,
+                create_row(mask_threshold_box, output_image_type_box),
                 create_row(input_box_reset, input_box_segment),
             ),
             name="Box",
@@ -116,7 +122,12 @@ class SamWebUI(SimpleWebUI):
         )
         input_click_segment.click(
             self.serve_click,
-            inputs=[origin_input_image, click_points, mask_threshold_click],
+            inputs=[
+                origin_input_image,
+                click_points,
+                mask_threshold_click,
+                output_image_type_click,
+            ],
             outputs=[output_image],
         )
 
@@ -137,7 +148,12 @@ class SamWebUI(SimpleWebUI):
         )
         input_box_segment.click(
             self.serve_box,
-            inputs=[origin_input_image, boxes_points, mask_threshold_box],
+            inputs=[
+                origin_input_image,
+                boxes_points,
+                mask_threshold_box,
+                output_image_type_box,
+            ],
             outputs=[output_image],
         )
 
@@ -190,13 +206,20 @@ class SamWebUI(SimpleWebUI):
         image: Image.Image,
         click_points: List[Tuple[int, int]] = [(0, 0)],
         mask_threshold: float = 0.5,
+        output_image_type: str = "Mask",
     ):
         assert self._pipe is not None
-        result = self._pipe(
+        mask = self._pipe(
             image,
             points=click_points,
             mask_threshold=mask_threshold,
         )
+        if output_image_type == "Object":
+            result = Image.new("RGBA", image.size, (0, 0, 0, 0))
+            mask = mask.convert("L").resize(image.size)
+            result.paste(image, (0, 0), mask)
+        else:
+            result = mask
         return result
 
     def serve_box(
@@ -204,15 +227,22 @@ class SamWebUI(SimpleWebUI):
         image: Image.Image,
         boxes_points: List[Tuple[int, int]] = [(0, 0)],
         mask_threshold: float = 0.5,
+        output_image_type: str = "Mask",
     ):
         assert self._pipe is not None
         x1 = min([point[0] for point in boxes_points])
         y1 = min([point[1] for point in boxes_points])
         x2 = max([point[0] for point in boxes_points])
         y2 = max([point[1] for point in boxes_points])
-        result = self._pipe(
+        mask = self._pipe(
             image,
             boxes=[[(x1, y1, x2, y2)]],
             mask_threshold=mask_threshold,
         )
+        if output_image_type == "Object":
+            result = Image.new("RGBA", image.size, (0, 0, 0, 0))
+            mask = mask.convert("L").resize(image.size)
+            result.paste(image, (0, 0), mask)
+        else:
+            result = mask
         return result

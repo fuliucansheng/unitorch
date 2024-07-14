@@ -3,7 +3,6 @@
 
 from unitorch.models.bloom.modeling import (
     BloomForClassification,
-    BloomForPretrain,
     BloomForGeneration,
 )
 from unitorch.models.bloom.processing import BloomProcessor

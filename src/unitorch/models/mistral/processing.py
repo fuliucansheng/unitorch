@@ -12,12 +12,13 @@ import torch
 from transformers import LlamaTokenizer
 from unitorch.utils import pop_value, truncate_sequence_pair
 from unitorch.models import (
+    HfTextClassificationProcessor,
     HfTextGenerationProcessor,
     GenericOutputs,
 )
 
 
-class MistralProcessor(HfTextGenerationProcessor):
+class MistralProcessor(HfTextClassificationProcessor, HfTextGenerationProcessor):
     def __init__(
         self,
         vocab_file: str,
@@ -39,41 +40,59 @@ class MistralProcessor(HfTextGenerationProcessor):
         tokenizer.cls_token_id = tokenizer.bos_token_id
         tokenizer.sep_token_id = tokenizer.eos_token_id
         tokenizer.pad_token_id = tokenizer.unk_token_id
-        super().__init__(
+        HfTextClassificationProcessor.__init__(
+            self,
+            tokenizer=tokenizer,
+            max_seq_length=max_seq_length,
+        )
+        HfTextGenerationProcessor.__init__(
+            self,
             tokenizer=tokenizer,
             max_seq_length=max_seq_length,
             max_gen_seq_length=max_gen_seq_length,
         )
 
-    def prompt(
+    def classification(
         self,
         text: str,
+        text_pair: Optional[str] = None,
         max_seq_length: Optional[int] = None,
     ):
         """
-        Process text as a prompt.
+        Process text for classification.
 
         Args:
             text (str): Input text.
+            text_pair (str, optional): Input text pair. Defaults to None.
             max_seq_length (int, optional): Maximum sequence length. Defaults to None.
 
         Returns:
-            GenericOutputs: Processed input_ids tensor.
+            GenericOutputs: Processed input_ids and attention_mask tensors.
         """
         max_seq_length = pop_value(
             max_seq_length,
             self.max_seq_length,
         )
-        tokens = [self.bos_token] + self.tokenizer.tokenize(str(text))[
-            1 - max_seq_length :
-        ]
-        padding = [self.pad_token] * (max_seq_length - len(tokens))
-        tokens = padding + tokens
-        input_ids = self.tokenizer.convert_tokens_to_ids(tokens)
+
+        tokens = self.tokenizer.tokenize(str(text))
+        if text_pair is None:
+            tokens = tokens[:max_seq_length]
+            input_ids = self.tokenizer.convert_tokens_to_ids(tokens)
+        else:
+            tokens_pair = self.tokenizer.tokenize(str(text_pair))
+            truncate_sequence_pair(tokens, tokens_pair, max_seq_length)
+            tokens = tokens + tokens_pair
+            input_ids = self.tokenizer.convert_tokens_to_ids(tokens)
+
+        padding = [0] * (max_seq_length - len(input_ids))
+        attention_mask = [0] * len(padding) + [1] * len(input_ids)
+        input_ids = len(padding) * [self.pad_token_id] + input_ids
 
         assert len(input_ids) == max_seq_length
+        assert len(attention_mask) == max_seq_length
         return GenericOutputs(
             input_ids=torch.tensor(input_ids, dtype=torch.long),
+            attention_mask=torch.tensor(attention_mask, dtype=torch.long),
         )
 
     def generation_inputs(

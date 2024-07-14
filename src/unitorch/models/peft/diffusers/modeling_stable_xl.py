@@ -26,8 +26,8 @@ from unitorch.models import (
     QuantizationConfig,
     QuantizationMixin,
 )
-from unitorch.models.diffusers.modeling_stable import compute_snr
 from unitorch.models.peft import GenericPeftModel
+from unitorch.models.diffusers import compute_snr
 
 
 class GenericStableXLLoraModel(GenericPeftModel, QuantizationMixin):
@@ -70,6 +70,7 @@ class GenericStableXLLoraModel(GenericPeftModel, QuantizationMixin):
         num_infer_timesteps: Optional[int] = 50,
         snr_gamma: Optional[float] = 5.0,
         lora_r: Optional[int] = 16,
+        lora_alpha: Optional[int] = 32,
         seed: Optional[int] = 1123,
     ):
         super().__init__()
@@ -112,11 +113,11 @@ class GenericStableXLLoraModel(GenericPeftModel, QuantizationMixin):
             param.requires_grad = False
         lora_config = LoraConfig(
             r=lora_r,
-            lora_alpha=lora_r,
+            lora_alpha=lora_alpha,
             init_lora_weights="gaussian",
             target_modules=["to_k", "to_q", "to_v", "to_out.0"],
         )
-        self.add_adapter(lora_config)
+        self.unet.add_adapter(lora_config)
 
         self.scheduler.set_timesteps(num_inference_steps=self.num_infer_timesteps)
 
@@ -137,6 +138,7 @@ class StableXLLoraForText2ImageGeneration(GenericStableXLLoraModel):
         num_infer_timesteps: Optional[int] = 50,
         snr_gamma: Optional[float] = 5.0,
         lora_r: Optional[int] = 16,
+        lora_alpha: Optional[int] = 32,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
@@ -153,6 +155,7 @@ class StableXLLoraForText2ImageGeneration(GenericStableXLLoraModel):
             num_infer_timesteps=num_infer_timesteps,
             snr_gamma=snr_gamma,
             lora_r=lora_r,
+            lora_alpha=lora_alpha,
             seed=seed,
         )
 
@@ -213,7 +216,7 @@ class StableXLLoraForText2ImageGeneration(GenericStableXLLoraModel):
         outputs = self.unet(
             noise_latents,
             timesteps,
-            prompt_embeds,
+            encoder_hidden_states=prompt_embeds,
             added_cond_kwargs={
                 "time_ids": add_time_ids,
                 "text_embeds": pooled_prompt_embeds,
@@ -321,6 +324,7 @@ class StableXLLoraForImage2ImageGeneration(GenericStableXLLoraModel):
         num_infer_timesteps: Optional[int] = 50,
         snr_gamma: Optional[float] = 5.0,
         lora_r: Optional[int] = 16,
+        lora_alpha: Optional[int] = 32,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
@@ -337,6 +341,7 @@ class StableXLLoraForImage2ImageGeneration(GenericStableXLLoraModel):
             num_infer_timesteps=num_infer_timesteps,
             snr_gamma=snr_gamma,
             lora_r=lora_r,
+            lora_alpha=lora_alpha,
             seed=seed,
         )
 
@@ -434,6 +439,7 @@ class StableXLLoraForImageInpainting(GenericStableXLLoraModel):
         num_infer_timesteps: Optional[int] = 50,
         snr_gamma: Optional[float] = 5.0,
         lora_r: Optional[int] = 16,
+        lora_alpha: Optional[int] = 32,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
@@ -450,6 +456,7 @@ class StableXLLoraForImageInpainting(GenericStableXLLoraModel):
             num_infer_timesteps=num_infer_timesteps,
             snr_gamma=snr_gamma,
             lora_r=lora_r,
+            lora_alpha=lora_alpha,
             seed=seed,
         )
 

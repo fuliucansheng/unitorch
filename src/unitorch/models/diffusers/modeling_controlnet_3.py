@@ -37,7 +37,7 @@ class ControlNet3ForText2ImageGeneration(GenericStable3Model):
         text_config_path (str): Path to the text model configuration file.
         text2_config_path (str): Path to the second text model configuration file.
         vae_config_path (str): Path to the VAE model configuration file.
-        controlnet_config_path (str): Path to the ControlNet model configuration file.
+        controlnet_configs_path (str): Path to the ControlNet model configuration file.
         scheduler_config_path (str): Path to the scheduler configuration file.
         quant_config_path (Optional[str]): Path to the quantization configuration file (default: None).
         image_size (Optional[int]): Size of the input image (default: None).
@@ -58,7 +58,7 @@ class ControlNet3ForText2ImageGeneration(GenericStable3Model):
         text2_config_path: str,
         text3_config_path: str,
         vae_config_path: str,
-        controlnet_config_path: str,
+        controlnet_configs_path: Union[str, List[str]],
         scheduler_config_path: str,
         quant_config_path: Optional[str] = None,
         image_size: Optional[int] = None,
@@ -77,7 +77,7 @@ class ControlNet3ForText2ImageGeneration(GenericStable3Model):
             text2_config_path=text2_config_path,
             text3_config_path=text3_config_path,
             vae_config_path=vae_config_path,
-            controlnet_config_path=controlnet_config_path,
+            controlnet_configs_path=controlnet_configs_path,
             scheduler_config_path=scheduler_config_path,
             quant_config_path=quant_config_path,
             image_size=image_size,

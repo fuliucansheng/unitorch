@@ -53,11 +53,16 @@ class BRIAWebUI(SimpleWebUI):
         mask_threshold = create_element(
             "slider", "Mask Threshold", default=0.5, min_value=0, max_value=1, step=0.01
         )
+        output_image_type = create_element(
+            "radio", "Output Image Type", default="Mask", values=["Mask", "Object"]
+        )
         segment = create_element("button", "Segment")
         output_image = create_element("image", "Output Image")
 
         # Create the blocks
-        left = create_column(input_image, mask_threshold, segment)
+        left = create_column(
+            input_image, create_row(mask_threshold, output_image_type), segment
+        )
         right = create_column(output_image)
         iface = create_blocks(pretrain_layout, create_row(left, right))
 
@@ -67,7 +72,9 @@ class BRIAWebUI(SimpleWebUI):
         start.click(self.start, inputs=[name], outputs=[status])
         stop.click(self.stop, outputs=[status])
         segment.click(
-            self.serve, inputs=[input_image, mask_threshold], outputs=[output_image]
+            self.serve,
+            inputs=[input_image, mask_threshold, output_image_type],
+            outputs=[output_image],
         )
 
         iface.load(
@@ -100,10 +107,17 @@ class BRIAWebUI(SimpleWebUI):
         self,
         image: Image.Image,
         mask_threshold: float = 0.5,
+        output_image_type: str = "Mask",
     ):
         assert self._pipe is not None
-        result = self._pipe(
+        mask = self._pipe(
             image,
             threshold=mask_threshold,
         )
+        if output_image_type == "Object":
+            result = Image.new("RGBA", image.size, (0, 0, 0, 0))
+            mask = mask.convert("L").resize(image.size)
+            result.paste(image, (0, 0), mask)
+        else:
+            result = mask
         return result

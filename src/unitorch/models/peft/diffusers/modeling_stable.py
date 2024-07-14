@@ -35,34 +35,7 @@ from unitorch.models import (
     QuantizationMixin,
 )
 from unitorch.models.peft import GenericPeftModel
-
-
-def compute_snr(timesteps, noise_scheduler):
-    """
-    Computes SNR as per https://github.com/TiankaiHang/Min-SNR-Diffusion-Training/blob/521b624bd70c67cee4bdf49225915f5945a872e3/guided_diffusion/gaussian_diffusion.py#L847-L849
-    """
-    alphas_cumprod = noise_scheduler.alphas_cumprod
-    sqrt_alphas_cumprod = alphas_cumprod**0.5
-    sqrt_one_minus_alphas_cumprod = (1.0 - alphas_cumprod) ** 0.5
-    # Expand the tensors.
-    # Adapted from https://github.com/TiankaiHang/Min-SNR-Diffusion-Training/blob/521b624bd70c67cee4bdf49225915f5945a872e3/guided_diffusion/gaussian_diffusion.py#L1026
-    sqrt_alphas_cumprod = sqrt_alphas_cumprod.to(device=timesteps.device)[
-        timesteps
-    ].float()
-    while len(sqrt_alphas_cumprod.shape) < len(timesteps.shape):
-        sqrt_alphas_cumprod = sqrt_alphas_cumprod[..., None]
-    alpha = sqrt_alphas_cumprod.expand(timesteps.shape)
-
-    sqrt_one_minus_alphas_cumprod = sqrt_one_minus_alphas_cumprod.to(
-        device=timesteps.device
-    )[timesteps].float()
-    while len(sqrt_one_minus_alphas_cumprod.shape) < len(timesteps.shape):
-        sqrt_one_minus_alphas_cumprod = sqrt_one_minus_alphas_cumprod[..., None]
-    sigma = sqrt_one_minus_alphas_cumprod.expand(timesteps.shape)
-
-    # Compute SNR
-    snr = (alpha / sigma) ** 2
-    return snr
+from unitorch.models.diffusers import compute_snr
 
 
 class GenericStableLoraModel(GenericPeftModel, QuantizationMixin):
@@ -106,6 +79,7 @@ class GenericStableLoraModel(GenericPeftModel, QuantizationMixin):
         num_infer_timesteps: Optional[int] = 50,
         snr_gamma: Optional[float] = 5.0,
         lora_r: Optional[int] = 16,
+        lora_alpha: Optional[int] = 32,
         seed: Optional[int] = 1123,
     ):
         super().__init__()
@@ -148,7 +122,7 @@ class GenericStableLoraModel(GenericPeftModel, QuantizationMixin):
             param.requires_grad = False
         lora_config = LoraConfig(
             r=lora_r,
-            lora_alpha=lora_r,
+            lora_alpha=lora_alpha,
             init_lora_weights="gaussian",
             target_modules=["to_k", "to_q", "to_v", "to_out.0"],
         )
@@ -172,6 +146,7 @@ class StableLoraForText2ImageGeneration(GenericStableLoraModel):
         num_infer_timesteps: Optional[int] = 50,
         snr_gamma: Optional[float] = 5.0,
         lora_r: Optional[int] = 16,
+        lora_alpha: Optional[int] = 32,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
@@ -187,6 +162,7 @@ class StableLoraForText2ImageGeneration(GenericStableLoraModel):
             num_infer_timesteps=num_infer_timesteps,
             snr_gamma=snr_gamma,
             lora_r=lora_r,
+            lora_alpha=lora_alpha,
             seed=seed,
         )
 
@@ -303,6 +279,7 @@ class StableLoraForImage2ImageGeneration(GenericStableLoraModel):
         num_infer_timesteps: Optional[int] = 50,
         snr_gamma: Optional[float] = 5.0,
         lora_r: Optional[int] = 16,
+        lora_alpha: Optional[int] = 32,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
@@ -318,6 +295,7 @@ class StableLoraForImage2ImageGeneration(GenericStableLoraModel):
             num_infer_timesteps=num_infer_timesteps,
             snr_gamma=snr_gamma,
             lora_r=lora_r,
+            lora_alpha=lora_alpha,
             seed=seed,
         )
 
@@ -386,6 +364,7 @@ class StableLoraForImageInpainting(GenericStableLoraModel):
         num_infer_timesteps: Optional[int] = 50,
         snr_gamma: Optional[float] = 5.0,
         lora_r: Optional[int] = 16,
+        lora_alpha: Optional[int] = 32,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
@@ -401,6 +380,7 @@ class StableLoraForImageInpainting(GenericStableLoraModel):
             num_infer_timesteps=num_infer_timesteps,
             snr_gamma=snr_gamma,
             lora_r=lora_r,
+            lora_alpha=lora_alpha,
             seed=seed,
         )
 
@@ -471,6 +451,7 @@ class StableLoraForImageResolution(GenericStableLoraModel):
         num_infer_timesteps: Optional[int] = 50,
         snr_gamma: Optional[float] = 5.0,
         lora_r: Optional[int] = 16,
+        lora_alpha: Optional[int] = 32,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
@@ -486,6 +467,7 @@ class StableLoraForImageResolution(GenericStableLoraModel):
             num_infer_timesteps=num_infer_timesteps,
             snr_gamma=snr_gamma,
             lora_r=lora_r,
+            lora_alpha=lora_alpha,
             seed=seed,
         )
 

@@ -9,7 +9,6 @@ from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.llama import (
     LlamaForClassification as _LlamaForClassification,
     LlamaForGeneration as _LlamaForGeneration,
-    LlamaForPretrain as _LlamaForPretrain,
 )
 from unitorch.cli import (
     cached_path,
@@ -19,7 +18,10 @@ from unitorch.cli import (
 )
 from unitorch.cli.models import generation_model_decorator
 from unitorch.cli.models import ClassificationOutputs, GenerationOutputs, LossOutputs
-from unitorch.cli.models.llama import pretrained_llama_infos
+from unitorch.cli.models.llama import (
+    pretrained_llama_infos,
+    pretrained_llama_extensions_infos,
+)
 
 
 @register_model("core/model/classification/llama")
@@ -63,6 +65,9 @@ class LlamaForClassification(_LlamaForClassification):
         """
         config.set_default_section("core/model/classification/llama")
         pretrained_name = config.getoption("pretrained_name", "default-llama")
+        pretrained_lora_name = config.getoption(
+            "pretrained_lora_name", "default-llama-lora"
+        )
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
             config_path,
@@ -95,6 +100,23 @@ class LlamaForClassification(_LlamaForClassification):
                 weight_path=weight_path,
             )
 
+        pretrained_lora_weight_path = config.getoption(
+            "pretrained_lora_weight_path", None
+        )
+        lora_weight_path = pop_value(
+            pretrained_lora_weight_path,
+            nested_dict_value(pretrained_llama_extensions_infos, pretrained_lora_name),
+            check_none=False,
+        )
+        pretrained_lora_weight = config.getoption("pretrained_lora_weight", 1.0)
+        pretrained_lora_alpha = config.getoption("pretrained_lora_alpha", 32.0)
+        if lora_weight_path is not None:
+            inst.load_lora_weights(
+                lora_weight_path,
+                lora_weights=pretrained_lora_weight,
+                lora_alphas=pretrained_lora_alpha,
+            )
+
         return inst
 
     def forward(
@@ -120,106 +142,6 @@ class LlamaForClassification(_LlamaForClassification):
             position_ids=position_ids,
         )
         return ClassificationOutputs(outputs=outputs)
-
-
-@register_model("core/model/pretrain/llama")
-class LlamaForPretrain(_LlamaForPretrain):
-    """Llama model for pretraining tasks."""
-
-    def __init__(
-        self,
-        config_path: str,
-        quant_config_path: Optional[str] = None,
-        gradient_checkpointing: Optional[bool] = False,
-    ):
-        """
-        Initialize the LlamaForPretrain model.
-
-        Args:
-            config_path (str): The path to the model configuration file.
-            gradient_checkpointing (bool, optional): Whether to use gradient checkpointing during training. Defaults to False.
-        """
-        super().__init__(
-            config_path=config_path,
-            quant_config_path=quant_config_path,
-            gradient_checkpointing=gradient_checkpointing,
-        )
-
-    @classmethod
-    @add_default_section_for_init("core/model/pretrain/llama")
-    def from_core_configure(cls, config, **kwargs):
-        """
-        Create an instance of LlamaForPretrain from a core configuration.
-
-        Args:
-            config: The core configuration.
-            **kwargs: Additional keyword arguments.
-
-        Returns:
-            LlamaForPretrain: An instance of LlamaForPretrain.
-        """
-        config.set_default_section("core/model/pretrain/llama")
-        pretrained_name = config.getoption("pretrained_name", "default-llama")
-        config_path = config.getoption("config_path", None)
-        config_path = pop_value(
-            config_path,
-            nested_dict_value(pretrained_llama_infos, pretrained_name, "config"),
-        )
-
-        config_path = cached_path(config_path)
-        quant_config_path = config.getoption("quant_config_path", None)
-        if quant_config_path is not None:
-            quant_config_path = cached_path(quant_config_path)
-        gradient_checkpointing = config.getoption("gradient_checkpointing", False)
-
-        inst = cls(
-            config_path,
-            quant_config_path=quant_config_path,
-            gradient_checkpointing=gradient_checkpointing,
-        )
-        pretrained_weight_path = config.getoption("pretrained_weight_path", None)
-        weight_path = pop_value(
-            pretrained_weight_path,
-            nested_dict_value(pretrained_llama_infos, pretrained_name, "weight"),
-            check_none=False,
-        )
-
-        if weight_path is not None:
-            inst.from_pretrained(
-                weight_path=weight_path,
-            )
-
-        return inst
-
-    def forward(
-        self,
-        input_ids: torch.Tensor,
-        attention_mask: Optional[torch.Tensor] = None,
-        position_ids: Optional[torch.Tensor] = None,
-        input_ids_label: Optional[torch.Tensor] = None,
-        attention_mask_label: Optional[torch.Tensor] = None,
-    ):
-        """
-        Perform a forward pass on the LlamaForPretrain model.
-
-        Args:
-            input_ids (torch.Tensor): The input tensor containing the input IDs.
-            attention_mask (torch.Tensor, optional): The attention mask tensor. Defaults to None.
-            position_ids (torch.Tensor, optional): The position IDs tensor. Defaults to None.
-            input_ids_label (torch.Tensor, optional): The input tensor containing the input IDs for the masked language model. Defaults to None.
-            attention_mask_label (torch.Tensor, optional): The attention mask tensor for the masked language model. Defaults to None.
-
-        Returns:
-            LossOutputs: The output of the pretraining model.
-        """
-        outputs = super().forward(
-            input_ids=input_ids,
-            attention_mask=attention_mask,
-            position_ids=position_ids,
-            input_ids_label=input_ids_label,
-            attention_mask_label=attention_mask_label,
-        )
-        return LossOutputs(loss=outputs)
 
 
 @register_model("core/model/generation/llama", generation_model_decorator)
@@ -260,6 +182,9 @@ class LlamaForGeneration(_LlamaForGeneration):
         """
         config.set_default_section("core/model/generation/llama")
         pretrained_name = config.getoption("pretrained_name", "default-llama")
+        pretrained_lora_name = config.getoption(
+            "pretrained_lora_name", "default-llama-lora"
+        )
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
             config_path,
@@ -289,11 +214,28 @@ class LlamaForGeneration(_LlamaForGeneration):
                 weight_path=weight_path,
             )
 
+        pretrained_lora_weight_path = config.getoption(
+            "pretrained_lora_weight_path", None
+        )
+        lora_weight_path = pop_value(
+            pretrained_lora_weight_path,
+            nested_dict_value(pretrained_llama_extensions_infos, pretrained_lora_name),
+            check_none=False,
+        )
+        pretrained_lora_weight = config.getoption("pretrained_lora_weight", 1.0)
+        pretrained_lora_alpha = config.getoption("pretrained_lora_alpha", 32.0)
+        if lora_weight_path is not None:
+            inst.load_lora_weights(
+                lora_weight_path,
+                lora_weights=pretrained_lora_weight,
+                lora_alphas=pretrained_lora_alpha,
+            )
+
         return inst
 
     def forward(
         self,
-        input_ids: Optional[torch.Tensor],
+        input_ids: torch.Tensor,
         attention_mask: Optional[torch.Tensor] = None,
         position_ids: Optional[torch.Tensor] = None,
     ):

@@ -97,61 +97,6 @@ class LlamaProcessor(_LlamaProcessor):
             attention_mask=outputs.attention_mask,
         )
 
-    @register_process("core/process/llama/pretrain")
-    def _pretrain(
-        self,
-        text: str,
-        text_pair: Optional[str] = None,
-        max_seq_length: Optional[int] = None,
-        max_gen_seq_length: Optional[int] = None,
-    ):
-        """
-        Process inputs for pretraining/generation.
-
-        Args:
-            text (str): The input text.
-            text_pair (str, optional): The second input text for sequence pair pretraining. Defaults to None.
-            max_seq_length (int, optional): The maximum sequence length. Defaults to None.
-            max_gen_seq_length (int, optional): The maximum generated sequence length. Defaults to None.
-
-        Returns:
-            TensorsInputs: Processed tensors inputs.
-        """
-        outputs = super().generation(
-            text=text,
-            text_pair=text_pair,
-            max_seq_length=max_seq_length,
-            max_gen_seq_length=max_gen_seq_length,
-        )
-        return TensorsInputs(
-            input_ids=outputs.input_ids,
-            attention_mask=outputs.attention_mask,
-            input_ids_label=outputs.input_ids_label,
-            attention_mask_label=outputs.attention_mask_label,
-        )
-
-    @register_process("core/process/llama/prompt")
-    def _prompt(
-        self,
-        text: str,
-        max_seq_length: Optional[int] = None,
-    ):
-        """
-        Process inputs for prompt-based generation.
-
-        Args:
-            text (str): The input text.
-            max_seq_length (int, optional): The maximum sequence length. Defaults to None.
-
-        Returns:
-            TensorsInputs: Processed tensors inputs.
-        """
-        outputs = super().prompt(
-            text=text,
-            max_seq_length=max_seq_length,
-        )
-        return TensorsInputs(input_ids=outputs.input_ids)
-
     @register_process("core/process/llama/generation/inputs")
     def _generation_inputs(
         self,

@@ -15,6 +15,7 @@ from diffusers.models import (
     UNet2DConditionModel,
     AutoencoderKL,
 )
+from diffusers.pipelines.controlnet import MultiControlNetModel
 from diffusers.pipelines import (
     StableDiffusionXLControlNetPipeline,
     StableDiffusionXLControlNetImg2ImgPipeline,
@@ -59,7 +60,7 @@ class GenericControlNetXLLoraModel(GenericPeftModel, QuantizationMixin):
         text_config_path: str,
         text2_config_path: str,
         vae_config_path: str,
-        controlnet_config_path: str,
+        controlnet_configs_path: Union[str, List[str]],
         scheduler_config_path: str,
         quant_config_path: Optional[str] = None,
         image_size: Optional[int] = None,
@@ -68,6 +69,7 @@ class GenericControlNetXLLoraModel(GenericPeftModel, QuantizationMixin):
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         lora_r: Optional[int] = 16,
+        lora_alpha: Optional[int] = 32,
         seed: Optional[int] = 1123,
     ):
         super().__init__()
@@ -89,8 +91,22 @@ class GenericControlNetXLLoraModel(GenericPeftModel, QuantizationMixin):
         self.text2 = CLIPTextModelWithProjection(text_config2)
         vae_config_dict = json.load(open(vae_config_path))
         self.vae = AutoencoderKL.from_config(vae_config_dict)
-        controlnet_config_dict = json.load(open(controlnet_config_path))
-        self.controlnet = ControlNetModel.from_config(controlnet_config_dict)
+        if isinstance(controlnet_configs_path, list):
+            controlnets = []
+            for controlnet_config_path in controlnet_configs_path:
+                controlnet_config_dict = json.load(open(controlnet_config_path))
+                controlnets.append(ControlNetModel.from_config(controlnet_config_dict))
+            self.num_controlnets = len(controlnets)
+            self.controlnet = MultiControlNetModel(
+                controlnets=controlnets,
+            )
+        elif isinstance(controlnet_configs_path, str):
+            controlnet_config_dict = json.load(open(controlnet_configs_path))
+            self.controlnet = ControlNetModel.from_config(controlnet_config_dict)
+            self.num_controlnets = 1
+        else:
+            self.controlnet = None
+            self.num_controlnets = 0
 
         scheduler_config_dict = json.load(open(scheduler_config_path))
         scheduler_class_name = scheduler_config_dict.get("_class_name", "DDPMScheduler")
@@ -112,7 +128,7 @@ class GenericControlNetXLLoraModel(GenericPeftModel, QuantizationMixin):
 
         lora_config = LoraConfig(
             r=lora_r,
-            lora_alpha=lora_r,
+            lora_alpha=lora_alpha,
             init_lora_weights="gaussian",
             target_modules=["to_k", "to_q", "to_v", "to_out.0"],
         )
@@ -179,7 +195,7 @@ class ControlNetXLLoraForText2ImageGeneration(GenericControlNetXLLoraModel):
         text_config_path (str): Path to the text model configuration file.
         text2_config_path (str): Path to the second text model configuration file.
         vae_config_path (str): Path to the VAE model configuration file.
-        controlnet_config_path (str): Path to the ControlNet model configuration file.
+        controlnet_configs_path (str): Path to the ControlNet model configuration file.
         scheduler_config_path (str): Path to the scheduler configuration file.
         quant_config_path (Optional[str]): Path to the quantization configuration file (default: None).
         image_size (Optional[int]): Size of the input image (default: None).
@@ -197,7 +213,7 @@ class ControlNetXLLoraForText2ImageGeneration(GenericControlNetXLLoraModel):
         text_config_path: str,
         text2_config_path: str,
         vae_config_path: str,
-        controlnet_config_path: str,
+        controlnet_configs_path: Union[str, List[str]],
         scheduler_config_path: str,
         quant_config_path: Optional[str] = None,
         image_size: Optional[int] = None,
@@ -206,6 +222,7 @@ class ControlNetXLLoraForText2ImageGeneration(GenericControlNetXLLoraModel):
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         lora_r: Optional[int] = 16,
+        lora_alpha: Optional[int] = 32,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
@@ -213,7 +230,7 @@ class ControlNetXLLoraForText2ImageGeneration(GenericControlNetXLLoraModel):
             text_config_path=text_config_path,
             text2_config_path=text2_config_path,
             vae_config_path=vae_config_path,
-            controlnet_config_path=controlnet_config_path,
+            controlnet_configs_path=controlnet_configs_path,
             scheduler_config_path=scheduler_config_path,
             quant_config_path=quant_config_path,
             image_size=image_size,
@@ -222,6 +239,7 @@ class ControlNetXLLoraForText2ImageGeneration(GenericControlNetXLLoraModel):
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             lora_r=lora_r,
+            lora_alpha=lora_alpha,
             seed=seed,
         )
         self.pipeline = StableDiffusionXLControlNetPipeline(
@@ -295,11 +313,10 @@ class ControlNetXLLoraForText2ImageGeneration(GenericControlNetXLLoraModel):
             timesteps,
         )
 
-        encoder_hidden_states = self.text(input_ids, attention_mask)[0]
         down_block_res_samples, mid_block_res_sample = self.controlnet(
             noise_latents,
             timesteps,
-            encoder_hidden_states=encoder_hidden_states,
+            encoder_hidden_states=prompt_embeds,
             controlnet_cond=condition_pixel_values,
             added_cond_kwargs={
                 "time_ids": add_time_ids,
@@ -310,7 +327,7 @@ class ControlNetXLLoraForText2ImageGeneration(GenericControlNetXLLoraModel):
         outputs = self.unet(
             noise_latents,
             timesteps,
-            prompt_embeds,
+            encoder_hidden_states=prompt_embeds,
             added_cond_kwargs={
                 "time_ids": add_time_ids,
                 "text_embeds": pooled_prompt_embeds,
@@ -397,7 +414,7 @@ class ControlNetXLLoraForImage2ImageGeneration(GenericControlNetXLLoraModel):
         text_config_path: str,
         text2_config_path: str,
         vae_config_path: str,
-        controlnet_config_path: str,
+        controlnet_configs_path: Union[str, List[str]],
         scheduler_config_path: str,
         quant_config_path: Optional[str] = None,
         image_size: Optional[int] = None,
@@ -406,6 +423,7 @@ class ControlNetXLLoraForImage2ImageGeneration(GenericControlNetXLLoraModel):
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         lora_r: Optional[int] = 16,
+        lora_alpha: Optional[int] = 32,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
@@ -413,7 +431,7 @@ class ControlNetXLLoraForImage2ImageGeneration(GenericControlNetXLLoraModel):
             text_config_path=text_config_path,
             text2_config_path=text2_config_path,
             vae_config_path=vae_config_path,
-            controlnet_config_path=controlnet_config_path,
+            controlnet_configs_path=controlnet_configs_path,
             scheduler_config_path=scheduler_config_path,
             quant_config_path=quant_config_path,
             image_size=image_size,
@@ -422,6 +440,7 @@ class ControlNetXLLoraForImage2ImageGeneration(GenericControlNetXLLoraModel):
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             lora_r=lora_r,
+            lora_alpha=lora_alpha,
             seed=seed,
         )
         self.pipeline = StableDiffusionXLControlNetImg2ImgPipeline(
@@ -493,7 +512,7 @@ class ControlNetXLLoraForImageInpainting(GenericControlNetXLLoraModel):
         text_config_path: str,
         text2_config_path: str,
         vae_config_path: str,
-        controlnet_config_path: str,
+        controlnet_configs_path: Union[str, List[str]],
         scheduler_config_path: str,
         quant_config_path: Optional[str] = None,
         image_size: Optional[int] = None,
@@ -502,6 +521,7 @@ class ControlNetXLLoraForImageInpainting(GenericControlNetXLLoraModel):
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         lora_r: Optional[int] = 16,
+        lora_alpha: Optional[int] = 32,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
@@ -509,7 +529,7 @@ class ControlNetXLLoraForImageInpainting(GenericControlNetXLLoraModel):
             text_config_path=text_config_path,
             text2_config_path=text2_config_path,
             vae_config_path=vae_config_path,
-            controlnet_config_path=controlnet_config_path,
+            controlnet_configs_path=controlnet_configs_path,
             scheduler_config_path=scheduler_config_path,
             quant_config_path=quant_config_path,
             image_size=image_size,
@@ -518,6 +538,7 @@ class ControlNetXLLoraForImageInpainting(GenericControlNetXLLoraModel):
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             lora_r=lora_r,
+            lora_alpha=lora_alpha,
             seed=seed,
         )
         self.pipeline = StableDiffusionXLControlNetInpaintPipeline(

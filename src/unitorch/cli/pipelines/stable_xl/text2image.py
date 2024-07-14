@@ -7,8 +7,7 @@ import torch
 from PIL import Image
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from diffusers.utils import numpy_to_pil
-from unitorch import is_xformers_available
-from diffusers.models import ControlNetModel
+from diffusers.models import ControlNetModel, T2IAdapter, MultiAdapter
 from diffusers.pipelines import (
     StableDiffusionXLPipeline,
     StableDiffusionXLImg2ImgPipeline,
@@ -16,7 +15,10 @@ from diffusers.pipelines import (
     StableDiffusionXLControlNetPipeline,
     StableDiffusionXLControlNetImg2ImgPipeline,
     StableDiffusionXLControlNetInpaintPipeline,
+    StableDiffusionXLAdapterPipeline,
 )
+from unitorch import is_xformers_available
+from unitorch.utils import is_remote_url
 from unitorch.models.diffusers import GenericStableXLModel
 from unitorch.models.diffusers import StableXLProcessor
 
@@ -105,33 +107,33 @@ class StableXLForText2ImageGenerationPipeline(GenericStableXLModel):
     ):
         config.set_default_section("core/pipeline/stable_xl/text2image")
         pretrained_name = config.getoption("pretrained_name", pretrained_name)
-        pretrain_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
+        pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
 
         config_path = config.getoption("config_path", config_path)
         config_path = pop_value(
             config_path,
-            nested_dict_value(pretrain_infos, "unet", "config"),
+            nested_dict_value(pretrained_infos, "unet", "config"),
         )
         config_path = cached_path(config_path)
 
         text_config_path = config.getoption("text_config_path", text_config_path)
         text_config_path = pop_value(
             text_config_path,
-            nested_dict_value(pretrain_infos, "text", "config"),
+            nested_dict_value(pretrained_infos, "text", "config"),
         )
         text_config_path = cached_path(text_config_path)
 
         text2_config_path = config.getoption("text2_config_path", text2_config_path)
         text2_config_path = pop_value(
             text2_config_path,
-            nested_dict_value(pretrain_infos, "text2", "config"),
+            nested_dict_value(pretrained_infos, "text2", "config"),
         )
         text2_config_path = cached_path(text2_config_path)
 
         vae_config_path = config.getoption("vae_config_path", vae_config_path)
         vae_config_path = pop_value(
             vae_config_path,
-            nested_dict_value(pretrain_infos, "vae", "config"),
+            nested_dict_value(pretrained_infos, "vae", "config"),
         )
         vae_config_path = cached_path(vae_config_path)
 
@@ -140,35 +142,35 @@ class StableXLForText2ImageGenerationPipeline(GenericStableXLModel):
         )
         scheduler_config_path = pop_value(
             scheduler_config_path,
-            nested_dict_value(pretrain_infos, "scheduler"),
+            nested_dict_value(pretrained_infos, "scheduler"),
         )
         scheduler_config_path = cached_path(scheduler_config_path)
 
         vocab_path = config.getoption("vocab_path", vocab_path)
         vocab_path = pop_value(
             vocab_path,
-            nested_dict_value(pretrain_infos, "text", "vocab"),
+            nested_dict_value(pretrained_infos, "text", "vocab"),
         )
         vocab_path = cached_path(vocab_path)
 
         merge_path = config.getoption("merge_path", merge_path)
         merge_path = pop_value(
             merge_path,
-            nested_dict_value(pretrain_infos, "text", "merge"),
+            nested_dict_value(pretrained_infos, "text", "merge"),
         )
         merge_path = cached_path(merge_path)
 
         vocab2_path = config.getoption("vocab2_path", vocab2_path)
         vocab2_path = pop_value(
             vocab2_path,
-            nested_dict_value(pretrain_infos, "text2", "vocab"),
+            nested_dict_value(pretrained_infos, "text2", "vocab"),
         )
         vocab2_path = cached_path(vocab2_path)
 
         merge2_path = config.getoption("merge2_path", merge2_path)
         merge2_path = pop_value(
             merge2_path,
-            nested_dict_value(pretrain_infos, "text2", "merge"),
+            nested_dict_value(pretrained_infos, "text2", "merge"),
         )
         merge2_path = cached_path(merge2_path)
 
@@ -185,22 +187,22 @@ class StableXLForText2ImageGenerationPipeline(GenericStableXLModel):
         enable_xformers = config.getoption("enable_xformers", True)
 
         state_dict = None
-        if weight_path is None and pretrain_infos is not None:
+        if weight_path is None and pretrained_infos is not None:
             state_dict = [
                 load_weight(
-                    nested_dict_value(pretrain_infos, "unet", "weight"),
+                    nested_dict_value(pretrained_infos, "unet", "weight"),
                     prefix_keys={"": "unet."},
                 ),
                 load_weight(
-                    nested_dict_value(pretrain_infos, "text", "weight"),
+                    nested_dict_value(pretrained_infos, "text", "weight"),
                     prefix_keys={"": "text."},
                 ),
                 load_weight(
-                    nested_dict_value(pretrain_infos, "text2", "weight"),
+                    nested_dict_value(pretrained_infos, "text2", "weight"),
                     prefix_keys={"": "text2."},
                 ),
                 load_weight(
-                    nested_dict_value(pretrain_infos, "vae", "weight"),
+                    nested_dict_value(pretrained_infos, "vae", "weight"),
                     prefix_keys={"": "vae."},
                 ),
             ]
@@ -248,6 +250,14 @@ class StableXLForText2ImageGenerationPipeline(GenericStableXLModel):
         controlnet_checkpoints: Optional[List[str]] = None,
         controlnet_images: Optional[List[Image.Image]] = None,
         controlnet_guidance_scales: Optional[List[float]] = None,
+        adapter_checkpoints: Optional[List[str]] = None,
+        adapter_images: Optional[List[Image.Image]] = None,
+        adapter_guidance_scales: Optional[List[float]] = None,
+        lora_checkpoints: Optional[Union[str, List[str]]] = None,
+        lora_weights: Optional[Union[float, List[float]]] = 1.0,
+        lora_alphas: Optional[Union[float, List[float]]] = 32,
+        lora_urls: Optional[Union[str, List[str]]] = None,
+        lora_files: Optional[Union[str, List[str]]] = None,
     ):
         text_inputs = self.processor.text2image_inputs(
             text,
@@ -306,9 +316,78 @@ class StableXLForText2ImageGenerationPipeline(GenericStableXLModel):
             )
             controlnets_inputs = self.processor.controlnets_inputs(conditioning_images)
             enable_controlnet = True
+            enable_adapter = False
             inputs = {
                 **text_inputs,
                 **{"condition_pixel_values": controlnets_inputs.pixel_values},
+            }
+        elif any(ckpt is not None for ckpt in adapter_checkpoints) and any(
+            img is not None for img in adapter_images
+        ):
+            adapters, conditioning_scales, conditioning_images = [], [], []
+            for checkpoint, conditioning_scale, conditioning_image in zip(
+                adapter_checkpoints, adapter_guidance_scales, adapter_images
+            ):
+                if checkpoint is None or conditioning_image is None:
+                    continue
+                adapter_config_path = cached_path(
+                    nested_dict_value(
+                        pretrained_stable_extensions_infos,
+                        checkpoint,
+                        "adapter",
+                        "config",
+                    )
+                )
+                adapter_config_dict = json.load(open(adapter_config_path))
+                adapter = T2IAdapter.from_config(adapter_config_dict)
+                adapter.load_state_dict(
+                    load_weight(
+                        nested_dict_value(
+                            pretrained_stable_extensions_infos,
+                            checkpoint,
+                            "adapter",
+                            "weight",
+                        )
+                    ),
+                )
+                adapter.to(device=self._device)
+                logging.info(f"Loading adapter from {checkpoint}")
+                adapters.append(adapter)
+                conditioning_scales.append(conditioning_scale)
+                conditioning_images.append(conditioning_image.resize((width, height)))
+
+            num_adapters = len(adapters)
+            if len(adapters) == 1:
+                adapters = adapters[0]
+                conditioning_scales = conditioning_scales[0]
+                conditioning_images = conditioning_images[0]
+                adapter_pixel_values = self.processor.adapter_inputs(
+                    conditioning_images
+                ).pixel_values
+            else:
+                adapters = MultiAdapter(adapters=adapters)
+                conditioning_scales = conditioning_scales
+                conditioning_images = conditioning_images
+                adapter_pixel_values = self.processor.adapters_inputs(
+                    conditioning_images
+                ).pixel_values
+
+            self.pipeline = StableDiffusionXLAdapterPipeline(
+                vae=self.vae,
+                text_encoder=self.text,
+                text_encoder_2=self.text2,
+                unet=self.unet,
+                adapter=adapters,
+                scheduler=self.scheduler,
+                tokenizer=None,
+                tokenizer_2=None,
+            )
+            enable_controlnet = False
+            enable_adapter = True
+
+            inputs = {
+                **text_inputs,
+                **{"adapter_pixel_values": adapter_pixel_values},
             }
         else:
             self.pipeline = StableDiffusionXLPipeline(
@@ -321,6 +400,7 @@ class StableXLForText2ImageGenerationPipeline(GenericStableXLModel):
                 tokenizer_2=None,
             )
             enable_controlnet = False
+            enable_adapter = False
             inputs = text_inputs
         self.pipeline.set_progress_bar_config(disable=True)
         self.pipeline.enable_freeu(*freeu_params)
@@ -331,6 +411,80 @@ class StableXLForText2ImageGenerationPipeline(GenericStableXLModel):
             k: v.to(device=self._device) if v is not None else v
             for k, v in inputs.items()
         }
+        if isinstance(lora_checkpoints, str):
+            lora_checkpoints = [lora_checkpoints]
+        if isinstance(lora_weights, float):
+            lora_weights = [lora_weights]
+        if isinstance(lora_alphas, float):
+            lora_alphas = [lora_alphas]
+        if isinstance(lora_urls, str):
+            lora_urls = [lora_urls]
+        if isinstance(lora_files, str):
+            lora_files = [lora_files]
+
+        if lora_checkpoints is not None:
+            _lora_checkpoints = list(
+                zip(
+                    *[
+                        (ckpt, weight, alpha)
+                        for ckpt, weight, alpha in zip(
+                            lora_checkpoints, lora_weights, lora_alphas
+                        )
+                        if ckpt is not None
+                    ]
+                )
+            )
+            if len(_lora_checkpoints) == 0:
+                lora_checkpoints = None
+            else:
+                lora_checkpoints, lora_weights, lora_alphas = _lora_checkpoints
+                lora_checkpoints = [
+                    nested_dict_value(pretrained_stable_extensions_infos, ckpt)
+                    for ckpt in lora_checkpoints
+                ]
+        if lora_urls is not None:
+            _lora_urls = list(
+                zip(
+                    *[
+                        (url, weight, alpha)
+                        for url, weight, alpha in zip(
+                            lora_urls, lora_weights, lora_alphas
+                        )
+                        if is_remote_url(url)
+                    ]
+                )
+            )
+            if len(_lora_urls) == 0:
+                lora_urls = None
+            else:
+                lora_urls, lora_weights, lora_alphas = _lora_urls
+        if lora_files is not None:
+            _lora_files = list(
+                zip(
+                    *[
+                        (file, weight, alpha)
+                        for file, weight, alpha in zip(
+                            lora_files, lora_weights, lora_alphas
+                        )
+                        if file is not None
+                    ]
+                )
+            )
+            if len(_lora_files) == 0:
+                lora_files = None
+            else:
+                lora_files, lora_weights, lora_alphas = _lora_files
+
+        lora_files = pop_value(
+            lora_checkpoints,
+            lora_urls,
+            lora_files,
+            check_none=False,
+        )
+        if lora_files is not None:
+            self.load_lora_weights(
+                lora_files, lora_weights=lora_weights, lora_alphas=lora_alphas
+            )
 
         prompt_embeds_results = self.get_prompt_outputs(
             inputs["input_ids"],
@@ -370,6 +524,24 @@ class StableXLForText2ImageGenerationPipeline(GenericStableXLModel):
                 controlnet_conditioning_scale=conditioning_scales,
                 output_type="np.array",
             )
+        elif enable_adapter:
+            outputs = self.pipeline(
+                prompt_embeds=prompt_embeds,
+                negative_prompt_embeds=negative_prompt_embeds,
+                pooled_prompt_embeds=pooled_prompt_embeds,
+                negative_pooled_prompt_embeds=negative_pooled_prompt_embeds,
+                generator=torch.Generator(device=self.pipeline.device).manual_seed(
+                    self.seed
+                ),
+                height=height,
+                width=width,
+                image=list(inputs["adapter_pixel_values"].transpose(0, 1))
+                if num_adapters > 1
+                else inputs["adapter_pixel_values"],
+                guidance_scale=guidance_scale,
+                adapter_conditioning_scale=conditioning_scales,
+                output_type="np.array",
+            )
         else:
             outputs = self.pipeline(
                 prompt_embeds=prompt_embeds,
@@ -384,6 +556,7 @@ class StableXLForText2ImageGenerationPipeline(GenericStableXLModel):
                 guidance_scale=guidance_scale,
                 output_type="np.array",
             )
+        self.unload_lora_weights()
 
         images = torch.from_numpy(outputs.images)
         images = numpy_to_pil(images.cpu().numpy())

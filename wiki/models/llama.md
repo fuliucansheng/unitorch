@@ -8,10 +8,6 @@
 
 ::: unitorch.models.llama.LlamaForClassification
 
-## LlamaForPretrain
-
-::: unitorch.models.llama.LlamaForPretrain
-
 ## LlamaForGeneration
 
 ::: unitorch.models.llama.LlamaForGeneration

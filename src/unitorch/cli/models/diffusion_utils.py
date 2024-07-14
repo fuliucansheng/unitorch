@@ -13,7 +13,8 @@ from PIL import Image
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from diffusers.utils import numpy_to_pil, pt_to_pil, export_to_gif
-from unitorch import is_safetensors_available, is_opencv_available
+from unitorch import is_opencv_available
+from unitorch.utils import load_weight
 from unitorch.cli import WriterMixin, WriterOutputs
 from unitorch.cli import (
     add_default_section_for_init,
@@ -23,38 +24,6 @@ from unitorch.cli import (
 from unitorch.cli.models.modeling_utils import TensorsOutputs, TensorsTargets
 
 from unitorch.cli import cached_path
-
-
-def load_weight(
-    path,
-    replace_keys: Optional[Dict] = dict(),
-    prefix_keys: Optional[Dict] = dict(),
-):
-    if isinstance(path, str):
-        path = [path]
-
-    state_dict = dict()
-    for p in path:
-        if p.endswith(".safetensors"):
-            p = cached_path(p)
-            state_dict = {**state_dict, **safetensors.torch.load_file(p)}
-        else:
-            p = cached_path(p)
-            state_dict = {**state_dict, **torch.load(p, map_location="cpu")}
-
-    results = dict()
-    for key, value in list(state_dict.items()):
-        for rkey, prefix in prefix_keys.items():
-            if re.match(rkey, key):
-                key = prefix + key
-                break
-
-        for rkey, nkey in replace_keys.items():
-            key = re.sub(rkey, nkey, key)
-
-        results[key] = value
-
-    return results
 
 
 def numpy2vid(video, mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]):

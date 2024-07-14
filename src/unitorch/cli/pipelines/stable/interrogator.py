@@ -193,7 +193,8 @@ class ClipInterrogatorPipeline(_ClipForPretrain):
         }
         vision_outputs = self.vision_model(pixel_values=inputs["pixel_values"])
         image_embeds = self.visual_projection(vision_outputs[1])
-        return image_embeds / image_embeds.norm(dim=-1, keepdim=True)
+        image_embeds = image_embeds / image_embeds.norm(dim=-1, keepdim=True)
+        return image_embeds.cpu()
 
     def get_text_embeds(self, texts: Union[str, List[str]], max_batch_size=1024):
         if isinstance(texts, str):
@@ -212,7 +213,7 @@ class ClipInterrogatorPipeline(_ClipForPretrain):
             )
             text_embeds = self.text_projection(text_outputs[1])
             text_embeds = text_embeds / text_embeds.norm(dim=-1, keepdim=True)
-            results.append(text_embeds)
+            results.append(text_embeds.cpu())
         return torch.cat(results, dim=0)
 
     def get_score(self, image_embeds, text):
@@ -276,7 +277,10 @@ class ClipInterrogatorPipeline(_ClipForPretrain):
 
     def get_best_prompt(self, image_embeds, caption="", min_count=8, max_count=32):
         positive_labels = self.rank_top(
-            image_embeds, topk=1024, text_embeds=self.positive_labels_embeds
+            image_embeds,
+            texts=self.positive_labels,
+            topk=1024,
+            text_embeds=self.positive_labels_embeds,
         )
         positive_labels = list(map(lambda x: x[0], positive_labels))
 
@@ -287,7 +291,10 @@ class ClipInterrogatorPipeline(_ClipForPretrain):
 
     def get_fast_prompt(self, image_embeds, caption="", max_count=32):
         positive_labels = self.rank_top(
-            image_embeds, topk=max_count, text_embeds=self.positive_labels_embeds
+            image_embeds,
+            texts=self.positive_labels,
+            topk=max_count,
+            text_embeds=self.positive_labels_embeds,
         )
         positive_labels = list(map(lambda x: x[0], positive_labels))
 
@@ -318,20 +325,35 @@ class ClipInterrogatorPipeline(_ClipForPretrain):
         )
 
         artist = self.rank_top(
-            image_embeds, topk=1, text_embeds=positive_artists_labels_embeds
+            image_embeds,
+            texts=self.positive_artists_labels,
+            topk=1,
+            text_embeds=positive_artists_labels_embeds,
         )[0][0]
         flavors = self.rank_top(
-            image_embeds, topk=max_count, text_embeds=positive_flavors_labels_embeds
+            image_embeds,
+            texts=self.positive_flavors_labels,
+            topk=max_count,
+            text_embeds=positive_flavors_labels_embeds,
         )
         flavors = ", ".join(list(map(lambda x: x[0], flavors)))
         medium = self.rank_top(
-            image_embeds, topk=1, text_embeds=positive_mediums_labels_embeds
+            image_embeds,
+            texts=self.positive_mediums_labels,
+            topk=1,
+            text_embeds=positive_mediums_labels_embeds,
         )[0][0]
         movement = self.rank_top(
-            image_embeds, topk=1, text_embeds=positive_movements_labels_embeds
+            image_embeds,
+            texts=self.positive_movements_labels,
+            topk=1,
+            text_embeds=positive_movements_labels_embeds,
         )[0][0]
         trending = self.rank_top(
-            image_embeds, topk=1, text_embeds=positive_trendings_labels_embeds
+            image_embeds,
+            texts=self.positive_trendings_labels,
+            topk=1,
+            text_embeds=positive_trendings_labels_embeds,
         )[0][0]
 
         if caption.startswith(medium):
@@ -350,6 +372,7 @@ class ClipInterrogatorPipeline(_ClipForPretrain):
         ]
         negative_labels = self.rank_top(
             image_embeds,
+            texts=self.positive_flavors_labels,
             topk=max_count,
             reverse=False,
             text_embeds=positive_flavors_labels_embeds,

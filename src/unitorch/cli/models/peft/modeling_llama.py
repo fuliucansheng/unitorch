@@ -272,7 +272,7 @@ class LlamaLoraForGeneration(_LlamaLoraForGeneration):
 
     def forward(
         self,
-        input_ids: Optional[torch.Tensor],
+        input_ids: torch.Tensor,
         attention_mask: Optional[torch.Tensor] = None,
         position_ids: Optional[torch.Tensor] = None,
     ):

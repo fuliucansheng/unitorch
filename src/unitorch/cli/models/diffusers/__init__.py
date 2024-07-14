@@ -136,6 +136,13 @@ __hf_hub_controlnet_safetensors_dict__ = lambda name: {
     }
 }
 
+__hf_hub_adapter_safetensors_dict__ = lambda name: {
+    "adapter": {
+        "config": f"https://huggingface.co/{name}/resolve/main/config.json",
+        "weight": f"https://huggingface.co/{name}/resolve/main/diffusion_pytorch_model.safetensors",
+    }
+}
+
 __hf_hub_stable_video_safetensors_dict__ = lambda name: {
     "unet": {
         "config": f"https://huggingface.co/{name}/resolve/main/unet/config.json",
@@ -181,10 +188,18 @@ pretrained_stable_infos = {
     "stable-xl-base": __hf_hub_stable_xl_safetensors_dict__(
         "stabilityai/stable-diffusion-xl-base-1.0"
     ),
+    "stable-xl-base-vae-fp16": {
+        **__hf_hub_stable_xl_safetensors_dict__(
+            "stabilityai/stable-diffusion-xl-base-1.0"
+        ),
+        **{
+            "vae": {
+                "config": "https://huggingface.co/madebyollin/sdxl-vae-fp16-fix/resolve/main/config.json",
+                "weight": "https://huggingface.co/madebyollin/sdxl-vae-fp16-fix/resolve/main/diffusion_pytorch_model.safetensors",
+            },
+        },
+    },
     "stable-xl-turbo": __hf_hub_stable_xl_safetensors_dict__("stabilityai/sdxl-turbo"),
-    "stable-xl-realism-v30": __hf_hub_stable_xl_dict__(
-        "stablediffusionapi/realism-engine-sdxl-v30"
-    ),
     "stable-xl-opendalle-v1.1": __hf_hub_stable_xl_safetensors_dict__(
         "dataautogpt3/OpenDalleV1.1"
     ),
@@ -192,12 +207,12 @@ pretrained_stable_infos = {
         "SG161222/RealVisXL_V3.0"
     ),
     "stable-xl-juggernaut-v8": __hf_hub_stable_xl_dict__(
-        "stablediffusionapi/juggernaut-xl-v8"
+        "RunDiffusion/Juggernaut-XL-v8"
     ),
     "stable-xl-playground-v2-aesthetic": __hf_hub_stable_xl_safetensors_dict__(
         "playgroundai/playground-v2-1024px-aesthetic"
     ),
-    "stable-3-medium": __hf_hub_stable_3_safetensors_dict__(
+    "stable-v3-medium": __hf_hub_stable_3_safetensors_dict__(
         "ckpt/stable-diffusion-3-medium-diffusers"
     ),
     "stable-video-diffusion-img2vid-xt": __hf_hub_stable_video_safetensors_dict__(
@@ -239,13 +254,19 @@ pretrained_stable_extensions_infos = {
     "stable-xl-controlnet-depth-small": __hf_hub_controlnet_dict__(
         "diffusers/controlnet-depth-sdxl-1.0-small"
     ),
-    "stable-xl-adapter-t2i-canny": __hf_hub_controlnet_safetensors_dict__(
+    "stable-xl-adapter-canny": __hf_hub_adapter_safetensors_dict__(
         "TencentARC/t2i-adapter-canny-sdxl-1.0"
     ),
-    "stable-xl-adapter-t2i-sketch": __hf_hub_controlnet_safetensors_dict__(
+    "stable-xl-adapter-sketch": __hf_hub_adapter_safetensors_dict__(
         "TencentARC/t2i-adapter-sketch-sdxl-1.0"
     ),
-    "stable-xl-adapter-t2i-openpose": __hf_hub_controlnet_safetensors_dict__(
+    "stable-xl-adapter-depth": __hf_hub_adapter_safetensors_dict__(
+        "TencentARC/t2i-adapter-depth-zoe-sdxl-1.0"
+    ),
+    "stable-xl-adapter-depth-midas": __hf_hub_adapter_safetensors_dict__(
+        "TencentARC/t2i-adapter-depth-midas-sdxl-1.0"
+    ),
+    "stable-xl-adapter-openpose": __hf_hub_adapter_safetensors_dict__(
         "TencentARC/t2i-adapter-openpose-sdxl-1.0"
     ),
     "stable-xl-refiner-1.0": {
@@ -273,7 +294,7 @@ pretrained_stable_extensions_infos = {
             "weight": "https://huggingface.co/madebyollin/sdxl-vae-fp16-fix/resolve/main/diffusion_pytorch_model.safetensors",
         },
     },
-    "stable-3-controlnet-canny": __hf_hub_controlnet_safetensors_dict__(
+    "stable-v3-controlnet-canny": __hf_hub_controlnet_safetensors_dict__(
         "InstantX/SD3-Controlnet-Canny"
     ),
 }
@@ -308,8 +329,12 @@ from unitorch.cli.models.diffusers.modeling_controlnet_xl import (
 from unitorch.cli.models.diffusers.modeling_controlnet_3 import (
     ControlNet3ForText2ImageGeneration,
 )
+from unitorch.cli.models.diffusers.modeling_adapter_xl import (
+    StableXLAdapterForText2ImageGeneration,
+)
 from unitorch.cli.models.diffusers.processing_stable import StableProcessor
 from unitorch.cli.models.diffusers.processing_stable_xl import StableXLProcessor
 from unitorch.cli.models.diffusers.processing_controlnet import ControlNetProcessor
 from unitorch.cli.models.diffusers.processing_controlnet_xl import ControlNetXLProcessor
 from unitorch.cli.models.diffusers.processing_controlnet_3 import ControlNet3Processor
+from unitorch.cli.models.diffusers.processing_adapter_xl import AdapterXLProcessor

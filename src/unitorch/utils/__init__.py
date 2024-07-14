@@ -4,6 +4,7 @@
 
 import os
 import io
+import re
 import fnmatch
 import json
 import signal
@@ -14,6 +15,7 @@ import logging
 import tarfile
 import tempfile
 import torch
+import safetensors
 from filelock import FileLock
 from contextlib import contextmanager
 from torch.multiprocessing import spawn
@@ -43,11 +45,9 @@ from unitorch.utils.image_utils import (
 from unitorch.utils.video_utils import tensor2vid
 from unitorch.utils.import_utils import (
     is_deepspeed_available,
-    is_accelerate_available,
     is_megatron_available,
     is_fastapi_available,
     is_diffusers_available,
-    is_safetensors_available,
     is_xformers_available,
     is_opencv_available,
     is_torch_available,
@@ -364,3 +364,35 @@ def read_file(file, lines=False):
 def read_json_file(file):
     with open(file, "r") as f:
         return json.load(f)
+
+
+def load_weight(
+    path,
+    replace_keys: Optional[Dict] = dict(),
+    prefix_keys: Optional[Dict] = dict(),
+):
+    if isinstance(path, str):
+        path = [path]
+
+    state_dict = dict()
+    for p in path:
+        if p.endswith(".safetensors"):
+            p = cached_path(p)
+            state_dict = {**state_dict, **safetensors.torch.load_file(p)}
+        else:
+            p = cached_path(p)
+            state_dict = {**state_dict, **torch.load(p, map_location="cpu")}
+
+    results = dict()
+    for key, value in list(state_dict.items()):
+        for rkey, prefix in prefix_keys.items():
+            if re.match(rkey, key):
+                key = prefix + key
+                break
+
+        for rkey, nkey in replace_keys.items():
+            key = re.sub(rkey, nkey, key)
+
+        results[key] = value
+
+    return results
