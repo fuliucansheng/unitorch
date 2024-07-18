@@ -106,7 +106,7 @@ pretrained_name = blip-image-captioning-base
 max_gen_seq_length = 15
 
 [core/process/image]
-http_url = http://0.0.0.0:11230/?image={0}
+http_url = http://0.0.0.0:11230/?file={0}
 ```
 
 !!! note

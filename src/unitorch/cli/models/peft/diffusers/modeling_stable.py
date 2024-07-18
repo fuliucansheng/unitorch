@@ -161,7 +161,7 @@ class StableLoraForText2ImageGeneration(_StableLoraForText2ImageGeneration):
             inst.from_pretrained(state_dict=state_dict)
         return inst
 
-    # @autocast()
+    @autocast()
     def forward(
         self,
         pixel_values: torch.Tensor,
@@ -178,7 +178,7 @@ class StableLoraForText2ImageGeneration(_StableLoraForText2ImageGeneration):
     @add_default_section_for_function(
         "core/model/peft/lora/diffusers/text2image/stable"
     )
-    # @autocast()
+    @autocast()
     def generate(
         self,
         input_ids: torch.Tensor,
@@ -334,7 +334,7 @@ class StableLoraForImage2ImageGeneration(_StableLoraForImage2ImageGeneration):
             inst.from_pretrained(state_dict=state_dict)
         return inst
 
-    # @autocast()
+    @autocast()
     def forward(
         self,
     ):
@@ -343,7 +343,7 @@ class StableLoraForImage2ImageGeneration(_StableLoraForImage2ImageGeneration):
     @add_default_section_for_function(
         "core/model/peft/lora/diffusers/image2image/stable"
     )
-    # @autocast()
+    @autocast()
     def generate(
         self,
         input_ids: torch.Tensor,
@@ -497,7 +497,7 @@ class StableLoraForImageInpainting(_StableLoraForImageInpainting):
             inst.from_pretrained(state_dict=state_dict)
         return inst
 
-    # @autocast()
+    @autocast()
     def forward(
         self,
     ):
@@ -506,7 +506,7 @@ class StableLoraForImageInpainting(_StableLoraForImageInpainting):
     @add_default_section_for_function(
         "core/model/peft/lora/diffusers/inpainting/stable"
     )
-    # @autocast()
+    @autocast()
     def generate(
         self,
         input_ids: torch.Tensor,
@@ -662,7 +662,7 @@ class StableLoraForImageResolution(_StableLoraForImageResolution):
             inst.from_pretrained(state_dict=state_dict)
         return inst
 
-    # @autocast()
+    @autocast()
     def forward(
         self,
     ):
@@ -671,7 +671,7 @@ class StableLoraForImageResolution(_StableLoraForImageResolution):
     @add_default_section_for_function(
         "core/model/peft/lora/diffusers/resolution/stable"
     )
-    # @autocast()
+    @autocast()
     def generate(
         self,
         input_ids: torch.Tensor,

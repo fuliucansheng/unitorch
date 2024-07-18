@@ -224,6 +224,7 @@ pretrained_stable_infos = {
 }
 
 pretrained_stable_extensions_infos = {
+    # sd 1.5 controlnet
     "stable-v1.5-controlnet-canny": __hf_hub_controlnet_dict__(
         "lllyasviel/sd-controlnet-canny"
     ),
@@ -239,6 +240,22 @@ pretrained_stable_extensions_infos = {
     "stable-v1.5-controlnet-depth": __hf_hub_controlnet_dict__(
         "lllyasviel/control_v11f1p_sd15_depth"
     ),
+    "stable-v1.5-controlnet-tile": __hf_hub_controlnet_dict__(
+        "lllyasviel/control_v11f1e_sd15_tile"
+    ),
+    "stable-v1.5-controlnet-lineart": __hf_hub_controlnet_dict__(
+        "lllyasviel/control_v11p_sd15_lineart"
+    ),
+    "stable-v1.5-controlnet-softedge": __hf_hub_controlnet_dict__(
+        "lllyasviel/control_v11p_sd15_softedge"
+    ),
+    "stable-v1.5-controlnet-scribble": __hf_hub_controlnet_dict__(
+        "lllyasviel/control_v11p_sd15_scribble"
+    ),
+    "stable-v1.5-controlnet-openpose": __hf_hub_controlnet_dict__(
+        "lllyasviel/control_v11p_sd15_openpose"
+    ),
+    # sdxl controlnet
     "stable-xl-controlnet-canny": __hf_hub_controlnet_dict__(
         "diffusers/controlnet-canny-sdxl-1.0"
     ),
@@ -254,6 +271,16 @@ pretrained_stable_extensions_infos = {
     "stable-xl-controlnet-depth-small": __hf_hub_controlnet_dict__(
         "diffusers/controlnet-depth-sdxl-1.0-small"
     ),
+    "stable-xl-controlnet-tile": __hf_hub_controlnet_dict__(
+        "xinsir/controlnet-tile-sdxl-1.0"
+    ),
+    "stable-xl-controlnet-openpose": __hf_hub_controlnet_dict__(
+        "xinsir/controlnet-openpose-sdxl-1.0"
+    ),
+    "stable-xl-controlnet-scribble": __hf_hub_controlnet_dict__(
+        "xinsir/controlnet-scribble-sdxl-1.0"
+    ),
+    # sdxl adapter
     "stable-xl-adapter-canny": __hf_hub_adapter_safetensors_dict__(
         "TencentARC/t2i-adapter-canny-sdxl-1.0"
     ),
@@ -269,6 +296,7 @@ pretrained_stable_extensions_infos = {
     "stable-xl-adapter-openpose": __hf_hub_adapter_safetensors_dict__(
         "TencentARC/t2i-adapter-openpose-sdxl-1.0"
     ),
+    # sdxl refiner
     "stable-xl-refiner-1.0": {
         "refiner": {
             "unet": {
@@ -288,12 +316,14 @@ pretrained_stable_extensions_infos = {
             "scheduler": f"https://huggingface.co/stabilityai/stable-diffusion-xl-refiner-1.0/resolve/main/scheduler/scheduler_config.json",
         },
     },
+    # sdxl vae
     "stable-xl-vae-fp16": {
         "vae": {
             "config": "https://huggingface.co/madebyollin/sdxl-vae-fp16-fix/resolve/main/config.json",
             "weight": "https://huggingface.co/madebyollin/sdxl-vae-fp16-fix/resolve/main/diffusion_pytorch_model.safetensors",
         },
     },
+    # stable 3 controlnet
     "stable-v3-controlnet-canny": __hf_hub_controlnet_safetensors_dict__(
         "InstantX/SD3-Controlnet-Canny"
     ),

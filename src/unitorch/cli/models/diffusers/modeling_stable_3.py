@@ -200,14 +200,14 @@ class Stable3ForText2ImageGeneration(_Stable3ForText2ImageGeneration):
             )
         return inst
 
-    # @autocast()
+    @autocast()
     def forward(
         self,
     ):
         raise NotImplementedError
 
     @add_default_section_for_function("core/model/diffusers/text2image/stable_3")
-    # @autocast()
+    @autocast()
     def generate(
         self,
         input_ids: torch.Tensor,
@@ -423,14 +423,14 @@ class Stable3ForImage2ImageGeneration(_Stable3ForImage2ImageGeneration):
             )
         return inst
 
-    # @autocast()
+    @autocast()
     def forward(
         self,
     ):
         raise NotImplementedError
 
     @add_default_section_for_function("core/model/diffusers/image2image/stable_3")
-    # @autocast()
+    @autocast()
     def generate(
         self,
         input_ids: torch.Tensor,

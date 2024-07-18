@@ -53,9 +53,9 @@ class ControlNet3Processor(_Stable3Processor):
         )
 
     @classmethod
-    @add_default_section_for_init("core/process/diffusers/controlnet_3")
+    @add_default_section_for_init("core/process/diffusion/controlnet_3")
     def from_core_configure(cls, config, **kwargs):
-        config.set_default_section("core/process/diffusers/controlnet_3")
+        config.set_default_section("core/process/diffusion/controlnet_3")
         pretrained_name = config.getoption("pretrained_name", "stable-v3-base")
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
 
@@ -110,7 +110,7 @@ class ControlNet3Processor(_Stable3Processor):
             "vae_config_path": vae_config_path,
         }
 
-    @register_process("core/process/diffusers/controlnet_3/text2image")
+    @register_process("core/process/diffusion/controlnet_3/text2image")
     def _text2image(
         self,
         prompt: str,
@@ -141,7 +141,7 @@ class ControlNet3Processor(_Stable3Processor):
             attention3_mask=outputs.attention3_mask,
         )
 
-    @register_process("core/process/diffusers/controlnet_3/text2image/inputs")
+    @register_process("core/process/diffusion/controlnet_3/text2image/inputs")
     def _text2image_inputs(
         self,
         prompt: str,

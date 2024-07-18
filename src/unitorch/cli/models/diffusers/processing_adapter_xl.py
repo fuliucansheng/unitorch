@@ -49,9 +49,9 @@ class AdapterXLProcessor(_StableXLProcessor):
         )
 
     @classmethod
-    @add_default_section_for_init("core/process/diffusers/adapter_xl")
+    @add_default_section_for_init("core/process/diffusion/adapter_xl")
     def from_core_configure(cls, config, **kwargs):
-        config.set_default_section("core/process/diffusers/adapter_xl")
+        config.set_default_section("core/process/diffusion/adapter_xl")
         pretrained_name = config.getoption("pretrained_name", "stable-xl-base")
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
 
@@ -98,7 +98,7 @@ class AdapterXLProcessor(_StableXLProcessor):
             "vae_config_path": vae_config_path,
         }
 
-    @register_process("core/process/diffusers/adapter_xl/text2image")
+    @register_process("core/process/diffusion/adapter_xl/text2image")
     def _text2image(
         self,
         prompt: str,
@@ -124,7 +124,7 @@ class AdapterXLProcessor(_StableXLProcessor):
             add_time_ids=outputs.add_time_ids,
         )
 
-    @register_process("core/process/diffusers/adapter_xl/text2image/inputs")
+    @register_process("core/process/diffusion/adapter_xl/text2image/inputs")
     def _text2image_inputs(
         self,
         prompt: str,

@@ -192,7 +192,7 @@ class StableXLForText2ImageGeneration(_StableXLForText2ImageGeneration):
             )
         return inst
 
-    # @autocast()
+    @autocast()
     def forward(
         self,
         input_ids: torch.Tensor,
@@ -213,7 +213,7 @@ class StableXLForText2ImageGeneration(_StableXLForText2ImageGeneration):
         return LossOutputs(loss=loss)
 
     @add_default_section_for_function("core/model/diffusers/text2image/stable_xl")
-    # @autocast()
+    @autocast()
     def generate(
         self,
         input_ids: torch.Tensor,
@@ -407,14 +407,14 @@ class StableXLForImage2ImageGeneration(_StableXLForImage2ImageGeneration):
             )
         return inst
 
-    # @autocast()
+    @autocast()
     def forward(
         self,
     ):
         raise NotImplementedError
 
     @add_default_section_for_function("core/model/diffusers/image2image/stable_xl")
-    # @autocast()
+    @autocast()
     def generate(
         self,
         input_ids: torch.Tensor,
@@ -608,14 +608,14 @@ class StableXLForImageInpainting(_StableXLForImageInpainting):
             )
         return inst
 
-    # @autocast()
+    @autocast()
     def forward(
         self,
     ):
         raise NotImplementedError
 
     @add_default_section_for_function("core/model/diffusers/inpainting/stable_xl")
-    # @autocast()
+    @autocast()
     def generate(
         self,
         input_ids: torch.Tensor,

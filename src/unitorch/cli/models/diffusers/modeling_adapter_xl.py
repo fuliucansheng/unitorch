@@ -243,7 +243,7 @@ class StableXLAdapterForText2ImageGeneration(_StableXLAdapterForText2ImageGenera
 
         return inst
 
-    # @autocast()
+    @autocast()
     def forward(
         self,
         input_ids: torch.Tensor,
@@ -266,7 +266,7 @@ class StableXLAdapterForText2ImageGeneration(_StableXLAdapterForText2ImageGenera
         return LossOutputs(loss=loss)
 
     @add_default_section_for_function("core/model/diffusers/text2image/adapter_xl")
-    # @autocast()
+    @autocast()
     def generate(
         self,
         input_ids: torch.Tensor,

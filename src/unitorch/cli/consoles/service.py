@@ -21,8 +21,12 @@ from unitorch.cli import (
     init_registered_module,
 )
 
+__service_inst__ = None
+
 
 def _sigterm_handler(signo, frame):
+    if __service_inst__ is not None:
+        __service_inst__.stop()
     raise SystemExit(1)
 
 
@@ -61,7 +65,10 @@ def daemonize(pid_file, name):
         f.write(str(os.getpid()))
 
     atexit.register(lambda: os.remove(pid_file))
-    signal.signal(signal.SIGTERM, _sigterm_handler)
+
+
+signal.signal(signal.SIGTERM, _sigterm_handler)
+signal.signal(signal.SIGINT, _sigterm_handler)
 
 
 def start(name, inst, daemon_mode):
@@ -87,6 +94,7 @@ def restart(name, inst):
 
 @fire.decorators.SetParseFn(str)
 def service(service_action: str, config_path: str, **kwargs):
+    global __service_inst__
     config_path = cached_path(config_path)
 
     params = []
@@ -121,6 +129,8 @@ def service(service_action: str, config_path: str, **kwargs):
         service_inst = main_service_cls["obj"](config)
     else:
         service_inst = None
+
+    __service_inst__ = service_inst
 
     hexsha = config.hexsha(6)
     service_name = service_name + f"@{hexsha}"

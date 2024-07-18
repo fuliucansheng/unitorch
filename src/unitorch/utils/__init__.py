@@ -194,7 +194,7 @@ def get_from_cache(
             incomplete_path = cache_path + ".incomplete"
 
             @contextmanager
-            def _resumable_file_manager() -> "io.BufferedWriter":
+            def _resumable_file_manager():
                 with open(incomplete_path, "ab") as f:
                     yield f
 

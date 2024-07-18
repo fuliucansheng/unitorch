@@ -44,9 +44,9 @@ class StableProcessor(_StableProcessor):
         )
 
     @classmethod
-    @add_default_section_for_init("core/process/diffusers/stable")
+    @add_default_section_for_init("core/process/diffusion/stable")
     def from_core_configure(cls, config, **kwargs):
-        config.set_default_section("core/process/diffusers/stable")
+        config.set_default_section("core/process/diffusion/stable")
         pretrained_name = config.getoption("pretrained_name", "stable-v1.5")
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
 
@@ -77,7 +77,7 @@ class StableProcessor(_StableProcessor):
             "vae_config_path": vae_config_path,
         }
 
-    @register_process("core/process/diffusers/stable/text2image")
+    @register_process("core/process/diffusion/stable/text2image")
     def _text2image(
         self,
         prompt: str,
@@ -95,7 +95,7 @@ class StableProcessor(_StableProcessor):
             pixel_values=outputs.pixel_values,
         )
 
-    @register_process("core/process/diffusers/stable/text2image/inputs")
+    @register_process("core/process/diffusion/stable/text2image/inputs")
     def _text2image_inputs(
         self,
         prompt: str,
@@ -114,7 +114,7 @@ class StableProcessor(_StableProcessor):
             negative_attention_mask=outputs.negative_attention_mask,
         )
 
-    @register_process("core/process/diffusers/stable/image2image/inputs")
+    @register_process("core/process/diffusion/stable/image2image/inputs")
     def _image2image_inputs(
         self,
         prompt: str,
@@ -136,7 +136,7 @@ class StableProcessor(_StableProcessor):
             negative_attention_mask=text_outputs.negative_attention_mask,
         )
 
-    @register_process("core/process/diffusers/stable/inpainting/inputs")
+    @register_process("core/process/diffusion/stable/inpainting/inputs")
     def _inpainting_inputs(
         self,
         prompt: str,
@@ -163,7 +163,7 @@ class StableProcessor(_StableProcessor):
             negative_attention_mask=text_outputs.negative_attention_mask,
         )
 
-    @register_process("core/process/diffusers/stable/resolution/inputs")
+    @register_process("core/process/diffusion/stable/resolution/inputs")
     def _resolution_inputs(
         self,
         prompt: str,

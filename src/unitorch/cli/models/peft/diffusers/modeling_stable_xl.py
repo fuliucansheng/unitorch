@@ -183,7 +183,7 @@ class StableXLLoraForText2ImageGeneration(_StableXLLoraForText2ImageGeneration):
             inst.from_pretrained(state_dict=state_dict)
         return inst
 
-    # @autocast()
+    @autocast()
     def forward(
         self,
         input_ids: torch.Tensor,
@@ -206,7 +206,7 @@ class StableXLLoraForText2ImageGeneration(_StableXLLoraForText2ImageGeneration):
     @add_default_section_for_function(
         "core/model/peft/lora/diffusers/text2image/stable_xl"
     )
-    # @autocast()
+    @autocast()
     def generate(
         self,
         input_ids: torch.Tensor,
@@ -393,7 +393,7 @@ class StableXLLoraForImage2ImageGeneration(_StableXLLoraForImage2ImageGeneration
             inst.from_pretrained(state_dict=state_dict)
         return inst
 
-    # @autocast()
+    @autocast()
     def forward(
         self,
     ):
@@ -402,7 +402,7 @@ class StableXLLoraForImage2ImageGeneration(_StableXLLoraForImage2ImageGeneration
     @add_default_section_for_function(
         "core/model/peft/lora/diffusers/image2image/stable_xl"
     )
-    # @autocast()
+    @autocast()
     def generate(
         self,
         input_ids: torch.Tensor,
@@ -581,7 +581,7 @@ class StableXLLoraForImageInpainting(_StableXLLoraForImageInpainting):
             inst.from_pretrained(state_dict=state_dict)
         return inst
 
-    # @autocast()
+    @autocast()
     def forward(
         self,
     ):
@@ -590,7 +590,7 @@ class StableXLLoraForImageInpainting(_StableXLLoraForImageInpainting):
     @add_default_section_for_function(
         "core/model/peft/lora/diffusers/inpainting/stable_xl"
     )
-    # @autocast()
+    @autocast()
     def generate(
         self,
         input_ids: torch.Tensor,

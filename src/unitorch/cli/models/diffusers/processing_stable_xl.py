@@ -49,9 +49,9 @@ class StableXLProcessor(_StableXLProcessor):
         )
 
     @classmethod
-    @add_default_section_for_init("core/process/diffusers/stable_xl")
+    @add_default_section_for_init("core/process/diffusion/stable_xl")
     def from_core_configure(cls, config, **kwargs):
-        config.set_default_section("core/process/diffusers/stable_xl")
+        config.set_default_section("core/process/diffusion/stable_xl")
         pretrained_name = config.getoption("pretrained_name", "stable-xl-base")
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
 
@@ -98,7 +98,7 @@ class StableXLProcessor(_StableXLProcessor):
             "vae_config_path": vae_config_path,
         }
 
-    @register_process("core/process/diffusers/stable_xl/text2image")
+    @register_process("core/process/diffusion/stable_xl/text2image")
     def _text2image(
         self,
         prompt: str,
@@ -121,7 +121,7 @@ class StableXLProcessor(_StableXLProcessor):
             add_time_ids=outputs.add_time_ids,
         )
 
-    @register_process("core/process/diffusers/stable_xl/text2image/inputs")
+    @register_process("core/process/diffusion/stable_xl/text2image/inputs")
     def _text2image_inputs(
         self,
         prompt: str,
@@ -148,7 +148,7 @@ class StableXLProcessor(_StableXLProcessor):
             negative_attention2_mask=outputs.negative_attention2_mask,
         )
 
-    @register_process("core/process/diffusers/stable_xl/image2image/inputs")
+    @register_process("core/process/diffusion/stable_xl/image2image/inputs")
     def _image2image_inputs(
         self,
         prompt: str,
@@ -178,7 +178,7 @@ class StableXLProcessor(_StableXLProcessor):
             negative_attention2_mask=text_outputs.negative_attention2_mask,
         )
 
-    @register_process("core/process/diffusers/stable_xl/inpainting/inputs")
+    @register_process("core/process/diffusion/stable_xl/inpainting/inputs")
     def _inpainting_inputs(
         self,
         prompt: str,
