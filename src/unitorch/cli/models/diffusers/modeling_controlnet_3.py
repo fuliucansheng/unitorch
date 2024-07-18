@@ -263,14 +263,14 @@ class ControlNet3ForText2ImageGeneration(_ControlNet3ForText2ImageGeneration):
 
         return inst
 
-    # @autocast()
+    @autocast()
     def forward(
         self,
     ):
         raise NotImplementedError
 
     @add_default_section_for_function("core/model/diffusers/text2image/controlnet_3")
-    # @autocast()
+    @autocast()
     def generate(
         self,
         input_ids: torch.Tensor,

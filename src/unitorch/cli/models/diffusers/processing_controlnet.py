@@ -43,9 +43,9 @@ class ControlNetProcessor(_StableProcessor):
         )
 
     @classmethod
-    @add_default_section_for_init("core/process/diffusers/controlnet")
+    @add_default_section_for_init("core/process/diffusion/controlnet")
     def from_core_configure(cls, config, **kwargs):
-        config.set_default_section("core/process/diffusers/controlnet")
+        config.set_default_section("core/process/diffusion/controlnet")
         pretrained_name = config.getoption("pretrained_name", "stable-v1.5")
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
 
@@ -76,7 +76,7 @@ class ControlNetProcessor(_StableProcessor):
             "vae_config_path": vae_config_path,
         }
 
-    @register_process("core/process/diffusers/controlnet/text2image")
+    @register_process("core/process/diffusion/controlnet/text2image")
     def _text2image(
         self,
         prompt: str,
@@ -98,7 +98,7 @@ class ControlNetProcessor(_StableProcessor):
             attention_mask=outputs.attention_mask,
         )
 
-    @register_process("core/process/diffusers/controlnet/text2image/inputs")
+    @register_process("core/process/diffusion/controlnet/text2image/inputs")
     def _text2image_inputs(
         self,
         prompt: str,
@@ -120,7 +120,7 @@ class ControlNetProcessor(_StableProcessor):
             negative_attention_mask=text_outputs.negative_attention_mask,
         )
 
-    @register_process("core/process/diffusers/controlnet/image2image/inputs")
+    @register_process("core/process/diffusion/controlnet/image2image/inputs")
     def _image2image_inputs(
         self,
         prompt: str,
@@ -146,7 +146,7 @@ class ControlNetProcessor(_StableProcessor):
             negative_attention_mask=text_outputs.negative_attention_mask,
         )
 
-    @register_process("core/process/diffusers/controlnet/inpainting/inputs")
+    @register_process("core/process/diffusion/controlnet/inpainting/inputs")
     def _inpainting_inputs(
         self,
         prompt: str,

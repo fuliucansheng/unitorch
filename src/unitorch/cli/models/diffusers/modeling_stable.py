@@ -174,7 +174,7 @@ class StableForText2ImageGeneration(_StableForText2ImageGeneration):
 
         return inst
 
-    # @autocast()
+    @autocast()
     def forward(
         self,
         pixel_values: torch.Tensor,
@@ -189,7 +189,7 @@ class StableForText2ImageGeneration(_StableForText2ImageGeneration):
         return LossOutputs(loss=loss)
 
     @add_default_section_for_function("core/model/diffusers/text2image/stable")
-    # @autocast()
+    @autocast()
     def generate(
         self,
         input_ids: torch.Tensor,
@@ -355,14 +355,14 @@ class StableForImage2ImageGeneration(_StableForImage2ImageGeneration):
 
         return inst
 
-    # @autocast()
+    @autocast()
     def forward(
         self,
     ):
         raise NotImplementedError
 
     @add_default_section_for_function("core/model/diffusers/image2image/stable")
-    # @autocast()
+    @autocast()
     def generate(
         self,
         input_ids: torch.Tensor,
@@ -526,14 +526,14 @@ class StableForImageInpainting(_StableForImageInpainting):
 
         return inst
 
-    # @autocast()
+    @autocast()
     def forward(
         self,
     ):
         raise NotImplementedError
 
     @add_default_section_for_function("core/model/diffusers/inpainting/stable")
-    # @autocast()
+    @autocast()
     def generate(
         self,
         input_ids: torch.Tensor,
@@ -698,14 +698,14 @@ class StableForImageResolution(_StableForImageResolution):
             )
         return inst
 
-    # @autocast()
+    @autocast()
     def forward(
         self,
     ):
         raise NotImplementedError
 
     @add_default_section_for_function("core/model/diffusers/resolution/stable")
-    # @autocast()
+    @autocast()
     def generate(
         self,
         input_ids: torch.Tensor,
@@ -864,14 +864,14 @@ class StableForImage2VideoGeneration(_StableForImage2VideoGeneration):
 
         return inst
 
-    # @autocast()
+    @autocast()
     def forward(
         self,
     ):
         raise NotImplementedError
 
     @add_default_section_for_function("core/model/diffusers/image2video/stable")
-    # @autocast()
+    @autocast()
     def generate(
         self,
         pixel_values: torch.Tensor,

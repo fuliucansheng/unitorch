@@ -3,10 +3,13 @@
 
 import os
 import re
+import io
 import torch
 import torch.nn as nn
+import requests
 import hashlib
 import tempfile
+import logging
 import numpy as np
 import safetensors
 from PIL import Image
@@ -71,14 +74,21 @@ class DiffusionTargets(TensorsTargets):
 
 
 class DiffusionProcessor:
-    def __init__(self, output_folder: Optional[str] = None):
-        assert output_folder is not None
+    def __init__(
+        self,
+        output_folder: Optional[str] = None,
+        http_url: Optional[str] = None,
+    ):
+        assert output_folder is not None or http_url is not None
         self.output_folder = output_folder
-        if not os.path.exists(output_folder):
+        if output_folder is not None and not os.path.exists(output_folder):
             os.makedirs(self.output_folder, exist_ok=True)
+        self.http_url = http_url
+        if self.http_url is None:
+            self.output_folder = tempfile.mkdtemp()
 
     @classmethod
-    @add_default_section_for_init("core/process/diffusers")
+    @add_default_section_for_init("core/process/diffusion")
     def from_core_configure(cls, config, **kwargs):
         pass
 
@@ -86,8 +96,20 @@ class DiffusionProcessor:
         md5 = hashlib.md5()
         md5.update(image.tobytes())
         name = md5.hexdigest() + ".jpg"
-        output_path = f"{self.output_folder}/{name}"
-        image.save(output_path)
+        if self.http_url is not None:
+            byte = io.BytesIO()
+            image.save(byte, format="JPEG")
+            for _ in range(3):
+                resp = requests.post(
+                    self.http_url.format(name), files={"file": byte.getvalue()}
+                )
+                if resp.status_code == 200:
+                    break
+            if resp.status_code != 200:
+                logging.error(f"Failed to save image {name} to zip.")
+        else:
+            output_path = f"{self.output_folder}/{name}"
+            image.save(output_path)
         return name
 
     def save_gif(self, images: List[Image.Image]):
@@ -97,6 +119,14 @@ class DiffusionProcessor:
         name = md5.hexdigest() + ".gif"
         output_path = f"{self.output_folder}/{name}"
         export_to_gif(images, output_path)
+        if self.http_url is not None:
+            byte = open(output_path, "rb")
+            for _ in range(3):
+                resp = requests.post(self.http_url.format(name), files={"file": byte})
+                if resp.status_code == 200:
+                    break
+            if resp.status_code != 200:
+                logging.error(f"Failed to save gif {name} to zip.")
         return name
 
     def save_video(self, video):
@@ -106,6 +136,14 @@ class DiffusionProcessor:
         name = md5.hexdigest() + ".mp4"
         output_path = f"{self.output_folder}/{name}"
         export_to_video(video, output_path)
+        if self.http_url is not None:
+            byte = open(output_path, "rb")
+            for _ in range(3):
+                resp = requests.post(self.http_url.format(name), files={"file": byte})
+                if resp.status_code == 200:
+                    break
+            if resp.status_code != 200:
+                logging.error(f"Failed to save video {name} to zip.")
         return name
 
     @register_process("core/postprocess/diffusion/image")

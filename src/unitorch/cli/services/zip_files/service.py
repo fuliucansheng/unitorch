@@ -7,7 +7,6 @@ import logging
 import http.server
 import zipfile
 from urllib.parse import parse_qs, urlparse
-from PIL import Image
 from threading import Thread
 from functools import lru_cache
 from unitorch.cli import CoreConfigureParser
@@ -72,7 +71,7 @@ def parse_params(path):
     return {k: v[0] for k, v in query_params.items()}
 
 
-class ImageServer(http.server.BaseHTTPRequestHandler):
+class ZipFilesServer(http.server.BaseHTTPRequestHandler):
     """
     HTTP request handler class.
     """
@@ -82,24 +81,24 @@ class ImageServer(http.server.BaseHTTPRequestHandler):
     none_resp = "".encode("utf-8")
 
     @lru_cache(maxsize=10000)
-    def _get_image(self, image):
+    def _get_file(self, file):
         """
-        Retrieves the image data from zip files.
+        Retrieves the file data from zip files.
 
         Args:
-            image (str): Image filename.
+            file (str): Image filename.
 
         Returns:
             bytes: Image data.
         """
-        zf = self.zip_dict.get(image)
+        zf = self.zip_dict.get(file)
         if zf is None:
             return self.none_resp
         zf = self.zip_data[zf]
         if zf is None:
             return self.none_resp
-        image = zf.read(image)
-        return image
+        file = zf.read(file)
+        return file
 
     def do_GET(self):
         """
@@ -112,10 +111,10 @@ class ImageServer(http.server.BaseHTTPRequestHandler):
         self.send_header("Content-Type", "text/html; charset=utf-8")
         self.end_headers()
         params = parse_params(self.path)
-        image = params.get("image")
+        file = params.get("file")
         resp = self.none_resp
-        if image is not None:
-            resp = self._get_image(image)
+        if file is not None:
+            resp = self._get_file(file)
         self.wfile.write(resp)
 
     def log_request(self, format, *args):
@@ -137,25 +136,28 @@ class ImageServer(http.server.BaseHTTPRequestHandler):
         return
 
 
-@register_service("core/service/zip_image")
-class ZipImageService(GenericService):
+@register_service("core/service/zip_files")
+class ZipFilesService(GenericService):
     def __init__(self, config: CoreConfigureParser):
         self.config = config
-        config.set_default_section("core/service/zip_image")
+        config.set_default_section("core/service/zip_files")
         self.ip = config.getoption("ip", "0.0.0.0")
         self.port = config.getoption("port", 11230)
-        self.name = config.getoption("processname", "core_zip_image_service")
+        self.name = config.getoption("processname", "core_zip_files_service")
         self.zip_folder = config.getoption("zip_folder", None)
         self.zip_extension = config.getoption("zip_extension", ".zip")
         self.num_thread = config.getoption("num_thread", 20)
         assert self.zip_folder is not None
+
         if isinstance(self.zip_folder, str):
+            self.zip_folder = os.path.abspath(self.zip_folder)
             zip_files = [
                 os.path.join(self.zip_folder, f)
                 for f in os.listdir(self.zip_folder)
                 if f.endswith(self.zip_extension)
             ]
         elif isinstance(self.zip_folder, list):
+            self.zip_folder = [os.path.abspath(f) for f in self.zip_folder]
             zip_files = []
             for folder in list(set(self.zip_folder)):
                 zip_files += [
@@ -170,9 +172,9 @@ class ZipImageService(GenericService):
         }
 
     def start(self, **kwargs):
-        ImageServer.zip_data = self.zip_data
-        ImageServer.zip_dict = self.zip_dict
-        self.httpd = http.server.HTTPServer((self.ip, self.port), ImageServer)
+        ZipFilesServer.zip_data = self.zip_data
+        ZipFilesServer.zip_dict = self.zip_dict
+        self.httpd = http.server.HTTPServer((self.ip, self.port), ZipFilesServer)
         self.httpd.serve_forever()
 
     def stop(self, **kwargs):

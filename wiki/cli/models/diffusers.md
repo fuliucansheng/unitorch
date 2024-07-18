@@ -3,7 +3,7 @@
 ## StableProcessor
 
 !!! tip
-    **`core/process/diffusers/stable`** is the section for configuration of BartProcessor.
+    **`core/process/diffusion/stable`** is the section for configuration of BartProcessor.
 
 ::: unitorch.cli.models.diffusers.StableProcessor
 
@@ -38,7 +38,7 @@
 ## StableXLProcessor
 
 !!! tip
-    **`core/process/diffusers/stable_xl`** is the section for configuration of StableXLProcessor.
+    **`core/process/diffusion/stable_xl`** is the section for configuration of StableXLProcessor.
 
 ::: unitorch.cli.models.diffusers.StableXLProcessor
 
@@ -66,7 +66,7 @@
 ## StableXLRefinerProcessor
 
 !!! tip
-    **`core/process/diffusers/stable_xl_refiner`** is the section for configuration of StableXLRefinerProcessor.
+    **`core/process/diffusion/stable_xl_refiner`** is the section for configuration of StableXLRefinerProcessor.
 
 ::: unitorch.cli.models.diffusers.StableXLRefinerProcessor
 
@@ -80,7 +80,7 @@
 ## ControlNetProcessor
 
 !!! tip
-    **`core/process/diffusers/controlnet`** is the section for configuration of ControlNetProcessor.
+    **`core/process/diffusion/controlnet`** is the section for configuration of ControlNetProcessor.
 
 ::: unitorch.cli.models.diffusers.ControlNetProcessor
 

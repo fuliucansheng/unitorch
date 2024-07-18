@@ -53,9 +53,9 @@ class Stable3Processor(_Stable3Processor):
         )
 
     @classmethod
-    @add_default_section_for_init("core/process/diffusers/stable_3")
+    @add_default_section_for_init("core/process/diffusion/stable_3")
     def from_core_configure(cls, config, **kwargs):
-        config.set_default_section("core/process/diffusers/stable_3")
+        config.set_default_section("core/process/diffusion/stable_3")
         pretrained_name = config.getoption("pretrained_name", "stable-v3-base")
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
 
@@ -110,7 +110,7 @@ class Stable3Processor(_Stable3Processor):
             "vae_config_path": vae_config_path,
         }
 
-    @register_process("core/process/diffusers/stable_3/text2image")
+    @register_process("core/process/diffusion/stable_3/text2image")
     def _text2image(
         self,
         prompt: str,
@@ -137,7 +137,7 @@ class Stable3Processor(_Stable3Processor):
             add_time_ids=outputs.add_time_ids,
         )
 
-    @register_process("core/process/diffusers/stable_3/text2image/inputs")
+    @register_process("core/process/diffusion/stable_3/text2image/inputs")
     def _text2image_inputs(
         self,
         prompt: str,
@@ -174,7 +174,7 @@ class Stable3Processor(_Stable3Processor):
             negative_attention3_mask=outputs.negative_attention3_mask,
         )
 
-    @register_process("core/process/diffusers/stable_3/image2image/inputs")
+    @register_process("core/process/diffusion/stable_3/image2image/inputs")
     def _image2image_inputs(
         self,
         prompt: str,
@@ -214,7 +214,7 @@ class Stable3Processor(_Stable3Processor):
             negative_attention3_mask=text_outputs.negative_attention3_mask,
         )
 
-    @register_process("core/process/diffusers/stable_3/inpainting/inputs")
+    @register_process("core/process/diffusion/stable_3/inpainting/inputs")
     def _inpainting_inputs(
         self,
         prompt: str,

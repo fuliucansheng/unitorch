@@ -1,4 +1,4 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
-import unitorch.cli.services.zip_image.service
+import unitorch.cli.services.http_files.service

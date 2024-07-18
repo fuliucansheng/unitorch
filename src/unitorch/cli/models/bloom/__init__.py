@@ -43,8 +43,7 @@ pretrained_bloom_infos = {
     },
 }
 
-pretrained_bloom_extensions_infos = {
-}
+pretrained_bloom_extensions_infos = {}
 
 import unitorch.cli.models.bloom.modeling
 import unitorch.cli.models.bloom.processing

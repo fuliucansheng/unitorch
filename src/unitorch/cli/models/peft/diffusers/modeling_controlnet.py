@@ -184,7 +184,7 @@ class ControlNetLoraForText2ImageGeneration(_ControlNetLoraForText2ImageGenerati
 
         return inst
 
-    # @autocast()
+    @autocast()
     def forward(
         self,
         input_ids: torch.Tensor,
@@ -203,7 +203,7 @@ class ControlNetLoraForText2ImageGeneration(_ControlNetLoraForText2ImageGenerati
     @add_default_section_for_function(
         "core/model/peft/lora/diffusers/text2image/controlnet"
     )
-    # @autocast()
+    @autocast()
     def generate(
         self,
         input_ids: torch.Tensor,
@@ -389,7 +389,7 @@ class ControlNetLoraForImage2ImageGeneration(_ControlNetLoraForImage2ImageGenera
 
         return inst
 
-    # @autocast()
+    @autocast()
     def forward(
         self,
     ):
@@ -398,7 +398,7 @@ class ControlNetLoraForImage2ImageGeneration(_ControlNetLoraForImage2ImageGenera
     @add_default_section_for_function(
         "core/model/peft/lora/diffusers/image2image/controlnet"
     )
-    # @autocast()
+    @autocast()
     def generate(
         self,
         input_ids: torch.Tensor,
@@ -583,7 +583,7 @@ class ControlNetLoraForImageInpainting(_ControlNetLoraForImageInpainting):
 
         return inst
 
-    # @autocast()
+    @autocast()
     def forward(
         self,
     ):
@@ -592,7 +592,7 @@ class ControlNetLoraForImageInpainting(_ControlNetLoraForImageInpainting):
     @add_default_section_for_function(
         "core/model/peft/lora/diffusers/inpainting/controlnet"
     )
-    # @autocast()
+    @autocast()
     def generate(
         self,
         input_ids: torch.Tensor,

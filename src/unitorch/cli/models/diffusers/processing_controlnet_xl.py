@@ -49,9 +49,9 @@ class ControlNetXLProcessor(_StableXLProcessor):
         )
 
     @classmethod
-    @add_default_section_for_init("core/process/diffusers/controlnet_xl")
+    @add_default_section_for_init("core/process/diffusion/controlnet_xl")
     def from_core_configure(cls, config, **kwargs):
-        config.set_default_section("core/process/diffusers/controlnet_xl")
+        config.set_default_section("core/process/diffusion/controlnet_xl")
         pretrained_name = config.getoption("pretrained_name", "stable-xl-base")
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
 
@@ -98,7 +98,7 @@ class ControlNetXLProcessor(_StableXLProcessor):
             "vae_config_path": vae_config_path,
         }
 
-    @register_process("core/process/diffusers/controlnet_xl/text2image")
+    @register_process("core/process/diffusion/controlnet_xl/text2image")
     def _text2image(
         self,
         prompt: str,
@@ -124,7 +124,7 @@ class ControlNetXLProcessor(_StableXLProcessor):
             add_time_ids=outputs.add_time_ids,
         )
 
-    @register_process("core/process/diffusers/controlnet_xl/text2image/inputs")
+    @register_process("core/process/diffusion/controlnet_xl/text2image/inputs")
     def _text2image_inputs(
         self,
         prompt: str,
@@ -146,7 +146,7 @@ class ControlNetXLProcessor(_StableXLProcessor):
             negative_attention_mask=text_outputs.negative_attention_mask,
         )
 
-    @register_process("core/process/diffusers/controlnet_xl/image2image/inputs")
+    @register_process("core/process/diffusion/controlnet_xl/image2image/inputs")
     def _image2image_inputs(
         self,
         prompt: str,
@@ -171,7 +171,7 @@ class ControlNetXLProcessor(_StableXLProcessor):
             negative_attention_mask=text_outputs.negative_attention_mask,
         )
 
-    @register_process("core/process/diffusers/controlnet_xl/inpainting/inputs")
+    @register_process("core/process/diffusion/controlnet_xl/inpainting/inputs")
     def _inpainting_inputs(
         prompt: str,
         condition_image: Union[Image.Image, str],

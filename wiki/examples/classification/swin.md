@@ -105,7 +105,7 @@ preprocess_functions = [
 pretrained_name = swin-base-patch4-window7-224
 
 [core/process/image]
-http_url = http://0.0.0.0:11230/?image={0}
+http_url = http://0.0.0.0:11230/?file={0}
 ```
 
 !!! note

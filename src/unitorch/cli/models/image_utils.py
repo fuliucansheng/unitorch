@@ -14,7 +14,7 @@ import numpy as np
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from random import random
 from PIL import Image, ImageOps, ImageFile, ImageFilter
-
+from unitorch.utils import is_opencv_available
 from unitorch.cli import (
     add_default_section_for_init,
     add_default_section_for_function,
@@ -230,4 +230,25 @@ class ImageProcessor:
         Returns:
             The image with detected edges as a PIL Image object.
         """
-        return image.filter(ImageFilter.FIND_EDGES)
+        if is_opencv_available():
+            import cv2
+
+            image = np.array(image, np.uint8)
+            image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
+            image = cv2.Canny(image, 100, 200)
+            image = Image.fromarray(image)
+        else:
+            image = image.convert("L")
+            image = image.filter(ImageFilter.FIND_EDGES)
+        return image
+
+    @register_process("core/process/image/mask")
+    def _mask(
+        self,
+        image: Image.Image,
+        mask: Image.Image,
+    ):
+        result = Image.new("RGBA", image.size, (0, 0, 0, 0))
+        mask = mask.convert("L").resize(image.size)
+        result.paste(image, (0, 0), mask)
+        return result

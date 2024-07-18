@@ -2,8 +2,11 @@
 # Licensed under the MIT License.
 
 import os
+import io
 import torch
 import hashlib
+import logging
+import requests
 import numpy as np
 import torch.nn as nn
 from PIL import Image
@@ -36,12 +39,14 @@ class SegmentationProcessor:
         self,
         mask_threshold: float = None,
         output_folder: Optional[str] = None,
+        http_url: Optional[str] = None,
     ):
         self.mask_threshold = mask_threshold
 
         self.output_folder = output_folder
         if self.output_folder is not None and not os.path.exists(output_folder):
             os.makedirs(self.output_folder, exist_ok=True)
+        self.http_url = http_url
 
     @classmethod
     @add_default_section_for_init("core/process/segmentation")
@@ -52,8 +57,20 @@ class SegmentationProcessor:
         md5 = hashlib.md5()
         md5.update(image.tobytes())
         name = md5.hexdigest() + ".jpg"
-        output_path = f"{self.output_folder}/{name}"
-        image.save(output_path)
+        if self.http_url is not None:
+            byte = io.BytesIO()
+            image.save(byte, format="JPEG")
+            for _ in range(3):
+                resp = requests.post(
+                    self.http_url.format(name), files={"file": byte.getvalue()}
+                )
+                if resp.status_code == 200:
+                    break
+            if resp.status_code != 200:
+                logging.error(f"Failed to save image {name} to zip.")
+        else:
+            output_path = f"{self.output_folder}/{name}"
+            image.save(output_path)
         return name
 
     @register_process("core/postprocess/segmentation")
