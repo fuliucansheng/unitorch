@@ -42,7 +42,7 @@ class LlavaMistralClipForGenerationPipeline(_LlavaMistralClipForGeneration):
             quant_config_path=quant_config_path,
         )
         self.processor = LlavaMistralClipProcessor(
-            vocab_file=vocab_path,
+            vocab_path=vocab_path,
             vision_config_path=vision_config_path,
             max_seq_length=max_seq_length,
             max_gen_seq_length=max_gen_seq_length,
@@ -170,69 +170,37 @@ class LlavaMistralClipForGenerationPipeline(_LlavaMistralClipForGeneration):
         if isinstance(lora_files, str):
             lora_files = [lora_files]
 
-        if lora_checkpoints is not None:
-            _lora_checkpoints = list(
-                zip(
-                    *[
-                        (ckpt, weight, alpha)
-                        for ckpt, weight, alpha in zip(
-                            lora_checkpoints, lora_weights, lora_alphas
-                        )
-                        if ckpt is not None
-                    ]
-                )
-            )
-            if len(_lora_checkpoints) == 0:
-                lora_checkpoints = None
-            else:
-                lora_checkpoints, lora_weights, lora_alphas = _lora_checkpoints
-                lora_checkpoints = [
-                    nested_dict_value(pretrained_llava_extensions_infos, ckpt)
-                    for ckpt in lora_checkpoints
-                ]
-        if lora_urls is not None:
-            _lora_urls = list(
-                zip(
-                    *[
-                        (url, weight, alpha)
-                        for url, weight, alpha in zip(
-                            lora_urls, lora_weights, lora_alphas
-                        )
-                        if is_remote_url(url)
-                    ]
-                )
-            )
-            if len(_lora_urls) == 0:
-                lora_urls = None
-            else:
-                lora_urls, lora_weights, lora_alphas = _lora_urls
-        if lora_files is not None:
-            _lora_files = list(
-                zip(
-                    *[
-                        (file, weight, alpha)
-                        for file, weight, alpha in zip(
-                            lora_files, lora_weights, lora_alphas
-                        )
-                        if file is not None
-                    ]
-                )
-            )
-            if len(_lora_files) == 0:
-                lora_files = None
-            else:
-                lora_files, lora_weights, lora_alphas = _lora_files
-
-        lora_files = pop_value(
-            lora_checkpoints,
-            lora_urls,
-            lora_files,
-            check_none=False,
+        assert (
+            len(lora_checkpoints) == len(lora_weights)
+            and len(lora_checkpoints) == len(lora_alphas)
+            and len(lora_checkpoints) == len(lora_urls)
+            and len(lora_checkpoints) == len(lora_files)
         )
-        if lora_files is not None:
+        processed_lora_files, processed_lora_weights, processed_lora_alphas = [], [], []
+        for ckpt, url, file, weight, alpha in zip(
+            lora_checkpoints, lora_urls, lora_files, lora_weights, lora_alphas
+        ):
+            if ckpt is not None:
+                lora_file = nested_dict_value(pretrained_llava_extensions_infos, ckpt)
+                processed_lora_files.append(lora_file)
+                processed_lora_weights.append(weight)
+                processed_lora_alphas.append(alpha)
+            elif url is not None and is_remote_url(url):
+                processed_lora_files.append(url)
+                processed_lora_weights.append(weight)
+                processed_lora_alphas.append(alpha)
+            elif file is not None:
+                processed_lora_files.append(file)
+                processed_lora_weights.append(weight)
+                processed_lora_alphas.append(alpha)
+
+        if len(processed_lora_files) > 0:
             self.load_lora_weights(
-                lora_files, lora_weights=lora_weights, lora_alphas=lora_alphas
+                processed_lora_files,
+                lora_weights=processed_lora_weights,
+                lora_alphas=processed_lora_alphas,
             )
+
         outputs = super().generate(
             input_ids=inputs["input_ids"],
             pixel_values=inputs["pixel_values"],

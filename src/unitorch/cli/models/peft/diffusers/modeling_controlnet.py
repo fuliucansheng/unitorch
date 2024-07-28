@@ -27,7 +27,7 @@ from unitorch.cli.models.diffusers import (
 
 
 @register_model(
-    "core/model/peft/lora/diffusers/text2image/controlnet", diffusion_model_decorator
+    "core/model/diffusers/peft/lora/text2image/controlnet", diffusion_model_decorator
 )
 class ControlNetLoraForText2ImageGeneration(_ControlNetLoraForText2ImageGeneration):
     def __init__(
@@ -64,11 +64,11 @@ class ControlNetLoraForText2ImageGeneration(_ControlNetLoraForText2ImageGenerati
 
     @classmethod
     @add_default_section_for_init(
-        "core/model/peft/lora/diffusers/text2image/controlnet"
+        "core/model/diffusers/peft/lora/text2image/controlnet"
     )
     def from_core_configure(cls, config, **kwargs):
         config.set_default_section(
-            "core/model/peft/lora/diffusers/text2image/controlnet"
+            "core/model/diffusers/peft/lora/text2image/controlnet"
         )
         pretrained_name = config.getoption("pretrained_name", "stable-v1.5")
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
@@ -201,7 +201,7 @@ class ControlNetLoraForText2ImageGeneration(_ControlNetLoraForText2ImageGenerati
         return LossOutputs(loss=loss)
 
     @add_default_section_for_function(
-        "core/model/peft/lora/diffusers/text2image/controlnet"
+        "core/model/diffusers/peft/lora/text2image/controlnet"
     )
     @autocast()
     def generate(
@@ -232,7 +232,7 @@ class ControlNetLoraForText2ImageGeneration(_ControlNetLoraForText2ImageGenerati
 
 
 @register_model(
-    "core/model/peft/lora/diffusers/image2image/controlnet", diffusion_model_decorator
+    "core/model/diffusers/peft/lora/image2image/controlnet", diffusion_model_decorator
 )
 class ControlNetLoraForImage2ImageGeneration(_ControlNetLoraForImage2ImageGeneration):
     def __init__(
@@ -269,11 +269,11 @@ class ControlNetLoraForImage2ImageGeneration(_ControlNetLoraForImage2ImageGenera
 
     @classmethod
     @add_default_section_for_init(
-        "core/model/peft/lora/diffusers/image2image/controlnet"
+        "core/model/diffusers/peft/lora/image2image/controlnet"
     )
     def from_core_configure(cls, config, **kwargs):
         config.set_default_section(
-            "core/model/peft/lora/diffusers/image2image/controlnet"
+            "core/model/diffusers/peft/lora/image2image/controlnet"
         )
         pretrained_name = config.getoption("pretrained_name", "stable-v1.5")
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
@@ -396,7 +396,7 @@ class ControlNetLoraForImage2ImageGeneration(_ControlNetLoraForImage2ImageGenera
         raise NotImplementedError
 
     @add_default_section_for_function(
-        "core/model/peft/lora/diffusers/image2image/controlnet"
+        "core/model/diffusers/peft/lora/image2image/controlnet"
     )
     @autocast()
     def generate(
@@ -426,7 +426,7 @@ class ControlNetLoraForImage2ImageGeneration(_ControlNetLoraForImage2ImageGenera
 
 
 @register_model(
-    "core/model/peft/lora/diffusers/inpainting/controlnet", diffusion_model_decorator
+    "core/model/diffusers/peft/lora/inpainting/controlnet", diffusion_model_decorator
 )
 class ControlNetLoraForImageInpainting(_ControlNetLoraForImageInpainting):
     def __init__(
@@ -463,11 +463,11 @@ class ControlNetLoraForImageInpainting(_ControlNetLoraForImageInpainting):
 
     @classmethod
     @add_default_section_for_init(
-        "core/model/peft/lora/diffusers/inpainting/controlnet"
+        "core/model/diffusers/peft/lora/inpainting/controlnet"
     )
     def from_core_configure(cls, config, **kwargs):
         config.set_default_section(
-            "core/model/peft/lora/diffusers/inpainting/controlnet"
+            "core/model/diffusers/peft/lora/inpainting/controlnet"
         )
         pretrained_name = config.getoption("pretrained_name", "stable-v1.5")
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
@@ -590,7 +590,7 @@ class ControlNetLoraForImageInpainting(_ControlNetLoraForImageInpainting):
         raise NotImplementedError
 
     @add_default_section_for_function(
-        "core/model/peft/lora/diffusers/inpainting/controlnet"
+        "core/model/diffusers/peft/lora/inpainting/controlnet"
     )
     @autocast()
     def generate(

@@ -144,14 +144,18 @@ class LlavaMistralClipForClassification(
             batch_size, text_seq_length + image_seq_length - 1
         ).to(text_embeds.device)
         overwrite_masks[batch_indices, new_text_indices] = 0
-        final_embeds[overwrite_masks == 0] = text_embeds[batch_indices, text_indices]
-        final_embeds[overwrite_masks == 1] = image_embeds.contiguous().view(
-            -1, text_dim
+        final_embeds[overwrite_masks == 0] = text_embeds[
+            batch_indices, text_indices
+        ].to(final_embeds)
+        final_embeds[overwrite_masks == 1] = (
+            image_embeds.contiguous().view(-1, text_dim).to(final_embeds)
         )
         final_masks = torch.zeros(
             batch_size, text_seq_length + image_seq_length - 1
         ).to(attention_mask)
-        final_masks[overwrite_masks == 0] = attention_mask[batch_indices, text_indices]
+        final_masks[overwrite_masks == 0] = attention_mask[
+            batch_indices, text_indices
+        ].to(final_masks)
         final_masks[overwrite_masks == 1] = 1
         position_ids = (final_masks.cumsum(dim=1) - 1).masked_fill(final_masks == 0, -1)
 
@@ -276,14 +280,18 @@ class LlavaMistralClipForGeneration(
             batch_size, text_seq_length + image_seq_length - 1
         ).to(text_embeds.device)
         overwrite_masks[batch_indices, new_text_indices] = 0
-        final_embeds[overwrite_masks == 0] = text_embeds[batch_indices, text_indices]
-        final_embeds[overwrite_masks == 1] = image_embeds.contiguous().view(
-            -1, text_dim
+        final_embeds[overwrite_masks == 0] = text_embeds[
+            batch_indices, text_indices
+        ].to(final_embeds)
+        final_embeds[overwrite_masks == 1] = (
+            image_embeds.contiguous().view(-1, text_dim).to(final_embeds)
         )
         final_masks = torch.zeros(
             batch_size, text_seq_length + image_seq_length - 1
         ).to(attention_mask)
-        final_masks[overwrite_masks == 0] = attention_mask[batch_indices, text_indices]
+        final_masks[overwrite_masks == 0] = attention_mask[
+            batch_indices, text_indices
+        ].to(final_masks)
         final_masks[overwrite_masks == 1] = 1
         position_ids = (final_masks.cumsum(dim=1) - 1).masked_fill(final_masks == 0, -1)
 
@@ -385,14 +393,18 @@ class LlavaMistralClipForGeneration(
             batch_size, text_seq_length + image_seq_length - 1
         ).to(text_embeds.device)
         overwrite_masks[batch_indices, new_text_indices] = 0
-        final_embeds[overwrite_masks == 0] = text_embeds[batch_indices, text_indices]
-        final_embeds[overwrite_masks == 1] = image_embeds.contiguous().view(
-            -1, text_dim
+        final_embeds[overwrite_masks == 0] = text_embeds[
+            batch_indices, text_indices
+        ].to(final_embeds)
+        final_embeds[overwrite_masks == 1] = (
+            image_embeds.contiguous().view(-1, text_dim).to(final_embeds)
         )
         final_masks = torch.zeros(
             batch_size, text_seq_length + image_seq_length - 1
         ).to(attention_mask)
-        final_masks[overwrite_masks == 0] = attention_mask[batch_indices, text_indices]
+        final_masks[overwrite_masks == 0] = attention_mask[
+            batch_indices, text_indices
+        ].to(final_masks)
         final_masks[overwrite_masks == 1] = 1
         input_seq_length = final_embeds.size(1)
         outputs = self.language_model.generate(

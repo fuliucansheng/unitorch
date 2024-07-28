@@ -141,6 +141,7 @@ class LlavaMistralClipForClassification(_LlavaMistralClipForClassification):
 
         return inst
 
+    @autocast()
     def forward(
         self,
         input_ids: torch.Tensor,
@@ -273,6 +274,7 @@ class LlavaMistralClipForGeneration(_LlavaMistralClipForGeneration):
 
         return inst
 
+    @autocast()
     def forward(
         self,
         input_ids: torch.Tensor,
@@ -299,6 +301,7 @@ class LlavaMistralClipForGeneration(_LlavaMistralClipForGeneration):
 
     @add_default_section_for_function("core/model/generation/llava/mistral_clip")
     @torch.no_grad()
+    @autocast()
     def generate(
         self,
         input_ids: torch.Tensor,

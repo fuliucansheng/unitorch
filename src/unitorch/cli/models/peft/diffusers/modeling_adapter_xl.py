@@ -25,7 +25,7 @@ from unitorch.cli.models.diffusers import (
 
 
 @register_model(
-    "core/model/peft/lora/diffusers/text2image/adapter_xl", diffusion_model_decorator
+    "core/model/diffusers/peft/lora/text2image/adapter_xl", diffusion_model_decorator
 )
 class StableXLAdapterLoraForText2ImageGeneration(
     _StableXLAdapterLoraForText2ImageGeneration
@@ -66,11 +66,11 @@ class StableXLAdapterLoraForText2ImageGeneration(
 
     @classmethod
     @add_default_section_for_init(
-        "core/model/peft/lora/diffusers/text2image/adapter_xl"
+        "core/model/diffusers/peft/lora/text2image/adapter_xl"
     )
     def from_core_configure(cls, config, **kwargs):
         config.set_default_section(
-            "core/model/peft/lora/diffusers/text2image/adapter_xl"
+            "core/model/diffusers/peft/lora/text2image/adapter_xl"
         )
         pretrained_name = config.getoption("pretrained_name", "stable-xl-base")
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
@@ -226,7 +226,7 @@ class StableXLAdapterLoraForText2ImageGeneration(
         return LossOutputs(loss=loss)
 
     @add_default_section_for_function(
-        "core/model/peft/lora/diffusers/text2image/adapter_xl"
+        "core/model/diffusers/peft/lora/text2image/adapter_xl"
     )
     @autocast()
     def generate(

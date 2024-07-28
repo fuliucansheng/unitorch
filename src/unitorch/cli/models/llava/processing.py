@@ -42,7 +42,7 @@ class LlavaMistralClipProcessor(_LlavaMistralClipProcessor):
             max_gen_seq_length (int, optional): The maximum generated sequence length. Defaults to 128.
         """
         super().__init__(
-            vocab_file=vocab_path,
+            vocab_path=vocab_path,
             vision_config_path=vision_config_path,
             max_seq_length=max_seq_length,
             max_gen_seq_length=max_gen_seq_length,

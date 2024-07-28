@@ -27,7 +27,7 @@ from unitorch.cli.models.diffusers import (
 
 
 @register_model(
-    "core/model/peft/lora/diffusers/text2image/controlnet_xl", diffusion_model_decorator
+    "core/model/diffusers/peft/lora/text2image/controlnet_xl", diffusion_model_decorator
 )
 class ControlNetXLLoraForText2ImageGeneration(_ControlNetXLLoraForText2ImageGeneration):
     def __init__(
@@ -66,11 +66,11 @@ class ControlNetXLLoraForText2ImageGeneration(_ControlNetXLLoraForText2ImageGene
 
     @classmethod
     @add_default_section_for_init(
-        "core/model/peft/lora/diffusers/text2image/controlnet_xl"
+        "core/model/diffusers/peft/lora/text2image/controlnet_xl"
     )
     def from_core_configure(cls, config, **kwargs):
         config.set_default_section(
-            "core/model/peft/lora/diffusers/text2image/controlnet_xl"
+            "core/model/diffusers/peft/lora/text2image/controlnet_xl"
         )
         pretrained_name = config.getoption("pretrained_name", "stable-xl-base")
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
@@ -228,7 +228,7 @@ class ControlNetXLLoraForText2ImageGeneration(_ControlNetXLLoraForText2ImageGene
         return LossOutputs(loss=loss)
 
     @add_default_section_for_function(
-        "core/model/peft/lora/diffusers/text2image/controlnet_xl"
+        "core/model/diffusers/peft/lora/text2image/controlnet_xl"
     )
     @autocast()
     def generate(
@@ -259,7 +259,7 @@ class ControlNetXLLoraForText2ImageGeneration(_ControlNetXLLoraForText2ImageGene
 
 
 @register_model(
-    "core/model/peft/lora/diffusers/image2image/controlnet_xl",
+    "core/model/diffusers/peft/lora/image2image/controlnet_xl",
     diffusion_model_decorator,
 )
 class ControlNetXLLoraForImage2ImageGeneration(
@@ -301,11 +301,11 @@ class ControlNetXLLoraForImage2ImageGeneration(
 
     @classmethod
     @add_default_section_for_init(
-        "core/model/peft/lora/diffusers/image2image/controlnet_xl"
+        "core/model/diffusers/peft/lora/image2image/controlnet_xl"
     )
     def from_core_configure(cls, config, **kwargs):
         config.set_default_section(
-            "core/model/peft/lora/diffusers/image2image/controlnet_xl"
+            "core/model/diffusers/peft/lora/image2image/controlnet_xl"
         )
         pretrained_name = config.getoption("pretrained_name", "stable-xl-base")
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
@@ -447,7 +447,7 @@ class ControlNetXLLoraForImage2ImageGeneration(
         raise NotImplementedError
 
     @add_default_section_for_function(
-        "core/model/peft/lora/diffusers/image2image/controlnet_xl"
+        "core/model/diffusers/peft/lora/image2image/controlnet_xl"
     )
     @autocast()
     def generate(
@@ -477,7 +477,7 @@ class ControlNetXLLoraForImage2ImageGeneration(
 
 
 @register_model(
-    "core/model/peft/lora/diffusers/inpainting/controlnet_xl", diffusion_model_decorator
+    "core/model/diffusers/peft/lora/inpainting/controlnet_xl", diffusion_model_decorator
 )
 class ControlNetXLLoraForImageInpainting(_ControlNetXLLoraForImageInpainting):
     def __init__(
@@ -516,11 +516,11 @@ class ControlNetXLLoraForImageInpainting(_ControlNetXLLoraForImageInpainting):
 
     @classmethod
     @add_default_section_for_init(
-        "core/model/peft/lora/diffusers/inpainting/controlnet_xl"
+        "core/model/diffusers/peft/lora/inpainting/controlnet_xl"
     )
     def from_core_configure(cls, config, **kwargs):
         config.set_default_section(
-            "core/model/peft/lora/diffusers/inpainting/controlnet_xl"
+            "core/model/diffusers/peft/lora/inpainting/controlnet_xl"
         )
         pretrained_name = config.getoption("pretrained_name", "stable-xl-base")
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
@@ -662,7 +662,7 @@ class ControlNetXLLoraForImageInpainting(_ControlNetXLLoraForImageInpainting):
         raise NotImplementedError
 
     @add_default_section_for_function(
-        "core/model/peft/lora/diffusers/inpainting/controlnet_xl"
+        "core/model/diffusers/peft/lora/inpainting/controlnet_xl"
     )
     @autocast()
     def generate(

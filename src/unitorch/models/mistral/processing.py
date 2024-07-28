@@ -21,7 +21,7 @@ from unitorch.models import (
 class MistralProcessor(HfTextClassificationProcessor, HfTextGenerationProcessor):
     def __init__(
         self,
-        vocab_file: str,
+        vocab_path: str,
         max_seq_length: Optional[int] = 128,
         max_gen_seq_length: Optional[int] = 48,
     ):
@@ -33,7 +33,7 @@ class MistralProcessor(HfTextClassificationProcessor, HfTextGenerationProcessor)
             max_seq_length (int, optional): Maximum sequence length for text classification. Defaults to 128.
             max_gen_seq_length (int, optional): Maximum sequence length for text generation. Defaults to 48.
         """
-        tokenizer = LlamaTokenizer(vocab_file=vocab_file)
+        tokenizer = LlamaTokenizer(vocab_file=vocab_path)
         tokenizer.cls_token = tokenizer.bos_token
         tokenizer.sep_token = tokenizer.eos_token
         tokenizer.pad_token = tokenizer.unk_token
@@ -126,6 +126,46 @@ class MistralProcessor(HfTextClassificationProcessor, HfTextGenerationProcessor)
             input_ids=torch.tensor(input_ids, dtype=torch.long),
         )
 
+    def _instrution_tokenize(self, instruction, input, max_seq_length):
+        tokens1 = self.tokenizer.tokenize(instruction.format(""))
+        tokens2 = self.tokenizer.tokenize(str(input))[
+            : max_seq_length - len(tokens1) - 2
+        ]
+        input2 = self.tokenizer.decode(self.tokenizer.convert_tokens_to_ids(tokens2))
+        input = instruction.format(input2)
+        return self.tokenizer.tokenize(input)[:max_seq_length]
+
+    def instruction_generation_inputs(
+        self,
+        instruction: str,
+        input: str,
+        max_seq_length: Optional[int] = None,
+    ) -> GenericOutputs:
+        """
+        Preprocesses text as generation inputs.
+
+        Args:
+            text (str): The input text for generation.
+            max_seq_length (Optional[int]): The maximum sequence length. Defaults to None.
+
+        Returns:
+            GenericOutputs: The processed input IDs tensor.
+        """
+        max_seq_length = pop_value(
+            max_seq_length,
+            self.max_seq_length,
+        )
+        tokens = self._instrution_tokenize(instruction, input, max_seq_length)
+        padding = [self.pad_token] * (max_seq_length - len(tokens))
+        tokens = padding + tokens
+        input_ids = self.tokenizer.convert_tokens_to_ids(tokens)
+
+        assert len(input_ids) == max_seq_length
+        assert len(input_ids) == max_seq_length
+        return GenericOutputs(
+            input_ids=torch.tensor(input_ids, dtype=torch.long),
+        )
+
     def generation_labels(
         self,
         text: str,
@@ -197,6 +237,54 @@ class MistralProcessor(HfTextClassificationProcessor, HfTextGenerationProcessor)
         tokens_pair = self.tokenizer.tokenize(str(text_pair))[
             : max_gen_seq_length - 1
         ] + [self.eos_token]
+        padding_a = [self.pad_token] * (max_seq_length - len(tokens))
+        padding_b = [self.pad_token] * (max_gen_seq_length - len(tokens_pair))
+        attention_mask = (
+            [0] * len(padding_a)
+            + [1] * (len(tokens) + len(tokens_pair))
+            + [0] * len(padding_b)
+        )
+        _tokens = padding_a + tokens + tokens_pair + padding_b
+        input_ids = self.tokenizer.convert_tokens_to_ids(_tokens)
+
+        tokens_label = tokens_pair + [self.pad_token] * (
+            max_gen_seq_length - len(tokens_pair) + 1
+        )
+        input_ids_label = self.tokenizer.convert_tokens_to_ids(tokens_label)
+        input_ids_label = [0] * (max_seq_length - 1) + input_ids_label
+        attention_mask_label = [1] * len(tokens_pair) + [0] * (
+            max_gen_seq_length - len(tokens_pair) + 1
+        )
+        attention_mask_label = [0] * (max_seq_length - 1) + attention_mask_label
+
+        return GenericOutputs(
+            input_ids=torch.tensor(input_ids, dtype=torch.long),
+            attention_mask=torch.tensor(attention_mask, dtype=torch.long),
+            input_ids_label=torch.tensor(input_ids_label, dtype=torch.long),
+            attention_mask_label=torch.tensor(attention_mask_label, dtype=torch.long),
+        )
+
+    def instruction_generation(
+        self,
+        instruction: str,
+        input: str,
+        output: str,
+        max_seq_length: Optional[int] = None,
+        max_gen_seq_length: Optional[int] = None,
+    ):
+        max_seq_length = pop_value(
+            max_seq_length,
+            self.max_seq_length,
+        )
+        max_gen_seq_length = pop_value(
+            max_gen_seq_length,
+            self.max_gen_seq_length,
+        )
+
+        tokens = self._instrution_tokenize(instruction, input, max_seq_length)
+        tokens_pair = self.tokenizer.tokenize(str(output))[: max_gen_seq_length - 1] + [
+            self.eos_token
+        ]
         padding_a = [self.pad_token] * (max_seq_length - len(tokens))
         padding_b = [self.pad_token] * (max_gen_seq_length - len(tokens_pair))
         attention_mask = (

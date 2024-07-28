@@ -109,149 +109,21 @@ class Stable3Image2ImageWebUI(SimpleWebUI):
             freeu_layout_group.layout,
         )
 
-        ## extensions
-        # controlnet_layout_group = create_controlnet_layout(
-        #     self.supported_controlnet_names,
-        #     self.supported_controlnet_process_names,
-        #     num_controlnets=5,
-        # )
-        # controlnets = controlnet_layout_group.controlnets
-        # controlnet_layout = controlnet_layout_group.layout
-        # controlnet0, controlnet1, controlnet2, controlnet3, controlnet4 = controlnets
-        # (
-        #     controlnet0_input_image,
-        #     controlnet0_output_image,
-        #     controlnet0_checkpoint,
-        #     controlnet0_guidance_scale,
-        #     controlnet0_process,
-        # ) = (
-        #     controlnet0.input_image,
-        #     controlnet0.output_image,
-        #     controlnet0.checkpoint,
-        #     controlnet0.guidance_scale,
-        #     controlnet0.process,
-        # )
-        # (
-        #     controlnet1_input_image,
-        #     controlnet1_output_image,
-        #     controlnet1_checkpoint,
-        #     controlnet1_guidance_scale,
-        #     controlnet1_process,
-        # ) = (
-        #     controlnet1.input_image,
-        #     controlnet1.output_image,
-        #     controlnet1.checkpoint,
-        #     controlnet1.guidance_scale,
-        #     controlnet1.process,
-        # )
-        # (
-        #     controlnet2_input_image,
-        #     controlnet2_output_image,
-        #     controlnet2_checkpoint,
-        #     controlnet2_guidance_scale,
-        #     controlnet2_process,
-        # ) = (
-        #     controlnet2.input_image,
-        #     controlnet2.output_image,
-        #     controlnet2.checkpoint,
-        #     controlnet2.guidance_scale,
-        #     controlnet2.process,
-        # )
-        # (
-        #     controlnet3_input_image,
-        #     controlnet3_output_image,
-        #     controlnet3_checkpoint,
-        #     controlnet3_guidance_scale,
-        #     controlnet3_process,
-        # ) = (
-        #     controlnet3.input_image,
-        #     controlnet3.output_image,
-        #     controlnet3.checkpoint,
-        #     controlnet3.guidance_scale,
-        #     controlnet3.process,
-        # )
-        # (
-        #     controlnet4_input_image,
-        #     controlnet4_output_image,
-        #     controlnet4_checkpoint,
-        #     controlnet4_guidance_scale,
-        #     controlnet4_process,
-        # ) = (
-        #     controlnet4.input_image,
-        #     controlnet4.output_image,
-        #     controlnet4.checkpoint,
-        #     controlnet4.guidance_scale,
-        #     controlnet4.process,
-        # )
-        lora_layout_group = create_lora_layout(self.supported_lora_names, num_loras=5)
+        self.num_loras = 5
+        lora_layout_group = create_lora_layout(
+            self.supported_lora_names, num_loras=self.num_loras
+        )
         loras = lora_layout_group.loras
         lora_layout = lora_layout_group.layout
-        lora0, lora1, lora2, lora3, lora4 = loras
-        (
-            lora0_checkpoint,
-            lora0_weight,
-            lora0_alpha,
-            lora0_url,
-            lora0_file,
-        ) = (
-            lora0.checkpoint,
-            lora0.weight,
-            lora0.alpha,
-            lora0.url,
-            lora0.file,
-        )
-        (
-            lora1_checkpoint,
-            lora1_weight,
-            lora1_alpha,
-            lora1_url,
-            lora1_file,
-        ) = (
-            lora1.checkpoint,
-            lora1.weight,
-            lora1.alpha,
-            lora1.url,
-            lora1.file,
-        )
-        (
-            lora2_checkpoint,
-            lora2_weight,
-            lora2_alpha,
-            lora2_url,
-            lora2_file,
-        ) = (
-            lora2.checkpoint,
-            lora2.weight,
-            lora2.alpha,
-            lora2.url,
-            lora2.file,
-        )
-        (
-            lora3_checkpoint,
-            lora3_weight,
-            lora3_alpha,
-            lora3_url,
-            lora3_file,
-        ) = (
-            lora3.checkpoint,
-            lora3.weight,
-            lora3.alpha,
-            lora3.url,
-            lora3.file,
-        )
-        (
-            lora4_checkpoint,
-            lora4_weight,
-            lora4_alpha,
-            lora4_url,
-            lora4_file,
-        ) = (
-            lora4.checkpoint,
-            lora4.weight,
-            lora4.alpha,
-            lora4.url,
-            lora4.file,
-        )
+        lora_params = []
+        for lora in loras:
+            lora_params += [
+                lora.checkpoint,
+                lora.weight,
+                lora.alpha,
+                lora.url,
+                lora.file,
+            ]
 
         generate = create_element("button", "Generate", variant="primary", scale=2)
         output_image = create_element("image", "Output Image")
@@ -290,57 +162,6 @@ class Stable3Image2ImageWebUI(SimpleWebUI):
         start.click(fn=self.start, inputs=[name], outputs=[status])
         stop.click(fn=self.stop, outputs=[status])
 
-        # controlnet0_input_image.upload(
-        #     fn=self.processing_controlnet_inputs,
-        #     inputs=[controlnet0_input_image, controlnet0_process],
-        #     outputs=[controlnet0_output_image],
-        # )
-        # controlnet0_process.change(
-        #     fn=self.processing_controlnet_inputs,
-        #     inputs=[controlnet0_input_image, controlnet0_process],
-        #     outputs=[controlnet0_output_image],
-        # )
-        # controlnet1_input_image.upload(
-        #     fn=self.processing_controlnet_inputs,
-        #     inputs=[controlnet1_input_image, controlnet1_process],
-        #     outputs=[controlnet1_output_image],
-        # )
-        # controlnet1_process.change(
-        #     fn=self.processing_controlnet_inputs,
-        #     inputs=[controlnet1_input_image, controlnet1_process],
-        #     outputs=[controlnet1_output_image],
-        # )
-        # controlnet2_input_image.upload(
-        #     fn=self.processing_controlnet_inputs,
-        #     inputs=[controlnet2_input_image, controlnet2_process],
-        #     outputs=[controlnet2_output_image],
-        # )
-        # controlnet2_process.change(
-        #     fn=self.processing_controlnet_inputs,
-        #     inputs=[controlnet2_input_image, controlnet2_process],
-        #     outputs=[controlnet2_output_image],
-        # )
-        # controlnet3_input_image.upload(
-        #     fn=self.processing_controlnet_inputs,
-        #     inputs=[controlnet3_input_image, controlnet3_process],
-        #     outputs=[controlnet3_output_image],
-        # )
-        # controlnet3_process.change(
-        #     fn=self.processing_controlnet_inputs,
-        #     inputs=[controlnet3_input_image, controlnet3_process],
-        #     outputs=[controlnet3_output_image],
-        # )
-        # controlnet4_input_image.upload(
-        #     fn=self.processing_controlnet_inputs,
-        #     inputs=[controlnet4_input_image, controlnet4_process],
-        #     outputs=[controlnet4_output_image],
-        # )
-        # controlnet4_process.change(
-        #     fn=self.processing_controlnet_inputs,
-        #     inputs=[controlnet4_input_image, controlnet4_process],
-        #     outputs=[controlnet4_output_image],
-        # )
-
         generate.click(
             fn=self.serve,
             inputs=[
@@ -356,46 +177,7 @@ class Stable3Image2ImageWebUI(SimpleWebUI):
                 s2,
                 b1,
                 b2,
-                # controlnet0_checkpoint,
-                # controlnet0_output_image,
-                # controlnet0_guidance_scale,
-                # controlnet1_checkpoint,
-                # controlnet1_output_image,
-                # controlnet1_guidance_scale,
-                # controlnet2_checkpoint,
-                # controlnet2_output_image,
-                # controlnet2_guidance_scale,
-                # controlnet3_checkpoint,
-                # controlnet3_output_image,
-                # controlnet3_guidance_scale,
-                # controlnet4_checkpoint,
-                # controlnet4_output_image,
-                # controlnet4_guidance_scale,
-                lora0_checkpoint,
-                lora0_weight,
-                lora0_alpha,
-                lora0_url,
-                lora0_file,
-                lora1_checkpoint,
-                lora1_weight,
-                lora1_alpha,
-                lora1_url,
-                lora1_file,
-                lora2_checkpoint,
-                lora2_weight,
-                lora2_alpha,
-                lora2_url,
-                lora2_file,
-                lora3_checkpoint,
-                lora3_weight,
-                lora3_alpha,
-                lora3_url,
-                lora3_file,
-                lora4_checkpoint,
-                lora4_weight,
-                lora4_alpha,
-                lora4_url,
-                lora4_file,
+                *lora_params,
             ],
             outputs=[output_image],
         )
@@ -438,58 +220,25 @@ class Stable3Image2ImageWebUI(SimpleWebUI):
         self,
         text: str,
         image: Image.Image,
-        negative_text: Optional[str] = None,
-        guidance_scale: Optional[float] = 7.5,
-        strength: Optional[float] = 0.8,
-        num_timesteps: Optional[int] = 25,
-        seed: Optional[int] = 1123,
-        scheduler: Optional[str] = None,
-        freeu_s1: Optional[float] = 0.9,
-        freeu_s2: Optional[float] = 0.2,
-        freeu_b1: Optional[float] = 1.2,
-        freeu_b2: Optional[float] = 1.4,
-        # controlnet0_checkpoint: Optional[str] = None,
-        # controlnet0_image: Optional[Image.Image] = None,
-        # controlnet0_guidance_scale: Optional[float] = 0.8,
-        # controlnet1_checkpoint: Optional[str] = None,
-        # controlnet1_image: Optional[Image.Image] = None,
-        # controlnet1_guidance_scale: Optional[float] = 0.8,
-        # controlnet2_checkpoint: Optional[str] = None,
-        # controlnet2_image: Optional[Image.Image] = None,
-        # controlnet2_guidance_scale: Optional[float] = 0.8,
-        # controlnet3_checkpoint: Optional[str] = None,
-        # controlnet3_image: Optional[Image.Image] = None,
-        # controlnet3_guidance_scale: Optional[float] = 0.8,
-        # controlnet4_checkpoint: Optional[str] = None,
-        # controlnet4_image: Optional[Image.Image] = None,
-        # controlnet4_guidance_scale: Optional[float] = 0.8,
-        lora0_checkpoint: Optional[str] = None,
-        lora0_weight: Optional[float] = 1.0,
-        lora0_alpha: Optional[float] = 32,
-        lora0_url: Optional[str] = None,
-        lora0_file: Optional[str] = None,
-        lora1_checkpoint: Optional[str] = None,
-        lora1_weight: Optional[float] = 1.0,
-        lora1_alpha: Optional[float] = 32,
-        lora1_url: Optional[str] = None,
-        lora1_file: Optional[str] = None,
-        lora2_checkpoint: Optional[str] = None,
-        lora2_weight: Optional[float] = 1.0,
-        lora2_alpha: Optional[float] = 32,
-        lora2_url: Optional[str] = None,
-        lora2_file: Optional[str] = None,
-        lora3_checkpoint: Optional[str] = None,
-        lora3_weight: Optional[float] = 1.0,
-        lora3_alpha: Optional[float] = 32,
-        lora3_url: Optional[str] = None,
-        lora3_file: Optional[str] = None,
-        lora4_checkpoint: Optional[str] = None,
-        lora4_weight: Optional[float] = 1.0,
-        lora4_alpha: Optional[float] = 32,
-        lora4_url: Optional[str] = None,
-        lora4_file: Optional[str] = None,
+        negative_text: str,
+        guidance_scale: float,
+        strength: float,
+        num_timesteps: int,
+        seed: int,
+        scheduler: str,
+        freeu_s1: float,
+        freeu_s2: float,
+        freeu_b1: float,
+        freeu_b2: float,
+        *params,
     ):
         assert self._pipe is not None
+        lora_params = params
+        lora_checkpoints = lora_params[0::5]
+        lora_weights = lora_params[1::5]
+        lora_alphas = lora_params[2::5]
+        lora_urls = lora_params[3::5]
+        lora_files = lora_params[4::5]
         image = self._pipe(
             text,
             image,
@@ -500,61 +249,10 @@ class Stable3Image2ImageWebUI(SimpleWebUI):
             seed=seed,
             scheduler=scheduler,
             freeu_params=(freeu_s1, freeu_s2, freeu_b1, freeu_b2),
-            # controlnet_checkpoints=(
-            #     controlnet0_checkpoint,
-            #     controlnet1_checkpoint,
-            #     controlnet2_checkpoint,
-            #     controlnet3_checkpoint,
-            #     controlnet4_checkpoint,
-            # ),
-            # controlnet_images=(
-            #     controlnet0_image,
-            #     controlnet1_image,
-            #     controlnet2_image,
-            #     controlnet3_image,
-            #     controlnet4_image,
-            # ),
-            # controlnet_guidance_scales=(
-            #     controlnet0_guidance_scale,
-            #     controlnet1_guidance_scale,
-            #     controlnet2_guidance_scale,
-            #     controlnet3_guidance_scale,
-            #     controlnet4_guidance_scale,
-            # ),
-            lora_checkpoints=(
-                lora0_checkpoint,
-                lora1_checkpoint,
-                lora2_checkpoint,
-                lora3_checkpoint,
-                lora4_checkpoint,
-            ),
-            lora_weights=(
-                lora0_weight,
-                lora1_weight,
-                lora2_weight,
-                lora3_weight,
-                lora4_weight,
-            ),
-            lora_alphas=(
-                lora0_alpha,
-                lora1_alpha,
-                lora2_alpha,
-                lora3_alpha,
-                lora4_alpha,
-            ),
-            lora_urls=(
-                lora0_url,
-                lora1_url,
-                lora2_url,
-                lora3_url,
-                lora4_url,
-            ),
-            lora_files=(
-                lora0_file,
-                lora1_file,
-                lora2_file,
-                lora3_file,
-                lora4_file,
-            ),
+            lora_checkpoints=lora_checkpoints,
+            lora_weights=lora_weights,
+            lora_alphas=lora_alphas,
+            lora_urls=lora_urls,
+            lora_files=lora_files,
         )
         return image

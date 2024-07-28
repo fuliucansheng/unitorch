@@ -274,7 +274,9 @@ class PeftWeightLoaderMixin(nn.Module):
                 scale = alpha / lora_B.shape[1]
                 key = key.replace("lora_A.default.", "")
                 if key in state_dict:
-                    state_dict[key] += scale * weight * lora_B @ lora_A
+                    state_dict[key] += (
+                        scale * weight * lora_B.float() @ lora_A.float()
+                    ).to(state_dict[key].dtype)
                 else:
                     logging.warning(f"Key {key} not found in the model state_dict.")
 

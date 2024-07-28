@@ -27,7 +27,7 @@ from unitorch.cli.models.diffusers import (
 
 
 @register_model(
-    "core/model/peft/lora/diffusers/text2image/stable_xl", diffusion_model_decorator
+    "core/model/diffusers/peft/lora/text2image/stable_xl", diffusion_model_decorator
 )
 class StableXLLoraForText2ImageGeneration(_StableXLLoraForText2ImageGeneration):
     def __init__(
@@ -65,10 +65,10 @@ class StableXLLoraForText2ImageGeneration(_StableXLLoraForText2ImageGeneration):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/peft/lora/diffusers/text2image/stable_xl")
+    @add_default_section_for_init("core/model/diffusers/peft/lora/text2image/stable_xl")
     def from_core_configure(cls, config, **kwargs):
         config.set_default_section(
-            "core/model/peft/lora/diffusers/text2image/stable_xl"
+            "core/model/diffusers/peft/lora/text2image/stable_xl"
         )
         pretrained_name = config.getoption("pretrained_name", "stable-xl-base")
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
@@ -204,7 +204,7 @@ class StableXLLoraForText2ImageGeneration(_StableXLLoraForText2ImageGeneration):
         return LossOutputs(loss=loss)
 
     @add_default_section_for_function(
-        "core/model/peft/lora/diffusers/text2image/stable_xl"
+        "core/model/diffusers/peft/lora/text2image/stable_xl"
     )
     @autocast()
     def generate(
@@ -239,7 +239,7 @@ class StableXLLoraForText2ImageGeneration(_StableXLLoraForText2ImageGeneration):
 
 
 @register_model(
-    "core/model/peft/lora/diffusers/image2image/stable_xl", diffusion_model_decorator
+    "core/model/diffusers/peft/lora/image2image/stable_xl", diffusion_model_decorator
 )
 class StableXLLoraForImage2ImageGeneration(_StableXLLoraForImage2ImageGeneration):
     def __init__(
@@ -276,11 +276,11 @@ class StableXLLoraForImage2ImageGeneration(_StableXLLoraForImage2ImageGeneration
 
     @classmethod
     @add_default_section_for_init(
-        "core/model/peft/lora/diffusers/image2image/stable_xl"
+        "core/model/diffusers/peft/lora/image2image/stable_xl"
     )
     def from_core_configure(cls, config, **kwargs):
         config.set_default_section(
-            "core/model/peft/lora/diffusers/image2image/stable_xl"
+            "core/model/diffusers/peft/lora/image2image/stable_xl"
         )
         pretrained_name = config.getoption("pretrained_name", "stable-xl-base")
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
@@ -400,7 +400,7 @@ class StableXLLoraForImage2ImageGeneration(_StableXLLoraForImage2ImageGeneration
         raise NotImplementedError
 
     @add_default_section_for_function(
-        "core/model/peft/lora/diffusers/image2image/stable_xl"
+        "core/model/diffusers/peft/lora/image2image/stable_xl"
     )
     @autocast()
     def generate(
@@ -435,7 +435,7 @@ class StableXLLoraForImage2ImageGeneration(_StableXLLoraForImage2ImageGeneration
 
 
 @register_model(
-    "core/model/peft/lora/diffusers/inpainting/stable_xl", diffusion_model_decorator
+    "core/model/diffusers/peft/lora/inpainting/stable_xl", diffusion_model_decorator
 )
 class StableXLLoraForImageInpainting(_StableXLLoraForImageInpainting):
     def __init__(
@@ -471,10 +471,10 @@ class StableXLLoraForImageInpainting(_StableXLLoraForImageInpainting):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/peft/lora/diffusers/inpainting/stable_xl")
+    @add_default_section_for_init("core/model/diffusers/peft/lora/inpainting/stable_xl")
     def from_core_configure(cls, config, **kwargs):
         config.set_default_section(
-            "core/model/peft/lora/diffusers/inpainting/stable_xl"
+            "core/model/diffusers/peft/lora/inpainting/stable_xl"
         )
         pretrained_name = config.getoption("pretrained_name", "stable-xl-base")
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
@@ -588,7 +588,7 @@ class StableXLLoraForImageInpainting(_StableXLLoraForImageInpainting):
         raise NotImplementedError
 
     @add_default_section_for_function(
-        "core/model/peft/lora/diffusers/inpainting/stable_xl"
+        "core/model/diffusers/peft/lora/inpainting/stable_xl"
     )
     @autocast()
     def generate(

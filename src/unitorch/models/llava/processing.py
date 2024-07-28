@@ -27,7 +27,7 @@ class LlavaMistralClipProcessor(
 ):
     def __init__(
         self,
-        vocab_file: str,
+        vocab_path: str,
         vision_config_path: Optional[str] = None,
         max_seq_length: Optional[int] = 128,
         max_gen_seq_length: Optional[int] = 48,
@@ -40,7 +40,7 @@ class LlavaMistralClipProcessor(
             max_seq_length (int, optional): Maximum sequence length for text classification. Defaults to 128.
             max_gen_seq_length (int, optional): Maximum sequence length for text generation. Defaults to 48.
         """
-        tokenizer = LlamaTokenizer(vocab_file=vocab_file)
+        tokenizer = LlamaTokenizer(vocab_file=vocab_path)
         tokenizer.add_tokens("<image>", special_tokens=True)
         tokenizer.cls_token = tokenizer.bos_token
         tokenizer.sep_token = tokenizer.eos_token
