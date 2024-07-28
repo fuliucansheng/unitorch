@@ -137,6 +137,7 @@ class MistralLoraForClassification(_MistralLoraForClassification):
 
         return inst
 
+    @autocast()
     def forward(
         self,
         input_ids: torch.Tensor,
@@ -270,6 +271,7 @@ class MistralLoraForGeneration(_MistralLoraForGeneration):
 
         return inst
 
+    @autocast()
     def forward(
         self,
         input_ids: torch.Tensor,
@@ -296,6 +298,7 @@ class MistralLoraForGeneration(_MistralLoraForGeneration):
 
     @add_default_section_for_function("core/model/generation/peft/lora/mistral")
     @torch.no_grad()
+    @autocast()
     def generate(
         self,
         input_ids: torch.Tensor,

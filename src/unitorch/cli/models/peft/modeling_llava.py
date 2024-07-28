@@ -38,6 +38,8 @@ class LlavaMistralClipLoraForClassification(_LlavaMistralClipLoraForClassificati
         fan_in_fan_out: Optional[bool] = True,
         target_modules: Optional[Union[List[str], str]] = ["q_proj", "v_proj"],
         num_classes: Optional[int] = 1,
+        freeze_multi_modal_projector: Optional[bool] = True,
+        freeze_classifer: Optional[bool] = True,
         gradient_checkpointing: Optional[bool] = False,
     ):
         """
@@ -63,6 +65,8 @@ class LlavaMistralClipLoraForClassification(_LlavaMistralClipLoraForClassificati
             fan_in_fan_out=fan_in_fan_out,
             target_modules=target_modules,
             num_classes=num_classes,
+            freeze_multi_modal_projector=freeze_multi_modal_projector,
+            freeze_classifer=freeze_classifer,
             gradient_checkpointing=gradient_checkpointing,
         )
 
@@ -102,7 +106,10 @@ class LlavaMistralClipLoraForClassification(_LlavaMistralClipLoraForClassificati
         lora_dropout = config.getoption("lora_dropout", 0.05)
         fan_in_fan_out = config.getoption("fan_in_fan_out", True)
         target_modules = config.getoption("target_modules", ["q_proj", "v_proj"])
-
+        freeze_multi_modal_projector = config.getoption(
+            "freeze_multi_modal_projector", True
+        )
+        freeze_classifer = config.getoption("freeze_classifer", True)
         gradient_checkpointing = config.getoption("gradient_checkpointing", False)
         num_classes = config.getoption("num_classes", 1)
 
@@ -116,6 +123,8 @@ class LlavaMistralClipLoraForClassification(_LlavaMistralClipLoraForClassificati
             fan_in_fan_out=fan_in_fan_out,
             target_modules=target_modules,
             num_classes=num_classes,
+            freeze_multi_modal_projector=freeze_multi_modal_projector,
+            freeze_classifer=freeze_classifer,
             gradient_checkpointing=gradient_checkpointing,
         )
 
@@ -145,6 +154,7 @@ class LlavaMistralClipLoraForClassification(_LlavaMistralClipLoraForClassificati
 
         return inst
 
+    @autocast()
     def forward(
         self,
         input_ids: torch.Tensor,
@@ -187,6 +197,7 @@ class LlavaMistralClipLoraForGeneration(_LlavaMistralClipLoraForGeneration):
         lora_dropout: Optional[float] = 0.05,
         fan_in_fan_out: Optional[bool] = True,
         target_modules: Optional[Union[List[str], str]] = ["q_proj", "v_proj"],
+        freeze_multi_modal_projector: Optional[bool] = True,
         gradient_checkpointing: Optional[bool] = False,
     ):
         """
@@ -210,6 +221,7 @@ class LlavaMistralClipLoraForGeneration(_LlavaMistralClipLoraForGeneration):
             lora_dropout=lora_dropout,
             fan_in_fan_out=fan_in_fan_out,
             target_modules=target_modules,
+            freeze_multi_modal_projector=freeze_multi_modal_projector,
             gradient_checkpointing=gradient_checkpointing,
         )
 
@@ -244,7 +256,9 @@ class LlavaMistralClipLoraForGeneration(_LlavaMistralClipLoraForGeneration):
         lora_dropout = config.getoption("lora_dropout", 0.05)
         fan_in_fan_out = config.getoption("fan_in_fan_out", True)
         target_modules = config.getoption("target_modules", ["q_proj", "v_proj"])
-
+        freeze_multi_modal_projector = config.getoption(
+            "freeze_multi_modal_projector", True
+        )
         gradient_checkpointing = config.getoption("gradient_checkpointing", False)
 
         inst = cls(
@@ -256,6 +270,7 @@ class LlavaMistralClipLoraForGeneration(_LlavaMistralClipLoraForGeneration):
             lora_dropout=lora_dropout,
             fan_in_fan_out=fan_in_fan_out,
             target_modules=target_modules,
+            freeze_multi_modal_projector=freeze_multi_modal_projector,
             gradient_checkpointing=gradient_checkpointing,
         )
 
@@ -285,6 +300,7 @@ class LlavaMistralClipLoraForGeneration(_LlavaMistralClipLoraForGeneration):
 
         return inst
 
+    @autocast()
     def forward(
         self,
         input_ids: torch.Tensor,
@@ -313,6 +329,7 @@ class LlavaMistralClipLoraForGeneration(_LlavaMistralClipLoraForGeneration):
         "core/model/generation/peft/lora/llava/mistral_clip"
     )
     @torch.no_grad()
+    @autocast()
     def generate(
         self,
         input_ids: torch.Tensor,

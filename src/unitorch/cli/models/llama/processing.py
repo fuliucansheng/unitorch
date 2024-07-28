@@ -26,6 +26,7 @@ class LlamaProcessor(_LlamaProcessor):
     def __init__(
         self,
         vocab_path,
+        tokenizer_file,
         max_seq_length: Optional[int] = 128,
         max_gen_seq_length: Optional[int] = 128,
     ):
@@ -38,7 +39,8 @@ class LlamaProcessor(_LlamaProcessor):
             max_gen_seq_length (int, optional): The maximum generated sequence length. Defaults to 128.
         """
         super().__init__(
-            vocab_file=vocab_path,
+            vocab_path=vocab_path,
+            tokenizer_file=tokenizer_file,
             max_seq_length=max_seq_length,
             max_gen_seq_length=max_gen_seq_length,
         )
@@ -62,11 +64,23 @@ class LlamaProcessor(_LlamaProcessor):
         vocab_path = pop_value(
             vocab_path,
             nested_dict_value(pretrained_llama_infos, pretrained_name, "vocab"),
+            check_none=False,
         )
-        vocab_path = cached_path(vocab_path)
+        vocab_path = cached_path(vocab_path) if vocab_path is not None else None
+
+        tokenizer_file = config.getoption("tokenizer_file", None)
+        tokenizer_file = pop_value(
+            tokenizer_file,
+            nested_dict_value(pretrained_llama_infos, pretrained_name, "tokenizer"),
+            check_none=False,
+        )
+        tokenizer_file = (
+            cached_path(tokenizer_file) if tokenizer_file is not None else None
+        )
 
         return {
             "vocab_path": vocab_path,
+            "tokenizer_file": tokenizer_file,
         }
 
     @register_process("core/process/llama/classification")
@@ -167,6 +181,66 @@ class LlamaProcessor(_LlamaProcessor):
         outputs = super().generation(
             text=text,
             text_pair=text_pair,
+            max_seq_length=max_seq_length,
+            max_gen_seq_length=max_gen_seq_length,
+        )
+        return TensorsInputs(
+            input_ids=outputs.input_ids,
+            attention_mask=outputs.attention_mask,
+        ), GenerationTargets(
+            refs=outputs.input_ids_label,
+            masks=outputs.attention_mask_label,
+        )
+
+    @register_process("core/process/llama/instruction/generation/inputs")
+    def _instruction_generation_inputs(
+        self,
+        instruction: str,
+        input: str,
+        max_seq_length: Optional[int] = None,
+    ):
+        """
+        Preprocess the input text for generation tasks.
+
+        Args:
+            text (str): The input text.
+            max_seq_length (int, optional): The maximum sequence length. Defaults to None.
+
+        Returns:
+            TensorsInputs: The processed input tensors.
+        """
+        outputs = super().instruction_generation_inputs(
+            instruction=instruction,
+            input=input,
+            max_seq_length=max_seq_length,
+        )
+        return TensorsInputs(input_ids=outputs.input_ids)
+
+    @register_process("core/process/llama/instruction/generation")
+    def _instruction_generation(
+        self,
+        instruction: str,
+        input: str,
+        output: Optional[str] = None,
+        max_seq_length: Optional[int] = None,
+        max_gen_seq_length: Optional[int] = None,
+    ):
+        """
+        Preprocess the input and target texts for generation tasks.
+
+        Args:
+            input (str): The input text.
+            output (str, optional): The paired input text. Defaults to None.
+            max_seq_length (int, optional): The maximum sequence length. Defaults to None.
+            max_gen_seq_length (int, optional): The maximum generation sequence length. Defaults to None.
+
+        Returns:
+            Tuple[TensorsInputs, GenerationTargets]: The processed input tensors and generation targets.
+        """
+        outputs = super().instruction_generation(
+            instruction=instruction,
+            input=input,
+            output=output,
             max_seq_length=max_seq_length,
             max_gen_seq_length=max_gen_seq_length,
         )

@@ -97,35 +97,6 @@ class BloomProcessor(HfTextClassificationProcessor, HfTextGenerationProcessor):
             attention_mask=torch.tensor(attention_mask, dtype=torch.long),
         )
 
-    def prompt(
-        self,
-        text: str,
-        max_seq_length: Optional[int] = None,
-    ) -> GenericOutputs:
-        """
-        Preprocesses text as a prompt for text generation.
-
-        Args:
-            text (str): The input text prompt.
-            max_seq_length (Optional[int]): The maximum sequence length. Defaults to None.
-
-        Returns:
-            GenericOutputs: The processed input IDs tensor.
-        """
-        max_seq_length = pop_value(
-            max_seq_length,
-            self.max_seq_length,
-        )
-        tokens = self.tokenizer.tokenize(str(text))[-max_seq_length:]
-        padding = [self.pad_token] * (max_seq_length - len(tokens))
-        tokens = padding + tokens
-        input_ids = self.tokenizer.convert_tokens_to_ids(tokens)
-
-        assert len(input_ids) == max_seq_length
-        return GenericOutputs(
-            input_ids=torch.tensor(input_ids, dtype=torch.long),
-        )
-
     def generation_inputs(
         self,
         text: str,
@@ -161,7 +132,7 @@ class BloomProcessor(HfTextClassificationProcessor, HfTextGenerationProcessor):
             : max_seq_length - len(tokens1) - 2
         ]
         input2 = self.tokenizer.decode(self.tokenizer.convert_tokens_to_ids(tokens2))
-        input = instruction.format(input)
+        input = instruction.format(input2)
         return self.tokenizer.tokenize(input)[:max_seq_length]
 
     def instruction_generation_inputs(

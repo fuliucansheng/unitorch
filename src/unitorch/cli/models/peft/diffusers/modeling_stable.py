@@ -28,7 +28,7 @@ from unitorch.cli.models.diffusers import (
 
 
 @register_model(
-    "core/model/peft/lora/diffusers/text2image/stable", diffusion_model_decorator
+    "core/model/diffusers/peft/lora/text2image/stable", diffusion_model_decorator
 )
 class StableLoraForText2ImageGeneration(_StableLoraForText2ImageGeneration):
     def __init__(
@@ -64,9 +64,9 @@ class StableLoraForText2ImageGeneration(_StableLoraForText2ImageGeneration):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/peft/lora/diffusers/text2image/stable")
+    @add_default_section_for_init("core/model/diffusers/peft/lora/text2image/stable")
     def from_core_configure(cls, config, **kwargs):
-        config.set_default_section("core/model/peft/diffusers/text2image/stable")
+        config.set_default_section("core/model/diffusers/peft/lora/text2image/stable")
         pretrained_name = config.getoption("pretrained_name", "stable-v1.5")
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
 
@@ -176,7 +176,7 @@ class StableLoraForText2ImageGeneration(_StableLoraForText2ImageGeneration):
         return LossOutputs(loss=loss)
 
     @add_default_section_for_function(
-        "core/model/peft/lora/diffusers/text2image/stable"
+        "core/model/diffusers/peft/lora/text2image/stable"
     )
     @autocast()
     def generate(
@@ -203,7 +203,7 @@ class StableLoraForText2ImageGeneration(_StableLoraForText2ImageGeneration):
 
 
 @register_model(
-    "core/model/peft/lora/diffusers/image2image/stable", diffusion_model_decorator
+    "core/model/diffusers/peft/lora/image2image/stable", diffusion_model_decorator
 )
 class StableLoraForImage2ImageGeneration(_StableLoraForImage2ImageGeneration):
     def __init__(
@@ -237,9 +237,9 @@ class StableLoraForImage2ImageGeneration(_StableLoraForImage2ImageGeneration):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/peft/lora/diffusers/image2image/stable")
+    @add_default_section_for_init("core/model/diffusers/peft/lora/image2image/stable")
     def from_core_configure(cls, config, **kwargs):
-        config.set_default_section("core/model/peft/lora/diffusers/image2image/stable")
+        config.set_default_section("core/model/diffusers/peft/lora/image2image/stable")
         pretrained_name = config.getoption(
             "pretrained_name", "stable-v1.5-nitrosocke-ghibli"
         )
@@ -341,7 +341,7 @@ class StableLoraForImage2ImageGeneration(_StableLoraForImage2ImageGeneration):
         raise NotImplementedError
 
     @add_default_section_for_function(
-        "core/model/peft/lora/diffusers/image2image/stable"
+        "core/model/diffusers/peft/lora/image2image/stable"
     )
     @autocast()
     def generate(
@@ -368,7 +368,7 @@ class StableLoraForImage2ImageGeneration(_StableLoraForImage2ImageGeneration):
 
 
 @register_model(
-    "core/model/peft/lora/diffusers/inpainting/stable", diffusion_model_decorator
+    "core/model/diffusers/peft/lora/inpainting/stable", diffusion_model_decorator
 )
 class StableLoraForImageInpainting(_StableLoraForImageInpainting):
     def __init__(
@@ -402,9 +402,9 @@ class StableLoraForImageInpainting(_StableLoraForImageInpainting):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/peft/lora/diffusers/inpainting/stable")
+    @add_default_section_for_init("core/model/diffusers/peft/lora/inpainting/stable")
     def from_core_configure(cls, config, **kwargs):
-        config.set_default_section("core/model/peft/lora/diffusers/inpainting/stable")
+        config.set_default_section("core/model/diffusers/peft/lora/inpainting/stable")
         pretrained_name = config.getoption("pretrained_name", "stable-v1.5-inpainting")
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
 
@@ -504,7 +504,7 @@ class StableLoraForImageInpainting(_StableLoraForImageInpainting):
         raise NotImplementedError
 
     @add_default_section_for_function(
-        "core/model/peft/lora/diffusers/inpainting/stable"
+        "core/model/diffusers/peft/lora/inpainting/stable"
     )
     @autocast()
     def generate(
@@ -533,7 +533,7 @@ class StableLoraForImageInpainting(_StableLoraForImageInpainting):
 
 
 @register_model(
-    "core/model/peft/lora/diffusers/resolution/stable", diffusion_model_decorator
+    "core/model/diffusers/peft/lora/resolution/stable", diffusion_model_decorator
 )
 class StableLoraForImageResolution(_StableLoraForImageResolution):
     def __init__(
@@ -567,9 +567,9 @@ class StableLoraForImageResolution(_StableLoraForImageResolution):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/peft/lora/diffusers/resolution/stable")
+    @add_default_section_for_init("core/model/diffusers/peft/lora/resolution/stable")
     def from_core_configure(cls, config, **kwargs):
-        config.set_default_section("core/model/peft/lora/diffusers/resolution/stable")
+        config.set_default_section("core/model/diffusers/peft/lora/resolution/stable")
         pretrained_name = config.getoption("pretrained_name", "stable-v1.5-x4-upscaler")
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
 
@@ -669,7 +669,7 @@ class StableLoraForImageResolution(_StableLoraForImageResolution):
         raise NotImplementedError
 
     @add_default_section_for_function(
-        "core/model/peft/lora/diffusers/resolution/stable"
+        "core/model/diffusers/peft/lora/resolution/stable"
     )
     @autocast()
     def generate(

@@ -237,39 +237,6 @@ class BloomProcessor(_BloomProcessor):
             masks=outputs.attention_mask_label,
         )
 
-    @register_process("core/process/bloom/pretrain")
-    def _pretrain(
-        self,
-        text: str,
-        text_pair: Optional[str] = None,
-        max_seq_length: Optional[int] = None,
-        max_gen_seq_length: Optional[int] = None,
-    ):
-        """
-        Perform pretraining using the Bloom model.
-
-        Args:
-            text (str): The input text.
-            text_pair (str, optional): The second input text for pair-based pretraining. Defaults to None.
-            max_seq_length (int, optional): The maximum sequence length. Defaults to None.
-            max_gen_seq_length (int, optional): The maximum generation sequence length. Defaults to None.
-
-        Returns:
-            TensorsInputs: The input tensors for pretraining.
-        """
-        outputs = super().generation(
-            text=text,
-            text_pair=text_pair,
-            max_seq_length=max_seq_length,
-            max_gen_seq_length=max_gen_seq_length,
-        )
-        return TensorsInputs(
-            input_ids=outputs.input_ids,
-            attention_mask=outputs.attention_mask,
-            input_ids_label=outputs.input_ids_label,
-            attention_mask_label=outputs.attention_mask_label,
-        )
-
     @register_process("core/postprocess/bloom/detokenize")
     def _detokenize(
         self,

@@ -228,68 +228,36 @@ class StableForImage2VideoGenerationPipeline(StableForImage2VideoGeneration):
         if isinstance(lora_files, str):
             lora_files = [lora_files]
 
-        if lora_checkpoints is not None:
-            _lora_checkpoints = list(
-                zip(
-                    *[
-                        (ckpt, weight, alpha)
-                        for ckpt, weight, alpha in zip(
-                            lora_checkpoints, lora_weights, lora_alphas
-                        )
-                        if ckpt is not None
-                    ]
-                )
-            )
-            if len(_lora_checkpoints) == 0:
-                lora_checkpoints = None
-            else:
-                lora_checkpoints, lora_weights, lora_alphas = _lora_checkpoints
-                lora_checkpoints = [
-                    nested_dict_value(pretrained_stable_extensions_infos, ckpt)
-                    for ckpt in lora_checkpoints
-                ]
-        if lora_urls is not None:
-            _lora_urls = list(
-                zip(
-                    *[
-                        (url, weight, alpha)
-                        for url, weight, alpha in zip(
-                            lora_urls, lora_weights, lora_alphas
-                        )
-                        if is_remote_url(url)
-                    ]
-                )
-            )
-            if len(_lora_urls) == 0:
-                lora_urls = None
-            else:
-                lora_urls, lora_weights, lora_alphas = _lora_urls
-        if lora_files is not None:
-            _lora_files = list(
-                zip(
-                    *[
-                        (file, weight, alpha)
-                        for file, weight, alpha in zip(
-                            lora_files, lora_weights, lora_alphas
-                        )
-                        if file is not None
-                    ]
-                )
-            )
-            if len(_lora_files) == 0:
-                lora_files = None
-            else:
-                lora_files, lora_weights, lora_alphas = _lora_files
-
-        lora_files = pop_value(
-            lora_checkpoints,
-            lora_urls,
-            lora_files,
-            check_none=False,
+        assert (
+            len(lora_checkpoints) == len(lora_weights)
+            and len(lora_checkpoints) == len(lora_alphas)
+            and len(lora_checkpoints) == len(lora_urls)
+            and len(lora_checkpoints) == len(lora_files)
         )
-        if lora_files is not None:
+        processed_lora_files, processed_lora_weights, processed_lora_alphas = [], [], []
+        for ckpt, url, file, weight, alpha in zip(
+            lora_checkpoints, lora_urls, lora_files, lora_weights, lora_alphas
+        ):
+            if ckpt is not None:
+                processed_lora_files.append(
+                    nested_dict_value(pretrained_stable_extensions_infos, ckpt)
+                )
+                processed_lora_weights.append(weight)
+                processed_lora_alphas.append(alpha)
+            elif url is not None and is_remote_url(url):
+                processed_lora_files.append(url)
+                processed_lora_weights.append(weight)
+                processed_lora_alphas.append(alpha)
+            elif file is not None:
+                processed_lora_files.append(file)
+                processed_lora_weights.append(weight)
+                processed_lora_alphas.append(alpha)
+
+        if len(processed_lora_files) > 0:
             self.load_lora_weights(
-                lora_files, lora_weights=lora_weights, lora_alphas=lora_alphas
+                processed_lora_files,
+                lora_weights=processed_lora_weights,
+                lora_alphas=processed_lora_alphas,
             )
 
         if self._enable_cpu_offload and self._device != "cpu":

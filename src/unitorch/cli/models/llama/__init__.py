@@ -56,6 +56,22 @@ pretrained_llama_infos = {
             for i in range(1, 4)
         ],
     },
+    "llama3-8b": {
+        "config": "https://huggingface.co/unsloth/llama-3-8b/resolve/main/config.json",
+        "tokenizer": "https://huggingface.co/unsloth/llama-3-8b/resolve/main/tokenizer.json",
+        "weight": [
+            f"https://huggingface.co/unsloth/llama-3-8b/resolve/main/model-{str(i).rjust(5, '0')}-of-00004.safetensors"
+            for i in range(1, 5)
+        ],
+    },
+    "llama3-13b": {
+        "config": "https://huggingface.co/Replete-AI/Llama-3-13B/resolve/main/config.json",
+        "tokenizer": "https://huggingface.co/Replete-AI/Llama-3-13B/resolve/main/tokenizer.json",
+        "weight": [
+            f"https://huggingface.co/Replete-AI/Llama-3-13B/resolve/main/model-{str(i).rjust(5, '0')}-of-00003.safetensors"
+            for i in range(1, 4)
+        ],
+    },
     "open-llama-3b": {
         "config": "https://huggingface.co/openlm-research/open_llama_3b/resolve/main/config.json",
         "vocab": "https://huggingface.co/openlm-research/open_llama_3b/resolve/main/tokenizer.model",

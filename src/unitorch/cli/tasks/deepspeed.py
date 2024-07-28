@@ -243,24 +243,26 @@ class DeepspeedTask:
         if "params" not in config_dict["optimizer"]:
             config_dict["optimizer"]["params"] = dict()
 
+        scheduler_type = None
         if "scheduler" in config_dict:
+            scheduler_type = config_dict["scheduler"].get("type", None)
             if "params" not in config_dict["scheduler"]:
                 config_dict["scheduler"]["params"] = dict()
 
         if learning_rate is not None:
             config_dict["optimizer"]["params"]["lr"] = learning_rate
-            if "scheduler" in config_dict:
+
+        if scheduler_type == "WarmupLR":
+            if learning_rate is not None:
                 config_dict["scheduler"]["params"]["warmup_max_lr"] = learning_rate
-
-        if max_warmup_learning_rate is not None and "scheduler" in config_dict:
-            config_dict["scheduler"]["params"][
-                "warmup_max_lr"
-            ] = max_warmup_learning_rate
-
-        if num_warmup_steps is not None and "scheduler" in config_dict:
-            if "params" not in config_dict["scheduler"]:
-                config_dict["scheduler"]["params"] = dict()
-            config_dict["scheduler"]["params"]["warmup_num_steps"] = num_warmup_steps
+            if max_warmup_learning_rate is not None:
+                config_dict["scheduler"]["params"][
+                    "warmup_max_lr"
+                ] = max_warmup_learning_rate
+            if num_warmup_steps is not None:
+                config_dict["scheduler"]["params"][
+                    "warmup_num_steps"
+                ] = num_warmup_steps
 
         info_path = os.path.join(to_ckpt_dir, "info.json")
         if os.path.exists(info_path):
