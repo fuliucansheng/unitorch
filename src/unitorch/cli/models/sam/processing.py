@@ -36,7 +36,7 @@ class SamProcessor(_SamProcessor):
     @add_default_section_for_init("core/process/sam")
     def from_core_configure(cls, config, **kwargs):
         config.set_default_section("core/process/sam")
-        pretrained_name = config.getoption("pretrained_name", "default-sam")
+        pretrained_name = config.getoption("pretrained_name", "sam-vit-base")
         vision_config_path = config.getoption("vision_config_path", None)
         vision_config_path = pop_value(
             vision_config_path,

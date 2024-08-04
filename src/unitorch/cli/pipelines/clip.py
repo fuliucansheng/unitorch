@@ -58,7 +58,7 @@ class ClipForClassificationPipeline(_ClipForClassification):
     def from_core_configure(
         cls,
         config,
-        pretrained_name: Optional[str] = "default-clip",
+        pretrained_name: Optional[str] = "clip-vit-base-patch16",
         config_path: Optional[str] = None,
         vocab_path: Optional[str] = None,
         merge_path: Optional[str] = None,
@@ -195,7 +195,7 @@ class ClipForTextClassificationPipeline(_ClipForTextClassification):
     def from_core_configure(
         cls,
         config,
-        pretrained_name: Optional[str] = "default-clip",
+        pretrained_name: Optional[str] = "clip-vit-base-patch16",
         config_path: Optional[str] = None,
         vocab_path: Optional[str] = None,
         merge_path: Optional[str] = None,
@@ -315,7 +315,7 @@ class ClipForImageClassificationPipeline(_ClipForImageClassification):
     def from_core_configure(
         cls,
         config,
-        pretrained_name: Optional[str] = "default-clip",
+        pretrained_name: Optional[str] = "clip-vit-base-patch16",
         config_path: Optional[str] = None,
         vision_config_path: Optional[str] = None,
         id2label: Optional[Dict[int, str]] = None,

@@ -45,7 +45,7 @@ class SamForSegmentationPipeline(_SamForSegmentation):
     def from_core_configure(
         cls,
         config,
-        pretrained_name: Optional[str] = "default-sam",
+        pretrained_name: Optional[str] = "sam-vit-base",
         config_path: Optional[str] = None,
         vision_config_path: Optional[str] = None,
         pretrained_weight_path: Optional[str] = None,

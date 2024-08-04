@@ -58,7 +58,7 @@ class XPegasusProcessor(_XPegasusProcessor):
             XPegasusProcessor: An instance of XPegasusProcessor initialized with the provided configuration.
         """
         config.set_default_section("core/process/xpegasus")
-        pretrained_name = config.getoption("pretrained_name", "default-xpegasus")
+        pretrained_name = config.getoption("pretrained_name", "xpegasus-base")
         vocab_path = config.getoption("vocab_path", None)
         vocab_path = pop_value(
             vocab_path,

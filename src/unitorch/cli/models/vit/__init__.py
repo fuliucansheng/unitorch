@@ -3,10 +3,6 @@
 
 # pretrained infos
 pretrained_vit_infos = {
-    "default-vit": {
-        "config": "https://huggingface.co/google/vit-base-patch16-224/resolve/main/config.json",
-        "vision_config": "https://huggingface.co/google/vit-base-patch16-224/resolve/main/preprocessor_config.json",
-    },
     "vit-base-patch16-224-in21k": {
         "config": "https://huggingface.co/google/vit-base-patch16-224-in21k/resolve/main/config.json",
         "vision_config": "https://huggingface.co/google/vit-base-patch16-224-in21k/resolve/main/preprocessor_config.json",

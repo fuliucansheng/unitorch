@@ -3,10 +3,6 @@
 
 # pretrained infos
 pretrained_t5_infos = {
-    "default-t5": {
-        "config": "https://huggingface.co/t5-base/resolve/main/config.json",
-        "vocab": "https://huggingface.co/t5-base/resolve/main/spiece.model",
-    },
     "t5-base": {
         "config": "https://huggingface.co/t5-base/resolve/main/config.json",
         "vocab": "https://huggingface.co/t5-base/resolve/main/spiece.model",

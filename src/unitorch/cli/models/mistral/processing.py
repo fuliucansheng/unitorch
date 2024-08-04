@@ -57,7 +57,9 @@ class MistralProcessor(_MistralProcessor):
             MistralProcessor: An instance of MistralProcessor.
         """
         config.set_default_section("core/process/mistral")
-        pretrained_name = config.getoption("pretrained_name", "default-mistral")
+        pretrained_name = config.getoption(
+            "pretrained_name", "mistral-7b-instruct-v0.1"
+        )
         vocab_path = config.getoption("vocab_path", None)
         vocab_path = pop_value(
             vocab_path,

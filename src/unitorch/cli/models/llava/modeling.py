@@ -74,9 +74,11 @@ class LlavaMistralClipForClassification(_LlavaMistralClipForClassification):
             LlavaMistralClipForClassification: An instance of LlavaMistralClipForClassification.
         """
         config.set_default_section("core/model/classification/llava/mistral_clip")
-        pretrained_name = config.getoption("pretrained_name", "default-llava-v1.6")
+        pretrained_name = config.getoption(
+            "pretrained_name", "llava-v1.6-mistral-7b-hf"
+        )
         pretrained_lora_name = config.getoption(
-            "pretrained_lora_name", "default-llava-lora"
+            "pretrained_lora_name", "llava-v1.6-mistral-7b-lora"
         )
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
@@ -212,9 +214,11 @@ class LlavaMistralClipForGeneration(_LlavaMistralClipForGeneration):
             LlavaMistralClipForGeneration: An instance of LlavaMistralClipForGeneration.
         """
         config.set_default_section("core/model/generation/llava/mistral_clip")
-        pretrained_name = config.getoption("pretrained_name", "default-llava-v1.6")
+        pretrained_name = config.getoption(
+            "pretrained_name", "llava-v1.6-mistral-7b-hf"
+        )
         pretrained_lora_name = config.getoption(
-            "pretrained_lora_name", "default-llava-lora"
+            "pretrained_lora_name", "llava-v1.6-mistral-7b-lora"
         )
         config_path = config.getoption("config_path", None)
         config_path = pop_value(

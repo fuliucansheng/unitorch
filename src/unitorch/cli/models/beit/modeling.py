@@ -53,7 +53,7 @@ class BeitForImageClassification(_BeitForImageClassification):
             BeitForImageClassification: An instance of BeitForImageClassification.
         """
         config.set_default_section("core/model/classification/beit")
-        pretrained_name = config.getoption("pretrained_name", "default-beit")
+        pretrained_name = config.getoption("pretrained_name", "beit-base-patch16-224")
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
             config_path,

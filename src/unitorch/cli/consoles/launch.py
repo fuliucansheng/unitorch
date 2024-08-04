@@ -16,6 +16,8 @@ from unitorch.cli import (
     registered_script,
     init_registered_module,
 )
+import unitorch.cli.pipelines
+import unitorch.cli.scripts
 
 
 @fire.decorators.SetParseFn(str)

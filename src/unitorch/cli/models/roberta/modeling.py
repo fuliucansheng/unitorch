@@ -56,7 +56,7 @@ class RobertaForClassification(_RobertaForClassification):
             RobertaForClassification: The initialized RobertaForClassification instance.
         """
         config.set_default_section("core/model/classification/roberta")
-        pretrained_name = config.getoption("pretrained_name", "default-roberta")
+        pretrained_name = config.getoption("pretrained_name", "roberta-base")
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
             config_path,

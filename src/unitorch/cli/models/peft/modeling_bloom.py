@@ -74,7 +74,7 @@ class BloomLoraForClassification(_BloomLoraForClassification):
             BloomLoraForClassification: The initialized BloomLoraForClassification instance.
         """
         config.set_default_section("core/model/classification/peft/lora/bloom")
-        pretrained_name = config.getoption("pretrained_name", "default-bloom")
+        pretrained_name = config.getoption("pretrained_name", "bloom-560m")
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
             config_path,
@@ -204,7 +204,7 @@ class BloomLoraForGeneration(_BloomLoraForGeneration):
             BloomLoraForGeneration: The initialized BloomLoraForGeneration instance.
         """
         config.set_default_section("core/model/generation/peft/lora/bloom")
-        pretrained_name = config.getoption("pretrained_name", "default-bloom")
+        pretrained_name = config.getoption("pretrained_name", "bloom-560m")
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
             config_path,

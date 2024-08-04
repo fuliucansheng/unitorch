@@ -4,10 +4,6 @@
 # pretrained infos
 pretrained_bloom_infos = {
     # bloom
-    "default-bloom": {
-        "config": "https://huggingface.co/bigscience/bloom-560m/resolve/main/config.json",
-        "tokenizer": "https://huggingface.co/bigscience/bloom-560m/resolve/main/tokenizer.json",
-    },
     "bloom-560m": {
         "config": "https://huggingface.co/bigscience/bloom-560m/resolve/main/config.json",
         "tokenizer": "https://huggingface.co/bigscience/bloom-560m/resolve/main/tokenizer.json",

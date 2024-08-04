@@ -60,7 +60,7 @@ class MT5Processor(_MT5Processor):
             dict: A dictionary containing the arguments for initializing the MT5Processor.
         """
         config.set_default_section("core/process/mt5")
-        pretrained_name = config.getoption("pretrained_name", "default-mt5")
+        pretrained_name = config.getoption("pretrained_name", "mt5-base")
         vocab_path = config.getoption("vocab_path", None)
         vocab_path = pop_value(
             vocab_path,

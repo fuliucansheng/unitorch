@@ -80,7 +80,6 @@ import unitorch.cli.models.bloom
 import unitorch.cli.models.bria
 import unitorch.cli.models.chinese_clip
 import unitorch.cli.models.clip
-import unitorch.cli.models.deberta
 import unitorch.cli.models.detr
 import unitorch.cli.models.dinov2
 import unitorch.cli.models.dpt

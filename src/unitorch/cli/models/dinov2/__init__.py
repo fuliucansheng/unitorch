@@ -3,10 +3,6 @@
 
 # pretrained infos
 pretrained_dinov2_infos = {
-    "default-dinov2": {
-        "config": "https://huggingface.co/facebook/dinov2-small/resolve/main/config.json",
-        "vision_config": "https://huggingface.co/facebook/dinov2-small/resolve/main/preprocessor_config.json",
-    },
     "dinov2-base": {
         "config": "https://huggingface.co/facebook/dinov2-base/resolve/main/config.json",
         "vision_config": "https://huggingface.co/facebook/dinov2-base/resolve/main/preprocessor_config.json",

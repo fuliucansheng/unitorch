@@ -71,7 +71,7 @@ class VisualBertProcessor(_VisualBertProcessor):
             dict: A dictionary containing the processor's configuration.
         """
         config.set_default_section("core/process/visualbert")
-        pretrained_name = config.getoption("pretrained_name", "default-visualbert")
+        pretrained_name = config.getoption("pretrained_name", "visualbert-vqa-coco-pre")
         vocab_path = config.getoption("vocab_path", None)
         vocab_path = pop_value(
             vocab_path,

@@ -11,7 +11,7 @@ import importlib_resources
 import unitorch.cli
 from torch.multiprocessing import spawn
 from transformers.utils import is_remote_url
-from unitorch.utils import read_file
+from unitorch.utils import read_file, reload_module
 from unitorch.cli import CoreConfigureParser
 from unitorch.cli import (
     import_library,
@@ -49,6 +49,8 @@ def webui(config_path: str, **kwargs):
     if depends_libraries:
         for library in depends_libraries:
             import_library(library)
+
+    reload_module(unitorch.cli.webuis)
 
     enabled_webuis = config.getdefault("core/cli", "enabled_webuis", None)
     single_webui = config.getdefault("core/cli", "single_webui", False)

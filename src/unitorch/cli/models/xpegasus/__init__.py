@@ -3,10 +3,6 @@
 
 # pretrained infos
 pretrained_xpegasus_infos = {
-    "default-xpegasus": {
-        "config": "https://huggingface.co/google/pegasus-x-base/resolve/main/config.json",
-        "vocab": "https://huggingface.co/google/pegasus-x-base/resolve/main/spiece.model",
-    },
     "xpegasus-base": {
         "config": "https://huggingface.co/google/pegasus-x-base/resolve/main/config.json",
         "vocab": "https://huggingface.co/google/pegasus-x-base/resolve/main/spiece.model",

@@ -62,7 +62,7 @@ class BartProcessor(_BartProcessor):
             BartProcessor: An instance of BartProcessor.
         """
         config.set_default_section("core/process/bart")
-        pretrained_name = config.getoption("pretrained_name", "default-bart")
+        pretrained_name = config.getoption("pretrained_name", "bart-base")
         vocab_path = config.getoption("vocab_path", None)
         vocab_path = pop_value(
             vocab_path,

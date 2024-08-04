@@ -4,10 +4,6 @@
 # pretrained infos
 
 pretrained_xlm_roberta_infos = {
-    "default-xlm-roberta": {
-        "config": "https://huggingface.co/xlm-roberta-base/resolve/main/config.json",
-        "vocab": "https://huggingface.co/xlm-roberta-base/resolve/main/sentencepiece.bpe.model",
-    },
     "xlm-roberta-base": {
         "config": "https://huggingface.co/xlm-roberta-base/resolve/main/config.json",
         "vocab": "https://huggingface.co/xlm-roberta-base/resolve/main/sentencepiece.bpe.model",

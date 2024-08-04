@@ -59,7 +59,7 @@ class LlamaProcessor(_LlamaProcessor):
             LlamaProcessor: An instance of LlamaProcessor.
         """
         config.set_default_section("core/process/llama")
-        pretrained_name = config.getoption("pretrained_name", "default-llama")
+        pretrained_name = config.getoption("pretrained_name", "llama-7b")
         vocab_path = config.getoption("vocab_path", None)
         vocab_path = pop_value(
             vocab_path,

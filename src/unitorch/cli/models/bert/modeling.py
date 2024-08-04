@@ -54,7 +54,7 @@ class BertForClassification(_BertForClassification):
             BertForClassification: An instance of BertForClassification.
         """
         config.set_default_section("core/model/classification/bert")
-        pretrained_name = config.getoption("pretrained_name", "default-bert")
+        pretrained_name = config.getoption("pretrained_name", "bert-base-uncased")
         config_path = config.getoption("config_path", None)
         num_classes = config.getoption("num_classes", 1)
 

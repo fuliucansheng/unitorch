@@ -4,10 +4,6 @@
 # pretrained infos
 pretrained_llama_infos = {
     # llama
-    "default-llama": {
-        "config": "https://huggingface.co/huggyllama/llama-7b/resolve/main/config.json",
-        "vocab": "https://huggingface.co/huggyllama/llama-7b/resolve/main/tokenizer.model",
-    },
     "llama-7b": {
         "config": "https://huggingface.co/huggyllama/llama-7b/resolve/main/config.json",
         "vocab": "https://huggingface.co/huggyllama/llama-7b/resolve/main/tokenizer.model",

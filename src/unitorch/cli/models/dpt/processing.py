@@ -51,7 +51,7 @@ class DPTProcessor(_DPTProcessor):
             dict: The processed arguments for initializing the processor.
         """
         config.set_default_section("core/process/dpt")
-        pretrained_name = config.getoption("pretrained_name", "default-dpt")
+        pretrained_name = config.getoption("pretrained_name", "dpt-large")
         vision_config_path = config.getoption("vision_config_path", None)
         vision_config_path = pop_value(
             vision_config_path,
@@ -64,8 +64,8 @@ class DPTProcessor(_DPTProcessor):
             "vision_config_path": vision_config_path,
         }
 
-    @register_process("core/process/dpt/depth_estimation")
-    def _depth_estimation_inputs(
+    @register_process("core/process/dpt/inputs")
+    def _inputs(
         self,
         image: Union[Image.Image, str],
     ):

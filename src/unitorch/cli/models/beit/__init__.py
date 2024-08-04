@@ -3,10 +3,6 @@
 
 # pretrained infos
 pretrained_beit_infos = {
-    "default-beit": {
-        "config": "https://huggingface.co/microsoft/beit-base-patch16-224-pt22k-ft22k/resolve/main/config.json",
-        "vision_config": "https://huggingface.co/microsoft/beit-base-patch16-224-pt22k-ft22k/resolve/main/preprocessor_config.json",
-    },
     "beit-base-patch16-224-pt22k-ft22k": {
         "config": "https://huggingface.co/microsoft/beit-base-patch16-224-pt22k-ft22k/resolve/main/config.json",
         "vision_config": "https://huggingface.co/microsoft/beit-base-patch16-224-pt22k-ft22k/resolve/main/preprocessor_config.json",

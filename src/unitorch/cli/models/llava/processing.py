@@ -62,7 +62,9 @@ class LlavaMistralClipProcessor(_LlavaMistralClipProcessor):
             LlavaMistralClipProcessor: An instance of LlavaMistralClipProcessor.
         """
         config.set_default_section("core/process/llava/mistral_clip")
-        pretrained_name = config.getoption("pretrained_name", "default-llava-v1.6")
+        pretrained_name = config.getoption(
+            "pretrained_name", "llava-v1.6-mistral-7b-hf"
+        )
         vocab_path = config.getoption("vocab_path", None)
         vocab_path = pop_value(
             vocab_path,

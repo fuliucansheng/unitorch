@@ -63,7 +63,9 @@ class BlipProcessor(_BlipProcessor):
             dict: A dictionary containing the processor parameters.
         """
         config.set_default_section("core/process/blip")
-        pretrained_name = config.getoption("pretrained_name", "default-blip")
+        pretrained_name = config.getoption(
+            "pretrained_name", "blip-image-captioning-base"
+        )
 
         vocab_path = config.getoption("vocab_path", None)
         vocab_path = pop_value(

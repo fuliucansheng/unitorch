@@ -80,6 +80,8 @@ class GenericStableLoraModel(GenericPeftModel, QuantizationMixin):
         snr_gamma: Optional[float] = 5.0,
         lora_r: Optional[int] = 16,
         lora_alpha: Optional[int] = 32,
+        enable_text_adapter: Optional[bool] = True,
+        enable_unet_adapter: Optional[bool] = True,
         seed: Optional[int] = 1123,
     ):
         super().__init__()
@@ -124,9 +126,20 @@ class GenericStableLoraModel(GenericPeftModel, QuantizationMixin):
             r=lora_r,
             lora_alpha=lora_alpha,
             init_lora_weights="gaussian",
-            target_modules=["to_k", "to_q", "to_v", "to_out.0"],
+            target_modules=[
+                "to_k",
+                "to_q",
+                "to_v",
+                "to_out.0",
+                "q_proj",
+                "v_proj",
+                "out_proj",
+            ],
         )
-        self.unet.add_adapter(lora_config)
+        if enable_text_adapter:
+            self.text.add_adapter(lora_config)
+        if enable_unet_adapter:
+            self.unet.add_adapter(lora_config)
 
         self.scheduler.set_timesteps(num_inference_steps=self.num_infer_timesteps)
 
@@ -147,6 +160,8 @@ class StableLoraForText2ImageGeneration(GenericStableLoraModel):
         snr_gamma: Optional[float] = 5.0,
         lora_r: Optional[int] = 16,
         lora_alpha: Optional[int] = 32,
+        enable_text_adapter: Optional[bool] = True,
+        enable_unet_adapter: Optional[bool] = True,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
@@ -163,6 +178,8 @@ class StableLoraForText2ImageGeneration(GenericStableLoraModel):
             snr_gamma=snr_gamma,
             lora_r=lora_r,
             lora_alpha=lora_alpha,
+            enable_text_adapter=enable_text_adapter,
+            enable_unet_adapter=enable_unet_adapter,
             seed=seed,
         )
 
@@ -280,6 +297,8 @@ class StableLoraForImage2ImageGeneration(GenericStableLoraModel):
         snr_gamma: Optional[float] = 5.0,
         lora_r: Optional[int] = 16,
         lora_alpha: Optional[int] = 32,
+        enable_text_adapter: Optional[bool] = True,
+        enable_unet_adapter: Optional[bool] = True,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
@@ -296,6 +315,8 @@ class StableLoraForImage2ImageGeneration(GenericStableLoraModel):
             snr_gamma=snr_gamma,
             lora_r=lora_r,
             lora_alpha=lora_alpha,
+            enable_text_adapter=enable_text_adapter,
+            enable_unet_adapter=enable_unet_adapter,
             seed=seed,
         )
 
@@ -365,6 +386,8 @@ class StableLoraForImageInpainting(GenericStableLoraModel):
         snr_gamma: Optional[float] = 5.0,
         lora_r: Optional[int] = 16,
         lora_alpha: Optional[int] = 32,
+        enable_text_adapter: Optional[bool] = True,
+        enable_unet_adapter: Optional[bool] = True,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
@@ -381,6 +404,8 @@ class StableLoraForImageInpainting(GenericStableLoraModel):
             snr_gamma=snr_gamma,
             lora_r=lora_r,
             lora_alpha=lora_alpha,
+            enable_text_adapter=enable_text_adapter,
+            enable_unet_adapter=enable_unet_adapter,
             seed=seed,
         )
 
@@ -452,6 +477,8 @@ class StableLoraForImageResolution(GenericStableLoraModel):
         snr_gamma: Optional[float] = 5.0,
         lora_r: Optional[int] = 16,
         lora_alpha: Optional[int] = 32,
+        enable_text_adapter: Optional[bool] = True,
+        enable_unet_adapter: Optional[bool] = True,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
@@ -468,6 +495,8 @@ class StableLoraForImageResolution(GenericStableLoraModel):
             snr_gamma=snr_gamma,
             lora_r=lora_r,
             lora_alpha=lora_alpha,
+            enable_text_adapter=enable_text_adapter,
+            enable_unet_adapter=enable_unet_adapter,
             seed=seed,
         )
 

@@ -56,7 +56,7 @@ class BloomProcessor(_BloomProcessor):
             BloomProcessor: An instance of BloomProcessor initialized with the provided configuration.
         """
         config.set_default_section("core/process/bloom")
-        pretrained_name = config.getoption("pretrained_name", "default-bloom")
+        pretrained_name = config.getoption("pretrained_name", "bloom-560m")
         tokenizer_file = config.getoption("tokenizer_file", None)
         tokenizer_file = pop_value(
             tokenizer_file,

@@ -4,6 +4,8 @@
 import re
 import torch
 import numpy as np
+import pandas as pd
+import hashlib
 from PIL import Image, ImageDraw
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from unitorch.utils import pop_value, nested_dict_value
@@ -16,6 +18,8 @@ from unitorch.cli import (
     add_default_section_for_init,
     add_default_section_for_function,
 )
+from unitorch.cli import CoreConfigureParser, GenericScript
+from unitorch.cli import register_script
 from unitorch.cli.models.dpt import pretrained_dpt_infos
 
 
@@ -45,7 +49,7 @@ class DPTForDepthEstimationPipeline(_DPTForDepthEstimation):
     def from_core_configure(
         cls,
         config,
-        pretrained_name: Optional[str] = "default-dpt",
+        pretrained_name: Optional[str] = "dpt-large",
         config_path: Optional[str] = None,
         vision_config_path: Optional[str] = None,
         pretrained_weight_path: Optional[str] = None,
@@ -104,3 +108,51 @@ class DPTForDepthEstimationPipeline(_DPTForDepthEstimation):
         result_image = result_image.resize(image.size)
 
         return result_image
+
+
+@register_script("core/script/dpt")
+class DPTForDepthEstimationScript(GenericScript):
+    def __init__(self, config: CoreConfigureParser):
+        self.config = config
+
+    def launch(self, **kwargs):
+        config = self.config
+
+        pipe = DPTForDepthEstimationPipeline.from_core_configure(config)
+
+        config.set_default_section("core/script/dpt")
+
+        data_file = config.getoption("data_file", None)
+        names = config.getoption("names", None)
+        if isinstance(names, str) and names.strip() == "*":
+            names = None
+        if isinstance(names, str):
+            names = re.split(r"[,;]", names)
+            names = [n.strip() for n in names]
+
+        image_col = config.getoption("image_col", None)
+
+        data = pd.read_csv(
+            data_file,
+            names=names,
+            sep="\t",
+            quoting=3,
+            header=None,
+        )
+
+        assert image_col in data.columns, f"Column {image_col} not found in data."
+
+        output_folder = config.getoption("output_folder", None)
+        output_file = config.getoption("output_file", None)
+
+        def save(image):
+            name = hashlib.md5(image.tobytes()).hexdigest() + ".jpg"
+            image.save(f"{output_folder}/{name}")
+            return name
+
+        results = []
+        for image in data[image_col]:
+            results.append(pipe(image))
+
+        data["result"] = results
+        data.to_csv(output_file, sep="\t", header=None, index=None, quoting=3)

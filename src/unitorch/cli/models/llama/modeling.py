@@ -64,10 +64,8 @@ class LlamaForClassification(_LlamaForClassification):
             LlamaForClassification: An instance of LlamaForClassification.
         """
         config.set_default_section("core/model/classification/llama")
-        pretrained_name = config.getoption("pretrained_name", "default-llama")
-        pretrained_lora_name = config.getoption(
-            "pretrained_lora_name", "default-llama-lora"
-        )
+        pretrained_name = config.getoption("pretrained_name", "llama-7b")
+        pretrained_lora_name = config.getoption("pretrained_lora_name", "llama-7b-lora")
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
             config_path,
@@ -182,10 +180,8 @@ class LlamaForGeneration(_LlamaForGeneration):
             LlamaForGeneration: An instance of LlamaForGeneration.
         """
         config.set_default_section("core/model/generation/llama")
-        pretrained_name = config.getoption("pretrained_name", "default-llama")
-        pretrained_lora_name = config.getoption(
-            "pretrained_lora_name", "default-llama-lora"
-        )
+        pretrained_name = config.getoption("pretrained_name", "llama-7b")
+        pretrained_lora_name = config.getoption("pretrained_lora_name", "llama-7b-lora")
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
             config_path,

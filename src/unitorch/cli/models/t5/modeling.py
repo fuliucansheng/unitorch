@@ -52,7 +52,7 @@ class T5ForGeneration(_T5ForGeneration):
             T5ForGeneration: An instance of the T5ForGeneration model.
         """
         config.set_default_section("core/model/generation/t5")
-        pretrained_name = config.getoption("pretrained_name", "default-t5")
+        pretrained_name = config.getoption("pretrained_name", "t5-base")
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
             config_path,

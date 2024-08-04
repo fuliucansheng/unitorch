@@ -51,7 +51,7 @@ class DinoV2Processor(_DinoV2Processor):
             dict: The processed arguments for initializing the processor.
         """
         config.set_default_section("core/process/dinov2")
-        pretrained_name = config.getoption("pretrained_name", "default-dinov2")
+        pretrained_name = config.getoption("pretrained_name", "dinov2-base")
         vision_config_path = config.getoption("vision_config_path", None)
         vision_config_path = pop_value(
             vision_config_path,

@@ -4,10 +4,6 @@
 # pretrained infos
 
 pretrained_visualbert_infos = {
-    "default-visualbert": {
-        "config": "https://huggingface.co/uclanlp/visualbert-vqa-coco-pre/resolve/main/config.json",
-        "vocab": "https://huggingface.co/bert-base-uncased/resolve/main/vocab.txt",
-    },
     "visualbert-vqa-coco-pre": {
         "config": "https://huggingface.co/uclanlp/visualbert-vqa-coco-pre/resolve/main/config.json",
         "vocab": "https://huggingface.co/bert-base-uncased/resolve/main/vocab.txt",

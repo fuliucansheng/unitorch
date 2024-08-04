@@ -3,10 +3,6 @@
 
 # pretrained infos
 pretrained_pegasus_infos = {
-    "default-pegasus": {
-        "config": "https://huggingface.co/google/pegasus-cnn_dailymail/resolve/main/config.json",
-        "vocab": "https://huggingface.co/google/pegasus-cnn_dailymail/resolve/main/spiece.model",
-    },
     "pegasus-cnn_dailymail": {
         "config": "https://huggingface.co/google/pegasus-cnn_dailymail/resolve/main/config.json",
         "vocab": "https://huggingface.co/google/pegasus-cnn_dailymail/resolve/main/spiece.model",

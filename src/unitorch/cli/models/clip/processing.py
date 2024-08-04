@@ -63,7 +63,7 @@ class ClipProcessor(_ClipProcessor):
             dict: A dictionary containing the processor's initialization arguments.
         """
         config.set_default_section("core/process/clip")
-        pretrained_name = config.getoption("pretrained_name", "default-clip")
+        pretrained_name = config.getoption("pretrained_name", "clip-vit-base-patch16")
         vocab_path = config.getoption("vocab_path", None)
         vocab_path = pop_value(
             vocab_path,

@@ -61,9 +61,9 @@ class BloomForClassification(_BloomForClassification):
             BloomForClassification: An instance of BloomForClassification initialized with the provided configuration.
         """
         config.set_default_section("core/model/classification/bloom")
-        pretrained_name = config.getoption("pretrained_name", "default-bloom")
+        pretrained_name = config.getoption("pretrained_name", "bloom-560m")
         pretrained_lora_name = config.getoption(
-            "pretrained_lora_name", "default-bloom-lora"
+            "pretrained_lora_name", "bloom-560m-lora"
         )
         config_path = config.getoption("config_path", None)
         num_classes = config.getoption("num_classes", 1)
@@ -163,9 +163,9 @@ class BloomForGeneration(_BloomForGeneration):
             BloomForGeneration: An instance of BloomForGeneration initialized with the provided configuration.
         """
         config.set_default_section("core/model/generation/bloom")
-        pretrained_name = config.getoption("pretrained_name", "default-bloom")
+        pretrained_name = config.getoption("pretrained_name", "bloom-560m")
         pretrained_lora_name = config.getoption(
-            "pretrained_lora_name", "default-bloom-lora"
+            "pretrained_lora_name", "bloom-560m-lora"
         )
         config_path = config.getoption("config_path", None)
         config_path = pop_value(

@@ -51,7 +51,9 @@ class ViTProcessor(_ViTProcessor):
             dict: The processed arguments for initializing the processor.
         """
         config.set_default_section("core/process/vit")
-        pretrained_name = config.getoption("pretrained_name", "default-vit")
+        pretrained_name = config.getoption(
+            "pretrained_name", "vit-base-patch16-224-in21k"
+        )
         vision_config_path = config.getoption("vision_config_path", None)
         vision_config_path = pop_value(
             vision_config_path,

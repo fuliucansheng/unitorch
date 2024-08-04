@@ -4,11 +4,6 @@
 # pretrained infos
 
 pretrained_roberta_infos = {
-    "default-roberta": {
-        "config": "https://huggingface.co/roberta-base/resolve/main/config.json",
-        "vocab": "https://huggingface.co/roberta-base/resolve/main/vocab.json",
-        "merge": "https://huggingface.co/roberta-base/resolve/main/merges.txt",
-    },
     "roberta-base": {
         "config": "https://huggingface.co/roberta-base/resolve/main/config.json",
         "vocab": "https://huggingface.co/roberta-base/resolve/main/vocab.json",

@@ -38,7 +38,7 @@ class DetrForDetection(_DetrForDetection):
     @add_default_section_for_init("core/model/detection/detr")
     def from_core_configure(cls, config, **kwargs):
         config.set_default_section("core/model/detection/detr")
-        pretrained_name = config.getoption("pretrained_name", "default-detr")
+        pretrained_name = config.getoption("pretrained_name", "detr-resnet-50")
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
             config_path,

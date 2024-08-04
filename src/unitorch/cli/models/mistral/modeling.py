@@ -64,9 +64,11 @@ class MistralForClassification(_MistralForClassification):
             MistralForClassification: An instance of MistralForClassification.
         """
         config.set_default_section("core/model/classification/mistral")
-        pretrained_name = config.getoption("pretrained_name", "default-mistral")
+        pretrained_name = config.getoption(
+            "pretrained_name", "mistral-7b-instruct-v0.1"
+        )
         pretrained_lora_name = config.getoption(
-            "pretrained_lora_name", "default-mistral-lora"
+            "pretrained_lora_name", "mistral-7b-instruct-v0.1-lora"
         )
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
@@ -184,9 +186,11 @@ class MistralForGeneration(_MistralForGeneration):
             MistralForGeneration: An instance of MistralForGeneration.
         """
         config.set_default_section("core/model/generation/mistral")
-        pretrained_name = config.getoption("pretrained_name", "default-mistral")
+        pretrained_name = config.getoption(
+            "pretrained_name", "mistral-7b-instruct-v0.1"
+        )
         pretrained_lora_name = config.getoption(
-            "pretrained_lora_name", "default-mistral-lora"
+            "pretrained_lora_name", "mistral-7b-instruct-v0.1-lora"
         )
         config_path = config.getoption("config_path", None)
         config_path = pop_value(

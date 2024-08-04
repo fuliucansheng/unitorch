@@ -70,6 +70,8 @@ class GenericControlNetXLLoraModel(GenericPeftModel, QuantizationMixin):
         num_infer_timesteps: Optional[int] = 50,
         lora_r: Optional[int] = 16,
         lora_alpha: Optional[int] = 32,
+        enable_text_adapter: Optional[bool] = True,
+        enable_unet_adapter: Optional[bool] = True,
         seed: Optional[int] = 1123,
     ):
         super().__init__()
@@ -130,9 +132,21 @@ class GenericControlNetXLLoraModel(GenericPeftModel, QuantizationMixin):
             r=lora_r,
             lora_alpha=lora_alpha,
             init_lora_weights="gaussian",
-            target_modules=["to_k", "to_q", "to_v", "to_out.0"],
+            target_modules=[
+                "to_k",
+                "to_q",
+                "to_v",
+                "to_out.0",
+                "q_proj",
+                "v_proj",
+                "out_proj",
+            ],
         )
-        self.unet.add_adapter(lora_config)
+        if enable_text_adapter:
+            self.text.add_adapter(lora_config)
+            self.text2.add_adapter(lora_config)
+        if enable_unet_adapter:
+            self.unet.add_adapter(lora_config)
 
         self.scheduler.set_timesteps(num_inference_steps=self.num_infer_timesteps)
 
@@ -223,6 +237,8 @@ class ControlNetXLLoraForText2ImageGeneration(GenericControlNetXLLoraModel):
         num_infer_timesteps: Optional[int] = 50,
         lora_r: Optional[int] = 16,
         lora_alpha: Optional[int] = 32,
+        enable_text_adapter: Optional[bool] = True,
+        enable_unet_adapter: Optional[bool] = True,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
@@ -240,6 +256,8 @@ class ControlNetXLLoraForText2ImageGeneration(GenericControlNetXLLoraModel):
             num_infer_timesteps=num_infer_timesteps,
             lora_r=lora_r,
             lora_alpha=lora_alpha,
+            enable_text_adapter=enable_text_adapter,
+            enable_unet_adapter=enable_unet_adapter,
             seed=seed,
         )
         self.pipeline = StableDiffusionXLControlNetPipeline(
@@ -424,6 +442,8 @@ class ControlNetXLLoraForImage2ImageGeneration(GenericControlNetXLLoraModel):
         num_infer_timesteps: Optional[int] = 50,
         lora_r: Optional[int] = 16,
         lora_alpha: Optional[int] = 32,
+        enable_text_adapter: Optional[bool] = True,
+        enable_unet_adapter: Optional[bool] = True,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
@@ -441,6 +461,8 @@ class ControlNetXLLoraForImage2ImageGeneration(GenericControlNetXLLoraModel):
             num_infer_timesteps=num_infer_timesteps,
             lora_r=lora_r,
             lora_alpha=lora_alpha,
+            enable_text_adapter=enable_text_adapter,
+            enable_unet_adapter=enable_unet_adapter,
             seed=seed,
         )
         self.pipeline = StableDiffusionXLControlNetImg2ImgPipeline(
@@ -522,6 +544,8 @@ class ControlNetXLLoraForImageInpainting(GenericControlNetXLLoraModel):
         num_infer_timesteps: Optional[int] = 50,
         lora_r: Optional[int] = 16,
         lora_alpha: Optional[int] = 32,
+        enable_text_adapter: Optional[bool] = True,
+        enable_unet_adapter: Optional[bool] = True,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
@@ -539,6 +563,8 @@ class ControlNetXLLoraForImageInpainting(GenericControlNetXLLoraModel):
             num_infer_timesteps=num_infer_timesteps,
             lora_r=lora_r,
             lora_alpha=lora_alpha,
+            enable_text_adapter=enable_text_adapter,
+            enable_unet_adapter=enable_unet_adapter,
             seed=seed,
         )
         self.pipeline = StableDiffusionXLControlNetInpaintPipeline(

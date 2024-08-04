@@ -52,7 +52,7 @@ class XPegasusForGeneration(_XPegasusForGeneration):
             XPegasusForGeneration: The instantiated XPegasusForGeneration model.
         """
         config.set_default_section("core/model/generation/xpegasus")
-        pretrained_name = config.getoption("pretrained_name", "default-xpegasus")
+        pretrained_name = config.getoption("pretrained_name", "xpegasus-base")
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
             config_path,

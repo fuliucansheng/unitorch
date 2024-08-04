@@ -65,7 +65,7 @@ class ClipForPretrain(_ClipForPretrain):
             ClipForPretrain: An instance of the ClipForPretrain model.
         """
         config.set_default_section("core/model/pretrain/clip")
-        pretrained_name = config.getoption("pretrained_name", "default-clip")
+        pretrained_name = config.getoption("pretrained_name", "clip-vit-base-patch16")
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
             config_path,
@@ -170,7 +170,7 @@ class ClipForClassification(_ClipForClassification):
             ClipForClassification: An instance of the ClipForClassification model.
         """
         config.set_default_section("core/model/classification/clip")
-        pretrained_name = config.getoption("pretrained_name", "default-clip")
+        pretrained_name = config.getoption("pretrained_name", "clip-vit-base-patch16")
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
             config_path,
@@ -275,7 +275,7 @@ class ClipForTextClassification(_ClipForTextClassification):
             ClipForTextClassification: An instance of the ClipForTextClassification model.
         """
         config.set_default_section("core/model/classification/clip/text")
-        pretrained_name = config.getoption("pretrained_name", "default-clip")
+        pretrained_name = config.getoption("pretrained_name", "clip-vit-base-patch16")
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
             config_path,
@@ -377,7 +377,7 @@ class ClipForImageClassification(_ClipForImageClassification):
             ClipForImageClassification: An instance of the ClipForImageClassification model.
         """
         config.set_default_section("core/model/classification/clip/image")
-        pretrained_name = config.getoption("pretrained_name", "default-clip")
+        pretrained_name = config.getoption("pretrained_name", "clip-vit-base-patch16")
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
             config_path,
