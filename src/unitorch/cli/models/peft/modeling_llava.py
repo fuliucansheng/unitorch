@@ -88,7 +88,9 @@ class LlavaMistralClipLoraForClassification(_LlavaMistralClipLoraForClassificati
         config.set_default_section(
             "core/model/classification/peft/lora/llava/mistral_clip"
         )
-        pretrained_name = config.getoption("pretrained_name", "default-llava-v1.6")
+        pretrained_name = config.getoption(
+            "pretrained_name", "llava-v1.6-mistral-7b-hf"
+        )
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
             config_path,
@@ -239,7 +241,9 @@ class LlavaMistralClipLoraForGeneration(_LlavaMistralClipLoraForGeneration):
             LlavaMistralClipLoraForGeneration: The initialized LlavaMistralClipLoraForGeneration instance.
         """
         config.set_default_section("core/model/generation/peft/lora/llava/mistral_clip")
-        pretrained_name = config.getoption("pretrained_name", "default-llava-v1.6")
+        pretrained_name = config.getoption(
+            "pretrained_name", "llava-v1.6-mistral-7b-hf"
+        )
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
             config_path,

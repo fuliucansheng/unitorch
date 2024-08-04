@@ -3,10 +3,6 @@
 
 # pretrained infos
 pretrained_detr_infos = {
-    "default-detr": {
-        "config": "https://huggingface.co/facebook/detr-resnet-50/resolve/main/config.json",
-        "vision_config": "https://huggingface.co/facebook/detr-resnet-50/resolve/main/preprocessor_config.json",
-    },
     "detr-resnet-50": {
         "config": "https://huggingface.co/facebook/detr-resnet-50/resolve/main/config.json",
         "vision_config": "https://huggingface.co/facebook/detr-resnet-50/resolve/main/preprocessor_config.json",

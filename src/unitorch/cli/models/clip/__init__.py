@@ -3,12 +3,6 @@
 
 # pretrained infos
 pretrained_clip_infos = {
-    "default-clip": {
-        "config": "https://huggingface.co/openai/clip-vit-base-patch16/resolve/main/config.json",
-        "vision_config": "https://huggingface.co/openai/clip-vit-base-patch16/resolve/main/preprocessor_config.json",
-        "vocab": "https://huggingface.co/openai/clip-vit-base-patch16/resolve/main/vocab.json",
-        "merge": "https://huggingface.co/openai/clip-vit-base-patch16/resolve/main/merges.txt",
-    },
     "clip-vit-base-patch16": {
         "config": "https://huggingface.co/openai/clip-vit-base-patch16/resolve/main/config.json",
         "vision_config": "https://huggingface.co/openai/clip-vit-base-patch16/resolve/main/preprocessor_config.json",

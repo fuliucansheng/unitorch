@@ -3,10 +3,6 @@
 
 # pretrained infos
 pretrained_mbart_infos = {
-    "default-mbart": {
-        "config": "https://huggingface.co/facebook/mbart-large-cc25/resolve/main/config.json",
-        "vocab": "https://huggingface.co/facebook/mbart-large-cc25/resolve/main/sentence.bpe.model",
-    },
     "mbart-large-cc25": {
         "config": "https://huggingface.co/facebook/mbart-large-cc25/resolve/main/config.json",
         "vocab": "https://huggingface.co/facebook/mbart-large-cc25/resolve/main/sentence.bpe.model",

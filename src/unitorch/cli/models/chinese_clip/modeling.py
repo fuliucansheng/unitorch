@@ -65,7 +65,9 @@ class ChineseClipForPretrain(_ChineseClipForPretrain):
             ClipForPretrain: An instance of the ClipForPretrain model.
         """
         config.set_default_section("core/model/pretrain/chinese_clip")
-        pretrained_name = config.getoption("pretrained_name", "default-chinese-clip")
+        pretrained_name = config.getoption(
+            "pretrained_name", "chinese-clip-vit-base-patch16"
+        )
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
             config_path,
@@ -172,7 +174,9 @@ class ChineseClipForClassification(_ChineseClipForClassification):
             ClipForClassification: An instance of the ClipForClassification model.
         """
         config.set_default_section("core/model/classification/chinese_clip")
-        pretrained_name = config.getoption("pretrained_name", "default-chinese-clip")
+        pretrained_name = config.getoption(
+            "pretrained_name", "chinese-clip-vit-base-patch16"
+        )
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
             config_path,
@@ -279,7 +283,9 @@ class ChineseClipForTextClassification(_ChineseClipForTextClassification):
             ClipForTextClassification: An instance of the ClipForTextClassification model.
         """
         config.set_default_section("core/model/classification/chinese_clip/text")
-        pretrained_name = config.getoption("pretrained_name", "default-chinese-clip")
+        pretrained_name = config.getoption(
+            "pretrained_name", "chinese-clip-vit-base-patch16"
+        )
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
             config_path,
@@ -383,7 +389,9 @@ class ChineseClipForImageClassification(_ChineseClipForImageClassification):
             ClipForImageClassification: An instance of the ClipForImageClassification model.
         """
         config.set_default_section("core/model/classification/chinese_clip/image")
-        pretrained_name = config.getoption("pretrained_name", "default-chinese-clip")
+        pretrained_name = config.getoption(
+            "pretrained_name", "chinese-clip-vit-base-patch16"
+        )
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
             config_path,

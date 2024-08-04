@@ -3,10 +3,6 @@
 
 # pretrained infos
 pretrained_mask2former_infos = {
-    "default-mask2former": {
-        "config": "https://huggingface.co/facebook/mask2former-swin-large-ade-semantic/resolve/main/config.json",
-        "vision_config": "https://huggingface.co/facebook/mask2former-swin-large-ade-semantic/resolve/main/preprocessor_config.json",
-    },
     "mask2former-swin-tiny-ade-semantic": {
         "config": "https://huggingface.co/facebook/mask2former-swin-tiny-ade-semantic/resolve/main/config.json",
         "vision_config": "https://huggingface.co/facebook/mask2former-swin-tiny-ade-semantic/resolve/main/preprocessor_config.json",

@@ -3,6 +3,7 @@
 
 import re
 import torch
+import pandas as pd
 from PIL import Image
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from unitorch.models.blip import (
@@ -15,6 +16,8 @@ from unitorch.cli import (
     add_default_section_for_init,
     add_default_section_for_function,
 )
+from unitorch.cli import CoreConfigureParser, GenericScript
+from unitorch.cli import register_script
 from unitorch.cli.models.blip import pretrained_blip_infos
 
 
@@ -50,7 +53,7 @@ class BlipForImageCaptionPipeline(_BlipForImageCaption):
     def from_core_configure(
         cls,
         config,
-        pretrained_name: Optional[str] = "default-blip",
+        pretrained_name: Optional[str] = "blip-image-captioning-base",
         config_path: Optional[str] = None,
         vocab_path: Optional[str] = None,
         vision_config_path: Optional[str] = None,
@@ -156,3 +159,47 @@ class BlipForImageCaptionPipeline(_BlipForImageCaption):
         decoded = self.processor.detokenize(outputs.sequences)
 
         return decoded[0].strip()
+
+
+@register_script("core/script/caption/blip")
+class BlipForImageCaptionScript(GenericScript):
+    def __init__(self, config: CoreConfigureParser):
+        self.config = config
+
+    def launch(self, **kwargs):
+        config = self.config
+
+        pipe = BlipForImageCaptionPipeline.from_core_configure(config)
+
+        config.set_default_section("core/script/caption/blip")
+
+        data_file = config.getoption("data_file", None)
+        names = config.getoption("names", None)
+        if isinstance(names, str) and names.strip() == "*":
+            names = None
+        if isinstance(names, str):
+            names = re.split(r"[,;]", names)
+            names = [n.strip() for n in names]
+
+        image_col = config.getoption("image_col", None)
+
+        data = pd.read_csv(
+            data_file,
+            names=names,
+            sep="\t",
+            quoting=3,
+            header=None,
+        )
+
+        assert image_col in data.columns, f"Column {image_col} not found in data."
+
+        captions = []
+        for img_path in data[image_col]:
+            img = Image.open(img_path)
+            caption = pipe(img)
+            captions.append(caption)
+
+        data["caption"] = captions
+
+        output_file = config.getoption("output_file", None)
+        data.to_csv(output_file, sep="\t", header=False, index=False, quoting=3)

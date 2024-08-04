@@ -60,7 +60,7 @@ class T5Processor(_T5Processor):
             dict: A dictionary containing the processor's configuration.
         """
         config.set_default_section("core/process/t5")
-        pretrained_name = config.getoption("pretrained_name", "default-t5")
+        pretrained_name = config.getoption("pretrained_name", "t5-base")
         vocab_path = config.getoption("vocab_path", None)
         vocab_path = pop_value(
             vocab_path,

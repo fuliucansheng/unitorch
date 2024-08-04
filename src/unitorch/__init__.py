@@ -11,6 +11,7 @@ UNITORCH_CACHE = os.getenv(
     "UNITORCH_CACHE", os.path.join(os.getenv("HOME", "."), ".cache/unitorch")
 )
 os.environ["TRANSFORMERS_CACHE"] = UNITORCH_CACHE
+os.environ["HF_HOME"] = UNITORCH_CACHE
 os.environ["HF_DATASETS_CACHE"] = UNITORCH_CACHE
 
 
@@ -19,7 +20,7 @@ def get_cache_home():
 
 
 ### version
-VERSION = "0.0.0.14"
+VERSION = "0.0.0.15"
 
 ### is offline mode
 UNITORCH_OFFLINE = os.environ.get("UNITORCH_OFFLINE", "0").upper()

@@ -1,9 +1,11 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
+import re
 import json
 import logging
 import torch
+import pandas as pd
 from PIL import Image
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from diffusers.utils import numpy_to_pil
@@ -31,6 +33,8 @@ from unitorch.cli import (
     add_default_section_for_init,
     add_default_section_for_function,
 )
+from unitorch.cli import CoreConfigureParser, GenericScript
+from unitorch.cli import register_script
 from unitorch.cli.models.diffusers import (
     pretrained_stable_infos,
     pretrained_stable_extensions_infos,
@@ -290,3 +294,46 @@ class StableForImage2VideoGenerationPipeline(StableForImage2VideoGeneration):
         frames = tensor2vid(outputs.frames)
         name = export_to_video(frames)
         return name
+
+
+@register_script("core/script/stable/image2video")
+class StableForImage2VideoGenerationScript(GenericScript):
+    def __init__(self, config: CoreConfigureParser):
+        self.config = config
+
+    def launch(self, **kwargs):
+        config = self.config
+
+        pipe = StableForImage2VideoGenerationPipeline.from_core_configure(config)
+
+        config.set_default_section("core/script/stable/image2video")
+
+        data_file = config.getoption("data_file", None)
+        names = config.getoption("names", None)
+        if isinstance(names, str) and names.strip() == "*":
+            names = None
+        if isinstance(names, str):
+            names = re.split(r"[,;]", names)
+            names = [n.strip() for n in names]
+
+        image_col = config.getoption("image_col", None)
+
+        data = pd.read_csv(
+            data_file,
+            names=names,
+            sep="\t",
+            quoting=3,
+            header=None,
+        )
+
+        assert image_col in data.columns, f"Column {image_col} not found in data."
+
+        results = []
+        for image in data[image_col]:
+            image = Image.open(image)
+            results.append(pipe(image))
+
+        data["result"] = results
+
+        output_file = config.getoption("output_file", None)
+        data.to_csv(output_file, sep="\t", header=None, index=None, quoting=3)

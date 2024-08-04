@@ -51,7 +51,7 @@ class BeitProcessor(_BeitProcessor):
             BeitProcessor: An instance of BeitProcessor.
         """
         config.set_default_section("core/process/beit")
-        pretrained_name = config.getoption("pretrained_name", "default-beit")
+        pretrained_name = config.getoption("pretrained_name", "beit-base-patch16-224")
         vision_config_path = config.getoption("vision_config_path", None)
         vision_config_path = pop_value(
             vision_config_path,

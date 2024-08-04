@@ -3,11 +3,6 @@
 
 # pretrained infos
 pretrained_bart_infos = {
-    "default-bart": {
-        "config": "https://huggingface.co/facebook/bart-base/resolve/main/config.json",
-        "vocab": "https://huggingface.co/facebook/bart-base/resolve/main/vocab.json",
-        "merge": "https://huggingface.co/facebook/bart-base/resolve/main/merges.txt",
-    },
     "bart-base": {
         "config": "https://huggingface.co/facebook/bart-base/resolve/main/config.json",
         "vocab": "https://huggingface.co/facebook/bart-base/resolve/main/vocab.json",

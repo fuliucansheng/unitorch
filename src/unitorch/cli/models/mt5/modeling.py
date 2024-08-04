@@ -51,7 +51,7 @@ class MT5ForGeneration(_MT5ForGeneration):
             MT5ForGeneration: An instance of MT5ForGeneration.
         """
         config.set_default_section("core/model/generation/mt5")
-        pretrained_name = config.getoption("pretrained_name", "default-mt5")
+        pretrained_name = config.getoption("pretrained_name", "mt5-base")
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
             config_path,

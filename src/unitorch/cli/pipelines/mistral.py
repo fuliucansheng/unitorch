@@ -3,6 +3,7 @@
 
 import re
 import torch
+import pandas as pd
 from PIL import Image
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from unitorch.utils import is_remote_url
@@ -16,6 +17,8 @@ from unitorch.cli import (
     add_default_section_for_init,
     add_default_section_for_function,
 )
+from unitorch.cli import CoreConfigureParser, GenericScript
+from unitorch.cli import register_script
 from unitorch.cli.models.mistral import (
     pretrained_mistral_infos,
     pretrained_mistral_extensions_infos,
@@ -56,7 +59,7 @@ class MistralForGenerationPipeline(_MistralForGeneration):
     def from_core_configure(
         cls,
         config,
-        pretrained_name: Optional[str] = "default-mistral",
+        pretrained_name: Optional[str] = "mistral-7b-instruct-v0.1",
         config_path: Optional[str] = None,
         vocab_path: Optional[str] = None,
         quant_config_path: Optional[str] = None,
@@ -211,3 +214,45 @@ class MistralForGenerationPipeline(_MistralForGeneration):
         decoded = self.processor.detokenize(outputs.sequences)
 
         return decoded[0].strip()
+
+
+@register_script("core/script/generation/mistral")
+class MistralForGenerationScript(GenericScript):
+    def __init__(self, config: CoreConfigureParser):
+        self.config = config
+
+    def launch(self, **kwargs):
+        config = self.config
+
+        pipe = MistralForGenerationPipeline.from_core_configure(config)
+
+        config.set_default_section("core/script/generation/mistral")
+
+        data_file = config.getoption("data_file", None)
+        names = config.getoption("names", None)
+        if isinstance(names, str) and names.strip() == "*":
+            names = None
+        if isinstance(names, str):
+            names = re.split(r"[,;]", names)
+            names = [n.strip() for n in names]
+
+        prompt_col = config.getoption("prompt_col", None)
+
+        data = pd.read_csv(
+            data_file,
+            names=names,
+            sep="\t",
+            quoting=3,
+            header=None,
+        )
+
+        assert prompt_col in data.columns, f"Column {prompt_col} not found in data."
+
+        results = []
+        for prompt in data[prompt_col]:
+            results.append(pipe(prompt))
+
+        data["result"] = results
+
+        output_file = config.getoption("output_file", None)
+        data.to_csv(output_file, sep="\t", header=None, index=None, quoting=3)

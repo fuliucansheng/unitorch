@@ -59,7 +59,7 @@ class XLMRobertaProcessor(_XLMRobertaProcessor):
             dict: The processed arguments for initializing the processor.
         """
         config.set_default_section("core/process/xlm_roberta")
-        pretrained_name = config.getoption("pretrained_name", "default-xlm-roberta")
+        pretrained_name = config.getoption("pretrained_name", "xlm-roberta-base")
         vocab_path = config.getoption("vocab_path", None)
         vocab_path = pop_value(
             vocab_path,

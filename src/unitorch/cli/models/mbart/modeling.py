@@ -55,7 +55,7 @@ class MBartForGeneration(_MBartForGeneration):
             MBartForGeneration: An instance of MBartForGeneration.
         """
         config.set_default_section("core/model/generation/mbart")
-        pretrained_name = config.getoption("pretrained_name", "default-mbart")
+        pretrained_name = config.getoption("pretrained_name", "mbart-large-cc25")
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
             config_path,

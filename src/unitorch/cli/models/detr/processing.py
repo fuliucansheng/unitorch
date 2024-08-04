@@ -36,7 +36,7 @@ class DetrProcessor(_DetrProcessor):
     @add_default_section_for_init("core/process/detr")
     def from_core_configure(cls, config, **kwargs):
         config.set_default_section("core/process/detr")
-        pretrained_name = config.getoption("pretrained_name", "default-detr")
+        pretrained_name = config.getoption("pretrained_name", "detr-resnet-50")
         vision_config_path = config.getoption("vision_config_path", None)
         vision_config_path = pop_value(
             vision_config_path,

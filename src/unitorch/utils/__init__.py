@@ -44,6 +44,7 @@ from unitorch.utils.image_utils import (
 )
 from unitorch.utils.video_utils import tensor2vid
 from unitorch.utils.import_utils import (
+    reload_module,
     is_deepspeed_available,
     is_megatron_available,
     is_fastapi_available,

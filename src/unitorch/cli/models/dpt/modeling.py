@@ -20,7 +20,7 @@ from unitorch.cli.models import segmentation_model_decorator
 from unitorch.cli.models.dpt import pretrained_dpt_infos
 
 
-@register_model("core/model/depth_estimation/dpt", segmentation_model_decorator)
+@register_model("core/model/dpt", segmentation_model_decorator)
 class DPTForDepthEstimation(_DPTForDepthEstimation):
     def __init__(
         self,
@@ -31,10 +31,10 @@ class DPTForDepthEstimation(_DPTForDepthEstimation):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/depth_estimation/dpt")
+    @add_default_section_for_init("core/model/dpt")
     def from_core_configure(cls, config, **kwargs):
-        config.set_default_section("core/model/depth_estimation/dpt")
-        pretrained_name = config.getoption("pretrained_name", "default-dpt")
+        config.set_default_section("core/model/dpt")
+        pretrained_name = config.getoption("pretrained_name", "dpt-large")
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
             config_path,
@@ -62,7 +62,7 @@ class DPTForDepthEstimation(_DPTForDepthEstimation):
     ):
         raise NotImplementedError
 
-    @add_default_section_for_function("core/model/depth_estimation/dpt")
+    @add_default_section_for_function("core/model/dpt")
     @torch.no_grad()
     def segment(
         self,

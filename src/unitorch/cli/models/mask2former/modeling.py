@@ -35,7 +35,9 @@ class Mask2FormerForSegmentation(_Mask2FormerForSegmentation):
     @add_default_section_for_init("core/model/segmentation/mask2former")
     def from_core_configure(cls, config, **kwargs):
         config.set_default_section("core/model/segmentation/mask2former")
-        pretrained_name = config.getoption("pretrained_name", "default-mask2former")
+        pretrained_name = config.getoption(
+            "pretrained_name", "mask2former-swin-tiny-ade-semantic"
+        )
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
             config_path,

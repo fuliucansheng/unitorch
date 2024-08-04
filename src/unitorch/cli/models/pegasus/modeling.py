@@ -51,7 +51,7 @@ class PegasusForGeneration(_PegasusForGeneration):
             PegasusForGeneration: The initialized PegasusForGeneration instance.
         """
         config.set_default_section("core/model/generation/pegasus")
-        pretrained_name = config.getoption("pretrained_name", "default-pegasus")
+        pretrained_name = config.getoption("pretrained_name", "pegasus-xsum")
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
             config_path,

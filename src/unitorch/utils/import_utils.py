@@ -8,6 +8,15 @@ import importlib
 import importlib.metadata as importlib_metadata
 from unitorch import is_offline_debug_mode
 
+
+def reload_module(module):
+    for name in dir(module):
+        attr = getattr(module, name)
+        if isinstance(attr, type(sys)) and attr.__name__.startswith(module.__name__):
+            reload_module(attr)
+    importlib.reload(module)
+
+
 # deepspeed
 _deepspeed_available = importlib.util.find_spec("deepspeed") is not None
 try:

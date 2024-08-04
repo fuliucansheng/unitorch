@@ -3,10 +3,6 @@
 
 # pretrained infos
 pretrained_mt5_infos = {
-    "default-mt5": {
-        "config": "https://huggingface.co/google/mt5-base/resolve/main/config.json",
-        "vocab": "https://huggingface.co/google/mt5-base/resolve/main/spiece.model",
-    },
     "mt5-base": {
         "config": "https://huggingface.co/google/mt5-base/resolve/main/config.json",
         "vocab": "https://huggingface.co/google/mt5-base/resolve/main/spiece.model",

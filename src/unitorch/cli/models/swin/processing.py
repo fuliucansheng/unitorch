@@ -51,7 +51,9 @@ class SwinProcessor(_SwinProcessor):
             dict: The SwinProcessor configuration.
         """
         config.set_default_section("core/process/swin")
-        pretrained_name = config.getoption("pretrained_name", "default-swin")
+        pretrained_name = config.getoption(
+            "pretrained_name", "swin-tiny-patch4-window7-224"
+        )
         vision_config_path = config.getoption("vision_config_path", None)
         vision_config_path = pop_value(
             vision_config_path,

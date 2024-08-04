@@ -3,11 +3,6 @@
 
 # pretrained infos
 pretrained_llava_infos = {
-    "default-llava-v1.6": {
-        "config": "https://huggingface.co/llava-hf/llava-v1.6-mistral-7b-hf/resolve/main/config.json",
-        "vocab": "https://huggingface.co/llava-hf/llava-v1.6-mistral-7b-hf/resolve/main/tokenizer.model",
-        "vision_config": "https://huggingface.co/llava-hf/llava-v1.6-mistral-7b-hf/resolve/main/preprocessor_config.json",
-    },
     "llava-v1.6-mistral-7b-hf": {
         "config": "https://huggingface.co/llava-hf/llava-v1.6-mistral-7b-hf/resolve/main/config.json",
         "vocab": "https://huggingface.co/llava-hf/llava-v1.6-mistral-7b-hf/resolve/main/tokenizer.model",

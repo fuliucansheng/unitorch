@@ -78,7 +78,7 @@ class LlamaLoraForClassification(_LlamaLoraForClassification):
             LlamaLoraForClassification: The initialized LlamaLoraForClassification instance.
         """
         config.set_default_section("core/model/classification/peft/lora/llama")
-        pretrained_name = config.getoption("pretrained_name", "default-llama")
+        pretrained_name = config.getoption("pretrained_name", "llama-7b")
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
             config_path,
@@ -215,7 +215,7 @@ class LlamaLoraForGeneration(_LlamaLoraForGeneration):
             LlamaLoraForGeneration: The initialized LlamaLoraForGeneration instance.
         """
         config.set_default_section("core/model/generation/peft/lora/llama")
-        pretrained_name = config.getoption("pretrained_name", "default-llama")
+        pretrained_name = config.getoption("pretrained_name", "llama-7b")
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
             config_path,

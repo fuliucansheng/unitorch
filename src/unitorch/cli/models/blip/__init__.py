@@ -3,11 +3,6 @@
 
 # pretrained infos
 pretrained_blip_infos = {
-    "default-blip": {
-        "config": "https://huggingface.co/Salesforce/blip-vqa-base/resolve/main/config.json",
-        "vision_config": "https://huggingface.co/Salesforce/blip-vqa-base/resolve/main/preprocessor_config.json",
-        "vocab": "https://huggingface.co/Salesforce/blip-vqa-base/resolve/main/vocab.txt",
-    },
     "blip-vqa-base": {
         "config": "https://huggingface.co/Salesforce/blip-vqa-base/resolve/main/config.json",
         "vision_config": "https://huggingface.co/Salesforce/blip-vqa-base/resolve/main/preprocessor_config.json",

@@ -3,11 +3,6 @@
 
 # pretrained infos
 pretrained_chinese_clip_infos = {
-    "default-chinese-clip": {
-        "config": "https://huggingface.co/OFA-Sys/chinese-clip-vit-base-patch16/resolve/main/config.json",
-        "vision_config": "https://huggingface.co/OFA-Sys/chinese-clip-vit-base-patch16/resolve/main/preprocessor_config.json",
-        "vocab": "https://huggingface.co/OFA-Sys/chinese-clip-vit-base-patch16/resolve/main/vocab.txt",
-    },
     "chinese-clip-vit-base-patch16": {
         "config": "https://huggingface.co/OFA-Sys/chinese-clip-vit-base-patch16/resolve/main/config.json",
         "vision_config": "https://huggingface.co/OFA-Sys/chinese-clip-vit-base-patch16/resolve/main/preprocessor_config.json",

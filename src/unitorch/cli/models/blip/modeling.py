@@ -67,7 +67,9 @@ class BlipForPretrain(_BlipForPretrain):
             BlipForPretrain: An instance of BlipForPretrain.
         """
         config.set_default_section("core/model/pretrain/blip")
-        pretrained_name = config.getoption("pretrained_name", "default-blip")
+        pretrained_name = config.getoption(
+            "pretrained_name", "blip-image-captioning-base"
+        )
 
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
@@ -172,7 +174,9 @@ class BlipForClassification(_BlipForClassification):
             BlipForClassification: An instance of BlipForClassification.
         """
         config.set_default_section("core/model/classification/blip")
-        pretrained_name = config.getoption("pretrained_name", "default-blip")
+        pretrained_name = config.getoption(
+            "pretrained_name", "blip-image-captioning-base"
+        )
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
             config_path,
@@ -277,7 +281,9 @@ class BlipForTextClassification(_BlipForTextClassification):
             BlipForTextClassification: An instance of BlipForTextClassification.
         """
         config.set_default_section("core/model/classification/blip/text")
-        pretrained_name = config.getoption("pretrained_name", "default-blip")
+        pretrained_name = config.getoption(
+            "pretrained_name", "blip-image-captioning-base"
+        )
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
             config_path,
@@ -379,7 +385,9 @@ class BlipForImageClassification(_BlipForImageClassification):
             BlipForImageClassification: An instance of BlipForImageClassification.
         """
         config.set_default_section("core/model/classification/blip/image")
-        pretrained_name = config.getoption("pretrained_name", "default-blip")
+        pretrained_name = config.getoption(
+            "pretrained_name", "blip-image-captioning-base"
+        )
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
             config_path,
@@ -464,7 +472,9 @@ class BlipForImageCaption(_BlipForImageCaption):
             BlipForImageCaption: An instance of BlipForImageCaption.
         """
         config.set_default_section("core/model/caption/blip")
-        pretrained_name = config.getoption("pretrained_name", "default-blip")
+        pretrained_name = config.getoption(
+            "pretrained_name", "blip-image-captioning-base"
+        )
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
             config_path,

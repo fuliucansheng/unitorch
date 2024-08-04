@@ -3,10 +3,6 @@
 
 # pretrained infos
 pretrained_sam_infos = {
-    "default-sam": {
-        "config": "https://huggingface.co/facebook/sam-vit-base/resolve/main/config.json",
-        "vision_config": "https://huggingface.co/facebook/sam-vit-base/resolve/main/preprocessor_config.json",
-    },
     "sam-vit-base": {
         "config": "https://huggingface.co/facebook/sam-vit-base/resolve/main/config.json",
         "vision_config": "https://huggingface.co/facebook/sam-vit-base/resolve/main/preprocessor_config.json",

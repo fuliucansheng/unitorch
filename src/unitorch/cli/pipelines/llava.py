@@ -3,6 +3,7 @@
 
 import re
 import torch
+import pandas as pd
 from PIL import Image
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from unitorch.utils import is_remote_url
@@ -16,6 +17,8 @@ from unitorch.cli import (
     add_default_section_for_init,
     add_default_section_for_function,
 )
+from unitorch.cli import CoreConfigureParser, GenericScript
+from unitorch.cli import register_script
 from unitorch.cli.models.llava import (
     pretrained_llava_infos,
     pretrained_llava_extensions_infos,
@@ -58,7 +61,7 @@ class LlavaMistralClipForGenerationPipeline(_LlavaMistralClipForGeneration):
     def from_core_configure(
         cls,
         config,
-        pretrained_name: Optional[str] = "default-llava-v1.6",
+        pretrained_name: Optional[str] = "llava-v1.6-mistral-7b-hf",
         config_path: Optional[str] = None,
         vision_config_path: Optional[str] = None,
         vocab_path: Optional[str] = None,
@@ -226,3 +229,47 @@ class LlavaMistralClipForGenerationPipeline(_LlavaMistralClipForGeneration):
         decoded = self.processor.detokenize(outputs.sequences)
 
         return decoded[0].strip()
+
+
+@register_script("core/script/generation/llava/mistral_clip")
+class LlavaMistralClipForGenerationScript(GenericScript):
+    def __init__(self, config: CoreConfigureParser):
+        self.config = config
+
+    def launch(self, **kwargs):
+        config = self.config
+
+        pipe = LlavaMistralClipForGenerationPipeline.from_core_configure(config)
+
+        config.set_default_section("core/script/generation/llava/mistral_clip")
+
+        data_file = config.getoption("data_file", None)
+        names = config.getoption("names", None)
+        if isinstance(names, str) and names.strip() == "*":
+            names = None
+        if isinstance(names, str):
+            names = re.split(r"[,;]", names)
+            names = [n.strip() for n in names]
+
+        prompt_col = config.getoption("prompt_col", None)
+        image_col = config.getoption("image_col", None)
+
+        data = pd.read_csv(
+            data_file,
+            names=names,
+            sep="\t",
+            quoting=3,
+            header=None,
+        )
+
+        assert prompt_col in data.columns, f"Column {prompt_col} not found in data."
+        assert image_col in data.columns, f"Column {image_col} not found in data."
+
+        results = []
+        for prompt, image in zip(data[prompt_col], data[image_col]):
+            results.append(pipe(prompt, image))
+
+        data["result"] = results
+
+        output_file = config.getoption("output_file", None)
+        data.to_csv(output_file, sep="\t", header=None, index=None, quoting=3)

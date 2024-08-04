@@ -60,7 +60,7 @@ class PegasusProcessor(_PegasusProcessor):
             PegasusProcessor: The initialized PegasusProcessor instance.
         """
         config.set_default_section("core/process/pegasus")
-        pretrained_name = config.getoption("pretrained_name", "default-pegasus")
+        pretrained_name = config.getoption("pretrained_name", "pegasus-xsum")
         vocab_path = config.getoption("vocab_path", None)
         vocab_path = pop_value(
             vocab_path,

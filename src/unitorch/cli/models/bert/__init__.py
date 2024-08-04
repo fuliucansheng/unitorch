@@ -4,10 +4,6 @@
 # pretrained infos
 
 pretrained_bert_infos = {
-    "default-bert": {
-        "config": "https://huggingface.co/bert-base-uncased/resolve/main/config.json",
-        "vocab": "https://huggingface.co/bert-base-uncased/resolve/main/vocab.txt",
-    },
     "bert-base-uncased": {
         "config": "https://huggingface.co/bert-base-uncased/resolve/main/config.json",
         "vocab": "https://huggingface.co/bert-base-uncased/resolve/main/vocab.txt",

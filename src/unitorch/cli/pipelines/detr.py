@@ -4,6 +4,7 @@
 import re
 import torch
 import numpy as np
+import pandas as pd
 from PIL import Image, ImageDraw
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from unitorch.models.detr import (
@@ -16,6 +17,8 @@ from unitorch.cli import (
     add_default_section_for_init,
     add_default_section_for_function,
 )
+from unitorch.cli import CoreConfigureParser, GenericScript
+from unitorch.cli import register_script
 from unitorch.cli.models.detr import pretrained_detr_infos
 
 
@@ -45,7 +48,7 @@ class DetrForDetectionPipeline(_DetrForDetection):
     def from_core_configure(
         cls,
         config,
-        pretrained_name: Optional[str] = "default-detr",
+        pretrained_name: Optional[str] = "detr-resnet-50",
         config_path: Optional[str] = None,
         vision_config_path: Optional[str] = None,
         pretrained_weight_path: Optional[str] = None,

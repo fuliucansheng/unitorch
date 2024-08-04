@@ -71,7 +71,7 @@ class BertProcessor(_BertProcessor):
             BertProcessor: An instance of BertProcessor.
         """
         config.set_default_section("core/process/bert")
-        pretrained_name = config.getoption("pretrained_name", "default-bert")
+        pretrained_name = config.getoption("pretrained_name", "bert-base-uncased")
         vocab_path = config.getoption("vocab_path", None)
         vocab_path = pop_value(
             vocab_path,

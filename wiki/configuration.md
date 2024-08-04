@@ -54,7 +54,7 @@ class BartForGeneration(_BartForGeneration):
     @add_default_section_for_init("core/model/generation/bart")
     def from_core_configure(cls, config, **kwargs):
         config.set_default_section("core/model/generation/bart")
-        pretrained_name = config.getoption("pretrained_name", "default-bart")
+        pretrained_name = config.getoption("pretrained_name", "bart-base")
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
             config_path,

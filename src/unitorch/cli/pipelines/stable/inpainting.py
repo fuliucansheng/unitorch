@@ -1,9 +1,12 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
+import re
 import json
 import logging
 import torch
+import hashlib
+import pandas as pd
 from PIL import Image
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from diffusers.utils import numpy_to_pil
@@ -30,6 +33,8 @@ from unitorch.cli import (
     add_default_section_for_init,
     add_default_section_for_function,
 )
+from unitorch.cli import CoreConfigureParser, GenericScript
+from unitorch.cli import register_script
 from unitorch.cli.models.diffusers import (
     pretrained_stable_infos,
     pretrained_stable_extensions_infos,
@@ -389,3 +394,71 @@ class StableForImageInpaintingPipeline(GenericStableModel):
         images = torch.from_numpy(outputs.images)
         images = numpy_to_pil(images.cpu().numpy())
         return images[0]
+
+
+@register_script("core/script/stable/inpainting")
+class StableForImageInpaintingScript(GenericScript):
+    def __init__(self, config: CoreConfigureParser):
+        self.config = config
+
+    def launch(self, **kwargs):
+        config = self.config
+
+        pipe = StableForImageInpaintingPipeline.from_core_configure(config)
+
+        config.set_default_section("core/script/stable/inpainting")
+
+        data_file = config.getoption("data_file", None)
+        names = config.getoption("names", None)
+        if isinstance(names, str) and names.strip() == "*":
+            names = None
+        if isinstance(names, str):
+            names = re.split(r"[,;]", names)
+            names = [n.strip() for n in names]
+
+        prompt_col = config.getoption("prompt_col", None)
+        neg_prompt_col = config.getoption("neg_prompt_col", None)
+        image_col = config.getoption("image_col", None)
+        mask_col = config.getoption("mask_col", None)
+
+        data = pd.read_csv(
+            data_file,
+            names=names,
+            sep="\t",
+            quoting=3,
+            header=None,
+        )
+
+        assert prompt_col in data.columns, f"Column {prompt_col} not found in data."
+        assert image_col in data.columns, f"Column {image_col} not found in data."
+        assert mask_col in data.columns, f"Column {mask_col} not found in data."
+
+        output_folder = config.getoption("output_folder", None)
+        output_file = config.getoption("output_file", None)
+
+        def save(image):
+            name = hashlib.md5(image.tobytes()).hexdigest() + ".jpg"
+            image.save(f"{output_folder}/{name}")
+            return name
+
+        results = []
+        if neg_prompt_col in data.columns:
+            for prompt, neg_prompt, image, mask in zip(
+                data[prompt_col], data[neg_prompt_col], data[image_col], data[mask_col]
+            ):
+                image = Image.open(image)
+                mask = Image.open(mask)
+                result = pipe(prompt, image, mask, neg_text=neg_prompt)
+                results.append(save(result))
+        else:
+            for prompt, image, mask in zip(
+                data[prompt_col], data[image_col], data[mask_col]
+            ):
+                image = Image.open(image)
+                mask = Image.open(mask)
+                result = pipe(prompt, image, mask)
+                results.append(save(result))
+
+        data["result"] = results
+
+        data.to_csv(output_file, sep="\t", header=None, index=None, quoting=3)

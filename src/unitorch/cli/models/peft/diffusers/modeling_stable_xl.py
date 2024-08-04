@@ -45,6 +45,8 @@ class StableXLLoraForText2ImageGeneration(_StableXLLoraForText2ImageGeneration):
         num_infer_timesteps: Optional[int] = 50,
         snr_gamma: Optional[float] = 5.0,
         lora_r: Optional[int] = 16,
+        enable_text_adapter: Optional[bool] = True,
+        enable_unet_adapter: Optional[bool] = True,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
@@ -61,6 +63,8 @@ class StableXLLoraForText2ImageGeneration(_StableXLLoraForText2ImageGeneration):
             num_infer_timesteps=num_infer_timesteps,
             snr_gamma=snr_gamma,
             lora_r=lora_r,
+            enable_text_adapter=enable_text_adapter,
+            enable_unet_adapter=enable_unet_adapter,
             seed=seed,
         )
 
@@ -119,6 +123,8 @@ class StableXLLoraForText2ImageGeneration(_StableXLLoraForText2ImageGeneration):
         num_infer_timesteps = config.getoption("num_infer_timesteps", 50)
         snr_gamma = config.getoption("snr_gamma", 5.0)
         lora_r = config.getoption("lora_r", 16)
+        enable_text_adapter = config.getoption("enable_text_adapter", True)
+        enable_unet_adapter = config.getoption("enable_unet_adapter", True)
         seed = config.getoption("seed", 1123)
 
         inst = cls(
@@ -135,6 +141,8 @@ class StableXLLoraForText2ImageGeneration(_StableXLLoraForText2ImageGeneration):
             num_infer_timesteps=num_infer_timesteps,
             snr_gamma=snr_gamma,
             lora_r=lora_r,
+            enable_text_adapter=enable_text_adapter,
+            enable_unet_adapter=enable_unet_adapter,
             seed=seed,
         )
 
@@ -151,15 +159,31 @@ class StableXLLoraForText2ImageGeneration(_StableXLLoraForText2ImageGeneration):
                         "to_q.": "to_q.base_layer.",
                         "to_v.": "to_v.base_layer.",
                         "to_out.0.": "to_out.0.base_layer.",
-                    },
+                    }
+                    if enable_unet_adapter
+                    else {},
                 ),
                 load_weight(
                     nested_dict_value(pretrained_infos, "text", "weight"),
                     prefix_keys={"": "text."},
+                    replace_keys={
+                        "q_proj.": "q_proj.base_layer.",
+                        "v_proj.": "v_proj.base_layer.",
+                        "out_proj.": "out_proj.base_layer.",
+                    }
+                    if enable_text_adapter
+                    else {},
                 ),
                 load_weight(
                     nested_dict_value(pretrained_infos, "text2", "weight"),
                     prefix_keys={"": "text2."},
+                    replace_keys={
+                        "q_proj.": "q_proj.base_layer.",
+                        "v_proj.": "v_proj.base_layer.",
+                        "out_proj.": "out_proj.base_layer.",
+                    }
+                    if enable_text_adapter
+                    else {},
                 ),
                 load_weight(
                     nested_dict_value(pretrained_infos, "vae", "weight"),
@@ -256,6 +280,8 @@ class StableXLLoraForImage2ImageGeneration(_StableXLLoraForImage2ImageGeneration
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         lora_r: Optional[int] = 16,
+        enable_text_adapter: Optional[bool] = True,
+        enable_unet_adapter: Optional[bool] = True,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
@@ -271,6 +297,8 @@ class StableXLLoraForImage2ImageGeneration(_StableXLLoraForImage2ImageGeneration
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             lora_r=lora_r,
+            enable_text_adapter=enable_text_adapter,
+            enable_unet_adapter=enable_unet_adapter,
             seed=seed,
         )
 
@@ -330,6 +358,8 @@ class StableXLLoraForImage2ImageGeneration(_StableXLLoraForImage2ImageGeneration
         num_train_timesteps = config.getoption("num_train_timesteps", 1000)
         num_infer_timesteps = config.getoption("num_infer_timesteps", 50)
         lora_r = config.getoption("lora_r", 16)
+        enable_text_adapter = config.getoption("enable_text_adapter", True)
+        enable_unet_adapter = config.getoption("enable_unet_adapter", True)
         seed = config.getoption("seed", 1123)
 
         inst = cls(
@@ -345,6 +375,8 @@ class StableXLLoraForImage2ImageGeneration(_StableXLLoraForImage2ImageGeneration
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             lora_r=lora_r,
+            enable_text_adapter=enable_text_adapter,
+            enable_unet_adapter=enable_unet_adapter,
             seed=seed,
         )
 
@@ -361,15 +393,31 @@ class StableXLLoraForImage2ImageGeneration(_StableXLLoraForImage2ImageGeneration
                         "to_q.": "to_q.base_layer.",
                         "to_v.": "to_v.base_layer.",
                         "to_out.0.": "to_out.0.base_layer.",
-                    },
+                    }
+                    if enable_unet_adapter
+                    else {},
                 ),
                 load_weight(
                     nested_dict_value(pretrained_infos, "text", "weight"),
                     prefix_keys={"": "text."},
+                    replace_keys={
+                        "q_proj.": "q_proj.base_layer.",
+                        "v_proj.": "v_proj.base_layer.",
+                        "out_proj.": "out_proj.base_layer.",
+                    }
+                    if enable_text_adapter
+                    else {},
                 ),
                 load_weight(
                     nested_dict_value(pretrained_infos, "text2", "weight"),
                     prefix_keys={"": "text2."},
+                    replace_keys={
+                        "q_proj.": "q_proj.base_layer.",
+                        "v_proj.": "v_proj.base_layer.",
+                        "out_proj.": "out_proj.base_layer.",
+                    }
+                    if enable_text_adapter
+                    else {},
                 ),
                 load_weight(
                     nested_dict_value(pretrained_infos, "vae", "weight"),
@@ -452,6 +500,8 @@ class StableXLLoraForImageInpainting(_StableXLLoraForImageInpainting):
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         lora_r: Optional[int] = 16,
+        enable_text_adapter: Optional[bool] = True,
+        enable_unet_adapter: Optional[bool] = True,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
@@ -467,6 +517,8 @@ class StableXLLoraForImageInpainting(_StableXLLoraForImageInpainting):
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             lora_r=lora_r,
+            enable_text_adapter=enable_text_adapter,
+            enable_unet_adapter=enable_unet_adapter,
             seed=seed,
         )
 
@@ -524,6 +576,8 @@ class StableXLLoraForImageInpainting(_StableXLLoraForImageInpainting):
         num_train_timesteps = config.getoption("num_train_timesteps", 1000)
         num_infer_timesteps = config.getoption("num_infer_timesteps", 50)
         lora_r = config.getoption("lora_r", 16)
+        enable_text_adapter = config.getoption("enable_text_adapter", True)
+        enable_unet_adapter = config.getoption("enable_unet_adapter", True)
         seed = config.getoption("seed", 1123)
 
         inst = cls(
@@ -539,6 +593,8 @@ class StableXLLoraForImageInpainting(_StableXLLoraForImageInpainting):
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             lora_r=lora_r,
+            enable_text_adapter=enable_text_adapter,
+            enable_unet_adapter=enable_unet_adapter,
             seed=seed,
         )
 
@@ -550,14 +606,36 @@ class StableXLLoraForImageInpainting(_StableXLLoraForImageInpainting):
                 load_weight(
                     nested_dict_value(pretrained_infos, "unet", "weight"),
                     prefix_keys={"": "unet."},
+                    replace_keys={
+                        "to_k.": "to_k.base_layer.",
+                        "to_q.": "to_q.base_layer.",
+                        "to_v.": "to_v.base_layer.",
+                        "to_out.0.": "to_out.0.base_layer.",
+                    }
+                    if enable_unet_adapter
+                    else {},
                 ),
                 load_weight(
                     nested_dict_value(pretrained_infos, "text", "weight"),
                     prefix_keys={"": "text."},
+                    replace_keys={
+                        "q_proj.": "q_proj.base_layer.",
+                        "v_proj.": "v_proj.base_layer.",
+                        "out_proj.": "out_proj.base_layer.",
+                    }
+                    if enable_text_adapter
+                    else {},
                 ),
                 load_weight(
                     nested_dict_value(pretrained_infos, "text2", "weight"),
                     prefix_keys={"": "text2."},
+                    replace_keys={
+                        "q_proj.": "q_proj.base_layer.",
+                        "v_proj.": "v_proj.base_layer.",
+                        "out_proj.": "out_proj.base_layer.",
+                    }
+                    if enable_text_adapter
+                    else {},
                 ),
                 load_weight(
                     nested_dict_value(pretrained_infos, "vae", "weight"),

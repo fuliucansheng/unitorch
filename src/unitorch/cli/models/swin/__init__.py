@@ -3,10 +3,6 @@
 
 # pretrained infos
 pretrained_swin_infos = {
-    "default-swin": {
-        "config": "https://huggingface.co/microsoft/swin-tiny-patch4-window7-224/resolve/main/config.json",
-        "vision_config": "https://huggingface.co/microsoft/swin-tiny-patch4-window7-224/resolve/main/preprocessor_config.json",
-    },
     "swin-tiny-patch4-window7-224": {
         "config": "https://huggingface.co/microsoft/swin-tiny-patch4-window7-224/resolve/main/config.json",
         "vision_config": "https://huggingface.co/microsoft/swin-tiny-patch4-window7-224/resolve/main/preprocessor_config.json",

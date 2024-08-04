@@ -4,6 +4,8 @@
 import re
 import torch
 import numpy as np
+import pandas as pd
+import hashlib
 from PIL import Image, ImageDraw
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from unitorch.utils import pop_value, nested_dict_value
@@ -16,6 +18,8 @@ from unitorch.cli import (
     add_default_section_for_init,
     add_default_section_for_function,
 )
+from unitorch.cli import CoreConfigureParser, GenericScript
+from unitorch.cli import register_script
 
 
 class BRIAForSegmentationPipeline(_BRIAForSegmentation):
@@ -88,3 +92,52 @@ class BRIAForSegmentationPipeline(_BRIAForSegmentation):
         result_image = result_image.resize(image.size)
 
         return result_image
+
+
+@register_script("core/script/segmentation/bria")
+class BRIAForSegmentationScript(GenericScript):
+    def __init__(self, config: CoreConfigureParser):
+        self.config = config
+
+    def launch(self, **kwargs):
+        config = self.config
+
+        pipe = BRIAForSegmentationPipeline.from_core_configure(config, **kwargs)
+
+        config.set_default_section("core/script/segmentation/bria")
+
+        data_file = config.getoption("data_file", None)
+        names = config.getoption("names", None)
+        if isinstance(names, str) and names.strip() == "*":
+            names = None
+        if isinstance(names, str):
+            names = re.split(r"[,;]", names)
+            names = [n.strip() for n in names]
+
+        image_col = config.getoption("image_col", None)
+
+        data = pd.read_csv(
+            data_file,
+            names=names,
+            sep="\t",
+            quoting=3,
+            header=None,
+        )
+
+        assert image_col in data.columns, f"Column {image_col} not found in data."
+
+        output_folder = config.getoption("output_folder", None)
+        output_file = config.getoption("output_file", None)
+
+        def save(image):
+            name = hashlib.md5(image.tobytes()).hexdigest() + ".jpg"
+            image.save(f"{output_folder}/{name}")
+            return name
+
+        results = []
+        for image in data[image_col]:
+            output = pipe(image)
+            results.append(save(output))
+
+        data["result"] = results
+        data.to_csv(output_file, sep="\t", header=None, index=None, quoting=3)

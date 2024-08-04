@@ -54,7 +54,7 @@ class DinoV2ForImageClassification(_DinoV2ForImageClassification):
             DinoV2ForImageClassification: The initialized DinoV2ForImageClassification instance.
         """
         config.set_default_section("core/model/classification/dinov2")
-        pretrained_name = config.getoption("pretrained_name", "default-dinov2")
+        pretrained_name = config.getoption("pretrained_name", "dinov2-base")
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
             config_path,

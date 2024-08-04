@@ -47,7 +47,7 @@ class SamForSegmentation(_SamForSegmentation):
     @add_default_section_for_init("core/model/segmentation/sam")
     def from_core_configure(cls, config, **kwargs):
         config.set_default_section("core/model/segmentation/sam")
-        pretrained_name = config.getoption("pretrained_name", "default-sam")
+        pretrained_name = config.getoption("pretrained_name", "sam-vit-base")
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
             config_path,

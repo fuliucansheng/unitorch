@@ -4,10 +4,6 @@
 # pretrained infos
 pretrained_mistral_infos = {
     # mistral
-    "default-mistral": {
-        "config": "https://huggingface.co/filipealmeida/Mistral-7B-Instruct-v0.1-sharded/resolve/main/config.json",
-        "vocab": "https://huggingface.co/filipealmeida/Mistral-7B-Instruct-v0.1-sharded/resolve/main/tokenizer.model",
-    },
     "mistral-7b-instruct-v0.1": {
         "config": "https://huggingface.co/filipealmeida/Mistral-7B-Instruct-v0.1-sharded/resolve/main/config.json",
         "vocab": "https://huggingface.co/filipealmeida/Mistral-7B-Instruct-v0.1-sharded/resolve/main/tokenizer.model",

@@ -53,7 +53,9 @@ class SwinForImageClassification(_SwinForImageClassification):
             SwinForImageClassification: An instance of the SwinForImageClassification model.
         """
         config.set_default_section("core/model/classification/swin")
-        pretrained_name = config.getoption("pretrained_name", "default-swin")
+        pretrained_name = config.getoption(
+            "pretrained_name", "swin-tiny-patch4-window7-224"
+        )
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
             config_path,

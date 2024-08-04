@@ -52,7 +52,9 @@ class ViTForImageClassification(_ViTForImageClassification):
             ViTForImageClassification: The initialized ViTForImageClassification instance.
         """
         config.set_default_section("core/model/classification/vit")
-        pretrained_name = config.getoption("pretrained_name", "default-vit")
+        pretrained_name = config.getoption(
+            "pretrained_name", "vit-base-patch16-224-in21k"
+        )
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
             config_path,

@@ -57,7 +57,7 @@ class XLMRobertaForClassification(_XLMRobertaForClassification):
             XLMRobertaForClassification: The instantiated XLMRobertaForClassification model.
         """
         config.set_default_section("core/model/classification/xlm_roberta")
-        pretrained_name = config.getoption("pretrained_name", "default-xlm-roberta")
+        pretrained_name = config.getoption("pretrained_name", "xlm-roberta-base")
         config_path = config.getoption("config_path", None)
         num_classes = config.getoption("num_classes", 1)
 

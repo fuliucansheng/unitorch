@@ -71,6 +71,8 @@ class GenericStableXLLoraModel(GenericPeftModel, QuantizationMixin):
         snr_gamma: Optional[float] = 5.0,
         lora_r: Optional[int] = 16,
         lora_alpha: Optional[int] = 32,
+        enable_text_adapter: Optional[bool] = True,
+        enable_unet_adapter: Optional[bool] = True,
         seed: Optional[int] = 1123,
     ):
         super().__init__()
@@ -115,9 +117,21 @@ class GenericStableXLLoraModel(GenericPeftModel, QuantizationMixin):
             r=lora_r,
             lora_alpha=lora_alpha,
             init_lora_weights="gaussian",
-            target_modules=["to_k", "to_q", "to_v", "to_out.0"],
+            target_modules=[
+                "to_k",
+                "to_q",
+                "to_v",
+                "to_out.0",
+                "q_proj",
+                "v_proj",
+                "out_proj",
+            ],
         )
-        self.unet.add_adapter(lora_config)
+        if enable_text_adapter:
+            self.text.add_adapter(lora_config)
+            self.text2.add_adapter(lora_config)
+        if enable_unet_adapter:
+            self.unet.add_adapter(lora_config)
 
         self.scheduler.set_timesteps(num_inference_steps=self.num_infer_timesteps)
 
@@ -139,6 +153,8 @@ class StableXLLoraForText2ImageGeneration(GenericStableXLLoraModel):
         snr_gamma: Optional[float] = 5.0,
         lora_r: Optional[int] = 16,
         lora_alpha: Optional[int] = 32,
+        enable_text_adapter: Optional[bool] = True,
+        enable_unet_adapter: Optional[bool] = True,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
@@ -156,6 +172,8 @@ class StableXLLoraForText2ImageGeneration(GenericStableXLLoraModel):
             snr_gamma=snr_gamma,
             lora_r=lora_r,
             lora_alpha=lora_alpha,
+            enable_text_adapter=enable_text_adapter,
+            enable_unet_adapter=enable_unet_adapter,
             seed=seed,
         )
 
@@ -325,6 +343,8 @@ class StableXLLoraForImage2ImageGeneration(GenericStableXLLoraModel):
         snr_gamma: Optional[float] = 5.0,
         lora_r: Optional[int] = 16,
         lora_alpha: Optional[int] = 32,
+        enable_text_adapter: Optional[bool] = True,
+        enable_unet_adapter: Optional[bool] = True,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
@@ -342,6 +362,8 @@ class StableXLLoraForImage2ImageGeneration(GenericStableXLLoraModel):
             snr_gamma=snr_gamma,
             lora_r=lora_r,
             lora_alpha=lora_alpha,
+            enable_text_adapter=enable_text_adapter,
+            enable_unet_adapter=enable_unet_adapter,
             seed=seed,
         )
 
@@ -440,6 +462,8 @@ class StableXLLoraForImageInpainting(GenericStableXLLoraModel):
         snr_gamma: Optional[float] = 5.0,
         lora_r: Optional[int] = 16,
         lora_alpha: Optional[int] = 32,
+        enable_text_adapter: Optional[bool] = True,
+        enable_unet_adapter: Optional[bool] = True,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
@@ -457,6 +481,8 @@ class StableXLLoraForImageInpainting(GenericStableXLLoraModel):
             snr_gamma=snr_gamma,
             lora_r=lora_r,
             lora_alpha=lora_alpha,
+            enable_text_adapter=enable_text_adapter,
+            enable_unet_adapter=enable_unet_adapter,
             seed=seed,
         )
 

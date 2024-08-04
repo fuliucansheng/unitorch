@@ -59,7 +59,7 @@ class VisualBertForClassification(_VisualBertForClassification):
             VisualBertForClassification: The initialized VisualBertForClassification instance.
         """
         config.set_default_section("core/model/classification/visualbert")
-        pretrained_name = config.getoption("pretrained_name", "default-visualbert")
+        pretrained_name = config.getoption("pretrained_name", "visualbert-vqa-coco-pre")
         config_path = config.getoption("config_path", None)
 
         config_path = pop_value(
@@ -157,7 +157,7 @@ class VisualBertForPretrain(_VisualBertForPretrain):
             VisualBertForPretrain: The initialized VisualBertForPretrain instance.
         """
         config.set_default_section("core/model/pretrain/visualbert")
-        pretrained_name = config.getoption("pretrained_name", "default-visualbert")
+        pretrained_name = config.getoption("pretrained_name", "visualbert-vqa-coco-pre")
         config_path = config.getoption("config_path", None)
 
         config_path = pop_value(
