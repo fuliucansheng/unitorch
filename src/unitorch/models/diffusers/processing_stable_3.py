@@ -85,15 +85,17 @@ class Stable3Processor:
             position_start_id=position_start_id,
         )
 
-        self.image_size = image_size
+        self.image_size = (
+            image_size if isinstance(image_size, tuple) else (image_size, image_size)
+        )
 
         if self.image_size is not None:
             self.vision_processor = Compose(
                 [
-                    Resize(self.image_size),
-                    CenterCrop(self.image_size)
+                    Resize((self.image_size[1], self.image_size[0])),
+                    CenterCrop((self.image_size[1], self.image_size[0]))
                     if center_crop
-                    else RandomCrop(self.image_size),
+                    else RandomCrop((self.image_size[1], self.image_size[0])),
                     RandomHorizontalFlip() if random_flip else Lambda(lambda x: x),
                     ToTensor(),
                     Normalize([0.5], [0.5]),
@@ -102,8 +104,8 @@ class Stable3Processor:
 
             self.condition_vision_processor = Compose(
                 [
-                    Resize(self.image_size),
-                    CenterCrop(self.image_size),
+                    Resize((self.image_size[1], self.image_size[0])),
+                    CenterCrop((self.image_size[1], self.image_size[0])),
                     ToTensor(),
                 ]
             )
