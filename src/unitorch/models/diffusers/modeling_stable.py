@@ -402,8 +402,61 @@ class StableForImage2ImageGeneration(GenericStableModel):
 
     def forward(
         self,
+        pixel_values: torch.Tensor,
+        input_pixel_values: torch.Tensor,
+        input_ids: torch.Tensor,
+        attention_mask: Optional[torch.Tensor] = None,
     ):
-        raise NotImplementedError
+        latents = self.vae.encode(pixel_values).latent_dist.sample()
+        input_latents = self.vae.encode(input_pixel_values).latent_dist.sample()
+        latents = latents * self.vae.config.scaling_factor
+        input_latents = input_latents * self.vae.config.scaling_factor
+        noise = torch.randn(latents.shape).to(latents.device)
+        batch = latents.size(0)
+
+        timesteps = torch.randint(
+            0,
+            self.scheduler.config.num_train_timesteps,
+            (batch,),
+            device=pixel_values.device,
+        ).long()
+
+        noise_latents = self.scheduler.add_noise(
+            input_latents,
+            noise,
+            timesteps,
+        )
+
+        encoder_hidden_states = self.text(input_ids)[0]
+        # encoder_hidden_states = self.text(input_ids, attention_mask)[0]
+        outputs = self.unet(
+            noise_latents,
+            timesteps,
+            encoder_hidden_states,
+        ).sample
+        if self.scheduler.config.prediction_type == "v_prediction":
+            noise = self.scheduler.get_velocity(latents, noise, timesteps)
+        else:
+            noise = noise + latents - input_latents
+        if self.snr_gamma > 0:
+            snr = compute_snr(timesteps, self.scheduler)
+            base_weight = (
+                torch.stack(
+                    [snr, self.snr_gamma * torch.ones_like(timesteps)], dim=1
+                ).min(dim=1)[0]
+                / snr
+            )
+
+            if self.scheduler.config.prediction_type == "v_prediction":
+                mse_loss_weights = base_weight + 1
+            else:
+                mse_loss_weights = base_weight
+            loss = F.mse_loss(outputs, noise, reduction="none")
+            loss = loss.mean(dim=list(range(1, len(loss.shape)))) * mse_loss_weights
+            loss = loss.mean()
+        else:
+            loss = F.mse_loss(outputs, noise, reduction="mean")
+        return loss
 
     def generate(
         self,

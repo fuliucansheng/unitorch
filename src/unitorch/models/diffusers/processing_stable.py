@@ -55,9 +55,14 @@ class StableProcessor(HfTextClassificationProcessor):
             position_start_id=position_start_id,
         )
 
-        self.image_size = (
-            image_size if isinstance(image_size, tuple) else (image_size, image_size)
-        )
+        if image_size is not None:
+            self.image_size = (
+                image_size
+                if isinstance(image_size, tuple)
+                else (image_size, image_size)
+            )
+        else:
+            self.image_size = None
 
         if self.image_size is not None:
             self.vision_processor = Compose(

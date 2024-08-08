@@ -320,8 +320,96 @@ class ControlNetXLForImage2ImageGeneration(GenericStableXLModel):
 
     def forward(
         self,
+        input_ids: torch.Tensor,
+        input2_ids: torch.Tensor,
+        add_time_ids: torch.Tensor,
+        input_pixel_values: torch.Tensor,
+        pixel_values: torch.Tensor,
+        condition_pixel_values: torch.Tensor,
+        attention_mask: Optional[torch.Tensor] = None,
+        attention2_mask: Optional[torch.Tensor] = None,
     ):
-        raise NotImplementedError
+        """
+        Forward pass of the model.
+
+        Args:
+            input_ids (torch.Tensor): Input IDs.
+            input2_ids (torch.Tensor): Second input IDs.
+            add_time_ids (torch.Tensor): Additional time IDs.
+            pixel_values (torch.Tensor): Pixel values.
+            condition_pixel_values (torch.Tensor): Condition pixel values.
+            attention_mask (Optional[torch.Tensor]): Attention mask (default: None).
+            attention2_mask (Optional[torch.Tensor]): Second attention mask (default: None).
+
+        Returns:
+            torch.Tensor: Loss value.
+        """
+        prompt_outputs = self.text(
+            input_ids,
+            # attention_mask,
+            output_hidden_states=True,
+        )
+        prompt_embeds = prompt_outputs.hidden_states[-2]
+        prompt2_outputs = self.text2(
+            input2_ids,
+            # attention2_mask,
+            output_hidden_states=True,
+        )
+        prompt2_embeds = prompt2_outputs.hidden_states[-2]
+        prompt_embeds = torch.concat([prompt_embeds, prompt2_embeds], dim=-1)
+        pooled_prompt_embeds = prompt2_outputs[0]
+
+        latents = self.vae.encode(pixel_values).latent_dist.sample()
+        input_latents = self.vae.encode(input_pixel_values).latent_dist.sample()
+        latents = latents * self.vae.config.scaling_factor
+        input_latents = input_latents * self.vae.config.scaling_factor
+
+        noise = torch.randn(latents.shape).to(latents.device)
+        batch = latents.size(0)
+
+        timesteps = torch.randint(
+            0,
+            self.scheduler.config.num_train_timesteps,
+            (batch,),
+            device=pixel_values.device,
+        ).long()
+
+        noise_latents = self.scheduler.add_noise(
+            input_latents,
+            noise,
+            timesteps,
+        )
+
+        down_block_res_samples, mid_block_res_sample = self.controlnet(
+            noise_latents,
+            timesteps,
+            encoder_hidden_states=prompt_embeds,
+            controlnet_cond=condition_pixel_values,
+            added_cond_kwargs={
+                "time_ids": add_time_ids,
+                "text_embeds": pooled_prompt_embeds,
+            },
+            return_dict=False,
+        )
+        outputs = self.unet(
+            noise_latents,
+            timesteps,
+            prompt_embeds,
+            added_cond_kwargs={
+                "time_ids": add_time_ids,
+                "text_embeds": pooled_prompt_embeds,
+            },
+            down_block_additional_residuals=down_block_res_samples,
+            mid_block_additional_residual=mid_block_res_sample,
+        ).sample
+
+        if self.scheduler.config.prediction_type == "v_prediction":
+            noise = self.scheduler.get_velocity(latents, noise, timesteps)
+        else:
+            noise = noise + latents - input_latents
+
+        loss = F.mse_loss(outputs, noise, reduction="mean")
+        return loss
 
     def generate(
         self,

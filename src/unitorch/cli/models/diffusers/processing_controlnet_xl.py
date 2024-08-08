@@ -146,6 +146,35 @@ class ControlNetXLProcessor(_StableXLProcessor):
             negative_attention_mask=text_outputs.negative_attention_mask,
         )
 
+    @register_process("core/process/diffusion/controlnet_xl/image2image")
+    def _image2image(
+        self,
+        prompt: str,
+        condition_image: Union[Image.Image, str],
+        input_image: Union[Image.Image, str],
+        image: Union[Image.Image, str],
+        prompt2: Optional[str] = None,
+        max_seq_length: Optional[int] = None,
+    ):
+        outputs = super().text2image(
+            prompt=prompt,
+            image=image,
+            prompt2=prompt2,
+            max_seq_length=max_seq_length,
+        )
+        input_image_outputs = super().image2image_inputs(image=input_image)
+        control_outputs = super().controlnet_inputs(condition_image)
+        return TensorsInputs(
+            input_ids=outputs.input_ids,
+            attention_mask=outputs.attention_mask,
+            input2_ids=outputs.input2_ids,
+            attention2_mask=outputs.attention2_mask,
+            input_pixel_values=input_image_outputs.pixel_values,
+            pixel_values=outputs.pixel_values,
+            condition_pixel_values=control_outputs.pixel_values,
+            add_time_ids=outputs.add_time_ids,
+        )
+
     @register_process("core/process/diffusion/controlnet_xl/image2image/inputs")
     def _image2image_inputs(
         self,

@@ -430,8 +430,20 @@ class ControlNetLoraForImage2ImageGeneration(_ControlNetLoraForImage2ImageGenera
     @autocast()
     def forward(
         self,
+        input_ids: torch.Tensor,
+        input_pixel_values: torch.Tensor,
+        pixel_values: torch.Tensor,
+        condition_pixel_values: torch.Tensor,
+        attention_mask: Optional[torch.Tensor] = None,
     ):
-        raise NotImplementedError
+        loss = super().forward(
+            input_ids=input_ids,
+            input_pixel_values=input_pixel_values,
+            pixel_values=pixel_values,
+            condition_pixel_values=condition_pixel_values,
+            attention_mask=attention_mask,
+        )
+        return LossOutputs(loss=loss)
 
     @add_default_section_for_function(
         "core/model/diffusers/peft/lora/image2image/controlnet"

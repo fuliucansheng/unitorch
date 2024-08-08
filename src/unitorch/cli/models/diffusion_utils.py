@@ -84,7 +84,7 @@ class DiffusionProcessor:
         if output_folder is not None and not os.path.exists(output_folder):
             os.makedirs(self.output_folder, exist_ok=True)
         self.http_url = http_url
-        if self.http_url is None:
+        if self.output_folder is None:
             self.output_folder = tempfile.mkdtemp()
 
     @classmethod
@@ -109,6 +109,7 @@ class DiffusionProcessor:
                 logging.error(f"Failed to save image {name} to zip.")
         else:
             output_path = f"{self.output_folder}/{name}"
+            print(output_path)
             image.save(output_path)
         return name
 

@@ -375,8 +375,18 @@ class StableLoraForImage2ImageGeneration(_StableLoraForImage2ImageGeneration):
     @autocast()
     def forward(
         self,
+        input_pixel_values: torch.Tensor,
+        pixel_values: torch.Tensor,
+        input_ids: torch.Tensor,
+        attention_mask: Optional[torch.Tensor] = None,
     ):
-        raise NotImplementedError
+        loss = super().forward(
+            input_pixel_values=input_pixel_values,
+            pixel_values=pixel_values,
+            input_ids=input_ids,
+            attention_mask=attention_mask,
+        )
+        return LossOutputs(loss=loss)
 
     @add_default_section_for_function(
         "core/model/diffusers/peft/lora/image2image/stable"

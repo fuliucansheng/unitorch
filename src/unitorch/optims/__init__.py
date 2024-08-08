@@ -4,7 +4,7 @@
 import torch
 import torch.nn as nn
 from torch.optim import Adam, SGD
-from transformers import AdamW
+from transformers import AdamW, Adafactor
 from unitorch.optims.lion import Lion
 
 from unitorch.utils import is_bitsandbytes_available

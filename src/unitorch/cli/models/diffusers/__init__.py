@@ -200,6 +200,9 @@ pretrained_stable_infos = {
         },
     },
     "stable-xl-turbo": __hf_hub_stable_xl_safetensors_dict__("stabilityai/sdxl-turbo"),
+    "stable-xl-realism-engine-v30": __hf_hub_stable_xl_safetensors_dict__(
+        "misri/realismEngineSDXL_v30VAE"
+    ),
     "stable-xl-opendalle-v1.1": __hf_hub_stable_xl_safetensors_dict__(
         "dataautogpt3/OpenDalleV1.1"
     ),
@@ -265,9 +268,6 @@ pretrained_stable_extensions_infos = {
     "stable-xl-controlnet-depth": __hf_hub_controlnet_dict__(
         "diffusers/controlnet-depth-sdxl-1.0"
     ),
-    "stable-xl-controlnet-softedge": __hf_hub_controlnet_dict__(
-        "diffusers/controlnet-softedge-sdxl-1.0"
-    ),
     "stable-xl-controlnet-depth-small": __hf_hub_controlnet_dict__(
         "diffusers/controlnet-depth-sdxl-1.0-small"
     ),
@@ -295,6 +295,9 @@ pretrained_stable_extensions_infos = {
     ),
     "stable-xl-adapter-openpose": __hf_hub_adapter_safetensors_dict__(
         "TencentARC/t2i-adapter-openpose-sdxl-1.0"
+    ),
+    "stable-xl-adapter-lineart": __hf_hub_adapter_safetensors_dict__(
+        "TencentARC/t2i-adapter-lineart-sdxl-1.0"
     ),
     # sdxl refiner
     "stable-xl-refiner-1.0": {

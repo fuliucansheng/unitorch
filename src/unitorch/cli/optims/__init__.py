@@ -5,7 +5,7 @@ import os
 import torch
 import logging
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
-from unitorch.optims import SGD, Adam, AdamW
+from unitorch.optims import SGD, Adam, AdamW, Adafactor
 from unitorch.models import CheckpointMixin
 from unitorch.cli import add_default_section_for_init, register_optim
 
@@ -60,6 +60,30 @@ class AdamWOptimizer(AdamW, CheckpointMixin):
 
     @classmethod
     @add_default_section_for_init("core/optim/adamw")
+    def from_core_configure(cls, config, **kwargs):
+        pass
+
+
+@register_optim("core/optim/adafactor")
+class AdafactorOptimizer(Adafactor, CheckpointMixin):
+    def __init__(
+        self,
+        params,
+        learning_rate: Optional[float] = 0.00001,
+        scale_parameter: bool = False,
+        relative_step: bool = False,
+        warmup_init: bool = False,
+    ):
+        super().__init__(
+            params=params,
+            lr=learning_rate,
+            scale_parameter=scale_parameter,
+            relative_step=relative_step,
+            warmup_init=warmup_init,
+        )
+
+    @classmethod
+    @add_default_section_for_init("core/optim/adafactor")
     def from_core_configure(cls, config, **kwargs):
         pass
 
