@@ -24,6 +24,7 @@ def create_element(
     show_label=True,
     elem_id=None,
     elem_classes=None,
+    link=None,
 ):
     if dtype == "text":
         return gr.Textbox(
@@ -216,6 +217,15 @@ def create_element(
         return gr.Markdown(
             value=label,
             show_label=show_label,
+            elem_id=elem_id,
+            elem_classes=elem_classes,
+        )
+
+    if dtype == "download_button":
+        return gr.DownloadButton(
+            label=label,
+            value=link,
+            scale=scale,
             elem_id=elem_id,
             elem_classes=elem_classes,
         )

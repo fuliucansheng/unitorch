@@ -120,6 +120,32 @@ class ControlNetProcessor(_StableProcessor):
             negative_attention_mask=text_outputs.negative_attention_mask,
         )
 
+    @register_process("core/process/diffusion/controlnet/image2image")
+    def _image2image(
+        self,
+        prompt: str,
+        condition_image: Union[Image.Image, str],
+        input_image: Union[Image.Image, str],
+        image: Union[Image.Image, str],
+        negative_prompt: Optional[str] = "",
+        max_seq_length: Optional[int] = None,
+    ):
+        text_outputs = super().text2image_inputs(
+            prompt=prompt,
+            negative_prompt=negative_prompt,
+            max_seq_length=max_seq_length,
+        )
+        input_image_outputs = super().image2image_inputs(image=input_image)
+        image_outputs = super().image2image_inputs(image=image)
+        control_outputs = super().controlnet_inputs(condition_image)
+        return TensorsInputs(
+            input_ids=text_outputs.input_ids,
+            pixel_values=image_outputs.pixel_values,
+            input_pixel_values=input_image_outputs.pixel_values,
+            condition_pixel_values=control_outputs.pixel_values,
+            attention_mask=text_outputs.attention_mask,
+        )
+
     @register_process("core/process/diffusion/controlnet/image2image/inputs")
     def _image2image_inputs(
         self,

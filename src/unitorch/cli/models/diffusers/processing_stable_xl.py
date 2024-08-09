@@ -148,6 +148,33 @@ class StableXLProcessor(_StableXLProcessor):
             negative_attention2_mask=outputs.negative_attention2_mask,
         )
 
+    @register_process("core/process/diffusion/stable_xl/image2image")
+    def _image2image(
+        self,
+        prompt: str,
+        input_image: Union[Image.Image, str],
+        image: Union[Image.Image, str],
+        prompt2: Optional[str] = None,
+        max_seq_length: Optional[int] = None,
+    ):
+        text_outputs = super().text2image(
+            prompt=prompt,
+            image=image,
+            prompt2=prompt2,
+            max_seq_length=max_seq_length,
+        )
+        input_image_outputs = super().image2image_inputs(image=input_image)
+        image_outputs = super().image2image_inputs(image=image)
+        return TensorsInputs(
+            input_pixel_values=input_image_outputs.pixel_values,
+            pixel_values=image_outputs.pixel_values,
+            input_ids=text_outputs.input_ids,
+            input2_ids=text_outputs.input2_ids,
+            attention_mask=text_outputs.attention_mask,
+            attention2_mask=text_outputs.attention2_mask,
+            add_time_ids=text_outputs.add_time_ids,
+        )
+
     @register_process("core/process/diffusion/stable_xl/image2image/inputs")
     def _image2image_inputs(
         self,
