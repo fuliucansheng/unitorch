@@ -19,6 +19,13 @@ def get_cache_home():
     return UNITORCH_CACHE
 
 
+UNITORCH_TEMP = os.getenv("UNITORCH_TEMP", "/tmp/unitorch")
+
+
+def get_temp_home():
+    return UNITORCH_TEMP
+
+
 ### version
 VERSION = "0.0.0.17"
 

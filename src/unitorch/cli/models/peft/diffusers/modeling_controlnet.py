@@ -131,6 +131,7 @@ class ControlNetLoraForText2ImageGeneration(_ControlNetLoraForText2ImageGenerati
         lora_r = config.getoption("lora_r", 16)
         enable_text_adapter = config.getoption("enable_text_adapter", True)
         enable_unet_adapter = config.getoption("enable_unet_adapter", True)
+
         seed = config.getoption("seed", 1123)
 
         inst = cls(
@@ -177,7 +178,9 @@ class ControlNetLoraForText2ImageGeneration(_ControlNetLoraForText2ImageGenerati
                     if enable_text_adapter
                     else {},
                 ),
-                load_weight(nested_dict_value(pretrained_infos, "vae", "weight")),
+                load_weight(
+                    nested_dict_value(pretrained_infos, "vae", "weight"),
+                ),
                 load_weight(
                     nested_dict_value(
                         pretrained_controlnet_infos, "controlnet", "weight"
@@ -355,6 +358,7 @@ class ControlNetLoraForImage2ImageGeneration(_ControlNetLoraForImage2ImageGenera
         lora_r = config.getoption("lora_r", 16)
         enable_text_adapter = config.getoption("enable_text_adapter", True)
         enable_unet_adapter = config.getoption("enable_unet_adapter", True)
+
         seed = config.getoption("seed", 1123)
 
         inst = cls(
@@ -401,7 +405,9 @@ class ControlNetLoraForImage2ImageGeneration(_ControlNetLoraForImage2ImageGenera
                     if enable_text_adapter
                     else {},
                 ),
-                load_weight(nested_dict_value(pretrained_infos, "vae", "weight")),
+                load_weight(
+                    nested_dict_value(pretrained_infos, "vae", "weight"),
+                ),
                 load_weight(
                     nested_dict_value(
                         pretrained_controlnet_infos, "controlnet", "weight"
@@ -580,6 +586,7 @@ class ControlNetLoraForImageInpainting(_ControlNetLoraForImageInpainting):
         lora_r = config.getoption("lora_r", 16)
         enable_text_adapter = config.getoption("enable_text_adapter", True)
         enable_unet_adapter = config.getoption("enable_unet_adapter", True)
+
         seed = config.getoption("seed", 1123)
 
         inst = cls(
@@ -626,7 +633,9 @@ class ControlNetLoraForImageInpainting(_ControlNetLoraForImageInpainting):
                     if enable_text_adapter
                     else {},
                 ),
-                load_weight(nested_dict_value(pretrained_infos, "vae", "weight")),
+                load_weight(
+                    nested_dict_value(pretrained_infos, "vae", "weight"),
+                ),
                 load_weight(
                     nested_dict_value(
                         pretrained_controlnet_infos, "controlnet", "weight"

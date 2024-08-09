@@ -26,12 +26,11 @@ from unitorch.models import (
     QuantizationConfig,
     QuantizationMixin,
 )
+from unitorch.models.quantization import quantize_model
 from unitorch.models.peft import PeftWeightLoaderMixin
 
 
-class LlavaMistralClipForClassification(
-    GenericModel, QuantizationMixin, PeftWeightLoaderMixin
-):
+class LlavaMistralClipForClassification(GenericModel, PeftWeightLoaderMixin):
     replace_keys_in_state_dict = {"language_model.model.": "language_model."}
     replace_keys_in_peft_state_dict = {
         "peft_model.base_model.model.": "language_model."
@@ -66,14 +65,19 @@ class LlavaMistralClipForClassification(
             torch.randn(self.config.text_config.hidden_size, dtype=self.dtype)
             * embed_std
         )
-        self.language_model = MistralModel(self.config.text_config)
+        language_model = MistralModel(self.config.text_config)
+        if quant_config_path is not None:
+            quant_config = QuantizationConfig.from_json_file(quant_config_path)
+            ignore_modules = ["lm_head"]
+            self.language_model = quantize_model(
+                language_model, quant_config, ignore_modules=ignore_modules
+            )
+        else:
+            self.language_model = language_model
+
         self.dropout = nn.Dropout(hidden_dropout_prob)
         self.classifier = nn.Linear(self.config.text_config.hidden_size, num_classes)
         self.init_weights()
-
-        if quant_config_path is not None:
-            self.quant_config = QuantizationConfig.from_json_file(quant_config_path)
-            self.quantize(self.quant_config, ignore_modules=["lm_head"])
 
         if freeze_vision_encoder:
             for param in self.vision_tower.parameters():

@@ -140,6 +140,7 @@ class ControlNetXLLoraForText2ImageGeneration(_ControlNetXLLoraForText2ImageGene
         lora_r = config.getoption("lora_r", 16)
         enable_text_adapter = config.getoption("enable_text_adapter", True)
         enable_unet_adapter = config.getoption("enable_unet_adapter", True)
+
         seed = config.getoption("seed", 1123)
 
         inst = cls(
@@ -399,6 +400,7 @@ class ControlNetXLLoraForImage2ImageGeneration(
         lora_r = config.getoption("lora_r", 16)
         enable_text_adapter = config.getoption("enable_text_adapter", True)
         enable_unet_adapter = config.getoption("enable_unet_adapter", True)
+
         seed = config.getoption("seed", 1123)
 
         inst = cls(
@@ -656,6 +658,7 @@ class ControlNetXLLoraForImageInpainting(_ControlNetXLLoraForImageInpainting):
         lora_r = config.getoption("lora_r", 16)
         enable_text_adapter = config.getoption("enable_text_adapter", True)
         enable_unet_adapter = config.getoption("enable_unet_adapter", True)
+
         seed = config.getoption("seed", 1123)
 
         inst = cls(

@@ -115,6 +115,7 @@ class StableLoraForText2ImageGeneration(_StableLoraForText2ImageGeneration):
         lora_r = config.getoption("lora_r", 16)
         enable_text_adapter = config.getoption("enable_text_adapter", True)
         enable_unet_adapter = config.getoption("enable_unet_adapter", True)
+
         seed = config.getoption("seed", 1123)
 
         inst = cls(
@@ -161,7 +162,9 @@ class StableLoraForText2ImageGeneration(_StableLoraForText2ImageGeneration):
                     if enable_text_adapter
                     else {},
                 ),
-                load_weight(nested_dict_value(pretrained_infos, "vae", "weight")),
+                load_weight(
+                    nested_dict_value(pretrained_infos, "vae", "weight"),
+                ),
             ]
         elif weight_path is not None:
             state_dict = load_weight(weight_path)
@@ -308,6 +311,7 @@ class StableLoraForImage2ImageGeneration(_StableLoraForImage2ImageGeneration):
         lora_r = config.getoption("lora_r", 16)
         enable_text_adapter = config.getoption("enable_text_adapter", True)
         enable_unet_adapter = config.getoption("enable_unet_adapter", True)
+
         seed = config.getoption("seed", 1123)
 
         inst = cls(
@@ -353,7 +357,9 @@ class StableLoraForImage2ImageGeneration(_StableLoraForImage2ImageGeneration):
                     if enable_text_adapter
                     else {},
                 ),
-                load_weight(nested_dict_value(pretrained_infos, "vae", "weight")),
+                load_weight(
+                    nested_dict_value(pretrained_infos, "vae", "weight"),
+                ),
             ]
         elif weight_path is not None:
             state_dict = load_weight(weight_path)
@@ -500,6 +506,7 @@ class StableLoraForImageInpainting(_StableLoraForImageInpainting):
         lora_r = config.getoption("lora_r", 16)
         enable_text_adapter = config.getoption("enable_text_adapter", True)
         enable_unet_adapter = config.getoption("enable_unet_adapter", True)
+
         seed = config.getoption("seed", 1123)
 
         inst = cls(
@@ -545,7 +552,9 @@ class StableLoraForImageInpainting(_StableLoraForImageInpainting):
                     if enable_text_adapter
                     else {},
                 ),
-                load_weight(nested_dict_value(pretrained_infos, "vae", "weight")),
+                load_weight(
+                    nested_dict_value(pretrained_infos, "vae", "weight"),
+                ),
             ]
         elif weight_path is not None:
             state_dict = load_weight(weight_path)
@@ -684,6 +693,7 @@ class StableLoraForImageResolution(_StableLoraForImageResolution):
         lora_r = config.getoption("lora_r", 16)
         enable_text_adapter = config.getoption("enable_text_adapter", True)
         enable_unet_adapter = config.getoption("enable_unet_adapter", True)
+
         seed = config.getoption("seed", 1123)
 
         inst = cls(
@@ -729,7 +739,9 @@ class StableLoraForImageResolution(_StableLoraForImageResolution):
                     if enable_text_adapter
                     else {},
                 ),
-                load_weight(nested_dict_value(pretrained_infos, "vae", "weight")),
+                load_weight(
+                    nested_dict_value(pretrained_infos, "vae", "weight"),
+                ),
             ]
         elif weight_path is not None:
             state_dict = load_weight(weight_path)
