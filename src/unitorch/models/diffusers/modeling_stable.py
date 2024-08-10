@@ -434,10 +434,7 @@ class StableForImage2ImageGeneration(GenericStableModel):
             timesteps,
             encoder_hidden_states,
         ).sample
-        if self.scheduler.config.prediction_type == "v_prediction":
-            noise = self.scheduler.get_velocity(latents, noise, timesteps)
-        else:
-            noise = noise + latents - input_latents
+        noise = self.scheduler.get_velocity(latents, noise, timesteps)
         if self.snr_gamma > 0:
             snr = compute_snr(timesteps, self.scheduler)
             base_weight = (

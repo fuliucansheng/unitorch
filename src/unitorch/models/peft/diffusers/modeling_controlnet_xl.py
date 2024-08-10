@@ -562,10 +562,7 @@ class ControlNetXLLoraForImage2ImageGeneration(GenericControlNetXLLoraModel):
             mid_block_additional_residual=mid_block_res_sample,
         ).sample
 
-        if self.scheduler.config.prediction_type == "v_prediction":
-            noise = self.scheduler.get_velocity(latents, noise, timesteps)
-        else:
-            noise = noise + latents - input_latents
+        noise = self.scheduler.get_velocity(latents, noise, timesteps)
 
         loss = F.mse_loss(outputs, noise, reduction="mean")
         return loss

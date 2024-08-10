@@ -5483,7 +5483,7 @@ process.umask = function() { return 0; };
   // In contrast to _.map it returns an object
   _.mapObject = function(obj, iteratee, context) {
     iteratee = cb(iteratee, context);
-    var keys =  _.keys(obj),
+    var keys = _.keys(obj),
           length = keys.length,
           results = {},
           currentKey;
