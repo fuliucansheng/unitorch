@@ -226,51 +226,8 @@ class ControlNetForImage2ImageGeneration(GenericStableModel):
 
     def forward(
         self,
-        input_ids: torch.Tensor,
-        input_pixel_values: torch.Tensor,
-        pixel_values: torch.Tensor,
-        condition_pixel_values: torch.Tensor,
-        attention_mask: Optional[torch.Tensor] = None,
     ):
-        latents = self.vae.encode(pixel_values).latent_dist.sample()
-        input_latents = self.vae.encode(input_pixel_values).latent_dist.sample()
-        latents = latents * self.vae.config.scaling_factor
-        input_latents = input_latents * self.vae.config.scaling_factor
-        noise = torch.randn(latents.shape).to(latents.device)
-        batch = latents.size(0)
-
-        timesteps = torch.randint(
-            0,
-            self.scheduler.config.num_train_timesteps,
-            (batch,),
-            device=pixel_values.device,
-        ).long()
-
-        noise_latents = self.scheduler.add_noise(
-            input_latents,
-            noise,
-            timesteps,
-        )
-
-        encoder_hidden_states = self.text(input_ids)[0]
-        # encoder_hidden_states = self.text(input_ids, attention_mask)[0]
-        down_block_res_samples, mid_block_res_sample = self.controlnet(
-            noise_latents,
-            timesteps,
-            encoder_hidden_states=encoder_hidden_states,
-            controlnet_cond=condition_pixel_values,
-            return_dict=False,
-        )
-        outputs = self.unet(
-            noise_latents,
-            timesteps,
-            encoder_hidden_states,
-            down_block_additional_residuals=down_block_res_samples,
-            mid_block_additional_residual=mid_block_res_sample,
-        ).sample
-        noise = self.scheduler.get_velocity(latents, noise, timesteps)
-        loss = F.mse_loss(outputs, noise, reduction="mean")
-        return loss
+        raise NotImplementedError
 
     @torch.no_grad()
     def generate(

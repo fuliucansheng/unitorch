@@ -13,15 +13,18 @@ from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from transformers.models.sam.modeling_sam import SamConfig, SamModel
 from transformers.models.sam.image_processing_sam import _build_point_grid
 from unitorch.models import GenericModel, GenericOutputs
+from unitorch.models.peft import PeftWeightLoaderMixin
 
 
-class SamForSegmentation(GenericModel):
+class SamForSegmentation(GenericModel, PeftWeightLoaderMixin):
     prefix_keys_in_state_dict = {
         "^mask_decoder.*": "sam.",
         "^vision_encoder.*": "sam.",
         "^prompt_encoder.*": "sam.",
         "^shared_image_embedding.*": "sam.",
     }
+
+    replace_keys_in_peft_state_dict = {"peft_model.base_model.model.": ""}
 
     def __init__(
         self,

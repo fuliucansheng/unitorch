@@ -9,15 +9,17 @@ from fastapi.responses import StreamingResponse
 from PIL import Image
 from unitorch.cli import CoreConfigureParser, GenericFastAPI
 from unitorch.cli import register_fastapi
-from unitorch.cli.pipelines.stable import StableForText2ImageGenerationPipeline
+from unitorch.cli.fastapis.stable_flux.text2image import (
+    StableFluxForText2ImageFastAPIPipeline,
+)
 
 
-@register_fastapi("core/fastapi/stable/text2image")
-class StableText2ImageFastAPI(GenericFastAPI):
+@register_fastapi("core/fastapi/stable_flux/text2image")
+class StableFluxText2ImageFastAPI(GenericFastAPI):
     def __init__(self, config: CoreConfigureParser):
         self.config = config
-        config.set_default_section(f"core/fastapi/stable/text2image")
-        router = config.getoption("router", "core/fastapi/stable/text2image")
+        config.set_default_section(f"core/fastapi/stable_flux/text2image")
+        router = config.getoption("router", "/core/fastapi/stable_flux/text2image")
         self._pipe = None if not hasattr(self, "_pipe") else self._pipe
         self._router = APIRouter(prefix=router)
         self._router.add_api_route("/", self.serve, methods=["GET"])
@@ -27,7 +29,7 @@ class StableText2ImageFastAPI(GenericFastAPI):
         return self._router
 
     def start(self, **kwargs):
-        self._pipe = StableForText2ImageGenerationPipeline.from_core_configure(
+        self._pipe = StableFluxForText2ImageFastAPIPipeline.from_core_configure(
             self.config
         )
 
@@ -38,8 +40,8 @@ class StableText2ImageFastAPI(GenericFastAPI):
     def serve(
         self,
         text: str,
-        height: Optional[int] = 512,
-        width: Optional[int] = 512,
+        height: Optional[int] = 1024,
+        width: Optional[int] = 1024,
         guidance_scale: Optional[float] = 7.5,
         num_timesteps: Optional[int] = 50,
         seed: Optional[int] = 1123,

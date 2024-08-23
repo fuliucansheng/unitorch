@@ -23,6 +23,10 @@ class GenericOnnxModel(GenericModel):
         pass
 
     @abc.abstractmethod
+    def setup(self, *args, **kwargs):
+        pass
+
+    @abc.abstractmethod
     def preprocess(self, *args, **kwargs):
         pass
 
@@ -30,6 +34,23 @@ class GenericOnnxModel(GenericModel):
     def forward(self, *args, **kwargs):
         pass
 
+    @abc.abstractmethod
+    def postprocess(self, *args, **kwargs):
+        pass
 
-if is_onnxruntime_available():
-    pass
+
+class SimpleOnnxModel(GenericOnnxModel):
+    def __init__(self):
+        super().__init__()
+
+    def setup(self):
+        pass
+
+    def preprocess(self):
+        pass
+
+    def forward(self):
+        pass
+
+    def postprocess(self):
+        pass

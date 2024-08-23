@@ -144,6 +144,16 @@ def create_element(
             elem_classes=elem_classes,
         )
 
+    if dtype == "anno_image":
+        return gr.AnnotatedImage(
+            value=default,
+            label=label,
+            scale=scale,
+            show_label=show_label,
+            elem_id=elem_id,
+            elem_classes=elem_classes,
+        )
+
     if dtype == "image_editor":
         return gr.ImageEditor(
             type="pil",
@@ -194,7 +204,6 @@ def create_element(
         return gr.Gallery(
             label=label,
             scale=scale,
-            info=info,
             interactive=interactive,
             show_label=show_label,
             elem_id=elem_id,

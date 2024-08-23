@@ -87,7 +87,6 @@ class Stable3ForText2ImageGenerationPipeline(GenericStable3Model):
 
         self.from_pretrained(weight_path, state_dict=state_dict)
         self.eval()
-        self.to(device=self._device)
 
         self._enable_cpu_offload = enable_cpu_offload
         self._enable_xformers = enable_xformers
@@ -97,7 +96,7 @@ class Stable3ForText2ImageGenerationPipeline(GenericStable3Model):
     def from_core_configure(
         cls,
         config,
-        pretrained_name: Optional[str] = "stable-v3-base",
+        pretrained_name: Optional[str] = "stable-v3-medium",
         config_path: Optional[str] = None,
         text_config_path: Optional[str] = None,
         text2_config_path: Optional[str] = None,
@@ -272,12 +271,6 @@ class Stable3ForText2ImageGenerationPipeline(GenericStable3Model):
         num_timesteps: Optional[int] = 50,
         seed: Optional[int] = 1123,
         scheduler: Optional[str] = None,
-        freeu_params: Optional[Tuple[float, float, float, float]] = (
-            0.9,
-            0.2,
-            1.2,
-            1.4,
-        ),
         controlnet_checkpoints: Optional[List[str]] = None,
         controlnet_images: Optional[List[Image.Image]] = None,
         controlnet_guidance_scales: Optional[List[float]] = None,
@@ -330,9 +323,9 @@ class Stable3ForText2ImageGenerationPipeline(GenericStable3Model):
                 controlnet.to(device=self._device)
                 logging.info(f"Loading controlnet from {checkpoint}")
                 controlnets.append(controlnet)
-                controlnets = SD3MultiControlNetModel(controlnets)
-                conditioning_scales.append(conditioning_scale)
-                conditioning_images.append(conditioning_image.resize((width, height)))
+            controlnets = SD3MultiControlNetModel(controlnets)
+            conditioning_scales.append(conditioning_scale)
+            conditioning_images.append(conditioning_image.resize((width, height)))
             self.pipeline = StableDiffusion3ControlNetPipeline(
                 vae=self.vae,
                 text_encoder=self.text,
@@ -366,12 +359,11 @@ class Stable3ForText2ImageGenerationPipeline(GenericStable3Model):
             enable_controlnet = False
             inputs = text_inputs
         self.pipeline.set_progress_bar_config(disable=True)
-        # self.pipeline.enable_freeu(*freeu_params)
         self.seed = seed
 
         inputs = {k: v.unsqueeze(0) if v is not None else v for k, v in inputs.items()}
         inputs = {
-            k: v.to(device=self._device) if v is not None else v
+            k: v.to(device=self.device) if v is not None else v
             for k, v in inputs.items()
         }
         if isinstance(lora_checkpoints, str):

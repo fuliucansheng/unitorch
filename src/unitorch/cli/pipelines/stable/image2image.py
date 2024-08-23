@@ -79,7 +79,6 @@ class StableForImage2ImageGenerationPipeline(GenericStableModel):
 
         self.from_pretrained(weight_path, state_dict=state_dict)
         self.eval()
-        self.to(device=self._device)
 
         self._enable_cpu_offload = enable_cpu_offload
         self._enable_xformers = enable_xformers
@@ -225,6 +224,7 @@ class StableForImage2ImageGenerationPipeline(GenericStableModel):
                 self.scheduler.config
             )
         self.scheduler.set_timesteps(num_inference_steps=num_timesteps)
+        self.scheduler.prediction_type = "v_prediction"
 
         if any(ckpt is not None for ckpt in controlnet_checkpoints) and any(
             img is not None for img in controlnet_images
@@ -295,7 +295,7 @@ class StableForImage2ImageGenerationPipeline(GenericStableModel):
 
         inputs = {k: v.unsqueeze(0) if v is not None else v for k, v in inputs.items()}
         inputs = {
-            k: v.to(device=self._device) if v is not None else v
+            k: v.to(device=self.device) if v is not None else v
             for k, v in inputs.items()
         }
 

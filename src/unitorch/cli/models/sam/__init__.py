@@ -20,6 +20,8 @@ pretrained_sam_infos = {
     },
 }
 
+pretrained_sam_extensions_infos = {}
+
 import unitorch.cli.models.sam.modeling
 import unitorch.cli.models.sam.processing
 from unitorch.cli.models.sam.modeling import SamForSegmentation

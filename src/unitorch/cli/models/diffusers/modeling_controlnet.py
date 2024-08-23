@@ -481,20 +481,8 @@ class ControlNetForImage2ImageGeneration(_ControlNetForImage2ImageGeneration):
     @autocast()
     def forward(
         self,
-        input_ids: torch.Tensor,
-        input_pixel_values: torch.Tensor,
-        pixel_values: torch.Tensor,
-        condition_pixel_values: torch.Tensor,
-        attention_mask: Optional[torch.Tensor] = None,
     ):
-        loss = super().forward(
-            input_ids=input_ids,
-            input_pixel_values=input_pixel_values,
-            pixel_values=pixel_values,
-            condition_pixel_values=condition_pixel_values,
-            attention_mask=attention_mask,
-        )
-        return LossOutputs(loss=loss)
+        raise NotImplementedError
 
     @add_default_section_for_function("core/model/diffusers/image2image/controlnet")
     @autocast()

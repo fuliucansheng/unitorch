@@ -56,7 +56,7 @@ class ControlNet3Processor(_Stable3Processor):
     @add_default_section_for_init("core/process/diffusion/controlnet_3")
     def from_core_configure(cls, config, **kwargs):
         config.set_default_section("core/process/diffusion/controlnet_3")
-        pretrained_name = config.getoption("pretrained_name", "stable-v3-base")
+        pretrained_name = config.getoption("pretrained_name", "stable-v3-medium")
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
 
         vocab_path = config.getoption("vocab_path", None)

@@ -102,15 +102,6 @@ class Stable3Text2ImageWebUI(SimpleWebUI):
             "slider", "Seed", min_value=0, max_value=9999, step=1, default=42
         )
 
-        freeu_layout_group = create_freeu_layout()
-        s1, s2, b1, b2, freeu_layout = (
-            freeu_layout_group.s1,
-            freeu_layout_group.s2,
-            freeu_layout_group.b1,
-            freeu_layout_group.b2,
-            freeu_layout_group.layout,
-        )
-
         ## extensions
         self.num_controlnets = 5
         controlnet_layout_group = create_controlnet_layout(
@@ -160,7 +151,6 @@ class Stable3Text2ImageWebUI(SimpleWebUI):
             create_row(width),
             create_row(guidance_scale),
             create_row(seed),
-            create_row(freeu_layout),
             name="Generation",
         )
         left_extension = create_tab(
@@ -205,10 +195,6 @@ class Stable3Text2ImageWebUI(SimpleWebUI):
                 steps,
                 seed,
                 scheduler,
-                s1,
-                s2,
-                b1,
-                b2,
                 *controlnet_params,
                 *lora_params,
             ],
@@ -224,6 +210,8 @@ class Stable3Text2ImageWebUI(SimpleWebUI):
         super().__init__(config, iname="Text2Image", iface=iface)
 
     def start(self, pretrained_name, **kwargs):
+        if self._name == pretrained_name and self._status == "Running":
+            return self._status
         if self._status == "Running":
             self.stop()
         self._name = pretrained_name
@@ -259,10 +247,6 @@ class Stable3Text2ImageWebUI(SimpleWebUI):
         num_timesteps: int,
         seed: int,
         scheduler: str,
-        freeu_s1: float,
-        freeu_s2: float,
-        freeu_b1: float,
-        freeu_b2: float,
         *params,
     ):
         assert self._pipe is not None
@@ -285,7 +269,6 @@ class Stable3Text2ImageWebUI(SimpleWebUI):
             num_timesteps=num_timesteps,
             seed=seed,
             scheduler=scheduler,
-            freeu_params=(freeu_s1, freeu_s2, freeu_b1, freeu_b2),
             controlnet_checkpoints=controlnet_checkpoints,
             controlnet_images=controlnet_images,
             controlnet_guidance_scales=controlnet_guidance_scales,

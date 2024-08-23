@@ -9,7 +9,10 @@ from typing import List, Tuple
 from PIL import Image, ImageDraw
 from unitorch.cli import CoreConfigureParser, GenericWebUI
 from unitorch.cli import register_webui
-from unitorch.cli.models.sam import pretrained_sam_infos
+from unitorch.cli.models.sam import (
+    pretrained_sam_infos,
+    pretrained_sam_extensions_infos,
+)
 from unitorch.cli.pipelines.sam import SamForSegmentationPipeline
 from unitorch.cli.webuis import (
     matched_pretrained_names,
@@ -22,6 +25,7 @@ from unitorch.cli.webuis import (
     create_tabs,
     create_blocks,
     create_pretrain_layout,
+    create_lora_layout,
     create_freeu_layout,
 )
 from unitorch.cli.webuis import SimpleWebUI
@@ -33,6 +37,11 @@ class SamWebUI(SimpleWebUI):
     supported_pretrained_names = matched_pretrained_names(
         pretrained_names,
         "^sam-",
+    )
+    pretrained_extension_names = list(pretrained_sam_extensions_infos.keys())
+    supported_lora_names = matched_pretrained_names(
+        pretrained_extension_names,
+        ["^sam-lora-"],
     )
 
     def __init__(self, config: CoreConfigureParser):
@@ -74,6 +83,22 @@ class SamWebUI(SimpleWebUI):
         input_box_reset = create_element("button", "Reset")
         input_box_segment = create_element("button", "Segment")
         output_image = create_element("image", "Output Image")
+        # create lora layout
+        self.num_loras = 5
+        lora_layout_group = create_lora_layout(
+            self.supported_lora_names, num_loras=self.num_loras
+        )
+        loras = lora_layout_group.loras
+        lora_layout = lora_layout_group.layout
+        lora_params = []
+        for lora in loras:
+            lora_params += [
+                lora.checkpoint,
+                lora.weight,
+                lora.alpha,
+                lora.url,
+                lora.file,
+            ]
 
         # create blocks
         click = create_tab(
@@ -92,7 +117,10 @@ class SamWebUI(SimpleWebUI):
             ),
             name="Box",
         )
-        left = create_tabs(click, box)
+        left = create_column(
+            lora_layout,
+            create_tabs(click, box),
+        )
         right = create_column(output_image)
         iface = create_blocks(pretrain_layout, create_row(left, right))
 
@@ -127,6 +155,7 @@ class SamWebUI(SimpleWebUI):
                 click_points,
                 mask_threshold_click,
                 output_image_type_click,
+                *lora_params,
             ],
             outputs=[output_image],
         )
@@ -153,6 +182,7 @@ class SamWebUI(SimpleWebUI):
                 boxes_points,
                 mask_threshold_box,
                 output_image_type_box,
+                *lora_params,
             ],
             outputs=[output_image],
         )
@@ -167,6 +197,8 @@ class SamWebUI(SimpleWebUI):
         super().__init__(config, iname="SAM", iface=iface)
 
     def start(self, pretrained_name, **kwargs):
+        if self._name == pretrained_name and self._status == "Running":
+            return self._status
         if self._status == "Running":
             self.stop()
         self._name = pretrained_name
@@ -204,15 +236,27 @@ class SamWebUI(SimpleWebUI):
     def serve_click(
         self,
         image: Image.Image,
-        click_points: List[Tuple[int, int]] = [(0, 0)],
-        mask_threshold: float = 0.5,
-        output_image_type: str = "Mask",
+        click_points,
+        mask_threshold,
+        output_image_type,
+        *params,
     ):
         assert self._pipe is not None
+        lora_params = params
+        lora_checkpoints = lora_params[::5]
+        lora_weights = lora_params[1::5]
+        lora_alphas = lora_params[2::5]
+        lora_urls = lora_params[3::5]
+        lora_files = lora_params[4::5]
         mask = self._pipe(
             image,
             points=click_points,
             mask_threshold=mask_threshold,
+            lora_checkpoints=lora_checkpoints,
+            lora_weights=lora_weights,
+            lora_alphas=lora_alphas,
+            lora_urls=lora_urls,
+            lora_files=lora_files,
         )
         if output_image_type == "Object":
             result = Image.new("RGBA", image.size, (0, 0, 0, 0))
@@ -225,19 +269,34 @@ class SamWebUI(SimpleWebUI):
     def serve_box(
         self,
         image: Image.Image,
-        boxes_points: List[Tuple[int, int]] = [(0, 0)],
-        mask_threshold: float = 0.5,
-        output_image_type: str = "Mask",
+        boxes_points,
+        mask_threshold,
+        output_image_type,
+        *params,
     ):
         assert self._pipe is not None
-        x1 = min([point[0] for point in boxes_points])
-        y1 = min([point[1] for point in boxes_points])
-        x2 = max([point[0] for point in boxes_points])
-        y2 = max([point[1] for point in boxes_points])
+        lora_params = params
+        lora_checkpoints = lora_params[::5]
+        lora_weights = lora_params[1::5]
+        lora_alphas = lora_params[2::5]
+        lora_urls = lora_params[3::5]
+        lora_files = lora_params[4::5]
+        if boxes_points is None or len(boxes_points) == 0:
+            x1, y1, x2, y2 = 0, 0, image.size[0], image.size[1]
+        else:
+            x1 = min([point[0] for point in boxes_points])
+            y1 = min([point[1] for point in boxes_points])
+            x2 = max([point[0] for point in boxes_points])
+            y2 = max([point[1] for point in boxes_points])
         mask = self._pipe(
             image,
             boxes=[[(x1, y1, x2, y2)]],
             mask_threshold=mask_threshold,
+            lora_checkpoints=lora_checkpoints,
+            lora_weights=lora_weights,
+            lora_alphas=lora_alphas,
+            lora_urls=lora_urls,
+            lora_files=lora_files,
         )
         if output_image_type == "Object":
             result = Image.new("RGBA", image.size, (0, 0, 0, 0))

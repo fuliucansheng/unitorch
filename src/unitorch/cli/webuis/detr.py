@@ -86,6 +86,8 @@ class DetrWebUI(SimpleWebUI):
         super().__init__(config, iname="DETR", iface=iface)
 
     def start(self, pretrained_name, **kwargs):
+        if self._name == pretrained_name and self._status == "Running":
+            return self._status
         if self._status == "Running":
             self.stop()
         self._name = pretrained_name

@@ -76,10 +76,13 @@ import unitorch.cli.webuis.detr
 import unitorch.cli.webuis.dpt
 import unitorch.cli.webuis.llama
 import unitorch.cli.webuis.llava.mistral_clip
+import unitorch.cli.webuis.mask2former
 import unitorch.cli.webuis.mistral
 import unitorch.cli.webuis.sam
+import unitorch.cli.webuis.segformer
 
 if is_diffusers_available():
     import unitorch.cli.webuis.stable
     import unitorch.cli.webuis.stable_xl
     import unitorch.cli.webuis.stable_3
+    import unitorch.cli.webuis.stable_flux

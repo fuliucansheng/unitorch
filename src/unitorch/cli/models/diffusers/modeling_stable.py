@@ -358,18 +358,8 @@ class StableForImage2ImageGeneration(_StableForImage2ImageGeneration):
     @autocast()
     def forward(
         self,
-        input_pixel_values: torch.Tensor,
-        pixel_values: torch.Tensor,
-        input_ids: torch.Tensor,
-        attention_mask: Optional[torch.Tensor] = None,
     ):
-        loss = super().forward(
-            input_pixel_values=input_pixel_values,
-            pixel_values=pixel_values,
-            input_ids=input_ids,
-            attention_mask=attention_mask,
-        )
-        return LossOutputs(loss=loss)
+        raise NotImplementedError
 
     @add_default_section_for_function("core/model/diffusers/image2image/stable")
     @autocast()

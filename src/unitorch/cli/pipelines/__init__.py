@@ -2,6 +2,9 @@
 # Licensed under the MIT License.
 
 from diffusers.schedulers import (
+    DDIMScheduler,
+    DDPMScheduler,
+    PNDMScheduler,
     DPMSolverSDEScheduler,
     UniPCMultistepScheduler,
     EulerAncestralDiscreteScheduler,
@@ -12,6 +15,9 @@ from diffusers.schedulers import (
 Schedulers = {
     "DPM++SDE": DPMSolverSDEScheduler,
     "UniPC++": UniPCMultistepScheduler,
+    "DDIM": DDIMScheduler,
+    "DDPM": DDPMScheduler,
+    "PNDM": PNDMScheduler,
     "FlowMatchEuler": FlowMatchEulerDiscreteScheduler,
     "EulerAncestral": EulerAncestralDiscreteScheduler,
     "Euler": EulerDiscreteScheduler,
@@ -25,7 +31,10 @@ import unitorch.cli.pipelines.dpt
 import unitorch.cli.pipelines.stable
 import unitorch.cli.pipelines.stable_xl
 import unitorch.cli.pipelines.stable_3
+import unitorch.cli.pipelines.stable_flux
+import unitorch.cli.pipelines.segformer
 import unitorch.cli.pipelines.llama
 import unitorch.cli.pipelines.llava
+import unitorch.cli.pipelines.mask2former
 import unitorch.cli.pipelines.mistral
 import unitorch.cli.pipelines.sam

@@ -72,7 +72,7 @@ class ControlNet3ForText2ImageGeneration(_ControlNet3ForText2ImageGeneration):
     @add_default_section_for_init("core/model/diffusers/text2image/controlnet_3")
     def from_core_configure(cls, config, **kwargs):
         config.set_default_section("core/model/diffusers/text2image/controlnet_3")
-        pretrained_name = config.getoption("pretrained_name", "stable-v3-base")
+        pretrained_name = config.getoption("pretrained_name", "stable-v3-medium")
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
 
         pretrained_controlnet_names = config.getoption(
@@ -263,14 +263,32 @@ class ControlNet3ForText2ImageGeneration(_ControlNet3ForText2ImageGeneration):
 
         return inst
 
-    @autocast()
+    # @autocast()
     def forward(
         self,
+        pixel_values: torch.Tensor,
+        input_ids: torch.Tensor,
+        input2_ids: torch.Tensor,
+        input3_ids: torch.Tensor,
+        condition_pixel_values: torch.Tensor,
+        attention_mask: Optional[torch.Tensor] = None,
+        attention2_mask: Optional[torch.Tensor] = None,
+        attention3_mask: Optional[torch.Tensor] = None,
     ):
-        raise NotImplementedError
+        loss = super().forward(
+            input_ids=input_ids,
+            input2_ids=input2_ids,
+            input3_ids=input3_ids,
+            pixel_values=pixel_values,
+            condition_pixel_values=condition_pixel_values,
+            attention_mask=attention_mask,
+            attention2_mask=attention2_mask,
+            attention3_mask=attention3_mask,
+        )
+        return LossOutputs(loss=loss)
 
     @add_default_section_for_function("core/model/diffusers/text2image/controlnet_3")
-    @autocast()
+    # @autocast()
     def generate(
         self,
         input_ids: torch.Tensor,

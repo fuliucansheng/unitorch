@@ -21,6 +21,10 @@ from unitorch.models.diffusers.modeling_stable_3 import (
     Stable3ForText2ImageGeneration,
     Stable3ForImage2ImageGeneration,
 )
+from unitorch.models.diffusers.modeling_stable_flux import (
+    GenericStableFluxModel,
+    StableFluxForText2ImageGeneration,
+)
 from unitorch.models.diffusers.modeling_controlnet import (
     ControlNetForText2ImageGeneration,
     ControlNetForImage2ImageGeneration,
@@ -34,6 +38,9 @@ from unitorch.models.diffusers.modeling_controlnet_xl import (
 from unitorch.models.diffusers.modeling_controlnet_3 import (
     ControlNet3ForText2ImageGeneration,
 )
+from unitorch.models.diffusers.modeling_controlnet_flux import (
+    ControlNetFluxForText2ImageGeneration,
+)
 from unitorch.models.diffusers.modeling_adapter_xl import (
     StableXLAdapterForText2ImageGeneration,
 )
@@ -43,3 +50,4 @@ from unitorch.models.diffusers.processing_stable import (
 )
 from unitorch.models.diffusers.processing_stable_xl import StableXLProcessor
 from unitorch.models.diffusers.processing_stable_3 import Stable3Processor
+from unitorch.models.diffusers.processing_stable_flux import StableFluxProcessor
