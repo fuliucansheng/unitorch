@@ -7,6 +7,7 @@ import gc
 import gradio as gr
 from PIL import Image
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from unitorch.utils import nested_dict_value
 from unitorch.cli import CoreConfigureParser, GenericWebUI
 from unitorch.cli import register_webui
 from unitorch.cli.models.diffusers import (
@@ -158,6 +159,15 @@ class StableImageResolutionWebUI(SimpleWebUI):
         start.click(fn=self.start, inputs=[name], outputs=[status])
         stop.click(fn=self.stop, outputs=[status])
 
+        for lora in loras:
+            lora.checkpoint.change(
+                fn=lambda x: nested_dict_value(
+                    pretrained_stable_extensions_infos, x, "text"
+                ),
+                inputs=[lora.checkpoint],
+                outputs=[lora.text],
+            )
+
         generate.click(
             fn=self.serve,
             inputs=[
@@ -187,6 +197,8 @@ class StableImageResolutionWebUI(SimpleWebUI):
         super().__init__(config, iname="Resolution", iface=iface)
 
     def start(self, pretrained_name, **kwargs):
+        if self._name == pretrained_name and self._status == "Running":
+            return self._status
         if self._status == "Running":
             self.stop()
         self._name = pretrained_name

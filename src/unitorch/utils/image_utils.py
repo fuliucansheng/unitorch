@@ -1,6 +1,8 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
+import io
+import requests
 import torch
 from PIL import Image
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union

@@ -7,6 +7,7 @@ import gc
 import gradio as gr
 from PIL import Image
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from unitorch.utils import nested_dict_value
 from unitorch.cli import CoreConfigureParser, GenericWebUI
 from unitorch.cli import register_webui
 from unitorch.cli.pipelines.bloom import BloomForGenerationPipeline
@@ -91,6 +92,16 @@ class BloomWebUI(SimpleWebUI):
 
         start.click(self.start, inputs=[name], outputs=[status])
         stop.click(self.stop, outputs=[status])
+
+        for lora in loras:
+            lora.checkpoint.change(
+                fn=lambda x: nested_dict_value(
+                    pretrained_bloom_extensions_infos, x, "text"
+                ),
+                inputs=[lora.checkpoint],
+                outputs=[lora.text],
+            )
+
         generate.click(
             self.serve,
             inputs=[
@@ -110,6 +121,8 @@ class BloomWebUI(SimpleWebUI):
         super().__init__(config, iname="Bloom", iface=iface)
 
     def start(self, pretrained_name, **kwargs):
+        if self._name == pretrained_name and self._status == "Running":
+            return self._status
         if self._status == "Running":
             self.stop()
         self._name = pretrained_name

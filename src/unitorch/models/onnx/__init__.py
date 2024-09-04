@@ -30,6 +30,5 @@ class GenericOnnxModel(GenericModel):
     def forward(self, *args, **kwargs):
         pass
 
-
-if is_onnxruntime_available():
-    pass
+    def postprocess(self, *args, **kwargs):
+        pass

@@ -87,6 +87,8 @@ class BRIAWebUI(SimpleWebUI):
         super().__init__(config, iname="BRIA", iface=iface)
 
     def start(self, pretrained_name, **kwargs):
+        if self._name == pretrained_name and self._status == "Running":
+            return self._status
         if self._status == "Running":
             self.stop()
         self._name = pretrained_name
@@ -115,7 +117,7 @@ class BRIAWebUI(SimpleWebUI):
             threshold=mask_threshold,
         )
         if output_image_type == "Object":
-            result = Image.new("RGBA", image.size, (0, 0, 0, 0))
+            result = Image.new("RGBA", image.size, (0, 0, 0, 64))
             mask = mask.convert("L").resize(image.size)
             result.paste(image, (0, 0), mask)
         else:

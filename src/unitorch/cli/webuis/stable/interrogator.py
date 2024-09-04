@@ -6,6 +6,7 @@ import torch
 import gc
 import gradio as gr
 from PIL import Image
+from unitorch.utils import nested_dict_value
 from unitorch.cli import CoreConfigureParser, GenericWebUI
 from unitorch.cli import register_webui
 from unitorch.cli.pipelines.stable import ClipInterrogatorPipeline
@@ -83,6 +84,8 @@ class InterrogatorWebUI(SimpleWebUI):
         super().__init__(config, iname="Interrogator", iface=iface)
 
     def start(self, pretrained_name, **kwargs):
+        if self._name == pretrained_name and self._status == "Running":
+            return self._status
         if self._status == "Running":
             self.stop()
         self._name = pretrained_name

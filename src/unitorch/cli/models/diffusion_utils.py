@@ -109,7 +109,6 @@ class DiffusionProcessor:
                 logging.error(f"Failed to save image {name} to zip.")
         else:
             output_path = f"{self.output_folder}/{name}"
-            print(output_path)
             image.save(output_path)
         return name
 

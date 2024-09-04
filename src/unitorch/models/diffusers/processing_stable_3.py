@@ -140,15 +140,15 @@ class Stable3Processor:
             self.vae_mask_image_processor = VaeImageProcessor(
                 vae_scale_factor=vae_scale_factor
             )
-            self.vae_condition_image_processor = VaeImageProcessor(
-                vae_scale_factor=vae_scale_factor,
-                do_convert_rgb=True,
-                do_normalize=False,
-            )
+            # self.vae_condition_image_processor = VaeImageProcessor(
+            #     vae_scale_factor=vae_scale_factor,
+            #     do_convert_rgb=True,
+            #     do_normalize=False,
+            # )
         else:
             self.vae_image_processor = None
             self.vae_mask_image_processor = None
-            self.vae_condition_image_processor = None
+            # self.vae_condition_image_processor = None
 
     def text2image(
         self,
@@ -260,7 +260,7 @@ class Stable3Processor:
         if self.image_size is not None:
             image = image.resize(self.image_size)
 
-        pixel_values = self.vae_condition_image_processor.preprocess(image)[0]
+        pixel_values = self.vae_image_processor.preprocess(image)[0]
         return GenericOutputs(pixel_values=pixel_values)
 
     def controlnets_inputs(
@@ -275,7 +275,7 @@ class Stable3Processor:
             if self.image_size is not None:
                 image = image.resize(self.image_size)
 
-            pixel_values.append(self.vae_condition_image_processor.preprocess(image)[0])
+            pixel_values.append(self.vae_image_processor.preprocess(image)[0])
 
         return GenericOutputs(pixel_values=torch.stack(pixel_values, dim=0))
 

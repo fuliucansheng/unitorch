@@ -144,6 +144,16 @@ def create_element(
             elem_classes=elem_classes,
         )
 
+    if dtype == "anno_image":
+        return gr.AnnotatedImage(
+            value=default,
+            label=label,
+            scale=scale,
+            show_label=show_label,
+            elem_id=elem_id,
+            elem_classes=elem_classes,
+        )
+
     if dtype == "image_editor":
         return gr.ImageEditor(
             type="pil",
@@ -194,7 +204,6 @@ def create_element(
         return gr.Gallery(
             label=label,
             scale=scale,
-            info=info,
             interactive=interactive,
             show_label=show_label,
             elem_id=elem_id,
@@ -230,6 +239,15 @@ def create_element(
             elem_classes=elem_classes,
         )
 
+    if dtype == "html":
+        return gr.HTML(
+            value=default,
+            label=label,
+            show_label=show_label,
+            elem_id=elem_id,
+            elem_classes=elem_classes,
+        )
+
     raise ValueError(f"Unknown element type: {dtype}")
 
 
@@ -241,7 +259,7 @@ def create_accordion(*elements, name=None, open=False):
 
 
 def create_row(*elements, variant="panel"):
-    row = gr.Row(variant=variant)
+    row = gr.Row(variant=variant, equal_height=True)
     for element in elements:
         row.add_child(element)
     return row
@@ -399,6 +417,7 @@ def create_lora_layout(
 ):
     def create_lora():
         checkpoint = create_element("dropdown", "Checkpoint", values=loras)
+        text = create_element("text", "Note", default="")
         weight = create_element(
             "slider", "Weight", default=1.0, min_value=0, max_value=3, step=0.1
         )
@@ -408,13 +427,19 @@ def create_lora_layout(
         url = create_element("text", "URL")
         file = create_element("file", "File")
         layout = create_column(
+            create_row(text),
             create_row(checkpoint, create_column(weight, alpha)),
             create_row(url),
             create_row(file),
         )
         return (
             GenericOutputs(
-                checkpoint=checkpoint, weight=weight, alpha=alpha, url=url, file=file
+                checkpoint=checkpoint,
+                text=text,
+                weight=weight,
+                alpha=alpha,
+                url=url,
+                file=file,
             ),
             layout,
         )

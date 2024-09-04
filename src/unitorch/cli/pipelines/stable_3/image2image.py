@@ -10,7 +10,7 @@ import pandas as pd
 from PIL import Image
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from diffusers.utils import numpy_to_pil
-from diffusers.models import SD3ControlNetModel
+from diffusers.models import SD3ControlNetModel, SD3MultiControlNetModel
 from diffusers.pipelines import (
     StableDiffusion3Pipeline,
     StableDiffusion3Img2ImgPipeline,
@@ -87,7 +87,6 @@ class Stable3ForImage2ImageGenerationPipeline(GenericStable3Model):
 
         self.from_pretrained(weight_path, state_dict=state_dict)
         self.eval()
-        self.to(device=self._device)
 
         self._enable_cpu_offload = enable_cpu_offload
         self._enable_xformers = enable_xformers
@@ -97,7 +96,7 @@ class Stable3ForImage2ImageGenerationPipeline(GenericStable3Model):
     def from_core_configure(
         cls,
         config,
-        pretrained_name: Optional[str] = "stable-v3-base",
+        pretrained_name: Optional[str] = "stable-v3-medium",
         config_path: Optional[str] = None,
         text_config_path: Optional[str] = None,
         text2_config_path: Optional[str] = None,
@@ -272,12 +271,6 @@ class Stable3ForImage2ImageGenerationPipeline(GenericStable3Model):
         num_timesteps: Optional[int] = 50,
         seed: Optional[int] = 1123,
         scheduler: Optional[str] = None,
-        freeu_params: Optional[Tuple[float, float, float, float]] = (
-            0.9,
-            0.2,
-            1.2,
-            1.4,
-        ),
         controlnet_checkpoints: Optional[List[str]] = [],
         controlnet_images: Optional[List[Image.Image]] = [],
         controlnet_guidance_scales: Optional[List[float]] = [],
@@ -334,6 +327,11 @@ class Stable3ForImage2ImageGenerationPipeline(GenericStable3Model):
                 controlnets.append(controlnet)
                 conditioning_scales.append(conditioning_scale)
                 conditioning_images.append(conditioning_image.resize(image.size))
+            if len(controlnets) > 1:
+                controlnets = SD3MultiControlNetModel(controlnets)
+            else:
+                controlnets = controlnets[0]
+
             # self.pipeline = StableDiffusion3ControlNetImg2ImgPipeline(
             #     vae=self.vae,
             #     text_encoder=self.text,
@@ -369,12 +367,11 @@ class Stable3ForImage2ImageGenerationPipeline(GenericStable3Model):
             enable_controlnet = False
             inputs = {**text_inputs, **image_inputs}
         self.pipeline.set_progress_bar_config(disable=True)
-        # self.pipeline.enable_freeu(*freeu_params)
         self.seed = seed
 
         inputs = {k: v.unsqueeze(0) if v is not None else v for k, v in inputs.items()}
         inputs = {
-            k: v.to(device=self._device) if v is not None else v
+            k: v.to(device=self.device) if v is not None else v
             for k, v in inputs.items()
         }
         if isinstance(lora_checkpoints, str):

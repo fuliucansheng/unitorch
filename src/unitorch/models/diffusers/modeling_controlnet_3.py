@@ -3,6 +3,7 @@
 
 import json
 import torch
+from torch.cuda.amp import autocast
 import torch.nn.functional as F
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 import diffusers.schedulers as schedulers
@@ -106,8 +107,89 @@ class ControlNet3ForText2ImageGeneration(GenericStable3Model):
 
     def forward(
         self,
+        pixel_values: torch.Tensor,
+        input_ids: torch.Tensor,
+        input2_ids: torch.Tensor,
+        input3_ids: torch.Tensor,
+        condition_pixel_values: torch.Tensor,
+        attention_mask: Optional[torch.Tensor] = None,
+        attention2_mask: Optional[torch.Tensor] = None,
+        attention3_mask: Optional[torch.Tensor] = None,
     ):
-        raise NotImplementedError
+        prompt_outputs = self.text(
+            input_ids,
+            # attention_mask,
+            output_hidden_states=True,
+        )
+        pooled_prompt_embeds = prompt_outputs[0]
+        prompt_embeds = prompt_outputs.hidden_states[-2]
+
+        prompt2_outputs = self.text2(
+            input2_ids,
+            # attention2_mask,
+            output_hidden_states=True,
+        )
+        pooled_prompt2_embeds = prompt2_outputs[0]
+        prompt2_embeds = prompt2_outputs.hidden_states[-2]
+
+        prompt3_outputs = self.text3(
+            input3_ids,
+            # attention3_mask,
+            output_hidden_states=True,
+        )
+        prompt3_embeds = prompt3_outputs[0]
+
+        prompt_embeds = torch.concat([prompt_embeds, prompt2_embeds], dim=-1)
+        pooled_prompt_embeds = torch.concat(
+            [pooled_prompt_embeds, pooled_prompt2_embeds], dim=-1
+        )
+
+        prompt_embeds = torch.nn.functional.pad(
+            prompt_embeds, (0, prompt3_embeds.shape[-1] - prompt_embeds.shape[-1])
+        )
+        prompt_embeds = torch.cat([prompt_embeds, prompt3_embeds], dim=-2)
+
+        latents = self.vae.encode(pixel_values).latent_dist.sample()
+        latents = latents * self.vae.config.scaling_factor
+
+        noise = torch.randn(latents.shape).to(latents.device)
+        batch = latents.size(0)
+
+        timesteps = torch.randint(
+            0,
+            self.scheduler.config.num_train_timesteps,
+            (batch,),
+            device=pixel_values.device,
+        ).long()
+
+        noise_latents = self.scheduler.add_noise(
+            latents,
+            noise,
+            timesteps,
+        )
+        condition_latents = self.vae.encode(condition_pixel_values).latent_dist.sample()
+        condition_latents = condition_latents * self.vae.config.scaling_factor
+        control_block_samples = self.controlnet(
+            hidden_states=noise_latents,
+            timestep=timesteps,
+            encoder_hidden_states=prompt_embeds,
+            pooled_projections=pooled_prompt_embeds,
+            controlnet_cond=condition_latents,
+            return_dict=False,
+        )[0]
+
+        outputs = self.transformer(
+            noise_latents,
+            timestep=timesteps,
+            encoder_hidden_states=prompt_embeds,
+            pooled_projections=pooled_prompt_embeds,
+            block_controlnet_hidden_states=control_block_samples,
+        ).sample
+
+        if self.scheduler.config.prediction_type == "v_prediction":
+            noise = self.scheduler.get_velocity(latents, noise, timesteps)
+        loss = F.mse_loss(outputs, noise, reduction="mean")
+        return loss
 
     def generate(
         self,

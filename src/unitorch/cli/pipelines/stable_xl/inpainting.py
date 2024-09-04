@@ -84,7 +84,6 @@ class StableXLForImageInpaintingPipeline(GenericStableXLModel):
 
         self.from_pretrained(weight_path, state_dict=state_dict)
         self.eval()
-        self.to(device=self._device)
 
         self._enable_cpu_offload = enable_cpu_offload
         self._enable_xformers = enable_xformers
@@ -343,7 +342,7 @@ class StableXLForImageInpaintingPipeline(GenericStableXLModel):
 
         inputs = {k: v.unsqueeze(0) if v is not None else v for k, v in inputs.items()}
         inputs = {
-            k: v.to(device=self._device) if v is not None else v
+            k: v.to(device=self.device) if v is not None else v
             for k, v in inputs.items()
         }
         if isinstance(lora_checkpoints, str):

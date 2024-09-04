@@ -69,7 +69,7 @@ class Stable3ForText2ImageGeneration(_Stable3ForText2ImageGeneration):
     @add_default_section_for_init("core/model/diffusers/text2image/stable_3")
     def from_core_configure(cls, config, **kwargs):
         config.set_default_section("core/model/diffusers/text2image/stable_3")
-        pretrained_name = config.getoption("pretrained_name", "stable-v3-base")
+        pretrained_name = config.getoption("pretrained_name", "stable-v3-medium")
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
 
         config_path = config.getoption("config_path", None)
@@ -98,6 +98,7 @@ class Stable3ForText2ImageGeneration(_Stable3ForText2ImageGeneration):
             text3_config_path,
             nested_dict_value(pretrained_infos, "text3", "config"),
         )
+        text3_config_path = cached_path(text3_config_path)
 
         vae_config_path = config.getoption("vae_config_path", None)
         vae_config_path = pop_value(
@@ -164,6 +165,10 @@ class Stable3ForText2ImageGeneration(_Stable3ForText2ImageGeneration):
                     prefix_keys={"": "text2."},
                 ),
                 load_weight(
+                    nested_dict_value(pretrained_infos, "text3", "weight"),
+                    prefix_keys={"": "text3."},
+                ),
+                load_weight(
                     nested_dict_value(pretrained_infos, "vae", "weight"),
                     prefix_keys={"": "vae."},
                 ),
@@ -203,8 +208,24 @@ class Stable3ForText2ImageGeneration(_Stable3ForText2ImageGeneration):
     @autocast()
     def forward(
         self,
+        pixel_values: torch.Tensor,
+        input_ids: torch.Tensor,
+        input2_ids: torch.Tensor,
+        input3_ids: torch.Tensor,
+        attention_mask: Optional[torch.Tensor] = None,
+        attention2_mask: Optional[torch.Tensor] = None,
+        attention3_mask: Optional[torch.Tensor] = None,
     ):
-        raise NotImplementedError
+        loss = super().forward(
+            input_ids=input_ids,
+            input2_ids=input2_ids,
+            input3_ids=input3_ids,
+            pixel_values=pixel_values,
+            attention_mask=attention_mask,
+            attention2_mask=attention2_mask,
+            attention3_mask=attention3_mask,
+        )
+        return LossOutputs(loss=loss)
 
     @add_default_section_for_function("core/model/diffusers/text2image/stable_3")
     @autocast()
@@ -289,7 +310,7 @@ class Stable3ForImage2ImageGeneration(_Stable3ForImage2ImageGeneration):
     @add_default_section_for_init("core/model/diffusers/image2image/stable_3")
     def from_core_configure(cls, config, **kwargs):
         config.set_default_section("core/model/diffusers/image2image/stable_3")
-        pretrained_name = config.getoption("pretrained_name", "stable-v3-base")
+        pretrained_name = config.getoption("pretrained_name", "stable-v3-medium")
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
 
         config_path = config.getoption("config_path", None)

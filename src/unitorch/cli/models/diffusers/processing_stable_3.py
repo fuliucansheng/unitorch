@@ -56,7 +56,7 @@ class Stable3Processor(_Stable3Processor):
     @add_default_section_for_init("core/process/diffusion/stable_3")
     def from_core_configure(cls, config, **kwargs):
         config.set_default_section("core/process/diffusion/stable_3")
-        pretrained_name = config.getoption("pretrained_name", "stable-v3-base")
+        pretrained_name = config.getoption("pretrained_name", "stable-v3-medium")
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
 
         vocab_path = config.getoption("vocab_path", None)
@@ -134,7 +134,8 @@ class Stable3Processor(_Stable3Processor):
             pixel_values=outputs.pixel_values,
             input2_ids=outputs.input2_ids,
             attention2_mask=outputs.attention2_mask,
-            add_time_ids=outputs.add_time_ids,
+            input3_ids=outputs.input3_ids,
+            attention3_mask=outputs.attention3_mask,
         )
 
     @register_process("core/process/diffusion/stable_3/text2image/inputs")

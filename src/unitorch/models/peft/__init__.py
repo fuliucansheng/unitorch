@@ -33,9 +33,6 @@ class PeftModelForSequenceClassification(PeftModelForSequenceClassification):
         return_dict=None,
         **kwargs,
     ):
-        return_dict = (
-            return_dict if return_dict is not None else self.config.use_return_dict
-        )
         peft_config = self.active_peft_config
         if not isinstance(peft_config, PromptLearningConfig):
             return self.base_model(
@@ -272,7 +269,10 @@ class PeftWeightLoaderMixin(nn.Module):
                 lora_A = value
                 lora_B = lora_state_dict[key.replace("lora_A", "lora_B")]
                 scale = alpha / lora_B.shape[1]
-                key = key.replace("lora_A.default.", "")
+                if "lora_A.default." in key:
+                    key = key.replace("lora_A.default.", "")
+                elif "lora_A." in key:
+                    key = key.replace("lora_A.", "")
                 if key in state_dict:
                     state_dict[key] += (
                         scale * weight * lora_B.float() @ lora_A.float()
@@ -310,16 +310,7 @@ from unitorch.models.peft.modeling_mistral import (
 if is_diffusers_available():
     from unitorch.models.peft.diffusers import (
         StableLoraForText2ImageGeneration,
-        StableLoraForImage2ImageGeneration,
-        StableLoraForImageInpainting,
-        StableLoraForImageResolution,
         StableXLLoraForText2ImageGeneration,
-        StableXLLoraForImage2ImageGeneration,
-        StableXLLoraForImageInpainting,
         ControlNetLoraForText2ImageGeneration,
-        ControlNetLoraForImage2ImageGeneration,
-        ControlNetLoraForImageInpainting,
         ControlNetXLLoraForText2ImageGeneration,
-        ControlNetXLLoraForImage2ImageGeneration,
-        ControlNetXLLoraForImageInpainting,
     )

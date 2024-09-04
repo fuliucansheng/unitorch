@@ -122,6 +122,35 @@ __hf_hub_stable_3_safetensors_dict__ = lambda name: {
     "scheduler": f"https://huggingface.co/{name}/resolve/main/scheduler/scheduler_config.json",
 }
 
+__hf_hub_stable_flux_safetensors_dict__ = lambda name: {
+    "transformer": {
+        "config": f"https://huggingface.co/{name}/resolve/main/transformer/config.json",
+        "weight": [
+            f"https://huggingface.co/{name}/resolve/main/transformer/diffusion_pytorch_model-{str(i).rjust(5, '0')}-of-00003.safetensors"
+            for i in range(1, 4)
+        ],
+    },
+    "text": {
+        "config": f"https://huggingface.co/{name}/resolve/main/text_encoder/config.json",
+        "vocab": f"https://huggingface.co/{name}/resolve/main/tokenizer/vocab.json",
+        "merge": f"https://huggingface.co/{name}/resolve/main/tokenizer/merges.txt",
+        "weight": f"https://huggingface.co/{name}/resolve/main/text_encoder/model.safetensors",
+    },
+    "text2": {
+        "config": f"https://huggingface.co/{name}/resolve/main/text_encoder_2/config.json",
+        "vocab": f"https://huggingface.co/{name}/resolve/main/tokenizer_2/spiece.model",
+        "weight": [
+            f"https://huggingface.co/{name}/resolve/main/text_encoder_2/model-{str(i).rjust(5, '0')}-of-00002.safetensors"
+            for i in range(1, 3)
+        ],
+    },
+    "vae": {
+        "config": f"https://huggingface.co/{name}/resolve/main/vae/config.json",
+        "weight": f"https://huggingface.co/{name}/resolve/main/vae/diffusion_pytorch_model.safetensors",
+    },
+    "scheduler": f"https://huggingface.co/{name}/resolve/main/scheduler/scheduler_config.json",
+}
+
 __hf_hub_controlnet_dict__ = lambda name: {
     "controlnet": {
         "config": f"https://huggingface.co/{name}/resolve/main/config.json",
@@ -161,7 +190,7 @@ __hf_hub_stable_video_safetensors_dict__ = lambda name: {
 }
 
 pretrained_stable_infos = {
-    "stable-v1.5": __hf_hub_stable_v1_5_dict__("runwayml/stable-diffusion-v1-5"),
+    "stable-v1.5": __hf_hub_stable_v1_5_dict__("botp/stable-diffusion-v1-5"),
     "stable-v1.5-realistic-v5.1-no-vae": __hf_hub_stable_v1_5_safetensors_dict__(
         "SG161222/Realistic_Vision_V5.1_noVAE"
     ),
@@ -178,7 +207,7 @@ pretrained_stable_infos = {
         "nitrosocke/Ghibli-Diffusion"
     ),
     "stable-v1.5-inpainting": __hf_hub_stable_v1_5_dict__(
-        "runwayml/stable-diffusion-inpainting"
+        "botp/stable-diffusion-v1-5-inpainting"
     ),
     "stable-v1.5-x4-upscaler": __hf_hub_stable_v1_5_dict__(
         "stabilityai/stable-diffusion-x4-upscaler"
@@ -217,6 +246,12 @@ pretrained_stable_infos = {
     ),
     "stable-v3-medium": __hf_hub_stable_3_safetensors_dict__(
         "ckpt/stable-diffusion-3-medium-diffusers"
+    ),
+    "stable-flux-schnell": __hf_hub_stable_flux_safetensors_dict__(
+        "black-forest-labs/FLUX.1-schnell"
+    ),
+    "stable-flux-dev": __hf_hub_stable_flux_safetensors_dict__(
+        "camenduru/FLUX.1-dev-diffusers"
     ),
     "stable-video-diffusion-img2vid-xt": __hf_hub_stable_video_safetensors_dict__(
         "stabilityai/stable-video-diffusion-img2vid-xt"
@@ -271,13 +306,13 @@ pretrained_stable_extensions_infos = {
     "stable-xl-controlnet-depth-small": __hf_hub_controlnet_dict__(
         "diffusers/controlnet-depth-sdxl-1.0-small"
     ),
-    "stable-xl-controlnet-tile": __hf_hub_controlnet_dict__(
+    "stable-xl-controlnet-tile": __hf_hub_controlnet_safetensors_dict__(
         "xinsir/controlnet-tile-sdxl-1.0"
     ),
-    "stable-xl-controlnet-openpose": __hf_hub_controlnet_dict__(
+    "stable-xl-controlnet-openpose": __hf_hub_controlnet_safetensors_dict__(
         "xinsir/controlnet-openpose-sdxl-1.0"
     ),
-    "stable-xl-controlnet-scribble": __hf_hub_controlnet_dict__(
+    "stable-xl-controlnet-scribble": __hf_hub_controlnet_safetensors_dict__(
         "xinsir/controlnet-scribble-sdxl-1.0"
     ),
     # sdxl adapter
@@ -330,6 +365,13 @@ pretrained_stable_extensions_infos = {
     "stable-v3-controlnet-canny": __hf_hub_controlnet_safetensors_dict__(
         "InstantX/SD3-Controlnet-Canny"
     ),
+    "stable-v3-controlnet-tile": __hf_hub_controlnet_safetensors_dict__(
+        "InstantX/SD3-Controlnet-Tile"
+    ),
+    # stable flux controlnet
+    "stable-flux-controlnet-canny": __hf_hub_controlnet_safetensors_dict__(
+        "InstantX/FLUX.1-dev-Controlnet-Canny"
+    ),
 }
 
 from unitorch.cli.models.diffusion_utils import load_weight
@@ -349,6 +391,9 @@ from unitorch.cli.models.diffusers.modeling_stable_3 import (
     Stable3ForText2ImageGeneration,
     Stable3ForImage2ImageGeneration,
 )
+from unitorch.cli.models.diffusers.modeling_stable_flux import (
+    StableFluxForText2ImageGeneration,
+)
 from unitorch.cli.models.diffusers.modeling_controlnet import (
     ControlNetForText2ImageGeneration,
     ControlNetForImage2ImageGeneration,
@@ -362,12 +407,20 @@ from unitorch.cli.models.diffusers.modeling_controlnet_xl import (
 from unitorch.cli.models.diffusers.modeling_controlnet_3 import (
     ControlNet3ForText2ImageGeneration,
 )
+from unitorch.cli.models.diffusers.modeling_controlnet_flux import (
+    ControlNetFluxForText2ImageGeneration,
+)
 from unitorch.cli.models.diffusers.modeling_adapter_xl import (
     StableXLAdapterForText2ImageGeneration,
 )
 from unitorch.cli.models.diffusers.processing_stable import StableProcessor
 from unitorch.cli.models.diffusers.processing_stable_xl import StableXLProcessor
+from unitorch.cli.models.diffusers.processing_stable_3 import Stable3Processor
+from unitorch.cli.models.diffusers.processing_stable_flux import StableFluxProcessor
 from unitorch.cli.models.diffusers.processing_controlnet import ControlNetProcessor
 from unitorch.cli.models.diffusers.processing_controlnet_xl import ControlNetXLProcessor
 from unitorch.cli.models.diffusers.processing_controlnet_3 import ControlNet3Processor
+from unitorch.cli.models.diffusers.processing_controlnet_flux import (
+    ControlNetFluxProcessor,
+)
 from unitorch.cli.models.diffusers.processing_adapter_xl import AdapterXLProcessor

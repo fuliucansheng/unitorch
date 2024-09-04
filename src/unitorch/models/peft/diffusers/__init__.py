@@ -3,24 +3,21 @@
 
 from unitorch.models.peft.diffusers.modeling_stable import (
     StableLoraForText2ImageGeneration,
-    StableLoraForImage2ImageGeneration,
-    StableLoraForImageInpainting,
-    StableLoraForImageResolution,
 )
 from unitorch.models.peft.diffusers.modeling_stable_xl import (
     StableXLLoraForText2ImageGeneration,
-    StableXLLoraForImage2ImageGeneration,
-    StableXLLoraForImageInpainting,
+)
+from unitorch.models.peft.diffusers.modeling_stable_3 import (
+    Stable3LoraForText2ImageGeneration,
 )
 from unitorch.models.peft.diffusers.modeling_controlnet import (
     ControlNetLoraForText2ImageGeneration,
-    ControlNetLoraForImage2ImageGeneration,
-    ControlNetLoraForImageInpainting,
 )
 from unitorch.models.peft.diffusers.modeling_controlnet_xl import (
     ControlNetXLLoraForText2ImageGeneration,
-    ControlNetXLLoraForImage2ImageGeneration,
-    ControlNetXLLoraForImageInpainting,
+)
+from unitorch.models.peft.diffusers.modeling_controlnet_3 import (
+    ControlNet3LoraForText2ImageGeneration,
 )
 from unitorch.models.peft.diffusers.modeling_adapter_xl import (
     StableXLAdapterLoraForText2ImageGeneration,
