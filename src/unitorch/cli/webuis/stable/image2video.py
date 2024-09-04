@@ -7,6 +7,7 @@ import gc
 import gradio as gr
 from PIL import Image
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from unitorch.utils import nested_dict_value
 from unitorch.cli import CoreConfigureParser, GenericWebUI
 from unitorch.cli import register_webui
 from unitorch.cli.models.diffusers import (
@@ -164,6 +165,15 @@ class StableImage2VideoWebUI(SimpleWebUI):
 
         start.click(fn=self.start, inputs=[name], outputs=[status])
         stop.click(fn=self.stop, outputs=[status])
+
+        for lora in loras:
+            lora.checkpoint.change(
+                fn=lambda x: nested_dict_value(
+                    pretrained_stable_extensions_infos, x, "text"
+                ),
+                inputs=[lora.checkpoint],
+                outputs=[lora.text],
+            )
 
         generate.click(
             fn=self.serve,

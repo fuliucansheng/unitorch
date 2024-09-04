@@ -10,7 +10,7 @@ import pandas as pd
 from PIL import Image
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from diffusers.utils import numpy_to_pil
-from diffusers.models import SD3ControlNetModel
+from diffusers.models import SD3ControlNetModel, SD3MultiControlNetModel
 from diffusers.pipelines import (
     StableDiffusion3Pipeline,
     StableDiffusion3Img2ImgPipeline,
@@ -327,6 +327,11 @@ class Stable3ForImage2ImageGenerationPipeline(GenericStable3Model):
                 controlnets.append(controlnet)
                 conditioning_scales.append(conditioning_scale)
                 conditioning_images.append(conditioning_image.resize(image.size))
+            if len(controlnets) > 1:
+                controlnets = SD3MultiControlNetModel(controlnets)
+            else:
+                controlnets = controlnets[0]
+
             # self.pipeline = StableDiffusion3ControlNetImg2ImgPipeline(
             #     vae=self.vae,
             #     text_encoder=self.text,

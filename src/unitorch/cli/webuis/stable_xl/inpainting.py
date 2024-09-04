@@ -7,6 +7,7 @@ import gc
 import gradio as gr
 from PIL import Image, ImageOps
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from unitorch.utils import nested_dict_value
 from unitorch.cli import CoreConfigureParser, GenericWebUI
 from unitorch.cli import register_webui
 from unitorch.cli.models.diffusers import (
@@ -193,6 +194,15 @@ class StableXLImageInpaintingWebUI(SimpleWebUI):
                 fn=self.processing_controlnet_inputs,
                 inputs=[controlnet.input_image, controlnet.process],
                 outputs=[controlnet.output_image],
+            )
+
+        for lora in loras:
+            lora.checkpoint.change(
+                fn=lambda x: nested_dict_value(
+                    pretrained_stable_extensions_infos, x, "text"
+                ),
+                inputs=[lora.checkpoint],
+                outputs=[lora.text],
             )
 
         generate.click(

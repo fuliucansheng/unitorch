@@ -208,6 +208,7 @@ class StableFluxForText2ImageGeneration(GenericStableFluxModel):
             tokenizer_2=None,
         )
         self.pipeline.set_progress_bar_config(disable=True)
+        self.pipeline.to(torch.bfloat16)
 
     def forward(
         self,
@@ -232,8 +233,8 @@ class StableFluxForText2ImageGeneration(GenericStableFluxModel):
         )
 
         images = self.pipeline(
-            prompt_embeds=outputs.prompt_embeds,
-            pooled_prompt_embeds=outputs.pooled_prompt_embeds,
+            prompt_embeds=outputs.prompt_embeds.to(torch.bfloat16),
+            pooled_prompt_embeds=outputs.pooled_prompt_embeds.to(torch.bfloat16),
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),

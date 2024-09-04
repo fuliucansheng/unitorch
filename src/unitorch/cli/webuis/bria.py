@@ -117,7 +117,7 @@ class BRIAWebUI(SimpleWebUI):
             threshold=mask_threshold,
         )
         if output_image_type == "Object":
-            result = Image.new("RGBA", image.size, (0, 0, 0, 0))
+            result = Image.new("RGBA", image.size, (0, 0, 0, 64))
             mask = mask.convert("L").resize(image.size)
             result.paste(image, (0, 0), mask)
         else:

@@ -14,7 +14,7 @@ from unitorch.cli.webuis.stable_flux.text2image import StableFluxText2ImageWebUI
 
 
 @register_webui("core/webui/stable_flux")
-class Stable3WebUI(SimpleWebUI):
+class StableFluxWebUI(SimpleWebUI):
     def __init__(self, config: CoreConfigureParser):
         webuis = [
             StableFluxText2ImageWebUI(config),

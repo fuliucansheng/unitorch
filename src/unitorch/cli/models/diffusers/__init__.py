@@ -190,7 +190,7 @@ __hf_hub_stable_video_safetensors_dict__ = lambda name: {
 }
 
 pretrained_stable_infos = {
-    "stable-v1.5": __hf_hub_stable_v1_5_dict__("runwayml/stable-diffusion-v1-5"),
+    "stable-v1.5": __hf_hub_stable_v1_5_dict__("botp/stable-diffusion-v1-5"),
     "stable-v1.5-realistic-v5.1-no-vae": __hf_hub_stable_v1_5_safetensors_dict__(
         "SG161222/Realistic_Vision_V5.1_noVAE"
     ),
@@ -207,7 +207,7 @@ pretrained_stable_infos = {
         "nitrosocke/Ghibli-Diffusion"
     ),
     "stable-v1.5-inpainting": __hf_hub_stable_v1_5_dict__(
-        "runwayml/stable-diffusion-inpainting"
+        "botp/stable-diffusion-v1-5-inpainting"
     ),
     "stable-v1.5-x4-upscaler": __hf_hub_stable_v1_5_dict__(
         "stabilityai/stable-diffusion-x4-upscaler"
@@ -306,13 +306,13 @@ pretrained_stable_extensions_infos = {
     "stable-xl-controlnet-depth-small": __hf_hub_controlnet_dict__(
         "diffusers/controlnet-depth-sdxl-1.0-small"
     ),
-    "stable-xl-controlnet-tile": __hf_hub_controlnet_dict__(
+    "stable-xl-controlnet-tile": __hf_hub_controlnet_safetensors_dict__(
         "xinsir/controlnet-tile-sdxl-1.0"
     ),
-    "stable-xl-controlnet-openpose": __hf_hub_controlnet_dict__(
+    "stable-xl-controlnet-openpose": __hf_hub_controlnet_safetensors_dict__(
         "xinsir/controlnet-openpose-sdxl-1.0"
     ),
-    "stable-xl-controlnet-scribble": __hf_hub_controlnet_dict__(
+    "stable-xl-controlnet-scribble": __hf_hub_controlnet_safetensors_dict__(
         "xinsir/controlnet-scribble-sdxl-1.0"
     ),
     # sdxl adapter

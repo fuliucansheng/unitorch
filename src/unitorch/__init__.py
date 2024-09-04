@@ -2,6 +2,7 @@
 # Licensed under the MIT License.
 
 import os
+import tempfile
 
 # env setting
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
@@ -24,6 +25,14 @@ UNITORCH_TEMP = os.getenv("UNITORCH_TEMP", "/tmp/unitorch")
 
 def get_temp_home():
     return UNITORCH_TEMP
+
+
+def mktempdir(prefix: str = "unitorch_"):
+    return tempfile.mkdtemp(prefix=prefix, dir=UNITORCH_TEMP)
+
+
+def mktempfile(prefix: str = "unitorch_", suffix: str = ""):
+    return tempfile.mktemp(prefix=prefix, suffix=suffix, dir=UNITORCH_TEMP)
 
 
 ### version

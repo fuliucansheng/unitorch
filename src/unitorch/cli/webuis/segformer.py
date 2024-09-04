@@ -32,7 +32,7 @@ class SegformerWebUI(SimpleWebUI):
     pretrained_names = list(pretrained_segformer_infos.keys())
     supported_pretrained_names = matched_pretrained_names(
         pretrained_names,
-        ["^segformer"],
+        ["^segformer-"],
     )
 
     def __init__(self, config: CoreConfigureParser):

@@ -269,7 +269,10 @@ class PeftWeightLoaderMixin(nn.Module):
                 lora_A = value
                 lora_B = lora_state_dict[key.replace("lora_A", "lora_B")]
                 scale = alpha / lora_B.shape[1]
-                key = key.replace("lora_A.default.", "")
+                if "lora_A.default." in key:
+                    key = key.replace("lora_A.default.", "")
+                elif "lora_A." in key:
+                    key = key.replace("lora_A.", "")
                 if key in state_dict:
                     state_dict[key] += (
                         scale * weight * lora_B.float() @ lora_A.float()

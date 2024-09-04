@@ -221,7 +221,6 @@ class StableFluxForText2ImageGenerationPipeline(GenericStableFluxModel):
     def __call__(
         self,
         text: str,
-        neg_text: Optional[str] = "",
         height: Optional[int] = 1024,
         width: Optional[int] = 1024,
         guidance_scale: Optional[float] = 7.5,
@@ -433,7 +432,6 @@ class StableFluxForText2ImageGenerationScript(GenericScript):
             names = [n.strip() for n in names]
 
         prompt_col = config.getoption("prompt_col", None)
-        neg_prompt_col = config.getoption("neg_prompt_col", None)
 
         data = pd.read_csv(
             data_file,
@@ -454,14 +452,9 @@ class StableFluxForText2ImageGenerationScript(GenericScript):
             return name
 
         results = []
-        if neg_prompt_col in data.columns:
-            for prompt, neg_prompt in zip(data[prompt_col], data[neg_prompt_col]):
-                result = pipe(prompt, neg_prompt)
-                results.append(save(result))
-        else:
-            for prompt in data[prompt_col]:
-                result = pipe(prompt)
-                results.append(save(result))
+        for prompt in data[prompt_col]:
+            result = pipe(prompt)
+            results.append(save(result))
 
         data["result"] = results
 

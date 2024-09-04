@@ -198,7 +198,6 @@ class StableFluxForText2ImageGeneration(_StableFluxForText2ImageGeneration):
         raise NotImplementedError
 
     @add_default_section_for_function("core/model/diffusers/text2image/stable_flux")
-    @autocast()
     def generate(
         self,
         input_ids: torch.Tensor,
@@ -207,7 +206,7 @@ class StableFluxForText2ImageGeneration(_StableFluxForText2ImageGeneration):
         attention2_mask: Optional[torch.Tensor] = None,
         height: Optional[int] = 1024,
         width: Optional[int] = 1024,
-        guidance_scale: Optional[float] = 5.0,
+        guidance_scale: Optional[float] = 7.5,
     ):
         outputs = super().generate(
             input_ids=input_ids,

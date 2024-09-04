@@ -7,6 +7,7 @@ import gc
 import gradio as gr
 from PIL import Image
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from unitorch.utils import nested_dict_value
 from unitorch.cli import CoreConfigureParser, GenericWebUI
 from unitorch.cli import register_webui
 from unitorch.cli.models.diffusers import (
@@ -69,13 +70,6 @@ class StableFluxText2ImageWebUI(SimpleWebUI):
 
         prompt = create_element(
             "text", "Input Prompt", lines=3, placeholder="Prompt", show_label=False
-        )
-        negative_prompt = create_element(
-            "text",
-            "Input Negative Prompt",
-            lines=3,
-            placeholder="Negative Prompt",
-            show_label=False,
         )
         scheduler = create_element(
             "dropdown",
@@ -141,7 +135,7 @@ class StableFluxText2ImageWebUI(SimpleWebUI):
         # create layouts
         top1 = create_column(pretrain_layout)
         top2 = create_row(
-            create_column(prompt, negative_prompt, scale=4),
+            create_column(prompt, scale=4),
             create_column(generate),
         )
         left_generation = create_tab(
@@ -183,11 +177,19 @@ class StableFluxText2ImageWebUI(SimpleWebUI):
                 outputs=[controlnet.output_image],
             )
 
+        for lora in loras:
+            lora.checkpoint.change(
+                fn=lambda x: nested_dict_value(
+                    pretrained_stable_extensions_infos, x, "text"
+                ),
+                inputs=[lora.checkpoint],
+                outputs=[lora.text],
+            )
+
         generate.click(
             fn=self.serve,
             inputs=[
                 prompt,
-                negative_prompt,
                 height,
                 width,
                 guidance_scale,
@@ -239,7 +241,6 @@ class StableFluxText2ImageWebUI(SimpleWebUI):
     def serve(
         self,
         text: str,
-        negative_text: str,
         height: int,
         width: int,
         guidance_scale: float,
@@ -261,7 +262,6 @@ class StableFluxText2ImageWebUI(SimpleWebUI):
         lora_files = lora_params[4::5]
         image = self._pipe(
             text,
-            negative_text,
             height=height,
             width=width,
             guidance_scale=guidance_scale,

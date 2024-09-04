@@ -323,9 +323,13 @@ class Stable3ForText2ImageGenerationPipeline(GenericStable3Model):
                 controlnet.to(device=self._device)
                 logging.info(f"Loading controlnet from {checkpoint}")
                 controlnets.append(controlnet)
-            controlnets = SD3MultiControlNetModel(controlnets)
-            conditioning_scales.append(conditioning_scale)
-            conditioning_images.append(conditioning_image.resize((width, height)))
+                conditioning_scales.append(conditioning_scale)
+                conditioning_images.append(conditioning_image.resize((width, height)))
+
+            if len(controlnets) > 1:
+                controlnets = SD3MultiControlNetModel(controlnets)
+            else:
+                controlnets = controlnets[0]
             self.pipeline = StableDiffusion3ControlNetPipeline(
                 vae=self.vae,
                 text_encoder=self.text,

@@ -194,7 +194,7 @@ class SamForSegmentationPipeline(_SamForSegmentation):
                 lora_weights=processed_lora_weights,
                 lora_alphas=processed_lora_alphas,
             )
-        print(input_points, input_boxes)
+
         outputs = self.segment(
             pixel_values,
             input_points=input_points,

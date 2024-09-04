@@ -6,6 +6,7 @@ import torch
 import gc
 import gradio as gr
 from PIL import Image
+from unitorch.utils import nested_dict_value
 from unitorch.cli import CoreConfigureParser, GenericWebUI
 from unitorch.cli import register_webui
 from unitorch.cli.pipelines.stable import ClipInterrogatorPipeline

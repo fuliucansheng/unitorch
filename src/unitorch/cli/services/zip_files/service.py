@@ -93,9 +93,11 @@ class ZipFilesServer(http.server.BaseHTTPRequestHandler):
         """
         zf = self.zip_dict.get(file)
         if zf is None:
+            logging.warning(f"File {file} not found.")
             return self.none_resp
         zf = self.zip_data[zf]
         if zf is None:
+            logging.warning(f"File {file} not found.")
             return self.none_resp
         file = zf.read(file)
         return file

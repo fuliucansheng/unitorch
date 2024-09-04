@@ -7,6 +7,7 @@ import gc
 import gradio as gr
 from typing import List, Tuple
 from PIL import Image, ImageDraw
+from unitorch.utils import nested_dict_value
 from unitorch.cli import CoreConfigureParser, GenericWebUI
 from unitorch.cli import register_webui
 from unitorch.cli.models.sam import (
@@ -130,13 +131,22 @@ class SamWebUI(SimpleWebUI):
         start.click(self.start, inputs=[name], outputs=[status])
         stop.click(self.stop, outputs=[status])
 
+        for lora in loras:
+            lora.checkpoint.change(
+                fn=lambda x: nested_dict_value(
+                    pretrained_sam_extensions_infos, x, "text"
+                ),
+                inputs=[lora.checkpoint],
+                outputs=[lora.text],
+            )
+
         origin_input_image = gr.State(None)
         click_points = gr.State([])
         boxes_points = gr.State([])
         input_image_click.upload(
-            lambda image: image.copy() if image is not None else None,
+            lambda image: (image.copy() if image is not None else None, []),
             inputs=[input_image_click],
-            outputs=[origin_input_image],
+            outputs=[origin_input_image, click_points],
         )
         input_image_click.select(
             self.add_click_points,
@@ -161,9 +171,9 @@ class SamWebUI(SimpleWebUI):
         )
 
         input_image_box.upload(
-            lambda image: image.copy() if image is not None else None,
+            lambda image: (image.copy() if image is not None else None, []),
             inputs=[input_image_box],
-            outputs=[origin_input_image],
+            outputs=[origin_input_image, boxes_points],
         )
         input_image_box.select(
             self.add_click_points,
@@ -259,7 +269,7 @@ class SamWebUI(SimpleWebUI):
             lora_files=lora_files,
         )
         if output_image_type == "Object":
-            result = Image.new("RGBA", image.size, (0, 0, 0, 0))
+            result = Image.new("RGBA", image.size, (116, 0, 0, 64))
             mask = mask.convert("L").resize(image.size)
             result.paste(image, (0, 0), mask)
         else:
@@ -299,7 +309,7 @@ class SamWebUI(SimpleWebUI):
             lora_files=lora_files,
         )
         if output_image_type == "Object":
-            result = Image.new("RGBA", image.size, (0, 0, 0, 0))
+            result = Image.new("RGBA", image.size, (116, 0, 0, 64))
             mask = mask.convert("L").resize(image.size)
             result.paste(image, (0, 0), mask)
         else:

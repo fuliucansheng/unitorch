@@ -7,6 +7,7 @@ import gc
 import gradio as gr
 from PIL import Image
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from unitorch.utils import nested_dict_value
 from unitorch.cli import CoreConfigureParser, GenericWebUI
 from unitorch.cli import register_webui
 from unitorch.cli.models.llama import (
@@ -94,6 +95,16 @@ class LlamaWebUI(SimpleWebUI):
 
         start.click(self.start, inputs=[name], outputs=[status])
         stop.click(self.stop, outputs=[status])
+
+        for lora in loras:
+            lora.checkpoint.change(
+                fn=lambda x: nested_dict_value(
+                    pretrained_llama_extensions_infos, x, "text"
+                ),
+                inputs=[lora.checkpoint],
+                outputs=[lora.text],
+            )
+
         generate.click(
             self.serve,
             inputs=[
