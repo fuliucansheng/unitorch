@@ -57,6 +57,7 @@ from unitorch.cli.webuis.utils import (
     create_accordion,
     create_row,
     create_column,
+    create_flex_layout,
     create_group,
     create_tab,
     create_tabs,
@@ -74,6 +75,7 @@ import unitorch.cli.webuis.bloom
 import unitorch.cli.webuis.bria
 import unitorch.cli.webuis.detr
 import unitorch.cli.webuis.dpt
+import unitorch.cli.webuis.grounding_dino
 import unitorch.cli.webuis.llama
 import unitorch.cli.webuis.llava.mistral_clip
 import unitorch.cli.webuis.mask2former

@@ -79,24 +79,6 @@ def cached_path(
     )
 
 
-# default core config object
-global_config = CoreConfigureParser()
-
-
-def get_global_config():
-    return global_config
-
-
-def set_global_config(config: Union[CoreConfigureParser, str]):
-    global global_config
-    if isinstance(config, CoreConfigureParser):
-        global_config = config
-    elif os.path.exists(config):
-        global_config = CoreConfigureParser(config)
-    else:
-        raise ValueError(f"Can't set global config by {config}")
-
-
 from unitorch.cli.decorators import (
     add_default_section_for_init,
     add_default_section_for_function,

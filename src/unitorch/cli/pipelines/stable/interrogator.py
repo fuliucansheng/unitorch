@@ -14,7 +14,6 @@ from unitorch.models.clip import (
 from unitorch.utils import pop_value, nested_dict_value, read_file, read_json_file
 
 from unitorch.cli import (
-    get_global_config,
     cached_path,
     add_default_section_for_init,
     add_default_section_for_function,
@@ -55,7 +54,7 @@ class ClipInterrogatorPipeline(_ClipForPretrain):
         self.from_pretrained(weight_path, state_dict=state_dict)
         self.to(device=self._device)
 
-        config = get_global_config()
+        config = CoreConfigureParser()
         self.blip_pipe = BlipForImageCaptionPipeline.from_core_configure(
             config, pretrained_name="blip-image-captioning-large"
         )

@@ -218,6 +218,7 @@ import unitorch.models.chinese_clip
 import unitorch.models.clip
 import unitorch.models.dpt
 import unitorch.models.dinov2
+import unitorch.models.grounding_dino
 import unitorch.models.llama
 import unitorch.models.llava
 import unitorch.models.mask2former

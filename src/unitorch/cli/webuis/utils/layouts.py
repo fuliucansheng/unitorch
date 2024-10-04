@@ -251,46 +251,87 @@ def create_element(
     raise ValueError(f"Unknown element type: {dtype}")
 
 
-def create_accordion(*elements, name=None, open=False):
-    accordion = gr.Accordion(label=name, open=open)
+def create_accordion(
+    *elements, name=None, open=False, elem_id=None, elem_classes="ut-bg-transparent"
+):
+    accordion = gr.Accordion(
+        label=name,
+        open=open,
+        elem_id=elem_id,
+        elem_classes=elem_classes,
+    )
     for element in elements:
         accordion.add_child(element)
     return accordion
 
 
-def create_row(*elements, variant="panel"):
-    row = gr.Row(variant=variant, equal_height=True)
+def create_row(
+    *elements, variant="panel", elem_id=None, elem_classes="ut-bg-transparent"
+):
+    row = gr.Row(
+        variant=variant,
+        equal_height=True,
+        elem_id=elem_id,
+        elem_classes=elem_classes,
+    )
     for element in elements:
         row.add_child(element)
     return row
 
 
-def create_column(*elements, variant="panel", scale=1):
+def create_column(
+    *elements, variant="panel", scale=1, elem_id=None, elem_classes="ut-bg-transparent"
+):
     col = gr.Column(
         variant=variant,
         scale=scale,
+        elem_id=elem_id,
+        elem_classes=elem_classes,
     )
     for element in elements:
         col.add_child(element)
     return col
 
 
-def create_group(*elements):
-    group = gr.Group()
+def create_flex_layout(
+    *eles,
+    num_per_row=2,
+    elem_id=None,
+    elem_classes="ut-bg-transparent",
+    elem_place_holder_classes="ut-bg-transparent",
+):
+    nums = num_per_row - len(eles) % num_per_row
+    eles = list(eles) + [
+        create_element(
+            "markdown", "<div></div>", elem_classes=elem_place_holder_classes
+        )
+        for _ in range(nums)
+    ]
+    rows = [
+        create_row(
+            *eles[i : i + num_per_row], elem_id=elem_id, elem_classes=elem_classes
+        )
+        for i in range(0, len(eles), num_per_row)
+    ]
+    return create_column(*rows, elem_id=elem_id, elem_classes=elem_classes)
+
+
+def create_group(*elements, elem_id=None, elem_classes="ut-bg-transparent"):
+    group = gr.Group(elem_id=elem_id, elem_classes=elem_classes)
     for element in elements:
         group.add_child(element)
     return group
 
 
-def create_tab(*elements, name=None):
-    tab = gr.Tab(label=name)
+def create_tab(*elements, name=None, elem_id=None, elem_classes="ut-bg-transparent"):
+    tab = gr.Tab(label=name, elem_id=elem_id, elem_classes=elem_classes)
     for element in elements:
         tab.add_child(element)
     return tab
 
 
-def create_tabs(*elements):
-    tabs = gr.Tabs()
+def create_tabs(*elements, elem_id=None, elem_classes="ut-bg-transparent"):
+    tabs = gr.Tabs(elem_id=elem_id, elem_classes=elem_classes)
     for element in elements:
         tabs.add_child(element)
     return tabs
@@ -417,7 +458,7 @@ def create_lora_layout(
 ):
     def create_lora():
         checkpoint = create_element("dropdown", "Checkpoint", values=loras)
-        text = create_element("text", "Note", default="")
+        text = create_element("markdown", "Placeholder README Text For LORA Checkpoint")
         weight = create_element(
             "slider", "Weight", default=1.0, min_value=0, max_value=3, step=0.1
         )
@@ -427,7 +468,7 @@ def create_lora_layout(
         url = create_element("text", "URL")
         file = create_element("file", "File")
         layout = create_column(
-            create_row(text),
+            create_accordion(text, name="Notes on Usage"),
             create_row(checkpoint, create_column(weight, alpha)),
             create_row(url),
             create_row(file),

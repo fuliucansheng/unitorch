@@ -58,7 +58,6 @@ class DetrForDetection(GenericModel):
             eos_coef=config.eos_coefficient,
             losses=losses,
         )
-        self.criterion.to(self.device)
         self.weight_dict = {
             "loss_ce": 1,
             "loss_bbox": config.bbox_loss_coefficient,
