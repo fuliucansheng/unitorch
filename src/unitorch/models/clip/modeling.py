@@ -17,6 +17,7 @@ from transformers.models.clip.modeling_clip import (
     CLIPVisionTransformer,
 )
 from unitorch.models import GenericModel
+from unitorch.models.peft import PeftWeightLoaderMixin
 
 
 def _contrastive_loss(logits: torch.Tensor) -> torch.Tensor:
@@ -442,3 +443,110 @@ class ClipForImageClassification(GenericModel):
         # image_embeds = image_embeds / image_embeds.norm(dim=-1, keepdim=True)
 
         return self.classifier(F.relu(image_embeds))
+
+
+class ClipForMatching(GenericModel, PeftWeightLoaderMixin):
+    replace_keys_in_peft_state_dict = {"peft_model.base_model.model.": ""}
+
+    def __init__(
+        self,
+        config_path: str,
+        projection_dim: Optional[int] = 512,
+        freeze_base_model: Optional[bool] = True,
+        gradient_checkpointing: Optional[bool] = False,
+    ):
+        """
+        Clip model for classification.
+
+        Args:
+            config_path (str): Config file path to Clip model.
+            projection_dim (int): Dimension for image/text output embedding.
+            num_classes (int): Number of classes for classification.
+            freeze_base_model (bool): Whether to freeze the base model.
+            gradient_checkpointing (Optional[bool]): Whether to enable gradient_checkpointing.
+        """
+        super().__init__()
+        config = CLIPConfig.from_json_file(config_path)
+        text_config = config.text_config
+        vision_config = config.vision_config
+        text_config.gradient_checkpointing = gradient_checkpointing
+        vision_config.gradient_checkpointing = gradient_checkpointing
+
+        self.projection_dim = projection_dim
+
+        self.text_embed_dim = text_config.hidden_size
+        self.vision_embed_dim = vision_config.hidden_size
+
+        self.text_model = CLIPTextTransformer(text_config)
+        self.vision_model = CLIPVisionTransformer(vision_config)
+
+        self.visual_projection = nn.Linear(
+            self.vision_embed_dim,
+            self.projection_dim,
+            bias=False,
+        )
+        self.text_projection = nn.Linear(
+            self.text_embed_dim,
+            self.projection_dim,
+            bias=False,
+        )
+
+        self.classifier = nn.Linear(1, 1)
+
+        self.init_weights()
+        self.classifier.weight.data.fill_(5.0)
+
+        if freeze_base_model:
+            for p in self.text_model.parameters():
+                p.requires_grad = False
+
+            for p in self.vision_model.parameters():
+                p.requires_grad = False
+
+        self.text_model.encoder.gradient_checkpointing = gradient_checkpointing
+        self.vision_model.encoder.gradient_checkpointing = gradient_checkpointing
+
+    def forward(
+        self,
+        input_ids: torch.Tensor,
+        pixel_values: torch.Tensor,
+        attention_mask: torch.Tensor,
+        position_ids: torch.Tensor,
+    ):
+        """
+        Forward pass of the Clip model for classification.
+
+        Args:
+            input_ids (tensor): Tokens of text.
+            pixel_values (tensor): Pixels of image.
+            attention_mask (tensor): Attention mask of tokens.
+            position_ids (tensor): Position IDs.
+            output_attentions (bool): Whether to output attentions.
+            output_hidden_states (bool): Whether to output hidden states.
+
+        Returns:
+            tensor: Output tensor from the classifier.
+        """
+        vision_outputs = self.vision_model(
+            pixel_values=pixel_values,
+        )
+
+        text_outputs = self.text_model(
+            input_ids=input_ids,
+            attention_mask=attention_mask,
+            position_ids=position_ids,
+        )
+
+        image_embeds = vision_outputs[1]
+        image_embeds = self.visual_projection(image_embeds)
+
+        text_embeds = text_outputs[1]
+        text_embeds = self.text_projection(text_embeds)
+
+        image_embeds = image_embeds / image_embeds.norm(dim=-1, keepdim=True)
+        text_embeds = text_embeds / text_embeds.norm(dim=-1, keepdim=True)
+
+        scores = torch.sum(text_embeds * image_embeds, dim=-1, keepdim=True)
+
+        outputs = self.classifier(scores)
+        return outputs

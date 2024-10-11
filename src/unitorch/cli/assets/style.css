@@ -448,12 +448,17 @@ video {
   text-decoration: none;
 }
 
-@media (max-width: 768px) {
-  .elem_place_holder_classes {
-    display: none;
-  }  
+.ut-0-margin-padding {
+  margin: 0;
+  padding: 0;
 }
 
+@media (max-width: 1536px)
+{
+  .ut-place-holder-block {
+    display: none;
+  }
+}
 table {
   width: 100%;
 }

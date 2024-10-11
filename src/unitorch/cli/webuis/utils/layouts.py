@@ -296,20 +296,30 @@ def create_column(
 def create_flex_layout(
     *eles,
     num_per_row=2,
+    do_padding=False,
     elem_id=None,
     elem_classes="ut-bg-transparent",
-    elem_place_holder_classes="ut-bg-transparent",
+    elem_place_holder_classes="ut-bg-transparent ut-place-holder-block",
 ):
-    nums = num_per_row - len(eles) % num_per_row
-    eles = list(eles) + [
-        create_element(
-            "markdown", "<div></div>", elem_classes=elem_place_holder_classes
+    if do_padding:
+        nums = num_per_row - len(eles) % num_per_row
+        eles = list(eles) + [
+            create_element(
+                "markdown", "<div></div>", elem_classes=elem_place_holder_classes
+            )
+            for _ in range(nums)
+        ]
+    eles = [
+        create_column(
+            ele,
+            elem_classes="ut-bg-transparent ut-0-margin-padding",
         )
-        for _ in range(nums)
+        for ele in eles
     ]
     rows = [
         create_row(
-            *eles[i : i + num_per_row], elem_id=elem_id, elem_classes=elem_classes
+            *eles[i : i + num_per_row],
+            elem_classes="ut-bg-transparent ut-0-margin-padding",
         )
         for i in range(0, len(eles), num_per_row)
     ]

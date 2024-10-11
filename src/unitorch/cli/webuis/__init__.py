@@ -73,6 +73,7 @@ import unitorch.cli.webuis.tools
 import unitorch.cli.webuis.blip
 import unitorch.cli.webuis.bloom
 import unitorch.cli.webuis.bria
+import unitorch.cli.webuis.clip
 import unitorch.cli.webuis.detr
 import unitorch.cli.webuis.dpt
 import unitorch.cli.webuis.grounding_dino
