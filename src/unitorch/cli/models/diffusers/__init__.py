@@ -197,6 +197,7 @@ pretrained_stable_infos = {
     "stable-v1.5-realistic-v5.1": __hf_hub_stable_v1_5_dict__(
         "stablediffusionapi/realistic-vision-v51"
     ),
+    "stable-v1.5-film": __hf_hub_stable_v1_5_safetensors_dict__("Yntec/Film"),
     "stable-v1.5-cyber-realistic": __hf_hub_stable_v1_5_safetensors_dict__(
         "Yntec/CyberRealistic"
     ),
