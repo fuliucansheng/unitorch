@@ -3,9 +3,6 @@
 
 import inspect
 import logging
-from unitorch.cli import get_global_config
-
-__global_config__ = get_global_config()
 
 
 def add_default_section_for_init(section, default_params=dict()):
@@ -75,13 +72,7 @@ def add_default_section_for_function(
                 )
                 ret = func(args[0], **kwargs)
             else:
-                kwargs = get_func_params(
-                    func,
-                    __global_config__,
-                    args,
-                    kwargs,
-                )
-                ret = func(args[0], **kwargs)
+                raise ValueError("Can't find the unitorch setting")
             return ret
 
         return _new_func

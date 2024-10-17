@@ -438,7 +438,9 @@ class StableXLForText2ImageGenerationPipeline(GenericStableXLModel):
         ):
             if ckpt is not None:
                 processed_lora_files.append(
-                    nested_dict_value(pretrained_stable_extensions_infos, ckpt)
+                    nested_dict_value(
+                        pretrained_stable_extensions_infos, ckpt, "weight"
+                    )
                 )
                 processed_lora_weights.append(weight)
                 processed_lora_alphas.append(alpha)

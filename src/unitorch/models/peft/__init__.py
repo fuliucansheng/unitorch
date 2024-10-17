@@ -294,6 +294,10 @@ from unitorch.models.peft.modeling_bloom import (
     BloomLoraForClassification,
     BloomLoraForGeneration,
 )
+from unitorch.models.peft.modeling_clip import (
+    ClipLoraForMatching,
+    ClipLoraForTextMatching,
+)
 from unitorch.models.peft.modeling_llama import (
     LlamaLoraForClassification,
     LlamaLoraForGeneration,

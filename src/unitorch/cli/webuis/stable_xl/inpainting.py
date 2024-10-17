@@ -15,7 +15,7 @@ from unitorch.cli.models.diffusers import (
     pretrained_stable_extensions_infos,
 )
 from unitorch.cli.pipelines.stable_xl import StableXLForImageInpaintingPipeline
-from unitorch.cli.pipelines.stable_xl import controlnet_processes
+from unitorch.cli.pipelines.tools import controlnet_processes
 from unitorch.cli.webuis import (
     supported_scheduler_names,
     matched_pretrained_names,

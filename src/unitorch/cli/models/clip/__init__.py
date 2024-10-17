@@ -26,6 +26,8 @@ pretrained_clip_infos = {
     },
 }
 
+pretrained_clip_extensions_infos = {}
+
 import unitorch.cli.models.clip.modeling
 import unitorch.cli.models.clip.processing
 from unitorch.cli.models.clip.modeling import (

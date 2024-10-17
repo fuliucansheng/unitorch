@@ -436,7 +436,7 @@ class SupervisedTask:
                 self.model,
                 device_ids=[self.local_rank],
                 output_device=self.local_rank,
-                find_unused_parameters=False,
+                find_unused_parameters=True,
                 broadcast_buffers=False,
             )
             global_rank = dist.get_rank()

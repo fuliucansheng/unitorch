@@ -15,7 +15,7 @@ from unitorch.cli.models.diffusers import (
     pretrained_stable_extensions_infos,
 )
 from unitorch.cli.pipelines.stable import StableForImage2VideoGenerationPipeline
-from unitorch.cli.pipelines.stable import controlnet_processes
+from unitorch.cli.pipelines.tools import controlnet_processes
 from unitorch.cli.webuis import (
     supported_scheduler_names,
     matched_pretrained_names,

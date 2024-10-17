@@ -6,6 +6,7 @@ from unitorch.cli.webuis.utils.layouts import (
     create_accordion,
     create_row,
     create_column,
+    create_flex_layout,
     create_group,
     create_tab,
     create_tabs,

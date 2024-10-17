@@ -83,6 +83,7 @@ import unitorch.cli.models.clip
 import unitorch.cli.models.detr
 import unitorch.cli.models.dinov2
 import unitorch.cli.models.dpt
+import unitorch.cli.models.grounding_dino
 import unitorch.cli.models.llama
 import unitorch.cli.models.llava
 import unitorch.cli.models.mask2former

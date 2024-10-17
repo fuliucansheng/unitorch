@@ -12,8 +12,15 @@ from itertools import chain
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 
 
-@dataclass
 class TensorsMixin:
+    def __init__(self, tensors: Optional[Dict] = dict(), **kwargs):
+        self.__tensors__ = {}
+        for k, v in {**tensors, **kwargs}.items():
+            if not hasattr(self, k):
+                setattr(self, k, v)
+            self.__tensors__[k] = v
+        self.__post_init__()
+
     def __post_init__(
         self,
     ):
@@ -83,7 +90,7 @@ class TensorsMixin:
             for key, value in new_tensors.items():
                 self.__tensors__[key] = value
             return
-        return type(self)(**new_tensors)
+        return TensorsMixin(**new_tensors)
 
     def cuda(self, inplace=False):
         new_tensors = {}
@@ -94,7 +101,7 @@ class TensorsMixin:
             for key, value in new_tensors.items():
                 self.__tensors__[key] = value
             return
-        return type(self)(**new_tensors)
+        return TensorsMixin(**new_tensors)
 
     def sync(self, dim=0, inplace=False):
         new_tensors = {}
@@ -110,14 +117,21 @@ class TensorsMixin:
             for key, value in new_tensors.items():
                 self.__tensors__[key] = value
             return
-        return type(self)(**new_tensors)
+        return TensorsMixin(**new_tensors)
 
     def dict(self):
         return self.__tensors__
 
 
-@dataclass
 class ListTensorsMixin:
+    def __init__(self, list_tensors: Optional[Dict] = dict(), **kwargs):
+        self.__list_tensors__ = {}
+        for k, v in {**list_tensors, **kwargs}.items():
+            if not hasattr(self, k):
+                setattr(self, k, v)
+            self.__list_tensors__[k] = v
+        self.__post_init__()
+
     def __post_init__(
         self,
     ):
@@ -206,7 +220,7 @@ class ListTensorsMixin:
             for key, value in new_list_tensors.items():
                 self.__tensors__[key] = value
             return
-        return type(self)(**new_list_tensors)
+        return ListTensorsMixin(**new_list_tensors)
 
     def cuda(self, inplace=False):
         new_list_tensors = {}
@@ -220,7 +234,7 @@ class ListTensorsMixin:
             for key, value in new_list_tensors.items():
                 self.__list_tensors__[key] = value
             return
-        return type(self)(**new_list_tensors)
+        return ListTensorsMixin(**new_list_tensors)
 
     def sync(self, inplace=False):
         new_list_tensors = {}
@@ -236,7 +250,7 @@ class ListTensorsMixin:
             for key, value in new_list_tensors.items():
                 self.__list_tensors__[key] = value
             return
-        return type(self)(**new_list_tensors)
+        return ListTensorsMixin(**new_list_tensors)
 
     def dict(self):
         return self.__list_tensors__
@@ -335,7 +349,7 @@ class CombineTensorsMixin(TensorsMixin, ListTensorsMixin):
         new_list_tensors = ListTensorsMixin.cpu(self, inplace=inplace)
         if inplace:
             return
-        return type(self)(
+        return CombineTensorsMixin(
             dict_of_tensors=new_tensors.__tensors__,
             dict_of_list_tensors=new_list_tensors.__list_tensors__,
         )
@@ -345,7 +359,7 @@ class CombineTensorsMixin(TensorsMixin, ListTensorsMixin):
         new_list_tensors = ListTensorsMixin.cuda(self, inplace=inplace)
         if inplace:
             return
-        return type(self)(
+        return CombineTensorsMixin(
             dict_of_tensors=new_tensors.__tensors__,
             dict_of_list_tensors=new_list_tensors.__list_tensors__,
         )
@@ -355,7 +369,7 @@ class CombineTensorsMixin(TensorsMixin, ListTensorsMixin):
         new_list_tensors = ListTensorsMixin.sync(self, inplace=inplace)
         if inplace:
             return
-        return type(self)(
+        return CombineTensorsMixin(
             dict_of_tensors=new_tensors.__tensors__,
             dict_of_list_tensors=new_list_tensors.__list_tensors__,
         )
@@ -379,13 +393,28 @@ class ModelTargets(metaclass=abc.ABCMeta):
 @dataclass(init=False)
 class TensorsInputs(ModelInputs, TensorsMixin):
     def __init__(self, inputs: Optional[Dict] = dict(), **kwargs):
-        self.__tensors__ = {}
-        for k, v in {**inputs, **kwargs}.items():
-            if not hasattr(self, k):
-                setattr(self, k, v)
-            self.__tensors__[k] = v
+        TensorsMixin.__init__(self, tensors=inputs, **kwargs)
+
+    def cpu(self, inplace=False):
+        results = TensorsMixin.cpu(self, inplace=inplace)
+        if inplace:
+            return
+        return TensorsInputs(**results.__tensors__)
+
+    def cuda(self, inplace=False):
+        results = TensorsMixin.cuda(self, inplace=inplace)
+        if inplace:
+            return
+        return TensorsInputs(**results.__tensors__)
+
+    def sync(self, inplace=False):
+        results = TensorsMixin.sync(self, inplace=inplace)
+        if inplace:
+            return
+        return TensorsInputs(**results.__tensors__)
 
 
+@dataclass
 class TensorsOutputs(ModelOutputs, TensorsMixin):
     def __post_init__(self):
         self.__tensors__ = {}
@@ -393,7 +422,26 @@ class TensorsOutputs(ModelOutputs, TensorsMixin):
             self.__tensors__[f.name] = getattr(self, f.name)
         super().__post_init__()
 
+    def cpu(self, inplace=False):
+        results = TensorsMixin.cpu(self, inplace=inplace)
+        if inplace:
+            return
+        return type(self)(**results.__tensors__)
 
+    def cuda(self, inplace=False):
+        results = TensorsMixin.cuda(self, inplace=inplace)
+        if inplace:
+            return
+        return type(self)(**results.__tensors__)
+
+    def sync(self, inplace=False):
+        results = TensorsMixin.sync(self, inplace=inplace)
+        if inplace:
+            return
+        return type(self)(**results.__tensors__)
+
+
+@dataclass
 class TensorsTargets(ModelTargets, TensorsMixin):
     def __post_init__(self):
         self.__tensors__ = {}
@@ -401,23 +449,50 @@ class TensorsTargets(ModelTargets, TensorsMixin):
             self.__tensors__[f.name] = getattr(self, f.name)
         super().__post_init__()
 
+    def cpu(self, inplace=False):
+        results = TensorsMixin.cpu(self, inplace=inplace)
+        if inplace:
+            return
+        return type(self)(**results.__tensors__)
+
+    def cuda(self, inplace=False):
+        results = TensorsMixin.cuda(self, inplace=inplace)
+        if inplace:
+            return
+        return type(self)(**results.__tensors__)
+
+    def sync(self, inplace=False):
+        results = TensorsMixin.sync(self, inplace=inplace)
+        if inplace:
+            return
+        return type(self)(**results.__tensors__)
+
 
 @dataclass(init=False)
 class ListTensorsInputs(ModelInputs, ListTensorsMixin):
     def __init__(self, inputs: Optional[Dict] = dict(), **kwargs):
-        self.__list_tensors__ = {}
-        for k, v in {**inputs, **kwargs}.items():
-            if not hasattr(self, k):
-                setattr(self, k, v)
-            self.__list_tensors__[k] = v
-        super().__post_init__()
+        ListTensorsMixin.__init__(self, list_tensors=inputs, **kwargs)
 
-    def __post_init__(self):
-        for f in fields(self):
-            self.__list_tensors__[f.name] = getattr(self, f.name)
-        super().__post_init__()
+    def cpu(self, inplace=False):
+        results = ListTensorsMixin.cpu(self, inplace=inplace)
+        if inplace:
+            return
+        return ListTensorsInputs(**results.__list_tensors__)
+
+    def cuda(self, inplace=False):
+        results = ListTensorsMixin.cuda(self, inplace=inplace)
+        if inplace:
+            return
+        return ListTensorsInputs(**results.__list_tensors__)
+
+    def sync(self, inplace=False):
+        results = ListTensorsMixin.sync(self, inplace=inplace)
+        if inplace:
+            return
+        return ListTensorsInputs(**results.__list_tensors__)
 
 
+@dataclass
 class ListTensorsOutputs(ModelOutputs, ListTensorsMixin):
     def __post_init__(self):
         self.__list_tensors__ = {}
@@ -425,13 +500,50 @@ class ListTensorsOutputs(ModelOutputs, ListTensorsMixin):
             self.__list_tensors__[f.name] = getattr(self, f.name)
         super().__post_init__()
 
+    def cpu(self, inplace=False):
+        results = ListTensorsMixin.cpu(self, inplace=inplace)
+        if inplace:
+            return
+        return type(self)(**results.__list_tensors__)
 
+    def cuda(self, inplace=False):
+        results = ListTensorsMixin.cuda(self, inplace=inplace)
+        if inplace:
+            return
+        return type(self)(**results.__list_tensors__)
+
+    def sync(self, inplace=False):
+        results = ListTensorsMixin.sync(self, inplace=inplace)
+        if inplace:
+            return
+        return type(self)(**results.__list_tensors__)
+
+
+@dataclass
 class ListTensorsTargets(ModelTargets, ListTensorsMixin):
     def __post_init__(self):
         self.__list_tensors__ = {}
         for f in fields(self):
             self.__list_tensors__[f.name] = getattr(self, f.name)
         super().__post_init__()
+
+    def cpu(self, inplace=False):
+        results = ListTensorsMixin.cpu(self, inplace=inplace)
+        if inplace:
+            return
+        return type(self)(**results.__list_tensors__)
+
+    def cuda(self, inplace=False):
+        results = ListTensorsMixin.cuda(self, inplace=inplace)
+        if inplace:
+            return
+        return type(self)(**results.__list_tensors__)
+
+    def sync(self, inplace=False):
+        results = ListTensorsMixin.sync(self, inplace=inplace)
+        if inplace:
+            return
+        return type(self)(**results.__list_tensors__)
 
 
 class CombineTensorsInputs(ModelInputs, CombineTensorsMixin):

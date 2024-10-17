@@ -6,5 +6,6 @@ from unitorch.models.clip.modeling import (
     ClipForClassification,
     ClipForTextClassification,
     ClipForImageClassification,
+    ClipForMatching,
 )
 from unitorch.models.clip.processing import ClipProcessor

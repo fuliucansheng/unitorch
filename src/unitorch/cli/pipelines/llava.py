@@ -184,7 +184,9 @@ class LlavaMistralClipForGenerationPipeline(_LlavaMistralClipForGeneration):
             lora_checkpoints, lora_urls, lora_files, lora_weights, lora_alphas
         ):
             if ckpt is not None:
-                lora_file = nested_dict_value(pretrained_llava_extensions_infos, ckpt)
+                lora_file = nested_dict_value(
+                    pretrained_llava_extensions_infos, ckpt, "weight"
+                )
                 processed_lora_files.append(lora_file)
                 processed_lora_weights.append(weight)
                 processed_lora_alphas.append(alpha)
