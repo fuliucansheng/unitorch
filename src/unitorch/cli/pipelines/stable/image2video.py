@@ -186,11 +186,11 @@ class StableForImage2VideoGenerationPipeline(StableForImage2VideoGeneration):
         num_timesteps: Optional[int] = 50,
         seed: Optional[int] = 1123,
         scheduler: Optional[str] = None,
-        lora_checkpoints: Optional[Union[str, List[str]]] = None,
+        lora_checkpoints: Optional[Union[str, List[str]]] = [],
         lora_weights: Optional[Union[float, List[float]]] = 1.0,
         lora_alphas: Optional[Union[float, List[float]]] = 32,
-        lora_urls: Optional[Union[str, List[str]]] = None,
-        lora_files: Optional[Union[str, List[str]]] = None,
+        lora_urls: Optional[Union[str, List[str]]] = [],
+        lora_files: Optional[Union[str, List[str]]] = [],
     ):
         image = image.convert("RGB")
         inputs = self.processor.image2video_inputs(
@@ -285,6 +285,7 @@ class StableForImage2VideoGenerationPipeline(StableForImage2VideoGeneration):
             fps=num_fps,
             motion_bucket_id=motion_bucket_id,
             decode_chunk_size=decode_chunk_size,
+            num_inference_steps=num_timesteps,
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),

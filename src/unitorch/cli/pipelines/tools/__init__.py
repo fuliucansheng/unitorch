@@ -18,6 +18,7 @@ if is_opencv_available():
         "hed": hed,
         "lineart": lineart,
         "lineart_anime": lineart_anime,
+        "inpainting": lambda x: x,
     }
 
     adapter_processes = {
@@ -27,6 +28,7 @@ if is_opencv_available():
         "hed": hed,
         "lineart": lineart,
         "lineart_anime": lineart_anime,
+        "inpainting": lambda x: x,
     }
 else:
     controlnet_processes = {}

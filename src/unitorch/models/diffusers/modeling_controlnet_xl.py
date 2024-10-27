@@ -59,6 +59,7 @@ class ControlNetXLForText2ImageGeneration(GenericStableXLModel):
         vae_config_path: str,
         controlnet_configs_path: Union[str, List[str]],
         scheduler_config_path: str,
+        inpainting_controlnet_configs_path: Union[str, List[str]] = None,
         quant_config_path: Optional[str] = None,
         image_size: Optional[int] = None,
         in_channels: Optional[int] = None,
@@ -76,6 +77,7 @@ class ControlNetXLForText2ImageGeneration(GenericStableXLModel):
             text2_config_path=text2_config_path,
             vae_config_path=vae_config_path,
             controlnet_configs_path=controlnet_configs_path,
+            inpainting_controlnet_configs_path=inpainting_controlnet_configs_path,
             scheduler_config_path=scheduler_config_path,
             quant_config_path=quant_config_path,
             image_size=image_size,
@@ -107,6 +109,7 @@ class ControlNetXLForText2ImageGeneration(GenericStableXLModel):
         add_time_ids: torch.Tensor,
         pixel_values: torch.Tensor,
         condition_pixel_values: torch.Tensor,
+        inpainting_condition_pixel_values: torch.Tensor = None,
         attention_mask: Optional[torch.Tensor] = None,
         attention2_mask: Optional[torch.Tensor] = None,
     ):
@@ -125,6 +128,19 @@ class ControlNetXLForText2ImageGeneration(GenericStableXLModel):
         Returns:
             torch.Tensor: Loss value.
         """
+        if inpainting_condition_pixel_values is not None:
+            if self.num_controlnets == 1:
+                condition_pixel_values = torch.stack(
+                    [condition_pixel_values, inpainting_condition_pixel_values], dim=1
+                )
+            else:
+                condition_pixel_values = torch.cat(
+                    [
+                        condition_pixel_values,
+                        inpainting_condition_pixel_values.unsqueeze(1),
+                    ],
+                    dim=1,
+                )
         prompt_outputs = self.text(
             input_ids,
             # attention_mask,
@@ -195,6 +211,7 @@ class ControlNetXLForText2ImageGeneration(GenericStableXLModel):
         input2_ids: torch.Tensor,
         negative_input_ids: torch.Tensor,
         negative_input2_ids: torch.Tensor,
+        inpainting_condition_pixel_values: torch.Tensor = None,
         attention_mask: Optional[torch.Tensor] = None,
         attention2_mask: Optional[torch.Tensor] = None,
         negative_attention_mask: Optional[torch.Tensor] = None,
@@ -224,6 +241,19 @@ class ControlNetXLForText2ImageGeneration(GenericStableXLModel):
         Returns:
             GenericOutputs: Generated images.
         """
+        if inpainting_condition_pixel_values is not None:
+            if self.num_controlnets == 1:
+                condition_pixel_values = torch.stack(
+                    [condition_pixel_values, inpainting_condition_pixel_values], dim=1
+                )
+            else:
+                condition_pixel_values = torch.cat(
+                    [
+                        condition_pixel_values,
+                        inpainting_condition_pixel_values.unsqueeze(1),
+                    ],
+                    dim=1,
+                )
         outputs = self.get_prompt_outputs(
             input_ids=input_ids,
             input2_ids=input2_ids,
@@ -277,6 +307,7 @@ class ControlNetXLForImage2ImageGeneration(GenericStableXLModel):
         vae_config_path: str,
         controlnet_configs_path: Union[str, List[str]],
         scheduler_config_path: str,
+        inpainting_controlnet_configs_path: Union[str, List[str]] = None,
         quant_config_path: Optional[str] = None,
         image_size: Optional[int] = None,
         in_channels: Optional[int] = None,
@@ -294,6 +325,7 @@ class ControlNetXLForImage2ImageGeneration(GenericStableXLModel):
             text2_config_path=text2_config_path,
             vae_config_path=vae_config_path,
             controlnet_configs_path=controlnet_configs_path,
+            inpainting_controlnet_configs_path=inpainting_controlnet_configs_path,
             scheduler_config_path=scheduler_config_path,
             quant_config_path=quant_config_path,
             image_size=image_size,
@@ -331,6 +363,7 @@ class ControlNetXLForImage2ImageGeneration(GenericStableXLModel):
         negative_input2_ids: torch.Tensor,
         pixel_values: torch.Tensor,
         condition_pixel_values: torch.Tensor,
+        inpainting_condition_pixel_values: torch.Tensor = None,
         attention_mask: Optional[torch.Tensor] = None,
         attention2_mask: Optional[torch.Tensor] = None,
         negative_attention_mask: Optional[torch.Tensor] = None,
@@ -339,6 +372,19 @@ class ControlNetXLForImage2ImageGeneration(GenericStableXLModel):
         guidance_scale: Optional[float] = 7.5,
         controlnet_conditioning_scale: Optional[Union[float, List[float]]] = None,
     ):
+        if inpainting_condition_pixel_values is not None:
+            if self.num_controlnets == 1:
+                condition_pixel_values = torch.stack(
+                    [condition_pixel_values, inpainting_condition_pixel_values], dim=1
+                )
+            else:
+                condition_pixel_values = torch.cat(
+                    [
+                        condition_pixel_values,
+                        inpainting_condition_pixel_values.unsqueeze(1),
+                    ],
+                    dim=1,
+                )
         outputs = self.get_prompt_outputs(
             input_ids=input_ids,
             input2_ids=input2_ids,
@@ -391,6 +437,7 @@ class ControlNetXLForImageInpainting(GenericStableXLModel):
         vae_config_path: str,
         controlnet_configs_path: Union[str, List[str]],
         scheduler_config_path: str,
+        inpainting_controlnet_configs_path: Union[str, List[str]] = None,
         quant_config_path: Optional[str] = None,
         image_size: Optional[int] = None,
         in_channels: Optional[int] = None,
@@ -409,6 +456,7 @@ class ControlNetXLForImageInpainting(GenericStableXLModel):
             vae_config_path=vae_config_path,
             controlnet_configs_path=controlnet_configs_path,
             scheduler_config_path=scheduler_config_path,
+            inpainting_controlnet_configs_path=inpainting_controlnet_configs_path,
             quant_config_path=quant_config_path,
             image_size=image_size,
             in_channels=in_channels,
@@ -446,6 +494,7 @@ class ControlNetXLForImageInpainting(GenericStableXLModel):
         pixel_values: torch.Tensor,
         pixel_masks: torch.Tensor,
         condition_pixel_values: torch.Tensor,
+        inpainting_condition_pixel_values: torch.Tensor = None,
         attention_mask: Optional[torch.Tensor] = None,
         attention2_mask: Optional[torch.Tensor] = None,
         negative_attention_mask: Optional[torch.Tensor] = None,
@@ -454,6 +503,19 @@ class ControlNetXLForImageInpainting(GenericStableXLModel):
         guidance_scale: Optional[float] = 7.5,
         controlnet_conditioning_scale: Optional[Union[float, List[float]]] = None,
     ):
+        if inpainting_condition_pixel_values is not None:
+            if self.num_controlnets == 1:
+                condition_pixel_values = torch.stack(
+                    [condition_pixel_values, inpainting_condition_pixel_values], dim=1
+                )
+            else:
+                condition_pixel_values = torch.cat(
+                    [
+                        condition_pixel_values,
+                        inpainting_condition_pixel_values.unsqueeze(1),
+                    ],
+                    dim=1,
+                )
         outputs = self.get_prompt_outputs(
             input_ids=input_ids,
             input2_ids=input2_ids,
@@ -489,6 +551,8 @@ class ControlNetXLForImageInpainting(GenericStableXLModel):
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),
+            width=pixel_values.size(-1),
+            height=pixel_values.size(-2),
             strength=strength,
             guidance_scale=guidance_scale,
             controlnet_conditioning_scale=controlnet_conditioning_scale,

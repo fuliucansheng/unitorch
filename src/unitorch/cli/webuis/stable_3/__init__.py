@@ -12,6 +12,7 @@ from unitorch.cli import register_webui
 from unitorch.cli.webuis import SimpleWebUI
 from unitorch.cli.webuis.stable_3.text2image import Stable3Text2ImageWebUI
 from unitorch.cli.webuis.stable_3.image2image import Stable3Image2ImageWebUI
+from unitorch.cli.webuis.stable_3.inpainting import Stable3ImageInpaintingWebUI
 
 
 @register_webui("core/webui/stable_3")
@@ -20,6 +21,7 @@ class Stable3WebUI(SimpleWebUI):
         webuis = [
             Stable3Text2ImageWebUI(config),
             Stable3Image2ImageWebUI(config),
+            Stable3ImageInpaintingWebUI(config),
         ]
         iface = gr.TabbedInterface(
             [webui.iface for webui in webuis],

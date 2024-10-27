@@ -240,6 +240,8 @@ class StableXLForImageInpaintingPipeline(GenericStableXLModel):
         image: Image.Image,
         mask_image: Image.Image,
         neg_text: Optional[str] = "",
+        width: Optional[int] = None,
+        height: Optional[int] = None,
         guidance_scale: Optional[float] = 7.5,
         strength: Optional[float] = 0.8,
         num_timesteps: Optional[int] = 50,
@@ -251,15 +253,22 @@ class StableXLForImageInpaintingPipeline(GenericStableXLModel):
             1.2,
             1.4,
         ),
-        controlnet_checkpoints: Optional[List[str]] = None,
-        controlnet_images: Optional[List[Image.Image]] = None,
-        controlnet_guidance_scales: Optional[List[float]] = None,
-        lora_checkpoints: Optional[Union[str, List[str]]] = None,
+        controlnet_checkpoints: Optional[List[str]] = [],
+        controlnet_images: Optional[List[Image.Image]] = [],
+        controlnet_guidance_scales: Optional[List[float]] = [],
+        lora_checkpoints: Optional[Union[str, List[str]]] = [],
         lora_weights: Optional[Union[float, List[float]]] = 1.0,
         lora_alphas: Optional[Union[float, List[float]]] = 32,
-        lora_urls: Optional[Union[str, List[str]]] = None,
-        lora_files: Optional[Union[str, List[str]]] = None,
+        lora_urls: Optional[Union[str, List[str]]] = [],
+        lora_files: Optional[Union[str, List[str]]] = [],
     ):
+        if width is None or height is None:
+            width, height = image.size
+            width = width // 8 * 8
+            height = height // 8 * 8
+        image = image.resize((width, height))
+        mask_image = mask_image.resize((width, height))
+
         text_inputs = self.processor.text2image_inputs(
             text,
             negative_prompt=neg_text,
@@ -277,10 +286,45 @@ class StableXLForImageInpaintingPipeline(GenericStableXLModel):
             img is not None for img in controlnet_images
         ):
             controlnets, conditioning_scales, conditioning_images = [], [], []
+            (
+                inpaint_controlnet,
+                inpaint_conditioning_scale,
+                inpaint_conditioning_image,
+            ) = (None, None, None)
             for checkpoint, conditioning_scale, conditioning_image in zip(
                 controlnet_checkpoints, controlnet_guidance_scales, controlnet_images
             ):
                 if checkpoint is None or conditioning_image is None:
+                    continue
+                if "inpainting" in checkpoint:
+                    inpaint_controlnet_config_path = cached_path(
+                        nested_dict_value(
+                            pretrained_stable_extensions_infos,
+                            checkpoint,
+                            "controlnet",
+                            "config",
+                        )
+                    )
+                    inpaint_controlnet_config_dict = json.load(
+                        open(inpaint_controlnet_config_path)
+                    )
+                    inpaint_controlnet = ControlNetModel.from_config(
+                        inpaint_controlnet_config_dict
+                    )
+                    inpaint_controlnet.load_state_dict(
+                        load_weight(
+                            nested_dict_value(
+                                pretrained_stable_extensions_infos,
+                                checkpoint,
+                                "controlnet",
+                                "weight",
+                            )
+                        )
+                    )
+                    inpaint_controlnet.to(device=self._device)
+                    logging.info(f"Loading inpaint controlnet from {checkpoint}")
+                    inpaint_conditioning_scale = conditioning_scale
+                    inpaint_conditioning_image = conditioning_image.resize(image.size)
                     continue
                 controlnet_config_path = cached_path(
                     nested_dict_value(
@@ -307,6 +351,9 @@ class StableXLForImageInpaintingPipeline(GenericStableXLModel):
                 controlnets.append(controlnet)
                 conditioning_scales.append(conditioning_scale)
                 conditioning_images.append(conditioning_image.resize(image.size))
+            if inpaint_controlnet is not None:
+                controlnets.append(inpaint_controlnet)
+                conditioning_scales.append(inpaint_conditioning_scale)
             self.pipeline = StableDiffusionXLControlNetInpaintPipeline(
                 vae=self.vae,
                 text_encoder=self.text,
@@ -317,12 +364,40 @@ class StableXLForImageInpaintingPipeline(GenericStableXLModel):
                 tokenizer=None,
                 tokenizer_2=None,
             )
-            controlnets_inputs = self.processor.controlnets_inputs(conditioning_images)
+            if len(conditioning_images) > 0:
+                controlnets_inputs = self.processor.controlnets_inputs(
+                    conditioning_images
+                )
+            else:
+                controlnets_inputs = None
+
+            if inpaint_conditioning_image is not None:
+                inpaint_controlnet_inputs = self.processor.inpainting_controlnet_inputs(
+                    inpaint_conditioning_image, mask_image
+                )
+            else:
+                inpaint_controlnet_inputs = None
+
+            if controlnets_inputs is not None and inpaint_controlnet_inputs is not None:
+                condition_pixel_values = torch.cat(
+                    [
+                        controlnets_inputs.pixel_values,
+                        inpaint_controlnet_inputs.pixel_values.unsqueeze(0),
+                    ],
+                    dim=0,
+                )
+            elif controlnets_inputs is not None:
+                condition_pixel_values = controlnets_inputs.pixel_values
+            elif inpaint_controlnet_inputs is not None:
+                condition_pixel_values = (
+                    inpaint_controlnet_inputs.pixel_values.unsqueeze(0)
+                )
+
             enable_controlnet = True
             inputs = {
                 **text_inputs,
                 **image_inputs,
-                **{"condition_pixel_values": controlnets_inputs.pixel_values},
+                **{"condition_pixel_values": condition_pixel_values},
             }
         else:
             self.pipeline = StableDiffusionXLInpaintPipeline(
@@ -337,7 +412,8 @@ class StableXLForImageInpaintingPipeline(GenericStableXLModel):
             enable_controlnet = False
             inputs = {**text_inputs, **image_inputs}
         self.pipeline.set_progress_bar_config(disable=True)
-        self.pipeline.enable_freeu(*freeu_params)
+        if freeu_params is not None:
+            self.pipeline.enable_freeu(*freeu_params)
         self.seed = seed
 
         inputs = {k: v.unsqueeze(0) if v is not None else v for k, v in inputs.items()}
@@ -420,10 +496,13 @@ class StableXLForImageInpaintingPipeline(GenericStableXLModel):
                 negative_prompt_embeds=negative_prompt_embeds,
                 pooled_prompt_embeds=pooled_prompt_embeds,
                 negative_pooled_prompt_embeds=negative_pooled_prompt_embeds,
+                width=inputs["pixel_values"].size(-1),
+                height=inputs["pixel_values"].size(-2),
                 generator=torch.Generator(device=self.pipeline.device).manual_seed(
                     self.seed
                 ),
                 control_image=list(inputs["condition_pixel_values"].transpose(0, 1)),
+                num_inference_steps=num_timesteps,
                 guidance_scale=guidance_scale,
                 strength=strength,
                 controlnet_conditioning_scale=conditioning_scales,
@@ -437,9 +516,12 @@ class StableXLForImageInpaintingPipeline(GenericStableXLModel):
                 negative_prompt_embeds=negative_prompt_embeds,
                 pooled_prompt_embeds=pooled_prompt_embeds,
                 negative_pooled_prompt_embeds=negative_pooled_prompt_embeds,
+                width=inputs["pixel_values"].size(-1),
+                height=inputs["pixel_values"].size(-2),
                 generator=torch.Generator(device=self.pipeline.device).manual_seed(
                     self.seed
                 ),
+                num_inference_steps=num_timesteps,
                 guidance_scale=guidance_scale,
                 strength=strength,
                 output_type="np.array",

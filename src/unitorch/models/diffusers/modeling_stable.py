@@ -111,6 +111,7 @@ class GenericStableModel(GenericModel, QuantizationMixin, PeftWeightLoaderMixin)
         vae_config_path: str,
         scheduler_config_path: str,
         controlnet_configs_path: Union[str, List[str]] = None,
+        inpainting_controlnet_configs_path: Union[str, List[str]] = None,
         adapter_configs_path: Union[str, List[str]] = None,
         quant_config_path: Optional[str] = None,
         image_size: Optional[int] = None,
@@ -145,6 +146,13 @@ class GenericStableModel(GenericModel, QuantizationMixin, PeftWeightLoaderMixin)
 
         vae_config_dict = json.load(open(vae_config_path))
         self.vae = AutoencoderKL.from_config(vae_config_dict)
+
+        if isinstance(controlnet_configs_path, str):
+            controlnet_configs_path = [controlnet_configs_path]
+        if isinstance(inpainting_controlnet_configs_path, str):
+            controlnet_configs_path += [inpainting_controlnet_configs_path]
+        elif isinstance(inpainting_controlnet_configs_path, list):
+            controlnet_configs_path += inpainting_controlnet_configs_path
 
         if isinstance(controlnet_configs_path, list):
             if len(controlnet_configs_path) == 0:
@@ -487,8 +495,70 @@ class StableForImageInpainting(GenericStableModel):
 
     def forward(
         self,
+        input_ids: torch.Tensor,
+        pixel_values: torch.Tensor,
+        masked_pixel_values: torch.Tensor,
+        pixel_masks: torch.Tensor,
+        attention_mask: Optional[torch.Tensor] = None,
     ):
-        raise NotImplementedError
+        latents = self.vae.encode(pixel_values).latent_dist.sample()
+        latents = latents * self.vae.config.scaling_factor
+
+        masked_latents = self.vae.encode(masked_pixel_values).latent_dist.sample()
+        masked_latents = masked_latents * self.vae.config.scaling_factor
+
+        pixel_masks = torch.nn.functional.interpolate(
+            pixel_masks, size=latents.shape[-2:], mode="nearest"
+        )
+
+        noise = torch.randn(latents.shape).to(latents.device)
+        batch = latents.size(0)
+
+        timesteps = torch.randint(
+            0,
+            self.scheduler.config.num_train_timesteps,
+            (batch,),
+            device=pixel_values.device,
+        ).long()
+
+        noise_latents = self.scheduler.add_noise(
+            latents,
+            noise,
+            timesteps,
+        )
+
+        latent_model_input = torch.cat(
+            [noise_latents, pixel_masks, masked_latents], dim=1
+        )
+
+        encoder_hidden_states = self.text(input_ids)[0]
+        # encoder_hidden_states = self.text(input_ids, attention_mask)[0]
+        outputs = self.unet(
+            latent_model_input,
+            timesteps,
+            encoder_hidden_states,
+        ).sample
+        if self.scheduler.config.prediction_type == "v_prediction":
+            noise = self.scheduler.get_velocity(latents, noise, timesteps)
+        if self.snr_gamma > 0:
+            snr = compute_snr(timesteps, self.scheduler)
+            base_weight = (
+                torch.stack(
+                    [snr, self.snr_gamma * torch.ones_like(timesteps)], dim=1
+                ).min(dim=1)[0]
+                / snr
+            )
+
+            if self.scheduler.config.prediction_type == "v_prediction":
+                mse_loss_weights = base_weight + 1
+            else:
+                mse_loss_weights = base_weight
+            loss = F.mse_loss(outputs, noise, reduction="none")
+            loss = loss.mean(dim=list(range(1, len(loss.shape)))) * mse_loss_weights
+            loss = loss.mean()
+        else:
+            loss = F.mse_loss(outputs, noise, reduction="mean")
+        return loss
 
     def generate(
         self,
@@ -518,6 +588,8 @@ class StableForImageInpainting(GenericStableModel):
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),
+            width=pixel_values.size(-1),
+            height=pixel_values.size(-2),
             strength=strength,
             guidance_scale=guidance_scale,
             output_type="np.array",

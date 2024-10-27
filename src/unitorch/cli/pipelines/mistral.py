@@ -134,11 +134,11 @@ class MistralForGenerationPipeline(_MistralForGeneration):
         temperature: Optional[float] = 1.0,
         top_k: Optional[int] = 50,
         top_p: Optional[float] = 1.0,
-        lora_checkpoints: Optional[Union[str, List[str]]] = None,
+        lora_checkpoints: Optional[Union[str, List[str]]] = [],
         lora_weights: Optional[Union[float, List[float]]] = 1.0,
         lora_alphas: Optional[Union[float, List[float]]] = 32,
-        lora_urls: Optional[Union[str, List[str]]] = None,
-        lora_files: Optional[Union[str, List[str]]] = None,
+        lora_urls: Optional[Union[str, List[str]]] = [],
+        lora_files: Optional[Union[str, List[str]]] = [],
     ):
         inputs = self.processor.generation_inputs(
             text=prompt,

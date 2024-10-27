@@ -538,8 +538,92 @@ class StableXLForImageInpainting(GenericStableXLModel):
 
     def forward(
         self,
+        input_ids: torch.Tensor,
+        input2_ids: torch.Tensor,
+        add_time_ids: torch.Tensor,
+        pixel_values: torch.Tensor,
+        masked_pixel_values: torch.Tensor,
+        pixel_masks: torch.Tensor,
+        attention_mask: Optional[torch.Tensor] = None,
+        attention2_mask: Optional[torch.Tensor] = None,
     ):
-        raise NotImplementedError
+        outputs = self.text(
+            input_ids,
+            # attention_mask,
+            output_hidden_states=True,
+        )
+        prompt_embeds = outputs.hidden_states[-2]
+        prompt2_outputs = self.text2(
+            input2_ids,
+            # attention2_mask,
+            output_hidden_states=True,
+        )
+        prompt2_embeds = prompt2_outputs.hidden_states[-2]
+        prompt_embeds = torch.concat([prompt_embeds, prompt2_embeds], dim=-1)
+        pooled_prompt_embeds = prompt2_outputs[0]
+
+        latents = self.vae.encode(pixel_values).latent_dist.sample()
+        latents = latents * self.vae.config.scaling_factor
+
+        masked_latents = self.vae.encode(masked_pixel_values).latent_dist.sample()
+        masked_latents = masked_latents * self.vae.config.scaling_factor
+
+        pixel_masks = torch.nn.functional.interpolate(
+            pixel_masks, size=latents.shape[-2:], mode="nearest"
+        )
+
+        noise = torch.randn(latents.shape).to(latents.device)
+        batch = latents.size(0)
+
+        timesteps = torch.randint(
+            0,
+            self.scheduler.config.num_train_timesteps,
+            (batch,),
+            device=pixel_values.device,
+        ).long()
+
+        noise_latents = self.scheduler.add_noise(
+            latents,
+            noise,
+            timesteps,
+        )
+
+        latent_model_input = torch.cat(
+            [noise_latents, pixel_masks, masked_latents], dim=1
+        )
+
+        outputs = self.unet(
+            latent_model_input,
+            timesteps,
+            prompt_embeds,
+            added_cond_kwargs={
+                "time_ids": add_time_ids,
+                "text_embeds": pooled_prompt_embeds,
+            },
+        ).sample
+
+        if self.scheduler.config.prediction_type == "v_prediction":
+            noise = self.scheduler.get_velocity(latents, noise, timesteps)
+        if self.snr_gamma > 0:
+            snr = compute_snr(timesteps, self.scheduler)
+            base_weight = (
+                torch.stack(
+                    [snr, self.snr_gamma * torch.ones_like(timesteps)], dim=1
+                ).min(dim=1)[0]
+                / snr
+            )
+
+            if self.scheduler.config.prediction_type == "v_prediction":
+                mse_loss_weights = base_weight + 1
+            else:
+                mse_loss_weights = base_weight
+            mse_loss_weights[snr == 0] = 1.0
+            loss = F.mse_loss(outputs, noise, reduction="none")
+            loss = loss.mean(dim=list(range(1, len(loss.shape)))) * mse_loss_weights
+            loss = loss.mean()
+        else:
+            loss = F.mse_loss(outputs, noise, reduction="mean")
+        return loss
 
     def generate(
         self,
@@ -577,6 +661,8 @@ class StableXLForImageInpainting(GenericStableXLModel):
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),
+            width=pixel_values.size(-1),
+            height=pixel_values.size(-2),
             strength=strength,
             guidance_scale=guidance_scale,
             output_type="np.array",

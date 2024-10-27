@@ -36,6 +36,7 @@ class ControlNetForText2ImageGeneration(GenericStableModel):
         vae_config_path: str,
         controlnet_configs_path: Union[str, List[str]],
         scheduler_config_path: str,
+        inpainting_controlnet_configs_path: Union[str, List[str]] = None,
         quant_config_path: Optional[str] = None,
         image_size: Optional[int] = None,
         in_channels: Optional[int] = None,
@@ -52,6 +53,7 @@ class ControlNetForText2ImageGeneration(GenericStableModel):
             text_config_path=text_config_path,
             vae_config_path=vae_config_path,
             controlnet_configs_path=controlnet_configs_path,
+            inpainting_controlnet_configs_path=inpainting_controlnet_configs_path,
             scheduler_config_path=scheduler_config_path,
             quant_config_path=quant_config_path,
             image_size=image_size,
@@ -81,8 +83,23 @@ class ControlNetForText2ImageGeneration(GenericStableModel):
         input_ids: torch.Tensor,
         pixel_values: torch.Tensor,
         condition_pixel_values: torch.Tensor,
+        inpainting_condition_pixel_values: torch.Tensor = None,
         attention_mask: Optional[torch.Tensor] = None,
     ):
+        if inpainting_condition_pixel_values is not None:
+            if self.num_controlnets == 1:
+                condition_pixel_values = torch.stack(
+                    [condition_pixel_values, inpainting_condition_pixel_values], dim=1
+                )
+            else:
+                condition_pixel_values = torch.cat(
+                    [
+                        condition_pixel_values,
+                        inpainting_condition_pixel_values.unsqueeze(1),
+                    ],
+                    dim=1,
+                )
+
         latents = self.vae.encode(pixel_values).latent_dist.sample()
         latents = latents * self.vae.config.scaling_factor
         noise = torch.randn(latents.shape).to(latents.device)
@@ -128,6 +145,7 @@ class ControlNetForText2ImageGeneration(GenericStableModel):
         condition_pixel_values: torch.Tensor,
         input_ids: torch.Tensor,
         negative_input_ids: torch.Tensor,
+        inpainting_condition_pixel_values: torch.Tensor = None,
         attention_mask: Optional[torch.Tensor] = None,
         negative_attention_mask: Optional[torch.Tensor] = None,
         height: Optional[int] = 512,
@@ -135,6 +153,20 @@ class ControlNetForText2ImageGeneration(GenericStableModel):
         guidance_scale: Optional[float] = 7.5,
         controlnet_conditioning_scale: Optional[Union[float, List[float]]] = None,
     ):
+        if inpainting_condition_pixel_values is not None:
+            if self.num_controlnets == 1:
+                condition_pixel_values = torch.stack(
+                    [condition_pixel_values, inpainting_condition_pixel_values], dim=1
+                )
+            else:
+                condition_pixel_values = torch.cat(
+                    [
+                        condition_pixel_values,
+                        inpainting_condition_pixel_values.unsqueeze(1),
+                    ],
+                    dim=1,
+                )
+
         prompt_embeds = self.text(
             input_ids,
             # attention_mask,
@@ -184,6 +216,7 @@ class ControlNetForImage2ImageGeneration(GenericStableModel):
         vae_config_path: str,
         controlnet_configs_path: Union[str, List[str]],
         scheduler_config_path: str,
+        inpainting_controlnet_configs_path: Union[str, List[str]] = None,
         quant_config_path: Optional[str] = None,
         image_size: Optional[int] = None,
         in_channels: Optional[int] = None,
@@ -200,6 +233,7 @@ class ControlNetForImage2ImageGeneration(GenericStableModel):
             text_config_path=text_config_path,
             vae_config_path=vae_config_path,
             controlnet_configs_path=controlnet_configs_path,
+            inpainting_controlnet_configs_path=inpainting_controlnet_configs_path,
             scheduler_config_path=scheduler_config_path,
             quant_config_path=quant_config_path,
             image_size=image_size,
@@ -236,12 +270,26 @@ class ControlNetForImage2ImageGeneration(GenericStableModel):
         condition_pixel_values: torch.Tensor,
         input_ids: torch.Tensor,
         negative_input_ids: torch.Tensor,
+        inpainting_condition_pixel_values: torch.Tensor = None,
         attention_mask: Optional[torch.Tensor] = None,
         negative_attention_mask: Optional[torch.Tensor] = None,
         strength: Optional[float] = 0.8,
         guidance_scale: Optional[float] = 7.5,
         controlnet_conditioning_scale: Optional[float] = 1.0,
     ):
+        if inpainting_condition_pixel_values is not None:
+            if self.num_controlnets == 1:
+                condition_pixel_values = torch.stack(
+                    [condition_pixel_values, inpainting_condition_pixel_values], dim=1
+                )
+            else:
+                condition_pixel_values = torch.cat(
+                    [
+                        condition_pixel_values,
+                        inpainting_condition_pixel_values.unsqueeze(1),
+                    ],
+                    dim=1,
+                )
         prompt_embeds = self.text(
             input_ids,
             # attention_mask,
@@ -291,6 +339,7 @@ class ControlNetForImageInpainting(GenericStableModel):
         vae_config_path: str,
         controlnet_configs_path: Union[str, List[str]],
         scheduler_config_path: str,
+        inpainting_controlnet_configs_path: Union[str, List[str]] = None,
         quant_config_path: Optional[str] = None,
         image_size: Optional[int] = None,
         in_channels: Optional[int] = None,
@@ -308,6 +357,7 @@ class ControlNetForImageInpainting(GenericStableModel):
             vae_config_path=vae_config_path,
             controlnet_configs_path=controlnet_configs_path,
             scheduler_config_path=scheduler_config_path,
+            inpainting_controlnet_configs_path=inpainting_controlnet_configs_path,
             quant_config_path=quant_config_path,
             image_size=image_size,
             in_channels=in_channels,
@@ -344,12 +394,26 @@ class ControlNetForImageInpainting(GenericStableModel):
         condition_pixel_values: torch.Tensor,
         input_ids: torch.Tensor,
         negative_input_ids: torch.Tensor,
+        inpainting_condition_pixel_values: torch.Tensor = None,
         attention_mask: Optional[torch.Tensor] = None,
         negative_attention_mask: Optional[torch.Tensor] = None,
         strength: Optional[float] = 0.8,
         guidance_scale: Optional[float] = 7.5,
         controlnet_conditioning_scale: Optional[float] = 1.0,
     ):
+        if inpainting_condition_pixel_values is not None:
+            if self.num_controlnets == 1:
+                condition_pixel_values = torch.stack(
+                    [condition_pixel_values, inpainting_condition_pixel_values], dim=1
+                )
+            else:
+                condition_pixel_values = torch.cat(
+                    [
+                        condition_pixel_values,
+                        inpainting_condition_pixel_values.unsqueeze(1),
+                    ],
+                    dim=1,
+                )
         prompt_embeds = self.text(
             input_ids,
             # attention_mask,
@@ -383,6 +447,8 @@ class ControlNetForImageInpainting(GenericStableModel):
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),
+            width=pixel_values.size(-1),
+            height=pixel_values.size(-2),
             strength=strength,
             guidance_scale=guidance_scale,
             controlnet_conditioning_scale=controlnet_conditioning_scale,

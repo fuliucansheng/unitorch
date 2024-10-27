@@ -93,15 +93,15 @@ class ClipClassificationWebUI(SimpleWebUI):
         score = create_element("text", "Output Score", lines=1)
 
         # create blocks
-        left = create_column(lora_layout, text, generate)
-        right = create_column(image, label, score)
+        left = create_column(lora_layout, text, image, generate)
+        right = create_column(label, score)
         iface = create_blocks(pretrain_layout, create_row(left, right))
 
         # create events
         iface.__enter__()
 
-        start.click(self.start, inputs=[name], outputs=[status])
-        stop.click(self.stop, outputs=[status])
+        start.click(self.start, inputs=[name], outputs=[status], trigger_mode="once")
+        stop.click(self.stop, outputs=[status], trigger_mode="once")
 
         for lora in loras:
             lora.checkpoint.change(
@@ -120,6 +120,7 @@ class ClipClassificationWebUI(SimpleWebUI):
                 *lora_params,
             ],
             outputs=[label, score],
+            trigger_mode="once",
         )
 
         iface.load(
@@ -240,8 +241,8 @@ class ClipTextClassificationWebUI(SimpleWebUI):
         # create events
         iface.__enter__()
 
-        start.click(self.start, inputs=[name], outputs=[status])
-        stop.click(self.stop, outputs=[status])
+        start.click(self.start, inputs=[name], outputs=[status], trigger_mode="once")
+        stop.click(self.stop, outputs=[status], trigger_mode="once")
 
         for lora in loras:
             lora.checkpoint.change(
@@ -259,6 +260,7 @@ class ClipTextClassificationWebUI(SimpleWebUI):
                 *lora_params,
             ],
             outputs=[label, score],
+            trigger_mode="once",
         )
 
         iface.load(
@@ -377,8 +379,8 @@ class ClipImageClassificationWebUI(SimpleWebUI):
         # create events
         iface.__enter__()
 
-        start.click(self.start, inputs=[name], outputs=[status])
-        stop.click(self.stop, outputs=[status])
+        start.click(self.start, inputs=[name], outputs=[status], trigger_mode="once")
+        stop.click(self.stop, outputs=[status], trigger_mode="once")
 
         for lora in loras:
             lora.checkpoint.change(
@@ -396,6 +398,7 @@ class ClipImageClassificationWebUI(SimpleWebUI):
                 *lora_params,
             ],
             outputs=[label, score],
+            trigger_mode="once",
         )
 
         iface.load(
@@ -507,15 +510,15 @@ class ClipMatchingWebUI(SimpleWebUI):
         score = create_element("text", "Output Score", lines=1)
 
         # create blocks
-        left = create_column(lora_layout, text, generate)
-        right = create_column(image, score)
+        left = create_column(lora_layout, text, image, generate)
+        right = create_column(score)
         iface = create_blocks(pretrain_layout, create_row(left, right))
 
         # create events
         iface.__enter__()
 
-        start.click(self.start, inputs=[name], outputs=[status])
-        stop.click(self.stop, outputs=[status])
+        start.click(self.start, inputs=[name], outputs=[status], trigger_mode="once")
+        stop.click(self.stop, outputs=[status], trigger_mode="once")
 
         for lora in loras:
             lora.checkpoint.change(
@@ -534,6 +537,7 @@ class ClipMatchingWebUI(SimpleWebUI):
                 *lora_params,
             ],
             outputs=[score],
+            trigger_mode="once",
         )
 
         iface.load(

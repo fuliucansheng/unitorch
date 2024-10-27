@@ -63,9 +63,11 @@ class BlipCaptionWebUI(SimpleWebUI):
         # create events
         iface.__enter__()
 
-        start.click(self.start, inputs=[name], outputs=[status])
-        stop.click(self.stop, outputs=[status])
-        generate.click(self.serve, inputs=[image], outputs=[result])
+        start.click(self.start, inputs=[name], outputs=[status], trigger_mode="once")
+        stop.click(self.stop, outputs=[status], trigger_mode="once")
+        generate.click(
+            self.serve, inputs=[image], outputs=[result], trigger_mode="once"
+        )
 
         iface.load(
             fn=lambda: [gr.update(value=self._name), gr.update(value=self._status)],

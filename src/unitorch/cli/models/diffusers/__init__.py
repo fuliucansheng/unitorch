@@ -210,6 +210,12 @@ pretrained_stable_infos = {
     "stable-v1.5-inpainting": __hf_hub_stable_v1_5_dict__(
         "botp/stable-diffusion-v1-5-inpainting"
     ),
+    "stable-v1.5-realistic-v5.1-inpainting": __hf_hub_stable_v1_5_safetensors_dict__(
+        "Uminosachi/realisticVisionV51_v51VAE-inpainting"
+    ),
+    "stable-v1.5-dreamshaper-8-inpainting": __hf_hub_stable_v1_5_safetensors_dict__(
+        "Lykon/dreamshaper-8-inpainting"
+    ),
     "stable-v1.5-x4-upscaler": __hf_hub_stable_v1_5_dict__(
         "stabilityai/stable-diffusion-x4-upscaler"
     ),
@@ -370,8 +376,8 @@ pretrained_stable_extensions_infos = {
         "InstantX/SD3-Controlnet-Tile"
     ),
     # stable flux controlnet
-    "stable-flux-controlnet-canny": __hf_hub_controlnet_safetensors_dict__(
-        "InstantX/FLUX.1-dev-Controlnet-Canny"
+    "stable-flux-controlnet-dev-union": __hf_hub_controlnet_safetensors_dict__(
+        "InstantX/FLUX.1-dev-Controlnet-Union"
     ),
 }
 
@@ -388,6 +394,7 @@ from unitorch.cli.models.diffusers.modeling_stable_xl import (
     StableXLForImage2ImageGeneration,
     StableXLForImageInpainting,
 )
+
 from unitorch.cli.models.diffusers.modeling_stable_3 import (
     Stable3ForText2ImageGeneration,
     Stable3ForImage2ImageGeneration,
@@ -405,6 +412,7 @@ from unitorch.cli.models.diffusers.modeling_controlnet_xl import (
     ControlNetXLForImage2ImageGeneration,
     ControlNetXLForImageInpainting,
 )
+
 from unitorch.cli.models.diffusers.modeling_controlnet_3 import (
     ControlNet3ForText2ImageGeneration,
 )

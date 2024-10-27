@@ -271,14 +271,14 @@ class Stable3ForText2ImageGenerationPipeline(GenericStable3Model):
         num_timesteps: Optional[int] = 50,
         seed: Optional[int] = 1123,
         scheduler: Optional[str] = None,
-        controlnet_checkpoints: Optional[List[str]] = None,
-        controlnet_images: Optional[List[Image.Image]] = None,
-        controlnet_guidance_scales: Optional[List[float]] = None,
-        lora_checkpoints: Optional[Union[str, List[str]]] = None,
+        controlnet_checkpoints: Optional[List[str]] = [],
+        controlnet_images: Optional[List[Image.Image]] = [],
+        controlnet_guidance_scales: Optional[List[float]] = [],
+        lora_checkpoints: Optional[Union[str, List[str]]] = [],
         lora_weights: Optional[Union[float, List[float]]] = 1.0,
         lora_alphas: Optional[Union[float, List[float]]] = 32,
-        lora_urls: Optional[Union[str, List[str]]] = None,
-        lora_files: Optional[Union[str, List[str]]] = None,
+        lora_urls: Optional[Union[str, List[str]]] = [],
+        lora_files: Optional[Union[str, List[str]]] = [],
     ):
         text_inputs = self.processor.text2image_inputs(
             text,
@@ -445,12 +445,13 @@ class Stable3ForText2ImageGenerationPipeline(GenericStable3Model):
                 negative_prompt_embeds=negative_prompt_embeds,
                 pooled_prompt_embeds=pooled_prompt_embeds,
                 negative_pooled_prompt_embeds=negative_pooled_prompt_embeds,
+                height=height,
+                width=width,
                 generator=torch.Generator(device=self.pipeline.device).manual_seed(
                     self.seed
                 ),
-                height=height,
-                width=width,
                 control_image=list(inputs["condition_pixel_values"].transpose(0, 1)),
+                num_inference_steps=num_timesteps,
                 guidance_scale=guidance_scale,
                 controlnet_conditioning_scale=conditioning_scales,
                 output_type="np.array",
@@ -461,11 +462,12 @@ class Stable3ForText2ImageGenerationPipeline(GenericStable3Model):
                 negative_prompt_embeds=negative_prompt_embeds,
                 pooled_prompt_embeds=pooled_prompt_embeds,
                 negative_pooled_prompt_embeds=negative_pooled_prompt_embeds,
+                height=height,
+                width=width,
                 generator=torch.Generator(device=self.pipeline.device).manual_seed(
                     self.seed
                 ),
-                height=height,
-                width=width,
+                num_inference_steps=num_timesteps,
                 guidance_scale=guidance_scale,
                 output_type="np.array",
             )

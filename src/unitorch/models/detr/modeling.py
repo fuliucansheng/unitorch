@@ -13,10 +13,12 @@ from transformers.models.detr import DetrConfig
 from transformers.models.detr.modeling_detr import (
     DetrModel,
     DetrMLPPredictionHead,
-    DetrHungarianMatcher,
     DetrMaskHeadSmallConv,
     DetrMHAttentionMap,
-    DetrLoss,
+)
+from transformers.loss.loss_for_object_detection import (
+    HungarianMatcher as DetrHungarianMatcher,
+    ImageLoss as DetrLoss,
 )
 from unitorch.models import GenericModel, GenericOutputs
 from unitorch.utils import image_list_to_tensor

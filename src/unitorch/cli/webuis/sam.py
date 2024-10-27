@@ -128,8 +128,8 @@ class SamWebUI(SimpleWebUI):
         # create events
         iface.__enter__()
 
-        start.click(self.start, inputs=[name], outputs=[status])
-        stop.click(self.stop, outputs=[status])
+        start.click(self.start, inputs=[name], outputs=[status], trigger_mode="once")
+        stop.click(self.stop, outputs=[status], trigger_mode="once")
 
         for lora in loras:
             lora.checkpoint.change(
@@ -157,6 +157,7 @@ class SamWebUI(SimpleWebUI):
             lambda x: (x, []),
             inputs=[origin_input_image],
             outputs=[input_image_click, click_points],
+            trigger_mode="once",
         )
         input_click_segment.click(
             self.serve_click,
@@ -168,6 +169,7 @@ class SamWebUI(SimpleWebUI):
                 *lora_params,
             ],
             outputs=[output_image],
+            trigger_mode="once",
         )
 
         input_image_box.upload(
@@ -184,6 +186,7 @@ class SamWebUI(SimpleWebUI):
             lambda x: (x, []),
             inputs=[origin_input_image],
             outputs=[input_image_box, boxes_points],
+            trigger_mode="once",
         )
         input_box_segment.click(
             self.serve_box,
@@ -195,6 +198,7 @@ class SamWebUI(SimpleWebUI):
                 *lora_params,
             ],
             outputs=[output_image],
+            trigger_mode="once",
         )
 
         iface.load(

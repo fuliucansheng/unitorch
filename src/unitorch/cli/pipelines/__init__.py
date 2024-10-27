@@ -8,6 +8,7 @@ if is_diffusers_available():
         DDIMScheduler,
         DDPMScheduler,
         PNDMScheduler,
+        DEISMultistepScheduler,
         DPMSolverSDEScheduler,
         UniPCMultistepScheduler,
         EulerAncestralDiscreteScheduler,
@@ -18,6 +19,7 @@ if is_diffusers_available():
     Schedulers = {
         "DPM++SDE": DPMSolverSDEScheduler,
         "UniPC++": UniPCMultistepScheduler,
+        "DEIS++": DEISMultistepScheduler,
         "DDIM": DDIMScheduler,
         "DDPM": DDPMScheduler,
         "PNDM": PNDMScheduler,
@@ -27,6 +29,7 @@ if is_diffusers_available():
     }
     import unitorch.cli.pipelines.stable
     import unitorch.cli.pipelines.stable_xl
+
     import unitorch.cli.pipelines.stable_3
     import unitorch.cli.pipelines.stable_flux
 else:

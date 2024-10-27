@@ -186,8 +186,8 @@ class StableText2ImageWebUI(SimpleWebUI):
         # create events
         iface.__enter__()
 
-        start.click(fn=self.start, inputs=[name], outputs=[status])
-        stop.click(fn=self.stop, outputs=[status])
+        start.click(fn=self.start, inputs=[name], outputs=[status], trigger_mode="once")
+        stop.click(fn=self.stop, outputs=[status], trigger_mode="once")
 
         for controlnet in controlnets:
             controlnet.input_image.upload(
@@ -229,6 +229,7 @@ class StableText2ImageWebUI(SimpleWebUI):
                 *lora_params,
             ],
             outputs=[output_image],
+            trigger_mode="once",
         )
         iface.load(
             fn=lambda: [gr.update(value=self._name), gr.update(value=self._status)],

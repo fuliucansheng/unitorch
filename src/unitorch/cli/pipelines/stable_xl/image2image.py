@@ -250,14 +250,14 @@ class StableXLForImage2ImageGenerationPipeline(GenericStableXLModel):
             1.2,
             1.4,
         ),
-        controlnet_checkpoints: Optional[List[str]] = None,
-        controlnet_images: Optional[List[Image.Image]] = None,
-        controlnet_guidance_scales: Optional[List[float]] = None,
-        lora_checkpoints: Optional[Union[str, List[str]]] = None,
+        controlnet_checkpoints: Optional[List[str]] = [],
+        controlnet_images: Optional[List[Image.Image]] = [],
+        controlnet_guidance_scales: Optional[List[float]] = [],
+        lora_checkpoints: Optional[Union[str, List[str]]] = [],
         lora_weights: Optional[Union[float, List[float]]] = 1.0,
         lora_alphas: Optional[Union[float, List[float]]] = 32,
-        lora_urls: Optional[Union[str, List[str]]] = None,
-        lora_files: Optional[Union[str, List[str]]] = None,
+        lora_urls: Optional[Union[str, List[str]]] = [],
+        lora_files: Optional[Union[str, List[str]]] = [],
     ):
         text_inputs = self.processor.text2image_inputs(
             text,
@@ -336,7 +336,8 @@ class StableXLForImage2ImageGenerationPipeline(GenericStableXLModel):
             enable_controlnet = False
             inputs = {**text_inputs, **image_inputs}
         self.pipeline.set_progress_bar_config(disable=True)
-        self.pipeline.enable_freeu(*freeu_params)
+        if freeu_params is not None:
+            self.pipeline.enable_freeu(*freeu_params)
         self.seed = seed
 
         inputs = {k: v.unsqueeze(0) if v is not None else v for k, v in inputs.items()}
@@ -422,6 +423,7 @@ class StableXLForImage2ImageGenerationPipeline(GenericStableXLModel):
                     self.seed
                 ),
                 control_image=list(inputs["condition_pixel_values"].transpose(0, 1)),
+                num_inference_steps=num_timesteps,
                 guidance_scale=guidance_scale,
                 strength=strength,
                 controlnet_conditioning_scale=conditioning_scales,
@@ -437,6 +439,7 @@ class StableXLForImage2ImageGenerationPipeline(GenericStableXLModel):
                 generator=torch.Generator(device=self.pipeline.device).manual_seed(
                     self.seed
                 ),
+                num_inference_steps=num_timesteps,
                 guidance_scale=guidance_scale,
                 strength=strength,
                 output_type="np.array",

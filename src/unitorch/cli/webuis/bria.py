@@ -69,12 +69,13 @@ class BRIAWebUI(SimpleWebUI):
         # Create the events
         iface.__enter__()
 
-        start.click(self.start, inputs=[name], outputs=[status])
-        stop.click(self.stop, outputs=[status])
+        start.click(self.start, inputs=[name], outputs=[status], trigger_mode="once")
+        stop.click(self.stop, outputs=[status], trigger_mode="once")
         segment.click(
             self.serve,
             inputs=[input_image, mask_threshold, output_image_type],
             outputs=[output_image],
+            trigger_mode="once",
         )
 
         iface.load(

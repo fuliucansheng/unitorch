@@ -12,3 +12,6 @@ from unitorch.cli.pipelines.stable_3.text2image import (
 from unitorch.cli.pipelines.stable_3.image2image import (
     Stable3ForImage2ImageGenerationPipeline,
 )
+from unitorch.cli.pipelines.stable_3.inpainting import (
+    Stable3ForImageInpaintingPipeline,
+)

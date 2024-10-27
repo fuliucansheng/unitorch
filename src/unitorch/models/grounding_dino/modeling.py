@@ -14,8 +14,10 @@ from transformers.models.grounding_dino.modeling_grounding_dino import (
     GroundingDinoModel,
     GroundingDinoContrastiveEmbedding,
     GroundingDinoMLPPredictionHead,
-    GroundingDinoHungarianMatcher,
-    GroundingDinoLoss,
+)
+from transformers.loss.loss_deformable_detr import (
+    DeformableDetrHungarianMatcher as GroundingDinoHungarianMatcher,
+    DeformableDetrImageLoss as GroundingDinoLoss,
 )
 from unitorch.models import GenericModel, GenericOutputs
 from unitorch.utils import image_list_to_tensor

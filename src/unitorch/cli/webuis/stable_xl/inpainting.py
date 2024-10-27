@@ -88,6 +88,12 @@ class StableXLImageInpaintingWebUI(SimpleWebUI):
         steps = create_element(
             "slider", "Diffusion Steps", min_value=1, max_value=100, step=1, default=25
         )
+        height = create_element(
+            "slider", "Image Height", min_value=1, max_value=2048, step=1, default=1024
+        )
+        width = create_element(
+            "slider", "Image Width", min_value=1, max_value=2048, step=1, default=1024
+        )
         image = create_element("image_editor", "Input Image")
         mask_image = create_element("image", "Input Image Mask")
 
@@ -157,8 +163,8 @@ class StableXLImageInpaintingWebUI(SimpleWebUI):
         left_generation = create_tab(
             create_row(image, mask_image),
             create_row(scheduler, steps),
-            create_row(guidance_scale),
-            create_row(strength),
+            create_row(height, width),
+            create_row(guidance_scale, strength),
             create_row(seed),
             create_row(freeu_layout),
             name="Generation",
@@ -179,8 +185,8 @@ class StableXLImageInpaintingWebUI(SimpleWebUI):
         # create events
         iface.__enter__()
 
-        start.click(fn=self.start, inputs=[name], outputs=[status])
-        stop.click(fn=self.stop, outputs=[status])
+        start.click(fn=self.start, inputs=[name], outputs=[status], trigger_mode="once")
+        stop.click(fn=self.stop, outputs=[status], trigger_mode="once")
 
         image.change(fn=self.composite_images, inputs=[image], outputs=[mask_image])
 
@@ -212,6 +218,8 @@ class StableXLImageInpaintingWebUI(SimpleWebUI):
                 image,
                 mask_image,
                 negative_prompt,
+                height,
+                width,
                 guidance_scale,
                 strength,
                 steps,
@@ -225,7 +233,14 @@ class StableXLImageInpaintingWebUI(SimpleWebUI):
                 *lora_params,
             ],
             outputs=[output_image],
+            trigger_mode="once",
         )
+        image.change(
+            lambda x: x["background"].size,
+            inputs=[image],
+            outputs=[width, height],
+        )
+
         iface.load(
             fn=lambda: [gr.update(value=self._name), gr.update(value=self._status)],
             outputs=[name, status],
@@ -281,6 +296,8 @@ class StableXLImageInpaintingWebUI(SimpleWebUI):
         image: Image.Image,
         mask_image: Image.Image,
         negative_text: str,
+        height: int,
+        width: int,
         guidance_scale: float,
         strength: float,
         num_timesteps: int,
@@ -308,6 +325,8 @@ class StableXLImageInpaintingWebUI(SimpleWebUI):
             image["background"],
             mask_image,
             negative_text,
+            width=width,
+            height=height,
             guidance_scale=guidance_scale,
             strength=strength,
             num_timesteps=num_timesteps,

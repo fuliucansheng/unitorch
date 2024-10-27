@@ -121,9 +121,6 @@ class StableXLProcessor:
             self.vae_image_processor = VaeImageProcessor(
                 vae_scale_factor=vae_scale_factor
             )
-            self.vae_mask_image_processor = VaeImageProcessor(
-                vae_scale_factor=vae_scale_factor
-            )
             self.vae_condition_image_processor = VaeImageProcessor(
                 vae_scale_factor=vae_scale_factor,
                 do_convert_rgb=True,
@@ -131,7 +128,6 @@ class StableXLProcessor:
             )
         else:
             self.vae_image_processor = None
-            self.vae_mask_image_processor = None
             self.vae_condition_image_processor = None
 
     def text2image(
@@ -267,6 +263,28 @@ class StableXLProcessor:
             pixel_values.append(self.vae_condition_image_processor.preprocess(image)[0])
 
         return GenericOutputs(pixel_values=torch.stack(pixel_values, dim=0))
+
+    def inpainting_controlnet_inputs(
+        self,
+        image: Union[Image.Image, str],
+        mask_image: Union[Image.Image, str],
+    ):
+        if isinstance(image, str):
+            image = Image.open(image)
+        image = image.convert("RGB")
+        if self.image_size is not None:
+            image = image.resize(self.image_size)
+
+        if isinstance(mask_image, str):
+            mask_image = Image.open(mask_image)
+        mask_image = mask_image.convert("L")
+        if self.image_size is not None:
+            mask_image = mask_image.resize(self.image_size)
+
+        pixel_values = self.vae_image_processor.preprocess(image)[0]
+        pixel_masks = self.vae_image_processor.preprocess(mask_image)[0]
+        pixel_values[:, pixel_masks[0] > 0.5] = -1.0
+        return GenericOutputs(pixel_values=pixel_values)
 
     def adapter_inputs(
         self,

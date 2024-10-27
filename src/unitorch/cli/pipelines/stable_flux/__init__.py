@@ -10,3 +10,9 @@ from unitorch.cli import CoreConfigureParser
 from unitorch.cli.pipelines.stable_flux.text2image import (
     StableFluxForText2ImageGenerationPipeline,
 )
+from unitorch.cli.pipelines.stable_flux.image2image import (
+    StableFluxForImage2ImageGenerationPipeline,
+)
+from unitorch.cli.pipelines.stable_flux.inpainting import (
+    StableFluxForImageInpaintingPipeline,
+)

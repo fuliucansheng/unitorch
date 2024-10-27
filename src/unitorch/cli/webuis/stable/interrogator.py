@@ -66,12 +66,13 @@ class InterrogatorWebUI(SimpleWebUI):
         # create events
         iface.__enter__()
 
-        start.click(self.start, inputs=[name], outputs=[status])
-        stop.click(self.stop, outputs=[status])
+        start.click(self.start, inputs=[name], outputs=[status], trigger_mode="once")
+        stop.click(self.stop, outputs=[status], trigger_mode="once")
         generate.click(
             self.serve,
             inputs=[image],
             outputs=[fast_prompt, classic_prompt, best_prompt, negative_prompt],
+            trigger_mode="once",
         )
 
         iface.load(

@@ -16,14 +16,18 @@ from unitorch.models.diffusers.modeling_stable_xl import (
     StableXLForImage2ImageGeneration,
     StableXLForImageInpainting,
 )
+
 from unitorch.models.diffusers.modeling_stable_3 import (
     GenericStable3Model,
     Stable3ForText2ImageGeneration,
     Stable3ForImage2ImageGeneration,
+    Stable3ForImageInpainting,
 )
 from unitorch.models.diffusers.modeling_stable_flux import (
     GenericStableFluxModel,
     StableFluxForText2ImageGeneration,
+    StableFluxForImage2ImageGeneration,
+    StableFluxForImageInpainting,
 )
 from unitorch.models.diffusers.modeling_controlnet import (
     ControlNetForText2ImageGeneration,
@@ -35,11 +39,13 @@ from unitorch.models.diffusers.modeling_controlnet_xl import (
     ControlNetXLForImage2ImageGeneration,
     ControlNetXLForImageInpainting,
 )
+
 from unitorch.models.diffusers.modeling_controlnet_3 import (
     ControlNet3ForText2ImageGeneration,
 )
 from unitorch.models.diffusers.modeling_controlnet_flux import (
     ControlNetFluxForText2ImageGeneration,
+    ControlNetFluxForImageInpainting,
 )
 from unitorch.models.diffusers.modeling_adapter_xl import (
     StableXLAdapterForText2ImageGeneration,

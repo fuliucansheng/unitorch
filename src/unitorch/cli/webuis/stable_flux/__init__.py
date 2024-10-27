@@ -11,6 +11,8 @@ from unitorch.cli import CoreConfigureParser, GenericWebUI
 from unitorch.cli import register_webui
 from unitorch.cli.webuis import SimpleWebUI
 from unitorch.cli.webuis.stable_flux.text2image import StableFluxText2ImageWebUI
+from unitorch.cli.webuis.stable_flux.image2image import StableFluxImage2ImageWebUI
+from unitorch.cli.webuis.stable_flux.inpainting import StableFluxImageInpaintingWebUI
 
 
 @register_webui("core/webui/stable_flux")
@@ -18,6 +20,8 @@ class StableFluxWebUI(SimpleWebUI):
     def __init__(self, config: CoreConfigureParser):
         webuis = [
             StableFluxText2ImageWebUI(config),
+            StableFluxImage2ImageWebUI(config),
+            StableFluxImageInpaintingWebUI(config),
         ]
         iface = gr.TabbedInterface(
             [webui.iface for webui in webuis],

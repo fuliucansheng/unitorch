@@ -14,7 +14,9 @@ from unitorch.cli.models.diffusers import (
     pretrained_stable_infos,
     pretrained_stable_extensions_infos,
 )
-from unitorch.cli.pipelines.stable_3 import Stable3ForImage2ImageGenerationPipeline
+from unitorch.cli.pipelines.stable_flux import (
+    StableFluxForImage2ImageGenerationPipeline,
+)
 from unitorch.cli.pipelines.tools import controlnet_processes
 from unitorch.cli.webuis import (
     supported_scheduler_names,
@@ -35,18 +37,18 @@ from unitorch.cli.webuis import (
 from unitorch.cli.webuis import SimpleWebUI
 
 
-class Stable3Image2ImageWebUI(SimpleWebUI):
+class StableFluxImage2ImageWebUI(SimpleWebUI):
     pretrained_names = list(pretrained_stable_infos.keys())
     supported_pretrained_names = matched_pretrained_names(
-        pretrained_names, "^stable-v3-"
+        pretrained_names, "^stable-flux-"
     )
     pretrained_extension_names = list(pretrained_stable_extensions_infos.keys())
     supported_controlnet_names = matched_pretrained_names(
-        pretrained_extension_names, "stable-v3-controlnet-"
+        pretrained_extension_names, "stable-flux-controlnet-"
     )
     supported_controlnet_process_names = list(controlnet_processes.keys())
     supported_lora_names = matched_pretrained_names(
-        pretrained_extension_names, "^stable-v3-lora-"
+        pretrained_extension_names, "^stable-flux-lora-"
     )
     supported_schedulers = supported_scheduler_names
 
@@ -72,13 +74,6 @@ class Stable3Image2ImageWebUI(SimpleWebUI):
         prompt = create_element(
             "text", "Input Prompt", lines=3, placeholder="Prompt", show_label=False
         )
-        negative_prompt = create_element(
-            "text",
-            "Input Negative Prompt",
-            lines=3,
-            placeholder="Negative Prompt",
-            show_label=False,
-        )
         scheduler = create_element(
             "dropdown",
             "Sampling Method",
@@ -100,6 +95,24 @@ class Stable3Image2ImageWebUI(SimpleWebUI):
         seed = create_element(
             "slider", "Seed", min_value=0, max_value=9999, step=1, default=42
         )
+
+        ## extensions
+        self.num_controlnets = 5
+        controlnet_layout_group = create_controlnet_layout(
+            self.supported_controlnet_names,
+            self.supported_controlnet_process_names,
+            num_controlnets=self.num_controlnets,
+        )
+        controlnets = controlnet_layout_group.controlnets
+        controlnet_layout = controlnet_layout_group.layout
+
+        controlnet_params = []
+        for controlnet in controlnets:
+            controlnet_params += [
+                controlnet.checkpoint,
+                controlnet.output_image,
+                controlnet.guidance_scale,
+            ]
 
         self.num_loras = 5
         lora_layout_group = create_lora_layout(
@@ -123,7 +136,7 @@ class Stable3Image2ImageWebUI(SimpleWebUI):
         # create layouts
         top1 = create_column(pretrain_layout)
         top2 = create_row(
-            create_column(prompt, negative_prompt, scale=4),
+            create_column(prompt, scale=4),
             create_column(generate),
         )
         left_generation = create_tab(
@@ -135,7 +148,7 @@ class Stable3Image2ImageWebUI(SimpleWebUI):
             name="Generation",
         )
         left_extension = create_tab(
-            # create_row(controlnet_layout),
+            create_row(controlnet_layout),
             create_row(lora_layout),
             name="Extensions",
         )
@@ -153,6 +166,18 @@ class Stable3Image2ImageWebUI(SimpleWebUI):
         start.click(fn=self.start, inputs=[name], outputs=[status], trigger_mode="once")
         stop.click(fn=self.stop, outputs=[status], trigger_mode="once")
 
+        for controlnet in controlnets:
+            controlnet.input_image.upload(
+                fn=self.processing_controlnet_inputs,
+                inputs=[controlnet.input_image, controlnet.process],
+                outputs=[controlnet.output_image],
+            )
+            controlnet.process.change(
+                fn=self.processing_controlnet_inputs,
+                inputs=[controlnet.input_image, controlnet.process],
+                outputs=[controlnet.output_image],
+            )
+
         for lora in loras:
             lora.checkpoint.change(
                 fn=lambda x: nested_dict_value(
@@ -167,12 +192,12 @@ class Stable3Image2ImageWebUI(SimpleWebUI):
             inputs=[
                 prompt,
                 image,
-                negative_prompt,
                 guidance_scale,
                 strength,
                 steps,
                 seed,
                 scheduler,
+                *controlnet_params,
                 *lora_params,
             ],
             outputs=[output_image],
@@ -193,7 +218,7 @@ class Stable3Image2ImageWebUI(SimpleWebUI):
         if self._status == "Running":
             self.stop()
         self._name = pretrained_name
-        self._pipe = Stable3ForImage2ImageGenerationPipeline.from_core_configure(
+        self._pipe = StableFluxForImage2ImageGenerationPipeline.from_core_configure(
             self._config,
             pretrained_name=pretrained_name,
         )
@@ -219,7 +244,6 @@ class Stable3Image2ImageWebUI(SimpleWebUI):
         self,
         text: str,
         image: Image.Image,
-        negative_text: str,
         guidance_scale: float,
         strength: float,
         num_timesteps: int,
@@ -228,8 +252,12 @@ class Stable3Image2ImageWebUI(SimpleWebUI):
         *params,
     ):
         assert self._pipe is not None
-        lora_params = params
-        lora_checkpoints = lora_params[0::5]
+        controlnet_params = params[: self.num_controlnets * 3]
+        lora_params = params[self.num_controlnets * 3 :]
+        controlnet_checkpoints = controlnet_params[::3]
+        controlnet_images = controlnet_params[1::3]
+        controlnet_guidance_scales = controlnet_params[2::3]
+        lora_checkpoints = lora_params[::5]
         lora_weights = lora_params[1::5]
         lora_alphas = lora_params[2::5]
         lora_urls = lora_params[3::5]
@@ -237,12 +265,14 @@ class Stable3Image2ImageWebUI(SimpleWebUI):
         image = self._pipe(
             text,
             image,
-            negative_text,
             guidance_scale=guidance_scale,
             strength=strength,
             num_timesteps=num_timesteps,
             seed=seed,
             scheduler=scheduler,
+            controlnet_checkpoints=controlnet_checkpoints,
+            controlnet_images=controlnet_images,
+            controlnet_guidance_scales=controlnet_guidance_scales,
             lora_checkpoints=lora_checkpoints,
             lora_weights=lora_weights,
             lora_alphas=lora_alphas,

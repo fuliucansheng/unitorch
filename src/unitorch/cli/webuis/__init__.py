@@ -87,5 +87,6 @@ import unitorch.cli.webuis.segformer
 if is_diffusers_available():
     import unitorch.cli.webuis.stable
     import unitorch.cli.webuis.stable_xl
+
     import unitorch.cli.webuis.stable_3
     import unitorch.cli.webuis.stable_flux

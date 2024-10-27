@@ -274,11 +274,11 @@ class Stable3ForImage2ImageGenerationPipeline(GenericStable3Model):
         controlnet_checkpoints: Optional[List[str]] = [],
         controlnet_images: Optional[List[Image.Image]] = [],
         controlnet_guidance_scales: Optional[List[float]] = [],
-        lora_checkpoints: Optional[Union[str, List[str]]] = None,
+        lora_checkpoints: Optional[Union[str, List[str]]] = [],
         lora_weights: Optional[Union[float, List[float]]] = 1.0,
         lora_alphas: Optional[Union[float, List[float]]] = 32,
-        lora_urls: Optional[Union[str, List[str]]] = None,
-        lora_files: Optional[Union[str, List[str]]] = None,
+        lora_urls: Optional[Union[str, List[str]]] = [],
+        lora_files: Optional[Union[str, List[str]]] = [],
     ):
         text_inputs = self.processor.text2image_inputs(
             text,
@@ -450,10 +450,13 @@ class Stable3ForImage2ImageGenerationPipeline(GenericStable3Model):
                 negative_prompt_embeds=negative_prompt_embeds,
                 pooled_prompt_embeds=pooled_prompt_embeds,
                 negative_pooled_prompt_embeds=negative_pooled_prompt_embeds,
+                width=inputs["pixel_values"].size(-1),
+                height=inputs["pixel_values"].size(-2),
                 generator=torch.Generator(device=self.pipeline.device).manual_seed(
                     self.seed
                 ),
                 control_image=list(inputs["condition_pixel_values"].transpose(0, 1)),
+                num_inference_steps=num_timesteps,
                 guidance_scale=guidance_scale,
                 strength=strength,
                 controlnet_conditioning_scale=conditioning_scales,
@@ -466,9 +469,12 @@ class Stable3ForImage2ImageGenerationPipeline(GenericStable3Model):
                 negative_prompt_embeds=negative_prompt_embeds,
                 pooled_prompt_embeds=pooled_prompt_embeds,
                 negative_pooled_prompt_embeds=negative_pooled_prompt_embeds,
+                width=inputs["pixel_values"].size(-1),
+                height=inputs["pixel_values"].size(-2),
                 generator=torch.Generator(device=self.pipeline.device).manual_seed(
                     self.seed
                 ),
+                num_inference_steps=num_timesteps,
                 guidance_scale=guidance_scale,
                 strength=strength,
                 output_type="np.array",
