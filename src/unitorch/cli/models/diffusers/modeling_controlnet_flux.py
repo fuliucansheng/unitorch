@@ -47,6 +47,7 @@ class ControlNetFluxForText2ImageGeneration(_ControlNetFluxForText2ImageGenerati
         freeze_vae_encoder: Optional[bool] = True,
         freeze_text_encoder: Optional[bool] = True,
         freeze_transformer_encoder: Optional[bool] = True,
+        snr_gamma: Optional[float] = 5.0,
         seed: Optional[int] = 1123,
         controlnet_conditioning_mode: Optional[Union[int, List[int]]] = None,
     ):
@@ -153,6 +154,7 @@ class ControlNetFluxForText2ImageGeneration(_ControlNetFluxForText2ImageGenerati
         freeze_transformer_encoder = config.getoption(
             "freeze_transformer_encoder", True
         )
+        snr_gamma = config.getoption("snr_gamma", 5.0)
         seed = config.getoption("seed", 1123)
         controlnet_conditioning_mode = config.getoption(
             "controlnet_conditioning_mode", None
@@ -174,6 +176,7 @@ class ControlNetFluxForText2ImageGeneration(_ControlNetFluxForText2ImageGenerati
             freeze_vae_encoder=freeze_vae_encoder,
             freeze_text_encoder=freeze_text_encoder,
             freeze_transformer_encoder=freeze_transformer_encoder,
+            snr_gamma=snr_gamma,
             seed=seed,
             controlnet_conditioning_mode=controlnet_conditioning_mode,
         )
@@ -329,6 +332,7 @@ class ControlNetFluxForImage2ImageGeneration(_ControlNetFluxForImage2ImageGenera
         freeze_vae_encoder: Optional[bool] = True,
         freeze_text_encoder: Optional[bool] = True,
         freeze_transformer_encoder: Optional[bool] = True,
+        snr_gamma: Optional[float] = 5.0,
         seed: Optional[int] = 1123,
         controlnet_conditioning_mode: Optional[Union[int, List[int]]] = None,
     ):
@@ -348,6 +352,7 @@ class ControlNetFluxForImage2ImageGeneration(_ControlNetFluxForImage2ImageGenera
             freeze_vae_encoder=freeze_vae_encoder,
             freeze_text_encoder=freeze_text_encoder,
             freeze_transformer_encoder=freeze_transformer_encoder,
+            snr_gamma=snr_gamma,
             seed=seed,
             controlnet_conditioning_mode=controlnet_conditioning_mode,
         )
@@ -435,6 +440,7 @@ class ControlNetFluxForImage2ImageGeneration(_ControlNetFluxForImage2ImageGenera
         freeze_transformer_encoder = config.getoption(
             "freeze_transformer_encoder", True
         )
+        snr_gamma = config.getoption("snr_gamma", 5.0)
         seed = config.getoption("seed", 1123)
         controlnet_conditioning_mode = config.getoption(
             "controlnet_conditioning_mode", None
@@ -456,6 +462,7 @@ class ControlNetFluxForImage2ImageGeneration(_ControlNetFluxForImage2ImageGenera
             freeze_vae_encoder=freeze_vae_encoder,
             freeze_text_encoder=freeze_text_encoder,
             freeze_transformer_encoder=freeze_transformer_encoder,
+            snr_gamma=snr_gamma,
             seed=seed,
             controlnet_conditioning_mode=controlnet_conditioning_mode,
         )
@@ -588,8 +595,9 @@ class ControlNetFluxForImageInpainting(_ControlNetFluxForImageInpainting):
         text_config_path: str,
         text2_config_path: str,
         vae_config_path: str,
-        controlnet_configs_path: Union[str, List[str]],
         scheduler_config_path: str,
+        controlnet_configs_path: Union[str, List[str]] = None,
+        inpainting_controlnet_config_path: Union[str] = None,
         quant_config_path: Optional[str] = None,
         image_size: Optional[int] = None,
         in_channels: Optional[int] = None,
@@ -599,6 +607,7 @@ class ControlNetFluxForImageInpainting(_ControlNetFluxForImageInpainting):
         freeze_vae_encoder: Optional[bool] = True,
         freeze_text_encoder: Optional[bool] = True,
         freeze_transformer_encoder: Optional[bool] = True,
+        snr_gamma: Optional[float] = 5.0,
         seed: Optional[int] = 1123,
         controlnet_conditioning_mode: Optional[Union[int, List[int]]] = None,
     ):
@@ -607,8 +616,9 @@ class ControlNetFluxForImageInpainting(_ControlNetFluxForImageInpainting):
             text_config_path=text_config_path,
             text2_config_path=text2_config_path,
             vae_config_path=vae_config_path,
-            controlnet_configs_path=controlnet_configs_path,
             scheduler_config_path=scheduler_config_path,
+            controlnet_configs_path=controlnet_configs_path,
+            inpainting_controlnet_config_path=inpainting_controlnet_config_path,
             quant_config_path=quant_config_path,
             image_size=image_size,
             in_channels=in_channels,
@@ -618,6 +628,7 @@ class ControlNetFluxForImageInpainting(_ControlNetFluxForImageInpainting):
             freeze_vae_encoder=freeze_vae_encoder,
             freeze_text_encoder=freeze_text_encoder,
             freeze_transformer_encoder=freeze_transformer_encoder,
+            snr_gamma=snr_gamma,
             seed=seed,
             controlnet_conditioning_mode=controlnet_conditioning_mode,
         )
@@ -628,18 +639,6 @@ class ControlNetFluxForImageInpainting(_ControlNetFluxForImageInpainting):
         config.set_default_section("core/model/diffusers/inpainting/controlnet_flux")
         pretrained_name = config.getoption("pretrained_name", "stable-flux-schnell")
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
-
-        pretrained_controlnet_names = config.getoption(
-            "pretrained_controlnet_names", "stable-v3-controlnet-canny"
-        )
-        if isinstance(pretrained_controlnet_names, str):
-            pretrained_controlnet_names = [pretrained_controlnet_names]
-        pretrained_controlnet_infos = [
-            nested_dict_value(
-                pretrained_stable_extensions_infos, pretrained_controlnet_name
-            )
-            for pretrained_controlnet_name in pretrained_controlnet_names
-        ]
 
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
@@ -669,6 +668,27 @@ class ControlNetFluxForImageInpainting(_ControlNetFluxForImageInpainting):
         )
         vae_config_path = cached_path(vae_config_path)
 
+        scheduler_config_path = config.getoption("scheduler_config_path", None)
+        scheduler_config_path = pop_value(
+            scheduler_config_path,
+            nested_dict_value(pretrained_infos, "scheduler"),
+        )
+        scheduler_config_path = cached_path(scheduler_config_path)
+
+        pretrained_controlnet_names = config.getoption(
+            "pretrained_controlnet_names", None
+        )
+        if pretrained_controlnet_names is None:
+            pretrained_controlnet_names = []
+        elif isinstance(pretrained_controlnet_names, str):
+            pretrained_controlnet_names = [pretrained_controlnet_names]
+        pretrained_controlnet_infos = [
+            nested_dict_value(
+                pretrained_stable_extensions_infos, pretrained_controlnet_name
+            )
+            for pretrained_controlnet_name in pretrained_controlnet_names
+        ]
+
         controlnet_configs_path = config.getoption("controlnet_configs_path", None)
         if isinstance(controlnet_configs_path, str):
             controlnet_configs_path = [controlnet_configs_path]
@@ -684,12 +704,33 @@ class ControlNetFluxForImageInpainting(_ControlNetFluxForImageInpainting):
             for controlnet_config_path in controlnet_configs_path
         ]
 
-        scheduler_config_path = config.getoption("scheduler_config_path", None)
-        scheduler_config_path = pop_value(
-            scheduler_config_path,
-            nested_dict_value(pretrained_infos, "scheduler"),
+        pretrained_inpainting_controlnet_name = config.getoption(
+            "pretrained_inpainting_controlnet_name", None
         )
-        scheduler_config_path = cached_path(scheduler_config_path)
+        inpainting_controlnet_config_path = config.getoption(
+            "inpainting_controlnet_config_path", None
+        )
+        inpainting_controlnet_config_path = pop_value(
+            inpainting_controlnet_config_path,
+            nested_dict_value(
+                pretrained_stable_extensions_infos,
+                pretrained_inpainting_controlnet_name,
+                "controlnet",
+                "config",
+            ),
+        )
+        inpainting_controlnet_config_path = (
+            cached_path(inpainting_controlnet_config_path)
+            if inpainting_controlnet_config_path is not None
+            else None
+        )
+        if pretrained_inpainting_controlnet_name is not None:
+            pretrained_controlnet_infos.append(
+                nested_dict_value(
+                    pretrained_stable_extensions_infos,
+                    pretrained_inpainting_controlnet_name,
+                )
+            )
 
         quant_config_path = config.getoption("quant_config_path", None)
         if quant_config_path is not None:
@@ -705,6 +746,7 @@ class ControlNetFluxForImageInpainting(_ControlNetFluxForImageInpainting):
         freeze_transformer_encoder = config.getoption(
             "freeze_transformer_encoder", True
         )
+        snr_gamma = config.getoption("snr_gamma", 5.0)
         seed = config.getoption("seed", 1123)
         controlnet_conditioning_mode = config.getoption(
             "controlnet_conditioning_mode", None
@@ -715,8 +757,11 @@ class ControlNetFluxForImageInpainting(_ControlNetFluxForImageInpainting):
             text_config_path=text_config_path,
             text2_config_path=text2_config_path,
             vae_config_path=vae_config_path,
-            controlnet_configs_path=controlnet_configs_path,
             scheduler_config_path=scheduler_config_path,
+            controlnet_configs_path=controlnet_configs_path
+            if len(controlnet_configs_path) > 0
+            else None,
+            inpainting_controlnet_config_path=inpainting_controlnet_config_path,
             quant_config_path=quant_config_path,
             image_size=image_size,
             in_channels=in_channels,
@@ -726,6 +771,7 @@ class ControlNetFluxForImageInpainting(_ControlNetFluxForImageInpainting):
             freeze_vae_encoder=freeze_vae_encoder,
             freeze_text_encoder=freeze_text_encoder,
             freeze_transformer_encoder=freeze_transformer_encoder,
+            snr_gamma=snr_gamma,
             seed=seed,
             controlnet_conditioning_mode=controlnet_conditioning_mode,
         )

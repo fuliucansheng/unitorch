@@ -43,6 +43,7 @@ class StableXLAdapterForText2ImageGeneration(_StableXLAdapterForText2ImageGenera
         freeze_vae_encoder: Optional[bool] = True,
         freeze_text_encoder: Optional[bool] = True,
         freeze_unet_encoder: Optional[bool] = True,
+        snr_gamma: Optional[float] = 5.0,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
@@ -61,6 +62,7 @@ class StableXLAdapterForText2ImageGeneration(_StableXLAdapterForText2ImageGenera
             freeze_vae_encoder=freeze_vae_encoder,
             freeze_text_encoder=freeze_text_encoder,
             freeze_unet_encoder=freeze_unet_encoder,
+            snr_gamma=snr_gamma,
             seed=seed,
         )
 
@@ -145,6 +147,7 @@ class StableXLAdapterForText2ImageGeneration(_StableXLAdapterForText2ImageGenera
         freeze_vae_encoder = config.getoption("freeze_vae_encoder", True)
         freeze_text_encoder = config.getoption("freeze_text_encoder", True)
         freeze_unet_encoder = config.getoption("freeze_unet_encoder", True)
+        snr_gamma = config.getoption("snr_gamma", 5.0)
         seed = config.getoption("seed", 1123)
 
         inst = cls(
@@ -163,6 +166,7 @@ class StableXLAdapterForText2ImageGeneration(_StableXLAdapterForText2ImageGenera
             freeze_vae_encoder=freeze_vae_encoder,
             freeze_text_encoder=freeze_text_encoder,
             freeze_unet_encoder=freeze_unet_encoder,
+            snr_gamma=snr_gamma,
             seed=seed,
         )
 
@@ -243,7 +247,7 @@ class StableXLAdapterForText2ImageGeneration(_StableXLAdapterForText2ImageGenera
 
         return inst
 
-    @autocast(device_type="cuda")
+    @autocast(device_type="cuda", dtype=torch.bfloat16)
     def forward(
         self,
         input_ids: torch.Tensor,
@@ -266,7 +270,7 @@ class StableXLAdapterForText2ImageGeneration(_StableXLAdapterForText2ImageGenera
         return LossOutputs(loss=loss)
 
     @add_default_section_for_function("core/model/diffusers/text2image/adapter_xl")
-    @autocast(device_type="cuda")
+    @autocast(device_type="cuda", dtype=torch.bfloat16)
     def generate(
         self,
         input_ids: torch.Tensor,

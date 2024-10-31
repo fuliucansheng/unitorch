@@ -125,7 +125,7 @@ class StableProcessor(HfTextClassificationProcessor):
         image = image.convert("RGB")
 
         pixel_values = self.vision_processor(image)
-        
+
         prompt_outputs = self.classification(prompt, max_seq_length=max_seq_length)
 
         return GenericOutputs(

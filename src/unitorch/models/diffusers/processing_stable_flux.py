@@ -139,7 +139,7 @@ class StableFluxProcessor:
         prompt_outputs = self.text_processor1.classification(
             prompt, max_seq_length=max_seq_length
         )
-        prompt2_outputs = self.text_processor3.classification(
+        prompt2_outputs = self.text_processor2.classification(
             prompt2, max_seq_length=max_seq_length2
         )
 

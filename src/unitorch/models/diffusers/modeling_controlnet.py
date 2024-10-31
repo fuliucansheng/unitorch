@@ -45,6 +45,7 @@ class ControlNetForText2ImageGeneration(GenericStableModel):
         freeze_vae_encoder: Optional[bool] = True,
         freeze_text_encoder: Optional[bool] = True,
         freeze_unet_encoder: Optional[bool] = False,
+        snr_gamma: Optional[float] = 5.0,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
@@ -62,6 +63,7 @@ class ControlNetForText2ImageGeneration(GenericStableModel):
             freeze_vae_encoder=freeze_vae_encoder,
             freeze_text_encoder=freeze_text_encoder,
             freeze_unet_encoder=freeze_unet_encoder,
+            snr_gamma=snr_gamma,
             seed=seed,
         )
         self.pipeline = StableDiffusionControlNetPipeline(
@@ -193,6 +195,7 @@ class ControlNetForImage2ImageGeneration(GenericStableModel):
         freeze_vae_encoder: Optional[bool] = True,
         freeze_text_encoder: Optional[bool] = True,
         freeze_unet_encoder: Optional[bool] = False,
+        snr_gamma: Optional[float] = 5.0,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
@@ -210,6 +213,7 @@ class ControlNetForImage2ImageGeneration(GenericStableModel):
             freeze_vae_encoder=freeze_vae_encoder,
             freeze_text_encoder=freeze_text_encoder,
             freeze_unet_encoder=freeze_unet_encoder,
+            snr_gamma=snr_gamma,
             seed=seed,
         )
         self.pipeline = StableDiffusionControlNetImg2ImgPipeline(
@@ -301,6 +305,7 @@ class ControlNetForImageInpainting(GenericStableModel):
         freeze_vae_encoder: Optional[bool] = True,
         freeze_text_encoder: Optional[bool] = True,
         freeze_unet_encoder: Optional[bool] = False,
+        snr_gamma: Optional[float] = 5.0,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
@@ -319,6 +324,7 @@ class ControlNetForImageInpainting(GenericStableModel):
             freeze_vae_encoder=freeze_vae_encoder,
             freeze_text_encoder=freeze_text_encoder,
             freeze_unet_encoder=freeze_unet_encoder,
+            snr_gamma=snr_gamma,
             seed=seed,
         )
         self.pipeline = StableDiffusionControlNetInpaintPipeline(

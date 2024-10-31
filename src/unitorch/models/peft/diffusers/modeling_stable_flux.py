@@ -11,6 +11,10 @@ from transformers import CLIPTextConfig, CLIPTextModel, CLIPTextModelWithProject
 from transformers.models.t5.configuration_t5 import T5Config
 from transformers.models.t5.modeling_t5 import T5EncoderModel
 from diffusers.schedulers import SchedulerMixin, FlowMatchEulerDiscreteScheduler
+from diffusers.training_utils import (
+    compute_loss_weighting_for_sd3,
+    compute_density_for_timestep_sampling,
+)
 from diffusers.models import (
     FluxControlNetModel,
     FluxMultiControlNetModel,
@@ -65,6 +69,19 @@ class GenericStableFluxLoraModel(GenericPeftModel, QuantizationMixin):
         snr_gamma: Optional[float] = 5.0,
         lora_r: Optional[int] = 16,
         lora_alpha: Optional[int] = 32,
+        lora_dropout: Optional[float] = 0.05,
+        fan_in_fan_out: Optional[bool] = True,
+        target_modules: Optional[Union[List[str], str]] = [
+            "to_q",
+            "to_k",
+            "to_v",
+            "q_proj",
+            "k_proj",
+            "v_proj",
+            "SelfAttention.q",
+            "SelfAttention.k",
+            "SelfAttention.v",
+        ],
         enable_text_adapter: Optional[bool] = True,
         enable_transformer_adapter: Optional[bool] = True,
         seed: Optional[int] = 1123,
@@ -149,17 +166,9 @@ class GenericStableFluxLoraModel(GenericPeftModel, QuantizationMixin):
             r=lora_r,
             lora_alpha=lora_alpha,
             init_lora_weights="gaussian",
-            target_modules=[
-                "to_q",
-                "to_k",
-                "to_v",
-                "q_proj",
-                "k_proj",
-                "v_proj",
-                "SelfAttention.q",
-                "SelfAttention.k",
-                "SelfAttention.v",
-            ],
+            lora_dropout=lora_dropout,
+            fan_in_fan_out=fan_in_fan_out,
+            target_modules=target_modules,
         )
         if enable_text_adapter:
             self.text.add_adapter(lora_config)
@@ -167,7 +176,16 @@ class GenericStableFluxLoraModel(GenericPeftModel, QuantizationMixin):
         if enable_transformer_adapter:
             self.transformer.add_adapter(lora_config)
 
-        self.scheduler.set_timesteps(num_inference_steps=self.num_infer_timesteps)
+    def get_sigmas(self, timesteps, n_dim=4, dtype=torch.float32):
+        sigmas = self.scheduler.sigmas.to(device=self.device, dtype=dtype)
+        schedule_timesteps = self.scheduler.timesteps.to(self.device)
+        timesteps = timesteps.to(self.device)
+        step_indices = [(schedule_timesteps == t).nonzero().item() for t in timesteps]
+
+        sigma = sigmas[step_indices].flatten()
+        while len(sigma.shape) < n_dim:
+            sigma = sigma.unsqueeze(-1)
+        return sigma
 
     def get_prompt_outputs(
         self,
@@ -213,6 +231,19 @@ class StableFluxLoraForText2ImageGeneration(GenericStableFluxLoraModel):
         snr_gamma: Optional[float] = 5.0,
         lora_r: Optional[int] = 16,
         lora_alpha: Optional[int] = 32,
+        lora_dropout: Optional[float] = 0.05,
+        fan_in_fan_out: Optional[bool] = True,
+        target_modules: Optional[Union[List[str], str]] = [
+            "to_q",
+            "to_k",
+            "to_v",
+            "q_proj",
+            "k_proj",
+            "v_proj",
+            "SelfAttention.q",
+            "SelfAttention.k",
+            "SelfAttention.v",
+        ],
         enable_text_adapter: Optional[bool] = True,
         enable_transformer_adapter: Optional[bool] = True,
         seed: Optional[int] = 1123,
@@ -233,13 +264,12 @@ class StableFluxLoraForText2ImageGeneration(GenericStableFluxLoraModel):
             snr_gamma=snr_gamma,
             lora_r=lora_r,
             lora_alpha=lora_alpha,
+            lora_dropout=lora_dropout,
+            fan_in_fan_out=fan_in_fan_out,
+            target_modules=target_modules,
             enable_text_adapter=enable_text_adapter,
             enable_transformer_adapter=enable_transformer_adapter,
             seed=seed,
-        )
-
-        new_scheduler = FlowMatchEulerDiscreteScheduler.from_config(
-            self.scheduler.config
         )
 
         self.pipeline = FluxPipeline(
@@ -247,32 +277,11 @@ class StableFluxLoraForText2ImageGeneration(GenericStableFluxLoraModel):
             text_encoder=self.text,
             text_encoder_2=self.text2,
             transformer=self.transformer,
-            scheduler=new_scheduler,
+            scheduler=self.scheduler,
             tokenizer=None,
             tokenizer_2=None,
         )
         self.pipeline.set_progress_bar_config(disable=True)
-
-    def _prepare_latent_image_ids(self, batch_size, height, width, device, dtype):
-        latent_image_ids = torch.zeros(height, width, 3)
-        latent_image_ids[..., 1] = (
-            latent_image_ids[..., 1] + torch.arange(height)[:, None]
-        )
-        latent_image_ids[..., 2] = (
-            latent_image_ids[..., 2] + torch.arange(width)[None, :]
-        )
-
-        (
-            latent_image_id_height,
-            latent_image_id_width,
-            latent_image_id_channels,
-        ) = latent_image_ids.shape
-
-        latent_image_ids = latent_image_ids.reshape(
-            latent_image_id_height * latent_image_id_width, latent_image_id_channels
-        )
-
-        return latent_image_ids.to(device=device, dtype=dtype)
 
     def forward(
         self,
@@ -289,68 +298,75 @@ class StableFluxLoraForText2ImageGeneration(GenericStableFluxLoraModel):
             attention2_mask=attention2_mask,
         )
         latents = self.vae.encode(pixel_values).latent_dist.sample()
-        latents = latents * self.vae.config.scaling_factor
+        latents = (
+            latents - self.vae.config.shift_factor
+        ) * self.vae.config.scaling_factor
+        latent_image_ids = FluxPipeline._prepare_latent_image_ids(
+            latents.shape[0],
+            latents.shape[2] // 2,
+            latents.shape[3] // 2,
+            self.device,
+            self.dtype,
+        )
 
         noise = torch.randn(latents.shape).to(latents.device)
-        batch = latents.size(0)
+        batch = latents.shape[0]
 
-        timesteps = torch.randint(
-            0,
-            self.scheduler.config.num_train_timesteps,
-            (batch,),
-            device=pixel_values.device,
-        ).long()
+        u = compute_density_for_timestep_sampling(
+            weighting_scheme="none",
+            batch_size=batch,
+            logit_mean=0.0,
+            logit_std=1.0,
+            mode_scale=1.29,
+        )
+        indices = (u * self.scheduler.config.num_train_timesteps).long()
+        timesteps = self.scheduler.timesteps[indices].to(device=self.device)
 
-        noise_latents = self.scheduler.add_noise(
-            latents,
-            noise,
-            timesteps,
+        sigmas = self.get_sigmas(timesteps, n_dim=latents.ndim, dtype=latents.dtype)
+        noise_latents = (1.0 - sigmas) * latents + sigmas * noise
+
+        noise_latents = FluxPipeline._pack_latents(
+            noise_latents,
+            batch_size=latents.shape[0],
+            num_channels_latents=latents.shape[1],
+            height=latents.shape[2],
+            width=latents.shape[3],
         )
 
-        height, width = pixel_values.shape[-2:]
-
-        guidance = torch.full(
-            [1], self.guidance_scale, device=self.device, dtype=torch.float32
-        )
-        guidance = guidance.expand(latents.shape[0])
         text_ids = torch.zeros(outputs.prompt_embeds.shape[1], 3).to(
             device=self.device, dtype=self.dtype
         )
-        latent_image_ids = self._prepare_latent_image_ids(
-            latents.shape[0], height // 2, width // 2, self.device, self.dtype
-        )
 
         outputs = self.transformer(
-            noise_latents,
+            hidden_states=noise_latents,
             timestep=timesteps / 1000,
-            guidance=guidance,
+            guidance=None,
             encoder_hidden_states=outputs.prompt_embeds,
             pooled_projections=outputs.pooled_prompt_embeds,
             txt_ids=text_ids,
             img_ids=latent_image_ids,
-        ).sample
+            return_dict=False,
+        )[0]
 
-        if self.scheduler.config.prediction_type == "v_prediction":
-            noise = self.scheduler.get_velocity(latents, noise, timesteps)
-        if self.snr_gamma > 0:
-            snr = compute_snr(timesteps, self.scheduler)
-            base_weight = (
-                torch.stack(
-                    [snr, self.snr_gamma * torch.ones_like(timesteps)], dim=1
-                ).min(dim=1)[0]
-                / snr
-            )
+        vae_scale_factor = 2 ** (len(self.vae.config.block_out_channels) - 1)
+        outputs = FluxPipeline._unpack_latents(
+            outputs,
+            height=latents.shape[2] * vae_scale_factor,
+            width=latents.shape[3] * vae_scale_factor,
+            vae_scale_factor=vae_scale_factor,
+        )
 
-            if self.scheduler.config.prediction_type == "v_prediction":
-                mse_loss_weights = base_weight + 1
-            else:
-                mse_loss_weights = base_weight
-            mse_loss_weights[snr == 0] = 1.0
-            loss = F.mse_loss(outputs, noise, reduction="none")
-            loss = loss.mean(dim=list(range(1, len(loss.shape)))) * mse_loss_weights
-            loss = loss.mean()
-        else:
-            loss = F.mse_loss(outputs, noise, reduction="mean")
+        weighting = compute_loss_weighting_for_sd3(
+            weighting_scheme="none", sigmas=sigmas
+        )
+        target = noise - latents
+        loss = torch.mean(
+            (weighting.float() * (outputs.float() - target.float()) ** 2).reshape(
+                target.shape[0], -1
+            ),
+            1,
+        )
+        loss = loss.mean()
         return loss
 
     def generate(

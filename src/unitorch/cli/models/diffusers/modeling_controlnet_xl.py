@@ -47,6 +47,7 @@ class ControlNetXLForText2ImageGeneration(_ControlNetXLForText2ImageGeneration):
         freeze_vae_encoder: Optional[bool] = True,
         freeze_text_encoder: Optional[bool] = True,
         freeze_unet_encoder: Optional[bool] = True,
+        snr_gamma: Optional[float] = 5.0,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
@@ -65,6 +66,7 @@ class ControlNetXLForText2ImageGeneration(_ControlNetXLForText2ImageGeneration):
             freeze_vae_encoder=freeze_vae_encoder,
             freeze_text_encoder=freeze_text_encoder,
             freeze_unet_encoder=freeze_unet_encoder,
+            snr_gamma=snr_gamma,
             seed=seed,
         )
 
@@ -149,6 +151,7 @@ class ControlNetXLForText2ImageGeneration(_ControlNetXLForText2ImageGeneration):
         freeze_vae_encoder = config.getoption("freeze_vae_encoder", True)
         freeze_text_encoder = config.getoption("freeze_text_encoder", True)
         freeze_unet_encoder = config.getoption("freeze_unet_encoder", True)
+        snr_gamma = config.getoption("snr_gamma", 5.0)
         seed = config.getoption("seed", 1123)
 
         inst = cls(
@@ -167,6 +170,7 @@ class ControlNetXLForText2ImageGeneration(_ControlNetXLForText2ImageGeneration):
             freeze_vae_encoder=freeze_vae_encoder,
             freeze_text_encoder=freeze_text_encoder,
             freeze_unet_encoder=freeze_unet_encoder,
+            snr_gamma=snr_gamma,
             seed=seed,
         )
 
@@ -249,7 +253,7 @@ class ControlNetXLForText2ImageGeneration(_ControlNetXLForText2ImageGeneration):
 
         return inst
 
-    @autocast(device_type="cuda")
+    @autocast(device_type="cuda", dtype=torch.bfloat16)
     def forward(
         self,
         input_ids: torch.Tensor,
@@ -272,7 +276,7 @@ class ControlNetXLForText2ImageGeneration(_ControlNetXLForText2ImageGeneration):
         return LossOutputs(loss=loss)
 
     @add_default_section_for_function("core/model/diffusers/text2image/controlnet_xl")
-    @autocast(device_type="cuda")
+    @autocast(device_type="cuda", dtype=torch.bfloat16)
     def generate(
         self,
         input_ids: torch.Tensor,
@@ -321,6 +325,7 @@ class ControlNetXLForImage2ImageGeneration(_ControlNetXLForImage2ImageGeneration
         freeze_vae_encoder: Optional[bool] = True,
         freeze_text_encoder: Optional[bool] = True,
         freeze_unet_encoder: Optional[bool] = True,
+        snr_gamma: Optional[float] = 5.0,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
@@ -339,6 +344,7 @@ class ControlNetXLForImage2ImageGeneration(_ControlNetXLForImage2ImageGeneration
             freeze_vae_encoder=freeze_vae_encoder,
             freeze_text_encoder=freeze_text_encoder,
             freeze_unet_encoder=freeze_unet_encoder,
+            snr_gamma=snr_gamma,
             seed=seed,
         )
 
@@ -423,6 +429,7 @@ class ControlNetXLForImage2ImageGeneration(_ControlNetXLForImage2ImageGeneration
         freeze_vae_encoder = config.getoption("freeze_vae_encoder", True)
         freeze_text_encoder = config.getoption("freeze_text_encoder", True)
         freeze_unet_encoder = config.getoption("freeze_unet_encoder", True)
+        snr_gamma = config.getoption("snr_gamma", 5.0)
         seed = config.getoption("seed", 1123)
 
         inst = cls(
@@ -441,6 +448,7 @@ class ControlNetXLForImage2ImageGeneration(_ControlNetXLForImage2ImageGeneration
             freeze_vae_encoder=freeze_vae_encoder,
             freeze_text_encoder=freeze_text_encoder,
             freeze_unet_encoder=freeze_unet_encoder,
+            snr_gamma=snr_gamma,
             seed=seed,
         )
 
@@ -523,14 +531,13 @@ class ControlNetXLForImage2ImageGeneration(_ControlNetXLForImage2ImageGeneration
 
         return inst
 
-    @autocast(device_type="cuda")
     def forward(
         self,
     ):
         raise NotImplementedError
 
     @add_default_section_for_function("core/model/diffusers/image2image/controlnet_xl")
-    @autocast(device_type="cuda")
+    @autocast(device_type="cuda", dtype=torch.bfloat16)
     def generate(
         self,
         input_ids: torch.Tensor,
@@ -575,8 +582,9 @@ class ControlNetXLForImageInpainting(_ControlNetXLForImageInpainting):
         text_config_path: str,
         text2_config_path: str,
         vae_config_path: str,
-        controlnet_configs_path: Union[str, List[str]],
         scheduler_config_path: str,
+        controlnet_configs_path: Union[str, List[str]] = None,
+        inpainting_controlnet_config_path: Union[str] = None,
         quant_config_path: Optional[str] = None,
         image_size: Optional[int] = None,
         in_channels: Optional[int] = None,
@@ -586,6 +594,7 @@ class ControlNetXLForImageInpainting(_ControlNetXLForImageInpainting):
         freeze_vae_encoder: Optional[bool] = True,
         freeze_text_encoder: Optional[bool] = True,
         freeze_unet_encoder: Optional[bool] = True,
+        snr_gamma: Optional[float] = 5.0,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
@@ -593,8 +602,9 @@ class ControlNetXLForImageInpainting(_ControlNetXLForImageInpainting):
             text_config_path=text_config_path,
             text2_config_path=text2_config_path,
             vae_config_path=vae_config_path,
-            controlnet_configs_path=controlnet_configs_path,
             scheduler_config_path=scheduler_config_path,
+            controlnet_configs_path=controlnet_configs_path,
+            inpainting_controlnet_config_path=inpainting_controlnet_config_path,
             quant_config_path=quant_config_path,
             image_size=image_size,
             in_channels=in_channels,
@@ -604,6 +614,7 @@ class ControlNetXLForImageInpainting(_ControlNetXLForImageInpainting):
             freeze_vae_encoder=freeze_vae_encoder,
             freeze_text_encoder=freeze_text_encoder,
             freeze_unet_encoder=freeze_unet_encoder,
+            snr_gamma=snr_gamma,
             seed=seed,
         )
 
@@ -613,18 +624,6 @@ class ControlNetXLForImageInpainting(_ControlNetXLForImageInpainting):
         config.set_default_section("core/model/diffusers/inpainting/controlnet_xl")
         pretrained_name = config.getoption("pretrained_name", "stable-xl-base")
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
-
-        pretrained_controlnet_names = config.getoption(
-            "pretrained_controlnet_names", "stable-xl-controlnet-canny"
-        )
-        if isinstance(pretrained_controlnet_names, str):
-            pretrained_controlnet_names = [pretrained_controlnet_names]
-        pretrained_controlnet_infos = [
-            nested_dict_value(
-                pretrained_stable_extensions_infos, pretrained_controlnet_name
-            )
-            for pretrained_controlnet_name in pretrained_controlnet_names
-        ]
 
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
@@ -654,6 +653,27 @@ class ControlNetXLForImageInpainting(_ControlNetXLForImageInpainting):
         )
         vae_config_path = cached_path(vae_config_path)
 
+        scheduler_config_path = config.getoption("scheduler_config_path", None)
+        scheduler_config_path = pop_value(
+            scheduler_config_path,
+            nested_dict_value(pretrained_infos, "scheduler"),
+        )
+        scheduler_config_path = cached_path(scheduler_config_path)
+
+        pretrained_controlnet_names = config.getoption(
+            "pretrained_controlnet_names", None
+        )
+        if pretrained_controlnet_names is None:
+            pretrained_controlnet_names = []
+        elif isinstance(pretrained_controlnet_names, str):
+            pretrained_controlnet_names = [pretrained_controlnet_names]
+        pretrained_controlnet_infos = [
+            nested_dict_value(
+                pretrained_stable_extensions_infos, pretrained_controlnet_name
+            )
+            for pretrained_controlnet_name in pretrained_controlnet_names
+        ]
+
         controlnet_configs_path = config.getoption("controlnet_configs_path", None)
         if isinstance(controlnet_configs_path, str):
             controlnet_configs_path = [controlnet_configs_path]
@@ -669,12 +689,33 @@ class ControlNetXLForImageInpainting(_ControlNetXLForImageInpainting):
             for controlnet_config_path in controlnet_configs_path
         ]
 
-        scheduler_config_path = config.getoption("scheduler_config_path", None)
-        scheduler_config_path = pop_value(
-            scheduler_config_path,
-            nested_dict_value(pretrained_infos, "scheduler"),
+        pretrained_inpainting_controlnet_name = config.getoption(
+            "pretrained_inpainting_controlnet_name", None
         )
-        scheduler_config_path = cached_path(scheduler_config_path)
+        inpainting_controlnet_config_path = config.getoption(
+            "inpainting_controlnet_config_path", None
+        )
+        inpainting_controlnet_config_path = pop_value(
+            inpainting_controlnet_config_path,
+            nested_dict_value(
+                pretrained_stable_extensions_infos,
+                pretrained_inpainting_controlnet_name,
+                "controlnet",
+                "config",
+            ),
+        )
+        inpainting_controlnet_config_path = (
+            cached_path(inpainting_controlnet_config_path)
+            if inpainting_controlnet_config_path is not None
+            else None
+        )
+        if pretrained_inpainting_controlnet_name is not None:
+            pretrained_controlnet_infos.append(
+                nested_dict_value(
+                    pretrained_stable_extensions_infos,
+                    pretrained_inpainting_controlnet_name,
+                )
+            )
 
         quant_config_path = config.getoption("quant_config_path", None)
         if quant_config_path is not None:
@@ -688,6 +729,7 @@ class ControlNetXLForImageInpainting(_ControlNetXLForImageInpainting):
         freeze_vae_encoder = config.getoption("freeze_vae_encoder", True)
         freeze_text_encoder = config.getoption("freeze_text_encoder", True)
         freeze_unet_encoder = config.getoption("freeze_unet_encoder", True)
+        snr_gamma = config.getoption("snr_gamma", 5.0)
         seed = config.getoption("seed", 1123)
 
         inst = cls(
@@ -695,8 +737,11 @@ class ControlNetXLForImageInpainting(_ControlNetXLForImageInpainting):
             text_config_path=text_config_path,
             text2_config_path=text2_config_path,
             vae_config_path=vae_config_path,
-            controlnet_configs_path=controlnet_configs_path,
             scheduler_config_path=scheduler_config_path,
+            controlnet_configs_path=controlnet_configs_path
+            if len(controlnet_configs_path) > 0
+            else None,
+            inpainting_controlnet_config_path=inpainting_controlnet_config_path,
             quant_config_path=quant_config_path,
             image_size=image_size,
             in_channels=in_channels,
@@ -706,6 +751,7 @@ class ControlNetXLForImageInpainting(_ControlNetXLForImageInpainting):
             freeze_vae_encoder=freeze_vae_encoder,
             freeze_text_encoder=freeze_text_encoder,
             freeze_unet_encoder=freeze_unet_encoder,
+            snr_gamma=snr_gamma,
             seed=seed,
         )
 
@@ -788,7 +834,7 @@ class ControlNetXLForImageInpainting(_ControlNetXLForImageInpainting):
 
         return inst
 
-    @autocast(device_type="cuda")
+    @autocast(device_type="cuda", dtype=torch.bfloat16)
     def forward(
         self,
         input_ids: torch.Tensor,
@@ -813,7 +859,7 @@ class ControlNetXLForImageInpainting(_ControlNetXLForImageInpainting):
         return LossOutputs(loss=loss)
 
     @add_default_section_for_function("core/model/diffusers/inpainting/controlnet_xl")
-    @autocast(device_type="cuda")
+    @autocast(device_type="cuda", dtype=torch.bfloat16)
     def generate(
         self,
         input_ids: torch.Tensor,

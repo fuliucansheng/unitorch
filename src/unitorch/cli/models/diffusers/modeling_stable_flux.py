@@ -374,7 +374,11 @@ class StableFluxForImage2ImageGeneration(_StableFluxForImage2ImageGeneration):
                 ),
             ]
 
-        inst.from_pretrained(weight_path, state_dict=state_dict)
+        elif weight_path is not None:
+            state_dict = load_weight(weight_path)
+
+        if state_dict is not None:
+            inst.from_pretrained(state_dict=state_dict)
 
         pretrained_lora_names = config.getoption("pretrained_lora_names", None)
         pretrained_lora_weights = config.getoption("pretrained_lora_weights", 1.0)
@@ -571,8 +575,11 @@ class StableFluxForImageInpainting(_StableFluxForImageInpainting):
                     prefix_keys={"": "vae."},
                 ),
             ]
+        elif weight_path is not None:
+            state_dict = load_weight(weight_path)
 
-        inst.from_pretrained(weight_path, state_dict=state_dict)
+        if state_dict is not None:
+            inst.from_pretrained(state_dict=state_dict)
 
         pretrained_lora_names = config.getoption("pretrained_lora_names", None)
         pretrained_lora_weights = config.getoption("pretrained_lora_weights", 1.0)

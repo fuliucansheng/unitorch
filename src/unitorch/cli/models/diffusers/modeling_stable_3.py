@@ -174,8 +174,11 @@ class Stable3ForText2ImageGeneration(_Stable3ForText2ImageGeneration):
                     prefix_keys={"": "vae."},
                 ),
             ]
+        elif weight_path is not None:
+            state_dict = load_weight(weight_path)
 
-        inst.from_pretrained(weight_path, state_dict=state_dict)
+        if state_dict is not None:
+            inst.from_pretrained(state_dict=state_dict)
 
         pretrained_lora_names = config.getoption("pretrained_lora_names", None)
         pretrained_lora_weights = config.getoption("pretrained_lora_weights", 1.0)
@@ -287,6 +290,7 @@ class Stable3ForImage2ImageGeneration(_Stable3ForImage2ImageGeneration):
         num_infer_timesteps: Optional[int] = 50,
         freeze_vae_encoder: Optional[bool] = True,
         freeze_text_encoder: Optional[bool] = True,
+        snr_gamma: Optional[float] = 5.0,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
@@ -304,6 +308,7 @@ class Stable3ForImage2ImageGeneration(_Stable3ForImage2ImageGeneration):
             num_infer_timesteps=num_infer_timesteps,
             freeze_vae_encoder=freeze_vae_encoder,
             freeze_text_encoder=freeze_text_encoder,
+            snr_gamma=snr_gamma,
             seed=seed,
         )
 
@@ -367,6 +372,7 @@ class Stable3ForImage2ImageGeneration(_Stable3ForImage2ImageGeneration):
         num_infer_timesteps = config.getoption("num_infer_timesteps", 50)
         freeze_vae_encoder = config.getoption("freeze_vae_encoder", True)
         freeze_text_encoder = config.getoption("freeze_text_encoder", True)
+        snr_gamma = config.getoption("snr_gamma", 5.0)
         seed = config.getoption("seed", 1123)
 
         inst = cls(
@@ -384,6 +390,7 @@ class Stable3ForImage2ImageGeneration(_Stable3ForImage2ImageGeneration):
             num_infer_timesteps=num_infer_timesteps,
             freeze_vae_encoder=freeze_vae_encoder,
             freeze_text_encoder=freeze_text_encoder,
+            snr_gamma=snr_gamma,
             seed=seed,
         )
 
@@ -413,8 +420,11 @@ class Stable3ForImage2ImageGeneration(_Stable3ForImage2ImageGeneration):
                     prefix_keys={"": "vae."},
                 ),
             ]
+        elif weight_path is not None:
+            state_dict = load_weight(weight_path)
 
-        inst.from_pretrained(weight_path, state_dict=state_dict)
+        if state_dict is not None:
+            inst.from_pretrained(state_dict=state_dict)
 
         pretrained_lora_names = config.getoption("pretrained_lora_names", None)
         pretrained_lora_weights = config.getoption("pretrained_lora_weights", 1.0)
@@ -451,7 +461,7 @@ class Stable3ForImage2ImageGeneration(_Stable3ForImage2ImageGeneration):
         raise NotImplementedError
 
     @add_default_section_for_function("core/model/diffusers/image2image/stable_3")
-    @autocast(device_type="cuda")
+    @autocast(device_type="cuda", dtype=torch.bfloat16)
     def generate(
         self,
         input_ids: torch.Tensor,
@@ -509,6 +519,7 @@ class Stable3ForImageInpainting(_Stable3ForImageInpainting):
         num_infer_timesteps: Optional[int] = 50,
         freeze_vae_encoder: Optional[bool] = True,
         freeze_text_encoder: Optional[bool] = True,
+        snr_gamma: Optional[float] = 5.0,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
@@ -526,6 +537,7 @@ class Stable3ForImageInpainting(_Stable3ForImageInpainting):
             num_infer_timesteps=num_infer_timesteps,
             freeze_vae_encoder=freeze_vae_encoder,
             freeze_text_encoder=freeze_text_encoder,
+            snr_gamma=snr_gamma,
             seed=seed,
         )
 
@@ -589,6 +601,7 @@ class Stable3ForImageInpainting(_Stable3ForImageInpainting):
         num_infer_timesteps = config.getoption("num_infer_timesteps", 50)
         freeze_vae_encoder = config.getoption("freeze_vae_encoder", True)
         freeze_text_encoder = config.getoption("freeze_text_encoder", True)
+        snr_gamma = config.getoption("snr_gamma", 5.0)
         seed = config.getoption("seed", 1123)
 
         inst = cls(
@@ -606,6 +619,7 @@ class Stable3ForImageInpainting(_Stable3ForImageInpainting):
             num_infer_timesteps=num_infer_timesteps,
             freeze_vae_encoder=freeze_vae_encoder,
             freeze_text_encoder=freeze_text_encoder,
+            snr_gamma=snr_gamma,
             seed=seed,
         )
 
@@ -635,8 +649,11 @@ class Stable3ForImageInpainting(_Stable3ForImageInpainting):
                     prefix_keys={"": "vae."},
                 ),
             ]
+        elif weight_path is not None:
+            state_dict = load_weight(weight_path)
 
-        inst.from_pretrained(weight_path, state_dict=state_dict)
+        if state_dict is not None:
+            inst.from_pretrained(state_dict=state_dict)
 
         pretrained_lora_names = config.getoption("pretrained_lora_names", None)
         pretrained_lora_weights = config.getoption("pretrained_lora_weights", 1.0)
@@ -667,7 +684,7 @@ class Stable3ForImageInpainting(_Stable3ForImageInpainting):
             )
         return inst
 
-    @autocast(device_type="cuda")
+    @autocast(device_type="cuda", dtype=torch.bfloat16)
     def forward(
         self,
         input_ids: torch.Tensor,
@@ -692,7 +709,7 @@ class Stable3ForImageInpainting(_Stable3ForImageInpainting):
         return LossOutputs(loss=loss)
 
     @add_default_section_for_function("core/model/diffusers/inpainting/stable_3")
-    @autocast(device_type="cuda")
+    @autocast(device_type="cuda", dtype=torch.bfloat16)
     def generate(
         self,
         input_ids: torch.Tensor,

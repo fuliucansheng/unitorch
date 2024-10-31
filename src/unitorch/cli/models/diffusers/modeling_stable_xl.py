@@ -161,7 +161,11 @@ class StableXLForText2ImageGeneration(_StableXLForText2ImageGeneration):
                 ),
             ]
 
-        inst.from_pretrained(weight_path, state_dict=state_dict)
+        elif weight_path is not None:
+            state_dict = load_weight(weight_path)
+
+        if state_dict is not None:
+            inst.from_pretrained(state_dict=state_dict)
 
         pretrained_lora_names = config.getoption("pretrained_lora_names", None)
         pretrained_lora_weights = config.getoption("pretrained_lora_weights", 1.0)
@@ -192,7 +196,7 @@ class StableXLForText2ImageGeneration(_StableXLForText2ImageGeneration):
             )
         return inst
 
-    @autocast(device_type="cuda")
+    @autocast(device_type="cuda", dtype=torch.bfloat16)
     def forward(
         self,
         input_ids: torch.Tensor,
@@ -213,7 +217,7 @@ class StableXLForText2ImageGeneration(_StableXLForText2ImageGeneration):
         return LossOutputs(loss=loss)
 
     @add_default_section_for_function("core/model/diffusers/text2image/stable_xl")
-    @autocast(device_type="cuda")
+    @autocast(device_type="cuda", dtype=torch.bfloat16)
     def generate(
         self,
         input_ids: torch.Tensor,
@@ -262,6 +266,7 @@ class StableXLForImage2ImageGeneration(_StableXLForImage2ImageGeneration):
         num_infer_timesteps: Optional[int] = 50,
         freeze_vae_encoder: Optional[bool] = True,
         freeze_text_encoder: Optional[bool] = True,
+        snr_gamma: Optional[float] = 5.0,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
@@ -278,6 +283,7 @@ class StableXLForImage2ImageGeneration(_StableXLForImage2ImageGeneration):
             num_infer_timesteps=num_infer_timesteps,
             freeze_vae_encoder=freeze_vae_encoder,
             freeze_text_encoder=freeze_text_encoder,
+            snr_gamma=snr_gamma,
             seed=seed,
         )
 
@@ -334,6 +340,7 @@ class StableXLForImage2ImageGeneration(_StableXLForImage2ImageGeneration):
         num_infer_timesteps = config.getoption("num_infer_timesteps", 50)
         freeze_vae_encoder = config.getoption("freeze_vae_encoder", True)
         freeze_text_encoder = config.getoption("freeze_text_encoder", True)
+        snr_gamma = config.getoption("snr_gamma", 5.0)
         seed = config.getoption("seed", 1123)
 
         inst = cls(
@@ -350,6 +357,7 @@ class StableXLForImage2ImageGeneration(_StableXLForImage2ImageGeneration):
             num_infer_timesteps=num_infer_timesteps,
             freeze_vae_encoder=freeze_vae_encoder,
             freeze_text_encoder=freeze_text_encoder,
+            snr_gamma=snr_gamma,
             seed=seed,
         )
 
@@ -376,7 +384,11 @@ class StableXLForImage2ImageGeneration(_StableXLForImage2ImageGeneration):
                 ),
             ]
 
-        inst.from_pretrained(weight_path, state_dict=state_dict)
+        elif weight_path is not None:
+            state_dict = load_weight(weight_path)
+
+        if state_dict is not None:
+            inst.from_pretrained(state_dict=state_dict)
 
         pretrained_lora_names = config.getoption("pretrained_lora_names", None)
         pretrained_lora_weights = config.getoption("pretrained_lora_weights", 1.0)
@@ -407,14 +419,13 @@ class StableXLForImage2ImageGeneration(_StableXLForImage2ImageGeneration):
             )
         return inst
 
-    @autocast(device_type="cuda")
     def forward(
         self,
     ):
         raise NotImplementedError
 
     @add_default_section_for_function("core/model/diffusers/image2image/stable_xl")
-    @autocast(device_type="cuda")
+    @autocast(device_type="cuda", dtype=torch.bfloat16)
     def generate(
         self,
         input_ids: torch.Tensor,
@@ -463,6 +474,7 @@ class StableXLForImageInpainting(_StableXLForImageInpainting):
         num_infer_timesteps: Optional[int] = 50,
         freeze_vae_encoder: Optional[bool] = True,
         freeze_text_encoder: Optional[bool] = True,
+        snr_gamma: Optional[float] = 5.0,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
@@ -479,6 +491,7 @@ class StableXLForImageInpainting(_StableXLForImageInpainting):
             num_infer_timesteps=num_infer_timesteps,
             freeze_vae_encoder=freeze_vae_encoder,
             freeze_text_encoder=freeze_text_encoder,
+            snr_gamma=snr_gamma,
             seed=seed,
         )
 
@@ -535,6 +548,7 @@ class StableXLForImageInpainting(_StableXLForImageInpainting):
         num_infer_timesteps = config.getoption("num_infer_timesteps", 50)
         freeze_vae_encoder = config.getoption("freeze_vae_encoder", True)
         freeze_text_encoder = config.getoption("freeze_text_encoder", True)
+        snr_gamma = config.getoption("snr_gamma", 5.0)
         seed = config.getoption("seed", 1123)
 
         inst = cls(
@@ -551,6 +565,7 @@ class StableXLForImageInpainting(_StableXLForImageInpainting):
             num_infer_timesteps=num_infer_timesteps,
             freeze_vae_encoder=freeze_vae_encoder,
             freeze_text_encoder=freeze_text_encoder,
+            snr_gamma=snr_gamma,
             seed=seed,
         )
 
@@ -577,7 +592,11 @@ class StableXLForImageInpainting(_StableXLForImageInpainting):
                 ),
             ]
 
-        inst.from_pretrained(weight_path, state_dict=state_dict)
+        elif weight_path is not None:
+            state_dict = load_weight(weight_path)
+
+        if state_dict is not None:
+            inst.from_pretrained(state_dict=state_dict)
 
         pretrained_lora_names = config.getoption("pretrained_lora_names", None)
         pretrained_lora_weights = config.getoption("pretrained_lora_weights", 1.0)
@@ -608,7 +627,7 @@ class StableXLForImageInpainting(_StableXLForImageInpainting):
             )
         return inst
 
-    @autocast(device_type="cuda")
+    @autocast(device_type="cuda", dtype=torch.bfloat16)
     def forward(
         self,
         input_ids: torch.Tensor,
@@ -631,7 +650,7 @@ class StableXLForImageInpainting(_StableXLForImageInpainting):
         return LossOutputs(loss=loss)
 
     @add_default_section_for_function("core/model/diffusers/inpainting/stable_xl")
-    @autocast(device_type="cuda")
+    @autocast(device_type="cuda", dtype=torch.bfloat16)
     def generate(
         self,
         input_ids: torch.Tensor,

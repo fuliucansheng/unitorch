@@ -94,15 +94,11 @@ class ControlNetFluxProcessor(_StableFluxProcessor):
         prompt: str,
         image: Union[Image.Image, str],
         condition_image: Union[Image.Image, str],
-        prompt2: Optional[str] = None,
-        prompt3: Optional[str] = None,
         max_seq_length: Optional[int] = None,
         max_seq_length2: Optional[int] = None,
     ):
         outputs = super().text2image(
             prompt=prompt,
-            prompt2=prompt2,
-            prompt3=prompt3,
             image=image,
             max_seq_length=max_seq_length,
             max_seq_length2=max_seq_length2,
@@ -115,8 +111,6 @@ class ControlNetFluxProcessor(_StableFluxProcessor):
             attention_mask=outputs.attention_mask,
             input2_ids=outputs.input2_ids,
             attention2_mask=outputs.attention2_mask,
-            input3_ids=outputs.input3_ids,
-            attention3_mask=outputs.attention3_mask,
         )
 
     @register_process("core/process/diffusion/controlnet_flux/text2image/inputs")

@@ -18,7 +18,8 @@ from collections.abc import Iterable
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union, Iterator
 from torch.utils.data import DataLoader, Dataset, SequentialSampler
 from torch.utils.data.distributed import DistributedSampler
-from torch import autocast, GradScaler
+from torch import autocast
+from torch.cuda.amp import GradScaler
 from torch.multiprocessing import Process, Queue
 from unitorch import set_seed, is_torch2_available
 from unitorch.models import ExponentialMovingAverage

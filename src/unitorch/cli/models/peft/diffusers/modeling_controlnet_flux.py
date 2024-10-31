@@ -48,9 +48,23 @@ class ControlNetFluxLoraForText2ImageGeneration(
         snr_gamma: Optional[float] = 5.0,
         lora_r: Optional[int] = 16,
         lora_alpha: Optional[int] = 32,
+        lora_dropout: Optional[float] = 0.05,
+        fan_in_fan_out: Optional[bool] = True,
+        target_modules: Optional[Union[List[str], str]] = [
+            "to_q",
+            "to_k",
+            "to_v",
+            "q_proj",
+            "k_proj",
+            "v_proj",
+            "SelfAttention.q",
+            "SelfAttention.k",
+            "SelfAttention.v",
+        ],
         enable_text_adapter: Optional[bool] = True,
         enable_transformer_adapter: Optional[bool] = True,
         seed: Optional[int] = 1123,
+        controlnet_conditioning_mode: Optional[Union[int, List[int]]] = None,
     ):
         super().__init__(
             config_path=config_path,
@@ -68,9 +82,13 @@ class ControlNetFluxLoraForText2ImageGeneration(
             snr_gamma=snr_gamma,
             lora_r=lora_r,
             lora_alpha=lora_alpha,
+            lora_dropout=lora_dropout,
+            fan_in_fan_out=fan_in_fan_out,
+            target_modules=target_modules,
             enable_text_adapter=enable_text_adapter,
             enable_transformer_adapter=enable_transformer_adapter,
             seed=seed,
+            controlnet_conditioning_mode=controlnet_conditioning_mode,
         )
 
     @classmethod
@@ -83,13 +101,6 @@ class ControlNetFluxLoraForText2ImageGeneration(
         )
         pretrained_name = config.getoption("pretrained_name", "stable-flux-schnell")
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
-
-        pretrained_controlnet_name = config.getoption(
-            "pretrained_controlnet_name", "stable-3-controlnet-canny"
-        )
-        pretrained_controlnet_infos = nested_dict_value(
-            pretrained_stable_extensions_infos, pretrained_controlnet_name
-        )
 
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
@@ -119,6 +130,13 @@ class ControlNetFluxLoraForText2ImageGeneration(
         )
         vae_config_path = cached_path(vae_config_path)
 
+        pretrained_controlnet_name = config.getoption(
+            "pretrained_controlnet_name", "stable-3-controlnet-canny"
+        )
+        pretrained_controlnet_infos = nested_dict_value(
+            pretrained_stable_extensions_infos, pretrained_controlnet_name
+        )
+
         controlnet_configs_path = config.getoption("controlnet_configs_path", None)
         controlnet_configs_path = pop_value(
             controlnet_configs_path,
@@ -142,11 +160,47 @@ class ControlNetFluxLoraForText2ImageGeneration(
         out_channels = config.getoption("out_channels", None)
         num_train_timesteps = config.getoption("num_train_timesteps", 1000)
         num_infer_timesteps = config.getoption("num_infer_timesteps", 50)
+        snr_gamma = config.getoption("snr_gamma", 5.0)
+        lora_r = config.getoption("lora_r", 16)
+        lora_alpha = config.getoption("lora_alpha", 32)
+        lora_dropout = config.getoption("lora_dropout", 0.05)
+        fan_in_fan_out = config.getoption("fan_in_fan_out", True)
+        target_modules = config.getoption(
+            "target_modules",
+            [
+                "to_q",
+                "to_k",
+                "to_v",
+                "q_proj",
+                "k_proj",
+                "v_proj",
+                "SelfAttention.q",
+                "SelfAttention.k",
+                "SelfAttention.v",
+            ],
+        )
+        replace_keys = config.getoption(
+            "replace_keys",
+            {
+                "to_q.": "to_q.base_layer.",
+                "to_k.": "to_k.base_layer.",
+                "to_v.": "to_v.base_layer.",
+                "q_proj.": "q_proj.base_layer.",
+                "k_proj.": "k_proj.base_layer.",
+                "v_proj.": "v_proj.base_layer.",
+                "SelfAttention.q.": "SelfAttention.q.base_layer.",
+                "SelfAttention.k.": "SelfAttention.k.base_layer.",
+                "SelfAttention.v.": "SelfAttention.v.base_layer.",
+            },
+        )
         enable_text_adapter = config.getoption("enable_text_adapter", True)
         enable_transformer_adapter = config.getoption(
             "enable_transformer_adapter", True
         )
         seed = config.getoption("seed", 1123)
+        controlnet_conditioning_mode = config.getoption(
+            "controlnet_conditioning_mode", None
+        )
 
         inst = cls(
             config_path=config_path,
@@ -161,9 +215,16 @@ class ControlNetFluxLoraForText2ImageGeneration(
             out_channels=out_channels,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
+            snr_gamma=snr_gamma,
+            lora_r=lora_r,
+            lora_alpha=lora_alpha,
+            lora_dropout=lora_dropout,
+            fan_in_fan_out=fan_in_fan_out,
+            target_modules=target_modules,
             enable_text_adapter=enable_text_adapter,
             enable_transformer_adapter=enable_transformer_adapter,
             seed=seed,
+            controlnet_conditioning_mode=controlnet_conditioning_mode,
         )
 
         weight_path = config.getoption("pretrained_weight_path", None)
@@ -174,35 +235,17 @@ class ControlNetFluxLoraForText2ImageGeneration(
                 load_weight(
                     nested_dict_value(pretrained_infos, "transformer", "weight"),
                     prefix_keys={"": "transformer."},
-                    replace_keys={
-                        "to_q.": "to_q.base_layer.",
-                        "to_k.": "to_k.base_layer.",
-                        "to_v.": "to_v.base_layer.",
-                    }
-                    if enable_transformer_adapter
-                    else {},
+                    replace_keys=replace_keys if enable_transformer_adapter else {},
                 ),
                 load_weight(
                     nested_dict_value(pretrained_infos, "text", "weight"),
                     prefix_keys={"": "text."},
-                    replace_keys={
-                        "q_proj.": "q_proj.base_layer.",
-                        "k_proj.": "k_proj.base_layer.",
-                        "v_proj.": "v_proj.base_layer.",
-                    }
-                    if enable_text_adapter
-                    else {},
+                    replace_keys=replace_keys if enable_text_adapter else {},
                 ),
                 load_weight(
                     nested_dict_value(pretrained_infos, "text2", "weight"),
                     prefix_keys={"": "text2."},
-                    replace_keys={
-                        "SelfAttention.q.": "SelfAttention.q.base_layer.",
-                        "SelfAttention.k.": "SelfAttention.k.base_layer.",
-                        "SelfAttention.v.": "SelfAttention.v.base_layer.",
-                    }
-                    if enable_text_adapter
-                    else {},
+                    replace_keys=replace_keys if enable_text_adapter else {},
                 ),
                 load_weight(
                     nested_dict_value(pretrained_infos, "vae", "weight"),

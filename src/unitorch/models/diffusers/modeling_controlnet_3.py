@@ -71,6 +71,7 @@ class ControlNet3ForText2ImageGeneration(GenericStable3Model):
         freeze_vae_encoder: Optional[bool] = True,
         freeze_text_encoder: Optional[bool] = True,
         freeze_transformer_encoder: Optional[bool] = False,
+        snr_gamma: Optional[float] = 5.0,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
@@ -90,6 +91,7 @@ class ControlNet3ForText2ImageGeneration(GenericStable3Model):
             freeze_vae_encoder=freeze_vae_encoder,
             freeze_text_encoder=freeze_text_encoder,
             freeze_transformer_encoder=freeze_transformer_encoder,
+            snr_gamma=snr_gamma,
             seed=seed,
         )
         self.pipeline = StableDiffusion3ControlNetPipeline(
@@ -322,6 +324,7 @@ class ControlNet3ForImageInpainting(GenericStable3Model):
         freeze_vae_encoder: Optional[bool] = True,
         freeze_text_encoder: Optional[bool] = True,
         freeze_transformer_encoder: Optional[bool] = False,
+        snr_gamma: Optional[float] = 5.0,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
@@ -342,6 +345,7 @@ class ControlNet3ForImageInpainting(GenericStable3Model):
             freeze_vae_encoder=freeze_vae_encoder,
             freeze_text_encoder=freeze_text_encoder,
             freeze_transformer_encoder=freeze_transformer_encoder,
+            snr_gamma=snr_gamma,
             seed=seed,
         )
         self.pipeline = StableDiffusion3ControlNetInpaintingPipeline(

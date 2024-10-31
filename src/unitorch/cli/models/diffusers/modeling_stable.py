@@ -142,7 +142,11 @@ class StableForText2ImageGeneration(_StableForText2ImageGeneration):
                 load_weight(nested_dict_value(pretrained_infos, "vae", "weight")),
             ]
 
-        inst.from_pretrained(weight_path, state_dict=state_dict)
+        elif weight_path is not None:
+            state_dict = load_weight(weight_path)
+
+        if state_dict is not None:
+            inst.from_pretrained(state_dict=state_dict)
 
         pretrained_lora_names = config.getoption("pretrained_lora_names", None)
         pretrained_lora_weights = config.getoption("pretrained_lora_weights", 1.0)
@@ -229,6 +233,7 @@ class StableForImage2ImageGeneration(_StableForImage2ImageGeneration):
         num_infer_timesteps: Optional[int] = 50,
         freeze_vae_encoder: Optional[bool] = True,
         freeze_text_encoder: Optional[bool] = True,
+        snr_gamma: Optional[float] = 5.0,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
@@ -244,6 +249,7 @@ class StableForImage2ImageGeneration(_StableForImage2ImageGeneration):
             num_infer_timesteps=num_infer_timesteps,
             freeze_vae_encoder=freeze_vae_encoder,
             freeze_text_encoder=freeze_text_encoder,
+            snr_gamma=snr_gamma,
             seed=seed,
         )
 
@@ -295,6 +301,7 @@ class StableForImage2ImageGeneration(_StableForImage2ImageGeneration):
         num_infer_timesteps = config.getoption("num_infer_timesteps", 50)
         freeze_vae_encoder = config.getoption("freeze_vae_encoder", True)
         freeze_text_encoder = config.getoption("freeze_text_encoder", True)
+        snr_gamma = config.getoption("snr_gamma", 5.0)
         seed = config.getoption("seed", 1123)
 
         inst = cls(
@@ -310,6 +317,7 @@ class StableForImage2ImageGeneration(_StableForImage2ImageGeneration):
             num_infer_timesteps=num_infer_timesteps,
             freeze_vae_encoder=freeze_vae_encoder,
             freeze_text_encoder=freeze_text_encoder,
+            snr_gamma=snr_gamma,
             seed=seed,
         )
 
@@ -323,7 +331,11 @@ class StableForImage2ImageGeneration(_StableForImage2ImageGeneration):
                 load_weight(nested_dict_value(pretrained_infos, "vae", "weight")),
             ]
 
-        inst.from_pretrained(weight_path, state_dict=state_dict)
+        elif weight_path is not None:
+            state_dict = load_weight(weight_path)
+
+        if state_dict is not None:
+            inst.from_pretrained(state_dict=state_dict)
 
         pretrained_lora_names = config.getoption("pretrained_lora_names", None)
         pretrained_lora_weights = config.getoption("pretrained_lora_weights", 1.0)
@@ -355,7 +367,6 @@ class StableForImage2ImageGeneration(_StableForImage2ImageGeneration):
 
         return inst
 
-    @autocast(device_type="cuda")
     def forward(
         self,
     ):
@@ -402,6 +413,7 @@ class StableForImageInpainting(_StableForImageInpainting):
         num_infer_timesteps: Optional[int] = 50,
         freeze_vae_encoder: Optional[bool] = True,
         freeze_text_encoder: Optional[bool] = True,
+        snr_gamma: Optional[float] = 5.0,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
@@ -417,6 +429,7 @@ class StableForImageInpainting(_StableForImageInpainting):
             num_infer_timesteps=num_infer_timesteps,
             freeze_vae_encoder=freeze_vae_encoder,
             freeze_text_encoder=freeze_text_encoder,
+            snr_gamma=snr_gamma,
             seed=seed,
         )
 
@@ -466,6 +479,7 @@ class StableForImageInpainting(_StableForImageInpainting):
         num_infer_timesteps = config.getoption("num_infer_timesteps", 50)
         freeze_vae_encoder = config.getoption("freeze_vae_encoder", True)
         freeze_text_encoder = config.getoption("freeze_text_encoder", True)
+        snr_gamma = config.getoption("snr_gamma", 5.0)
         seed = config.getoption("seed", 1123)
 
         inst = cls(
@@ -481,6 +495,7 @@ class StableForImageInpainting(_StableForImageInpainting):
             num_infer_timesteps=num_infer_timesteps,
             freeze_vae_encoder=freeze_vae_encoder,
             freeze_text_encoder=freeze_text_encoder,
+            snr_gamma=snr_gamma,
             seed=seed,
         )
 
@@ -494,7 +509,11 @@ class StableForImageInpainting(_StableForImageInpainting):
                 load_weight(nested_dict_value(pretrained_infos, "vae", "weight")),
             ]
 
-        inst.from_pretrained(weight_path, state_dict=state_dict)
+        elif weight_path is not None:
+            state_dict = load_weight(weight_path)
+
+        if state_dict is not None:
+            inst.from_pretrained(state_dict=state_dict)
 
         pretrained_lora_names = config.getoption("pretrained_lora_names", None)
         pretrained_lora_weights = config.getoption("pretrained_lora_weights", 1.0)
@@ -585,6 +604,7 @@ class StableForImageResolution(_StableForImageResolution):
         num_infer_timesteps: Optional[int] = 50,
         freeze_vae_encoder: Optional[bool] = True,
         freeze_text_encoder: Optional[bool] = True,
+        snr_gamma: Optional[float] = 5.0,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
@@ -600,6 +620,7 @@ class StableForImageResolution(_StableForImageResolution):
             num_infer_timesteps=num_infer_timesteps,
             freeze_vae_encoder=freeze_vae_encoder,
             freeze_text_encoder=freeze_text_encoder,
+            snr_gamma=snr_gamma,
             seed=seed,
         )
 
@@ -649,6 +670,7 @@ class StableForImageResolution(_StableForImageResolution):
         num_infer_timesteps = config.getoption("num_infer_timesteps", 50)
         freeze_vae_encoder = config.getoption("freeze_vae_encoder", True)
         freeze_text_encoder = config.getoption("freeze_text_encoder", True)
+        snr_gamma = config.getoption("snr_gamma", 5.0)
         seed = config.getoption("seed", 1123)
 
         inst = cls(
@@ -664,6 +686,7 @@ class StableForImageResolution(_StableForImageResolution):
             num_infer_timesteps=num_infer_timesteps,
             freeze_vae_encoder=freeze_vae_encoder,
             freeze_text_encoder=freeze_text_encoder,
+            snr_gamma=snr_gamma,
             seed=seed,
         )
 
@@ -677,7 +700,11 @@ class StableForImageResolution(_StableForImageResolution):
                 load_weight(nested_dict_value(pretrained_infos, "vae", "weight")),
             ]
 
-        inst.from_pretrained(weight_path, state_dict=state_dict)
+        elif weight_path is not None:
+            state_dict = load_weight(weight_path)
+
+        if state_dict is not None:
+            inst.from_pretrained(state_dict=state_dict)
 
         pretrained_lora_names = config.getoption("pretrained_lora_names", None)
         pretrained_lora_weights = config.getoption("pretrained_lora_weights", 1.0)
@@ -814,6 +841,7 @@ class StableForImage2VideoGeneration(_StableForImage2VideoGeneration):
         num_infer_timesteps = config.getoption("num_infer_timesteps", 50)
         freeze_vae_encoder = config.getoption("freeze_vae_encoder", True)
         freeze_text_encoder = config.getoption("freeze_text_encoder", True)
+        snr_gamma = config.getoption("snr_gamma", 5.0)
         seed = config.getoption("seed", 1123)
 
         inst = cls(
@@ -829,6 +857,7 @@ class StableForImage2VideoGeneration(_StableForImage2VideoGeneration):
             num_infer_timesteps=num_infer_timesteps,
             freeze_vae_encoder=freeze_vae_encoder,
             freeze_text_encoder=freeze_text_encoder,
+            snr_gamma=snr_gamma,
             seed=seed,
         )
 
@@ -842,7 +871,11 @@ class StableForImage2VideoGeneration(_StableForImage2VideoGeneration):
                 load_weight(nested_dict_value(pretrained_infos, "vae", "weight")),
             ]
 
-        inst.from_pretrained(weight_path, state_dict=state_dict)
+        elif weight_path is not None:
+            state_dict = load_weight(weight_path)
+
+        if state_dict is not None:
+            inst.from_pretrained(state_dict=state_dict)
 
         pretrained_lora_names = config.getoption("pretrained_lora_names", None)
         pretrained_lora_weights = config.getoption("pretrained_lora_weights", 1.0)
@@ -874,7 +907,6 @@ class StableForImage2VideoGeneration(_StableForImage2VideoGeneration):
 
         return inst
 
-    @autocast(device_type="cuda")
     def forward(
         self,
     ):

@@ -42,6 +42,7 @@ class StableAdapterForText2ImageGeneration(_StableAdapterForText2ImageGeneration
         freeze_vae_encoder: Optional[bool] = True,
         freeze_text_encoder: Optional[bool] = True,
         freeze_unet_encoder: Optional[bool] = True,
+        snr_gamma: Optional[float] = 5.0,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
@@ -59,6 +60,7 @@ class StableAdapterForText2ImageGeneration(_StableAdapterForText2ImageGeneration
             freeze_vae_encoder=freeze_vae_encoder,
             freeze_text_encoder=freeze_text_encoder,
             freeze_unet_encoder=freeze_unet_encoder,
+            snr_gamma=snr_gamma,
             seed=seed,
         )
 
@@ -136,6 +138,7 @@ class StableAdapterForText2ImageGeneration(_StableAdapterForText2ImageGeneration
         freeze_vae_encoder = config.getoption("freeze_vae_encoder", True)
         freeze_text_encoder = config.getoption("freeze_text_encoder", True)
         freeze_unet_encoder = config.getoption("freeze_unet_encoder", True)
+        snr_gamma = config.getoption("snr_gamma", 5.0)
         seed = config.getoption("seed", 1123)
 
         inst = cls(
@@ -153,6 +156,7 @@ class StableAdapterForText2ImageGeneration(_StableAdapterForText2ImageGeneration
             freeze_vae_encoder=freeze_vae_encoder,
             freeze_text_encoder=freeze_text_encoder,
             freeze_unet_encoder=freeze_unet_encoder,
+            snr_gamma=snr_gamma,
             seed=seed,
         )
 
