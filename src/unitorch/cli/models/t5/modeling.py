@@ -3,7 +3,7 @@
 
 import torch
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
-from torch.cuda.amp import autocast
+from torch import autocast
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.t5 import T5ForGeneration as _T5ForGeneration
 from unitorch.cli import (
@@ -74,7 +74,7 @@ class T5ForGeneration(_T5ForGeneration):
 
         return inst
 
-    @autocast()
+    @autocast(device_type="cuda")
     def forward(
         self,
         input_ids: torch.Tensor,
@@ -104,7 +104,7 @@ class T5ForGeneration(_T5ForGeneration):
 
     @add_default_section_for_function("core/model/generation/t5")
     @torch.no_grad()
-    @autocast()
+    @autocast(device_type="cuda")
     def generate(
         self,
         input_ids: torch.Tensor,

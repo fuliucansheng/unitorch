@@ -3,7 +3,7 @@
 
 import torch
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
-from torch.cuda.amp import autocast
+from torch import autocast
 
 from unitorch.models.diffusers import (
     ControlNetForText2ImageGeneration as _ControlNetForText2ImageGeneration,
@@ -227,7 +227,7 @@ class ControlNetForText2ImageGeneration(_ControlNetForText2ImageGeneration):
 
         return inst
 
-    @autocast()
+    @autocast(device_type="cuda")
     def forward(
         self,
         input_ids: torch.Tensor,
@@ -244,7 +244,7 @@ class ControlNetForText2ImageGeneration(_ControlNetForText2ImageGeneration):
         return LossOutputs(loss=loss)
 
     @add_default_section_for_function("core/model/diffusers/text2image/controlnet")
-    @autocast()
+    @autocast(device_type="cuda")
     def generate(
         self,
         input_ids: torch.Tensor,
@@ -478,14 +478,14 @@ class ControlNetForImage2ImageGeneration(_ControlNetForImage2ImageGeneration):
 
         return inst
 
-    @autocast()
+    @autocast(device_type="cuda")
     def forward(
         self,
     ):
         raise NotImplementedError
 
     @add_default_section_for_function("core/model/diffusers/image2image/controlnet")
-    @autocast()
+    @autocast(device_type="cuda")
     def generate(
         self,
         input_ids: torch.Tensor,
@@ -494,7 +494,7 @@ class ControlNetForImage2ImageGeneration(_ControlNetForImage2ImageGeneration):
         condition_pixel_values: torch.Tensor,
         attention_mask: Optional[torch.Tensor] = None,
         negative_attention_mask: Optional[torch.Tensor] = None,
-        strength: Optional[float] = 0.8,
+        strength: Optional[float] = 1.0,
         guidance_scale: Optional[float] = 7.5,
         controlnet_conditioning_scale: Optional[float] = 1.0,
     ):
@@ -710,26 +710,42 @@ class ControlNetForImageInpainting(_ControlNetForImageInpainting):
 
         return inst
 
-    @autocast()
+    @autocast(device_type="cuda")
     def forward(
         self,
+        input_ids: torch.Tensor,
+        pixel_values: torch.Tensor,
+        pixel_masks: torch.Tensor,
+        condition_pixel_values: torch.Tensor = None,
+        inpainting_condition_pixel_values: torch.Tensor = None,
+        attention_mask: Optional[torch.Tensor] = None,
     ):
-        raise NotImplementedError
+        loss = super().forward(
+            input_ids=input_ids,
+            pixel_values=pixel_values,
+            pixel_masks=pixel_masks,
+            condition_pixel_values=condition_pixel_values,
+            inpainting_condition_pixel_values=inpainting_condition_pixel_values,
+            attention_mask=attention_mask,
+        )
+        return LossOutputs(loss=loss)
 
     @add_default_section_for_function("core/model/diffusers/inpainting/controlnet")
-    @autocast()
+    @autocast(device_type="cuda")
     def generate(
         self,
         input_ids: torch.Tensor,
         negative_input_ids: torch.Tensor,
         pixel_values: torch.Tensor,
         pixel_masks: torch.Tensor,
-        condition_pixel_values: torch.Tensor,
+        condition_pixel_values: torch.Tensor = None,
+        inpainting_condition_pixel_values: torch.Tensor = None,
         attention_mask: Optional[torch.Tensor] = None,
         negative_attention_mask: Optional[torch.Tensor] = None,
-        strength: Optional[float] = 0.8,
+        strength: Optional[float] = 1.0,
         guidance_scale: Optional[float] = 7.5,
-        controlnet_conditioning_scale: Optional[float] = 1.0,
+        controlnet_conditioning_scale: Optional[Union[float, List[float]]] = None,
+        inpainting_controlnet_conditioning_scale: Optional[float] = None,
     ):
         outputs = super().generate(
             input_ids=input_ids,
@@ -737,10 +753,12 @@ class ControlNetForImageInpainting(_ControlNetForImageInpainting):
             pixel_values=pixel_values,
             pixel_masks=pixel_masks,
             condition_pixel_values=condition_pixel_values,
+            inpainting_condition_pixel_values=inpainting_condition_pixel_values,
             attention_mask=attention_mask,
             negative_attention_mask=negative_attention_mask,
             strength=strength,
             guidance_scale=guidance_scale,
             controlnet_conditioning_scale=controlnet_conditioning_scale,
+            inpainting_controlnet_conditioning_scale=inpainting_controlnet_conditioning_scale,
         )
         return DiffusionOutputs(outputs=outputs.images)

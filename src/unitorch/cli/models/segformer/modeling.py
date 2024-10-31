@@ -4,7 +4,7 @@
 import torch
 from PIL import Image
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
-from torch.cuda.amp import autocast
+from torch import autocast
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.segformer import (
     SegformerForSegmentation as _SegformerForSegmentation,
@@ -59,7 +59,7 @@ class SegformerForSegmentation(_SegformerForSegmentation):
 
         return inst
 
-    @autocast()
+    @autocast(device_type="cuda")
     def forward(
         self,
     ):

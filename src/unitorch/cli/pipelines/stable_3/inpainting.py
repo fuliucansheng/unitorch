@@ -270,7 +270,7 @@ class Stable3ForImageInpaintingPipeline(GenericStable3Model):
         width: Optional[int] = None,
         height: Optional[int] = None,
         guidance_scale: Optional[float] = 7.5,
-        strength: Optional[float] = 0.8,
+        strength: Optional[float] = 1.0,
         num_timesteps: Optional[int] = 50,
         seed: Optional[int] = 1123,
         scheduler: Optional[str] = None,
@@ -404,7 +404,7 @@ class Stable3ForImageInpaintingPipeline(GenericStable3Model):
                 controlnets_inputs = None
 
             if inpaint_conditioning_image is not None:
-                inpaint_controlnet_inputs = self.processor.inpainting_controlnet_inputs(
+                inpaint_controlnet_inputs = self.processor.inpainting_control_inputs(
                     inpaint_conditioning_image, mask_image
                 )
             else:

@@ -8,7 +8,7 @@ import logging
 import torch
 import torch.nn.functional as F
 import torch.nn as nn
-from torch.cuda.amp import autocast
+from torch import autocast
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from transformers.models.sam.modeling_sam import SamConfig, SamModel
 from transformers.models.sam.image_processing_sam import _build_point_grid

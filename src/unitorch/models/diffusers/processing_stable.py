@@ -63,7 +63,6 @@ class StableProcessor(HfTextClassificationProcessor):
             )
         else:
             self.image_size = None
-
         if self.image_size is not None:
             self.vision_processor = Compose(
                 [
@@ -126,7 +125,7 @@ class StableProcessor(HfTextClassificationProcessor):
         image = image.convert("RGB")
 
         pixel_values = self.vision_processor(image)
-
+        
         prompt_outputs = self.classification(prompt, max_seq_length=max_seq_length)
 
         return GenericOutputs(
@@ -236,7 +235,7 @@ class StableProcessor(HfTextClassificationProcessor):
 
         return GenericOutputs(pixel_values=torch.stack(pixel_values, dim=0))
 
-    def inpainting_controlnet_inputs(
+    def inpainting_control_inputs(
         self,
         image: Union[Image.Image, str],
         mask_image: Union[Image.Image, str],

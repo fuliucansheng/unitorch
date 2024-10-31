@@ -3,7 +3,7 @@
 
 import torch
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
-from torch.cuda.amp import autocast
+from torch import autocast
 
 from unitorch.models.peft.diffusers import (
     ControlNetLoraForText2ImageGeneration as _ControlNetLoraForText2ImageGeneration,
@@ -204,7 +204,7 @@ class ControlNetLoraForText2ImageGeneration(_ControlNetLoraForText2ImageGenerati
 
         return inst
 
-    @autocast()
+    @autocast(device_type="cuda")
     def forward(
         self,
         input_ids: torch.Tensor,
@@ -223,7 +223,7 @@ class ControlNetLoraForText2ImageGeneration(_ControlNetLoraForText2ImageGenerati
     @add_default_section_for_function(
         "core/model/diffusers/peft/lora/text2image/controlnet"
     )
-    @autocast()
+    @autocast(device_type="cuda")
     def generate(
         self,
         input_ids: torch.Tensor,

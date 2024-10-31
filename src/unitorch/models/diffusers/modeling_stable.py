@@ -111,7 +111,7 @@ class GenericStableModel(GenericModel, QuantizationMixin, PeftWeightLoaderMixin)
         vae_config_path: str,
         scheduler_config_path: str,
         controlnet_configs_path: Union[str, List[str]] = None,
-        inpainting_controlnet_configs_path: Union[str, List[str]] = None,
+        inpainting_controlnet_config_path: Union[str] = None,
         adapter_configs_path: Union[str, List[str]] = None,
         quant_config_path: Optional[str] = None,
         image_size: Optional[int] = None,
@@ -149,10 +149,8 @@ class GenericStableModel(GenericModel, QuantizationMixin, PeftWeightLoaderMixin)
 
         if isinstance(controlnet_configs_path, str):
             controlnet_configs_path = [controlnet_configs_path]
-        if isinstance(inpainting_controlnet_configs_path, str):
-            controlnet_configs_path += [inpainting_controlnet_configs_path]
-        elif isinstance(inpainting_controlnet_configs_path, list):
-            controlnet_configs_path += inpainting_controlnet_configs_path
+        if isinstance(inpainting_controlnet_config_path, str):
+            controlnet_configs_path += [inpainting_controlnet_config_path]
 
         if isinstance(controlnet_configs_path, list):
             if len(controlnet_configs_path) == 0:
@@ -420,7 +418,7 @@ class StableForImage2ImageGeneration(GenericStableModel):
         pixel_values: torch.Tensor,
         attention_mask: Optional[torch.Tensor] = None,
         negative_attention_mask: Optional[torch.Tensor] = None,
-        strength: Optional[float] = 0.8,
+        strength: Optional[float] = 1.0,
         guidance_scale: Optional[float] = 7.5,
     ):
         prompt_embeds = self.text(
@@ -492,24 +490,17 @@ class StableForImageInpainting(GenericStableModel):
             feature_extractor=None,
         )
         self.pipeline.set_progress_bar_config(disable=True)
+        self.num_channels_unet = self.unet.config.in_channels
 
     def forward(
         self,
         input_ids: torch.Tensor,
         pixel_values: torch.Tensor,
-        masked_pixel_values: torch.Tensor,
         pixel_masks: torch.Tensor,
         attention_mask: Optional[torch.Tensor] = None,
     ):
         latents = self.vae.encode(pixel_values).latent_dist.sample()
         latents = latents * self.vae.config.scaling_factor
-
-        masked_latents = self.vae.encode(masked_pixel_values).latent_dist.sample()
-        masked_latents = masked_latents * self.vae.config.scaling_factor
-
-        pixel_masks = torch.nn.functional.interpolate(
-            pixel_masks, size=latents.shape[-2:], mode="nearest"
-        )
 
         noise = torch.randn(latents.shape).to(latents.device)
         batch = latents.size(0)
@@ -527,9 +518,22 @@ class StableForImageInpainting(GenericStableModel):
             timesteps,
         )
 
-        latent_model_input = torch.cat(
-            [noise_latents, pixel_masks, masked_latents], dim=1
-        )
+        if self.num_channels_unet == 9:
+            masked_pixel_values = pixel_values.clone()
+            masked_pixel_masks = pixel_masks.clone()
+            masked_pixel_masks = masked_pixel_masks.expand_as(masked_pixel_values)
+            masked_pixel_values[masked_pixel_masks > 0.5] = -1.0
+            masked_latents = self.vae.encode(masked_pixel_values).latent_dist.sample()
+            masked_latents = masked_latents * self.vae.config.scaling_factor
+
+            pixel_masks = torch.nn.functional.interpolate(
+                pixel_masks, size=latents.shape[-2:], mode="nearest"
+            )
+            latent_model_input = torch.cat(
+                [noise_latents, pixel_masks, masked_latents], dim=1
+            )
+        else:
+            latent_model_input = noise_latents
 
         encoder_hidden_states = self.text(input_ids)[0]
         # encoder_hidden_states = self.text(input_ids, attention_mask)[0]

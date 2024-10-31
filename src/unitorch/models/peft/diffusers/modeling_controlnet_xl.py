@@ -374,7 +374,7 @@ class ControlNetXLLoraForText2ImageGeneration(GenericControlNetXLLoraModel):
         height: Optional[int] = 1024,
         width: Optional[int] = 1024,
         guidance_scale: Optional[float] = 5.0,
-        controlnet_conditioning_scale: Optional[float] = 0.5,
+        controlnet_conditioning_scale: Optional[float] = 1.0,
     ):
         """
         Generate images using the model.

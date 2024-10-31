@@ -3,7 +3,7 @@
 
 import torch
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
-from torch.cuda.amp import autocast
+from torch import autocast
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.grounding_dino import (
     GroundingDinoForDetection as _GroundingDinoForDetection,
@@ -65,7 +65,7 @@ class GroundingDinoForDetection(_GroundingDinoForDetection):
 
         return inst
 
-    @autocast()
+    @autocast(device_type="cuda")
     def forward(
         self, pixel_values, input_ids, attention_mask, token_type_ids, bboxes, classes
     ):

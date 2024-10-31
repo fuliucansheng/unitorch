@@ -9,9 +9,10 @@ import diffusers.schedulers as schedulers
 from transformers import CLIPTextConfig, CLIPTextModel, CLIPTextModelWithProjection
 from transformers.models.t5.configuration_t5 import T5Config
 from transformers.models.t5.modeling_t5 import T5EncoderModel
-from diffusers.schedulers import SchedulerMixin
+from diffusers.schedulers import SchedulerMixin, FlowMatchEulerDiscreteScheduler
 from diffusers.models import (
     FluxControlNetModel,
+    FluxMultiControlNetModel,
     FluxTransformer2DModel,
     AutoencoderKL,
 )
@@ -54,6 +55,7 @@ class GenericStableFluxModel(GenericModel, QuantizationMixin, PeftWeightLoaderMi
         vae_config_path: str,
         scheduler_config_path: str,
         controlnet_configs_path: Union[str, List[str]] = None,
+        inpainting_controlnet_config_path: Union[str] = None,
         quant_config_path: Optional[str] = None,
         image_size: Optional[int] = None,
         in_channels: Optional[int] = None,
@@ -90,13 +92,29 @@ class GenericStableFluxModel(GenericModel, QuantizationMixin, PeftWeightLoaderMi
         vae_config_dict = json.load(open(vae_config_path))
         self.vae = AutoencoderKL.from_config(vae_config_dict)
 
+        if isinstance(controlnet_configs_path, str):
+            controlnet_configs_path = [controlnet_configs_path]
+        if isinstance(inpainting_controlnet_config_path, str):
+            controlnet_configs_path += [inpainting_controlnet_config_path]
+
         if isinstance(controlnet_configs_path, list):
             if len(controlnet_configs_path) == 0:
                 controlnet_configs_path = None
             elif len(controlnet_configs_path) == 1:
                 controlnet_configs_path = controlnet_configs_path[0]
 
-        if isinstance(controlnet_configs_path, str):
+        if isinstance(controlnet_configs_path, list):
+            controlnets = []
+            for controlnet_config_path in controlnet_configs_path:
+                controlnet_config_dict = json.load(open(controlnet_config_path))
+                controlnets.append(
+                    FluxControlNetModel.from_config(controlnet_config_dict)
+                )
+            self.num_controlnets = len(controlnets)
+            self.controlnet = FluxMultiControlNetModel(
+                controlnets=controlnets,
+            )
+        elif isinstance(controlnet_configs_path, str):
             controlnet_config_dict = json.load(open(controlnet_configs_path))
             self.controlnet = FluxControlNetModel.from_config(controlnet_config_dict)
             self.num_controlnets = 1
@@ -134,7 +152,7 @@ class GenericStableFluxModel(GenericModel, QuantizationMixin, PeftWeightLoaderMi
                 self.quant_config, ignore_modules=["lm_head", "transformer", "vae"]
             )
 
-        if not self.scheduler.use_dynamic_shifting:
+        if not getattr(self.scheduler, "use_dynamic_shifting", None):
             self.scheduler.set_timesteps(num_inference_steps=self.num_infer_timesteps)
 
     def get_prompt_outputs(
@@ -200,17 +218,19 @@ class StableFluxForText2ImageGeneration(GenericStableFluxModel):
             seed=seed,
         )
 
+        new_scheduler = FlowMatchEulerDiscreteScheduler.from_config(
+            self.scheduler.config
+        )
         self.pipeline = FluxPipeline(
             vae=self.vae,
             text_encoder=self.text,
             text_encoder_2=self.text2,
             transformer=self.transformer,
-            scheduler=self.scheduler,
+            scheduler=new_scheduler,
             tokenizer=None,
             tokenizer_2=None,
         )
         self.pipeline.set_progress_bar_config(disable=True)
-        self.pipeline.to(torch.bfloat16)
 
     def _prepare_latent_image_ids(self, batch_size, height, width, device, dtype):
         latent_image_ids = torch.zeros(height, width, 3)
@@ -381,17 +401,20 @@ class StableFluxForImage2ImageGeneration(GenericStableFluxModel):
             seed=seed,
         )
 
+        new_scheduler = FlowMatchEulerDiscreteScheduler.from_config(
+            self.scheduler.config
+        )
+
         self.pipeline = FluxImg2ImgPipeline(
             vae=self.vae,
             text_encoder=self.text,
             text_encoder_2=self.text2,
             transformer=self.transformer,
-            scheduler=self.scheduler,
+            scheduler=new_scheduler,
             tokenizer=None,
             tokenizer_2=None,
         )
         self.pipeline.set_progress_bar_config(disable=True)
-        self.pipeline.to(torch.bfloat16)
 
     def forward(
         self,
@@ -405,7 +428,7 @@ class StableFluxForImage2ImageGeneration(GenericStableFluxModel):
         input2_ids: torch.Tensor,
         attention_mask: Optional[torch.Tensor] = None,
         attention2_mask: Optional[torch.Tensor] = None,
-        strength: Optional[float] = 0.8,
+        strength: Optional[float] = 1.0,
         guidance_scale: Optional[float] = 7.5,
     ):
         outputs = self.get_prompt_outputs(
@@ -467,17 +490,20 @@ class StableFluxForImageInpainting(GenericStableFluxModel):
             seed=seed,
         )
 
+        new_scheduler = FlowMatchEulerDiscreteScheduler.from_config(
+            self.scheduler.config
+        )
+
         self.pipeline = FluxInpaintPipeline(
             vae=self.vae,
             text_encoder=self.text,
             text_encoder_2=self.text2,
             transformer=self.transformer,
-            scheduler=self.scheduler,
+            scheduler=new_scheduler,
             tokenizer=None,
             tokenizer_2=None,
         )
         self.pipeline.set_progress_bar_config(disable=True)
-        self.pipeline.to(torch.bfloat16)
 
     def forward(
         self,

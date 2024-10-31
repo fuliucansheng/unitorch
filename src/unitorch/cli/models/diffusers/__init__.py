@@ -165,6 +165,13 @@ __hf_hub_controlnet_safetensors_dict__ = lambda name: {
     }
 }
 
+__hf_hub_adapter_dict__ = lambda name: {
+    "adapter": {
+        "config": f"https://huggingface.co/{name}/resolve/main/config.json",
+        "weight": f"https://huggingface.co/{name}/resolve/main/diffusion_pytorch_model.bin",
+    }
+}
+
 __hf_hub_adapter_safetensors_dict__ = lambda name: {
     "adapter": {
         "config": f"https://huggingface.co/{name}/resolve/main/config.json",
@@ -254,6 +261,12 @@ pretrained_stable_infos = {
     "stable-v3-medium": __hf_hub_stable_3_safetensors_dict__(
         "ckpt/stable-diffusion-3-medium-diffusers"
     ),
+    "stable-v3.5-medium": __hf_hub_stable_3_safetensors_dict__(
+        "ckpt/stable-diffusion-3.5-medium"
+    ),
+    "stable-v3.5-large": __hf_hub_stable_3_safetensors_dict__(
+        "yuvraj108c/stable-diffusion-3.5-large"
+    ),
     "stable-flux-schnell": __hf_hub_stable_flux_safetensors_dict__(
         "black-forest-labs/FLUX.1-schnell"
     ),
@@ -299,6 +312,16 @@ pretrained_stable_extensions_infos = {
     ),
     "stable-v1.5-controlnet-openpose": __hf_hub_controlnet_dict__(
         "lllyasviel/control_v11p_sd15_openpose"
+    ),
+    # sd 1.5 adapter
+    "stable-v1.5-adapter-canny": __hf_hub_adapter_dict__(
+        "diffusers/t2iadapter_canny_sd15v2"
+    ),
+    "stable-v1.5-adapter-depth": __hf_hub_adapter_dict__(
+        "diffusers/t2iadapter_depth_sd15v2"
+    ),
+    "stable-v1.5-adapter-sketch": __hf_hub_adapter_dict__(
+        "diffusers/t2iadapter_sketch_sd15v2"
     ),
     # sdxl controlnet
     "stable-xl-controlnet-canny": __hf_hub_controlnet_dict__(
@@ -419,6 +442,9 @@ from unitorch.cli.models.diffusers.modeling_controlnet_3 import (
 from unitorch.cli.models.diffusers.modeling_controlnet_flux import (
     ControlNetFluxForText2ImageGeneration,
 )
+from unitorch.cli.models.diffusers.modeling_adapter import (
+    StableAdapterForText2ImageGeneration,
+)
 from unitorch.cli.models.diffusers.modeling_adapter_xl import (
     StableXLAdapterForText2ImageGeneration,
 )
@@ -432,4 +458,5 @@ from unitorch.cli.models.diffusers.processing_controlnet_3 import ControlNet3Pro
 from unitorch.cli.models.diffusers.processing_controlnet_flux import (
     ControlNetFluxProcessor,
 )
+from unitorch.cli.models.diffusers.processing_adapter import AdapterProcessor
 from unitorch.cli.models.diffusers.processing_adapter_xl import AdapterXLProcessor

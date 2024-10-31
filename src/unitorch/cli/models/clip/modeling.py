@@ -3,7 +3,7 @@
 
 import torch
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
-from torch.cuda.amp import autocast
+from torch import autocast
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.clip import (
     ClipForPretrain as _ClipForPretrain,
@@ -98,7 +98,7 @@ class ClipForPretrain(_ClipForPretrain):
 
         return inst
 
-    @autocast()
+    @autocast(device_type="cuda")
     def forward(
         self,
         input_ids: torch.Tensor,
@@ -203,7 +203,7 @@ class ClipForClassification(_ClipForClassification):
 
         return inst
 
-    @autocast()
+    @autocast(device_type="cuda")
     def forward(
         self,
         input_ids: torch.Tensor,
@@ -308,7 +308,7 @@ class ClipForTextClassification(_ClipForTextClassification):
 
         return inst
 
-    @autocast()
+    @autocast(device_type="cuda")
     def forward(
         self,
         input_ids=None,
@@ -410,7 +410,7 @@ class ClipForImageClassification(_ClipForImageClassification):
 
         return inst
 
-    @autocast()
+    @autocast(device_type="cuda")
     def forward(
         self,
         pixel_values: torch.Tensor,
@@ -500,7 +500,7 @@ class ClipForMatching(_ClipForMatching):
 
         return inst
 
-    @autocast()
+    @autocast(device_type="cuda")
     def forward(
         self,
         input_ids: torch.Tensor,

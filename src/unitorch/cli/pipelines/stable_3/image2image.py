@@ -267,7 +267,7 @@ class Stable3ForImage2ImageGenerationPipeline(GenericStable3Model):
         image: Image.Image,
         neg_text: Optional[str] = "",
         guidance_scale: Optional[float] = 7.5,
-        strength: Optional[float] = 0.8,
+        strength: Optional[float] = 1.0,
         num_timesteps: Optional[int] = 50,
         seed: Optional[int] = 1123,
         scheduler: Optional[str] = None,

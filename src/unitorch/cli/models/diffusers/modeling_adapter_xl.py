@@ -3,7 +3,7 @@
 
 import torch
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
-from torch.cuda.amp import autocast
+from torch import autocast
 
 from unitorch.models.diffusers import (
     StableXLAdapterForText2ImageGeneration as _StableXLAdapterForText2ImageGeneration,
@@ -243,7 +243,7 @@ class StableXLAdapterForText2ImageGeneration(_StableXLAdapterForText2ImageGenera
 
         return inst
 
-    @autocast()
+    @autocast(device_type="cuda")
     def forward(
         self,
         input_ids: torch.Tensor,
@@ -266,7 +266,7 @@ class StableXLAdapterForText2ImageGeneration(_StableXLAdapterForText2ImageGenera
         return LossOutputs(loss=loss)
 
     @add_default_section_for_function("core/model/diffusers/text2image/adapter_xl")
-    @autocast()
+    @autocast(device_type="cuda")
     def generate(
         self,
         input_ids: torch.Tensor,

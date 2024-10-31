@@ -120,32 +120,6 @@ class ControlNetProcessor(_StableProcessor):
             negative_attention_mask=text_outputs.negative_attention_mask,
         )
 
-    @register_process("core/process/diffusion/controlnet/image2image")
-    def _image2image(
-        self,
-        prompt: str,
-        condition_image: Union[Image.Image, str],
-        input_image: Union[Image.Image, str],
-        image: Union[Image.Image, str],
-        negative_prompt: Optional[str] = "",
-        max_seq_length: Optional[int] = None,
-    ):
-        text_outputs = super().text2image_inputs(
-            prompt=prompt,
-            negative_prompt=negative_prompt,
-            max_seq_length=max_seq_length,
-        )
-        input_image_outputs = super().image2image_inputs(image=input_image)
-        image_outputs = super().image2image_inputs(image=image)
-        control_outputs = super().controlnet_inputs(condition_image)
-        return TensorsInputs(
-            input_ids=text_outputs.input_ids,
-            pixel_values=image_outputs.pixel_values,
-            input_pixel_values=input_image_outputs.pixel_values,
-            condition_pixel_values=control_outputs.pixel_values,
-            attention_mask=text_outputs.attention_mask,
-        )
-
     @register_process("core/process/diffusion/controlnet/image2image/inputs")
     def _image2image_inputs(
         self,
@@ -170,6 +144,34 @@ class ControlNetProcessor(_StableProcessor):
             condition_pixel_values=control_outputs.pixel_values,
             attention_mask=text_outputs.attention_mask,
             negative_attention_mask=text_outputs.negative_attention_mask,
+        )
+
+    @register_process("core/process/diffusion/controlnet/inpainting")
+    def _inpainting(
+        self,
+        prompt: str,
+        condition_image: Union[Image.Image, str],
+        image: Union[Image.Image, str],
+        mask_image: Union[Image.Image, str],
+        negative_prompt: Optional[str] = "",
+        max_seq_length: Optional[int] = None,
+    ):
+        text_outputs = super().text2image_inputs(
+            prompt=prompt,
+            negative_prompt=negative_prompt,
+            max_seq_length=max_seq_length,
+        )
+        image_outputs = super().inpainting_inputs(
+            image=image,
+            mask_image=mask_image,
+        )
+        control_outputs = super().controlnet_inputs(condition_image)
+        return TensorsInputs(
+            input_ids=text_outputs.input_ids,
+            pixel_values=image_outputs.pixel_values,
+            pixel_masks=image_outputs.pixel_masks,
+            condition_pixel_values=control_outputs.pixel_values,
+            attention_mask=text_outputs.attention_mask,
         )
 
     @register_process("core/process/diffusion/controlnet/inpainting/inputs")
@@ -201,3 +203,17 @@ class ControlNetProcessor(_StableProcessor):
             attention_mask=text_outputs.attention_mask,
             negative_attention_mask=text_outputs.negative_attention_mask,
         )
+
+    @register_process("core/process/diffusion/controlnet/inpainting/control_inputs")
+    def _inpainting_control_inputs(
+        self,
+        image: Union[Image.Image, str],
+        mask_image: Union[Image.Image, str],
+        key: Optional[str] = "condition_pixel_values",
+    ):
+        image_outputs = super().inpainting_control_inputs(
+            image=image,
+            mask_image=mask_image,
+        )
+        results = {key: image_outputs.pixel_values}
+        return TensorsInputs(**results)

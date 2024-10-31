@@ -3,7 +3,7 @@
 
 import torch
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
-from torch.cuda.amp import autocast
+from torch import autocast
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.mbart import MBartForGeneration as _MBartForGeneration
 from unitorch.cli import (
@@ -82,7 +82,7 @@ class MBartForGeneration(_MBartForGeneration):
 
         return inst
 
-    @autocast()
+    @autocast(device_type="cuda")
     def forward(
         self,
         input_ids: torch.Tensor,
@@ -112,7 +112,7 @@ class MBartForGeneration(_MBartForGeneration):
 
     @add_default_section_for_function("core/model/generation/mbart")
     @torch.no_grad()
-    @autocast()
+    @autocast(device_type="cuda")
     def generate(
         self,
         input_ids: torch.Tensor,

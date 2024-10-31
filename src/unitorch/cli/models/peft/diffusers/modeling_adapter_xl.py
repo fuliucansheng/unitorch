@@ -3,7 +3,7 @@
 
 import torch
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
-from torch.cuda.amp import autocast
+from torch import autocast
 
 from unitorch.models.peft.diffusers import (
     StableXLAdapterLoraForText2ImageGeneration as _StableXLAdapterLoraForText2ImageGeneration,
@@ -228,7 +228,7 @@ class StableXLAdapterLoraForText2ImageGeneration(
 
         return inst
 
-    @autocast()
+    @autocast(device_type="cuda")
     def forward(
         self,
         input_ids: torch.Tensor,
@@ -253,7 +253,7 @@ class StableXLAdapterLoraForText2ImageGeneration(
     @add_default_section_for_function(
         "core/model/diffusers/peft/lora/text2image/adapter_xl"
     )
-    @autocast()
+    @autocast(device_type="cuda")
     def generate(
         self,
         input_ids: torch.Tensor,

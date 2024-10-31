@@ -295,7 +295,7 @@ class Stable3Processor:
 
         return GenericOutputs(pixel_values=torch.stack(pixel_values, dim=0))
 
-    def inpainting_controlnet_inputs(
+    def inpainting_control_inputs(
         self,
         image: Union[Image.Image, str],
         mask_image: Union[Image.Image, str],

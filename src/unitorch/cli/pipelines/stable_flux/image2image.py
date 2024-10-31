@@ -229,7 +229,7 @@ class StableFluxForImage2ImageGenerationPipeline(GenericStableFluxModel):
         text: str,
         image: Image.Image,
         guidance_scale: Optional[float] = 7.5,
-        strength: Optional[float] = 0.8,
+        strength: Optional[float] = 1.0,
         num_timesteps: Optional[int] = 50,
         seed: Optional[int] = 1123,
         scheduler: Optional[str] = None,

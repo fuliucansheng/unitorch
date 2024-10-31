@@ -5,7 +5,7 @@ import os
 import logging
 import torch
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
-from torch.cuda.amp import autocast
+from torch import autocast
 from transformers.utils import is_remote_url
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.peft import (
@@ -123,7 +123,7 @@ class ClipLoraForMatching(_ClipLoraForMatching):
 
         return inst
 
-    @autocast()
+    @autocast(device_type="cuda")
     def forward(
         self,
         input_ids: torch.Tensor,

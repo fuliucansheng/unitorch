@@ -114,29 +114,6 @@ class StableProcessor(_StableProcessor):
             negative_attention_mask=outputs.negative_attention_mask,
         )
 
-    @register_process("core/process/diffusion/stable/image2image")
-    def _image2image(
-        self,
-        prompt: str,
-        input_image: Union[Image.Image, str],
-        image: Union[Image.Image, str],
-        negative_prompt: Optional[str] = "",
-        max_seq_length: Optional[int] = None,
-    ):
-        text_outputs = super().text2image_inputs(
-            prompt=prompt,
-            negative_prompt=negative_prompt,
-            max_seq_length=max_seq_length,
-        )
-        input_image_outputs = super().image2image_inputs(image=input_image)
-        image_outputs = super().image2image_inputs(image=image)
-        return TensorsInputs(
-            input_ids=text_outputs.input_ids,
-            attention_mask=text_outputs.attention_mask,
-            pixel_values=image_outputs.pixel_values,
-            input_pixel_values=input_image_outputs.pixel_values,
-        )
-
     @register_process("core/process/diffusion/stable/image2image/inputs")
     def _image2image_inputs(
         self,
@@ -157,6 +134,31 @@ class StableProcessor(_StableProcessor):
             pixel_values=image_outputs.pixel_values,
             negative_input_ids=text_outputs.negative_input_ids,
             negative_attention_mask=text_outputs.negative_attention_mask,
+        )
+
+    @register_process("core/process/diffusion/stable/inpainting")
+    def _inpainting(
+        self,
+        prompt: str,
+        image: Union[Image.Image, str],
+        mask_image: Union[Image.Image, str],
+        negative_prompt: Optional[str] = "",
+        max_seq_length: Optional[int] = None,
+    ):
+        text_outputs = super().text2image_inputs(
+            prompt=prompt,
+            negative_prompt=negative_prompt,
+            max_seq_length=max_seq_length,
+        )
+        image_outputs = super().inpainting_inputs(
+            image=image,
+            mask_image=mask_image,
+        )
+        return TensorsInputs(
+            input_ids=text_outputs.input_ids,
+            attention_mask=text_outputs.attention_mask,
+            pixel_values=image_outputs.pixel_values,
+            pixel_masks=image_outputs.pixel_masks,
         )
 
     @register_process("core/process/diffusion/stable/inpainting/inputs")

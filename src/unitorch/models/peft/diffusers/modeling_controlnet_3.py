@@ -19,6 +19,7 @@ from diffusers.models import (
 )
 from diffusers.pipelines import (
     StableDiffusion3ControlNetPipeline,
+    StableDiffusion3ControlNetInpaintingPipeline,
 )
 from unitorch.models import (
     GenericModel,
@@ -407,6 +408,7 @@ class ControlNet3LoraForText2ImageGeneration(GenericControlNet3LoraModel):
 
     def generate(
         self,
+        condition_pixel_values: torch.Tensor,
         input_ids: torch.Tensor,
         input2_ids: torch.Tensor,
         input3_ids: torch.Tensor,
@@ -422,6 +424,7 @@ class ControlNet3LoraForText2ImageGeneration(GenericControlNet3LoraModel):
         height: Optional[int] = 1024,
         width: Optional[int] = 1024,
         guidance_scale: Optional[float] = 5.0,
+        controlnet_conditioning_scale: Optional[Union[float, List[float]]] = 1.0,
     ):
         outputs = self.get_prompt_outputs(
             input_ids=input_ids,
@@ -439,6 +442,7 @@ class ControlNet3LoraForText2ImageGeneration(GenericControlNet3LoraModel):
         )
 
         images = self.pipeline(
+            control_image=condition_pixel_values,
             prompt_embeds=outputs.prompt_embeds,
             negative_prompt_embeds=outputs.negative_prompt_embeds,
             pooled_prompt_embeds=outputs.pooled_prompt_embeds,
@@ -449,6 +453,7 @@ class ControlNet3LoraForText2ImageGeneration(GenericControlNet3LoraModel):
             height=height,
             width=width,
             guidance_scale=guidance_scale,
+            controlnet_conditioning_scale=float(controlnet_conditioning_scale),
             output_type="np.array",
         ).images
 

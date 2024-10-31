@@ -3,7 +3,7 @@
 
 import json
 import torch
-from torch.cuda.amp import autocast
+from torch import autocast
 import torch.nn.functional as F
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 import diffusers.schedulers as schedulers
@@ -62,7 +62,6 @@ class ControlNet3ForText2ImageGeneration(GenericStable3Model):
         vae_config_path: str,
         controlnet_configs_path: Union[str, List[str]],
         scheduler_config_path: str,
-        inpainting_controlnet_configs_path: Union[str, List[str]] = None,
         quant_config_path: Optional[str] = None,
         image_size: Optional[int] = None,
         in_channels: Optional[int] = None,
@@ -81,7 +80,6 @@ class ControlNet3ForText2ImageGeneration(GenericStable3Model):
             text3_config_path=text3_config_path,
             vae_config_path=vae_config_path,
             controlnet_configs_path=controlnet_configs_path,
-            inpainting_controlnet_configs_path=inpainting_controlnet_configs_path,
             scheduler_config_path=scheduler_config_path,
             quant_config_path=quant_config_path,
             image_size=image_size,
@@ -115,24 +113,10 @@ class ControlNet3ForText2ImageGeneration(GenericStable3Model):
         input2_ids: torch.Tensor,
         input3_ids: torch.Tensor,
         condition_pixel_values: torch.Tensor,
-        inpainting_condition_pixel_values: torch.Tensor = None,
         attention_mask: Optional[torch.Tensor] = None,
         attention2_mask: Optional[torch.Tensor] = None,
         attention3_mask: Optional[torch.Tensor] = None,
     ):
-        if inpainting_condition_pixel_values is not None:
-            if self.num_controlnets == 1:
-                condition_pixel_values = torch.stack(
-                    [condition_pixel_values, inpainting_condition_pixel_values], dim=1
-                )
-            else:
-                condition_pixel_values = torch.cat(
-                    [
-                        condition_pixel_values,
-                        inpainting_condition_pixel_values.unsqueeze(1),
-                    ],
-                    dim=1,
-                )
         prompt_outputs = self.text(
             input_ids,
             # attention_mask,
@@ -217,7 +201,6 @@ class ControlNet3ForText2ImageGeneration(GenericStable3Model):
         negative_input_ids: torch.Tensor,
         negative_input2_ids: torch.Tensor,
         negative_input3_ids: torch.Tensor,
-        inpainting_condition_pixel_values: torch.Tensor = None,
         attention_mask: Optional[torch.Tensor] = None,
         attention2_mask: Optional[torch.Tensor] = None,
         attention3_mask: Optional[torch.Tensor] = None,
@@ -249,19 +232,6 @@ class ControlNet3ForText2ImageGeneration(GenericStable3Model):
         Returns:
             GenericOutputs: Generated images.
         """
-        if inpainting_condition_pixel_values is not None:
-            if self.num_controlnets == 1:
-                condition_pixel_values = torch.stack(
-                    [condition_pixel_values, inpainting_condition_pixel_values], dim=1
-                )
-            else:
-                condition_pixel_values = torch.cat(
-                    [
-                        condition_pixel_values,
-                        inpainting_condition_pixel_values.unsqueeze(1),
-                    ],
-                    dim=1,
-                )
         outputs = self.get_prompt_outputs(
             input_ids=input_ids,
             input2_ids=input2_ids,
@@ -342,7 +312,7 @@ class ControlNet3ForImageInpainting(GenericStable3Model):
         vae_config_path: str,
         controlnet_configs_path: Union[str, List[str]],
         scheduler_config_path: str,
-        inpainting_controlnet_configs_path: Union[str, List[str]] = None,
+        inpainting_controlnet_config_path: Union[str] = None,
         quant_config_path: Optional[str] = None,
         image_size: Optional[int] = None,
         in_channels: Optional[int] = None,
@@ -361,7 +331,7 @@ class ControlNet3ForImageInpainting(GenericStable3Model):
             text3_config_path=text3_config_path,
             vae_config_path=vae_config_path,
             controlnet_configs_path=controlnet_configs_path,
-            inpainting_controlnet_configs_path=inpainting_controlnet_configs_path,
+            inpainting_controlnet_config_path=inpainting_controlnet_config_path,
             scheduler_config_path=scheduler_config_path,
             quant_config_path=quant_config_path,
             image_size=image_size,
@@ -395,7 +365,6 @@ class ControlNet3ForImageInpainting(GenericStable3Model):
 
     def generate(
         self,
-        condition_pixel_values: torch.Tensor,
         input_ids: torch.Tensor,
         input2_ids: torch.Tensor,
         input3_ids: torch.Tensor,
@@ -404,6 +373,7 @@ class ControlNet3ForImageInpainting(GenericStable3Model):
         negative_input_ids: torch.Tensor,
         negative_input2_ids: torch.Tensor,
         negative_input3_ids: torch.Tensor,
+        condition_pixel_values: torch.Tensor = None,
         inpainting_condition_pixel_values: torch.Tensor = None,
         attention_mask: Optional[torch.Tensor] = None,
         attention2_mask: Optional[torch.Tensor] = None,
@@ -411,9 +381,10 @@ class ControlNet3ForImageInpainting(GenericStable3Model):
         negative_attention_mask: Optional[torch.Tensor] = None,
         negative_attention2_mask: Optional[torch.Tensor] = None,
         negative_attention3_mask: Optional[torch.Tensor] = None,
-        strength: Optional[float] = 0.8,
+        strength: Optional[float] = 1.0,
         guidance_scale: Optional[float] = 5.0,
         controlnet_conditioning_scale: Optional[Union[float, List[float]]] = None,
+        inpainting_controlnet_conditioning_scale: Optional[float] = None,
     ):
         """
         Generate images using the model.
@@ -435,11 +406,14 @@ class ControlNet3ForImageInpainting(GenericStable3Model):
         Returns:
             GenericOutputs: Generated images.
         """
+        assert (
+            condition_pixel_values is not None
+            or inpainting_condition_pixel_values is not None
+        )
         if inpainting_condition_pixel_values is not None:
             if self.num_controlnets == 1:
-                condition_pixel_values = torch.stack(
-                    [condition_pixel_values, inpainting_condition_pixel_values], dim=1
-                )
+                condition_pixel_values = inpainting_condition_pixel_values
+                controlnet_conditioning_scale = inpainting_controlnet_conditioning_scale
             else:
                 condition_pixel_values = torch.cat(
                     [
@@ -448,6 +422,24 @@ class ControlNet3ForImageInpainting(GenericStable3Model):
                     ],
                     dim=1,
                 )
+                if controlnet_conditioning_scale is None:
+                    controlnet_conditioning_scale = [1.0] * (self.num_controlnets - 1)
+                controlnet_conditioning_scale += [
+                    inpainting_controlnet_conditioning_scale
+                ]
+        else:
+            if controlnet_conditioning_scale is None:
+                if self.num_controlnets == 1:
+                    controlnet_conditioning_scale = 1.0
+                else:
+                    controlnet_conditioning_scale = [1.0] * self.num_controlnets
+            elif (
+                not isinstance(controlnet_conditioning_scale, list)
+                and self.num_controlnets > 1
+            ):
+                controlnet_conditioning_scale = [
+                    controlnet_conditioning_scale
+                ] * self.num_controlnets
         outputs = self.get_prompt_outputs(
             input_ids=input_ids,
             input2_ids=input2_ids,
@@ -462,18 +454,6 @@ class ControlNet3ForImageInpainting(GenericStable3Model):
             negative_attention2_mask=negative_attention2_mask,
             negative_attention3_mask=negative_attention3_mask,
         )
-        if controlnet_conditioning_scale is None:
-            if self.num_controlnets == 1:
-                controlnet_conditioning_scale = 1.0
-            else:
-                controlnet_conditioning_scale = [1.0] * self.num_controlnets
-        elif (
-            not isinstance(controlnet_conditioning_scale, list)
-            and self.num_controlnets > 1
-        ):
-            controlnet_conditioning_scale = [
-                controlnet_conditioning_scale
-            ] * self.num_controlnets
 
         images = self.pipeline(
             image=pixel_values,

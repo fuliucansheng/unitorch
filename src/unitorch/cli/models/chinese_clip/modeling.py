@@ -3,7 +3,7 @@
 
 import torch
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
-from torch.cuda.amp import autocast
+from torch import autocast
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.chinese_clip import (
     ChineseClipForPretrain as _ChineseClipForPretrain,
@@ -99,7 +99,7 @@ class ChineseClipForPretrain(_ChineseClipForPretrain):
 
         return inst
 
-    @autocast()
+    @autocast(device_type="cuda")
     def forward(
         self,
         input_ids: torch.Tensor,
@@ -208,7 +208,7 @@ class ChineseClipForClassification(_ChineseClipForClassification):
 
         return inst
 
-    @autocast()
+    @autocast(device_type="cuda")
     def forward(
         self,
         input_ids: torch.Tensor,
@@ -317,7 +317,7 @@ class ChineseClipForTextClassification(_ChineseClipForTextClassification):
 
         return inst
 
-    @autocast()
+    @autocast(device_type="cuda")
     def forward(
         self,
         input_ids=None,
@@ -423,7 +423,7 @@ class ChineseClipForImageClassification(_ChineseClipForImageClassification):
 
         return inst
 
-    @autocast()
+    @autocast(device_type="cuda")
     def forward(
         self,
         pixel_values: torch.Tensor,

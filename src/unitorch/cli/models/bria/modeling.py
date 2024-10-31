@@ -4,7 +4,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.cuda.amp import autocast
+from torch import autocast
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
 from unitorch.models.bria import BRIAForSegmentation as _BRIAForSegmentation
 from unitorch.cli import (
@@ -44,7 +44,7 @@ class BRIAForSegmentation(_BRIAForSegmentation):
 
         return inst
 
-    @autocast()
+    @autocast(device_type="cuda")
     def forward(self, images):
         outputs = super().forward(images)
         return SegmentationOutputs(

@@ -38,15 +38,16 @@ from unitorch.cli.webuis import SimpleWebUI
 class Stable3ImageInpaintingWebUI(SimpleWebUI):
     pretrained_names = list(pretrained_stable_infos.keys())
     supported_pretrained_names = matched_pretrained_names(
-        pretrained_names, "stable-v3-"
+        pretrained_names, ["^stable-v3-", "^stable-v3.5-"]
     )
     pretrained_extension_names = list(pretrained_stable_extensions_infos.keys())
     supported_controlnet_names = matched_pretrained_names(
-        pretrained_extension_names, "^stable-v3-controlnet-"
+        pretrained_extension_names,
+        ["^stable-v3-controlnet-", "^stable-v3.5-controlnet-"],
     )
     supported_controlnet_process_names = list(controlnet_processes.keys())
     supported_lora_names = matched_pretrained_names(
-        pretrained_extension_names, "stable-v3-lora-"
+        pretrained_extension_names, ["^stable-v3-lora-", "^stable-v3.5-lora-"]
     )
     supported_schedulers = supported_scheduler_names
 

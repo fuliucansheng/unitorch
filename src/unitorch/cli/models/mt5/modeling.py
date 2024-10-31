@@ -3,7 +3,7 @@
 
 import torch
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
-from torch.cuda.amp import autocast
+from torch import autocast
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.mt5 import MT5ForGeneration as _MT5ForGeneration
 from unitorch.cli import (
@@ -73,7 +73,7 @@ class MT5ForGeneration(_MT5ForGeneration):
 
         return inst
 
-    @autocast()
+    @autocast(device_type="cuda")
     def forward(
         self,
         input_ids: torch.Tensor,
@@ -103,7 +103,7 @@ class MT5ForGeneration(_MT5ForGeneration):
 
     @add_default_section_for_function("core/model/generation/mt5")
     @torch.no_grad()
-    @autocast()
+    @autocast(device_type="cuda")
     def generate(
         self,
         input_ids: torch.Tensor,
