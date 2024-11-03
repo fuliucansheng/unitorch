@@ -382,7 +382,14 @@ class ControlNetFluxLoraForText2ImageGeneration(GenericControlNetFluxLoraModel):
                 for latent in condition_latents
             ]
 
-        if self.controlnet.config.guidance_embeds:
+        if self.num_controlnets == 1:
+            use_guidance = self.controlnet.config.guidance_embeds
+        else:
+            use_guidance = [net.config.guidance_embeds for net in self.controlnet.nets]
+            assert all(g == use_guidance[0] for g in use_guidance)
+            use_guidance = use_guidance[0]
+
+        if use_guidance:
             guidance = torch.full(
                 [1], self.guidance_scale, device=self.device, dtype=torch.float32
             )
@@ -414,7 +421,7 @@ class ControlNetFluxLoraForText2ImageGeneration(GenericControlNetFluxLoraModel):
                     if mode is None:
                         return None
                     _mode = torch.tensor(mode).to(self.device).long()
-                    return _mode.expand(latents.shape[0]).reshape(-1, 1)
+                    return _mode.expand(latents.shape[0]).reshape(-1)
 
                 controlnet_mode = [
                     _get_mode(mode) for mode in self.controlnet_conditioning_mode
@@ -427,7 +434,9 @@ class ControlNetFluxLoraForText2ImageGeneration(GenericControlNetFluxLoraModel):
             pooled_projections=outputs.pooled_prompt_embeds,
             controlnet_cond=condition_latents,
             controlnet_mode=controlnet_mode,
-            conditioning_scale=1.0,
+            conditioning_scale=1.0
+            if self.num_controlnets == 1
+            else [1.0] * self.num_controlnets,
             txt_ids=text_ids,
             img_ids=latent_image_ids,
             return_dict=False,

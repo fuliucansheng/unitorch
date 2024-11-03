@@ -115,7 +115,7 @@ class ControlNet3Processor(_Stable3Processor):
         self,
         prompt: str,
         image: Union[Image.Image, str],
-        condition_image: Union[Image.Image, str],
+        condition_image: Union[Image.Image, str, List[Union[Image.Image, str]]],
         prompt2: Optional[str] = None,
         prompt3: Optional[str] = None,
         max_seq_length: Optional[int] = None,
@@ -129,7 +129,10 @@ class ControlNet3Processor(_Stable3Processor):
             max_seq_length=max_seq_length,
             max_seq_length2=max_seq_length2,
         )
-        control_outputs = self.controlnet_inputs(condition_image)
+        if isinstance(condition_image, (list, tuple)):
+            control_outputs = super().controlnets_inputs(condition_image)
+        else:
+            control_outputs = super().controlnet_inputs(condition_image=condition_image)
         return TensorsInputs(
             pixel_values=outputs.pixel_values,
             condition_pixel_values=control_outputs.pixel_values,
@@ -145,7 +148,7 @@ class ControlNet3Processor(_Stable3Processor):
     def _text2image_inputs(
         self,
         prompt: str,
-        condition_image: Union[Image.Image, str],
+        condition_image: Union[Image.Image, str, List[Union[Image.Image, str]]],
         prompt2: Optional[str] = None,
         prompt3: Optional[str] = None,
         negative_prompt: Optional[str] = "",
@@ -164,7 +167,10 @@ class ControlNet3Processor(_Stable3Processor):
             max_seq_length=max_seq_length,
             max_seq_length2=max_seq_length2,
         )
-        control_outputs = super().controlnet_inputs(condition_image=condition_image)
+        if isinstance(condition_image, (list, tuple)):
+            control_outputs = super().controlnets_inputs(condition_image)
+        else:
+            control_outputs = super().controlnet_inputs(condition_image=condition_image)
         return TensorsInputs(
             input_ids=text_outputs.input_ids,
             input2_ids=text_outputs.input2_ids,
@@ -185,7 +191,7 @@ class ControlNet3Processor(_Stable3Processor):
     def _inpainting(
         self,
         prompt: str,
-        condition_image: Union[Image.Image, str],
+        condition_image: Union[Image.Image, str, List[Union[Image.Image, str]]],
         image: Union[Image.Image, str],
         mask_image: Union[Image.Image, str],
         prompt2: Optional[str] = None,
@@ -204,7 +210,10 @@ class ControlNet3Processor(_Stable3Processor):
             image=image,
             mask_image=mask_image,
         )
-        control_outputs = super().controlnet_inputs(condition_image)
+        if isinstance(condition_image, (list, tuple)):
+            control_outputs = super().controlnets_inputs(condition_image)
+        else:
+            control_outputs = super().controlnet_inputs(condition_image=condition_image)
         return TensorsInputs(
             input_ids=text_outputs.input_ids,
             input2_ids=text_outputs.input2_ids,
@@ -227,7 +236,7 @@ class ControlNet3Processor(_Stable3Processor):
     def _inpainting_inputs(
         self,
         prompt: str,
-        condition_image: Union[Image.Image, str],
+        condition_image: Union[Image.Image, str, List[Union[Image.Image, str]]],
         image: Union[Image.Image, str],
         mask_image: Union[Image.Image, str],
         prompt2: Optional[str] = None,
@@ -252,7 +261,10 @@ class ControlNet3Processor(_Stable3Processor):
             image=image,
             mask_image=mask_image,
         )
-        control_outputs = super().controlnet_inputs(condition_image)
+        if isinstance(condition_image, (list, tuple)):
+            control_outputs = super().controlnets_inputs(condition_image)
+        else:
+            control_outputs = super().controlnet_inputs(condition_image=condition_image)
         return TensorsInputs(
             input_ids=text_outputs.input_ids,
             input2_ids=text_outputs.input2_ids,

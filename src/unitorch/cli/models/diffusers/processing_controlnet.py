@@ -81,7 +81,7 @@ class ControlNetProcessor(_StableProcessor):
         self,
         prompt: str,
         image: Union[Image.Image, str],
-        condition_image: Union[Image.Image, str],
+        condition_image: Union[Image.Image, str, List[Union[Image.Image, str]]],
         max_seq_length: Optional[int] = None,
     ):
         outputs = super().text2image(
@@ -89,7 +89,10 @@ class ControlNetProcessor(_StableProcessor):
             image=image,
             max_seq_length=max_seq_length,
         )
-        control_outputs = super().controlnet_inputs(condition_image)
+        if isinstance(condition_image, (list, tuple)):
+            control_outputs = super().controlnets_inputs(condition_image)
+        else:
+            control_outputs = super().controlnet_inputs(condition_image=condition_image)
 
         return TensorsInputs(
             input_ids=outputs.input_ids,
@@ -102,7 +105,7 @@ class ControlNetProcessor(_StableProcessor):
     def _text2image_inputs(
         self,
         prompt: str,
-        condition_image: Union[Image.Image, str],
+        condition_image: Union[Image.Image, str, List[Union[Image.Image, str]]],
         negative_prompt: Optional[str] = "",
         max_seq_length: Optional[int] = None,
     ):
@@ -111,7 +114,10 @@ class ControlNetProcessor(_StableProcessor):
             negative_prompt=negative_prompt,
             max_seq_length=max_seq_length,
         )
-        control_outputs = super().controlnet_inputs(condition_image)
+        if isinstance(condition_image, (list, tuple)):
+            control_outputs = super().controlnets_inputs(condition_image)
+        else:
+            control_outputs = super().controlnet_inputs(condition_image=condition_image)
         return TensorsInputs(
             input_ids=text_outputs.input_ids,
             negative_input_ids=text_outputs.negative_input_ids,
@@ -124,7 +130,7 @@ class ControlNetProcessor(_StableProcessor):
     def _image2image_inputs(
         self,
         prompt: str,
-        condition_image: Union[Image.Image, str],
+        condition_image: Union[Image.Image, str, List[Union[Image.Image, str]]],
         image: Union[Image.Image, str],
         negative_prompt: Optional[str] = "",
         max_seq_length: Optional[int] = None,
@@ -136,7 +142,10 @@ class ControlNetProcessor(_StableProcessor):
         )
 
         image_outputs = super().image2image_inputs(image=image)
-        control_outputs = super().controlnet_inputs(condition_image)
+        if isinstance(condition_image, (list, tuple)):
+            control_outputs = super().controlnets_inputs(condition_image)
+        else:
+            control_outputs = super().controlnet_inputs(condition_image=condition_image)
         return TensorsInputs(
             input_ids=text_outputs.input_ids,
             negative_input_ids=text_outputs.negative_input_ids,
@@ -150,7 +159,7 @@ class ControlNetProcessor(_StableProcessor):
     def _inpainting(
         self,
         prompt: str,
-        condition_image: Union[Image.Image, str],
+        condition_image: Union[Image.Image, str, List[Union[Image.Image, str]]],
         image: Union[Image.Image, str],
         mask_image: Union[Image.Image, str],
         negative_prompt: Optional[str] = "",
@@ -165,7 +174,10 @@ class ControlNetProcessor(_StableProcessor):
             image=image,
             mask_image=mask_image,
         )
-        control_outputs = super().controlnet_inputs(condition_image)
+        if isinstance(condition_image, (list, tuple)):
+            control_outputs = super().controlnets_inputs(condition_image)
+        else:
+            control_outputs = super().controlnet_inputs(condition_image=condition_image)
         return TensorsInputs(
             input_ids=text_outputs.input_ids,
             pixel_values=image_outputs.pixel_values,
@@ -178,7 +190,7 @@ class ControlNetProcessor(_StableProcessor):
     def _inpainting_inputs(
         self,
         prompt: str,
-        condition_image: Union[Image.Image, str],
+        condition_image: Union[Image.Image, str, List[Union[Image.Image, str]]],
         image: Union[Image.Image, str],
         mask_image: Union[Image.Image, str],
         negative_prompt: Optional[str] = "",
@@ -193,7 +205,10 @@ class ControlNetProcessor(_StableProcessor):
             image=image,
             mask_image=mask_image,
         )
-        control_outputs = super().controlnet_inputs(condition_image)
+        if isinstance(condition_image, (list, tuple)):
+            control_outputs = super().controlnets_inputs(condition_image)
+        else:
+            control_outputs = super().controlnet_inputs(condition_image=condition_image)
         return TensorsInputs(
             input_ids=text_outputs.input_ids,
             negative_input_ids=text_outputs.negative_input_ids,
