@@ -274,7 +274,6 @@ class StableXLForText2ImageFastAPIPipeline(GenericStableXLModel):
             text,
             negative_prompt=neg_text,
         )
-        self.scheduler.set_timesteps(num_inference_steps=num_timesteps)
 
         inputs = text_inputs
         if freeu_params is not None:
@@ -308,6 +307,7 @@ class StableXLForText2ImageFastAPIPipeline(GenericStableXLModel):
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),
+            num_inference_steps=num_timesteps,
             height=height,
             width=width,
             guidance_scale=guidance_scale,

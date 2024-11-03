@@ -138,8 +138,6 @@ class GenericStableXLLoraModel(GenericPeftModel, QuantizationMixin):
         if enable_unet_adapter:
             self.unet.add_adapter(lora_config)
 
-        self.scheduler.set_timesteps(num_inference_steps=self.num_infer_timesteps)
-
 
 class StableXLLoraForText2ImageGeneration(GenericStableXLLoraModel):
     def __init__(
@@ -336,6 +334,7 @@ class StableXLLoraForText2ImageGeneration(GenericStableXLLoraModel):
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),
+            num_inference_steps=self.num_infer_timesteps,
             height=height,
             width=width,
             guidance_scale=guidance_scale,
@@ -562,6 +561,7 @@ class StableXLLoraForImageInpainting(GenericStableXLLoraModel):
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),
+            num_inference_steps=self.num_infer_timesteps,
             width=pixel_values.size(-1),
             height=pixel_values.size(-2),
             strength=strength,

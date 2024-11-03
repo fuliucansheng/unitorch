@@ -168,6 +168,7 @@ class ControlNetForText2ImageGeneration(GenericStableModel):
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),
+            num_inference_steps=self.num_infer_timesteps,
             height=height,
             width=width,
             guidance_scale=guidance_scale,
@@ -278,6 +279,7 @@ class ControlNetForImage2ImageGeneration(GenericStableModel):
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),
+            num_inference_steps=self.num_infer_timesteps,
             strength=strength,
             guidance_scale=guidance_scale,
             controlnet_conditioning_scale=controlnet_conditioning_scale,
@@ -414,6 +416,7 @@ class ControlNetForImageInpainting(GenericStableModel):
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),
+            num_inference_steps=self.num_infer_timesteps,
             width=pixel_values.size(-1),
             height=pixel_values.size(-2),
             strength=strength,

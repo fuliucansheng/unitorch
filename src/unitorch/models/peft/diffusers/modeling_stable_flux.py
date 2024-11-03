@@ -34,6 +34,11 @@ from unitorch.models import (
 )
 from unitorch.models.peft import GenericPeftModel
 from unitorch.models.diffusers import compute_snr
+from unitorch.models.diffusers.modeling_stable_flux import (
+    _prepare_latent_image_ids,
+    _pack_latents,
+    _unpack_latents,
+)
 
 
 class GenericStableFluxLoraModel(GenericPeftModel, QuantizationMixin):
@@ -247,6 +252,7 @@ class StableFluxLoraForText2ImageGeneration(GenericStableFluxLoraModel):
         enable_text_adapter: Optional[bool] = True,
         enable_transformer_adapter: Optional[bool] = True,
         seed: Optional[int] = 1123,
+        guidance_scale: Optional[float] = 3.5,
     ):
         super().__init__(
             config_path=config_path,
@@ -282,6 +288,7 @@ class StableFluxLoraForText2ImageGeneration(GenericStableFluxLoraModel):
             tokenizer_2=None,
         )
         self.pipeline.set_progress_bar_config(disable=True)
+        self.guidance_scale = guidance_scale
 
     def forward(
         self,
@@ -301,7 +308,7 @@ class StableFluxLoraForText2ImageGeneration(GenericStableFluxLoraModel):
         latents = (
             latents - self.vae.config.shift_factor
         ) * self.vae.config.scaling_factor
-        latent_image_ids = FluxPipeline._prepare_latent_image_ids(
+        latent_image_ids = _prepare_latent_image_ids(
             latents.shape[0],
             latents.shape[2] // 2,
             latents.shape[3] // 2,
@@ -325,7 +332,7 @@ class StableFluxLoraForText2ImageGeneration(GenericStableFluxLoraModel):
         sigmas = self.get_sigmas(timesteps, n_dim=latents.ndim, dtype=latents.dtype)
         noise_latents = (1.0 - sigmas) * latents + sigmas * noise
 
-        noise_latents = FluxPipeline._pack_latents(
+        noise_latents = _pack_latents(
             noise_latents,
             batch_size=latents.shape[0],
             num_channels_latents=latents.shape[1],
@@ -337,10 +344,18 @@ class StableFluxLoraForText2ImageGeneration(GenericStableFluxLoraModel):
             device=self.device, dtype=self.dtype
         )
 
+        if self.transformer.config.guidance_embeds:
+            guidance = torch.full(
+                [1], self.guidance_scale, device=self.device, dtype=torch.float32
+            )
+            guidance = guidance.expand(latents.shape[0])
+        else:
+            guidance = None
+
         outputs = self.transformer(
             hidden_states=noise_latents,
             timestep=timesteps / 1000,
-            guidance=None,
+            guidance=guidance,
             encoder_hidden_states=outputs.prompt_embeds,
             pooled_projections=outputs.pooled_prompt_embeds,
             txt_ids=text_ids,
@@ -349,7 +364,7 @@ class StableFluxLoraForText2ImageGeneration(GenericStableFluxLoraModel):
         )[0]
 
         vae_scale_factor = 2 ** (len(self.vae.config.block_out_channels) - 1)
-        outputs = FluxPipeline._unpack_latents(
+        outputs = _unpack_latents(
             outputs,
             height=latents.shape[2] * vae_scale_factor,
             width=latents.shape[3] * vae_scale_factor,
@@ -392,6 +407,7 @@ class StableFluxLoraForText2ImageGeneration(GenericStableFluxLoraModel):
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),
+            num_inference_steps=self.num_infer_timesteps,
             height=height,
             width=width,
             guidance_scale=guidance_scale,

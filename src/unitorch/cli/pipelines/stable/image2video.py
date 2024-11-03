@@ -203,7 +203,6 @@ class StableForImage2VideoGenerationPipeline(StableForImage2VideoGeneration):
             self.scheduler = Schedulers.get(scheduler).from_config(
                 self.scheduler.config
             )
-        self.scheduler.set_timesteps(num_inference_steps=num_timesteps)
 
         self.pipeline = StableVideoDiffusionPipelineV2(
             vae=self.vae,

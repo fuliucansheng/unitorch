@@ -10,7 +10,11 @@ from peft import LoraConfig
 from transformers import CLIPTextConfig, CLIPTextModel, CLIPTextModelWithProjection
 from transformers.models.t5.configuration_t5 import T5Config
 from transformers.models.t5.modeling_t5 import T5EncoderModel
-from diffusers.schedulers import SchedulerMixin
+from diffusers.schedulers import SchedulerMixin, FlowMatchEulerDiscreteScheduler
+from diffusers.training_utils import (
+    compute_loss_weighting_for_sd3,
+    compute_density_for_timestep_sampling,
+)
 from diffusers.models import (
     SD3ControlNetModel,
     SD3MultiControlNetModel,
@@ -133,7 +137,9 @@ class GenericControlNet3LoraModel(GenericPeftModel, QuantizationMixin):
             self.num_controlnets = 0
 
         scheduler_config_dict = json.load(open(scheduler_config_path))
-        scheduler_class_name = scheduler_config_dict.get("_class_name", "DDPMScheduler")
+        scheduler_class_name = scheduler_config_dict.get(
+            "_class_name", "FlowMatchEulerDiscreteScheduler"
+        )
         assert hasattr(schedulers, scheduler_class_name)
         scheduler_class = getattr(schedulers, scheduler_class_name)
         assert issubclass(scheduler_class, SchedulerMixin)
@@ -174,7 +180,16 @@ class GenericControlNet3LoraModel(GenericPeftModel, QuantizationMixin):
         if enable_transformer_adapter:
             self.transformer.add_adapter(lora_config)
 
-        self.scheduler.set_timesteps(num_inference_steps=self.num_infer_timesteps)
+    def get_sigmas(self, timesteps, n_dim=4, dtype=torch.float32):
+        sigmas = self.scheduler.sigmas.to(device=self.device, dtype=dtype)
+        schedule_timesteps = self.scheduler.timesteps.to(self.device)
+        timesteps = timesteps.to(self.device)
+        step_indices = [(schedule_timesteps == t).nonzero().item() for t in timesteps]
+
+        sigma = sigmas[step_indices].flatten()
+        while len(sigma.shape) < n_dim:
+            sigma = sigma.unsqueeze(-1)
+        return sigma
 
     def get_prompt_outputs(
         self,
@@ -388,18 +403,18 @@ class ControlNet3LoraForText2ImageGeneration(GenericControlNet3LoraModel):
         noise = torch.randn(latents.shape).to(latents.device)
         batch = latents.size(0)
 
-        timesteps = torch.randint(
-            0,
-            self.scheduler.config.num_train_timesteps,
-            (batch,),
-            device=pixel_values.device,
-        ).long()
-
-        noise_latents = self.scheduler.add_noise(
-            latents,
-            noise,
-            timesteps,
+        u = compute_density_for_timestep_sampling(
+            weighting_scheme="none",
+            batch_size=batch,
+            logit_mean=0.0,
+            logit_std=1.0,
+            mode_scale=1.29,
         )
+        indices = (u * self.scheduler.config.num_train_timesteps).long()
+        timesteps = self.scheduler.timesteps[indices].to(device=self.device)
+
+        sigmas = self.get_sigmas(timesteps, n_dim=latents.ndim, dtype=latents.dtype)
+        noise_latents = (1.0 - sigmas) * latents + sigmas * noise
 
         condition_latents = self.vae.encode(condition_pixel_values).latent_dist.sample()
         condition_latents = condition_latents * self.vae.config.scaling_factor
@@ -420,9 +435,17 @@ class ControlNet3LoraForText2ImageGeneration(GenericControlNet3LoraModel):
             block_controlnet_hidden_states=control_block_samples,
         ).sample
 
-        if self.scheduler.config.prediction_type == "v_prediction":
-            noise = self.scheduler.get_velocity(latents, noise, timesteps)
-        loss = F.mse_loss(outputs, noise, reduction="mean")
+        weighting = compute_loss_weighting_for_sd3(
+            weighting_scheme="none", sigmas=sigmas
+        )
+        target = noise - latents
+        loss = torch.mean(
+            (weighting.float() * (outputs.float() - target.float()) ** 2).reshape(
+                target.shape[0], -1
+            ),
+            1,
+        )
+        loss = loss.mean()
         return loss
 
     def generate(
@@ -469,6 +492,7 @@ class ControlNet3LoraForText2ImageGeneration(GenericControlNet3LoraModel):
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),
+            num_inference_steps=self.num_infer_timesteps,
             height=height,
             width=width,
             guidance_scale=guidance_scale,

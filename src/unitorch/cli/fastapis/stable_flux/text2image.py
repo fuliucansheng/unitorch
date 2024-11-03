@@ -251,8 +251,6 @@ class StableFluxForText2ImageFastAPIPipeline(GenericStableFluxModel):
         text_inputs = self.processor.text2image_inputs(
             text,
         )
-        if not self.scheduler.use_dynamic_shifting:
-            self.scheduler.set_timesteps(num_inference_steps=num_timesteps)
 
         inputs = text_inputs
         self.seed = seed
@@ -276,6 +274,7 @@ class StableFluxForText2ImageFastAPIPipeline(GenericStableFluxModel):
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),
+            num_inference_steps=num_timesteps,
             height=height,
             width=width,
             guidance_scale=guidance_scale,

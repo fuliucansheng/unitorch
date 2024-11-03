@@ -153,8 +153,6 @@ class GenericStableXLAdapterLoraModel(GenericPeftModel, QuantizationMixin):
         if enable_unet_adapter:
             self.unet.add_adapter(lora_config)
 
-        self.scheduler.set_timesteps(num_inference_steps=self.num_infer_timesteps)
-
     def get_prompt_outputs(
         self,
         input_ids: torch.Tensor,
@@ -429,6 +427,7 @@ class StableXLAdapterLoraForText2ImageGeneration(GenericStableXLAdapterLoraModel
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),
+            num_inference_steps=self.num_infer_timesteps,
             height=height,
             width=width,
             guidance_scale=guidance_scale,

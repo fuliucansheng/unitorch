@@ -64,6 +64,7 @@ class ControlNetFluxLoraForText2ImageGeneration(
         enable_text_adapter: Optional[bool] = True,
         enable_transformer_adapter: Optional[bool] = True,
         seed: Optional[int] = 1123,
+        guidance_scale: Optional[float] = 3.5,
         controlnet_conditioning_mode: Optional[Union[int, List[int]]] = None,
     ):
         super().__init__(
@@ -88,6 +89,7 @@ class ControlNetFluxLoraForText2ImageGeneration(
             enable_text_adapter=enable_text_adapter,
             enable_transformer_adapter=enable_transformer_adapter,
             seed=seed,
+            guidance_scale=guidance_scale,
             controlnet_conditioning_mode=controlnet_conditioning_mode,
         )
 
@@ -198,6 +200,7 @@ class ControlNetFluxLoraForText2ImageGeneration(
             "enable_transformer_adapter", True
         )
         seed = config.getoption("seed", 1123)
+        guidance_scale = config.getoption("guidance_scale", 3.5)
         controlnet_conditioning_mode = config.getoption(
             "controlnet_conditioning_mode", None
         )
@@ -224,6 +227,7 @@ class ControlNetFluxLoraForText2ImageGeneration(
             enable_text_adapter=enable_text_adapter,
             enable_transformer_adapter=enable_transformer_adapter,
             seed=seed,
+            guidance_scale=guidance_scale,
             controlnet_conditioning_mode=controlnet_conditioning_mode,
         )
 

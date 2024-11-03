@@ -296,7 +296,6 @@ class Stable3ForText2ImageFastAPIPipeline(GenericStable3Model):
             text,
             negative_prompt=neg_text,
         )
-        self.scheduler.set_timesteps(num_inference_steps=num_timesteps)
 
         inputs = text_inputs
         self.seed = seed
@@ -330,6 +329,7 @@ class Stable3ForText2ImageFastAPIPipeline(GenericStable3Model):
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),
+            num_inference_steps=num_timesteps,
             height=height,
             width=width,
             guidance_scale=guidance_scale,

@@ -49,6 +49,7 @@ class ControlNetFluxForText2ImageGeneration(_ControlNetFluxForText2ImageGenerati
         freeze_transformer_encoder: Optional[bool] = True,
         snr_gamma: Optional[float] = 5.0,
         seed: Optional[int] = 1123,
+        guidance_scale: Optional[float] = 3.5,
         controlnet_conditioning_mode: Optional[Union[int, List[int]]] = None,
     ):
         super().__init__(
@@ -67,7 +68,9 @@ class ControlNetFluxForText2ImageGeneration(_ControlNetFluxForText2ImageGenerati
             freeze_vae_encoder=freeze_vae_encoder,
             freeze_text_encoder=freeze_text_encoder,
             freeze_transformer_encoder=freeze_transformer_encoder,
+            snr_gamma=snr_gamma,
             seed=seed,
+            guidance_scale=guidance_scale,
             controlnet_conditioning_mode=controlnet_conditioning_mode,
         )
 
@@ -156,6 +159,7 @@ class ControlNetFluxForText2ImageGeneration(_ControlNetFluxForText2ImageGenerati
         )
         snr_gamma = config.getoption("snr_gamma", 5.0)
         seed = config.getoption("seed", 1123)
+        guidance_scale = config.getoption("guidance_scale", 3.5)
         controlnet_conditioning_mode = config.getoption(
             "controlnet_conditioning_mode", None
         )
@@ -178,6 +182,7 @@ class ControlNetFluxForText2ImageGeneration(_ControlNetFluxForText2ImageGenerati
             freeze_transformer_encoder=freeze_transformer_encoder,
             snr_gamma=snr_gamma,
             seed=seed,
+            guidance_scale=guidance_scale,
             controlnet_conditioning_mode=controlnet_conditioning_mode,
         )
 

@@ -61,6 +61,7 @@ class StableFluxLoraForText2ImageGeneration(_StableFluxLoraForText2ImageGenerati
         enable_text_adapter: Optional[bool] = True,
         enable_transformer_adapter: Optional[bool] = True,
         seed: Optional[int] = 1123,
+        guidance_scale: Optional[float] = 3.5,
     ):
         super().__init__(
             config_path=config_path,
@@ -84,6 +85,7 @@ class StableFluxLoraForText2ImageGeneration(_StableFluxLoraForText2ImageGenerati
             enable_text_adapter=enable_text_adapter,
             enable_transformer_adapter=enable_transformer_adapter,
             seed=seed,
+            guidance_scale=guidance_scale,
         )
 
     @classmethod
@@ -179,6 +181,7 @@ class StableFluxLoraForText2ImageGeneration(_StableFluxLoraForText2ImageGenerati
             "enable_transformer_adapter", True
         )
         seed = config.getoption("seed", 1123)
+        guidance_scale = config.getoption("guidance_scale", 3.5)
 
         inst = cls(
             config_path=config_path,
@@ -201,6 +204,7 @@ class StableFluxLoraForText2ImageGeneration(_StableFluxLoraForText2ImageGenerati
             enable_text_adapter=enable_text_adapter,
             enable_transformer_adapter=enable_transformer_adapter,
             seed=seed,
+            guidance_scale=guidance_scale,
         )
 
         weight_path = config.getoption("pretrained_weight_path", None)

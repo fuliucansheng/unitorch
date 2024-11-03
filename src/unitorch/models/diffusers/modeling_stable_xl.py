@@ -181,8 +181,6 @@ class GenericStableXLModel(GenericModel, QuantizationMixin, PeftWeightLoaderMixi
             self.quant_config = QuantizationConfig.from_json_file(quant_config_path)
             self.quantize(self.quant_config, ignore_modules=["lm_head", "unet", "vae"])
 
-        self.scheduler.set_timesteps(num_inference_steps=self.num_infer_timesteps)
-
     def get_prompt_outputs(
         self,
         input_ids: torch.Tensor,
@@ -390,6 +388,7 @@ class StableXLForText2ImageGeneration(GenericStableXLModel):
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),
+            num_inference_steps=self.num_infer_timesteps,
             height=height,
             width=width,
             guidance_scale=guidance_scale,
@@ -486,6 +485,7 @@ class StableXLForImage2ImageGeneration(GenericStableXLModel):
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),
+            num_inference_steps=self.num_infer_timesteps,
             strength=strength,
             guidance_scale=guidance_scale,
             output_type="np.array",
@@ -673,6 +673,7 @@ class StableXLForImageInpainting(GenericStableXLModel):
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),
+            num_inference_steps=self.num_infer_timesteps,
             width=pixel_values.size(-1),
             height=pixel_values.size(-2),
             strength=strength,

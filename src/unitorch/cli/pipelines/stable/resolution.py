@@ -220,7 +220,6 @@ class StableForImageResolutionPipeline(GenericStableModel):
             self.scheduler = Schedulers.get(scheduler).from_config(
                 self.scheduler.config
             )
-        self.scheduler.set_timesteps(num_inference_steps=num_timesteps)
 
         self.pipeline = StableDiffusionUpscalePipeline(
             vae=self.vae,

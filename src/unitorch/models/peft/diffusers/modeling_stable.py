@@ -146,8 +146,6 @@ class GenericStableLoraModel(GenericPeftModel, QuantizationMixin):
         if enable_unet_adapter:
             self.unet.add_adapter(lora_config)
 
-        self.scheduler.set_timesteps(num_inference_steps=self.num_infer_timesteps)
-
 
 class StableLoraForText2ImageGeneration(GenericStableLoraModel):
     def __init__(
@@ -291,6 +289,7 @@ class StableLoraForText2ImageGeneration(GenericStableLoraModel):
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),
+            num_inference_steps=self.num_infer_timesteps,
             height=height,
             width=width,
             guidance_scale=guidance_scale,
@@ -464,6 +463,7 @@ class StableLoraForImageInpainting(GenericStableLoraModel):
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),
+            num_inference_steps=self.num_infer_timesteps,
             width=pixel_values.size(-1),
             height=pixel_values.size(-2),
             strength=strength,

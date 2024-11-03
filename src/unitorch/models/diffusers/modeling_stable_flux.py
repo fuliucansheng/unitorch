@@ -35,6 +35,50 @@ from unitorch.models.peft import PeftWeightLoaderMixin
 from unitorch.models.diffusers import compute_snr
 
 
+def _prepare_latent_image_ids(batch_size, height, width, device, dtype):
+    latent_image_ids = torch.zeros(height, width, 3)
+    latent_image_ids[..., 1] = latent_image_ids[..., 1] + torch.arange(height)[:, None]
+    latent_image_ids[..., 2] = latent_image_ids[..., 2] + torch.arange(width)[None, :]
+
+    (
+        latent_image_id_height,
+        latent_image_id_width,
+        latent_image_id_channels,
+    ) = latent_image_ids.shape
+
+    latent_image_ids = latent_image_ids.reshape(
+        latent_image_id_height * latent_image_id_width, latent_image_id_channels
+    )
+
+    return latent_image_ids.to(device=device, dtype=dtype)
+
+
+def _pack_latents(latents, batch_size, num_channels_latents, height, width):
+    latents = latents.view(
+        batch_size, num_channels_latents, height // 2, 2, width // 2, 2
+    )
+    latents = latents.permute(0, 2, 4, 1, 3, 5)
+    latents = latents.reshape(
+        batch_size, (height // 2) * (width // 2), num_channels_latents * 4
+    )
+
+    return latents
+
+
+def _unpack_latents(latents, height, width, vae_scale_factor):
+    batch_size, num_patches, channels = latents.shape
+
+    height = height // vae_scale_factor
+    width = width // vae_scale_factor
+
+    latents = latents.view(batch_size, height // 2, width // 2, channels // 4, 2, 2)
+    latents = latents.permute(0, 3, 1, 4, 2, 5)
+
+    latents = latents.reshape(batch_size, channels // (2 * 2), height, width)
+
+    return latents
+
+
 class GenericStableFluxModel(GenericModel, QuantizationMixin, PeftWeightLoaderMixin):
     prefix_keys_in_state_dict = {
         # vae weights
@@ -211,6 +255,7 @@ class StableFluxForText2ImageGeneration(GenericStableFluxModel):
         freeze_text_encoder: Optional[bool] = True,
         snr_gamma: Optional[float] = 5.0,
         seed: Optional[int] = 1123,
+        guidance_scale: Optional[float] = 3.5,
     ):
         super().__init__(
             config_path=config_path,
@@ -230,19 +275,17 @@ class StableFluxForText2ImageGeneration(GenericStableFluxModel):
             seed=seed,
         )
 
-        new_scheduler = FlowMatchEulerDiscreteScheduler.from_config(
-            self.scheduler.config
-        )
         self.pipeline = FluxPipeline(
             vae=self.vae,
             text_encoder=self.text,
             text_encoder_2=self.text2,
             transformer=self.transformer,
-            scheduler=new_scheduler,
+            scheduler=self.scheduler,
             tokenizer=None,
             tokenizer_2=None,
         )
         self.pipeline.set_progress_bar_config(disable=True)
+        self.guidance_scale = guidance_scale
 
     def forward(
         self,
@@ -262,7 +305,7 @@ class StableFluxForText2ImageGeneration(GenericStableFluxModel):
         latents = (
             latents - self.vae.config.shift_factor
         ) * self.vae.config.scaling_factor
-        latent_image_ids = FluxPipeline._prepare_latent_image_ids(
+        latent_image_ids = _prepare_latent_image_ids(
             latents.shape[0],
             latents.shape[2] // 2,
             latents.shape[3] // 2,
@@ -286,7 +329,7 @@ class StableFluxForText2ImageGeneration(GenericStableFluxModel):
         sigmas = self.get_sigmas(timesteps, n_dim=latents.ndim, dtype=latents.dtype)
         noise_latents = (1.0 - sigmas) * latents + sigmas * noise
 
-        noise_latents = FluxPipeline._pack_latents(
+        noise_latents = _pack_latents(
             noise_latents,
             batch_size=latents.shape[0],
             num_channels_latents=latents.shape[1],
@@ -298,10 +341,18 @@ class StableFluxForText2ImageGeneration(GenericStableFluxModel):
             device=self.device, dtype=self.dtype
         )
 
+        if self.transformer.config.guidance_embeds:
+            guidance = torch.full(
+                [1], self.guidance_scale, device=self.device, dtype=torch.float32
+            )
+            guidance = guidance.expand(latents.shape[0])
+        else:
+            guidance = None
+
         outputs = self.transformer(
             hidden_states=noise_latents,
             timestep=timesteps / 1000,
-            guidance=None,
+            guidance=guidance,
             encoder_hidden_states=outputs.prompt_embeds,
             pooled_projections=outputs.pooled_prompt_embeds,
             txt_ids=text_ids,
@@ -310,7 +361,7 @@ class StableFluxForText2ImageGeneration(GenericStableFluxModel):
         )[0]
 
         vae_scale_factor = 2 ** (len(self.vae.config.block_out_channels) - 1)
-        outputs = FluxPipeline._unpack_latents(
+        outputs = _unpack_latents(
             outputs,
             height=latents.shape[2] * vae_scale_factor,
             width=latents.shape[3] * vae_scale_factor,
@@ -353,6 +404,7 @@ class StableFluxForText2ImageGeneration(GenericStableFluxModel):
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),
+            num_inference_steps=self.num_infer_timesteps,
             height=height,
             width=width,
             guidance_scale=guidance_scale,
@@ -399,16 +451,12 @@ class StableFluxForImage2ImageGeneration(GenericStableFluxModel):
             seed=seed,
         )
 
-        new_scheduler = FlowMatchEulerDiscreteScheduler.from_config(
-            self.scheduler.config
-        )
-
         self.pipeline = FluxImg2ImgPipeline(
             vae=self.vae,
             text_encoder=self.text,
             text_encoder_2=self.text2,
             transformer=self.transformer,
-            scheduler=new_scheduler,
+            scheduler=self.scheduler,
             tokenizer=None,
             tokenizer_2=None,
         )
@@ -443,6 +491,7 @@ class StableFluxForImage2ImageGeneration(GenericStableFluxModel):
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),
+            num_inference_steps=self.num_infer_timesteps,
             strength=strength,
             guidance_scale=guidance_scale,
             output_type="np.array",
@@ -488,16 +537,12 @@ class StableFluxForImageInpainting(GenericStableFluxModel):
             seed=seed,
         )
 
-        new_scheduler = FlowMatchEulerDiscreteScheduler.from_config(
-            self.scheduler.config
-        )
-
         self.pipeline = FluxInpaintPipeline(
             vae=self.vae,
             text_encoder=self.text,
             text_encoder_2=self.text2,
             transformer=self.transformer,
-            scheduler=new_scheduler,
+            scheduler=self.scheduler,
             tokenizer=None,
             tokenizer_2=None,
         )
@@ -534,6 +579,7 @@ class StableFluxForImageInpainting(GenericStableFluxModel):
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),
+            num_inference_steps=self.num_infer_timesteps,
             width=pixel_values.size(-1),
             height=pixel_values.size(-2),
             strength=strength,

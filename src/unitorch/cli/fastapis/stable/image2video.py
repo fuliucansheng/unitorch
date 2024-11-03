@@ -209,8 +209,6 @@ class StableForImage2VideoFastAPIPipeline(StableForImage2VideoGeneration):
             vae_image=image.resize((width, height)),
         )
 
-        self.scheduler.set_timesteps(num_inference_steps=num_timesteps)
-
         self.seed = seed
 
         inputs = {k: v.unsqueeze(0) if v is not None else v for k, v in inputs.items()}
@@ -233,6 +231,7 @@ class StableForImage2VideoFastAPIPipeline(StableForImage2VideoGeneration):
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),
+            num_inference_steps=num_timesteps,
             output_type="pt",
         )
 

@@ -9,7 +9,11 @@ import diffusers.schedulers as schedulers
 from transformers import CLIPTextConfig, CLIPTextModel, CLIPTextModelWithProjection
 from transformers.models.t5.configuration_t5 import T5Config
 from transformers.models.t5.modeling_t5 import T5EncoderModel
-from diffusers.schedulers import SchedulerMixin
+from diffusers.schedulers import SchedulerMixin, FlowMatchEulerDiscreteScheduler
+from diffusers.training_utils import (
+    compute_loss_weighting_for_sd3,
+    compute_density_for_timestep_sampling,
+)
 from diffusers.models import (
     SD3ControlNetModel,
     SD3MultiControlNetModel,
@@ -158,7 +162,16 @@ class GenericStable3Model(GenericModel, QuantizationMixin, PeftWeightLoaderMixin
                 self.quant_config, ignore_modules=["lm_head", "transformer", "vae"]
             )
 
-        self.scheduler.set_timesteps(num_inference_steps=self.num_infer_timesteps)
+    def get_sigmas(self, timesteps, n_dim=4, dtype=torch.float32):
+        sigmas = self.scheduler.sigmas.to(device=self.device, dtype=dtype)
+        schedule_timesteps = self.scheduler.timesteps.to(self.device)
+        timesteps = timesteps.to(self.device)
+        step_indices = [(schedule_timesteps == t).nonzero().item() for t in timesteps]
+
+        sigma = sigmas[step_indices].flatten()
+        while len(sigma.shape) < n_dim:
+            sigma = sigma.unsqueeze(-1)
+        return sigma
 
     def get_prompt_outputs(
         self,
@@ -350,18 +363,18 @@ class Stable3ForText2ImageGeneration(GenericStable3Model):
         noise = torch.randn(latents.shape).to(latents.device)
         batch = latents.size(0)
 
-        timesteps = torch.randint(
-            0,
-            self.scheduler.config.num_train_timesteps,
-            (batch,),
-            device=pixel_values.device,
-        ).long()
-
-        noise_latents = self.scheduler.add_noise(
-            latents,
-            noise,
-            timesteps,
+        u = compute_density_for_timestep_sampling(
+            weighting_scheme="none",
+            batch_size=batch,
+            logit_mean=0.0,
+            logit_std=1.0,
+            mode_scale=1.29,
         )
+        indices = (u * self.scheduler.config.num_train_timesteps).long()
+        timesteps = self.scheduler.timesteps[indices].to(device=self.device)
+
+        sigmas = self.get_sigmas(timesteps, n_dim=latents.ndim, dtype=latents.dtype)
+        noise_latents = (1.0 - sigmas) * latents + sigmas * noise
 
         outputs = self.transformer(
             noise_latents,
@@ -370,27 +383,17 @@ class Stable3ForText2ImageGeneration(GenericStable3Model):
             pooled_projections=pooled_prompt_embeds,
         ).sample
 
-        if self.scheduler.config.prediction_type == "v_prediction":
-            noise = self.scheduler.get_velocity(latents, noise, timesteps)
-        if self.snr_gamma > 0:
-            snr = compute_snr(timesteps, self.scheduler)
-            base_weight = (
-                torch.stack(
-                    [snr, self.snr_gamma * torch.ones_like(timesteps)], dim=1
-                ).min(dim=1)[0]
-                / snr
-            )
-
-            if self.scheduler.config.prediction_type == "v_prediction":
-                mse_loss_weights = base_weight + 1
-            else:
-                mse_loss_weights = base_weight
-            mse_loss_weights[snr == 0] = 1.0
-            loss = F.mse_loss(outputs, noise, reduction="none")
-            loss = loss.mean(dim=list(range(1, len(loss.shape)))) * mse_loss_weights
-            loss = loss.mean()
-        else:
-            loss = F.mse_loss(outputs, noise, reduction="mean")
+        weighting = compute_loss_weighting_for_sd3(
+            weighting_scheme="none", sigmas=sigmas
+        )
+        target = noise - latents
+        loss = torch.mean(
+            (weighting.float() * (outputs.float() - target.float()) ** 2).reshape(
+                target.shape[0], -1
+            ),
+            1,
+        )
+        loss = loss.mean()
         return loss
 
     def generate(
@@ -434,6 +437,7 @@ class Stable3ForText2ImageGeneration(GenericStable3Model):
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),
+            num_inference_steps=self.num_infer_timesteps,
             height=height,
             width=width,
             guidance_scale=guidance_scale,
@@ -542,6 +546,7 @@ class Stable3ForImage2ImageGeneration(GenericStable3Model):
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),
+            num_inference_steps=self.num_infer_timesteps,
             strength=strength,
             guidance_scale=guidance_scale,
             output_type="np.array",
@@ -653,18 +658,18 @@ class Stable3ForImageInpainting(GenericStable3Model):
         noise = torch.randn(latents.shape).to(latents.device)
         batch = latents.size(0)
 
-        timesteps = torch.randint(
-            0,
-            self.scheduler.config.num_train_timesteps,
-            (batch,),
-            device=pixel_values.device,
-        ).long()
-
-        noise_latents = self.scheduler.add_noise(
-            latents,
-            noise,
-            timesteps,
+        u = compute_density_for_timestep_sampling(
+            weighting_scheme="none",
+            batch_size=batch,
+            logit_mean=0.0,
+            logit_std=1.0,
+            mode_scale=1.29,
         )
+        indices = (u * self.scheduler.config.num_train_timesteps).long()
+        timesteps = self.scheduler.timesteps[indices].to(device=self.device)
+
+        sigmas = self.get_sigmas(timesteps, n_dim=latents.ndim, dtype=latents.dtype)
+        noise_latents = (1.0 - sigmas) * latents + sigmas * noise
 
         if self.num_channels_transformer == 33:
             masked_pixel_values = pixel_values.clone()
@@ -691,27 +696,17 @@ class Stable3ForImageInpainting(GenericStable3Model):
             pooled_projections=pooled_prompt_embeds,
         ).sample
 
-        if self.scheduler.config.prediction_type == "v_prediction":
-            noise = self.scheduler.get_velocity(latents, noise, timesteps)
-        if self.snr_gamma > 0:
-            snr = compute_snr(timesteps, self.scheduler)
-            base_weight = (
-                torch.stack(
-                    [snr, self.snr_gamma * torch.ones_like(timesteps)], dim=1
-                ).min(dim=1)[0]
-                / snr
-            )
-
-            if self.scheduler.config.prediction_type == "v_prediction":
-                mse_loss_weights = base_weight + 1
-            else:
-                mse_loss_weights = base_weight
-            mse_loss_weights[snr == 0] = 1.0
-            loss = F.mse_loss(outputs, noise, reduction="none")
-            loss = loss.mean(dim=list(range(1, len(loss.shape)))) * mse_loss_weights
-            loss = loss.mean()
-        else:
-            loss = F.mse_loss(outputs, noise, reduction="mean")
+        weighting = compute_loss_weighting_for_sd3(
+            weighting_scheme="none", sigmas=sigmas
+        )
+        target = noise - latents
+        loss = torch.mean(
+            (weighting.float() * (outputs.float() - target.float()) ** 2).reshape(
+                target.shape[0], -1
+            ),
+            1,
+        )
+        loss = loss.mean()
         return loss
 
     def generate(
@@ -758,6 +753,7 @@ class Stable3ForImageInpainting(GenericStable3Model):
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),
+            num_inference_steps=self.num_infer_timesteps,
             width=pixel_values.size(-1),
             height=pixel_values.size(-2),
             strength=strength,

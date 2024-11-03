@@ -233,7 +233,6 @@ class StableForImageInpaintingPipeline(GenericStableModel):
             self.scheduler = Schedulers.get(scheduler).from_config(
                 self.scheduler.config
             )
-        self.scheduler.set_timesteps(num_inference_steps=num_timesteps)
 
         if any(ckpt is not None for ckpt in controlnet_checkpoints) and any(
             img is not None for img in controlnet_images

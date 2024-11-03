@@ -224,8 +224,6 @@ class GenericStableModel(GenericModel, QuantizationMixin, PeftWeightLoaderMixin)
             self.quant_config = QuantizationConfig.from_json_file(quant_config_path)
             self.quantize(self.quant_config, ignore_modules=["lm_head", "unet", "vae"])
 
-        self.scheduler.set_timesteps(num_inference_steps=self.num_infer_timesteps)
-
 
 class StableForText2ImageGeneration(GenericStableModel):
     def __init__(
@@ -351,6 +349,7 @@ class StableForText2ImageGeneration(GenericStableModel):
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),
+            num_inference_steps=self.num_infer_timesteps,
             height=height,
             width=width,
             guidance_scale=guidance_scale,
@@ -437,6 +436,7 @@ class StableForImage2ImageGeneration(GenericStableModel):
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),
+            num_inference_steps=self.num_infer_timesteps,
             strength=strength,
             guidance_scale=guidance_scale,
             output_type="np.array",
@@ -592,6 +592,7 @@ class StableForImageInpainting(GenericStableModel):
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),
+            num_inference_steps=self.num_infer_timesteps,
             width=pixel_values.size(-1),
             height=pixel_values.size(-2),
             strength=strength,
@@ -680,6 +681,7 @@ class StableForImageResolution(GenericStableModel):
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),
+            num_inference_steps=self.num_infer_timesteps,
             guidance_scale=guidance_scale,
             noise_level=noise_level,
             output_type="np.array",
@@ -1001,8 +1003,6 @@ class StableForImage2VideoGeneration(GenericModel):
             self.quant_config = QuantizationConfig.from_json_file(quant_config_path)
             self.quantize(self.quant_config, ignore_modules=["lm_head", "unet", "vae"])
 
-        self.scheduler.set_timesteps(num_inference_steps=self.num_infer_timesteps)
-
     def forward(
         self,
     ):
@@ -1032,7 +1032,10 @@ class StableForImage2VideoGeneration(GenericModel):
             fps=fps,
             motion_bucket_id=motion_bucket_id,
             decode_chunk_size=decode_chunk_size,
-            generator=torch.manual_seed(self.seed),
+            generator=torch.Generator(device=self.pipeline.device).manual_seed(
+                self.seed
+            ),
+            num_inference_steps=self.num_infer_timesteps,
             output_type="pt",
         ).frames
 

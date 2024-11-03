@@ -28,6 +28,11 @@ from unitorch.models import (
     QuantizationMixin,
 )
 from unitorch.models.diffusers import GenericStableFluxModel
+from unitorch.models.diffusers.modeling_stable_flux import (
+    _prepare_latent_image_ids,
+    _pack_latents,
+    _unpack_latents,
+)
 from unitorch.models.diffusers import compute_snr
 
 
@@ -73,6 +78,7 @@ class ControlNetFluxForText2ImageGeneration(GenericStableFluxModel):
         freeze_transformer_encoder: Optional[bool] = False,
         snr_gamma: Optional[float] = 5.0,
         seed: Optional[int] = 1123,
+        guidance_scale: Optional[float] = 3.5,
         controlnet_conditioning_mode: Optional[Union[int, List[int]]] = None,
     ):
         super().__init__(
@@ -104,6 +110,7 @@ class ControlNetFluxForText2ImageGeneration(GenericStableFluxModel):
             tokenizer=None,
             tokenizer_2=None,
         )
+        self.guidance_scale = guidance_scale
         self.pipeline.set_progress_bar_config(disable=True)
         self.controlnet_conditioning_mode = controlnet_conditioning_mode
 
@@ -126,7 +133,7 @@ class ControlNetFluxForText2ImageGeneration(GenericStableFluxModel):
         latents = (
             latents - self.vae.config.shift_factor
         ) * self.vae.config.scaling_factor
-        latent_image_ids = FluxPipeline._prepare_latent_image_ids(
+        latent_image_ids = _prepare_latent_image_ids(
             latents.shape[0],
             latents.shape[2] // 2,
             latents.shape[3] // 2,
@@ -150,7 +157,7 @@ class ControlNetFluxForText2ImageGeneration(GenericStableFluxModel):
         sigmas = self.get_sigmas(timesteps, n_dim=latents.ndim, dtype=latents.dtype)
         noise_latents = (1.0 - sigmas) * latents + sigmas * noise
 
-        noise_latents = FluxPipeline._pack_latents(
+        noise_latents = _pack_latents(
             noise_latents,
             batch_size=latents.shape[0],
             num_channels_latents=latents.shape[1],
@@ -169,7 +176,7 @@ class ControlNetFluxForText2ImageGeneration(GenericStableFluxModel):
             condition_latents = (
                 condition_latents - self.vae.config.shift_factor
             ) * self.vae.config.scaling_factor
-            condition_latents = FluxPipeline._pack_latents(
+            condition_latents = _pack_latents(
                 condition_latents,
                 batch_size=condition_latents.shape[0],
                 num_channels_latents=condition_latents.shape[1],
@@ -187,7 +194,7 @@ class ControlNetFluxForText2ImageGeneration(GenericStableFluxModel):
                 for latent in condition_latents
             ]
             condition_latents = [
-                FluxPipeline._pack_latents(
+                _pack_latents(
                     latent,
                     batch_size=latent.shape[0],
                     num_channels_latents=latent.shape[1],
@@ -196,13 +203,48 @@ class ControlNetFluxForText2ImageGeneration(GenericStableFluxModel):
                 )
                 for latent in condition_latents
             ]
-        controlnet_mode = (
-            torch.tensor(self.controlnet_conditioning_mode).to(self.device).long()
-        )
+
+        if self.controlnet.config.guidance_embeds:
+            guidance = torch.full(
+                [1], self.guidance_scale, device=self.device, dtype=torch.float32
+            )
+            guidance = guidance.expand(latents.shape[0])
+        else:
+            guidance = None
+
+        if self.controlnet_conditioning_mode is None:
+            controlnet_mode = (
+                None if self.num_controlnets == 1 else [None] * self.num_controlnets
+            )
+        else:
+            if self.num_controlnets == 1:
+                controlnet_mode = (
+                    torch.tensor(self.controlnet_conditioning_mode)
+                    .to(self.device)
+                    .long()
+                )
+                controlnet_mode = controlnet_mode.expand(latents.shape[0]).reshape(
+                    -1, 1
+                )
+            else:
+                assert (
+                    isinstance(self.controlnet_conditioning_mode, list)
+                    and len(self.controlnet_conditioning_mode) == self.num_controlnets
+                )
+
+                def _get_mode(mode):
+                    if mode is None:
+                        return None
+                    _mode = torch.tensor(mode).to(self.device).long()
+                    return _mode.expand(latents.shape[0]).reshape(-1, 1)
+
+                controlnet_mode = [
+                    _get_mode(mode) for mode in self.controlnet_conditioning_mode
+                ]
         controlnet_block_samples, controlnet_single_block_samples = self.controlnet(
             hidden_states=noise_latents,
             timestep=timesteps / 1000,
-            guidance=None,
+            guidance=guidance,
             encoder_hidden_states=outputs.prompt_embeds,
             pooled_projections=outputs.pooled_prompt_embeds,
             controlnet_cond=condition_latents,
@@ -213,10 +255,18 @@ class ControlNetFluxForText2ImageGeneration(GenericStableFluxModel):
             return_dict=False,
         )
 
+        if self.transformer.config.guidance_embeds:
+            guidance = torch.full(
+                [1], self.guidance_scale, device=self.device, dtype=torch.float32
+            )
+            guidance = guidance.expand(latents.shape[0])
+        else:
+            guidance = None
+
         outputs = self.transformer(
             hidden_states=noise_latents,
             timestep=timesteps / 1000,
-            guidance=None,
+            guidance=guidance,
             encoder_hidden_states=outputs.prompt_embeds,
             pooled_projections=outputs.pooled_prompt_embeds,
             controlnet_block_samples=controlnet_block_samples,
@@ -227,7 +277,7 @@ class ControlNetFluxForText2ImageGeneration(GenericStableFluxModel):
         )[0]
 
         vae_scale_factor = 2 ** (len(self.vae.config.block_out_channels) - 1)
-        outputs = FluxPipeline._unpack_latents(
+        outputs = _unpack_latents(
             outputs,
             height=latents.shape[2] * vae_scale_factor,
             width=latents.shape[3] * vae_scale_factor,
@@ -317,6 +367,7 @@ class ControlNetFluxForText2ImageGeneration(GenericStableFluxModel):
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),
+            num_inference_steps=self.num_infer_timesteps,
             height=height,
             width=width,
             guidance_scale=guidance_scale,
@@ -480,6 +531,7 @@ class ControlNetFluxForImage2ImageGeneration(GenericStableFluxModel):
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),
+            num_inference_steps=self.num_infer_timesteps,
             strength=strength,
             guidance_scale=guidance_scale,
             controlnet_conditioning_scale=controlnet_conditioning_scale,
@@ -566,7 +618,6 @@ class ControlNetFluxForImageInpainting(GenericStableFluxModel):
             tokenizer_2=None,
         )
         self.pipeline.set_progress_bar_config(disable=True)
-        self.guidance_scale = 3.5
         self.controlnet_conditioning_mode = controlnet_conditioning_mode
         self.inpainting_controlnet_conditioning_mode = (
             inpainting_controlnet_conditioning_mode
@@ -687,6 +738,7 @@ class ControlNetFluxForImageInpainting(GenericStableFluxModel):
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),
+            num_inference_steps=self.num_infer_timesteps,
             width=pixel_values.size(-1),
             height=pixel_values.size(-2),
             strength=strength,
