@@ -92,7 +92,7 @@ class ControlNetProcessor(_StableProcessor):
         if isinstance(condition_image, (list, tuple)):
             control_outputs = super().controlnets_inputs(condition_image)
         else:
-            control_outputs = super().controlnet_inputs(condition_image=condition_image)
+            control_outputs = super().controlnet_inputs(condition_image)
 
         return TensorsInputs(
             input_ids=outputs.input_ids,
@@ -117,7 +117,7 @@ class ControlNetProcessor(_StableProcessor):
         if isinstance(condition_image, (list, tuple)):
             control_outputs = super().controlnets_inputs(condition_image)
         else:
-            control_outputs = super().controlnet_inputs(condition_image=condition_image)
+            control_outputs = super().controlnet_inputs(condition_image)
         return TensorsInputs(
             input_ids=text_outputs.input_ids,
             negative_input_ids=text_outputs.negative_input_ids,
@@ -145,7 +145,7 @@ class ControlNetProcessor(_StableProcessor):
         if isinstance(condition_image, (list, tuple)):
             control_outputs = super().controlnets_inputs(condition_image)
         else:
-            control_outputs = super().controlnet_inputs(condition_image=condition_image)
+            control_outputs = super().controlnet_inputs(condition_image)
         return TensorsInputs(
             input_ids=text_outputs.input_ids,
             negative_input_ids=text_outputs.negative_input_ids,
@@ -177,7 +177,7 @@ class ControlNetProcessor(_StableProcessor):
         if isinstance(condition_image, (list, tuple)):
             control_outputs = super().controlnets_inputs(condition_image)
         else:
-            control_outputs = super().controlnet_inputs(condition_image=condition_image)
+            control_outputs = super().controlnet_inputs(condition_image)
         return TensorsInputs(
             input_ids=text_outputs.input_ids,
             pixel_values=image_outputs.pixel_values,
@@ -208,7 +208,7 @@ class ControlNetProcessor(_StableProcessor):
         if isinstance(condition_image, (list, tuple)):
             control_outputs = super().controlnets_inputs(condition_image)
         else:
-            control_outputs = super().controlnet_inputs(condition_image=condition_image)
+            control_outputs = super().controlnet_inputs(condition_image)
         return TensorsInputs(
             input_ids=text_outputs.input_ids,
             negative_input_ids=text_outputs.negative_input_ids,

@@ -116,7 +116,7 @@ class ControlNetXLProcessor(_StableXLProcessor):
         if isinstance(condition_image, (list, tuple)):
             control_outputs = super().controlnets_inputs(condition_image)
         else:
-            control_outputs = super().controlnet_inputs(condition_image=condition_image)
+            control_outputs = super().controlnet_inputs(condition_image)
         return TensorsInputs(
             pixel_values=outputs.pixel_values,
             condition_pixel_values=control_outputs.pixel_values,
@@ -143,7 +143,7 @@ class ControlNetXLProcessor(_StableXLProcessor):
         if isinstance(condition_image, (list, tuple)):
             control_outputs = super().controlnets_inputs(condition_image)
         else:
-            control_outputs = super().controlnet_inputs(condition_image=condition_image)
+            control_outputs = super().controlnet_inputs(condition_image)
         return TensorsInputs(
             input_ids=text_outputs.input_ids,
             negative_input_ids=text_outputs.negative_input_ids,
@@ -170,7 +170,7 @@ class ControlNetXLProcessor(_StableXLProcessor):
         if isinstance(condition_image, (list, tuple)):
             control_outputs = super().controlnets_inputs(condition_image)
         else:
-            control_outputs = super().controlnet_inputs(condition_image=condition_image)
+            control_outputs = super().controlnet_inputs(condition_image)
         return TensorsInputs(
             input_ids=text_outputs.input_ids,
             negative_input_ids=text_outputs.negative_input_ids,
@@ -202,7 +202,7 @@ class ControlNetXLProcessor(_StableXLProcessor):
         if isinstance(condition_image, (list, tuple)):
             control_outputs = super().controlnets_inputs(condition_image)
         else:
-            control_outputs = super().controlnet_inputs(condition_image=condition_image)
+            control_outputs = super().controlnet_inputs(condition_image)
         return TensorsInputs(
             input_ids=text_outputs.input_ids,
             pixel_values=image_outputs.pixel_values,
@@ -233,7 +233,7 @@ class ControlNetXLProcessor(_StableXLProcessor):
         if isinstance(condition_image, (list, tuple)):
             control_outputs = super().controlnets_inputs(condition_image)
         else:
-            control_outputs = super().controlnet_inputs(condition_image=condition_image)
+            control_outputs = super().controlnet_inputs(condition_image)
         return TensorsInputs(
             input_ids=text_outputs.input_ids,
             negative_input_ids=text_outputs.negative_input_ids,
