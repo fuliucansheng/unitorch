@@ -129,16 +129,18 @@ class GenericStableFluxModel(GenericModel, QuantizationMixin, PeftWeightLoaderMi
             config_dict.update({"in_channels": in_channels})
         if out_channels is not None:
             config_dict.update({"out_channels": out_channels})
-        self.transformer = FluxTransformer2DModel.from_config(config_dict)
+        self.transformer = FluxTransformer2DModel.from_config(config_dict).to(
+            torch.bfloat16
+        )
 
         text_config = CLIPTextConfig.from_json_file(text_config_path)
-        self.text = CLIPTextModel(text_config)
+        self.text = CLIPTextModel(text_config).to(torch.bfloat16)
 
         text_config2 = T5Config.from_json_file(text2_config_path)
-        self.text2 = T5EncoderModel(text_config2)
+        self.text2 = T5EncoderModel(text_config2).to(torch.bfloat16)
 
         vae_config_dict = json.load(open(vae_config_path))
-        self.vae = AutoencoderKL.from_config(vae_config_dict)
+        self.vae = AutoencoderKL.from_config(vae_config_dict).to(torch.bfloat16)
 
         if isinstance(controlnet_configs_path, str):
             controlnet_configs_path = [controlnet_configs_path]
@@ -156,7 +158,9 @@ class GenericStableFluxModel(GenericModel, QuantizationMixin, PeftWeightLoaderMi
             for controlnet_config_path in controlnet_configs_path:
                 controlnet_config_dict = json.load(open(controlnet_config_path))
                 controlnets.append(
-                    FluxControlNetModel.from_config(controlnet_config_dict)
+                    FluxControlNetModel.from_config(controlnet_config_dict).to(
+                        torch.bfloat16
+                    )
                 )
             self.num_controlnets = len(controlnets)
             self.controlnet = FluxMultiControlNetModel(
@@ -164,7 +168,9 @@ class GenericStableFluxModel(GenericModel, QuantizationMixin, PeftWeightLoaderMi
             )
         elif isinstance(controlnet_configs_path, str):
             controlnet_config_dict = json.load(open(controlnet_configs_path))
-            self.controlnet = FluxControlNetModel.from_config(controlnet_config_dict)
+            self.controlnet = FluxControlNetModel.from_config(
+                controlnet_config_dict
+            ).to(torch.bfloat16)
             self.num_controlnets = 1
         else:
             self.controlnet = None
