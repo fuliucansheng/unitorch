@@ -4,6 +4,7 @@ matplotlib
 sentencepiece
 importlib_resources
 fire>=0.2.1
+numpy<2.0.0
 pandas<=1.5.3
 scikit-learn>=0.24.2
 transformers>=4.46.0
