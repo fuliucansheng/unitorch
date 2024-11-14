@@ -253,7 +253,10 @@ class ControlNetXLForText2ImageGeneration(_ControlNetXLForText2ImageGeneration):
 
         return inst
 
-    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"), dtype=torch.bfloat16)
+    @autocast(
+        device_type=("cuda" if torch.cuda.is_available() else "cpu"),
+        dtype=torch.bfloat16,
+    )
     def forward(
         self,
         input_ids: torch.Tensor,
@@ -276,7 +279,10 @@ class ControlNetXLForText2ImageGeneration(_ControlNetXLForText2ImageGeneration):
         return LossOutputs(loss=loss)
 
     @add_default_section_for_function("core/model/diffusers/text2image/controlnet_xl")
-    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"), dtype=torch.bfloat16)
+    @autocast(
+        device_type=("cuda" if torch.cuda.is_available() else "cpu"),
+        dtype=torch.bfloat16,
+    )
     def generate(
         self,
         input_ids: torch.Tensor,
@@ -537,7 +543,10 @@ class ControlNetXLForImage2ImageGeneration(_ControlNetXLForImage2ImageGeneration
         raise NotImplementedError
 
     @add_default_section_for_function("core/model/diffusers/image2image/controlnet_xl")
-    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"), dtype=torch.bfloat16)
+    @autocast(
+        device_type=("cuda" if torch.cuda.is_available() else "cpu"),
+        dtype=torch.bfloat16,
+    )
     def generate(
         self,
         input_ids: torch.Tensor,
@@ -834,7 +843,10 @@ class ControlNetXLForImageInpainting(_ControlNetXLForImageInpainting):
 
         return inst
 
-    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"), dtype=torch.bfloat16)
+    @autocast(
+        device_type=("cuda" if torch.cuda.is_available() else "cpu"),
+        dtype=torch.bfloat16,
+    )
     def forward(
         self,
         input_ids: torch.Tensor,
@@ -859,7 +871,10 @@ class ControlNetXLForImageInpainting(_ControlNetXLForImageInpainting):
         return LossOutputs(loss=loss)
 
     @add_default_section_for_function("core/model/diffusers/inpainting/controlnet_xl")
-    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"), dtype=torch.bfloat16)
+    @autocast(
+        device_type=("cuda" if torch.cuda.is_available() else "cpu"),
+        dtype=torch.bfloat16,
+    )
     def generate(
         self,
         input_ids: torch.Tensor,

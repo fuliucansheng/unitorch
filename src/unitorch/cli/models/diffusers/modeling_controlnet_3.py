@@ -268,7 +268,10 @@ class ControlNet3ForText2ImageGeneration(_ControlNet3ForText2ImageGeneration):
 
         return inst
 
-    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"), dtype=torch.bfloat16)
+    @autocast(
+        device_type=("cuda" if torch.cuda.is_available() else "cpu"),
+        dtype=torch.bfloat16,
+    )
     def forward(
         self,
         pixel_values: torch.Tensor,
@@ -293,7 +296,10 @@ class ControlNet3ForText2ImageGeneration(_ControlNet3ForText2ImageGeneration):
         return LossOutputs(loss=loss)
 
     @add_default_section_for_function("core/model/diffusers/text2image/controlnet_3")
-    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"), dtype=torch.bfloat16)
+    @autocast(
+        device_type=("cuda" if torch.cuda.is_available() else "cpu"),
+        dtype=torch.bfloat16,
+    )
     def generate(
         self,
         input_ids: torch.Tensor,
@@ -615,7 +621,10 @@ class ControlNet3ForImageInpainting(_ControlNet3ForImageInpainting):
 
         return inst
 
-    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"), dtype=torch.bfloat16)
+    @autocast(
+        device_type=("cuda" if torch.cuda.is_available() else "cpu"),
+        dtype=torch.bfloat16,
+    )
     def forward(
         self,
         pixel_values: torch.Tensor,
@@ -644,7 +653,10 @@ class ControlNet3ForImageInpainting(_ControlNet3ForImageInpainting):
         return LossOutputs(loss=loss)
 
     @add_default_section_for_function("core/model/diffusers/inpainting/controlnet_3")
-    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"), dtype=torch.bfloat16)
+    @autocast(
+        device_type=("cuda" if torch.cuda.is_available() else "cpu"),
+        dtype=torch.bfloat16,
+    )
     def generate(
         self,
         pixel_values: torch.Tensor,

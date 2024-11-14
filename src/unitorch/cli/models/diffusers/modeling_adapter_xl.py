@@ -247,7 +247,10 @@ class StableXLAdapterForText2ImageGeneration(_StableXLAdapterForText2ImageGenera
 
         return inst
 
-    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"), dtype=torch.bfloat16)
+    @autocast(
+        device_type=("cuda" if torch.cuda.is_available() else "cpu"),
+        dtype=torch.bfloat16,
+    )
     def forward(
         self,
         input_ids: torch.Tensor,
@@ -270,7 +273,10 @@ class StableXLAdapterForText2ImageGeneration(_StableXLAdapterForText2ImageGenera
         return LossOutputs(loss=loss)
 
     @add_default_section_for_function("core/model/diffusers/text2image/adapter_xl")
-    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"), dtype=torch.bfloat16)
+    @autocast(
+        device_type=("cuda" if torch.cuda.is_available() else "cpu"),
+        dtype=torch.bfloat16,
+    )
     def generate(
         self,
         input_ids: torch.Tensor,

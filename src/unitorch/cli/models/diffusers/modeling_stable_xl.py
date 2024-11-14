@@ -196,7 +196,10 @@ class StableXLForText2ImageGeneration(_StableXLForText2ImageGeneration):
             )
         return inst
 
-    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"), dtype=torch.bfloat16)
+    @autocast(
+        device_type=("cuda" if torch.cuda.is_available() else "cpu"),
+        dtype=torch.bfloat16,
+    )
     def forward(
         self,
         input_ids: torch.Tensor,
@@ -217,7 +220,10 @@ class StableXLForText2ImageGeneration(_StableXLForText2ImageGeneration):
         return LossOutputs(loss=loss)
 
     @add_default_section_for_function("core/model/diffusers/text2image/stable_xl")
-    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"), dtype=torch.bfloat16)
+    @autocast(
+        device_type=("cuda" if torch.cuda.is_available() else "cpu"),
+        dtype=torch.bfloat16,
+    )
     def generate(
         self,
         input_ids: torch.Tensor,
@@ -425,7 +431,10 @@ class StableXLForImage2ImageGeneration(_StableXLForImage2ImageGeneration):
         raise NotImplementedError
 
     @add_default_section_for_function("core/model/diffusers/image2image/stable_xl")
-    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"), dtype=torch.bfloat16)
+    @autocast(
+        device_type=("cuda" if torch.cuda.is_available() else "cpu"),
+        dtype=torch.bfloat16,
+    )
     def generate(
         self,
         input_ids: torch.Tensor,
@@ -627,7 +636,10 @@ class StableXLForImageInpainting(_StableXLForImageInpainting):
             )
         return inst
 
-    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"), dtype=torch.bfloat16)
+    @autocast(
+        device_type=("cuda" if torch.cuda.is_available() else "cpu"),
+        dtype=torch.bfloat16,
+    )
     def forward(
         self,
         input_ids: torch.Tensor,
@@ -650,7 +662,10 @@ class StableXLForImageInpainting(_StableXLForImageInpainting):
         return LossOutputs(loss=loss)
 
     @add_default_section_for_function("core/model/diffusers/inpainting/stable_xl")
-    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"), dtype=torch.bfloat16)
+    @autocast(
+        device_type=("cuda" if torch.cuda.is_available() else "cpu"),
+        dtype=torch.bfloat16,
+    )
     def generate(
         self,
         input_ids: torch.Tensor,

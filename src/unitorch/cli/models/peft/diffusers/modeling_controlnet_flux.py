@@ -273,7 +273,10 @@ class ControlNetFluxLoraForText2ImageGeneration(
             inst.from_pretrained(state_dict=state_dict)
         return inst
 
-    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"), dtype=torch.bfloat16)
+    @autocast(
+        device_type=("cuda" if torch.cuda.is_available() else "cpu"),
+        dtype=torch.bfloat16,
+    )
     def forward(
         self,
         pixel_values: torch.Tensor,
@@ -296,7 +299,10 @@ class ControlNetFluxLoraForText2ImageGeneration(
     @add_default_section_for_function(
         "core/model/diffusers/peft/lora/text2image/controlnet_flux"
     )
-    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"), dtype=torch.bfloat16)
+    @autocast(
+        device_type=("cuda" if torch.cuda.is_available() else "cpu"),
+        dtype=torch.bfloat16,
+    )
     def generate(
         self,
         condition_pixel_values: torch.Tensor,
