@@ -1,22 +1,42 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
+from unitorch.cli import hf_endpoint_url
+
 # pretrained infos
 pretrained_mask2former_infos = {
     "mask2former-swin-tiny-ade-semantic": {
-        "config": "https://huggingface.co/facebook/mask2former-swin-tiny-ade-semantic/resolve/main/config.json",
-        "vision_config": "https://huggingface.co/facebook/mask2former-swin-tiny-ade-semantic/resolve/main/preprocessor_config.json",
-        "weight": "https://huggingface.co/facebook/mask2former-swin-tiny-ade-semantic/resolve/main/pytorch_model.bin",
+        "config": hf_endpoint_url(
+            "/facebook/mask2former-swin-tiny-ade-semantic/resolve/main/config.json"
+        ),
+        "vision_config": hf_endpoint_url(
+            "/facebook/mask2former-swin-tiny-ade-semantic/resolve/main/preprocessor_config.json"
+        ),
+        "weight": hf_endpoint_url(
+            "/facebook/mask2former-swin-tiny-ade-semantic/resolve/main/pytorch_model.bin"
+        ),
     },
     "mask2former-swin-base-ade-semantic": {
-        "config": "https://huggingface.co/facebook/mask2former-swin-base-ade-semantic/resolve/main/config.json",
-        "vision_config": "https://huggingface.co/facebook/mask2former-swin-base-ade-semantic/resolve/main/preprocessor_config.json",
-        "weight": "https://huggingface.co/facebook/mask2former-swin-base-ade-semantic/resolve/main/pytorch_model.bin",
+        "config": hf_endpoint_url(
+            "/facebook/mask2former-swin-base-ade-semantic/resolve/main/config.json"
+        ),
+        "vision_config": hf_endpoint_url(
+            "/facebook/mask2former-swin-base-ade-semantic/resolve/main/preprocessor_config.json"
+        ),
+        "weight": hf_endpoint_url(
+            "/facebook/mask2former-swin-base-ade-semantic/resolve/main/pytorch_model.bin"
+        ),
     },
     "mask2former-swin-large-ade-semantic": {
-        "config": "https://huggingface.co/facebook/mask2former-swin-large-ade-semantic/resolve/main/config.json",
-        "vision_config": "https://huggingface.co/facebook/mask2former-swin-large-ade-semantic/resolve/main/preprocessor_config.json",
-        "weight": "https://huggingface.co/facebook/mask2former-swin-large-ade-semantic/resolve/main/pytorch_model.bin",
+        "config": hf_endpoint_url(
+            "/facebook/mask2former-swin-large-ade-semantic/resolve/main/config.json"
+        ),
+        "vision_config": hf_endpoint_url(
+            "/facebook/mask2former-swin-large-ade-semantic/resolve/main/preprocessor_config.json"
+        ),
+        "weight": hf_endpoint_url(
+            "/facebook/mask2former-swin-large-ade-semantic/resolve/main/pytorch_model.bin"
+        ),
     },
 }
 

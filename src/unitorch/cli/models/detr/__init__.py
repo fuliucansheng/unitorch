@@ -1,17 +1,27 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
+from unitorch.cli import hf_endpoint_url
+
 # pretrained infos
 pretrained_detr_infos = {
     "detr-resnet-50": {
-        "config": "https://huggingface.co/facebook/detr-resnet-50/resolve/main/config.json",
-        "vision_config": "https://huggingface.co/facebook/detr-resnet-50/resolve/main/preprocessor_config.json",
-        "weight": "https://huggingface.co/facebook/detr-resnet-50/resolve/main/pytorch_model.bin",
+        "config": hf_endpoint_url("/facebook/detr-resnet-50/resolve/main/config.json"),
+        "vision_config": hf_endpoint_url(
+            "/facebook/detr-resnet-50/resolve/main/preprocessor_config.json"
+        ),
+        "weight": hf_endpoint_url(
+            "/facebook/detr-resnet-50/resolve/main/pytorch_model.bin"
+        ),
     },
     "detr-resnet-101": {
-        "config": "https://huggingface.co/facebook/detr-resnet-101/resolve/main/config.json",
-        "vision_config": "https://huggingface.co/facebook/detr-resnet-101/resolve/main/preprocessor_config.json",
-        "weight": "https://huggingface.co/facebook/detr-resnet-101/resolve/main/pytorch_model.bin",
+        "config": hf_endpoint_url("/facebook/detr-resnet-101/resolve/main/config.json"),
+        "vision_config": hf_endpoint_url(
+            "/facebook/detr-resnet-101/resolve/main/preprocessor_config.json"
+        ),
+        "weight": hf_endpoint_url(
+            "/facebook/detr-resnet-101/resolve/main/pytorch_model.bin"
+        ),
     },
 }
 

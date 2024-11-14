@@ -6,7 +6,7 @@ import torch
 import numpy as np
 from PIL import Image
 import onnxruntime as ort
-from unitorch.cli import cached_path
+from unitorch.cli import cached_path, hf_endpoint_url
 import unitorch.cli.pipelines.tools.controlnet.dwpose.utils as utils
 from unitorch.cli.pipelines.tools.controlnet.dwpose.onnxdet import inference_detector
 from unitorch.cli.pipelines.tools.controlnet.dwpose.onnxpose import inference_pose
@@ -19,9 +19,9 @@ class Wholebody:
             if torch.cuda.is_available()
             else ["CPUExecutionProvider"]
         )
-        onnx_det_path = "https://huggingface.co/yzd-v/DWPose/resolve/main/yolox_l.onnx"
-        onnx_pose_path = (
-            "https://huggingface.co/yzd-v/DWPose/resolve/main/dw-ll_ucoco_384.onnx"
+        onnx_det_path = hf_endpoint_url("/yzd-v/DWPose/resolve/main/yolox_l.onnx")
+        onnx_pose_path = hf_endpoint_url(
+            "/yzd-v/DWPose/resolve/main/dw-ll_ucoco_384.onnx"
         )
 
         self.session_det = ort.InferenceSession(

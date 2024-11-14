@@ -10,9 +10,13 @@ import pandas as pd
 from PIL import Image
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from diffusers.utils import numpy_to_pil
+from diffusers.models import (
+    FluxControlNetModel,
+    FluxMultiControlNetModel,
+)
 from diffusers.pipelines import (
     FluxPipeline,
-    # FluxControlNetPipeline,
+    FluxControlNetPipeline,
 )
 from unitorch import is_xformers_available
 from unitorch.utils import is_remote_url
@@ -80,6 +84,7 @@ class StableFluxForText2ImageGenerationPipeline(GenericStableFluxModel):
 
         self._enable_cpu_offload = enable_cpu_offload
         self._enable_xformers = enable_xformers
+        self.to(device=self._device)
 
     @classmethod
     @add_default_section_for_init("core/pipeline/stable_flux/text2image")
@@ -263,7 +268,9 @@ class StableFluxForText2ImageGenerationPipeline(GenericStableFluxModel):
                     )
                 )
                 controlnet_config_dict = json.load(open(controlnet_config_path))
-                controlnet = FluxControlNetModel.from_config(controlnet_config_dict)
+                controlnet = FluxControlNetModel.from_config(controlnet_config_dict).to(
+                    torch.bfloat16
+                )
                 controlnet.load_state_dict(
                     load_weight(
                         nested_dict_value(
@@ -312,7 +319,7 @@ class StableFluxForText2ImageGenerationPipeline(GenericStableFluxModel):
 
         inputs = {k: v.unsqueeze(0) if v is not None else v for k, v in inputs.items()}
         inputs = {
-            k: v.to(device=self.device) if v is not None else v
+            k: v.to(device=self._device) if v is not None else v
             for k, v in inputs.items()
         }
         if isinstance(lora_checkpoints, str):
@@ -360,19 +367,17 @@ class StableFluxForText2ImageGenerationPipeline(GenericStableFluxModel):
                 lora_alphas=processed_lora_alphas,
             )
 
+        if self._enable_cpu_offload and self._device != "cpu":
+            self.pipeline.enable_model_cpu_offload(self._device)
+        else:
+            self.to(device=self._device)
+
         prompt_embeds_results = self.get_prompt_outputs(
             inputs["input_ids"],
             input2_ids=inputs["input2_ids"],
         )
         prompt_embeds = prompt_embeds_results.prompt_embeds
         pooled_prompt_embeds = prompt_embeds_results.pooled_prompt_embeds
-
-        if self._enable_cpu_offload and self._device != "cpu":
-            self.pipeline.enable_model_cpu_offload(self._device)
-        else:
-            self.to(device=self._device)
-
-        self.pipeline.to(torch.bfloat16)
 
         if self._enable_xformers and self._device != "cpu":
             assert is_xformers_available(), "Please install xformers first."

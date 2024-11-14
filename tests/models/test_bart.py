@@ -9,7 +9,7 @@ from absl.testing import absltest, parameterized
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from unitorch import set_seed
 from unitorch.models.bart import BartForGeneration, BartProcessor
-from unitorch.cli import cached_path
+from unitorch.cli import cached_path, hf_endpoint_url
 from unitorch.cli import CoreConfigureParser
 from unitorch.cli.models.bart.modeling import BartForGeneration as CoreBartForGeneration
 from unitorch.cli.models.bart.processing import BartProcessor as CoreBartProcessor
@@ -25,16 +25,16 @@ class BartTest(parameterized.TestCase):
 
         # Download the required files if they are not already cached
         self.config_path = cached_path(
-            "https://huggingface.co/facebook/bart-base/resolve/main/config.json"
+            hf_endpoint_url("/facebook/bart-base/resolve/main/config.json")
         )
         self.vocab_path = cached_path(
-            "https://huggingface.co/facebook/bart-base/resolve/main/vocab.json"
+            hf_endpoint_url("/facebook/bart-base/resolve/main/vocab.json")
         )
         self.merge_path = cached_path(
-            "https://huggingface.co/facebook/bart-base/resolve/main/merges.txt"
+            hf_endpoint_url("/facebook/bart-base/resolve/main/merges.txt")
         )
         self.weight_path = cached_path(
-            "https://huggingface.co/facebook/bart-base/resolve/main/pytorch_model.bin"
+            hf_endpoint_url("/facebook/bart-base/resolve/main/pytorch_model.bin")
         )
 
     @parameterized.named_parameters(

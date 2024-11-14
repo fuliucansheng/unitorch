@@ -8,6 +8,7 @@ import torch.nn as nn
 from PIL import Image
 from torchvision.transforms import ToTensor, ToPILImage
 from unitorch.models import GenericModel
+from unitorch.cli import hf_endpoint_url
 
 
 class ResidualBlock(nn.Module):
@@ -99,7 +100,7 @@ class LineartPipeline(LineartModel):
     def __init__(self):
         super().__init__(3, 1, 3)
         self.from_pretrained(
-            "https://huggingface.co/lllyasviel/Annotators/resolve/main/sk_model.pth"
+            hf_endpoint_url("/lllyasviel/Annotators/resolve/main/sk_model.pth")
         )
         self.preprocess = ToTensor()
         self.postprocess = ToPILImage()

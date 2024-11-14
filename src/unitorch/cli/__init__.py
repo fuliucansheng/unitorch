@@ -29,6 +29,17 @@ def import_library(library):
     return is_load_success
 
 
+UNITORCH_HF_ENDPOINT = os.environ.get("UNITORCH_HF_ENDPOINT", "https://huggingface.co")
+
+
+def hf_endpoint_url(url):
+    if is_remote_url(url):
+        return url
+    if url.startswith("/"):
+        url = url[1:]
+    return f"{UNITORCH_HF_ENDPOINT}/{url}"
+
+
 # extenstions
 UNITORCH_EXTENSTIONS = os.environ.get("UNITORCH_EXTENSTIONS", "")
 UNITORCH_EXTENSTIONS = [

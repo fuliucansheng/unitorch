@@ -9,6 +9,7 @@ import torch.nn as nn
 from PIL import Image
 from torchvision.transforms import ToTensor, ToPILImage
 from unitorch.models import GenericModel
+from unitorch.cli import hf_endpoint_url
 
 
 class DoubleConvBlock(torch.nn.Module):
@@ -86,7 +87,7 @@ class HedPipeline(ControlNetHED_Apache2):
     def __init__(self):
         super().__init__()
         self.from_pretrained(
-            "https://huggingface.co/lllyasviel/Annotators/resolve/main/ControlNetHED.pth"
+            hf_endpoint_url("/lllyasviel/Annotators/resolve/main/ControlNetHED.pth")
         )
         self.preprocess = ToTensor()
         self.postprocess = ToPILImage()

@@ -1,22 +1,24 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
+from unitorch.cli import hf_endpoint_url
+
 # pretrained infos
 pretrained_mt5_infos = {
     "mt5-base": {
-        "config": "https://huggingface.co/google/mt5-base/resolve/main/config.json",
-        "vocab": "https://huggingface.co/google/mt5-base/resolve/main/spiece.model",
-        "weight": "https://huggingface.co/google/mt5-base/resolve/main/pytorch_model.bin",
+        "config": hf_endpoint_url("/google/mt5-base/resolve/main/config.json"),
+        "vocab": hf_endpoint_url("/google/mt5-base/resolve/main/spiece.model"),
+        "weight": hf_endpoint_url("/google/mt5-base/resolve/main/pytorch_model.bin"),
     },
     "mt5-small": {
-        "config": "https://huggingface.co/google/mt5-small/resolve/main/config.json",
-        "vocab": "https://huggingface.co/google/mt5-small/resolve/main/spiece.model",
-        "weight": "https://huggingface.co/google/mt5-small/resolve/main/pytorch_model.bin",
+        "config": hf_endpoint_url("/google/mt5-small/resolve/main/config.json"),
+        "vocab": hf_endpoint_url("/google/mt5-small/resolve/main/spiece.model"),
+        "weight": hf_endpoint_url("/google/mt5-small/resolve/main/pytorch_model.bin"),
     },
     "mt5-large": {
-        "config": "https://huggingface.co/google/mt5-large/resolve/main/config.json",
-        "vocab": "https://huggingface.co/google/mt5-large/resolve/main/spiece.model",
-        "weight": "https://huggingface.co/google/mt5-large/resolve/main/pytorch_model.bin",
+        "config": hf_endpoint_url("/google/mt5-large/resolve/main/config.json"),
+        "vocab": hf_endpoint_url("/google/mt5-large/resolve/main/spiece.model"),
+        "weight": hf_endpoint_url("/google/mt5-large/resolve/main/pytorch_model.bin"),
     },
 }
 

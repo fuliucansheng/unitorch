@@ -56,6 +56,9 @@ class StableForText2ImageFastAPIPipeline(GenericStableModel):
         max_seq_length: Optional[int] = 77,
         pad_token: Optional[str] = "<|endoftext|>",
         weight_path: Optional[Union[str, List[str]]] = None,
+        lora_checkpoints: Optional[Union[str, List[str]]] = None,
+        lora_weights: Optional[Union[float, List[float]]] = 1.0,
+        lora_alphas: Optional[Union[float, List[float]]] = 32,
         state_dict: Optional[Dict[str, Any]] = None,
         device: Optional[Union[str, int]] = "cpu",
         enable_cpu_offload: Optional[bool] = False,
@@ -78,6 +81,13 @@ class StableForText2ImageFastAPIPipeline(GenericStableModel):
         self._device = "cpu" if device == "cpu" else int(device)
 
         self.from_pretrained(weight_path, state_dict=state_dict)
+
+        if isinstance(lora_checkpoints, str):
+            pass
+
+        if lora_checkpoints is not None:
+            lora_weights = [1.0] * len(lora_checkpoints)
+
         self.eval()
 
         self.pipeline = StableDiffusionPipeline(

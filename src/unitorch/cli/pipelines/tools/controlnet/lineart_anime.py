@@ -13,6 +13,7 @@ import functools
 from PIL import Image
 from torchvision.transforms import ToTensor, ToPILImage
 from unitorch.models import GenericModel
+from unitorch.cli import hf_endpoint_url
 
 
 class UnetSkipConnectionBlock(nn.Module):
@@ -172,7 +173,7 @@ class LineartAnimeDetector(UnetGenerator):
         )
         super().__init__(3, 1, 8, 64, norm_layer=norm_layer, use_dropout=False)
         self.from_pretrained(
-            "https://huggingface.co/lllyasviel/Annotators/resolve/main/netG.pth",
+            hf_endpoint_url("/lllyasviel/Annotators/resolve/main/netG.pth"),
             replace_keys={"module.": ""},
         )
         self.eval()

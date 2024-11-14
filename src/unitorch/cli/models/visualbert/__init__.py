@@ -1,18 +1,29 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
-# pretrained infos
+from unitorch.cli import hf_endpoint_url
 
+# pretrained infos
 pretrained_visualbert_infos = {
     "visualbert-vqa-coco-pre": {
-        "config": "https://huggingface.co/uclanlp/visualbert-vqa-coco-pre/resolve/main/config.json",
-        "vocab": "https://huggingface.co/bert-base-uncased/resolve/main/vocab.txt",
-        "weight": "https://huggingface.co/uclanlp/visualbert-vqa-coco-pre/resolve/main/pytorch_model.bin",
+        "config": hf_endpoint_url(
+            "/uclanlp/visualbert-vqa-coco-pre/resolve/main/config.json"
+        ),
+        "vocab": hf_endpoint_url("/bert-base-uncased/resolve/main/vocab.txt"),
+        "weight": hf_endpoint_url(
+            "/uclanlp/visualbert-vqa-coco-pre/resolve/main/pytorch_model.bin"
+        ),
     },
     "visualbert-nlvr2-coco-pre": {
-        "config": "https://huggingface.co/uclanlp/visualbert-nlvr2-coco-pre/resolve/main/config.json",
-        "vocab": "https://huggingface.co/bert-base-multilingual-uncased/resolve/main/vocab.txt",
-        "weight": "https://huggingface.co/uclanlp/visualbert-nlvr2-coco-pre/resolve/main/pytorch_model.bin",
+        "config": hf_endpoint_url(
+            "/uclanlp/visualbert-nlvr2-coco-pre/resolve/main/config.json"
+        ),
+        "vocab": hf_endpoint_url(
+            "/bert-base-multilingual-uncased/resolve/main/vocab.txt"
+        ),
+        "weight": hf_endpoint_url(
+            "/uclanlp/visualbert-nlvr2-coco-pre/resolve/main/pytorch_model.bin"
+        ),
     },
 }
 

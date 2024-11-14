@@ -15,6 +15,7 @@ from unitorch.utils import pop_value, nested_dict_value, read_file, read_json_fi
 
 from unitorch.cli import (
     cached_path,
+    hf_endpoint_url,
     add_default_section_for_init,
     add_default_section_for_function,
 )
@@ -63,37 +64,49 @@ class ClipInterrogatorPipeline(_ClipForPretrain):
 
         artists = read_file(
             cached_path(
-                "https://huggingface.co/datasets/fuliucansheng/hubfiles/raw/main/clip-interrogator/artists.txt"
+                hf_endpoint_url(
+                    "/datasets/fuliucansheng/hubfiles/raw/main/clip-interrogator/artists.txt"
+                )
             ),
             lines=True,
         )
         flavors = read_file(
             cached_path(
-                "https://huggingface.co/datasets/fuliucansheng/hubfiles/raw/main/clip-interrogator/flavors.txt"
+                hf_endpoint_url(
+                    "/datasets/fuliucansheng/hubfiles/raw/main/clip-interrogator/flavors.txt"
+                )
             ),
             lines=True,
         )
         mediums = read_file(
             cached_path(
-                "https://huggingface.co/datasets/fuliucansheng/hubfiles/raw/main/clip-interrogator/mediums.txt"
+                hf_endpoint_url(
+                    "/datasets/fuliucansheng/hubfiles/raw/main/clip-interrogator/mediums.txt"
+                )
             ),
             lines=True,
         )
         movements = read_file(
             cached_path(
-                "https://huggingface.co/datasets/fuliucansheng/hubfiles/raw/main/clip-interrogator/movements.txt"
+                hf_endpoint_url(
+                    "/datasets/fuliucansheng/hubfiles/raw/main/clip-interrogator/movements.txt"
+                )
             ),
             lines=True,
         )
         negative = read_file(
             cached_path(
-                "https://huggingface.co/datasets/fuliucansheng/hubfiles/raw/main/clip-interrogator/negative.txt"
+                hf_endpoint_url(
+                    "/datasets/fuliucansheng/hubfiles/raw/main/clip-interrogator/negative.txt"
+                )
             ),
             lines=True,
         )
         sites = read_file(
             cached_path(
-                "https://huggingface.co/datasets/fuliucansheng/hubfiles/raw/main/clip-interrogator/sites.txt"
+                hf_endpoint_url(
+                    "/datasets/fuliucansheng/hubfiles/raw/main/clip-interrogator/sites.txt"
+                )
             ),
             lines=True,
         )

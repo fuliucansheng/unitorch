@@ -1,40 +1,58 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
+from unitorch.cli import hf_endpoint_url
+
 __hf_hub_stable_v1_5_dict__ = lambda name: {
     "unet": {
-        "config": f"https://huggingface.co/{name}/resolve/main/unet/config.json",
-        "weight": f"https://huggingface.co/{name}/resolve/main/unet/diffusion_pytorch_model.bin",
+        "config": hf_endpoint_url(f"/{name}/resolve/main/unet/config.json"),
+        "weight": hf_endpoint_url(
+            f"/{name}/resolve/main/unet/diffusion_pytorch_model.bin"
+        ),
     },
     "text": {
-        "config": f"https://huggingface.co/{name}/resolve/main/text_encoder/config.json",
-        "vocab": f"https://huggingface.co/{name}/resolve/main/tokenizer/vocab.json",
-        "merge": f"https://huggingface.co/{name}/resolve/main/tokenizer/merges.txt",
-        "weight": f"https://huggingface.co/{name}/resolve/main/text_encoder/pytorch_model.bin",
+        "config": hf_endpoint_url(f"/{name}/resolve/main/text_encoder/config.json"),
+        "vocab": hf_endpoint_url(f"/{name}/resolve/main/tokenizer/vocab.json"),
+        "merge": hf_endpoint_url(f"/{name}/resolve/main/tokenizer/merges.txt"),
+        "weight": hf_endpoint_url(
+            f"/{name}/resolve/main/text_encoder/pytorch_model.bin"
+        ),
     },
     "vae": {
-        "config": f"https://huggingface.co/{name}/resolve/main/vae/config.json",
-        "weight": f"https://huggingface.co/{name}/resolve/main/vae/diffusion_pytorch_model.bin",
+        "config": hf_endpoint_url(f"/{name}/resolve/main/vae/config.json"),
+        "weight": hf_endpoint_url(
+            f"/{name}/resolve/main/vae/diffusion_pytorch_model.bin"
+        ),
     },
-    "scheduler": f"https://huggingface.co/{name}/resolve/main/scheduler/scheduler_config.json",
+    "scheduler": hf_endpoint_url(
+        f"/{name}/resolve/main/scheduler/scheduler_config.json"
+    ),
 }
 
 __hf_hub_stable_v1_5_safetensors_dict__ = lambda name: {
     "unet": {
-        "config": f"https://huggingface.co/{name}/resolve/main/unet/config.json",
-        "weight": f"https://huggingface.co/{name}/resolve/main/unet/diffusion_pytorch_model.safetensors",
+        "config": hf_endpoint_url(f"/{name}/resolve/main/unet/config.json"),
+        "weight": hf_endpoint_url(
+            f"/{name}/resolve/main/unet/diffusion_pytorch_model.safetensors"
+        ),
     },
     "text": {
-        "config": f"https://huggingface.co/{name}/resolve/main/text_encoder/config.json",
-        "vocab": f"https://huggingface.co/{name}/resolve/main/tokenizer/vocab.json",
-        "merge": f"https://huggingface.co/{name}/resolve/main/tokenizer/merges.txt",
-        "weight": f"https://huggingface.co/{name}/resolve/main/text_encoder/model.safetensors",
+        "config": hf_endpoint_url(f"/{name}/resolve/main/text_encoder/config.json"),
+        "vocab": hf_endpoint_url(f"/{name}/resolve/main/tokenizer/vocab.json"),
+        "merge": hf_endpoint_url(f"/{name}/resolve/main/tokenizer/merges.txt"),
+        "weight": hf_endpoint_url(
+            f"/{name}/resolve/main/text_encoder/model.safetensors"
+        ),
     },
     "vae": {
-        "config": f"https://huggingface.co/{name}/resolve/main/vae/config.json",
-        "weight": f"https://huggingface.co/{name}/resolve/main/vae/diffusion_pytorch_model.safetensors",
+        "config": hf_endpoint_url(f"/{name}/resolve/main/vae/config.json"),
+        "weight": hf_endpoint_url(
+            f"/{name}/resolve/main/vae/diffusion_pytorch_model.safetensors"
+        ),
     },
-    "scheduler": f"https://huggingface.co/{name}/resolve/main/scheduler/scheduler_config.json",
+    "scheduler": hf_endpoint_url(
+        f"/{name}/resolve/main/scheduler/scheduler_config.json"
+    ),
 }
 
 __hf_hub_stable_v2_dict__ = __hf_hub_stable_v1_5_dict__
@@ -44,156 +62,212 @@ __hf_hub_stable_v2_1_safetensors_dict__ = __hf_hub_stable_v1_5_safetensors_dict_
 
 __hf_hub_stable_xl_dict__ = lambda name: {
     "unet": {
-        "config": f"https://huggingface.co/{name}/resolve/main/unet/config.json",
-        "weight": f"https://huggingface.co/{name}/resolve/main/unet/diffusion_pytorch_model.bin",
+        "config": hf_endpoint_url(f"/{name}/resolve/main/unet/config.json"),
+        "weight": hf_endpoint_url(
+            f"/{name}/resolve/main/unet/diffusion_pytorch_model.bin"
+        ),
     },
     "text": {
-        "config": f"https://huggingface.co/{name}/resolve/main/text_encoder/config.json",
-        "vocab": f"https://huggingface.co/{name}/resolve/main/tokenizer/vocab.json",
-        "merge": f"https://huggingface.co/{name}/resolve/main/tokenizer/merges.txt",
-        "weight": f"https://huggingface.co/{name}/resolve/main/text_encoder/pytorch_model.bin",
+        "config": hf_endpoint_url(f"/{name}/resolve/main/text_encoder/config.json"),
+        "vocab": hf_endpoint_url(f"/{name}/resolve/main/tokenizer/vocab.json"),
+        "merge": hf_endpoint_url(f"/{name}/resolve/main/tokenizer/merges.txt"),
+        "weight": hf_endpoint_url(
+            f"/{name}/resolve/main/text_encoder/pytorch_model.bin"
+        ),
     },
     "text2": {
-        "config": f"https://huggingface.co/{name}/resolve/main/text_encoder_2/config.json",
-        "vocab": f"https://huggingface.co/{name}/resolve/main/tokenizer_2/vocab.json",
-        "merge": f"https://huggingface.co/{name}/resolve/main/tokenizer_2/merges.txt",
-        "weight": f"https://huggingface.co/{name}/resolve/main/text_encoder_2/pytorch_model.bin",
+        "config": hf_endpoint_url(f"/{name}/resolve/main/text_encoder_2/config.json"),
+        "vocab": hf_endpoint_url(f"/{name}/resolve/main/tokenizer_2/vocab.json"),
+        "merge": hf_endpoint_url(f"/{name}/resolve/main/tokenizer_2/merges.txt"),
+        "weight": hf_endpoint_url(
+            f"/{name}/resolve/main/text_encoder_2/pytorch_model.bin"
+        ),
     },
     "vae": {
-        "config": f"https://huggingface.co/{name}/resolve/main/vae/config.json",
-        "weight": f"https://huggingface.co/{name}/resolve/main/vae/diffusion_pytorch_model.bin",
+        "config": hf_endpoint_url(f"/{name}/resolve/main/vae/config.json"),
+        "weight": hf_endpoint_url(
+            f"/{name}/resolve/main/vae/diffusion_pytorch_model.bin"
+        ),
     },
-    "scheduler": f"https://huggingface.co/{name}/resolve/main/scheduler/scheduler_config.json",
+    "scheduler": hf_endpoint_url(
+        f"/{name}/resolve/main/scheduler/scheduler_config.json"
+    ),
 }
 
 __hf_hub_stable_xl_safetensors_dict__ = lambda name: {
     "unet": {
-        "config": f"https://huggingface.co/{name}/resolve/main/unet/config.json",
-        "weight": f"https://huggingface.co/{name}/resolve/main/unet/diffusion_pytorch_model.fp16.safetensors",
+        "config": hf_endpoint_url(f"/{name}/resolve/main/unet/config.json"),
+        "weight": hf_endpoint_url(
+            f"/{name}/resolve/main/unet/diffusion_pytorch_model.fp16.safetensors"
+        ),
     },
     "text": {
-        "config": f"https://huggingface.co/{name}/resolve/main/text_encoder/config.json",
-        "vocab": f"https://huggingface.co/{name}/resolve/main/tokenizer/vocab.json",
-        "merge": f"https://huggingface.co/{name}/resolve/main/tokenizer/merges.txt",
-        "weight": f"https://huggingface.co/{name}/resolve/main/text_encoder/model.fp16.safetensors",
+        "config": hf_endpoint_url(f"/{name}/resolve/main/text_encoder/config.json"),
+        "vocab": hf_endpoint_url(f"/{name}/resolve/main/tokenizer/vocab.json"),
+        "merge": hf_endpoint_url(f"/{name}/resolve/main/tokenizer/merges.txt"),
+        "weight": hf_endpoint_url(
+            f"/{name}/resolve/main/text_encoder/model.fp16.safetensors"
+        ),
     },
     "text2": {
-        "config": f"https://huggingface.co/{name}/resolve/main/text_encoder_2/config.json",
-        "vocab": f"https://huggingface.co/{name}/resolve/main/tokenizer_2/vocab.json",
-        "merge": f"https://huggingface.co/{name}/resolve/main/tokenizer_2/merges.txt",
-        "weight": f"https://huggingface.co/{name}/resolve/main/text_encoder_2/model.fp16.safetensors",
+        "config": hf_endpoint_url(f"/{name}/resolve/main/text_encoder_2/config.json"),
+        "vocab": hf_endpoint_url(f"/{name}/resolve/main/tokenizer_2/vocab.json"),
+        "merge": hf_endpoint_url(f"/{name}/resolve/main/tokenizer_2/merges.txt"),
+        "weight": hf_endpoint_url(
+            f"/{name}/resolve/main/text_encoder_2/model.fp16.safetensors"
+        ),
     },
     "vae": {
-        "config": f"https://huggingface.co/{name}/resolve/main/vae/config.json",
-        "weight": f"https://huggingface.co/{name}/resolve/main/vae/diffusion_pytorch_model.fp16.safetensors",
+        "config": hf_endpoint_url(f"/{name}/resolve/main/vae/config.json"),
+        "weight": hf_endpoint_url(
+            f"/{name}/resolve/main/vae/diffusion_pytorch_model.fp16.safetensors"
+        ),
     },
-    "scheduler": f"https://huggingface.co/{name}/resolve/main/scheduler/scheduler_config.json",
+    "scheduler": hf_endpoint_url(
+        f"/{name}/resolve/main/scheduler/scheduler_config.json"
+    ),
 }
 
 __hf_hub_stable_3_safetensors_dict__ = lambda name: {
     "transformer": {
-        "config": f"https://huggingface.co/{name}/resolve/main/transformer/config.json",
-        "weight": f"https://huggingface.co/{name}/resolve/main/transformer/diffusion_pytorch_model.safetensors",
+        "config": hf_endpoint_url(f"/{name}/resolve/main/transformer/config.json"),
+        "weight": hf_endpoint_url(
+            f"/{name}/resolve/main/transformer/diffusion_pytorch_model.safetensors"
+        ),
     },
     "text": {
-        "config": f"https://huggingface.co/{name}/resolve/main/text_encoder/config.json",
-        "vocab": f"https://huggingface.co/{name}/resolve/main/tokenizer/vocab.json",
-        "merge": f"https://huggingface.co/{name}/resolve/main/tokenizer/merges.txt",
-        "weight": f"https://huggingface.co/{name}/resolve/main/text_encoder/model.safetensors",
+        "config": hf_endpoint_url(f"/{name}/resolve/main/text_encoder/config.json"),
+        "vocab": hf_endpoint_url(f"/{name}/resolve/main/tokenizer/vocab.json"),
+        "merge": hf_endpoint_url(f"/{name}/resolve/main/tokenizer/merges.txt"),
+        "weight": hf_endpoint_url(
+            f"/{name}/resolve/main/text_encoder/model.safetensors"
+        ),
     },
     "text2": {
-        "config": f"https://huggingface.co/{name}/resolve/main/text_encoder_2/config.json",
-        "vocab": f"https://huggingface.co/{name}/resolve/main/tokenizer_2/vocab.json",
-        "merge": f"https://huggingface.co/{name}/resolve/main/tokenizer_2/merges.txt",
-        "weight": f"https://huggingface.co/{name}/resolve/main/text_encoder_2/model.safetensors",
+        "config": hf_endpoint_url(f"/{name}/resolve/main/text_encoder_2/config.json"),
+        "vocab": hf_endpoint_url(f"/{name}/resolve/main/tokenizer_2/vocab.json"),
+        "merge": hf_endpoint_url(f"/{name}/resolve/main/tokenizer_2/merges.txt"),
+        "weight": hf_endpoint_url(
+            f"/{name}/resolve/main/text_encoder_2/model.safetensors"
+        ),
     },
     "text3": {
-        "config": f"https://huggingface.co/{name}/resolve/main/text_encoder_3/config.json",
-        "vocab": f"https://huggingface.co/{name}/resolve/main/tokenizer_3/spiece.model",
+        "config": hf_endpoint_url(f"/{name}/resolve/main/text_encoder_3/config.json"),
+        "vocab": hf_endpoint_url(f"/{name}/resolve/main/tokenizer_3/spiece.model"),
         "weight": [
-            f"https://huggingface.co/{name}/resolve/main/text_encoder_3/model-{str(i).rjust(5, '0')}-of-00002.safetensors"
+            hf_endpoint_url(
+                f"/{name}/resolve/main/text_encoder_3/model-{str(i).rjust(5, '0')}-of-00002.safetensors"
+            )
             for i in range(1, 3)
         ],
     },
     "vae": {
-        "config": f"https://huggingface.co/{name}/resolve/main/vae/config.json",
-        "weight": f"https://huggingface.co/{name}/resolve/main/vae/diffusion_pytorch_model.safetensors",
+        "config": hf_endpoint_url(f"/{name}/resolve/main/vae/config.json"),
+        "weight": hf_endpoint_url(
+            f"/{name}/resolve/main/vae/diffusion_pytorch_model.safetensors"
+        ),
     },
-    "scheduler": f"https://huggingface.co/{name}/resolve/main/scheduler/scheduler_config.json",
+    "scheduler": hf_endpoint_url(
+        f"/{name}/resolve/main/scheduler/scheduler_config.json"
+    ),
 }
 
 __hf_hub_stable_flux_safetensors_dict__ = lambda name: {
     "transformer": {
-        "config": f"https://huggingface.co/{name}/resolve/main/transformer/config.json",
+        "config": hf_endpoint_url(f"/{name}/resolve/main/transformer/config.json"),
         "weight": [
-            f"https://huggingface.co/{name}/resolve/main/transformer/diffusion_pytorch_model-{str(i).rjust(5, '0')}-of-00003.safetensors"
+            hf_endpoint_url(
+                f"/{name}/resolve/main/transformer/diffusion_pytorch_model-{str(i).rjust(5, '0')}-of-00003.safetensors"
+            )
             for i in range(1, 4)
         ],
     },
     "text": {
-        "config": f"https://huggingface.co/{name}/resolve/main/text_encoder/config.json",
-        "vocab": f"https://huggingface.co/{name}/resolve/main/tokenizer/vocab.json",
-        "merge": f"https://huggingface.co/{name}/resolve/main/tokenizer/merges.txt",
-        "weight": f"https://huggingface.co/{name}/resolve/main/text_encoder/model.safetensors",
+        "config": hf_endpoint_url(f"/{name}/resolve/main/text_encoder/config.json"),
+        "vocab": hf_endpoint_url(f"/{name}/resolve/main/tokenizer/vocab.json"),
+        "merge": hf_endpoint_url(f"/{name}/resolve/main/tokenizer/merges.txt"),
+        "weight": hf_endpoint_url(
+            f"/{name}/resolve/main/text_encoder/model.safetensors"
+        ),
     },
     "text2": {
-        "config": f"https://huggingface.co/{name}/resolve/main/text_encoder_2/config.json",
-        "vocab": f"https://huggingface.co/{name}/resolve/main/tokenizer_2/spiece.model",
+        "config": hf_endpoint_url(f"/{name}/resolve/main/text_encoder_2/config.json"),
+        "vocab": hf_endpoint_url(f"/{name}/resolve/main/tokenizer_2/spiece.model"),
         "weight": [
-            f"https://huggingface.co/{name}/resolve/main/text_encoder_2/model-{str(i).rjust(5, '0')}-of-00002.safetensors"
+            hf_endpoint_url(
+                f"/{name}/resolve/main/text_encoder_2/model-{str(i).rjust(5, '0')}-of-00002.safetensors"
+            )
             for i in range(1, 3)
         ],
     },
     "vae": {
-        "config": f"https://huggingface.co/{name}/resolve/main/vae/config.json",
-        "weight": f"https://huggingface.co/{name}/resolve/main/vae/diffusion_pytorch_model.safetensors",
+        "config": hf_endpoint_url(f"/{name}/resolve/main/vae/config.json"),
+        "weight": hf_endpoint_url(
+            f"/{name}/resolve/main/vae/diffusion_pytorch_model.safetensors"
+        ),
     },
-    "scheduler": f"https://huggingface.co/{name}/resolve/main/scheduler/scheduler_config.json",
+    "scheduler": hf_endpoint_url(
+        f"/{name}/resolve/main/scheduler/scheduler_config.json"
+    ),
 }
 
 __hf_hub_controlnet_dict__ = lambda name: {
     "controlnet": {
-        "config": f"https://huggingface.co/{name}/resolve/main/config.json",
-        "weight": f"https://huggingface.co/{name}/resolve/main/diffusion_pytorch_model.bin",
+        "config": hf_endpoint_url(f"/{name}/resolve/main/config.json"),
+        "weight": hf_endpoint_url(f"/{name}/resolve/main/diffusion_pytorch_model.bin"),
     }
 }
 
 __hf_hub_controlnet_safetensors_dict__ = lambda name: {
     "controlnet": {
-        "config": f"https://huggingface.co/{name}/resolve/main/config.json",
-        "weight": f"https://huggingface.co/{name}/resolve/main/diffusion_pytorch_model.safetensors",
+        "config": hf_endpoint_url(f"/{name}/resolve/main/config.json"),
+        "weight": hf_endpoint_url(
+            f"/{name}/resolve/main/diffusion_pytorch_model.safetensors"
+        ),
     }
 }
 
 __hf_hub_adapter_dict__ = lambda name: {
     "adapter": {
-        "config": f"https://huggingface.co/{name}/resolve/main/config.json",
-        "weight": f"https://huggingface.co/{name}/resolve/main/diffusion_pytorch_model.bin",
+        "config": hf_endpoint_url(f"/{name}/resolve/main/config.json"),
+        "weight": hf_endpoint_url(f"/{name}/resolve/main/diffusion_pytorch_model.bin"),
     }
 }
 
 __hf_hub_adapter_safetensors_dict__ = lambda name: {
     "adapter": {
-        "config": f"https://huggingface.co/{name}/resolve/main/config.json",
-        "weight": f"https://huggingface.co/{name}/resolve/main/diffusion_pytorch_model.safetensors",
+        "config": hf_endpoint_url(f"/{name}/resolve/main/config.json"),
+        "weight": hf_endpoint_url(
+            f"/{name}/resolve/main/diffusion_pytorch_model.safetensors"
+        ),
     }
 }
 
 __hf_hub_stable_video_safetensors_dict__ = lambda name: {
     "unet": {
-        "config": f"https://huggingface.co/{name}/resolve/main/unet/config.json",
-        "weight": f"https://huggingface.co/{name}/resolve/main/unet/diffusion_pytorch_model.safetensors",
+        "config": hf_endpoint_url(f"/{name}/resolve/main/unet/config.json"),
+        "weight": hf_endpoint_url(
+            f"/{name}/resolve/main/unet/diffusion_pytorch_model.safetensors"
+        ),
     },
     "image": {
-        "config": f"https://huggingface.co/{name}/resolve/main/image_encoder/config.json",
-        "vision_config": f"https://huggingface.co/{name}/resolve/main/feature_extractor/preprocessor_config.json",
-        "weight": f"https://huggingface.co/{name}/resolve/main/image_encoder/model.safetensors",
+        "config": hf_endpoint_url(f"/{name}/resolve/main/image_encoder/config.json"),
+        "vision_config": hf_endpoint_url(
+            f"/{name}/resolve/main/feature_extractor/preprocessor_config.json"
+        ),
+        "weight": hf_endpoint_url(
+            f"/{name}/resolve/main/image_encoder/model.safetensors"
+        ),
     },
     "vae": {
-        "config": f"https://huggingface.co/{name}/resolve/main/vae/config.json",
-        "weight": f"https://huggingface.co/{name}/resolve/main/vae/diffusion_pytorch_model.safetensors",
+        "config": hf_endpoint_url(f"/{name}/resolve/main/vae/config.json"),
+        "weight": hf_endpoint_url(
+            f"/{name}/resolve/main/vae/diffusion_pytorch_model.safetensors"
+        ),
     },
-    "scheduler": f"https://huggingface.co/{name}/resolve/main/scheduler/scheduler_config.json",
+    "scheduler": hf_endpoint_url(
+        f"/{name}/resolve/main/scheduler/scheduler_config.json"
+    ),
 }
 
 pretrained_stable_infos = {
@@ -237,8 +311,12 @@ pretrained_stable_infos = {
         ),
         **{
             "vae": {
-                "config": "https://huggingface.co/madebyollin/sdxl-vae-fp16-fix/resolve/main/config.json",
-                "weight": "https://huggingface.co/madebyollin/sdxl-vae-fp16-fix/resolve/main/diffusion_pytorch_model.safetensors",
+                "config": hf_endpoint_url(
+                    "/madebyollin/sdxl-vae-fp16-fix/resolve/main/config.json"
+                ),
+                "weight": hf_endpoint_url(
+                    "/madebyollin/sdxl-vae-fp16-fix/resolve/main/diffusion_pytorch_model.safetensors"
+                ),
             },
         },
     },
@@ -368,27 +446,49 @@ pretrained_stable_extensions_infos = {
     "stable-xl-refiner-1.0": {
         "refiner": {
             "unet": {
-                "config": f"https://huggingface.co/stabilityai/stable-diffusion-xl-refiner-1.0/resolve/main/unet/config.json",
-                "weight": f"https://huggingface.co/stabilityai/stable-diffusion-xl-refiner-1.0/resolve/main/unet/diffusion_pytorch_model.fp16.safetensors",
+                "config": hf_endpoint_url(
+                    f"/stabilityai/stable-diffusion-xl-refiner-1.0/resolve/main/unet/config.json"
+                ),
+                "weight": hf_endpoint_url(
+                    f"/stabilityai/stable-diffusion-xl-refiner-1.0/resolve/main/unet/diffusion_pytorch_model.fp16.safetensors"
+                ),
             },
             "text2": {
-                "config": f"https://huggingface.co/stabilityai/stable-diffusion-xl-refiner-1.0/resolve/main/text_encoder_2/config.json",
-                "vocab": f"https://huggingface.co/stabilityai/stable-diffusion-xl-refiner-1.0/resolve/main/tokenizer_2/vocab.json",
-                "merge": f"https://huggingface.co/stabilityai/stable-diffusion-xl-refiner-1.0/resolve/main/tokenizer_2/merges.txt",
-                "weight": f"https://huggingface.co/stabilityai/stable-diffusion-xl-refiner-1.0/resolve/main/text_encoder_2/model.fp16.safetensors",
+                "config": hf_endpoint_url(
+                    f"/stabilityai/stable-diffusion-xl-refiner-1.0/resolve/main/text_encoder_2/config.json"
+                ),
+                "vocab": hf_endpoint_url(
+                    f"/stabilityai/stable-diffusion-xl-refiner-1.0/resolve/main/tokenizer_2/vocab.json"
+                ),
+                "merge": hf_endpoint_url(
+                    f"/stabilityai/stable-diffusion-xl-refiner-1.0/resolve/main/tokenizer_2/merges.txt"
+                ),
+                "weight": hf_endpoint_url(
+                    f"/stabilityai/stable-diffusion-xl-refiner-1.0/resolve/main/text_encoder_2/model.fp16.safetensors"
+                ),
             },
             "vae": {
-                "config": f"https://huggingface.co/stabilityai/stable-diffusion-xl-refiner-1.0/resolve/main/vae/config.json",
-                "weight": f"https://huggingface.co/stabilityai/stable-diffusion-xl-refiner-1.0/resolve/main/vae/diffusion_pytorch_model.fp16.safetensors",
+                "config": hf_endpoint_url(
+                    f"/stabilityai/stable-diffusion-xl-refiner-1.0/resolve/main/vae/config.json"
+                ),
+                "weight": hf_endpoint_url(
+                    f"/stabilityai/stable-diffusion-xl-refiner-1.0/resolve/main/vae/diffusion_pytorch_model.fp16.safetensors"
+                ),
             },
-            "scheduler": f"https://huggingface.co/stabilityai/stable-diffusion-xl-refiner-1.0/resolve/main/scheduler/scheduler_config.json",
+            "scheduler": hf_endpoint_url(
+                f"/stabilityai/stable-diffusion-xl-refiner-1.0/resolve/main/scheduler/scheduler_config.json"
+            ),
         },
     },
     # sdxl vae
     "stable-xl-vae-fp16": {
         "vae": {
-            "config": "https://huggingface.co/madebyollin/sdxl-vae-fp16-fix/resolve/main/config.json",
-            "weight": "https://huggingface.co/madebyollin/sdxl-vae-fp16-fix/resolve/main/diffusion_pytorch_model.safetensors",
+            "config": hf_endpoint_url(
+                "/madebyollin/sdxl-vae-fp16-fix/resolve/main/config.json"
+            ),
+            "weight": hf_endpoint_url(
+                "/madebyollin/sdxl-vae-fp16-fix/resolve/main/diffusion_pytorch_model.safetensors"
+            ),
         },
     },
     # stable 3 controlnet

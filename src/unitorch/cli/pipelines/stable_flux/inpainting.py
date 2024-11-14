@@ -290,7 +290,7 @@ class StableFluxForImageInpaintingPipeline(GenericStableFluxModel):
                     )
                     inpaint_controlnet = FluxControlNetModel.from_config(
                         inpaint_controlnet_config_dict
-                    )
+                    ).to(torch.bfloat16)
                     inpaint_controlnet.load_state_dict(
                         load_weight(
                             nested_dict_value(
@@ -315,7 +315,9 @@ class StableFluxForImageInpaintingPipeline(GenericStableFluxModel):
                     )
                 )
                 controlnet_config_dict = json.load(open(controlnet_config_path))
-                controlnet = FluxControlNetModel.from_config(controlnet_config_dict)
+                controlnet = FluxControlNetModel.from_config(controlnet_config_dict).to(
+                    torch.bfloat16
+                )
                 controlnet.load_state_dict(
                     load_weight(
                         nested_dict_value(
@@ -396,7 +398,7 @@ class StableFluxForImageInpaintingPipeline(GenericStableFluxModel):
 
         inputs = {k: v.unsqueeze(0) if v is not None else v for k, v in inputs.items()}
         inputs = {
-            k: v.to(device=self.device) if v is not None else v
+            k: v.to(device=self._device) if v is not None else v
             for k, v in inputs.items()
         }
         if isinstance(lora_checkpoints, str):
