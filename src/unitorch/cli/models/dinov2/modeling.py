@@ -79,7 +79,7 @@ class DinoV2ForImageClassification(_DinoV2ForImageClassification):
 
         return inst
 
-    @autocast(device_type="cuda")
+    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
     def forward(
         self,
         pixel_values: torch.Tensor,

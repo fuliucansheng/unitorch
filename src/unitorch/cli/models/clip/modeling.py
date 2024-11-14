@@ -98,7 +98,7 @@ class ClipForPretrain(_ClipForPretrain):
 
         return inst
 
-    @autocast(device_type="cuda")
+    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
     def forward(
         self,
         input_ids: torch.Tensor,
@@ -203,7 +203,7 @@ class ClipForClassification(_ClipForClassification):
 
         return inst
 
-    @autocast(device_type="cuda")
+    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
     def forward(
         self,
         input_ids: torch.Tensor,
@@ -308,7 +308,7 @@ class ClipForTextClassification(_ClipForTextClassification):
 
         return inst
 
-    @autocast(device_type="cuda")
+    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
     def forward(
         self,
         input_ids=None,
@@ -410,7 +410,7 @@ class ClipForImageClassification(_ClipForImageClassification):
 
         return inst
 
-    @autocast(device_type="cuda")
+    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
     def forward(
         self,
         pixel_values: torch.Tensor,
@@ -500,7 +500,7 @@ class ClipForMatching(_ClipForMatching):
 
         return inst
 
-    @autocast(device_type="cuda")
+    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
     def forward(
         self,
         input_ids: torch.Tensor,

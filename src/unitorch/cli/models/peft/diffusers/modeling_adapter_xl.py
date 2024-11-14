@@ -260,7 +260,7 @@ class StableXLAdapterLoraForText2ImageGeneration(
 
         return inst
 
-    @autocast(device_type="cuda")
+    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
     def forward(
         self,
         input_ids: torch.Tensor,
@@ -285,7 +285,7 @@ class StableXLAdapterLoraForText2ImageGeneration(
     @add_default_section_for_function(
         "core/model/diffusers/peft/lora/text2image/adapter_xl"
     )
-    @autocast(device_type="cuda")
+    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
     def generate(
         self,
         input_ids: torch.Tensor,

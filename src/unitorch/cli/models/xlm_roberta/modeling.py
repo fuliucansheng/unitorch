@@ -81,7 +81,7 @@ class XLMRobertaForClassification(_XLMRobertaForClassification):
 
         return inst
 
-    @autocast(device_type="cuda")
+    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
     def forward(
         self,
         input_ids: torch.Tensor,
@@ -172,7 +172,7 @@ class XLMRobertaXLForClassification(_XLMRobertaXLForClassification):
 
         return inst
 
-    @autocast(device_type="cuda")
+    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
     def forward(
         self,
         input_ids: torch.Tensor,

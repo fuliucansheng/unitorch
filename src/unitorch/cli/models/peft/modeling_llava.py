@@ -156,7 +156,7 @@ class LlavaMistralClipLoraForClassification(_LlavaMistralClipLoraForClassificati
 
         return inst
 
-    @autocast(device_type="cuda")
+    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
     def forward(
         self,
         input_ids: torch.Tensor,
@@ -304,7 +304,7 @@ class LlavaMistralClipLoraForGeneration(_LlavaMistralClipLoraForGeneration):
 
         return inst
 
-    @autocast(device_type="cuda")
+    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
     def forward(
         self,
         input_ids: torch.Tensor,
@@ -333,7 +333,7 @@ class LlavaMistralClipLoraForGeneration(_LlavaMistralClipLoraForGeneration):
         "core/model/generation/peft/lora/llava/mistral_clip"
     )
     @torch.no_grad()
-    @autocast(device_type="cuda")
+    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
     def generate(
         self,
         input_ids: torch.Tensor,

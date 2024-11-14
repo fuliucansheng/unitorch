@@ -209,7 +209,7 @@ class Stable3ForText2ImageGeneration(_Stable3ForText2ImageGeneration):
             )
         return inst
 
-    @autocast(device_type="cuda", dtype=torch.bfloat16)
+    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"), dtype=torch.bfloat16)
     def forward(
         self,
         pixel_values: torch.Tensor,
@@ -232,7 +232,7 @@ class Stable3ForText2ImageGeneration(_Stable3ForText2ImageGeneration):
         return LossOutputs(loss=loss)
 
     @add_default_section_for_function("core/model/diffusers/text2image/stable_3")
-    @autocast(device_type="cuda", dtype=torch.bfloat16)
+    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"), dtype=torch.bfloat16)
     def generate(
         self,
         input_ids: torch.Tensor,
@@ -461,7 +461,7 @@ class Stable3ForImage2ImageGeneration(_Stable3ForImage2ImageGeneration):
         raise NotImplementedError
 
     @add_default_section_for_function("core/model/diffusers/image2image/stable_3")
-    @autocast(device_type="cuda", dtype=torch.bfloat16)
+    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"), dtype=torch.bfloat16)
     def generate(
         self,
         input_ids: torch.Tensor,
@@ -684,7 +684,7 @@ class Stable3ForImageInpainting(_Stable3ForImageInpainting):
             )
         return inst
 
-    @autocast(device_type="cuda", dtype=torch.bfloat16)
+    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"), dtype=torch.bfloat16)
     def forward(
         self,
         input_ids: torch.Tensor,
@@ -709,7 +709,7 @@ class Stable3ForImageInpainting(_Stable3ForImageInpainting):
         return LossOutputs(loss=loss)
 
     @add_default_section_for_function("core/model/diffusers/inpainting/stable_3")
-    @autocast(device_type="cuda", dtype=torch.bfloat16)
+    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"), dtype=torch.bfloat16)
     def generate(
         self,
         input_ids: torch.Tensor,

@@ -235,7 +235,7 @@ class StableXLLoraForText2ImageGeneration(_StableXLLoraForText2ImageGeneration):
             inst.from_pretrained(state_dict=state_dict)
         return inst
 
-    @autocast(device_type="cuda")
+    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
     def forward(
         self,
         input_ids: torch.Tensor,
@@ -258,7 +258,7 @@ class StableXLLoraForText2ImageGeneration(_StableXLLoraForText2ImageGeneration):
     @add_default_section_for_function(
         "core/model/diffusers/peft/lora/text2image/stable_xl"
     )
-    @autocast(device_type="cuda")
+    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
     def generate(
         self,
         input_ids: torch.Tensor,
@@ -500,7 +500,7 @@ class StableXLLoraForImageInpainting(_StableXLLoraForImageInpainting):
             inst.from_pretrained(state_dict=state_dict)
         return inst
 
-    @autocast(device_type="cuda")
+    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
     def forward(
         self,
         input_ids: torch.Tensor,
@@ -525,7 +525,7 @@ class StableXLLoraForImageInpainting(_StableXLLoraForImageInpainting):
     @add_default_section_for_function(
         "core/model/diffusers/peft/lora/inpainting/stable_xl"
     )
-    @autocast(device_type="cuda")
+    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
     def generate(
         self,
         pixel_values: torch.Tensor,

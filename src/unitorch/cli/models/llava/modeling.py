@@ -143,7 +143,7 @@ class LlavaMistralClipForClassification(_LlavaMistralClipForClassification):
 
         return inst
 
-    @autocast(device_type="cuda")
+    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
     def forward(
         self,
         input_ids: torch.Tensor,
@@ -278,7 +278,7 @@ class LlavaMistralClipForGeneration(_LlavaMistralClipForGeneration):
 
         return inst
 
-    @autocast(device_type="cuda")
+    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
     def forward(
         self,
         input_ids: torch.Tensor,
@@ -305,7 +305,7 @@ class LlavaMistralClipForGeneration(_LlavaMistralClipForGeneration):
 
     @add_default_section_for_function("core/model/generation/llava/mistral_clip")
     @torch.no_grad()
-    @autocast(device_type="cuda")
+    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
     def generate(
         self,
         input_ids: torch.Tensor,

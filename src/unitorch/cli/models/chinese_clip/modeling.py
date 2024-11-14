@@ -99,7 +99,7 @@ class ChineseClipForPretrain(_ChineseClipForPretrain):
 
         return inst
 
-    @autocast(device_type="cuda")
+    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
     def forward(
         self,
         input_ids: torch.Tensor,
@@ -208,7 +208,7 @@ class ChineseClipForClassification(_ChineseClipForClassification):
 
         return inst
 
-    @autocast(device_type="cuda")
+    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
     def forward(
         self,
         input_ids: torch.Tensor,
@@ -317,7 +317,7 @@ class ChineseClipForTextClassification(_ChineseClipForTextClassification):
 
         return inst
 
-    @autocast(device_type="cuda")
+    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
     def forward(
         self,
         input_ids=None,
@@ -423,7 +423,7 @@ class ChineseClipForImageClassification(_ChineseClipForImageClassification):
 
         return inst
 
-    @autocast(device_type="cuda")
+    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
     def forward(
         self,
         pixel_values: torch.Tensor,

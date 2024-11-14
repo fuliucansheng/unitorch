@@ -65,7 +65,7 @@ class GroundingDinoForDetection(_GroundingDinoForDetection):
 
         return inst
 
-    @autocast(device_type="cuda")
+    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
     def forward(
         self, pixel_values, input_ids, attention_mask, token_type_ids, bboxes, classes
     ):

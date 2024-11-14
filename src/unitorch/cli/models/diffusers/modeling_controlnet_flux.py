@@ -265,7 +265,7 @@ class ControlNetFluxForText2ImageGeneration(_ControlNetFluxForText2ImageGenerati
 
         return inst
 
-    @autocast(device_type="cuda", dtype=torch.bfloat16)
+    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"), dtype=torch.bfloat16)
     def forward(
         self,
         condition_pixel_values: torch.Tensor,
@@ -286,7 +286,7 @@ class ControlNetFluxForText2ImageGeneration(_ControlNetFluxForText2ImageGenerati
         return LossOutputs(loss=loss)
 
     @add_default_section_for_function("core/model/diffusers/text2image/controlnet_flux")
-    @autocast(device_type="cuda", dtype=torch.bfloat16)
+    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"), dtype=torch.bfloat16)
     def generate(
         self,
         input_ids: torch.Tensor,
@@ -551,7 +551,7 @@ class ControlNetFluxForImage2ImageGeneration(_ControlNetFluxForImage2ImageGenera
 
         return inst
 
-    @autocast(device_type="cuda", dtype=torch.bfloat16)
+    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"), dtype=torch.bfloat16)
     def forward(
         self,
     ):
@@ -560,7 +560,7 @@ class ControlNetFluxForImage2ImageGeneration(_ControlNetFluxForImage2ImageGenera
     @add_default_section_for_function(
         "core/model/diffusers/image2image/controlnet_flux"
     )
-    @autocast(device_type="cuda", dtype=torch.bfloat16)
+    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"), dtype=torch.bfloat16)
     def generate(
         self,
         pixel_values: torch.Tensor,
@@ -866,7 +866,7 @@ class ControlNetFluxForImageInpainting(_ControlNetFluxForImageInpainting):
         raise NotImplementedError
 
     @add_default_section_for_function("core/model/diffusers/inpainting/controlnet_flux")
-    @autocast(device_type="cuda", dtype=torch.bfloat16)
+    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"), dtype=torch.bfloat16)
     def generate(
         self,
         pixel_values: torch.Tensor,

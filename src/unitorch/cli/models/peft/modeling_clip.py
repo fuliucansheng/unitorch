@@ -123,7 +123,7 @@ class ClipLoraForMatching(_ClipLoraForMatching):
 
         return inst
 
-    @autocast(device_type="cuda")
+    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
     def forward(
         self,
         input_ids: torch.Tensor,

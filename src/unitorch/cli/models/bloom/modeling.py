@@ -106,7 +106,7 @@ class BloomForClassification(_BloomForClassification):
 
         return inst
 
-    @autocast(device_type="cuda")
+    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
     def forward(
         self,
         input_ids: torch.Tensor,
@@ -206,7 +206,7 @@ class BloomForGeneration(_BloomForGeneration):
 
         return inst
 
-    @autocast(device_type="cuda")
+    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
     def forward(
         self,
         input_ids: torch.Tensor,
@@ -230,7 +230,7 @@ class BloomForGeneration(_BloomForGeneration):
 
     @add_default_section_for_function("core/model/generation/bloom")
     @torch.no_grad()
-    @autocast(device_type="cuda")
+    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
     def generate(
         self,
         input_ids: torch.Tensor,

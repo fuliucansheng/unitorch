@@ -44,7 +44,7 @@ class BRIAForSegmentation(_BRIAForSegmentation):
 
         return inst
 
-    @autocast(device_type="cuda")
+    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
     def forward(self, images):
         outputs = super().forward(images)
         return SegmentationOutputs(
