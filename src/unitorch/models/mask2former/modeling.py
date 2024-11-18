@@ -8,7 +8,7 @@ import logging
 import torch
 import torch.nn.functional as F
 import torch.nn as nn
-from torch.cuda.amp import autocast
+from torch import autocast
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from transformers.models.mask2former.modeling_mask2former import (
     Mask2FormerConfig,

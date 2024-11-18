@@ -18,7 +18,8 @@ from collections.abc import Iterable
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union, Iterator
 from torch.utils.data import DataLoader, Dataset, SequentialSampler
 from torch.utils.data.distributed import DistributedSampler
-from torch.cuda.amp import autocast, GradScaler
+from torch import autocast
+from torch.cuda.amp import GradScaler
 from torch.multiprocessing import Process, Queue
 from unitorch import set_seed, is_torch2_available
 from unitorch.models import ExponentialMovingAverage
@@ -60,7 +61,7 @@ from unitorch.cli.tasks.supervised import (
     collate_fn,
     infer,
     monitor,
-    save_checkpoint,
+    save_snapshot,
 )
 
 
@@ -162,6 +163,7 @@ class DeepspeedTask:
         num_workers: Optional[int] = 4,
         save_optimizer: Optional[bool] = False,
         save_scheduler: Optional[bool] = False,
+        save_checkpoint: Optional[str] = "all",
         log_freq: Optional[int] = 100,
         ckpt_freq: Optional[int] = 10000,
         grad_acc_step: Optional[int] = 1,
@@ -174,7 +176,6 @@ class DeepspeedTask:
         use_ema: Optional[bool] = False,
         ema_decay: Optional[float] = 0.9999,
         ema_tau: Optional[int] = 2000,
-        gpu_mode: Optional[bool] = False,
     ):
         """
         Train the model using deepspeed.
@@ -422,7 +423,7 @@ class DeepspeedTask:
                         iter_dev.sampler.set_epoch(dev_epoch)
 
                     dev_epoch += 1
-                    self.best_score = save_checkpoint(
+                    self.best_score = save_snapshot(
                         self.model.module,
                         to_ckpt_dir,
                         iter_dev,
@@ -430,6 +431,7 @@ class DeepspeedTask:
                         monitor_fns,
                         optim=optim if save_optimizer else None,
                         scheduler=scheduler if save_scheduler else None,
+                        save_checkpoint=save_checkpoint,
                         ema_model=self.ema_model if use_ema else None,
                         best_score=self.best_score,
                         info_path=info_path,
@@ -458,7 +460,7 @@ class DeepspeedTask:
             dev_epoch += 1
 
             global_step = 0
-            self.best_score = save_checkpoint(
+            self.best_score = save_snapshot(
                 self.model.module,
                 to_ckpt_dir,
                 iter_dev,
@@ -466,6 +468,7 @@ class DeepspeedTask:
                 monitor_fns,
                 optim=optim if save_optimizer else None,
                 scheduler=scheduler if save_scheduler else None,
+                save_checkpoint=save_checkpoint,
                 ema_model=self.ema_model if use_ema else None,
                 best_score=self.best_score,
                 info_path=info_path,

@@ -5,7 +5,7 @@ import os
 import logging
 import torch
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
-from torch.cuda.amp import autocast
+from torch import autocast
 from transformers.utils import is_remote_url
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.peft import (
@@ -156,7 +156,7 @@ class LlavaMistralClipLoraForClassification(_LlavaMistralClipLoraForClassificati
 
         return inst
 
-    @autocast()
+    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
     def forward(
         self,
         input_ids: torch.Tensor,
@@ -304,7 +304,7 @@ class LlavaMistralClipLoraForGeneration(_LlavaMistralClipLoraForGeneration):
 
         return inst
 
-    @autocast()
+    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
     def forward(
         self,
         input_ids: torch.Tensor,
@@ -333,7 +333,7 @@ class LlavaMistralClipLoraForGeneration(_LlavaMistralClipLoraForGeneration):
         "core/model/generation/peft/lora/llava/mistral_clip"
     )
     @torch.no_grad()
-    @autocast()
+    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
     def generate(
         self,
         input_ids: torch.Tensor,

@@ -1,12 +1,16 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
+from unitorch.cli import hf_endpoint_url
+
 # pretrained infos
 pretrained_dpt_infos = {
     "dpt-large": {
-        "config": "https://huggingface.co/Intel/dpt-large/resolve/main/config.json",
-        "vision_config": "https://huggingface.co/Intel/dpt-large/resolve/main/preprocessor_config.json",
-        "weight": "https://huggingface.co/Intel/dpt-large/resolve/main/pytorch_model.bin",
+        "config": hf_endpoint_url("/Intel/dpt-large/resolve/main/config.json"),
+        "vision_config": hf_endpoint_url(
+            "/Intel/dpt-large/resolve/main/preprocessor_config.json"
+        ),
+        "weight": hf_endpoint_url("/Intel/dpt-large/resolve/main/pytorch_model.bin"),
     },
 }
 

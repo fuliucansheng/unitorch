@@ -93,21 +93,20 @@ class ControlNetFluxProcessor(_StableFluxProcessor):
         self,
         prompt: str,
         image: Union[Image.Image, str],
-        condition_image: Union[Image.Image, str],
-        prompt2: Optional[str] = None,
-        prompt3: Optional[str] = None,
+        condition_image: Union[Image.Image, str, List[Union[Image.Image, str]]],
         max_seq_length: Optional[int] = None,
         max_seq_length2: Optional[int] = None,
     ):
         outputs = super().text2image(
             prompt=prompt,
-            prompt2=prompt2,
-            prompt3=prompt3,
             image=image,
             max_seq_length=max_seq_length,
             max_seq_length2=max_seq_length2,
         )
-        control_outputs = self.controlnet_inputs(condition_image)
+        if isinstance(condition_image, (list, tuple)):
+            control_outputs = super().controlnets_inputs(condition_image)
+        else:
+            control_outputs = super().controlnet_inputs(condition_image)
         return TensorsInputs(
             pixel_values=outputs.pixel_values,
             condition_pixel_values=control_outputs.pixel_values,
@@ -115,15 +114,13 @@ class ControlNetFluxProcessor(_StableFluxProcessor):
             attention_mask=outputs.attention_mask,
             input2_ids=outputs.input2_ids,
             attention2_mask=outputs.attention2_mask,
-            input3_ids=outputs.input3_ids,
-            attention3_mask=outputs.attention3_mask,
         )
 
     @register_process("core/process/diffusion/controlnet_flux/text2image/inputs")
     def _text2image_inputs(
         self,
         prompt: str,
-        condition_image: Union[Image.Image, str],
+        condition_image: Union[Image.Image, str, List[Union[Image.Image, str]]],
         max_seq_length: Optional[int] = None,
         max_seq_length2: Optional[int] = None,
     ):
@@ -132,7 +129,10 @@ class ControlNetFluxProcessor(_StableFluxProcessor):
             max_seq_length=max_seq_length,
             max_seq_length2=max_seq_length2,
         )
-        control_outputs = super().controlnet_inputs(condition_image=condition_image)
+        if isinstance(condition_image, (list, tuple)):
+            control_outputs = super().controlnets_inputs(condition_image)
+        else:
+            control_outputs = super().controlnet_inputs(condition_image)
         return TensorsInputs(
             input_ids=text_outputs.input_ids,
             input2_ids=text_outputs.input2_ids,
@@ -140,3 +140,113 @@ class ControlNetFluxProcessor(_StableFluxProcessor):
             attention_mask=text_outputs.attention_mask,
             attention2_mask=text_outputs.attention2_mask,
         )
+
+    @register_process("core/process/diffusion/controlnet_flux/image2image/inputs")
+    def _image2image_inputs(
+        self,
+        prompt: str,
+        condition_image: Union[Image.Image, str, List[Union[Image.Image, str]]],
+        image: Union[Image.Image, str],
+        negative_prompt: Optional[str] = "",
+        max_seq_length: Optional[int] = None,
+    ):
+        text_outputs = super().text2image_inputs(
+            prompt=prompt,
+            negative_prompt=negative_prompt,
+            max_seq_length=max_seq_length,
+        )
+        image_outputs = super().image2image_inputs(image=image)
+        if isinstance(condition_image, (list, tuple)):
+            control_outputs = super().controlnets_inputs(condition_image)
+        else:
+            control_outputs = super().controlnet_inputs(condition_image)
+        return TensorsInputs(
+            input_ids=text_outputs.input_ids,
+            input2_ids=text_outputs.input2_ids,
+            pixel_values=image_outputs.pixel_values,
+            condition_pixel_values=control_outputs.pixel_values,
+            attention_mask=text_outputs.attention_mask,
+            attention2_mask=text_outputs.attention2_mask,
+        )
+
+    @register_process("core/process/diffusion/controlnet_flux/inpainting")
+    def _inpainting(
+        self,
+        prompt: str,
+        condition_image: Union[Image.Image, str, List[Union[Image.Image, str]]],
+        image: Union[Image.Image, str],
+        mask_image: Union[Image.Image, str],
+        negative_prompt: Optional[str] = "",
+        max_seq_length: Optional[int] = None,
+    ):
+        text_outputs = super().text2image_inputs(
+            prompt=prompt,
+            negative_prompt=negative_prompt,
+            max_seq_length=max_seq_length,
+        )
+        image_outputs = super().inpainting_inputs(
+            image=image,
+            mask_image=mask_image,
+        )
+        if isinstance(condition_image, (list, tuple)):
+            control_outputs = super().controlnets_inputs(condition_image)
+        else:
+            control_outputs = super().controlnet_inputs(condition_image)
+        return TensorsInputs(
+            input_ids=text_outputs.input_ids,
+            input2_ids=text_outputs.input2_ids,
+            pixel_values=image_outputs.pixel_values,
+            pixel_masks=image_outputs.pixel_masks,
+            condition_pixel_values=control_outputs.pixel_values,
+            attention_mask=text_outputs.attention_mask,
+            attention2_mask=text_outputs.attention2_mask,
+        )
+
+    @register_process("core/process/diffusion/controlnet_flux/inpainting/inputs")
+    def _inpainting_inputs(
+        self,
+        prompt: str,
+        condition_image: Union[Image.Image, str, List[Union[Image.Image, str]]],
+        image: Union[Image.Image, str],
+        mask_image: Union[Image.Image, str],
+        negative_prompt: Optional[str] = "",
+        max_seq_length: Optional[int] = None,
+    ):
+        text_outputs = super().text2image_inputs(
+            prompt=prompt,
+            negative_prompt=negative_prompt,
+            max_seq_length=max_seq_length,
+        )
+        image_outputs = super().inpainting_inputs(
+            image=image,
+            mask_image=mask_image,
+        )
+        if isinstance(condition_image, (list, tuple)):
+            control_outputs = super().controlnets_inputs(condition_image)
+        else:
+            control_outputs = super().controlnet_inputs(condition_image)
+        return TensorsInputs(
+            input_ids=text_outputs.input_ids,
+            input2_ids=text_outputs.input2_ids,
+            pixel_values=image_outputs.pixel_values,
+            pixel_masks=image_outputs.pixel_masks,
+            condition_pixel_values=control_outputs.pixel_values,
+            attention_mask=text_outputs.attention_mask,
+            attention2_mask=text_outputs.attention2_mask,
+        )
+
+    @register_process(
+        "core/process/diffusion/controlnet_flux/inpainting/control_inputs"
+    )
+    def _inpainting_control_inputs(
+        self,
+        image: Union[Image.Image, str],
+        mask_image: Union[Image.Image, str],
+        key: Optional[str] = "condition_pixel_values",
+    ):
+        image_outputs = super().inpainting_control_inputs(
+            image=image,
+            mask_image=mask_image,
+        )
+        results = {key: image_outputs.pixel_values}
+        return TensorsInputs(**results)

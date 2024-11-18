@@ -68,6 +68,7 @@ class ControlNetXLForText2ImageGeneration(GenericStableXLModel):
         freeze_vae_encoder: Optional[bool] = True,
         freeze_text_encoder: Optional[bool] = True,
         freeze_unet_encoder: Optional[bool] = False,
+        snr_gamma: Optional[float] = 5.0,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
@@ -86,6 +87,7 @@ class ControlNetXLForText2ImageGeneration(GenericStableXLModel):
             freeze_vae_encoder=freeze_vae_encoder,
             freeze_text_encoder=freeze_text_encoder,
             freeze_unet_encoder=freeze_unet_encoder,
+            snr_gamma=snr_gamma,
             seed=seed,
         )
         self.pipeline = StableDiffusionXLControlNetPipeline(
@@ -202,7 +204,7 @@ class ControlNetXLForText2ImageGeneration(GenericStableXLModel):
         height: Optional[int] = 1024,
         width: Optional[int] = 1024,
         guidance_scale: Optional[float] = 5.0,
-        controlnet_conditioning_scale: Optional[Union[float, List[float]]] = None,
+        controlnet_conditioning_scale: Optional[Union[float, List[float]]] = 1.0,
     ):
         """
         Generate images using the model.
@@ -258,6 +260,7 @@ class ControlNetXLForText2ImageGeneration(GenericStableXLModel):
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),
+            num_inference_steps=self.num_infer_timesteps,
             height=height,
             width=width,
             guidance_scale=guidance_scale,
@@ -286,6 +289,7 @@ class ControlNetXLForImage2ImageGeneration(GenericStableXLModel):
         freeze_vae_encoder: Optional[bool] = True,
         freeze_text_encoder: Optional[bool] = True,
         freeze_unet_encoder: Optional[bool] = False,
+        snr_gamma: Optional[float] = 5.0,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
@@ -304,6 +308,7 @@ class ControlNetXLForImage2ImageGeneration(GenericStableXLModel):
             freeze_vae_encoder=freeze_vae_encoder,
             freeze_text_encoder=freeze_text_encoder,
             freeze_unet_encoder=freeze_unet_encoder,
+            snr_gamma=snr_gamma,
             seed=seed,
         )
         self.pipeline = StableDiffusionXLControlNetImg2ImgPipeline(
@@ -373,6 +378,7 @@ class ControlNetXLForImage2ImageGeneration(GenericStableXLModel):
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),
+            num_inference_steps=self.num_infer_timesteps,
             strength=strength,
             guidance_scale=guidance_scale,
             controlnet_conditioning_scale=controlnet_conditioning_scale,
@@ -391,6 +397,7 @@ class ControlNetXLForImageInpainting(GenericStableXLModel):
         vae_config_path: str,
         controlnet_configs_path: Union[str, List[str]],
         scheduler_config_path: str,
+        inpainting_controlnet_config_path: Union[str] = None,
         quant_config_path: Optional[str] = None,
         image_size: Optional[int] = None,
         in_channels: Optional[int] = None,
@@ -400,6 +407,7 @@ class ControlNetXLForImageInpainting(GenericStableXLModel):
         freeze_vae_encoder: Optional[bool] = True,
         freeze_text_encoder: Optional[bool] = True,
         freeze_unet_encoder: Optional[bool] = False,
+        snr_gamma: Optional[float] = 5.0,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
@@ -409,6 +417,7 @@ class ControlNetXLForImageInpainting(GenericStableXLModel):
             vae_config_path=vae_config_path,
             controlnet_configs_path=controlnet_configs_path,
             scheduler_config_path=scheduler_config_path,
+            inpainting_controlnet_config_path=inpainting_controlnet_config_path,
             quant_config_path=quant_config_path,
             image_size=image_size,
             in_channels=in_channels,
@@ -418,6 +427,7 @@ class ControlNetXLForImageInpainting(GenericStableXLModel):
             freeze_vae_encoder=freeze_vae_encoder,
             freeze_text_encoder=freeze_text_encoder,
             freeze_unet_encoder=freeze_unet_encoder,
+            snr_gamma=snr_gamma,
             seed=seed,
         )
         self.pipeline = StableDiffusionXLControlNetInpaintPipeline(
@@ -445,15 +455,52 @@ class ControlNetXLForImageInpainting(GenericStableXLModel):
         negative_input2_ids: torch.Tensor,
         pixel_values: torch.Tensor,
         pixel_masks: torch.Tensor,
-        condition_pixel_values: torch.Tensor,
+        condition_pixel_values: torch.Tensor = None,
+        inpainting_condition_pixel_values: torch.Tensor = None,
         attention_mask: Optional[torch.Tensor] = None,
         attention2_mask: Optional[torch.Tensor] = None,
         negative_attention_mask: Optional[torch.Tensor] = None,
         negative_attention2_mask: Optional[torch.Tensor] = None,
-        strength: Optional[float] = 0.8,
+        strength: Optional[float] = 1.0,
         guidance_scale: Optional[float] = 7.5,
         controlnet_conditioning_scale: Optional[Union[float, List[float]]] = None,
+        inpainting_controlnet_conditioning_scale: Optional[float] = None,
     ):
+        assert (
+            condition_pixel_values is not None
+            or inpainting_condition_pixel_values is not None
+        )
+        if inpainting_condition_pixel_values is not None:
+            if self.num_controlnets == 1:
+                condition_pixel_values = inpainting_condition_pixel_values
+                controlnet_conditioning_scale = inpainting_controlnet_conditioning_scale
+            else:
+                condition_pixel_values = torch.cat(
+                    [
+                        condition_pixel_values,
+                        inpainting_condition_pixel_values.unsqueeze(1),
+                    ],
+                    dim=1,
+                )
+                if controlnet_conditioning_scale is None:
+                    controlnet_conditioning_scale = [1.0] * (self.num_controlnets - 1)
+                controlnet_conditioning_scale += [
+                    inpainting_controlnet_conditioning_scale
+                ]
+        else:
+            if controlnet_conditioning_scale is None:
+                if self.num_controlnets == 1:
+                    controlnet_conditioning_scale = 1.0
+                else:
+                    controlnet_conditioning_scale = [1.0] * self.num_controlnets
+            elif (
+                not isinstance(controlnet_conditioning_scale, list)
+                and self.num_controlnets > 1
+            ):
+                controlnet_conditioning_scale = [
+                    controlnet_conditioning_scale
+                ] * self.num_controlnets
+
         outputs = self.get_prompt_outputs(
             input_ids=input_ids,
             input2_ids=input2_ids,
@@ -464,18 +511,7 @@ class ControlNetXLForImageInpainting(GenericStableXLModel):
             negative_attention_mask=negative_attention_mask,
             negative_attention2_mask=negative_attention2_mask,
         )
-        if controlnet_conditioning_scale is None:
-            if self.num_controlnets == 1:
-                controlnet_conditioning_scale = 1.0
-            else:
-                controlnet_conditioning_scale = [1.0] * self.num_controlnets
-        elif (
-            not isinstance(controlnet_conditioning_scale, list)
-            and self.num_controlnets > 1
-        ):
-            controlnet_conditioning_scale = [
-                controlnet_conditioning_scale
-            ] * self.num_controlnets
+
         images = self.pipeline(
             image=pixel_values,
             mask_image=pixel_masks,
@@ -489,6 +525,9 @@ class ControlNetXLForImageInpainting(GenericStableXLModel):
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),
+            num_inference_steps=self.num_infer_timesteps,
+            width=pixel_values.size(-1),
+            height=pixel_values.size(-2),
             strength=strength,
             guidance_scale=guidance_scale,
             controlnet_conditioning_scale=controlnet_conditioning_scale,

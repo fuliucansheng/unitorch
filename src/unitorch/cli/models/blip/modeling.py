@@ -3,7 +3,7 @@
 
 import torch
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
-from torch.cuda.amp import autocast
+from torch import autocast
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.blip import (
     BlipForPretrain as _BlipForPretrain,
@@ -101,7 +101,7 @@ class BlipForPretrain(_BlipForPretrain):
 
         return inst
 
-    @autocast()
+    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
     def forward(
         self,
         input_ids: torch.Tensor,
@@ -208,7 +208,7 @@ class BlipForClassification(_BlipForClassification):
 
         return inst
 
-    @autocast()
+    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
     def forward(
         self,
         input_ids: torch.Tensor,
@@ -315,7 +315,7 @@ class BlipForTextClassification(_BlipForTextClassification):
 
         return inst
 
-    @autocast()
+    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
     def forward(
         self,
         input_ids=None,
@@ -419,7 +419,7 @@ class BlipForImageClassification(_BlipForImageClassification):
 
         return inst
 
-    @autocast()
+    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
     def forward(
         self,
         pixel_values: torch.Tensor,
@@ -499,7 +499,7 @@ class BlipForImageCaption(_BlipForImageCaption):
 
         return inst
 
-    @autocast()
+    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
     def forward(
         self,
         pixel_values: torch.Tensor,
@@ -524,7 +524,7 @@ class BlipForImageCaption(_BlipForImageCaption):
         return GenerationOutputs(sequences=outputs)
 
     @torch.no_grad()
-    @autocast()
+    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
     def generate(
         self,
         pixel_values: torch.Tensor,

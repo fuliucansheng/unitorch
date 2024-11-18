@@ -8,7 +8,7 @@ from absl.testing import absltest, parameterized
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from unitorch import set_seed
 from unitorch.models.mbart import MBartForGeneration, MBartProcessor
-from unitorch.cli import cached_path
+from unitorch.cli import cached_path, hf_endpoint_url
 from unitorch.cli import CoreConfigureParser
 from unitorch.cli.models.mbart.modeling import (
     MBartForGeneration as CoreMBartForGeneration,
@@ -27,13 +27,15 @@ class MBartTest(parameterized.TestCase):
 
         # Define paths to the required files
         self.config_path = cached_path(
-            "https://huggingface.co/facebook/mbart-large-cc25/resolve/main/config.json"
+            hf_endpoint_url("/facebook/mbart-large-cc25/resolve/main/config.json")
         )
         self.vocab_path = cached_path(
-            "https://huggingface.co/facebook/mbart-large-cc25/resolve/main/sentence.bpe.model"
+            hf_endpoint_url(
+                "/facebook/mbart-large-cc25/resolve/main/sentence.bpe.model"
+            )
         )
         self.weight_path = cached_path(
-            "https://huggingface.co/facebook/mbart-large-cc25/resolve/main/pytorch_model.bin"
+            hf_endpoint_url("/facebook/mbart-large-cc25/resolve/main/pytorch_model.bin")
         )
 
     @parameterized.named_parameters(

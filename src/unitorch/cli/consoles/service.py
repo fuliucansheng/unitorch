@@ -107,10 +107,7 @@ def service(service_action: str, config_path: str, **kwargs):
             k1 = k
         params.append((k0, k1, v))
 
-    if config_path is not None:
-        config = CoreConfigureParser(config_path, params=params)
-    else:
-        config = CoreConfigureParser(params=params)
+    config = CoreConfigureParser(config_path, params=params)
 
     depends_libraries = config.getdefault("core/cli", "depends_libraries", None)
 

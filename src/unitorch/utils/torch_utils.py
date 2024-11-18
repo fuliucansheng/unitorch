@@ -12,7 +12,7 @@ from torch.utils.data import (
     RandomSampler,
     SequentialSampler,
 )
-from torch.utils.data.distributed import DistributedSampler, T_co
+from torch.utils.data.distributed import DistributedSampler
 
 
 def get_local_rank() -> int:
@@ -46,7 +46,7 @@ class DistributedSkipSampler(DistributedSampler):
         )
         self.skip_step = skip_step
 
-    def __iter__(self) -> Iterator[T_co]:
+    def __iter__(self):
         if self.shuffle:
             # Deterministically shuffle based on epoch and seed
             g = torch.Generator()

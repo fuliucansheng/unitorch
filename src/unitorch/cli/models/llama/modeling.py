@@ -3,7 +3,7 @@
 
 import torch
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
-from torch.cuda.amp import autocast
+from torch import autocast
 from transformers.utils import is_remote_url
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.llama import (
@@ -117,7 +117,7 @@ class LlamaForClassification(_LlamaForClassification):
 
         return inst
 
-    @autocast()
+    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
     def forward(
         self,
         input_ids: torch.Tensor,
@@ -230,7 +230,7 @@ class LlamaForGeneration(_LlamaForGeneration):
 
         return inst
 
-    @autocast()
+    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
     def forward(
         self,
         input_ids: torch.Tensor,
@@ -257,7 +257,7 @@ class LlamaForGeneration(_LlamaForGeneration):
 
     @add_default_section_for_function("core/model/generation/llama")
     @torch.no_grad()
-    @autocast()
+    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
     def generate(
         self,
         input_ids: torch.Tensor,

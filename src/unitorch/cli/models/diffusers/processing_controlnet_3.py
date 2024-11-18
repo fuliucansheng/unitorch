@@ -115,7 +115,7 @@ class ControlNet3Processor(_Stable3Processor):
         self,
         prompt: str,
         image: Union[Image.Image, str],
-        condition_image: Union[Image.Image, str],
+        condition_image: Union[Image.Image, str, List[Union[Image.Image, str]]],
         prompt2: Optional[str] = None,
         prompt3: Optional[str] = None,
         max_seq_length: Optional[int] = None,
@@ -123,13 +123,16 @@ class ControlNet3Processor(_Stable3Processor):
     ):
         outputs = super().text2image(
             prompt=prompt,
+            image=image,
             prompt2=prompt2,
             prompt3=prompt3,
-            image=image,
             max_seq_length=max_seq_length,
             max_seq_length2=max_seq_length2,
         )
-        control_outputs = self.controlnet_inputs(condition_image)
+        if isinstance(condition_image, (list, tuple)):
+            control_outputs = super().controlnets_inputs(condition_image)
+        else:
+            control_outputs = super().controlnet_inputs(condition_image)
         return TensorsInputs(
             pixel_values=outputs.pixel_values,
             condition_pixel_values=control_outputs.pixel_values,
@@ -145,18 +148,29 @@ class ControlNet3Processor(_Stable3Processor):
     def _text2image_inputs(
         self,
         prompt: str,
-        condition_image: Union[Image.Image, str],
+        condition_image: Union[Image.Image, str, List[Union[Image.Image, str]]],
+        prompt2: Optional[str] = None,
+        prompt3: Optional[str] = None,
         negative_prompt: Optional[str] = "",
+        negative_prompt2: Optional[str] = None,
+        negative_prompt3: Optional[str] = None,
         max_seq_length: Optional[int] = None,
         max_seq_length2: Optional[int] = None,
     ):
         text_outputs = super().text2image_inputs(
             prompt=prompt,
+            prompt2=prompt2,
+            prompt3=prompt3,
             negative_prompt=negative_prompt,
+            negative_prompt2=negative_prompt2,
+            negative_prompt3=negative_prompt3,
             max_seq_length=max_seq_length,
             max_seq_length2=max_seq_length2,
         )
-        control_outputs = super().controlnet_inputs(condition_image=condition_image)
+        if isinstance(condition_image, (list, tuple)):
+            control_outputs = super().controlnets_inputs(condition_image)
+        else:
+            control_outputs = super().controlnet_inputs(condition_image)
         return TensorsInputs(
             input_ids=text_outputs.input_ids,
             input2_ids=text_outputs.input2_ids,
@@ -172,3 +186,113 @@ class ControlNet3Processor(_Stable3Processor):
             negative_attention2_mask=text_outputs.negative_attention2_mask,
             negative_attention3_mask=text_outputs.negative_attention3_mask,
         )
+
+    @register_process("core/process/diffusion/controlnet_3/inpainting")
+    def _inpainting(
+        self,
+        prompt: str,
+        condition_image: Union[Image.Image, str, List[Union[Image.Image, str]]],
+        image: Union[Image.Image, str],
+        mask_image: Union[Image.Image, str],
+        prompt2: Optional[str] = None,
+        prompt3: Optional[str] = None,
+        max_seq_length: Optional[int] = None,
+        max_seq_length2: Optional[int] = None,
+    ):
+        text_outputs = super().text2image_inputs(
+            prompt=prompt,
+            prompt2=prompt2,
+            prompt3=prompt3,
+            max_seq_length=max_seq_length,
+            max_seq_length2=max_seq_length2,
+        )
+        image_outputs = super().inpainting_inputs(
+            image=image,
+            mask_image=mask_image,
+        )
+        if isinstance(condition_image, (list, tuple)):
+            control_outputs = super().controlnets_inputs(condition_image)
+        else:
+            control_outputs = super().controlnet_inputs(condition_image)
+        return TensorsInputs(
+            input_ids=text_outputs.input_ids,
+            input2_ids=text_outputs.input2_ids,
+            input3_ids=text_outputs.input3_ids,
+            negative_input_ids=text_outputs.negative_input_ids,
+            negative_input2_ids=text_outputs.negative_input2_ids,
+            negative_input3_ids=text_outputs.negative_input3_ids,
+            pixel_values=image_outputs.pixel_values,
+            pixel_masks=image_outputs.pixel_masks,
+            condition_pixel_values=control_outputs.pixel_values,
+            attention_mask=text_outputs.attention_mask,
+            attention2_mask=text_outputs.attention2_mask,
+            attention3_mask=text_outputs.attention3_mask,
+            negative_attention_mask=text_outputs.negative_attention_mask,
+            negative_attention2_mask=text_outputs.negative_attention2_mask,
+            negative_attention3_mask=text_outputs.negative_attention3_mask,
+        )
+
+    @register_process("core/process/diffusion/controlnet_3/inpainting/inputs")
+    def _inpainting_inputs(
+        self,
+        prompt: str,
+        condition_image: Union[Image.Image, str, List[Union[Image.Image, str]]],
+        image: Union[Image.Image, str],
+        mask_image: Union[Image.Image, str],
+        prompt2: Optional[str] = None,
+        prompt3: Optional[str] = None,
+        negative_prompt: Optional[str] = "",
+        negative_prompt2: Optional[str] = None,
+        negative_prompt3: Optional[str] = None,
+        max_seq_length: Optional[int] = None,
+        max_seq_length2: Optional[int] = None,
+    ):
+        text_outputs = super().text2image_inputs(
+            prompt=prompt,
+            prompt2=prompt2,
+            prompt3=prompt3,
+            negative_prompt=negative_prompt,
+            negative_prompt2=negative_prompt2,
+            negative_prompt3=negative_prompt3,
+            max_seq_length=max_seq_length,
+            max_seq_length2=max_seq_length2,
+        )
+        image_outputs = super().inpainting_inputs(
+            image=image,
+            mask_image=mask_image,
+        )
+        if isinstance(condition_image, (list, tuple)):
+            control_outputs = super().controlnets_inputs(condition_image)
+        else:
+            control_outputs = super().controlnet_inputs(condition_image)
+        return TensorsInputs(
+            input_ids=text_outputs.input_ids,
+            input2_ids=text_outputs.input2_ids,
+            input3_ids=text_outputs.input3_ids,
+            negative_input_ids=text_outputs.negative_input_ids,
+            negative_input2_ids=text_outputs.negative_input2_ids,
+            negative_input3_ids=text_outputs.negative_input3_ids,
+            pixel_values=image_outputs.pixel_values,
+            pixel_masks=image_outputs.pixel_masks,
+            condition_pixel_values=control_outputs.pixel_values,
+            attention_mask=text_outputs.attention_mask,
+            attention2_mask=text_outputs.attention2_mask,
+            attention3_mask=text_outputs.attention3_mask,
+            negative_attention_mask=text_outputs.negative_attention_mask,
+            negative_attention2_mask=text_outputs.negative_attention2_mask,
+            negative_attention3_mask=text_outputs.negative_attention3_mask,
+        )
+
+    @register_process("core/process/diffusion/controlnet_3/inpainting/control_inputs")
+    def _inpainting_control_inputs(
+        self,
+        image: Union[Image.Image, str],
+        mask_image: Union[Image.Image, str],
+        key: Optional[str] = "condition_pixel_values",
+    ):
+        image_outputs = super().inpainting_control_inputs(
+            image=image,
+            mask_image=mask_image,
+        )
+        results = {key: image_outputs.pixel_values}
+        return TensorsInputs(**results)

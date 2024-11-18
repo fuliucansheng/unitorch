@@ -15,7 +15,6 @@ from unitorch.cli import CoreConfigureParser
 from unitorch.cli import (
     import_library,
     cached_path,
-    set_global_config,
     registered_fastapi,
     init_registered_module,
 )
@@ -36,12 +35,7 @@ def fastapi(config_path: str, **kwargs):
             k1 = k
         params.append((k0, k1, v))
 
-    if config_path is not None:
-        config = CoreConfigureParser(config_path, params=params)
-    else:
-        config = CoreConfigureParser(params=params)
-
-    set_global_config(config)
+    config = CoreConfigureParser(config_path, params=params)
 
     depends_libraries = config.getdefault("core/cli", "depends_libraries", None)
 
@@ -63,7 +57,7 @@ def fastapi(config_path: str, **kwargs):
     app = FastAPI()
 
     for fastapi_instance in fastapi_instances:
-        fastapi_instance.start()
+        # fastapi_instance.start()
         app.include_router(fastapi_instance.router)
 
     app.add_middleware(
@@ -74,7 +68,11 @@ def fastapi(config_path: str, **kwargs):
         allow_headers=["*"],
     )
 
-    uvicorn.run(app, host="0.0.0.0", port=5000, log_level="info")
+    config.set_default_section("core/cli")
+    host = config.getoption("host", "0.0.0.0")
+    port = config.getoption("port", 5000)
+
+    uvicorn.run(app, host=host, port=port, log_level="info")
 
 
 def cli_main():

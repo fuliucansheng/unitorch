@@ -1,17 +1,23 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
+from unitorch.cli import hf_endpoint_url
+
 # pretrained infos
 pretrained_xpegasus_infos = {
     "xpegasus-base": {
-        "config": "https://huggingface.co/google/pegasus-x-base/resolve/main/config.json",
-        "vocab": "https://huggingface.co/google/pegasus-x-base/resolve/main/spiece.model",
-        "weight": "https://huggingface.co/google/pegasus-x-base/resolve/main/pytorch_model.bin",
+        "config": hf_endpoint_url("/google/pegasus-x-base/resolve/main/config.json"),
+        "vocab": hf_endpoint_url("/google/pegasus-x-base/resolve/main/spiece.model"),
+        "weight": hf_endpoint_url(
+            "/google/pegasus-x-base/resolve/main/pytorch_model.bin"
+        ),
     },
     "xpegasus-large": {
-        "config": "https://huggingface.co/google/pegasus-x-large/resolve/main/config.json",
-        "vocab": "https://huggingface.co/google/pegasus-x-large/resolve/main/spiece.model",
-        "weight": "https://huggingface.co/google/pegasus-x-large/resolve/main/pytorch_model.bin",
+        "config": hf_endpoint_url("/google/pegasus-x-large/resolve/main/config.json"),
+        "vocab": hf_endpoint_url("/google/pegasus-x-large/resolve/main/spiece.model"),
+        "weight": hf_endpoint_url(
+            "/google/pegasus-x-large/resolve/main/pytorch_model.bin"
+        ),
     },
 }
 

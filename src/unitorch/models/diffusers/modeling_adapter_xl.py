@@ -65,6 +65,7 @@ class StableXLAdapterForText2ImageGeneration(GenericStableXLModel):
         freeze_vae_encoder: Optional[bool] = True,
         freeze_text_encoder: Optional[bool] = True,
         freeze_unet_encoder: Optional[bool] = False,
+        snr_gamma: Optional[float] = 5.0,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
@@ -83,6 +84,7 @@ class StableXLAdapterForText2ImageGeneration(GenericStableXLModel):
             freeze_vae_encoder=freeze_vae_encoder,
             freeze_text_encoder=freeze_text_encoder,
             freeze_unet_encoder=freeze_unet_encoder,
+            snr_gamma=snr_gamma,
             seed=seed,
         )
         self.pipeline = StableDiffusionXLAdapterPipeline(
@@ -245,6 +247,7 @@ class StableXLAdapterForText2ImageGeneration(GenericStableXLModel):
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),
+            num_inference_steps=self.num_infer_timesteps,
             height=height,
             width=width,
             guidance_scale=guidance_scale,

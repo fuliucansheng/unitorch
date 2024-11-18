@@ -6,7 +6,7 @@ import torch
 import gc
 import numpy as np
 import gradio as gr
-from PIL import Image, ImageFilter, ImageOps
+from PIL import Image, ImageFilter, ImageOps, ImageColor
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from unitorch.utils import is_opencv_available
 from unitorch.cli import CoreConfigureParser, GenericWebUI
@@ -23,6 +23,109 @@ from unitorch.cli.webuis import (
     create_pretrain_layout,
 )
 from unitorch.cli.webuis import SimpleWebUI
+
+
+class ResizeWebUI(SimpleWebUI):
+    def __init__(self, config: CoreConfigureParser):
+        # create elements
+        input_image = create_element("image", "Input Image")
+        width = create_element(
+            "slider", "Width", min_value=0, max_value=1024, step=1, default=0
+        )
+        height = create_element(
+            "slider", "Height", min_value=0, max_value=1024, step=1, default=0
+        )
+        generate = create_element("button", "Generate")
+        output_image = create_element("image", "Output Image")
+
+        # create layouts
+        left = create_column(input_image, width, height, generate)
+        right = create_column(output_image)
+        iface = create_blocks(create_row(left, right))
+
+        iface.__enter__()
+
+        generate.click(
+            fn=self.resize,
+            inputs=[input_image, width, height],
+            outputs=[output_image],
+            trigger_mode="once",
+        )
+
+        input_image.upload(
+            lambda x: x.size,
+            inputs=[input_image],
+            outputs=[width, height],
+        )
+
+        iface.__exit__()
+        super().__init__(config, iname="Resize", iface=iface)
+
+    def resize(
+        self,
+        image: Image.Image,
+        width: Optional[int] = 0,
+        height: Optional[int] = 0,
+    ):
+        if width > 0 and height > 0:
+            image = image.resize((width, height))
+
+        return image
+
+
+class ExpandWebUI(SimpleWebUI):
+    def __init__(self, config: CoreConfigureParser):
+        # create elements
+        input_image = create_element("image", "Input Image")
+        color = gr.ColorPicker(label="Color", value="#2f4f4f")
+        width = create_element(
+            "slider", "Width", min_value=0, max_value=1024, step=1, default=0
+        )
+        height = create_element(
+            "slider", "Height", min_value=0, max_value=1024, step=1, default=0
+        )
+        generate = create_element("button", "Generate")
+        output_image = create_element("image", "Output Image")
+
+        # create layouts
+        left = create_column(input_image, color, width, height, generate)
+        right = create_column(output_image)
+        iface = create_blocks(create_row(left, right))
+
+        iface.__enter__()
+
+        generate.click(
+            fn=self.expand,
+            inputs=[input_image, width, height, color],
+            outputs=[output_image],
+            trigger_mode="once",
+        )
+        input_image.upload(
+            lambda x: x.size,
+            inputs=[input_image],
+            outputs=[width, height],
+        )
+
+        iface.__exit__()
+        super().__init__(config, iname="Expand", iface=iface)
+
+    def expand(
+        self,
+        image: Image.Image,
+        width: Optional[int] = 0,
+        height: Optional[int] = 0,
+        color: Optional[str] = "＃2f4f4f",
+    ):
+        color = ImageColor.getcolor(color, "RGB")
+        if width == 0:
+            width = image.width
+        if height == 0:
+            height = image.height
+        new_image = Image.new("RGB", (width, height), color)
+        x = (width - image.width) // 2
+        y = (height - image.height) // 2
+        new_image.paste(image, (x, y))
+        return new_image
 
 
 class CannyWebUI(SimpleWebUI):
@@ -46,7 +149,16 @@ class CannyWebUI(SimpleWebUI):
         iface.__enter__()
 
         generate.click(
-            fn=self.canny, inputs=[input_image, width, height], outputs=[output_image]
+            fn=self.canny,
+            inputs=[input_image, width, height],
+            outputs=[output_image],
+            trigger_mode="once",
+        )
+
+        input_image.upload(
+            lambda x: x.size,
+            inputs=[input_image],
+            outputs=[width, height],
         )
 
         iface.__exit__()
@@ -105,6 +217,7 @@ class BlendWebUI(SimpleWebUI):
             fn=self.blend,
             inputs=[input_image1, input_image2, alpha, height, width],
             outputs=[output_image],
+            trigger_mode="once",
         )
 
         iface.__exit__()
@@ -147,7 +260,15 @@ class InvertWebUI(SimpleWebUI):
         iface.__enter__()
 
         generate.click(
-            fn=self.invert, inputs=[input_image, height, width], outputs=[output_image]
+            fn=self.invert,
+            inputs=[input_image, height, width],
+            outputs=[output_image],
+            trigger_mode="once",
+        )
+        input_image.upload(
+            lambda x: x.size,
+            inputs=[input_image],
+            outputs=[width, height],
         )
 
         iface.__exit__()
@@ -193,6 +314,7 @@ class CompositeWebUI(SimpleWebUI):
             fn=self.composite,
             inputs=[input_image, input_mask, height, width],
             outputs=[output_image],
+            trigger_mode="once",
         )
 
         iface.__exit__()
@@ -217,6 +339,8 @@ class CompositeWebUI(SimpleWebUI):
 class ImageWebUI(SimpleWebUI):
     def __init__(self, config: CoreConfigureParser):
         webuis = [
+            ResizeWebUI(config),
+            ExpandWebUI(config),
             CannyWebUI(config),
             BlendWebUI(config),
             InvertWebUI(config),

@@ -70,10 +70,13 @@ class DetrWebUI(SimpleWebUI):
         # create events
         iface.__enter__()
 
-        start.click(self.start, inputs=[name], outputs=[status])
-        stop.click(self.stop, outputs=[status])
+        start.click(self.start, inputs=[name], outputs=[status], trigger_mode="once")
+        stop.click(self.stop, outputs=[status], trigger_mode="once")
         detect.click(
-            self.serve, inputs=[input_image, mask_threshold], outputs=[output_image]
+            self.serve,
+            inputs=[input_image, mask_threshold],
+            outputs=[output_image],
+            trigger_mode="once",
         )
 
         iface.load(

@@ -3,7 +3,7 @@
 
 import torch
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
-from torch.cuda.amp import autocast
+from torch import autocast
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.dinov2 import (
     DinoV2ForImageClassification as _DinoV2ForImageClassification,
@@ -79,7 +79,7 @@ class DinoV2ForImageClassification(_DinoV2ForImageClassification):
 
         return inst
 
-    @autocast()
+    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
     def forward(
         self,
         pixel_values: torch.Tensor,

@@ -69,12 +69,13 @@ class SegformerWebUI(SimpleWebUI):
         # create events
         iface.__enter__()
 
-        start.click(self.start, inputs=[name], outputs=[status])
-        stop.click(self.stop, outputs=[status])
+        start.click(self.start, inputs=[name], outputs=[status], trigger_mode="once")
+        stop.click(self.stop, outputs=[status], trigger_mode="once")
         segment.click(
             self.serve,
             inputs=[input_image],
             outputs=[output_image],
+            trigger_mode="once",
         )
 
         iface.load(

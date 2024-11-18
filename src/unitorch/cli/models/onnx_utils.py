@@ -15,9 +15,11 @@ from unitorch.cli import (
 from unitorch.cli import WriterMixin, WriterOutputs
 from unitorch.cli.models import TensorsOutputs, TensorsTargets, ACT2FN
 
+
 @dataclass
 class PandasOutputs(WriterMixin):
     outputs: pd.DataFrame
+
 
 def onnx_model_decorator(cls):
     class OnnxModel(GenericOnnxModel):

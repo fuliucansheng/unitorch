@@ -64,14 +64,27 @@ class GenericStableXLAdapterLoraModel(GenericPeftModel, QuantizationMixin):
         out_channels: Optional[int] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
+        snr_gamma: Optional[float] = 5.0,
         lora_r: Optional[int] = 16,
         lora_alpha: Optional[int] = 32,
+        lora_dropout: Optional[float] = 0.05,
+        fan_in_fan_out: Optional[bool] = True,
+        target_modules: Optional[Union[List[str], str]] = [
+            "to_k",
+            "to_q",
+            "to_v",
+            "to_out.0",
+            "q_proj",
+            "v_proj",
+            "out_proj",
+        ],
         enable_text_adapter: Optional[bool] = True,
         enable_unet_adapter: Optional[bool] = True,
         seed: Optional[int] = 1123,
     ):
         super().__init__()
         self.seed = seed
+        self.snr_gamma = snr_gamma
         self.num_train_timesteps = num_train_timesteps
         self.num_infer_timesteps = num_infer_timesteps
 
@@ -130,23 +143,15 @@ class GenericStableXLAdapterLoraModel(GenericPeftModel, QuantizationMixin):
             r=lora_r,
             lora_alpha=lora_alpha,
             init_lora_weights="gaussian",
-            target_modules=[
-                "to_k",
-                "to_q",
-                "to_v",
-                "to_out.0",
-                "q_proj",
-                "v_proj",
-                "out_proj",
-            ],
+            lora_dropout=lora_dropout,
+            fan_in_fan_out=fan_in_fan_out,
+            target_modules=target_modules,
         )
         if enable_text_adapter:
             self.text.add_adapter(lora_config)
             self.text2.add_adapter(lora_config)
         if enable_unet_adapter:
             self.unet.add_adapter(lora_config)
-
-        self.scheduler.set_timesteps(num_inference_steps=self.num_infer_timesteps)
 
     def get_prompt_outputs(
         self,
@@ -233,8 +238,20 @@ class StableXLAdapterLoraForText2ImageGeneration(GenericStableXLAdapterLoraModel
         out_channels: Optional[int] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
+        snr_gamma: Optional[float] = 5.0,
         lora_r: Optional[int] = 16,
         lora_alpha: Optional[int] = 32,
+        lora_dropout: Optional[float] = 0.05,
+        fan_in_fan_out: Optional[bool] = True,
+        target_modules: Optional[Union[List[str], str]] = [
+            "to_k",
+            "to_q",
+            "to_v",
+            "to_out.0",
+            "q_proj",
+            "v_proj",
+            "out_proj",
+        ],
         enable_text_adapter: Optional[bool] = True,
         enable_unet_adapter: Optional[bool] = True,
         seed: Optional[int] = 1123,
@@ -252,8 +269,12 @@ class StableXLAdapterLoraForText2ImageGeneration(GenericStableXLAdapterLoraModel
             out_channels=out_channels,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
+            snr_gamma=snr_gamma,
             lora_r=lora_r,
             lora_alpha=lora_alpha,
+            lora_dropout=lora_dropout,
+            fan_in_fan_out=fan_in_fan_out,
+            target_modules=target_modules,
             enable_text_adapter=enable_text_adapter,
             enable_unet_adapter=enable_unet_adapter,
             seed=seed,
@@ -406,6 +427,7 @@ class StableXLAdapterLoraForText2ImageGeneration(GenericStableXLAdapterLoraModel
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),
+            num_inference_steps=self.num_infer_timesteps,
             height=height,
             width=width,
             guidance_scale=guidance_scale,

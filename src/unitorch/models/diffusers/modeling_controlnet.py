@@ -45,6 +45,7 @@ class ControlNetForText2ImageGeneration(GenericStableModel):
         freeze_vae_encoder: Optional[bool] = True,
         freeze_text_encoder: Optional[bool] = True,
         freeze_unet_encoder: Optional[bool] = False,
+        snr_gamma: Optional[float] = 5.0,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
@@ -62,6 +63,7 @@ class ControlNetForText2ImageGeneration(GenericStableModel):
             freeze_vae_encoder=freeze_vae_encoder,
             freeze_text_encoder=freeze_text_encoder,
             freeze_unet_encoder=freeze_unet_encoder,
+            snr_gamma=snr_gamma,
             seed=seed,
         )
         self.pipeline = StableDiffusionControlNetPipeline(
@@ -135,14 +137,12 @@ class ControlNetForText2ImageGeneration(GenericStableModel):
         guidance_scale: Optional[float] = 7.5,
         controlnet_conditioning_scale: Optional[Union[float, List[float]]] = None,
     ):
-        prompt_embeds = self.text(
-            input_ids,
-            # attention_mask,
-        )[0]
-        negative_prompt_embeds = self.text(
-            negative_input_ids,
-            # negative_attention_mask,
-        )[0]
+        outputs = self.get_prompt_outputs(
+            input_ids=input_ids,
+            negative_input_ids=negative_input_ids,
+            attention_mask=attention_mask,
+            negative_attention_mask=negative_attention_mask,
+        )
 
         if controlnet_conditioning_scale is None:
             if self.num_controlnets == 1:
@@ -161,11 +161,12 @@ class ControlNetForText2ImageGeneration(GenericStableModel):
             image=condition_pixel_values
             if self.num_controlnets == 1
             else list(condition_pixel_values.transpose(0, 1)),
-            prompt_embeds=prompt_embeds,
-            negative_prompt_embeds=negative_prompt_embeds,
+            prompt_embeds=outputs.prompt_embeds,
+            negative_prompt_embeds=outputs.negative_prompt_embeds,
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),
+            num_inference_steps=self.num_infer_timesteps,
             height=height,
             width=width,
             guidance_scale=guidance_scale,
@@ -193,6 +194,7 @@ class ControlNetForImage2ImageGeneration(GenericStableModel):
         freeze_vae_encoder: Optional[bool] = True,
         freeze_text_encoder: Optional[bool] = True,
         freeze_unet_encoder: Optional[bool] = False,
+        snr_gamma: Optional[float] = 5.0,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
@@ -210,6 +212,7 @@ class ControlNetForImage2ImageGeneration(GenericStableModel):
             freeze_vae_encoder=freeze_vae_encoder,
             freeze_text_encoder=freeze_text_encoder,
             freeze_unet_encoder=freeze_unet_encoder,
+            snr_gamma=snr_gamma,
             seed=seed,
         )
         self.pipeline = StableDiffusionControlNetImg2ImgPipeline(
@@ -238,18 +241,16 @@ class ControlNetForImage2ImageGeneration(GenericStableModel):
         negative_input_ids: torch.Tensor,
         attention_mask: Optional[torch.Tensor] = None,
         negative_attention_mask: Optional[torch.Tensor] = None,
-        strength: Optional[float] = 0.8,
+        strength: Optional[float] = 1.0,
         guidance_scale: Optional[float] = 7.5,
         controlnet_conditioning_scale: Optional[float] = 1.0,
     ):
-        prompt_embeds = self.text(
-            input_ids,
-            # attention_mask,
-        )[0]
-        negative_prompt_embeds = self.text(
-            negative_input_ids,
-            # negative_attention_mask,
-        )[0]
+        outputs = self.get_prompt_outputs(
+            input_ids=input_ids,
+            negative_input_ids=negative_input_ids,
+            attention_mask=attention_mask,
+            negative_attention_mask=negative_attention_mask,
+        )
 
         if controlnet_conditioning_scale is None:
             if self.num_controlnets == 1:
@@ -269,11 +270,12 @@ class ControlNetForImage2ImageGeneration(GenericStableModel):
             control_image=condition_pixel_values
             if self.num_controlnets == 1
             else list(condition_pixel_values.transpose(0, 1)),
-            prompt_embeds=prompt_embeds,
-            negative_prompt_embeds=negative_prompt_embeds,
+            prompt_embeds=outputs.prompt_embeds,
+            negative_prompt_embeds=outputs.negative_prompt_embeds,
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),
+            num_inference_steps=self.num_infer_timesteps,
             strength=strength,
             guidance_scale=guidance_scale,
             controlnet_conditioning_scale=controlnet_conditioning_scale,
@@ -291,6 +293,7 @@ class ControlNetForImageInpainting(GenericStableModel):
         vae_config_path: str,
         controlnet_configs_path: Union[str, List[str]],
         scheduler_config_path: str,
+        inpainting_controlnet_config_path: Union[str] = None,
         quant_config_path: Optional[str] = None,
         image_size: Optional[int] = None,
         in_channels: Optional[int] = None,
@@ -300,6 +303,7 @@ class ControlNetForImageInpainting(GenericStableModel):
         freeze_vae_encoder: Optional[bool] = True,
         freeze_text_encoder: Optional[bool] = True,
         freeze_unet_encoder: Optional[bool] = False,
+        snr_gamma: Optional[float] = 5.0,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
@@ -308,6 +312,7 @@ class ControlNetForImageInpainting(GenericStableModel):
             vae_config_path=vae_config_path,
             controlnet_configs_path=controlnet_configs_path,
             scheduler_config_path=scheduler_config_path,
+            inpainting_controlnet_config_path=inpainting_controlnet_config_path,
             quant_config_path=quant_config_path,
             image_size=image_size,
             in_channels=in_channels,
@@ -317,6 +322,7 @@ class ControlNetForImageInpainting(GenericStableModel):
             freeze_vae_encoder=freeze_vae_encoder,
             freeze_text_encoder=freeze_text_encoder,
             freeze_unet_encoder=freeze_unet_encoder,
+            snr_gamma=snr_gamma,
             seed=seed,
         )
         self.pipeline = StableDiffusionControlNetInpaintPipeline(
@@ -341,36 +347,57 @@ class ControlNetForImageInpainting(GenericStableModel):
         self,
         pixel_values: torch.Tensor,
         pixel_masks: torch.Tensor,
-        condition_pixel_values: torch.Tensor,
         input_ids: torch.Tensor,
         negative_input_ids: torch.Tensor,
+        condition_pixel_values: torch.Tensor = None,
+        inpainting_condition_pixel_values: torch.Tensor = None,
         attention_mask: Optional[torch.Tensor] = None,
         negative_attention_mask: Optional[torch.Tensor] = None,
-        strength: Optional[float] = 0.8,
+        strength: Optional[float] = 1.0,
         guidance_scale: Optional[float] = 7.5,
-        controlnet_conditioning_scale: Optional[float] = 1.0,
+        controlnet_conditioning_scale: Optional[Union[float, List[float]]] = None,
+        inpainting_controlnet_conditioning_scale: Optional[float] = None,
     ):
-        prompt_embeds = self.text(
-            input_ids,
-            # attention_mask,
-        )[0]
-        negative_prompt_embeds = self.text(
-            negative_input_ids,
-            # negative_attention_mask,
-        )[0]
-
-        if controlnet_conditioning_scale is None:
+        assert (
+            condition_pixel_values is not None
+            or inpainting_condition_pixel_values is not None
+        )
+        if inpainting_condition_pixel_values is not None:
             if self.num_controlnets == 1:
-                controlnet_conditioning_scale = 1.0
+                condition_pixel_values = inpainting_condition_pixel_values
+                controlnet_conditioning_scale = inpainting_controlnet_conditioning_scale
             else:
-                controlnet_conditioning_scale = [1.0] * self.num_controlnets
-        elif (
-            not isinstance(controlnet_conditioning_scale, list)
-            and self.num_controlnets > 1
-        ):
-            controlnet_conditioning_scale = [
-                controlnet_conditioning_scale
-            ] * self.num_controlnets
+                condition_pixel_values = torch.cat(
+                    [
+                        condition_pixel_values,
+                        inpainting_condition_pixel_values.unsqueeze(1),
+                    ],
+                    dim=1,
+                )
+                if controlnet_conditioning_scale is None:
+                    controlnet_conditioning_scale = [1.0] * (self.num_controlnets - 1)
+                controlnet_conditioning_scale += [
+                    inpainting_controlnet_conditioning_scale
+                ]
+        else:
+            if controlnet_conditioning_scale is None:
+                if self.num_controlnets == 1:
+                    controlnet_conditioning_scale = 1.0
+                else:
+                    controlnet_conditioning_scale = [1.0] * self.num_controlnets
+            elif (
+                not isinstance(controlnet_conditioning_scale, list)
+                and self.num_controlnets > 1
+            ):
+                controlnet_conditioning_scale = [
+                    controlnet_conditioning_scale
+                ] * self.num_controlnets
+        outputs = self.get_prompt_outputs(
+            input_ids=input_ids,
+            negative_input_ids=negative_input_ids,
+            attention_mask=attention_mask,
+            negative_attention_mask=negative_attention_mask,
+        )
 
         images = self.pipeline(
             image=pixel_values,
@@ -378,11 +405,14 @@ class ControlNetForImageInpainting(GenericStableModel):
             control_image=condition_pixel_values
             if self.num_controlnets == 1
             else list(condition_pixel_values.transpose(0, 1)),
-            prompt_embeds=prompt_embeds,
-            negative_prompt_embeds=negative_prompt_embeds,
+            prompt_embeds=outputs.prompt_embeds,
+            negative_prompt_embeds=outputs.negative_prompt_embeds,
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),
+            num_inference_steps=self.num_infer_timesteps,
+            width=pixel_values.size(-1),
+            height=pixel_values.size(-2),
             strength=strength,
             guidance_scale=guidance_scale,
             controlnet_conditioning_scale=controlnet_conditioning_scale,

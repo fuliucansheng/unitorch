@@ -186,11 +186,11 @@ class StableForImage2VideoGenerationPipeline(StableForImage2VideoGeneration):
         num_timesteps: Optional[int] = 50,
         seed: Optional[int] = 1123,
         scheduler: Optional[str] = None,
-        lora_checkpoints: Optional[Union[str, List[str]]] = None,
+        lora_checkpoints: Optional[Union[str, List[str]]] = [],
         lora_weights: Optional[Union[float, List[float]]] = 1.0,
         lora_alphas: Optional[Union[float, List[float]]] = 32,
-        lora_urls: Optional[Union[str, List[str]]] = None,
-        lora_files: Optional[Union[str, List[str]]] = None,
+        lora_urls: Optional[Union[str, List[str]]] = [],
+        lora_files: Optional[Union[str, List[str]]] = [],
     ):
         image = image.convert("RGB")
         inputs = self.processor.image2video_inputs(
@@ -203,7 +203,6 @@ class StableForImage2VideoGenerationPipeline(StableForImage2VideoGeneration):
             self.scheduler = Schedulers.get(scheduler).from_config(
                 self.scheduler.config
             )
-        self.scheduler.set_timesteps(num_inference_steps=num_timesteps)
 
         self.pipeline = StableVideoDiffusionPipelineV2(
             vae=self.vae,
@@ -243,7 +242,9 @@ class StableForImage2VideoGenerationPipeline(StableForImage2VideoGeneration):
         ):
             if ckpt is not None:
                 processed_lora_files.append(
-                    nested_dict_value(pretrained_stable_extensions_infos, ckpt)
+                    nested_dict_value(
+                        pretrained_stable_extensions_infos, ckpt, "weight"
+                    )
                 )
                 processed_lora_weights.append(weight)
                 processed_lora_alphas.append(alpha)
@@ -283,6 +284,7 @@ class StableForImage2VideoGenerationPipeline(StableForImage2VideoGeneration):
             fps=num_fps,
             motion_bucket_id=motion_bucket_id,
             decode_chunk_size=decode_chunk_size,
+            num_inference_steps=num_timesteps,
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),

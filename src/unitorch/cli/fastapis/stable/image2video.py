@@ -1,12 +1,17 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
+import io
 import re
+import gc
 import json
 import logging
 import torch
 import pandas as pd
 from PIL import Image
+from torch import autocast
+from fastapi import APIRouter, UploadFile, File
+from fastapi.responses import StreamingResponse
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from diffusers.utils import numpy_to_pil
 from diffusers.models import ControlNetModel
@@ -30,11 +35,11 @@ from unitorch.models.diffusers.modeling_stable import StableVideoDiffusionPipeli
 from unitorch.utils import pop_value, nested_dict_value, tensor2vid
 from unitorch.cli import (
     cached_path,
+    register_fastapi,
     add_default_section_for_init,
     add_default_section_for_function,
 )
-from unitorch.cli import CoreConfigureParser, GenericScript
-from unitorch.cli import register_script
+from unitorch.cli import CoreConfigureParser, GenericFastAPI
 from unitorch.cli.models.diffusers import (
     pretrained_stable_infos,
     pretrained_stable_extensions_infos,
@@ -188,6 +193,7 @@ class StableForImage2VideoFastAPIPipeline(StableForImage2VideoGeneration):
         return inst
 
     @torch.no_grad()
+    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
     @add_default_section_for_function("core/fastapi/pipeline/stable/image2video")
     def __call__(
         self,
@@ -208,8 +214,6 @@ class StableForImage2VideoFastAPIPipeline(StableForImage2VideoGeneration):
             image,
             vae_image=image.resize((width, height)),
         )
-
-        self.scheduler.set_timesteps(num_inference_steps=num_timesteps)
 
         self.seed = seed
 
@@ -233,9 +237,80 @@ class StableForImage2VideoFastAPIPipeline(StableForImage2VideoGeneration):
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),
+            num_inference_steps=num_timesteps,
             output_type="pt",
         )
 
         frames = tensor2vid(outputs.frames)
         name = export_to_video(frames)
         return name
+
+
+@register_fastapi("core/fastapi/stable/image2video")
+class StableImage2VideoFastAPI(GenericFastAPI):
+    def __init__(self, config: CoreConfigureParser):
+        self.config = config
+        config.set_default_section(f"core/fastapi/stable/image2video")
+        router = config.getoption("router", "/core/fastapi/stable/image2video")
+        self._pipe = None if not hasattr(self, "_pipe") else self._pipe
+        self._router = APIRouter(prefix=router)
+        self._router.add_api_route("/", self.serve, methods=["POST"])
+        self._router.add_api_route("/status", self.status, methods=["GET"])
+        self._router.add_api_route("/start", self.start, methods=["GET"])
+        self._router.add_api_route("/stop", self.stop, methods=["GET"])
+
+    @property
+    def router(self):
+        return self._router
+
+    def start(self):
+        self._pipe = StableForImage2VideoFastAPIPipeline.from_core_configure(
+            self.config
+        )
+        return "start success"
+
+    def stop(self):
+        self._pipe.to("cpu")
+        del self._pipe
+        gc.collect()
+        torch.cuda.empty_cache()
+        self._pipe = None if not hasattr(self, "_pipe") else self._pipe
+        return "stop success"
+
+    def status(self):
+        return "running" if self._pipe is not None else "stopped"
+
+    async def serve(
+        self,
+        image: UploadFile,
+        num_frames: Optional[int] = 30,
+        num_fps: Optional[int] = 6,
+        min_guidance_scale: Optional[float] = 1.0,
+        max_guidance_scale: Optional[float] = 2.5,
+        motion_bucket_id: Optional[int] = 127,
+        decode_chunk_size: Optional[int] = 8,
+        num_timesteps: Optional[int] = 50,
+        seed: Optional[int] = 1123,
+    ):
+        assert self._pipe is not None
+        image_bytes = await image.read()
+        image = Image.open(io.BytesIO(image_bytes))
+        video = self._pipe(
+            image,
+            num_frames=num_frames,
+            num_fps=num_fps,
+            min_guidance_scale=min_guidance_scale,
+            max_guidance_scale=max_guidance_scale,
+            motion_bucket_id=motion_bucket_id,
+            decode_chunk_size=decode_chunk_size,
+            num_timesteps=num_timesteps,
+            seed=seed,
+        )
+        buffer = io.BytesIO()
+        with open(video, "rb") as f:
+            buffer.write(f.read())
+        buffer.seek(0)
+        return StreamingResponse(
+            io.BytesIO(buffer.getvalue()),
+            media_type="video/mp4",
+        )

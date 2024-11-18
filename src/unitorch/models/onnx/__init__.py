@@ -26,6 +26,9 @@ class GenericOnnxModel(GenericModel):
     def preprocess(self, *args, **kwargs):
         pass
 
+    def setup(self):
+        pass
+
     @abc.abstractmethod
     def forward(self, *args, **kwargs):
         pass

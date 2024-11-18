@@ -1,13 +1,18 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
+import io
 import re
+import gc
 import json
 import logging
 import torch
 import hashlib
 import pandas as pd
 from PIL import Image
+from torch import autocast
+from fastapi import APIRouter, UploadFile, File
+from fastapi.responses import StreamingResponse
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from diffusers.utils import numpy_to_pil
 from diffusers.models import SD3ControlNetModel, SD3MultiControlNetModel
@@ -15,6 +20,8 @@ from diffusers.pipelines import (
     StableDiffusion3Pipeline,
     StableDiffusion3Img2ImgPipeline,
     StableDiffusion3ControlNetPipeline,
+    StableDiffusion3InpaintPipeline,
+    StableDiffusion3ControlNetInpaintingPipeline,
 )
 from unitorch import is_xformers_available
 from unitorch.utils import is_remote_url
@@ -24,11 +31,11 @@ from unitorch.models.diffusers import Stable3Processor
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.cli import (
     cached_path,
+    register_fastapi,
     add_default_section_for_init,
     add_default_section_for_function,
 )
-from unitorch.cli import CoreConfigureParser, GenericScript
-from unitorch.cli import register_script
+from unitorch.cli import CoreConfigureParser, GenericFastAPI
 from unitorch.cli.models.diffusers import (
     pretrained_stable_infos,
     pretrained_stable_extensions_infos,
@@ -58,6 +65,9 @@ class Stable3ForText2ImageFastAPIPipeline(GenericStable3Model):
         pad_token2: Optional[str] = "!",
         weight_path: Optional[Union[str, List[str]]] = None,
         state_dict: Optional[Dict[str, Any]] = None,
+        lora_checkpoints: Optional[Union[str, List[str]]] = None,
+        lora_weights: Optional[Union[float, List[float]]] = 1.0,
+        lora_alphas: Optional[Union[float, List[float]]] = 32,
         device: Optional[Union[str, int]] = "cpu",
         enable_cpu_offload: Optional[bool] = False,
         enable_xformers: Optional[bool] = False,
@@ -86,10 +96,8 @@ class Stable3ForText2ImageFastAPIPipeline(GenericStable3Model):
         self._device = "cpu" if device == "cpu" else int(device)
 
         self.from_pretrained(weight_path, state_dict=state_dict)
-        self.eval()
 
-        self._enable_cpu_offload = enable_cpu_offload
-        self._enable_xformers = enable_xformers
+        self.eval()
 
         self.pipeline = StableDiffusion3Pipeline(
             vae=self.vae,
@@ -103,6 +111,18 @@ class Stable3ForText2ImageFastAPIPipeline(GenericStable3Model):
             tokenizer_3=None,
         )
         self.pipeline.set_progress_bar_config(disable=True)
+
+        if lora_checkpoints is not None:
+            self.load_lora_weights(
+                lora_checkpoints,
+                lora_weights=lora_weights,
+                lora_alphas=lora_alphas,
+                save_base_state=False,
+            )
+
+        self._enable_cpu_offload = enable_cpu_offload
+        self._enable_xformers = enable_xformers
+
         if self._enable_cpu_offload and self._device != "cpu":
             self.pipeline.enable_model_cpu_offload(self._device)
         else:
@@ -255,6 +275,33 @@ class Stable3ForText2ImageFastAPIPipeline(GenericStable3Model):
                 ),
             ]
 
+        pretrained_lora_names = config.getoption("pretrained_lora_names", None)
+        pretrained_lora_weights = config.getoption("pretrained_lora_weights", 1.0)
+        pretrained_lora_alphas = config.getoption("pretrained_lora_alphas", 32)
+
+        if isinstance(pretrained_lora_names, str):
+            pretrained_lora_weights_path = nested_dict_value(
+                pretrained_stable_extensions_infos,
+                pretrained_lora_names,
+                "lora",
+                "weight",
+            )
+        elif isinstance(pretrained_lora_names, list):
+            pretrained_lora_weights_path = [
+                nested_dict_value(
+                    pretrained_stable_extensions_infos, name, "lora", "weight"
+                )
+                for name in pretrained_lora_names
+            ]
+            assert len(pretrained_lora_weights_path) == len(pretrained_lora_weights)
+            assert len(pretrained_lora_weights_path) == len(pretrained_lora_alphas)
+        else:
+            pretrained_lora_weights_path = None
+
+        lora_weights_path = config.getoption(
+            "pretrained_lora_weights_path", pretrained_lora_weights_path
+        )
+
         inst = cls(
             config_path=config_path,
             text_config_path=text_config_path,
@@ -268,12 +315,15 @@ class Stable3ForText2ImageFastAPIPipeline(GenericStable3Model):
             merge2_path=merge2_path,
             vocab3_path=vocab3_path,
             quant_config_path=quant_config_path,
-            max_seq_length=max_seq_length,
-            max_seq_length2=max_seq_length2,
             pad_token=pad_token,
             pad_token2=pad_token2,
+            max_seq_length=max_seq_length,
+            max_seq_length2=max_seq_length2,
             weight_path=weight_path,
             state_dict=state_dict,
+            lora_checkpoints=lora_weights_path,
+            lora_weights=pretrained_lora_weights,
+            lora_alphas=pretrained_lora_alphas,
             device=device,
             enable_cpu_offload=enable_cpu_offload,
             enable_xformers=enable_xformers,
@@ -281,6 +331,10 @@ class Stable3ForText2ImageFastAPIPipeline(GenericStable3Model):
         return inst
 
     @torch.no_grad()
+    @autocast(
+        device_type=("cuda" if torch.cuda.is_available() else "cpu"),
+        dtype=torch.bfloat16,
+    )
     @add_default_section_for_function("core/fastapi/pipeline/stable_3/text2image")
     def __call__(
         self,
@@ -296,8 +350,6 @@ class Stable3ForText2ImageFastAPIPipeline(GenericStable3Model):
             text,
             negative_prompt=neg_text,
         )
-        self.scheduler.set_timesteps(num_inference_steps=num_timesteps)
-
         inputs = text_inputs
         self.seed = seed
 
@@ -307,31 +359,39 @@ class Stable3ForText2ImageFastAPIPipeline(GenericStable3Model):
             for k, v in inputs.items()
         }
 
-        prompt_embeds_results = self.get_prompt_outputs(
-            inputs["input_ids"],
-            input2_ids=inputs["input2_ids"],
-            input3_ids=inputs["input3_ids"],
-            negative_input_ids=inputs["negative_input_ids"],
-            negative_input2_ids=inputs["negative_input2_ids"],
-            negative_input3_ids=inputs["negative_input3_ids"],
+        prompt_outputs = self.get_prompt_outputs(
+            input_ids=inputs.get("input_ids"),
+            input2_ids=inputs.get("input2_ids"),
+            input3_ids=inputs.get("input3_ids"),
+            negative_input_ids=inputs.get("negative_input_ids"),
+            negative_input2_ids=inputs.get("negative_input2_ids"),
+            negative_input3_ids=inputs.get("negative_input3_ids"),
+            attention_mask=inputs.get("attention_mask"),
+            attention2_mask=inputs.get("attention2_mask"),
+            attention3_mask=inputs.get("attention3_mask"),
+            negative_attention_mask=inputs.get("negative_attention_mask"),
+            negative_attention2_mask=inputs.get("negative_attention2_mask"),
+            negative_attention3_mask=inputs.get("negative_attention3_mask"),
+            enable_cpu_offload=self._enable_cpu_offload,
+            cpu_offload_device=self._device,
         )
-        prompt_embeds = prompt_embeds_results.prompt_embeds
-        negative_prompt_embeds = prompt_embeds_results.negative_prompt_embeds
-        pooled_prompt_embeds = prompt_embeds_results.pooled_prompt_embeds
-        negative_pooled_prompt_embeds = (
-            prompt_embeds_results.negative_pooled_prompt_embeds
-        )
+
+        prompt_embeds = prompt_outputs.prompt_embeds
+        negative_prompt_embeds = prompt_outputs.negative_prompt_embeds
+        pooled_prompt_embeds = prompt_outputs.pooled_prompt_embeds
+        negative_pooled_prompt_embeds = prompt_outputs.negative_pooled_prompt_embeds
 
         outputs = self.pipeline(
             prompt_embeds=prompt_embeds,
             negative_prompt_embeds=negative_prompt_embeds,
             pooled_prompt_embeds=pooled_prompt_embeds,
             negative_pooled_prompt_embeds=negative_pooled_prompt_embeds,
+            height=height,
+            width=width,
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),
-            height=height,
-            width=width,
+            num_inference_steps=num_timesteps,
             guidance_scale=guidance_scale,
             output_type="np.array",
         )
@@ -339,3 +399,64 @@ class Stable3ForText2ImageFastAPIPipeline(GenericStable3Model):
         images = torch.from_numpy(outputs.images)
         images = numpy_to_pil(images.cpu().numpy())
         return images[0]
+
+
+@register_fastapi("core/fastapi/stable_3/text2image")
+class Stable3Text2ImageFastAPI(GenericFastAPI):
+    def __init__(self, config: CoreConfigureParser):
+        self.config = config
+        config.set_default_section(f"core/fastapi/stable_3/text2image")
+        router = config.getoption("router", "/core/fastapi/stable_3/text2image")
+        self._pipe = None if not hasattr(self, "_pipe") else self._pipe
+        self._router = APIRouter(prefix=router)
+        self._router.add_api_route("/", self.serve, methods=["GET"])
+        self._router.add_api_route("/status", self.status, methods=["GET"])
+        self._router.add_api_route("/start", self.start, methods=["GET"])
+        self._router.add_api_route("/stop", self.stop, methods=["GET"])
+
+    @property
+    def router(self):
+        return self._router
+
+    def start(self):
+        self._pipe = Stable3ForText2ImageFastAPIPipeline.from_core_configure(
+            self.config
+        )
+        return "start success"
+
+    def stop(self):
+        self._pipe.to("cpu")
+        del self._pipe
+        gc.collect()
+        torch.cuda.empty_cache()
+        self._pipe = None if not hasattr(self, "_pipe") else self._pipe
+        return "stop success"
+
+    def status(self):
+        return "running" if self._pipe is not None else "stopped"
+
+    def serve(
+        self,
+        text: str,
+        height: Optional[int] = 512,
+        width: Optional[int] = 512,
+        guidance_scale: Optional[float] = 7.5,
+        num_timesteps: Optional[int] = 50,
+        seed: Optional[int] = 1123,
+    ):
+        assert self._pipe is not None
+        image = self._pipe(
+            text,
+            height=height,
+            width=width,
+            guidance_scale=guidance_scale,
+            num_timesteps=num_timesteps,
+            seed=seed,
+        )
+        buffer = io.BytesIO()
+        image.save(buffer, format="PNG")
+
+        return StreamingResponse(
+            io.BytesIO(buffer.getvalue()),
+            media_type="image/png",
+        )

@@ -13,10 +13,12 @@ from transformers.models.detr import DetrConfig
 from transformers.models.detr.modeling_detr import (
     DetrModel,
     DetrMLPPredictionHead,
-    DetrHungarianMatcher,
     DetrMaskHeadSmallConv,
     DetrMHAttentionMap,
-    DetrLoss,
+)
+from transformers.loss.loss_for_object_detection import (
+    HungarianMatcher as DetrHungarianMatcher,
+    ImageLoss as DetrLoss,
 )
 from unitorch.models import GenericModel, GenericOutputs
 from unitorch.utils import image_list_to_tensor
@@ -58,7 +60,6 @@ class DetrForDetection(GenericModel):
             eos_coef=config.eos_coefficient,
             losses=losses,
         )
-        self.criterion.to(self.device)
         self.weight_dict = {
             "loss_ce": 1,
             "loss_bbox": config.bbox_loss_coefficient,

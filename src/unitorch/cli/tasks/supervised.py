@@ -18,7 +18,8 @@ from collections.abc import Iterable
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union, Iterator
 from torch.utils.data import DataLoader, Dataset, SequentialSampler
 from torch.utils.data.distributed import DistributedSampler
-from torch.cuda.amp import autocast, GradScaler
+from torch import autocast
+from torch.cuda.amp import GradScaler
 from torch.multiprocessing import Process, Queue
 from unitorch import set_seed, is_torch2_available
 from unitorch.models import ExponentialMovingAverage
@@ -149,7 +150,7 @@ def monitor(outputs, targets, monitor_fns):
     return
 
 
-def save_checkpoint(
+def save_snapshot(
     model,
     ckpt_dir,
     iter_dev,
@@ -157,6 +158,7 @@ def save_checkpoint(
     monitor_fns,
     optim,
     scheduler,
+    save_checkpoint="all",
     ema_model=None,
     best_score=-np.inf,
     info_path=None,
@@ -193,23 +195,25 @@ def save_checkpoint(
                 scheduler.save_checkpoint(
                     ckpt_dir=ckpt_dir, weight_name="pytorch_scheduler.bin"
                 )
-        if model:
-            model.save_checkpoint(
-                ckpt_dir=ckpt_dir, weight_name="pytorch_model_latest.bin"
-            )
-        if ema_model:
-            ema_model.save_checkpoint(
-                ckpt_dir=ckpt_dir, weight_name="pytorch_ema_model_latest.bin"
-            )
-            kwargs["num_ema_steps"] = ema_model.num_steps
-        if optim:
-            optim.save_checkpoint(
-                ckpt_dir=ckpt_dir, weight_name="pytorch_optim_latest.bin"
-            )
-        if scheduler:
-            scheduler.save_checkpoint(
-                ckpt_dir=ckpt_dir, weight_name="pytorch_scheduler_latest.bin"
-            )
+
+        if save_checkpoint in ["all", "latest"]:
+            if model:
+                model.save_checkpoint(
+                    ckpt_dir=ckpt_dir, weight_name="pytorch_model_latest.bin"
+                )
+            if ema_model:
+                ema_model.save_checkpoint(
+                    ckpt_dir=ckpt_dir, weight_name="pytorch_ema_model_latest.bin"
+                )
+                kwargs["num_ema_steps"] = ema_model.num_steps
+            if optim:
+                optim.save_checkpoint(
+                    ckpt_dir=ckpt_dir, weight_name="pytorch_optim_latest.bin"
+                )
+            if scheduler:
+                scheduler.save_checkpoint(
+                    ckpt_dir=ckpt_dir, weight_name="pytorch_scheduler_latest.bin"
+                )
         if info_path is not None:
             json.dump({"best_score": best_score, **kwargs}, open(info_path, "w"))
     return best_score
@@ -311,6 +315,7 @@ class SupervisedTask:
         num_workers: Optional[int] = 4,
         save_optimizer: Optional[bool] = True,
         save_scheduler: Optional[bool] = True,
+        save_checkpoint: Optional[str] = "all",
         log_freq: Optional[int] = 100,
         ckpt_freq: Optional[int] = 10000,
         grad_acc_step: Optional[int] = 1,
@@ -321,7 +326,6 @@ class SupervisedTask:
         ema_decay: Optional[float] = 0.9999,
         ema_tau: Optional[int] = 2000,
         use_amp: Optional[bool] = True,
-        gpu_mode: Optional[bool] = False,
     ):
         """
         Train the model.
@@ -436,7 +440,7 @@ class SupervisedTask:
                 self.model,
                 device_ids=[self.local_rank],
                 output_device=self.local_rank,
-                find_unused_parameters=False,
+                find_unused_parameters=True,
                 broadcast_buffers=False,
             )
             global_rank = dist.get_rank()
@@ -595,7 +599,7 @@ class SupervisedTask:
                         iter_dev.sampler.set_epoch(dev_epoch)
 
                     dev_epoch += 1
-                    self.best_score = save_checkpoint(
+                    self.best_score = save_snapshot(
                         self.model.module if self.n_gpu > 1 else self.model,
                         to_ckpt_dir,
                         iter_dev,
@@ -603,6 +607,7 @@ class SupervisedTask:
                         monitor_fns,
                         optim=optim if save_optimizer else None,
                         scheduler=scheduler if save_scheduler else None,
+                        save_checkpoint=save_checkpoint,
                         ema_model=self.ema_model if use_ema else None,
                         best_score=self.best_score,
                         info_path=info_path,
@@ -634,7 +639,7 @@ class SupervisedTask:
             dev_epoch += 1
 
             global_step = 0
-            self.best_score = save_checkpoint(
+            self.best_score = save_snapshot(
                 self.model.module if self.n_gpu > 1 else self.model,
                 to_ckpt_dir,
                 iter_dev,
@@ -642,6 +647,7 @@ class SupervisedTask:
                 monitor_fns,
                 optim=optim if save_optimizer else None,
                 scheduler=scheduler if save_scheduler else None,
+                save_checkpoint=save_checkpoint,
                 ema_model=self.ema_model if use_ema else None,
                 best_score=self.best_score,
                 info_path=info_path,

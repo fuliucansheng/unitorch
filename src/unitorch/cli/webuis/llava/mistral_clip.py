@@ -88,8 +88,8 @@ class LlavaMistralClipGenerationWebUI(SimpleWebUI):
         # Create the events
         iface.__enter__()
 
-        start.click(self.start, inputs=[name], outputs=[status])
-        stop.click(self.stop, outputs=[status])
+        start.click(self.start, inputs=[name], outputs=[status], trigger_mode="once")
+        stop.click(self.stop, outputs=[status], trigger_mode="once")
         generate.click(
             self.serve,
             inputs=[
@@ -98,6 +98,7 @@ class LlavaMistralClipGenerationWebUI(SimpleWebUI):
                 *lora_params,
             ],
             outputs=[result],
+            trigger_mode="once",
         )
 
         iface.load(

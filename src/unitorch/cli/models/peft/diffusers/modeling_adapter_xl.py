@@ -3,7 +3,7 @@
 
 import torch
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
-from torch.cuda.amp import autocast
+from torch import autocast
 
 from unitorch.models.peft.diffusers import (
     StableXLAdapterLoraForText2ImageGeneration as _StableXLAdapterLoraForText2ImageGeneration,
@@ -44,7 +44,20 @@ class StableXLAdapterLoraForText2ImageGeneration(
         out_channels: Optional[int] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
+        snr_gamma: Optional[float] = 5.0,
         lora_r: Optional[int] = 16,
+        lora_alpha: Optional[int] = 32,
+        lora_dropout: Optional[float] = 0.05,
+        fan_in_fan_out: Optional[bool] = True,
+        target_modules: Optional[Union[List[str], str]] = [
+            "to_k",
+            "to_q",
+            "to_v",
+            "to_out.0",
+            "q_proj",
+            "v_proj",
+            "out_proj",
+        ],
         enable_text_adapter: Optional[bool] = True,
         enable_unet_adapter: Optional[bool] = True,
         seed: Optional[int] = 1123,
@@ -62,7 +75,12 @@ class StableXLAdapterLoraForText2ImageGeneration(
             out_channels=out_channels,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
+            snr_gamma=snr_gamma,
             lora_r=lora_r,
+            lora_alpha=lora_alpha,
+            lora_dropout=lora_dropout,
+            fan_in_fan_out=fan_in_fan_out,
+            target_modules=target_modules,
             enable_text_adapter=enable_text_adapter,
             enable_unet_adapter=enable_unet_adapter,
             seed=seed,
@@ -137,7 +155,35 @@ class StableXLAdapterLoraForText2ImageGeneration(
         out_channels = config.getoption("out_channels", None)
         num_train_timesteps = config.getoption("num_train_timesteps", 1000)
         num_infer_timesteps = config.getoption("num_infer_timesteps", 50)
+        snr_gamma = config.getoption("snr_gamma", 5.0)
         lora_r = config.getoption("lora_r", 16)
+        lora_alpha = config.getoption("lora_alpha", 32)
+        lora_dropout = config.getoption("lora_dropout", 0.05)
+        fan_in_fan_out = config.getoption("fan_in_fan_out", True)
+        target_modules = config.getoption(
+            "target_modules",
+            [
+                "to_k",
+                "to_q",
+                "to_v",
+                "to_out.0",
+                "q_proj",
+                "v_proj",
+                "out_proj",
+            ],
+        )
+        replace_keys = config.getoption(
+            "replace_keys",
+            {
+                "to_k.": "to_k.base_layer.",
+                "to_q.": "to_q.base_layer.",
+                "to_v.": "to_v.base_layer.",
+                "to_out.0.": "to_out.0.base_layer.",
+                "q_proj.": "q_proj.base_layer.",
+                "v_proj.": "v_proj.base_layer.",
+                "out_proj.": "out_proj.base_layer.",
+            },
+        )
         enable_text_adapter = config.getoption("enable_text_adapter", True)
         enable_unet_adapter = config.getoption("enable_unet_adapter", True)
 
@@ -156,7 +202,12 @@ class StableXLAdapterLoraForText2ImageGeneration(
             out_channels=out_channels,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
+            snr_gamma=snr_gamma,
             lora_r=lora_r,
+            lora_alpha=lora_alpha,
+            lora_dropout=lora_dropout,
+            fan_in_fan_out=fan_in_fan_out,
+            target_modules=target_modules,
             enable_text_adapter=enable_text_adapter,
             enable_unet_adapter=enable_unet_adapter,
             seed=seed,
@@ -170,36 +221,17 @@ class StableXLAdapterLoraForText2ImageGeneration(
                 load_weight(
                     nested_dict_value(pretrained_infos, "unet", "weight"),
                     prefix_keys={"": "unet."},
-                    replace_keys={
-                        "to_k.": "to_k.base_layer.",
-                        "to_q.": "to_q.base_layer.",
-                        "to_v.": "to_v.base_layer.",
-                        "to_out.0.": "to_out.0.base_layer.",
-                    }
-                    if enable_unet_adapter
-                    else {},
+                    replace_keys=replace_keys if enable_unet_adapter else {},
                 ),
                 load_weight(
                     nested_dict_value(pretrained_infos, "text", "weight"),
                     prefix_keys={"": "text."},
-                    replace_keys={
-                        "q_proj.": "q_proj.base_layer.",
-                        "v_proj.": "v_proj.base_layer.",
-                        "out_proj.": "out_proj.base_layer.",
-                    }
-                    if enable_text_adapter
-                    else {},
+                    replace_keys=replace_keys if enable_text_adapter else {},
                 ),
                 load_weight(
                     nested_dict_value(pretrained_infos, "text2", "weight"),
                     prefix_keys={"": "text2."},
-                    replace_keys={
-                        "q_proj.": "q_proj.base_layer.",
-                        "v_proj.": "v_proj.base_layer.",
-                        "out_proj.": "out_proj.base_layer.",
-                    }
-                    if enable_text_adapter
-                    else {},
+                    replace_keys=replace_keys if enable_text_adapter else {},
                 ),
                 load_weight(
                     nested_dict_value(pretrained_infos, "vae", "weight"),
@@ -228,7 +260,7 @@ class StableXLAdapterLoraForText2ImageGeneration(
 
         return inst
 
-    @autocast()
+    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
     def forward(
         self,
         input_ids: torch.Tensor,
@@ -253,7 +285,7 @@ class StableXLAdapterLoraForText2ImageGeneration(
     @add_default_section_for_function(
         "core/model/diffusers/peft/lora/text2image/adapter_xl"
     )
-    @autocast()
+    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
     def generate(
         self,
         input_ids: torch.Tensor,

@@ -1,22 +1,36 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
+from unitorch.cli import hf_endpoint_url
+
 # pretrained infos
 pretrained_mistral_infos = {
     # mistral
     "mistral-7b-instruct-v0.1": {
-        "config": "https://huggingface.co/filipealmeida/Mistral-7B-Instruct-v0.1-sharded/resolve/main/config.json",
-        "vocab": "https://huggingface.co/filipealmeida/Mistral-7B-Instruct-v0.1-sharded/resolve/main/tokenizer.model",
+        "config": hf_endpoint_url(
+            "/filipealmeida/Mistral-7B-Instruct-v0.1-sharded/resolve/main/config.json"
+        ),
+        "vocab": hf_endpoint_url(
+            "/filipealmeida/Mistral-7B-Instruct-v0.1-sharded/resolve/main/tokenizer.model"
+        ),
         "weight": [
-            f"https://huggingface.co/filipealmeida/Mistral-7B-Instruct-v0.1-sharded/resolve/main/pytorch_model-{str(i).rjust(5, '0')}-of-00008.bin"
+            hf_endpoint_url(
+                f"/filipealmeida/Mistral-7B-Instruct-v0.1-sharded/resolve/main/pytorch_model-{str(i).rjust(5, '0')}-of-00008.bin"
+            )
             for i in range(1, 9)
         ],
     },
     "mistral-7b-instruct-v0.3": {
-        "config": "https://huggingface.co/MaziyarPanahi/Mistral-7B-Instruct-v0.3/resolve/main/config.json",
-        "vocab": "https://huggingface.co/MaziyarPanahi/Mistral-7B-Instruct-v0.3/resolve/main/tokenizer.model",
+        "config": hf_endpoint_url(
+            "/MaziyarPanahi/Mistral-7B-Instruct-v0.3/resolve/main/config.json"
+        ),
+        "vocab": hf_endpoint_url(
+            "/MaziyarPanahi/Mistral-7B-Instruct-v0.3/resolve/main/tokenizer.model"
+        ),
         "weight": [
-            f"https://huggingface.co/MaziyarPanahi/Mistral-7B-Instruct-v0.3/resolve/main/model-{str(i).rjust(5, '0')}-of-00003.safetensors"
+            hf_endpoint_url(
+                f"/MaziyarPanahi/Mistral-7B-Instruct-v0.3/resolve/main/model-{str(i).rjust(5, '0')}-of-00003.safetensors"
+            )
             for i in range(1, 4)
         ],
     },

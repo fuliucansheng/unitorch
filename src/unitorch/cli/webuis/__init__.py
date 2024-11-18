@@ -57,6 +57,7 @@ from unitorch.cli.webuis.utils import (
     create_accordion,
     create_row,
     create_column,
+    create_flex_layout,
     create_group,
     create_tab,
     create_tabs,
@@ -72,8 +73,10 @@ import unitorch.cli.webuis.tools
 import unitorch.cli.webuis.blip
 import unitorch.cli.webuis.bloom
 import unitorch.cli.webuis.bria
+import unitorch.cli.webuis.clip
 import unitorch.cli.webuis.detr
 import unitorch.cli.webuis.dpt
+import unitorch.cli.webuis.grounding_dino
 import unitorch.cli.webuis.llama
 import unitorch.cli.webuis.llava.mistral_clip
 import unitorch.cli.webuis.mask2former
@@ -84,5 +87,6 @@ import unitorch.cli.webuis.segformer
 if is_diffusers_available():
     import unitorch.cli.webuis.stable
     import unitorch.cli.webuis.stable_xl
+
     import unitorch.cli.webuis.stable_3
     import unitorch.cli.webuis.stable_flux

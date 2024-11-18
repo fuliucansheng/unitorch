@@ -15,7 +15,7 @@ from unitorch.cli.models.diffusers import (
     pretrained_stable_extensions_infos,
 )
 from unitorch.cli.pipelines.stable import StableForImageInpaintingPipeline
-from unitorch.cli.pipelines.stable import controlnet_processes
+from unitorch.cli.pipelines.tools import controlnet_processes
 from unitorch.cli.webuis import (
     supported_scheduler_names,
     matched_pretrained_names,
@@ -94,6 +94,12 @@ class StableImageInpaintingWebUI(SimpleWebUI):
         steps = create_element(
             "slider", "Diffusion Steps", min_value=1, max_value=100, step=1, default=25
         )
+        height = create_element(
+            "slider", "Image Height", min_value=1, max_value=2048, step=1, default=1024
+        )
+        width = create_element(
+            "slider", "Image Width", min_value=1, max_value=2048, step=1, default=1024
+        )
         image = create_element("image_editor", "Input Image")
         mask_image = create_element("image", "Input Image Mask")
 
@@ -163,8 +169,8 @@ class StableImageInpaintingWebUI(SimpleWebUI):
         left_generation = create_tab(
             create_row(image, mask_image),
             create_row(scheduler, steps),
-            create_row(guidance_scale),
-            create_row(strength),
+            create_row(height, width),
+            create_row(guidance_scale, strength),
             create_row(seed),
             create_row(freeu_layout),
             name="Generation",
@@ -185,8 +191,8 @@ class StableImageInpaintingWebUI(SimpleWebUI):
         # create events
         iface.__enter__()
 
-        start.click(fn=self.start, inputs=[name], outputs=[status])
-        stop.click(fn=self.stop, outputs=[status])
+        start.click(fn=self.start, inputs=[name], outputs=[status], trigger_mode="once")
+        stop.click(fn=self.stop, outputs=[status], trigger_mode="once")
 
         image.change(fn=self.composite_images, inputs=[image], outputs=[mask_image])
 
@@ -218,6 +224,8 @@ class StableImageInpaintingWebUI(SimpleWebUI):
                 image,
                 mask_image,
                 negative_prompt,
+                height,
+                width,
                 guidance_scale,
                 strength,
                 steps,
@@ -231,6 +239,12 @@ class StableImageInpaintingWebUI(SimpleWebUI):
                 *lora_params,
             ],
             outputs=[output_image],
+            trigger_mode="once",
+        )
+        image.change(
+            lambda x: x["background"].size,
+            inputs=[image],
+            outputs=[width, height],
         )
         iface.load(
             fn=lambda: [gr.update(value=self._name), gr.update(value=self._status)],
@@ -287,6 +301,8 @@ class StableImageInpaintingWebUI(SimpleWebUI):
         image: Image.Image,
         mask_image: Image.Image,
         negative_text: str,
+        height: int,
+        width: int,
         guidance_scale: float,
         strength: float,
         num_timesteps: int,
@@ -314,6 +330,8 @@ class StableImageInpaintingWebUI(SimpleWebUI):
             image["background"],
             mask_image,
             negative_text,
+            width=width,
+            height=height,
             guidance_scale=guidance_scale,
             strength=strength,
             num_timesteps=num_timesteps,

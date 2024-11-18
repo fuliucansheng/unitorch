@@ -3,7 +3,7 @@
 
 import torch
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
-from torch.cuda.amp import autocast
+from torch import autocast
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.xpegasus import XPegasusForGeneration as _XPegasusForGeneration
 from unitorch.cli import (
@@ -74,7 +74,7 @@ class XPegasusForGeneration(_XPegasusForGeneration):
 
         return inst
 
-    # @autocast()
+    # @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
     def forward(
         self,
         input_ids: torch.Tensor,
@@ -104,7 +104,7 @@ class XPegasusForGeneration(_XPegasusForGeneration):
 
     @add_default_section_for_function("core/model/generation/xpegasus")
     @torch.no_grad()
-    @autocast()
+    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
     def generate(
         self,
         input_ids: torch.Tensor,

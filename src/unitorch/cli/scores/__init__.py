@@ -404,40 +404,6 @@ class MSEScore(Score):
         return -float(score)
 
 
-@register_score("core/score/mse")
-class MSEScore(Score):
-    def __init__(
-        self,
-    ):
-        super().__init__()
-
-    @classmethod
-    @add_default_section_for_init("core/score/mse")
-    def from_core_configure(cls, config, **kwargs):
-        pass
-
-    def forward(
-        self,
-        outputs: Union[ClassificationOutputs, SegmentationOutputs],
-        targets: Union[ClassificationTargets, SegmentationTargets],
-    ):
-        if isinstance(outputs, ClassificationOutputs):
-            outputs = outputs.outputs
-        if isinstance(targets, ClassificationTargets):
-            targets = targets.targets
-        if isinstance(outputs, SegmentationOutputs):
-            outputs = torch.cat([m.view(-1) for m in outputs.masks], dim=0)
-        if isinstance(targets, SegmentationTargets):
-            targets = torch.cat([m.view(-1) for m in targets.targets], dim=0)
-
-        outputs = outputs.view(-1)
-        targets = targets.view(-1)
-
-        assert outputs.numel() == targets.numel()
-
-        return -float(torch.mean(targets - outputs))
-
-
 @register_score("core/score/bleu")
 class BleuScore(Score):
     def __init__(

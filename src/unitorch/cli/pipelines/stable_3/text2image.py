@@ -271,14 +271,14 @@ class Stable3ForText2ImageGenerationPipeline(GenericStable3Model):
         num_timesteps: Optional[int] = 50,
         seed: Optional[int] = 1123,
         scheduler: Optional[str] = None,
-        controlnet_checkpoints: Optional[List[str]] = None,
-        controlnet_images: Optional[List[Image.Image]] = None,
-        controlnet_guidance_scales: Optional[List[float]] = None,
-        lora_checkpoints: Optional[Union[str, List[str]]] = None,
+        controlnet_checkpoints: Optional[List[str]] = [],
+        controlnet_images: Optional[List[Image.Image]] = [],
+        controlnet_guidance_scales: Optional[List[float]] = [],
+        lora_checkpoints: Optional[Union[str, List[str]]] = [],
         lora_weights: Optional[Union[float, List[float]]] = 1.0,
         lora_alphas: Optional[Union[float, List[float]]] = 32,
-        lora_urls: Optional[Union[str, List[str]]] = None,
-        lora_files: Optional[Union[str, List[str]]] = None,
+        lora_urls: Optional[Union[str, List[str]]] = [],
+        lora_files: Optional[Union[str, List[str]]] = [],
     ):
         text_inputs = self.processor.text2image_inputs(
             text,
@@ -289,7 +289,6 @@ class Stable3ForText2ImageGenerationPipeline(GenericStable3Model):
             self.scheduler = Schedulers.get(scheduler).from_config(
                 self.scheduler.config
             )
-        self.scheduler.set_timesteps(num_inference_steps=num_timesteps)
 
         if any(ckpt is not None for ckpt in controlnet_checkpoints) and any(
             img is not None for img in controlnet_images
@@ -393,7 +392,9 @@ class Stable3ForText2ImageGenerationPipeline(GenericStable3Model):
         ):
             if ckpt is not None:
                 processed_lora_files.append(
-                    nested_dict_value(pretrained_stable_extensions_infos, ckpt)
+                    nested_dict_value(
+                        pretrained_stable_extensions_infos, ckpt, "weight"
+                    )
                 )
                 processed_lora_weights.append(weight)
                 processed_lora_alphas.append(alpha)
@@ -413,20 +414,20 @@ class Stable3ForText2ImageGenerationPipeline(GenericStable3Model):
                 lora_alphas=processed_lora_alphas,
             )
 
-        prompt_embeds_results = self.get_prompt_outputs(
+        prompt_outputs = self.get_prompt_outputs(
             inputs["input_ids"],
             input2_ids=inputs["input2_ids"],
             input3_ids=inputs["input3_ids"],
             negative_input_ids=inputs["negative_input_ids"],
             negative_input2_ids=inputs["negative_input2_ids"],
             negative_input3_ids=inputs["negative_input3_ids"],
+            enable_cpu_offload=self._enable_cpu_offload,
+            cpu_offload_device=self._device,
         )
-        prompt_embeds = prompt_embeds_results.prompt_embeds
-        negative_prompt_embeds = prompt_embeds_results.negative_prompt_embeds
-        pooled_prompt_embeds = prompt_embeds_results.pooled_prompt_embeds
-        negative_pooled_prompt_embeds = (
-            prompt_embeds_results.negative_pooled_prompt_embeds
-        )
+        prompt_embeds = prompt_outputs.prompt_embeds
+        negative_prompt_embeds = prompt_outputs.negative_prompt_embeds
+        pooled_prompt_embeds = prompt_outputs.pooled_prompt_embeds
+        negative_pooled_prompt_embeds = prompt_outputs.negative_pooled_prompt_embeds
 
         if self._enable_cpu_offload and self._device != "cpu":
             self.pipeline.enable_model_cpu_offload(self._device)
@@ -443,12 +444,13 @@ class Stable3ForText2ImageGenerationPipeline(GenericStable3Model):
                 negative_prompt_embeds=negative_prompt_embeds,
                 pooled_prompt_embeds=pooled_prompt_embeds,
                 negative_pooled_prompt_embeds=negative_pooled_prompt_embeds,
+                height=height,
+                width=width,
                 generator=torch.Generator(device=self.pipeline.device).manual_seed(
                     self.seed
                 ),
-                height=height,
-                width=width,
                 control_image=list(inputs["condition_pixel_values"].transpose(0, 1)),
+                num_inference_steps=num_timesteps,
                 guidance_scale=guidance_scale,
                 controlnet_conditioning_scale=conditioning_scales,
                 output_type="np.array",
@@ -459,11 +461,12 @@ class Stable3ForText2ImageGenerationPipeline(GenericStable3Model):
                 negative_prompt_embeds=negative_prompt_embeds,
                 pooled_prompt_embeds=pooled_prompt_embeds,
                 negative_pooled_prompt_embeds=negative_pooled_prompt_embeds,
+                height=height,
+                width=width,
                 generator=torch.Generator(device=self.pipeline.device).manual_seed(
                     self.seed
                 ),
-                height=height,
-                width=width,
+                num_inference_steps=num_timesteps,
                 guidance_scale=guidance_scale,
                 output_type="np.array",
             )

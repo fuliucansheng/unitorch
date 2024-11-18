@@ -21,22 +21,23 @@ def get_cache_home():
 
 
 UNITORCH_TEMP = os.getenv("UNITORCH_TEMP", "/tmp/unitorch")
+os.makedirs(UNITORCH_TEMP, exist_ok=True)
 
 
 def get_temp_home():
     return UNITORCH_TEMP
 
 
-def mktempdir(prefix: str = "unitorch_"):
+def mktempdir(prefix: str = ""):
     return tempfile.mkdtemp(prefix=prefix, dir=UNITORCH_TEMP)
 
 
-def mktempfile(prefix: str = "unitorch_", suffix: str = ""):
+def mktempfile(prefix: str = "", suffix: str = ""):
     return tempfile.mktemp(prefix=prefix, suffix=suffix, dir=UNITORCH_TEMP)
 
 
 ### version
-VERSION = "0.0.0.18"
+VERSION = "0.0.0.19"
 
 ### is offline mode
 UNITORCH_OFFLINE = os.environ.get("UNITORCH_OFFLINE", "0").upper()

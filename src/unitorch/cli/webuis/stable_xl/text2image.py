@@ -15,7 +15,7 @@ from unitorch.cli.models.diffusers import (
     pretrained_stable_extensions_infos,
 )
 from unitorch.cli.pipelines.stable_xl import StableXLForText2ImageGenerationPipeline
-from unitorch.cli.pipelines.stable_xl import controlnet_processes, adapter_processes
+from unitorch.cli.pipelines.tools import controlnet_processes, adapter_processes
 from unitorch.cli.webuis import (
     supported_scheduler_names,
     matched_pretrained_names,
@@ -202,8 +202,8 @@ class StableXLText2ImageWebUI(SimpleWebUI):
         # create events
         iface.__enter__()
 
-        start.click(fn=self.start, inputs=[name], outputs=[status])
-        stop.click(fn=self.stop, outputs=[status])
+        start.click(fn=self.start, inputs=[name], outputs=[status], trigger_mode="once")
+        stop.click(fn=self.stop, outputs=[status], trigger_mode="once")
 
         for controlnet in controlnets:
             controlnet.input_image.upload(
@@ -258,6 +258,7 @@ class StableXLText2ImageWebUI(SimpleWebUI):
                 *lora_params,
             ],
             outputs=[output_image],
+            trigger_mode="once",
         )
         iface.load(
             fn=lambda: [gr.update(value=self._name), gr.update(value=self._status)],

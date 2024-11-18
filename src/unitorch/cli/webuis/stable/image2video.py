@@ -15,7 +15,7 @@ from unitorch.cli.models.diffusers import (
     pretrained_stable_extensions_infos,
 )
 from unitorch.cli.pipelines.stable import StableForImage2VideoGenerationPipeline
-from unitorch.cli.pipelines.stable import controlnet_processes
+from unitorch.cli.pipelines.tools import controlnet_processes
 from unitorch.cli.webuis import (
     supported_scheduler_names,
     matched_pretrained_names,
@@ -163,8 +163,8 @@ class StableImage2VideoWebUI(SimpleWebUI):
         # create events
         iface.__enter__()
 
-        start.click(fn=self.start, inputs=[name], outputs=[status])
-        stop.click(fn=self.stop, outputs=[status])
+        start.click(fn=self.start, inputs=[name], outputs=[status], trigger_mode="once")
+        stop.click(fn=self.stop, outputs=[status], trigger_mode="once")
 
         for lora in loras:
             lora.checkpoint.change(
@@ -193,6 +193,7 @@ class StableImage2VideoWebUI(SimpleWebUI):
                 *lora_params,
             ],
             outputs=[output_video],
+            trigger_mode="once",
         )
         iface.load(
             fn=lambda: [gr.update(value=self._name), gr.update(value=self._status)],

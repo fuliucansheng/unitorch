@@ -10,9 +10,13 @@ import pandas as pd
 from PIL import Image
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from diffusers.utils import numpy_to_pil
+from diffusers.models import (
+    FluxControlNetModel,
+    FluxMultiControlNetModel,
+)
 from diffusers.pipelines import (
     FluxPipeline,
-    # FluxControlNetPipeline,
+    FluxControlNetPipeline,
 )
 from unitorch import is_xformers_available
 from unitorch.utils import is_remote_url
@@ -80,6 +84,7 @@ class StableFluxForText2ImageGenerationPipeline(GenericStableFluxModel):
 
         self._enable_cpu_offload = enable_cpu_offload
         self._enable_xformers = enable_xformers
+        self.to(device=self._device)
 
     @classmethod
     @add_default_section_for_init("core/pipeline/stable_flux/text2image")
@@ -227,14 +232,14 @@ class StableFluxForText2ImageGenerationPipeline(GenericStableFluxModel):
         num_timesteps: Optional[int] = 50,
         seed: Optional[int] = 1123,
         scheduler: Optional[str] = None,
-        controlnet_checkpoints: Optional[List[str]] = None,
-        controlnet_images: Optional[List[Image.Image]] = None,
-        controlnet_guidance_scales: Optional[List[float]] = None,
-        lora_checkpoints: Optional[Union[str, List[str]]] = None,
+        controlnet_checkpoints: Optional[List[str]] = [],
+        controlnet_images: Optional[List[Image.Image]] = [],
+        controlnet_guidance_scales: Optional[List[float]] = [],
+        lora_checkpoints: Optional[Union[str, List[str]]] = [],
         lora_weights: Optional[Union[float, List[float]]] = 1.0,
         lora_alphas: Optional[Union[float, List[float]]] = 32,
-        lora_urls: Optional[Union[str, List[str]]] = None,
-        lora_files: Optional[Union[str, List[str]]] = None,
+        lora_urls: Optional[Union[str, List[str]]] = [],
+        lora_files: Optional[Union[str, List[str]]] = [],
     ):
         text_inputs = self.processor.text2image_inputs(
             text,
@@ -244,8 +249,6 @@ class StableFluxForText2ImageGenerationPipeline(GenericStableFluxModel):
             self.scheduler = Schedulers.get(scheduler).from_config(
                 self.scheduler.config
             )
-        if not self.scheduler.use_dynamic_shifting:
-            self.scheduler.set_timesteps(num_inference_steps=num_timesteps)
 
         if any(ckpt is not None for ckpt in controlnet_checkpoints) and any(
             img is not None for img in controlnet_images
@@ -265,7 +268,9 @@ class StableFluxForText2ImageGenerationPipeline(GenericStableFluxModel):
                     )
                 )
                 controlnet_config_dict = json.load(open(controlnet_config_path))
-                controlnet = FluxControlNetModel.from_config(controlnet_config_dict)
+                controlnet = FluxControlNetModel.from_config(controlnet_config_dict).to(
+                    torch.bfloat16
+                )
                 controlnet.load_state_dict(
                     load_weight(
                         nested_dict_value(
@@ -314,7 +319,7 @@ class StableFluxForText2ImageGenerationPipeline(GenericStableFluxModel):
 
         inputs = {k: v.unsqueeze(0) if v is not None else v for k, v in inputs.items()}
         inputs = {
-            k: v.to(device=self.device) if v is not None else v
+            k: v.to(device=self._device) if v is not None else v
             for k, v in inputs.items()
         }
         if isinstance(lora_checkpoints, str):
@@ -340,7 +345,9 @@ class StableFluxForText2ImageGenerationPipeline(GenericStableFluxModel):
         ):
             if ckpt is not None:
                 processed_lora_files.append(
-                    nested_dict_value(pretrained_stable_extensions_infos, ckpt)
+                    nested_dict_value(
+                        pretrained_stable_extensions_infos, ckpt, "weight"
+                    )
                 )
                 processed_lora_weights.append(weight)
                 processed_lora_alphas.append(alpha)
@@ -360,19 +367,19 @@ class StableFluxForText2ImageGenerationPipeline(GenericStableFluxModel):
                 lora_alphas=processed_lora_alphas,
             )
 
-        prompt_embeds_results = self.get_prompt_outputs(
-            inputs["input_ids"],
-            input2_ids=inputs["input2_ids"],
-        )
-        prompt_embeds = prompt_embeds_results.prompt_embeds
-        pooled_prompt_embeds = prompt_embeds_results.pooled_prompt_embeds
-
         if self._enable_cpu_offload and self._device != "cpu":
             self.pipeline.enable_model_cpu_offload(self._device)
         else:
             self.to(device=self._device)
 
-        self.pipeline.to(torch.bfloat16)
+        prompt_outputs = self.get_prompt_outputs(
+            inputs["input_ids"],
+            input2_ids=inputs["input2_ids"],
+            enable_cpu_offload=self._enable_cpu_offload,
+            cpu_offload_device=self._device,
+        )
+        prompt_embeds = prompt_outputs.prompt_embeds
+        pooled_prompt_embeds = prompt_outputs.pooled_prompt_embeds
 
         if self._enable_xformers and self._device != "cpu":
             assert is_xformers_available(), "Please install xformers first."
@@ -382,12 +389,13 @@ class StableFluxForText2ImageGenerationPipeline(GenericStableFluxModel):
             outputs = self.pipeline(
                 prompt_embeds=prompt_embeds.to(torch.bfloat16),
                 pooled_prompt_embeds=pooled_prompt_embeds.to(torch.bfloat16),
+                height=height,
+                width=width,
                 generator=torch.Generator(device=self.pipeline.device).manual_seed(
                     self.seed
                 ),
-                height=height,
-                width=width,
                 control_image=list(inputs["condition_pixel_values"].transpose(0, 1)),
+                num_inference_steps=num_timesteps,
                 guidance_scale=guidance_scale,
                 controlnet_conditioning_scale=conditioning_scales,
                 output_type="np.array",
@@ -396,11 +404,12 @@ class StableFluxForText2ImageGenerationPipeline(GenericStableFluxModel):
             outputs = self.pipeline(
                 prompt_embeds=prompt_embeds.to(torch.bfloat16),
                 pooled_prompt_embeds=pooled_prompt_embeds.to(torch.bfloat16),
+                height=height,
+                width=width,
                 generator=torch.Generator(device=self.pipeline.device).manual_seed(
                     self.seed
                 ),
-                height=height,
-                width=width,
+                num_inference_steps=num_timesteps,
                 guidance_scale=guidance_scale,
                 output_type="np.array",
             )

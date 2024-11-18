@@ -29,6 +29,17 @@ def import_library(library):
     return is_load_success
 
 
+UNITORCH_HF_ENDPOINT = os.environ.get("UNITORCH_HF_ENDPOINT", "https://huggingface.co")
+
+
+def hf_endpoint_url(url):
+    if is_remote_url(url):
+        return url
+    if url.startswith("/"):
+        url = url[1:]
+    return f"{UNITORCH_HF_ENDPOINT}/{url}"
+
+
 # extenstions
 UNITORCH_EXTENSTIONS = os.environ.get("UNITORCH_EXTENSTIONS", "")
 UNITORCH_EXTENSTIONS = [
@@ -77,24 +88,6 @@ def cached_path(
         use_auth_token=use_auth_token,
         local_files_only=local_files_only,
     )
-
-
-# default core config object
-global_config = CoreConfigureParser()
-
-
-def get_global_config():
-    return global_config
-
-
-def set_global_config(config: Union[CoreConfigureParser, str]):
-    global global_config
-    if isinstance(config, CoreConfigureParser):
-        global_config = config
-    elif os.path.exists(config):
-        global_config = CoreConfigureParser(config)
-    else:
-        raise ValueError(f"Can't set global config by {config}")
 
 
 from unitorch.cli.decorators import (

@@ -103,7 +103,7 @@ class AdapterXLProcessor(_StableXLProcessor):
         self,
         prompt: str,
         image: Union[Image.Image, str],
-        condition_image: Union[Image.Image, str],
+        condition_image: Union[Image.Image, str, List[Union[Image.Image, str]]],
         prompt2: Optional[str] = None,
         max_seq_length: Optional[int] = None,
     ):
@@ -113,7 +113,10 @@ class AdapterXLProcessor(_StableXLProcessor):
             prompt2=prompt2,
             max_seq_length=max_seq_length,
         )
-        adapter_outputs = self.adapter_inputs(condition_image)
+        if isinstance(condition_image, (list, tuple)):
+            adapter_outputs = super().adapters_inputs(condition_image)
+        else:
+            adapter_outputs = super().adapter_inputs(condition_image)
         return TensorsInputs(
             pixel_values=outputs.pixel_values,
             adapter_pixel_values=adapter_outputs.pixel_values,
@@ -128,7 +131,7 @@ class AdapterXLProcessor(_StableXLProcessor):
     def _text2image_inputs(
         self,
         prompt: str,
-        condition_image: Union[Image.Image, str],
+        condition_image: Union[Image.Image, str, List[Union[Image.Image, str]]],
         negative_prompt: Optional[str] = "",
         max_seq_length: Optional[int] = None,
     ):
@@ -137,7 +140,10 @@ class AdapterXLProcessor(_StableXLProcessor):
             negative_prompt=negative_prompt,
             max_seq_length=max_seq_length,
         )
-        adapter_outputs = self.adapter_inputs(condition_image)
+        if isinstance(condition_image, (list, tuple)):
+            adapter_outputs = super().adapters_inputs(condition_image)
+        else:
+            adapter_outputs = super().adapter_inputs(condition_image)
         return TensorsInputs(
             input_ids=text_outputs.input_ids,
             negative_input_ids=text_outputs.negative_input_ids,

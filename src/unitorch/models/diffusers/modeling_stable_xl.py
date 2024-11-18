@@ -66,6 +66,7 @@ class GenericStableXLModel(GenericModel, QuantizationMixin, PeftWeightLoaderMixi
         vae_config_path: str,
         scheduler_config_path: str,
         controlnet_configs_path: Union[str, List[str]] = None,
+        inpainting_controlnet_config_path: Union[str] = None,
         adapter_configs_path: Union[str, List[str]] = None,
         quant_config_path: Optional[str] = None,
         image_size: Optional[int] = None,
@@ -102,6 +103,11 @@ class GenericStableXLModel(GenericModel, QuantizationMixin, PeftWeightLoaderMixi
 
         vae_config_dict = json.load(open(vae_config_path))
         self.vae = AutoencoderKL.from_config(vae_config_dict)
+
+        if isinstance(controlnet_configs_path, str):
+            controlnet_configs_path = [controlnet_configs_path]
+        if isinstance(inpainting_controlnet_config_path, str):
+            controlnet_configs_path += [inpainting_controlnet_config_path]
 
         if isinstance(controlnet_configs_path, list):
             if len(controlnet_configs_path) == 0:
@@ -175,8 +181,6 @@ class GenericStableXLModel(GenericModel, QuantizationMixin, PeftWeightLoaderMixi
             self.quant_config = QuantizationConfig.from_json_file(quant_config_path)
             self.quantize(self.quant_config, ignore_modules=["lm_head", "unet", "vae"])
 
-        self.scheduler.set_timesteps(num_inference_steps=self.num_infer_timesteps)
-
     def get_prompt_outputs(
         self,
         input_ids: torch.Tensor,
@@ -187,7 +191,16 @@ class GenericStableXLModel(GenericModel, QuantizationMixin, PeftWeightLoaderMixi
         attention2_mask: Optional[torch.Tensor] = None,
         negative_attention_mask: Optional[torch.Tensor] = None,
         negative_attention2_mask: Optional[torch.Tensor] = None,
+        enable_cpu_offload: Optional[bool] = False,
+        cpu_offload_device: Optional[str] = "cpu",
     ):
+        if enable_cpu_offload:
+            self.text.to(cpu_offload_device)
+            self.text2.to(cpu_offload_device)
+            input_ids = input_ids.to(cpu_offload_device)
+            input2_ids = input2_ids.to(cpu_offload_device)
+            negative_input_ids = negative_input_ids.to(cpu_offload_device)
+            negative_input2_ids = negative_input2_ids.to(cpu_offload_device)
         outputs = self.text(
             input_ids,
             # attention_mask,
@@ -219,11 +232,22 @@ class GenericStableXLModel(GenericModel, QuantizationMixin, PeftWeightLoaderMixi
         )
         pooled_prompt_embeds = prompt2_outputs[0]
         negative_pooled_prompt_embeds = negative_prompt2_outputs[0]
+        if enable_cpu_offload:
+            self.text.to("cpu")
+            self.text2.to("cpu")
         return GenericOutputs(
-            prompt_embeds=prompt_embeds,
-            negative_prompt_embeds=negative_prompt_embeds,
-            pooled_prompt_embeds=pooled_prompt_embeds,
-            negative_pooled_prompt_embeds=negative_pooled_prompt_embeds,
+            prompt_embeds=prompt_embeds.to("cpu")
+            if enable_cpu_offload
+            else prompt_embeds,
+            negative_prompt_embeds=negative_prompt_embeds.to("cpu")
+            if enable_cpu_offload
+            else negative_prompt_embeds,
+            pooled_prompt_embeds=pooled_prompt_embeds.to("cpu")
+            if enable_cpu_offload
+            else pooled_prompt_embeds,
+            negative_pooled_prompt_embeds=negative_pooled_prompt_embeds.to("cpu")
+            if enable_cpu_offload
+            else negative_pooled_prompt_embeds,
         )
 
 
@@ -384,6 +408,7 @@ class StableXLForText2ImageGeneration(GenericStableXLModel):
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),
+            num_inference_steps=self.num_infer_timesteps,
             height=height,
             width=width,
             guidance_scale=guidance_scale,
@@ -457,7 +482,7 @@ class StableXLForImage2ImageGeneration(GenericStableXLModel):
         attention2_mask: Optional[torch.Tensor] = None,
         negative_attention_mask: Optional[torch.Tensor] = None,
         negative_attention2_mask: Optional[torch.Tensor] = None,
-        strength: Optional[float] = 0.8,
+        strength: Optional[float] = 1.0,
         guidance_scale: Optional[float] = 7.5,
     ):
         outputs = self.get_prompt_outputs(
@@ -480,6 +505,7 @@ class StableXLForImage2ImageGeneration(GenericStableXLModel):
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),
+            num_inference_steps=self.num_infer_timesteps,
             strength=strength,
             guidance_scale=guidance_scale,
             output_type="np.array",
@@ -535,11 +561,101 @@ class StableXLForImageInpainting(GenericStableXLModel):
             tokenizer_2=None,
         )
         self.pipeline.set_progress_bar_config(disable=True)
+        self.num_channels_unet = self.unet.config.in_channels
 
     def forward(
         self,
+        input_ids: torch.Tensor,
+        input2_ids: torch.Tensor,
+        add_time_ids: torch.Tensor,
+        pixel_values: torch.Tensor,
+        pixel_masks: torch.Tensor,
+        attention_mask: Optional[torch.Tensor] = None,
+        attention2_mask: Optional[torch.Tensor] = None,
     ):
-        raise NotImplementedError
+        outputs = self.text(
+            input_ids,
+            # attention_mask,
+            output_hidden_states=True,
+        )
+        prompt_embeds = outputs.hidden_states[-2]
+        prompt2_outputs = self.text2(
+            input2_ids,
+            # attention2_mask,
+            output_hidden_states=True,
+        )
+        prompt2_embeds = prompt2_outputs.hidden_states[-2]
+        prompt_embeds = torch.concat([prompt_embeds, prompt2_embeds], dim=-1)
+        pooled_prompt_embeds = prompt2_outputs[0]
+
+        latents = self.vae.encode(pixel_values).latent_dist.sample()
+        latents = latents * self.vae.config.scaling_factor
+
+        noise = torch.randn(latents.shape).to(latents.device)
+        batch = latents.size(0)
+
+        timesteps = torch.randint(
+            0,
+            self.scheduler.config.num_train_timesteps,
+            (batch,),
+            device=pixel_values.device,
+        ).long()
+
+        noise_latents = self.scheduler.add_noise(
+            latents,
+            noise,
+            timesteps,
+        )
+
+        if self.num_channels_unet == 9:
+            masked_pixel_values = pixel_values.clone()
+            masked_pixel_masks = pixel_masks.clone()
+            masked_pixel_masks = masked_pixel_masks.expand_as(masked_pixel_values)
+            masked_pixel_values[masked_pixel_masks > 0.5] = -1.0
+            masked_latents = self.vae.encode(masked_pixel_values).latent_dist.sample()
+            masked_latents = masked_latents * self.vae.config.scaling_factor
+
+            pixel_masks = torch.nn.functional.interpolate(
+                pixel_masks, size=latents.shape[-2:], mode="nearest"
+            )
+            latent_model_input = torch.cat(
+                [noise_latents, pixel_masks, masked_latents], dim=1
+            )
+        else:
+            latent_model_input = noise_latents
+
+        outputs = self.unet(
+            latent_model_input,
+            timesteps,
+            prompt_embeds,
+            added_cond_kwargs={
+                "time_ids": add_time_ids,
+                "text_embeds": pooled_prompt_embeds,
+            },
+        ).sample
+
+        if self.scheduler.config.prediction_type == "v_prediction":
+            noise = self.scheduler.get_velocity(latents, noise, timesteps)
+        if self.snr_gamma > 0:
+            snr = compute_snr(timesteps, self.scheduler)
+            base_weight = (
+                torch.stack(
+                    [snr, self.snr_gamma * torch.ones_like(timesteps)], dim=1
+                ).min(dim=1)[0]
+                / snr
+            )
+
+            if self.scheduler.config.prediction_type == "v_prediction":
+                mse_loss_weights = base_weight + 1
+            else:
+                mse_loss_weights = base_weight
+            mse_loss_weights[snr == 0] = 1.0
+            loss = F.mse_loss(outputs, noise, reduction="none")
+            loss = loss.mean(dim=list(range(1, len(loss.shape)))) * mse_loss_weights
+            loss = loss.mean()
+        else:
+            loss = F.mse_loss(outputs, noise, reduction="mean")
+        return loss
 
     def generate(
         self,
@@ -577,6 +693,9 @@ class StableXLForImageInpainting(GenericStableXLModel):
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),
+            num_inference_steps=self.num_infer_timesteps,
+            width=pixel_values.size(-1),
+            height=pixel_values.size(-2),
             strength=strength,
             guidance_scale=guidance_scale,
             output_type="np.array",

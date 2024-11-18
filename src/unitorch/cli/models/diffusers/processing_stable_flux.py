@@ -157,6 +157,35 @@ class StableFluxProcessor(_StableFluxProcessor):
             attention2_mask=text_outputs.attention2_mask,
         )
 
+    @register_process("core/process/diffusion/stable_flux/inpainting")
+    def _inpainting(
+        self,
+        prompt: str,
+        image: Union[Image.Image, str],
+        mask_image: Union[Image.Image, str],
+        prompt2: Optional[str] = None,
+        max_seq_length: Optional[int] = None,
+        max_seq_length2: Optional[int] = None,
+    ):
+        text_outputs = super().text2image_inputs(
+            prompt=prompt,
+            prompt2=prompt2,
+            max_seq_length=max_seq_length,
+            max_seq_length2=max_seq_length2,
+        )
+        image_outputs = super().inpainting_inputs(
+            image=image,
+            mask_image=mask_image,
+        )
+        return TensorsInputs(
+            pixel_values=image_outputs.pixel_values,
+            pixel_masks=image_outputs.pixel_masks,
+            input_ids=text_outputs.input_ids,
+            input2_ids=text_outputs.input2_ids,
+            attention_mask=text_outputs.attention_mask,
+            attention2_mask=text_outputs.attention2_mask,
+        )
+
     @register_process("core/process/diffusion/stable_flux/inpainting/inputs")
     def _inpainting_inputs(
         self,
