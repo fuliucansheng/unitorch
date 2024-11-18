@@ -372,12 +372,14 @@ class StableFluxForText2ImageGenerationPipeline(GenericStableFluxModel):
         else:
             self.to(device=self._device)
 
-        prompt_embeds_results = self.get_prompt_outputs(
+        prompt_outputs = self.get_prompt_outputs(
             inputs["input_ids"],
             input2_ids=inputs["input2_ids"],
+            enable_cpu_offload=self._enable_cpu_offload,
+            cpu_offload_device=self._device,
         )
-        prompt_embeds = prompt_embeds_results.prompt_embeds
-        pooled_prompt_embeds = prompt_embeds_results.pooled_prompt_embeds
+        prompt_embeds = prompt_outputs.prompt_embeds
+        pooled_prompt_embeds = prompt_outputs.pooled_prompt_embeds
 
         if self._enable_xformers and self._device != "cpu":
             assert is_xformers_available(), "Please install xformers first."

@@ -3,7 +3,6 @@
 
 import io
 import re
-import gc
 import json
 import logging
 import torch
@@ -48,12 +47,13 @@ from unitorch.cli.models.diffusers import (
 from unitorch.cli.pipelines import Schedulers
 
 
-class StableForText2ImageFastAPIPipeline(GenericStableModel):
+class ControlNetForText2ImageFastAPIPipeline(GenericStableModel):
     def __init__(
         self,
         config_path: str,
         text_config_path: str,
         vae_config_path: str,
+        controlnet_configs_path: Union[str, List[str]],
         scheduler_config_path: str,
         vocab_path: str,
         merge_path: str,
@@ -73,6 +73,7 @@ class StableForText2ImageFastAPIPipeline(GenericStableModel):
             config_path=config_path,
             text_config_path=text_config_path,
             vae_config_path=vae_config_path,
+            controlnet_configs_path=controlnet_configs_path,
             scheduler_config_path=scheduler_config_path,
             quant_config_path=quant_config_path,
         )
@@ -89,10 +90,11 @@ class StableForText2ImageFastAPIPipeline(GenericStableModel):
 
         self.eval()
 
-        self.pipeline = StableDiffusionPipeline(
+        self.pipeline = StableDiffusionControlNetPipeline(
             vae=self.vae,
             text_encoder=self.text,
             unet=self.unet,
+            controlnet=self.controlnet,
             scheduler=self.scheduler,
             tokenizer=None,
             safety_checker=None,
@@ -121,11 +123,14 @@ class StableForText2ImageFastAPIPipeline(GenericStableModel):
             self.pipeline.enable_xformers_memory_efficient_attention()
 
     @classmethod
-    @add_default_section_for_init("core/fastapi/pipeline/stable/text2image")
+    @add_default_section_for_init("core/fastapi/pipeline/controlnet/text2image")
     def from_core_configure(
         cls,
         config,
         pretrained_name: Optional[str] = "stable-v1.5",
+        pretrained_controlnet_names: Optional[
+            Union[str, List[str]]
+        ] = "stable-v1.5-controlnet-canny",
         config_path: Optional[str] = None,
         text_config_path: Optional[str] = None,
         vae_config_path: Optional[str] = None,
@@ -137,9 +142,22 @@ class StableForText2ImageFastAPIPipeline(GenericStableModel):
         device: Optional[str] = "cpu",
         **kwargs,
     ):
-        config.set_default_section("core/fastapi/pipeline/stable/text2image")
+        config.set_default_section("core/fastapi/pipeline/controlnet/text2image")
         pretrained_name = config.getoption("pretrained_name", pretrained_name)
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
+
+        pretrained_controlnet_names = config.getoption(
+            "pretrained_controlnet_names", pretrained_controlnet_names
+        )
+        if isinstance(pretrained_controlnet_names, str):
+            pretrained_controlnet_names = [pretrained_controlnet_names]
+
+        pretrained_controlnet_infos = [
+            nested_dict_value(
+                pretrained_stable_extensions_infos, pretrained_controlnet_name
+            )
+            for pretrained_controlnet_name in pretrained_controlnet_names
+        ]
 
         config_path = config.getoption("config_path", config_path)
         config_path = pop_value(
@@ -161,6 +179,21 @@ class StableForText2ImageFastAPIPipeline(GenericStableModel):
             nested_dict_value(pretrained_infos, "vae", "config"),
         )
         vae_config_path = cached_path(vae_config_path)
+
+        controlnet_configs_path = config.getoption("controlnet_configs_path", None)
+        if isinstance(controlnet_configs_path, str):
+            controlnet_configs_path = [controlnet_configs_path]
+        controlnet_configs_path = pop_value(
+            controlnet_configs_path,
+            [
+                nested_dict_value(pretrained_controlnet_info, "controlnet", "config")
+                for pretrained_controlnet_info in pretrained_controlnet_infos
+            ],
+        )
+        controlnet_configs_path = [
+            cached_path(controlnet_config_path)
+            for controlnet_config_path in controlnet_configs_path
+        ]
 
         scheduler_config_path = config.getoption(
             "scheduler_config_path", scheduler_config_path
@@ -203,6 +236,27 @@ class StableForText2ImageFastAPIPipeline(GenericStableModel):
                 load_weight(nested_dict_value(pretrained_infos, "text", "weight")),
                 load_weight(nested_dict_value(pretrained_infos, "vae", "weight")),
             ]
+            if len(pretrained_controlnet_infos) > 1:
+                for i, pretrained_controlnet_info in enumerate(
+                    pretrained_controlnet_infos
+                ):
+                    state_dict.append(
+                        load_weight(
+                            nested_dict_value(
+                                pretrained_controlnet_info, "controlnet", "weight"
+                            ),
+                            prefix_keys={"": f"controlnet.nets.{i}."},
+                        )
+                    )
+            else:
+                state_dict.append(
+                    load_weight(
+                        nested_dict_value(
+                            pretrained_controlnet_infos[0], "controlnet", "weight"
+                        ),
+                        prefix_keys={"": "controlnet."},
+                    )
+                )
 
         pretrained_lora_names = config.getoption("pretrained_lora_names", None)
         pretrained_lora_weights = config.getoption("pretrained_lora_weights", 1.0)
@@ -235,6 +289,7 @@ class StableForText2ImageFastAPIPipeline(GenericStableModel):
             config_path=config_path,
             text_config_path=text_config_path,
             vae_config_path=vae_config_path,
+            controlnet_configs_path=controlnet_configs_path,
             scheduler_config_path=scheduler_config_path,
             vocab_path=vocab_path,
             merge_path=merge_path,
@@ -254,10 +309,12 @@ class StableForText2ImageFastAPIPipeline(GenericStableModel):
 
     @torch.no_grad()
     @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
-    @add_default_section_for_function("core/fastapi/pipeline/stable/text2image")
+    @add_default_section_for_function("core/fastapi/pipeline/controlnet/text2image")
     def __call__(
         self,
         text: str,
+        controlnet_images: Optional[List[Image.Image]] = [],
+        controlnet_guidance_scales: Optional[List[float]] = [],
         neg_text: Optional[str] = "",
         height: Optional[int] = 512,
         width: Optional[int] = 512,
@@ -275,7 +332,14 @@ class StableForText2ImageFastAPIPipeline(GenericStableModel):
             text,
             negative_prompt=neg_text,
         )
-        inputs = text_inputs
+        controlnet_images = [img.resize((width, height)) for img in controlnet_images]
+        assert len(controlnet_images) == len(controlnet_guidance_scales)
+        assert len(controlnet_images) == self.num_controlnets
+        controlnets_inputs = self.processor.controlnets_inputs(controlnet_images)
+        inputs = {
+            **text_inputs,
+            **{"condition_pixel_values": controlnets_inputs.pixel_values},
+        }
         if freeu_params is not None:
             self.pipeline.enable_freeu(*freeu_params)
         self.seed = seed
@@ -301,6 +365,7 @@ class StableForText2ImageFastAPIPipeline(GenericStableModel):
         outputs = self.pipeline(
             prompt_embeds=prompt_embeds,
             negative_prompt_embeds=negative_prompt_embeds,
+            image=list(inputs["condition_pixel_values"].transpose(0, 1)),
             height=height,
             width=width,
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
@@ -314,62 +379,3 @@ class StableForText2ImageFastAPIPipeline(GenericStableModel):
         images = torch.from_numpy(outputs.images)
         images = numpy_to_pil(images.cpu().numpy())
         return images[0]
-
-
-@register_fastapi("core/fastapi/stable/text2image")
-class StableText2ImageFastAPI(GenericFastAPI):
-    def __init__(self, config: CoreConfigureParser):
-        self.config = config
-        config.set_default_section(f"core/fastapi/stable/text2image")
-        router = config.getoption("router", "/core/fastapi/stable/text2image")
-        self._pipe = None if not hasattr(self, "_pipe") else self._pipe
-        self._router = APIRouter(prefix=router)
-        self._router.add_api_route("/", self.serve, methods=["GET"])
-        self._router.add_api_route("/status", self.status, methods=["GET"])
-        self._router.add_api_route("/start", self.start, methods=["GET"])
-        self._router.add_api_route("/stop", self.stop, methods=["GET"])
-
-    @property
-    def router(self):
-        return self._router
-
-    def start(self):
-        self._pipe = StableForText2ImageFastAPIPipeline.from_core_configure(self.config)
-        return "start success"
-
-    def stop(self):
-        self._pipe.to("cpu")
-        del self._pipe
-        gc.collect()
-        torch.cuda.empty_cache()
-        self._pipe = None if not hasattr(self, "_pipe") else self._pipe
-        return "stop success"
-
-    def status(self):
-        return "running" if self._pipe is not None else "stopped"
-
-    def serve(
-        self,
-        text: str,
-        height: Optional[int] = 512,
-        width: Optional[int] = 512,
-        guidance_scale: Optional[float] = 7.5,
-        num_timesteps: Optional[int] = 50,
-        seed: Optional[int] = 1123,
-    ):
-        assert self._pipe is not None
-        image = self._pipe(
-            text,
-            height=height,
-            width=width,
-            guidance_scale=guidance_scale,
-            num_timesteps=num_timesteps,
-            seed=seed,
-        )
-        buffer = io.BytesIO()
-        image.save(buffer, format="PNG")
-
-        return StreamingResponse(
-            io.BytesIO(buffer.getvalue()),
-            media_type="image/png",
-        )

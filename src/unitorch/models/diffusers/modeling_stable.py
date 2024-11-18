@@ -224,6 +224,38 @@ class GenericStableModel(GenericModel, QuantizationMixin, PeftWeightLoaderMixin)
             self.quant_config = QuantizationConfig.from_json_file(quant_config_path)
             self.quantize(self.quant_config, ignore_modules=["lm_head", "unet", "vae"])
 
+    def get_prompt_outputs(
+        self,
+        input_ids: torch.Tensor,
+        negative_input_ids: torch.Tensor,
+        attention_mask: Optional[torch.Tensor] = None,
+        negative_attention_mask: Optional[torch.Tensor] = None,
+        enable_cpu_offload: Optional[bool] = False,
+        cpu_offload_device: Optional[str] = "cpu",
+    ):
+        if enable_cpu_offload:
+            self.text.to(cpu_offload_device)
+            input_ids = input_ids.to(cpu_offload_device)
+            negative_input_ids = negative_input_ids.to(cpu_offload_device)
+        prompt_embeds = self.text(
+            input_ids,
+            # attention_mask,
+        )[0]
+        negative_prompt_embeds = self.text(
+            negative_input_ids,
+            # negative_attention_mask,
+        )[0]
+        if enable_cpu_offload:
+            self.text.to("cpu")
+        return GenericOutputs(
+            prompt_embeds=prompt_embeds.to("cpu")
+            if enable_cpu_offload
+            else prompt_embeds,
+            negative_prompt_embeds=negative_prompt_embeds.to("cpu")
+            if enable_cpu_offload
+            else negative_prompt_embeds,
+        )
+
 
 class StableForText2ImageGeneration(GenericStableModel):
     def __init__(
@@ -334,18 +366,16 @@ class StableForText2ImageGeneration(GenericStableModel):
         width: Optional[int] = 512,
         guidance_scale: Optional[float] = 7.5,
     ):
-        prompt_embeds = self.text(
-            input_ids,
-            # attention_mask,
-        )[0]
-        negative_prompt_embeds = self.text(
-            negative_input_ids,
-            # negative_attention_mask,
-        )[0]
+        outputs = self.get_prompt_outputs(
+            input_ids=input_ids,
+            negative_input_ids=negative_input_ids,
+            attention_mask=attention_mask,
+            negative_attention_mask=negative_attention_mask,
+        )
 
         images = self.pipeline(
-            prompt_embeds=prompt_embeds,
-            negative_prompt_embeds=negative_prompt_embeds,
+            prompt_embeds=outputs.prompt_embeds,
+            negative_prompt_embeds=outputs.negative_prompt_embeds,
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),
@@ -420,19 +450,17 @@ class StableForImage2ImageGeneration(GenericStableModel):
         strength: Optional[float] = 1.0,
         guidance_scale: Optional[float] = 7.5,
     ):
-        prompt_embeds = self.text(
-            input_ids,
-            # attention_mask,
-        )[0]
-        negative_prompt_embeds = self.text(
-            negative_input_ids,
-            # negative_attention_mask,
-        )[0]
+        outputs = self.get_prompt_outputs(
+            input_ids=input_ids,
+            negative_input_ids=negative_input_ids,
+            attention_mask=attention_mask,
+            negative_attention_mask=negative_attention_mask,
+        )
 
         images = self.pipeline(
             image=pixel_values,
-            prompt_embeds=prompt_embeds,
-            negative_prompt_embeds=negative_prompt_embeds,
+            prompt_embeds=outputs.prompt_embeds,
+            negative_prompt_embeds=outputs.negative_prompt_embeds,
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),
@@ -575,20 +603,18 @@ class StableForImageInpainting(GenericStableModel):
         strength: Optional[float] = 1.0,
         guidance_scale: Optional[float] = 7.5,
     ):
-        prompt_embeds = self.text(
-            input_ids,
-            # attention_mask,
-        )[0]
-        negative_prompt_embeds = self.text(
-            negative_input_ids,
-            # negative_attention_mask,
-        )[0]
+        outputs = self.get_prompt_outputs(
+            input_ids=input_ids,
+            negative_input_ids=negative_input_ids,
+            attention_mask=attention_mask,
+            negative_attention_mask=negative_attention_mask,
+        )
 
         images = self.pipeline(
             image=pixel_values,
             mask_image=pixel_masks,
-            prompt_embeds=prompt_embeds,
-            negative_prompt_embeds=negative_prompt_embeds,
+            prompt_embeds=outputs.prompt_embeds,
+            negative_prompt_embeds=outputs.negative_prompt_embeds,
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),
@@ -665,19 +691,17 @@ class StableForImageResolution(GenericStableModel):
         guidance_scale: Optional[float] = 9.0,
         noise_level: Optional[int] = 20,
     ):
-        prompt_embeds = self.text(
-            input_ids,
-            # attention_mask,
-        )[0]
-        negative_prompt_embeds = self.text(
-            negative_input_ids,
-            # negative_attention_mask,
-        )[0]
+        outputs = self.get_prompt_outputs(
+            input_ids=input_ids,
+            negative_input_ids=negative_input_ids,
+            attention_mask=attention_mask,
+            negative_attention_mask=negative_attention_mask,
+        )
 
         images = self.pipeline(
             image=pixel_values,
-            prompt_embeds=prompt_embeds,
-            negative_prompt_embeds=negative_prompt_embeds,
+            prompt_embeds=outputs.prompt_embeds,
+            negative_prompt_embeds=outputs.negative_prompt_embeds,
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),

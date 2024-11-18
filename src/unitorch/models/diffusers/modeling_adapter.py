@@ -187,14 +187,12 @@ class StableAdapterForText2ImageGeneration(GenericStableModel):
         Returns:
             GenericOutputs: Generated images.
         """
-        prompt_embeds = self.text(
-            input_ids,
-            # attention_mask,
-        )[0]
-        negative_prompt_embeds = self.text(
-            negative_input_ids,
-            # negative_attention_mask,
-        )[0]
+        outputs = self.get_prompt_outputs(
+            input_ids=input_ids,
+            negative_input_ids=negative_input_ids,
+            attention_mask=attention_mask,
+            negative_attention_mask=negative_attention_mask,
+        )
         if adapter_conditioning_scale is None:
             if self.num_adapters == 1:
                 adapter_conditioning_scale = 1.0
@@ -209,8 +207,8 @@ class StableAdapterForText2ImageGeneration(GenericStableModel):
             image=adapter_pixel_values
             if self.num_adapters == 1
             else list(adapter_pixel_values.transpose(0, 1)),
-            prompt_embeds=prompt_embeds,
-            negative_prompt_embeds=negative_prompt_embeds,
+            prompt_embeds=outputs.prompt_embeds,
+            negative_prompt_embeds=outputs.negative_prompt_embeds,
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),

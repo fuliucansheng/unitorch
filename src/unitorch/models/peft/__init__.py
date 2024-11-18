@@ -222,13 +222,15 @@ class PeftWeightLoaderMixin(nn.Module):
         lora_alphas: Optional[Union[float, List[float]]] = None,
         replace_keys: Optional[Dict] = dict(),
         prefix_keys: Optional[Dict] = dict(),
+        save_base_state: bool = True,
     ):
         if self.__base_state_dict__ is not None:
             state_dict = self.__base_state_dict__.copy()
         else:
             state_dict = self.state_dict()
             state_dict = {k: v.cpu() for k, v in state_dict.items()}
-            self.__base_state_dict__ = {k: v.clone() for k, v in state_dict.items()}
+            if save_base_state:
+                self.__base_state_dict__ = {k: v.clone() for k, v in state_dict.items()}
 
         if isinstance(self.replace_keys_in_peft_state_dict, dict):
             replace_keys = {**self.replace_keys_in_peft_state_dict, **replace_keys}

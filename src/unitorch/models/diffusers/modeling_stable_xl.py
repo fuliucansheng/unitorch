@@ -191,7 +191,16 @@ class GenericStableXLModel(GenericModel, QuantizationMixin, PeftWeightLoaderMixi
         attention2_mask: Optional[torch.Tensor] = None,
         negative_attention_mask: Optional[torch.Tensor] = None,
         negative_attention2_mask: Optional[torch.Tensor] = None,
+        enable_cpu_offload: Optional[bool] = False,
+        cpu_offload_device: Optional[str] = "cpu",
     ):
+        if enable_cpu_offload:
+            self.text.to(cpu_offload_device)
+            self.text2.to(cpu_offload_device)
+            input_ids = input_ids.to(cpu_offload_device)
+            input2_ids = input2_ids.to(cpu_offload_device)
+            negative_input_ids = negative_input_ids.to(cpu_offload_device)
+            negative_input2_ids = negative_input2_ids.to(cpu_offload_device)
         outputs = self.text(
             input_ids,
             # attention_mask,
@@ -223,11 +232,22 @@ class GenericStableXLModel(GenericModel, QuantizationMixin, PeftWeightLoaderMixi
         )
         pooled_prompt_embeds = prompt2_outputs[0]
         negative_pooled_prompt_embeds = negative_prompt2_outputs[0]
+        if enable_cpu_offload:
+            self.text.to("cpu")
+            self.text2.to("cpu")
         return GenericOutputs(
-            prompt_embeds=prompt_embeds,
-            negative_prompt_embeds=negative_prompt_embeds,
-            pooled_prompt_embeds=pooled_prompt_embeds,
-            negative_pooled_prompt_embeds=negative_pooled_prompt_embeds,
+            prompt_embeds=prompt_embeds.to("cpu")
+            if enable_cpu_offload
+            else prompt_embeds,
+            negative_prompt_embeds=negative_prompt_embeds.to("cpu")
+            if enable_cpu_offload
+            else negative_prompt_embeds,
+            pooled_prompt_embeds=pooled_prompt_embeds.to("cpu")
+            if enable_cpu_offload
+            else pooled_prompt_embeds,
+            negative_pooled_prompt_embeds=negative_pooled_prompt_embeds.to("cpu")
+            if enable_cpu_offload
+            else negative_pooled_prompt_embeds,
         )
 
 

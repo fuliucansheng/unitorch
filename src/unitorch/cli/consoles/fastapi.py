@@ -57,7 +57,7 @@ def fastapi(config_path: str, **kwargs):
     app = FastAPI()
 
     for fastapi_instance in fastapi_instances:
-        fastapi_instance.start()
+        # fastapi_instance.start()
         app.include_router(fastapi_instance.router)
 
     app.add_middleware(

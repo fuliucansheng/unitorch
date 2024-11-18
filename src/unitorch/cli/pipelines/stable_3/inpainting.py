@@ -383,18 +383,19 @@ class Stable3ForImageInpaintingPipeline(GenericStable3Model):
             else:
                 controlnets = controlnets[0]
 
-            self.pipeline = StableDiffusion3ControlNetInpaintingPipeline(
-                vae=self.vae,
-                text_encoder=self.text,
-                text_encoder_2=self.text2,
-                text_encoder_3=self.text3,
-                transformer=self.transformer,
-                controlnet=controlnets,
-                scheduler=self.scheduler,
-                tokenizer=None,
-                tokenizer_2=None,
-                tokenizer_3=None,
-            )
+            # self.pipeline = StableDiffusion3ControlNetInpaintingPipeline(
+            #     vae=self.vae,
+            #     text_encoder=self.text,
+            #     text_encoder_2=self.text2,
+            #     text_encoder_3=self.text3,
+            #     transformer=self.transformer,
+            #     controlnet=controlnets,
+            #     scheduler=self.scheduler,
+            #     tokenizer=None,
+            #     tokenizer_2=None,
+            #     tokenizer_3=None,
+            # )
+            raise "StableDiffusion3ControlNetInpaintingPipeline is not implemented yet."
             if len(conditioning_images) > 0:
                 controlnets_inputs = self.processor.controlnets_inputs(
                     conditioning_images
@@ -497,20 +498,20 @@ class Stable3ForImageInpaintingPipeline(GenericStable3Model):
                 lora_alphas=processed_lora_alphas,
             )
 
-        prompt_embeds_results = self.get_prompt_outputs(
+        prompt_outputs = self.get_prompt_outputs(
             inputs["input_ids"],
             input2_ids=inputs["input2_ids"],
             input3_ids=inputs["input3_ids"],
             negative_input_ids=inputs["negative_input_ids"],
             negative_input2_ids=inputs["negative_input2_ids"],
             negative_input3_ids=inputs["negative_input3_ids"],
+            enable_cpu_offload=self._enable_cpu_offload,
+            cpu_offload_device=self._device,
         )
-        prompt_embeds = prompt_embeds_results.prompt_embeds
-        negative_prompt_embeds = prompt_embeds_results.negative_prompt_embeds
-        pooled_prompt_embeds = prompt_embeds_results.pooled_prompt_embeds
-        negative_pooled_prompt_embeds = (
-            prompt_embeds_results.negative_pooled_prompt_embeds
-        )
+        prompt_embeds = prompt_outputs.prompt_embeds
+        negative_prompt_embeds = prompt_outputs.negative_prompt_embeds
+        pooled_prompt_embeds = prompt_outputs.pooled_prompt_embeds
+        negative_pooled_prompt_embeds = prompt_outputs.negative_pooled_prompt_embeds
 
         if self._enable_cpu_offload and self._device != "cpu":
             self.pipeline.enable_model_cpu_offload(self._device)
@@ -565,14 +566,14 @@ class Stable3ForImageInpaintingPipeline(GenericStable3Model):
 
 
 @register_script("core/script/stable_3/inpainting")
-class Stable3ForImage2ImageGenerationScript(GenericScript):
+class Stable3ForImageInpaintingGenerationScript(GenericScript):
     def __init__(self, config: CoreConfigureParser):
         self.config = config
 
     def launch(self, **kwargs):
         config = self.config
 
-        pipe = Stable3ForImage2ImageGenerationPipeline.from_core_configure(config)
+        pipe = Stable3ForImageInpaintingPipeline.from_core_configure(config)
 
         config.set_default_section("core/script/stable_3/inpainting")
 

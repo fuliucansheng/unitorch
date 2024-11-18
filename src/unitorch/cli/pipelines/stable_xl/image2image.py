@@ -389,18 +389,18 @@ class StableXLForImage2ImageGenerationPipeline(GenericStableXLModel):
                 lora_alphas=processed_lora_alphas,
             )
 
-        prompt_embeds_results = self.get_prompt_outputs(
+        prompt_outputs = self.get_prompt_outputs(
             inputs["input_ids"],
             input2_ids=inputs["input2_ids"],
             negative_input_ids=inputs["negative_input_ids"],
             negative_input2_ids=inputs["negative_input2_ids"],
+            enable_cpu_offload=self._enable_cpu_offload,
+            cpu_offload_device=self._device,
         )
-        prompt_embeds = prompt_embeds_results.prompt_embeds
-        negative_prompt_embeds = prompt_embeds_results.negative_prompt_embeds
-        pooled_prompt_embeds = prompt_embeds_results.pooled_prompt_embeds
-        negative_pooled_prompt_embeds = (
-            prompt_embeds_results.negative_pooled_prompt_embeds
-        )
+        prompt_embeds = prompt_outputs.prompt_embeds
+        negative_prompt_embeds = prompt_outputs.negative_prompt_embeds
+        pooled_prompt_embeds = prompt_outputs.pooled_prompt_embeds
+        negative_pooled_prompt_embeds = prompt_outputs.negative_pooled_prompt_embeds
 
         if self._enable_cpu_offload and self._device != "cpu":
             self.pipeline.enable_model_cpu_offload(self._device)

@@ -223,7 +223,15 @@ class GenericStableFluxModel(GenericModel, QuantizationMixin, PeftWeightLoaderMi
         input2_ids: torch.Tensor,
         attention_mask: Optional[torch.Tensor] = None,
         attention2_mask: Optional[torch.Tensor] = None,
+        enable_cpu_offload: Optional[bool] = False,
+        cpu_offload_device: Optional[str] = "cpu",
     ):
+        if enable_cpu_offload:
+            self.text = self.text.to(cpu_offload_device)
+            self.text2 = self.text2.to(cpu_offload_device)
+            input_ids = input_ids.to(cpu_offload_device)
+            input2_ids = input2_ids.to(cpu_offload_device)
+
         prompt_outputs = self.text(
             input_ids,
             # attention_mask,
@@ -236,10 +244,17 @@ class GenericStableFluxModel(GenericModel, QuantizationMixin, PeftWeightLoaderMi
             # attention2_mask,
             output_hidden_states=False,
         )[0]
+        if enable_cpu_offload:
+            self.text = self.text.to("cpu")
+            self.text2 = self.text2.to("cpu")
 
         return GenericOutputs(
-            prompt_embeds=prompt_embeds,
-            pooled_prompt_embeds=pooled_prompt_embeds,
+            prompt_embeds=prompt_embeds.to("cpu")
+            if enable_cpu_offload
+            else prompt_embeds,
+            pooled_prompt_embeds=pooled_prompt_embeds.to("cpu")
+            if enable_cpu_offload
+            else pooled_prompt_embeds,
         )
 
 

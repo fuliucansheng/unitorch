@@ -48,7 +48,7 @@ from unitorch.cli.models.diffusers import (
 from unitorch.cli.pipelines import Schedulers
 
 
-class StableForText2ImageFastAPIPipeline(GenericStableModel):
+class StableForImageResolutionFastAPIPipeline(GenericStableModel):
     def __init__(
         self,
         config_path: str,
@@ -89,11 +89,12 @@ class StableForText2ImageFastAPIPipeline(GenericStableModel):
 
         self.eval()
 
-        self.pipeline = StableDiffusionPipeline(
+        self.pipeline = StableDiffusionUpscalePipeline(
             vae=self.vae,
             text_encoder=self.text,
             unet=self.unet,
             scheduler=self.scheduler,
+            low_res_scheduler=self.scheduler,
             tokenizer=None,
             safety_checker=None,
             feature_extractor=None,
@@ -121,11 +122,11 @@ class StableForText2ImageFastAPIPipeline(GenericStableModel):
             self.pipeline.enable_xformers_memory_efficient_attention()
 
     @classmethod
-    @add_default_section_for_init("core/fastapi/pipeline/stable/text2image")
+    @add_default_section_for_init("core/fastapi/pipeline/stable/resolution")
     def from_core_configure(
         cls,
         config,
-        pretrained_name: Optional[str] = "stable-v1.5",
+        pretrained_name: Optional[str] = "stable-v1.5-x4-upscaler",
         config_path: Optional[str] = None,
         text_config_path: Optional[str] = None,
         vae_config_path: Optional[str] = None,
@@ -137,7 +138,7 @@ class StableForText2ImageFastAPIPipeline(GenericStableModel):
         device: Optional[str] = "cpu",
         **kwargs,
     ):
-        config.set_default_section("core/fastapi/pipeline/stable/text2image")
+        config.set_default_section("core/fastapi/pipeline/stable/resolution")
         pretrained_name = config.getoption("pretrained_name", pretrained_name)
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
 
@@ -254,14 +255,14 @@ class StableForText2ImageFastAPIPipeline(GenericStableModel):
 
     @torch.no_grad()
     @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
-    @add_default_section_for_function("core/fastapi/pipeline/stable/text2image")
+    @add_default_section_for_function("core/fastapi/pipeline/stable/resolution")
     def __call__(
         self,
         text: str,
+        image: Image.Image,
         neg_text: Optional[str] = "",
-        height: Optional[int] = 512,
-        width: Optional[int] = 512,
         guidance_scale: Optional[float] = 7.5,
+        noise_level: Optional[int] = 20,
         num_timesteps: Optional[int] = 50,
         seed: Optional[int] = 1123,
         freeu_params: Optional[Tuple[float, float, float, float]] = (
@@ -275,7 +276,8 @@ class StableForText2ImageFastAPIPipeline(GenericStableModel):
             text,
             negative_prompt=neg_text,
         )
-        inputs = text_inputs
+        image_inputs = self.processor.image2image_inputs(image)
+        inputs = {**text_inputs, **image_inputs}
         if freeu_params is not None:
             self.pipeline.enable_freeu(*freeu_params)
         self.seed = seed
@@ -299,15 +301,15 @@ class StableForText2ImageFastAPIPipeline(GenericStableModel):
         negative_prompt_embeds = prompt_outputs.negative_prompt_embeds
 
         outputs = self.pipeline(
+            image=inputs["pixel_values"],
             prompt_embeds=prompt_embeds,
             negative_prompt_embeds=negative_prompt_embeds,
-            height=height,
-            width=width,
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),
             num_inference_steps=num_timesteps,
             guidance_scale=guidance_scale,
+            noise_level=noise_level,
             output_type="np.array",
         )
 
@@ -316,15 +318,15 @@ class StableForText2ImageFastAPIPipeline(GenericStableModel):
         return images[0]
 
 
-@register_fastapi("core/fastapi/stable/text2image")
-class StableText2ImageFastAPI(GenericFastAPI):
+@register_fastapi("core/fastapi/stable/resolution")
+class StableImageResolutionFastAPI(GenericFastAPI):
     def __init__(self, config: CoreConfigureParser):
         self.config = config
-        config.set_default_section(f"core/fastapi/stable/text2image")
-        router = config.getoption("router", "/core/fastapi/stable/text2image")
+        config.set_default_section(f"core/fastapi/stable/resolution")
+        router = config.getoption("router", "/core/fastapi/stable/resolution")
         self._pipe = None if not hasattr(self, "_pipe") else self._pipe
         self._router = APIRouter(prefix=router)
-        self._router.add_api_route("/", self.serve, methods=["GET"])
+        self._router.add_api_route("/", self.serve, methods=["POST"])
         self._router.add_api_route("/status", self.status, methods=["GET"])
         self._router.add_api_route("/start", self.start, methods=["GET"])
         self._router.add_api_route("/stop", self.stop, methods=["GET"])
@@ -334,7 +336,9 @@ class StableText2ImageFastAPI(GenericFastAPI):
         return self._router
 
     def start(self):
-        self._pipe = StableForText2ImageFastAPIPipeline.from_core_configure(self.config)
+        self._pipe = StableForImageResolutionFastAPIPipeline.from_core_configure(
+            self.config
+        )
         return "start success"
 
     def stop(self):
@@ -348,21 +352,23 @@ class StableText2ImageFastAPI(GenericFastAPI):
     def status(self):
         return "running" if self._pipe is not None else "stopped"
 
-    def serve(
+    async def serve(
         self,
         text: str,
-        height: Optional[int] = 512,
-        width: Optional[int] = 512,
+        image: UploadFile,
         guidance_scale: Optional[float] = 7.5,
+        noise_level: Optional[float] = 1.0,
         num_timesteps: Optional[int] = 50,
         seed: Optional[int] = 1123,
     ):
         assert self._pipe is not None
+        image_bytes = await image.read()
+        image = Image.open(io.BytesIO(image_bytes))
         image = self._pipe(
             text,
-            height=height,
-            width=width,
+            image,
             guidance_scale=guidance_scale,
+            noise_level=noise_level,
             num_timesteps=num_timesteps,
             seed=seed,
         )

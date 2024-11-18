@@ -345,14 +345,17 @@ class StableForImage2ImageGenerationPipeline(GenericStableModel):
                 lora_alphas=processed_lora_alphas,
             )
 
-        prompt_embeds = self.text(
-            inputs.get("input_ids"),
-            # attention_mask,
-        )[0]
-        negative_prompt_embeds = self.text(
-            inputs.get("negative_input_ids"),
-            # negative_attention_mask,
-        )[0]
+        prompt_outputs = self.get_prompt_outputs(
+            input_ids=inputs.get("input_ids"),
+            negative_input_ids=inputs.get("negative_input_ids"),
+            attention_mask=inputs.get("attention_mask"),
+            negative_attention_mask=inputs.get("negative_attention_mask"),
+            enable_cpu_offload=self._enable_cpu_offload,
+            cpu_offload_device=self._device,
+        )
+
+        prompt_embeds = prompt_outputs.prompt_embeds
+        negative_prompt_embeds = prompt_outputs.negative_prompt_embeds
 
         if self._enable_cpu_offload and self._device != "cpu":
             self.pipeline.enable_model_cpu_offload(self._device)

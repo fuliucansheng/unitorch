@@ -137,14 +137,12 @@ class ControlNetForText2ImageGeneration(GenericStableModel):
         guidance_scale: Optional[float] = 7.5,
         controlnet_conditioning_scale: Optional[Union[float, List[float]]] = None,
     ):
-        prompt_embeds = self.text(
-            input_ids,
-            # attention_mask,
-        )[0]
-        negative_prompt_embeds = self.text(
-            negative_input_ids,
-            # negative_attention_mask,
-        )[0]
+        outputs = self.get_prompt_outputs(
+            input_ids=input_ids,
+            negative_input_ids=negative_input_ids,
+            attention_mask=attention_mask,
+            negative_attention_mask=negative_attention_mask,
+        )
 
         if controlnet_conditioning_scale is None:
             if self.num_controlnets == 1:
@@ -163,8 +161,8 @@ class ControlNetForText2ImageGeneration(GenericStableModel):
             image=condition_pixel_values
             if self.num_controlnets == 1
             else list(condition_pixel_values.transpose(0, 1)),
-            prompt_embeds=prompt_embeds,
-            negative_prompt_embeds=negative_prompt_embeds,
+            prompt_embeds=outputs.prompt_embeds,
+            negative_prompt_embeds=outputs.negative_prompt_embeds,
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),
@@ -247,14 +245,12 @@ class ControlNetForImage2ImageGeneration(GenericStableModel):
         guidance_scale: Optional[float] = 7.5,
         controlnet_conditioning_scale: Optional[float] = 1.0,
     ):
-        prompt_embeds = self.text(
-            input_ids,
-            # attention_mask,
-        )[0]
-        negative_prompt_embeds = self.text(
-            negative_input_ids,
-            # negative_attention_mask,
-        )[0]
+        outputs = self.get_prompt_outputs(
+            input_ids=input_ids,
+            negative_input_ids=negative_input_ids,
+            attention_mask=attention_mask,
+            negative_attention_mask=negative_attention_mask,
+        )
 
         if controlnet_conditioning_scale is None:
             if self.num_controlnets == 1:
@@ -274,8 +270,8 @@ class ControlNetForImage2ImageGeneration(GenericStableModel):
             control_image=condition_pixel_values
             if self.num_controlnets == 1
             else list(condition_pixel_values.transpose(0, 1)),
-            prompt_embeds=prompt_embeds,
-            negative_prompt_embeds=negative_prompt_embeds,
+            prompt_embeds=outputs.prompt_embeds,
+            negative_prompt_embeds=outputs.negative_prompt_embeds,
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),
@@ -396,14 +392,12 @@ class ControlNetForImageInpainting(GenericStableModel):
                 controlnet_conditioning_scale = [
                     controlnet_conditioning_scale
                 ] * self.num_controlnets
-        prompt_embeds = self.text(
-            input_ids,
-            # attention_mask,
-        )[0]
-        negative_prompt_embeds = self.text(
-            negative_input_ids,
-            # negative_attention_mask,
-        )[0]
+        outputs = self.get_prompt_outputs(
+            input_ids=input_ids,
+            negative_input_ids=negative_input_ids,
+            attention_mask=attention_mask,
+            negative_attention_mask=negative_attention_mask,
+        )
 
         images = self.pipeline(
             image=pixel_values,
@@ -411,8 +405,8 @@ class ControlNetForImageInpainting(GenericStableModel):
             control_image=condition_pixel_values
             if self.num_controlnets == 1
             else list(condition_pixel_values.transpose(0, 1)),
-            prompt_embeds=prompt_embeds,
-            negative_prompt_embeds=negative_prompt_embeds,
+            prompt_embeds=outputs.prompt_embeds,
+            negative_prompt_embeds=outputs.negative_prompt_embeds,
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),
