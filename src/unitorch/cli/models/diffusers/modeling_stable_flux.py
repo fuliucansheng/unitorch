@@ -200,7 +200,7 @@ class StableFluxForText2ImageGeneration(_StableFluxForText2ImageGeneration):
 
     @autocast(
         device_type=("cuda" if torch.cuda.is_available() else "cpu"),
-        dtype=torch.bfloat16,
+        dtype=(torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float32),
     )
     def forward(
         self,
@@ -222,7 +222,7 @@ class StableFluxForText2ImageGeneration(_StableFluxForText2ImageGeneration):
     @add_default_section_for_function("core/model/diffusers/text2image/stable_flux")
     @autocast(
         device_type=("cuda" if torch.cuda.is_available() else "cpu"),
-        dtype=torch.bfloat16,
+        dtype=(torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float32),
     )
     def generate(
         self,
@@ -427,7 +427,7 @@ class StableFluxForImage2ImageGeneration(_StableFluxForImage2ImageGeneration):
     @add_default_section_for_function("core/model/diffusers/image2image/stable_flux")
     @autocast(
         device_type=("cuda" if torch.cuda.is_available() else "cpu"),
-        dtype=torch.bfloat16,
+        dtype=(torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float32),
     )
     def generate(
         self,
@@ -631,7 +631,7 @@ class StableFluxForImageInpainting(_StableFluxForImageInpainting):
     @add_default_section_for_function("core/model/diffusers/inpainting/stable_flux")
     @autocast(
         device_type=("cuda" if torch.cuda.is_available() else "cpu"),
-        dtype=torch.bfloat16,
+        dtype=(torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float32),
     )
     def generate(
         self,
