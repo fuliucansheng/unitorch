@@ -249,7 +249,7 @@ class StableXLAdapterForText2ImageGeneration(_StableXLAdapterForText2ImageGenera
 
     @autocast(
         device_type=("cuda" if torch.cuda.is_available() else "cpu"),
-        dtype=torch.bfloat16,
+        dtype=(torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float32),
     )
     def forward(
         self,
@@ -275,7 +275,7 @@ class StableXLAdapterForText2ImageGeneration(_StableXLAdapterForText2ImageGenera
     @add_default_section_for_function("core/model/diffusers/text2image/adapter_xl")
     @autocast(
         device_type=("cuda" if torch.cuda.is_available() else "cpu"),
-        dtype=torch.bfloat16,
+        dtype=(torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float32),
     )
     def generate(
         self,

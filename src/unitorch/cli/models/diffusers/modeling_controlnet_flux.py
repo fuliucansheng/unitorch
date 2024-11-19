@@ -267,7 +267,7 @@ class ControlNetFluxForText2ImageGeneration(_ControlNetFluxForText2ImageGenerati
 
     @autocast(
         device_type=("cuda" if torch.cuda.is_available() else "cpu"),
-        dtype=torch.bfloat16,
+        dtype=(torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float32),
     )
     def forward(
         self,
@@ -291,7 +291,7 @@ class ControlNetFluxForText2ImageGeneration(_ControlNetFluxForText2ImageGenerati
     @add_default_section_for_function("core/model/diffusers/text2image/controlnet_flux")
     @autocast(
         device_type=("cuda" if torch.cuda.is_available() else "cpu"),
-        dtype=torch.bfloat16,
+        dtype=(torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float32),
     )
     def generate(
         self,
@@ -559,7 +559,7 @@ class ControlNetFluxForImage2ImageGeneration(_ControlNetFluxForImage2ImageGenera
 
     @autocast(
         device_type=("cuda" if torch.cuda.is_available() else "cpu"),
-        dtype=torch.bfloat16,
+        dtype=(torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float32),
     )
     def forward(
         self,
@@ -571,7 +571,7 @@ class ControlNetFluxForImage2ImageGeneration(_ControlNetFluxForImage2ImageGenera
     )
     @autocast(
         device_type=("cuda" if torch.cuda.is_available() else "cpu"),
-        dtype=torch.bfloat16,
+        dtype=(torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float32),
     )
     def generate(
         self,
@@ -880,7 +880,7 @@ class ControlNetFluxForImageInpainting(_ControlNetFluxForImageInpainting):
     @add_default_section_for_function("core/model/diffusers/inpainting/controlnet_flux")
     @autocast(
         device_type=("cuda" if torch.cuda.is_available() else "cpu"),
-        dtype=torch.bfloat16,
+        dtype=(torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float32),
     )
     def generate(
         self,
