@@ -410,8 +410,8 @@ class ControlNetForImageInpaintingFastAPIPipeline(GenericStableModel):
             **image_inputs,
             **{"condition_pixel_values": condition_pixel_values},
         }
-        if freeu_params is not None:
-            self.pipeline.enable_freeu(*freeu_params)
+        # if freeu_params is not None:
+        #     self.pipeline.enable_freeu(*freeu_params)
         self.seed = seed
 
         inputs = {k: v.unsqueeze(0) if v is not None else v for k, v in inputs.items()}

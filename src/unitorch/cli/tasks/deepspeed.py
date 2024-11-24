@@ -18,12 +18,10 @@ from collections.abc import Iterable
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union, Iterator
 from torch.utils.data import DataLoader, Dataset, SequentialSampler
 from torch.utils.data.distributed import DistributedSampler
-from torch import autocast
-from torch.cuda.amp import GradScaler
 from torch.multiprocessing import Process, Queue
-from unitorch import set_seed, is_torch2_available
+from unitorch import set_seed
 from unitorch.models import ExponentialMovingAverage
-from unitorch.utils import get_local_rank
+from unitorch.utils import get_local_rank, nested_dict_value, update_nested_dict
 from unitorch.utils import (
     DistributedSkipSampler,
     RandomSkipSampler,
@@ -76,6 +74,7 @@ class DeepspeedTask:
         datasets,
         local_rank: Optional[int] = -1,
         seed: Optional[int] = 1123,
+        cpu_offload: Optional[bool] = False,
     ):
         """
         Initialize the DeepspeedTask.
@@ -100,7 +99,7 @@ class DeepspeedTask:
         if self.local_rank != -1:
             torch.cuda.set_device(self.local_rank)
 
-        if torch.cuda.is_available():
+        if torch.cuda.is_available() and not cpu_offload:
             self.model = self.model.cuda()
 
         self.best_score = -np.inf
@@ -139,12 +138,14 @@ class DeepspeedTask:
             "local_rank",
             get_local_rank(),
         )
+        cpu_offload = config.getoption("cpu_offload", False)
 
         return dict(
             configure=config,
             model=model,
             datasets=dataset,
             local_rank=local_rank,
+            cpu_offload=cpu_offload,
         )
 
     @add_default_section_for_function("core/task/deepspeed/supervised")
@@ -172,7 +173,7 @@ class DeepspeedTask:
         max_warmup_learning_rate: Optional[float] = None,
         num_warmup_steps: Optional[int] = None,
         epochs: Optional[int] = 5,
-        use_amp: Optional[bool] = False,
+        zero_stage: Optional[int] = 2,
         use_ema: Optional[bool] = False,
         ema_decay: Optional[float] = 0.9999,
         ema_tau: Optional[int] = 2000,
@@ -241,29 +242,34 @@ class DeepspeedTask:
 
         assert "optimizer" in config_dict
 
-        if "params" not in config_dict["optimizer"]:
-            config_dict["optimizer"]["params"] = dict()
+        update_nested_dict(config_dict, "zero_optimization", "stage", zero_stage)
 
-        scheduler_type = None
-        if "scheduler" in config_dict:
-            scheduler_type = config_dict["scheduler"].get("type", None)
-            if "params" not in config_dict["scheduler"]:
-                config_dict["scheduler"]["params"] = dict()
+        scheduler_type = nested_dict_value(config_dict, "scheduler", "type")
 
         if learning_rate is not None:
-            config_dict["optimizer"]["params"]["lr"] = learning_rate
+            update_nested_dict(config_dict, "optimizer", "params", "lr", learning_rate)
 
         if scheduler_type == "WarmupLR":
             if learning_rate is not None:
-                config_dict["scheduler"]["params"]["warmup_max_lr"] = learning_rate
+                update_nested_dict(
+                    config_dict, "scheduler", "params", "warmup_max_lr", learning_rate
+                )
             if max_warmup_learning_rate is not None:
-                config_dict["scheduler"]["params"][
-                    "warmup_max_lr"
-                ] = max_warmup_learning_rate
+                update_nested_dict(
+                    config_dict,
+                    "scheduler",
+                    "params",
+                    "warmup_max_lr",
+                    max_warmup_learning_rate,
+                )
             if num_warmup_steps is not None:
-                config_dict["scheduler"]["params"][
-                    "warmup_num_steps"
-                ] = num_warmup_steps
+                update_nested_dict(
+                    config_dict,
+                    "scheduler",
+                    "params",
+                    "warmup_num_steps",
+                    num_warmup_steps,
+                )
 
         info_path = os.path.join(to_ckpt_dir, "info.json")
         if os.path.exists(info_path):
@@ -370,30 +376,11 @@ class DeepspeedTask:
                     inputs = inputs.cuda()
                     targets = targets.cuda()
 
-                if is_torch2_available():
-                    with torch.cuda.amp.autocast(
-                        enabled=use_amp
-                    ) as autocast, torch.backends.cuda.sdp_kernel(
-                        enable_flash=False
-                    ) as disable:
-                        outputs = self.model(**inputs.dict())
-                        if isinstance(outputs, LossOutputs):
-                            loss = outputs.loss / grad_acc_step
-                        else:
-                            loss = (
-                                loss_fn(outputs=outputs, targets=targets)
-                                / grad_acc_step
-                            )
+                outputs = self.model(**inputs.dict())
+                if isinstance(outputs, LossOutputs):
+                    loss = outputs.loss / grad_acc_step
                 else:
-                    with torch.cuda.amp.autocast(enabled=use_amp) as autocast:
-                        outputs = self.model(**inputs.dict())
-                        if isinstance(outputs, LossOutputs):
-                            loss = outputs.loss / grad_acc_step
-                        else:
-                            loss = (
-                                loss_fn(outputs=outputs, targets=targets)
-                                / grad_acc_step
-                            )
+                    loss = loss_fn(outputs=outputs, targets=targets) / grad_acc_step
 
                 nn.utils.clip_grad_norm_(self.model.parameters(), max_grad_norm)
                 self.model.backward(loss)
@@ -552,7 +539,7 @@ class DeepspeedTask:
         max_size: Optional[int] = 10000,
         from_ckpt_dir: Optional[str] = "./from_ckpt",
         output_header: Optional[List] = None,
-        output_path: Optional[str] = "./cache/predict.txt",
+        output_path: Optional[str] = "./output.txt",
         postprocess_workers: Optional[int] = 2,
     ):
         """
@@ -567,7 +554,7 @@ class DeepspeedTask:
             max_size (optional): The maximum size of the dataset for inference. Defaults to 10000.
             from_ckpt_dir (optional): The directory path to load checkpoints from. Defaults to "./from_ckpt".
             output_header (optional): The header for the output file. Defaults to None.
-            output_path (optional): The path to save the output file. Defaults to "./cache/predict.txt".
+            output_path (optional): The path to save the output file. Defaults to "./output.txt".
             postprocess_workers (optional): The number of worker processes for post-processing. Defaults to 2.
         """
         assert self.n_gpu <= 1

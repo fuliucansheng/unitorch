@@ -56,7 +56,6 @@ class DPTForDepthEstimation(_DPTForDepthEstimation):
 
         return inst
 
-    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
     def forward(
         self,
     ):
@@ -71,6 +70,7 @@ class DPTForDepthEstimation(_DPTForDepthEstimation):
         outputs = super().forward(
             pixel_values=pixel_values,
         )
+        max_values = torch.amax(outputs.reshape(len(outputs), -1), dim=1)
         return SegmentationOutputs(
-            masks=list(outputs),
+            masks=list([out / value for out, value in zip(outputs, max_values)]),
         )

@@ -252,15 +252,27 @@ class StableFluxForImage2ImageGenerationPipeline(GenericStableFluxModel):
                 self.scheduler.config
             )
 
+        controlnet_checkpoints, controlnet_processes = zip(*controlnet_checkpoints)
+
         if any(ckpt is not None for ckpt in controlnet_checkpoints) and any(
             img is not None for img in controlnet_images
         ):
             controlnets, conditioning_scales, conditioning_images = [], [], []
-            for checkpoint, conditioning_scale, conditioning_image in zip(
-                controlnet_checkpoints, controlnet_guidance_scales, controlnet_images
+            controlnet_conditioning_modes = []
+            for checkpoint, process, conditioning_scale, conditioning_image in zip(
+                controlnet_checkpoints,
+                controlnet_processes,
+                controlnet_guidance_scales,
+                controlnet_images,
             ):
                 if checkpoint is None or conditioning_image is None:
                     continue
+                if "union" in checkpoint:
+                    assert process in {"canny", "tile", "depth"}
+                    mode = {"canny": 0, "tile": 1, "depth": 2}.get(process, None)
+                    controlnet_conditioning_modes.append(mode)
+                else:
+                    controlnet_conditioning_modes.append(None)
                 controlnet_config_path = cached_path(
                     nested_dict_value(
                         pretrained_stable_extensions_infos,
@@ -286,8 +298,8 @@ class StableFluxForImage2ImageGenerationPipeline(GenericStableFluxModel):
                 controlnet.to(device=self._device)
                 logging.info(f"Loading controlnet from {checkpoint}")
                 controlnets.append(controlnet)
-            conditioning_scales.append(conditioning_scale)
-            conditioning_images.append(conditioning_image.resize(image.size))
+                conditioning_scales.append(conditioning_scale)
+                conditioning_images.append(conditioning_image.resize(image.size))
             self.pipeline = FluxControlNetImg2ImgPipeline(
                 vae=self.vae,
                 text_encoder=self.text,
@@ -401,6 +413,7 @@ class StableFluxForImage2ImageGenerationPipeline(GenericStableFluxModel):
                 guidance_scale=guidance_scale,
                 strength=strength,
                 controlnet_conditioning_scale=conditioning_scales,
+                control_mode=controlnet_conditioning_modes,
                 output_type="np.array",
             )
         else:

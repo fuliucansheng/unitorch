@@ -35,6 +35,7 @@ from unitorch.utils.functional import (
     rpartial,
     truncate_sequence_pair,
     nested_dict_value,
+    update_nested_dict,
 )
 from unitorch.utils.image_utils import (
     make_grid,
@@ -51,8 +52,6 @@ from unitorch.utils.import_utils import (
     is_diffusers_available,
     is_xformers_available,
     is_opencv_available,
-    is_torch_available,
-    is_torch2_available,
     is_bitsandbytes_available,
     is_auto_gptq_available,
     is_onnxruntime_available,

@@ -502,6 +502,9 @@ pretrained_stable_extensions_infos = {
     "stable-flux-controlnet-dev-union": __hf_hub_controlnet_safetensors_dict__(
         "InstantX/FLUX.1-dev-Controlnet-Union"
     ),
+    "stable-flux-controlnet-dev-union-pro": __hf_hub_controlnet_safetensors_dict__(
+        "Shakker-Labs/FLUX.1-dev-ControlNet-Union-Pro"
+    ),
 }
 
 from unitorch.cli.models.diffusion_utils import load_weight

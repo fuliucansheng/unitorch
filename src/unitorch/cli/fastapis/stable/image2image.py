@@ -277,8 +277,8 @@ class StableForImage2ImageFastAPIPipeline(GenericStableModel):
         )
         image_inputs = self.processor.image2image_inputs(image)
         inputs = {**text_inputs, **image_inputs}
-        if freeu_params is not None:
-            self.pipeline.enable_freeu(*freeu_params)
+        # if freeu_params is not None:
+        #     self.pipeline.enable_freeu(*freeu_params)
         self.seed = seed
 
         inputs = {k: v.unsqueeze(0) if v is not None else v for k, v in inputs.items()}

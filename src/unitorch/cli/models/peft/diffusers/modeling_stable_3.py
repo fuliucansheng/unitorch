@@ -89,7 +89,11 @@ class Stable3LoraForText2ImageGeneration(_Stable3LoraForText2ImageGeneration):
             seed=seed,
         )
         self.use_dtype = torch.float16 if use_fp16 else torch.float32
-        self.use_dtype = torch.bfloat16 if use_bf16 and torch.cuda.is_bf16_supported() else self.use_dtype
+        self.use_dtype = (
+            torch.bfloat16
+            if use_bf16 and torch.cuda.is_bf16_supported()
+            else self.use_dtype
+        )
 
     @classmethod
     @add_default_section_for_init("core/model/diffusers/peft/lora/text2image/stable_3")
@@ -394,7 +398,11 @@ class Stable3LoraForImageInpainting(_Stable3LoraForImageInpainting):
             seed=seed,
         )
         self.use_dtype = torch.float16 if use_fp16 else torch.float32
-        self.use_dtype = torch.bfloat16 if use_bf16 and torch.cuda.is_bf16_supported() else self.use_dtype
+        self.use_dtype = (
+            torch.bfloat16
+            if use_bf16 and torch.cuda.is_bf16_supported()
+            else self.use_dtype
+        )
 
     @classmethod
     @add_default_section_for_init("core/model/diffusers/peft/lora/inpainting/stable_3")

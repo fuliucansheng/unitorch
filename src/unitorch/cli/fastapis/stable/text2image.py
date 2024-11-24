@@ -276,8 +276,8 @@ class StableForText2ImageFastAPIPipeline(GenericStableModel):
             negative_prompt=neg_text,
         )
         inputs = text_inputs
-        if freeu_params is not None:
-            self.pipeline.enable_freeu(*freeu_params)
+        # if freeu_params is not None:
+        #     self.pipeline.enable_freeu(*freeu_params)
         self.seed = seed
 
         inputs = {k: v.unsqueeze(0) if v is not None else v for k, v in inputs.items()}

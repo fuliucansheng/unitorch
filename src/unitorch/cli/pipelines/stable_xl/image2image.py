@@ -335,8 +335,8 @@ class StableXLForImage2ImageGenerationPipeline(GenericStableXLModel):
             enable_controlnet = False
             inputs = {**text_inputs, **image_inputs}
         self.pipeline.set_progress_bar_config(disable=True)
-        if freeu_params is not None:
-            self.pipeline.enable_freeu(*freeu_params)
+        # if freeu_params is not None:
+        #     self.pipeline.enable_freeu(*freeu_params)
         self.seed = seed
 
         inputs = {k: v.unsqueeze(0) if v is not None else v for k, v in inputs.items()}

@@ -88,7 +88,11 @@ class ControlNet3LoraForText2ImageGeneration(_ControlNet3LoraForText2ImageGenera
             seed=seed,
         )
         self.use_dtype = torch.float16 if use_fp16 else torch.float32
-        self.use_dtype = torch.bfloat16 if use_bf16 and torch.cuda.is_bf16_supported() else self.use_dtype
+        self.use_dtype = (
+            torch.bfloat16
+            if use_bf16 and torch.cuda.is_bf16_supported()
+            else self.use_dtype
+        )
 
     @classmethod
     @add_default_section_for_init(
@@ -282,7 +286,7 @@ class ControlNet3LoraForText2ImageGeneration(_ControlNet3LoraForText2ImageGenera
         if state_dict is not None:
             inst.from_pretrained(state_dict=state_dict)
         return inst
-    
+
     def forward(
         self,
         pixel_values: torch.Tensor,
