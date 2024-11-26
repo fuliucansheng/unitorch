@@ -138,7 +138,9 @@ class DeepspeedTask:
             "local_rank",
             get_local_rank(),
         )
-        cpu_offload = config.getoption("cpu_offload", False)
+        cpu_offload = config.getdefault(
+            "core/task/deepspeed/supervised", "cpu_offload", False
+        )
 
         return dict(
             configure=config,
