@@ -44,6 +44,7 @@ def launch(config_path: str, **kwargs):
     script_name = config.getdefault("core/cli", "script_name", None)
 
     assert script_name is not None
+    assert script_name in registered_script, f"{script_name} not found"
 
     main_script_cls = registered_script.get(script_name)
     if main_script_cls is None:

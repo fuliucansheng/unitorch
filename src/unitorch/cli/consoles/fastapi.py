@@ -47,9 +47,10 @@ def fastapi(config_path: str, **kwargs):
     assert enabled_services is not None
     if isinstance(enabled_services, str):
         enabled_services = [enabled_services]
-    assert all(
-        fastapi_service in registered_fastapi for fastapi_service in enabled_services
-    )
+
+    for enabled_service in enabled_services:
+        assert enabled_service in registered_fastapi, f"{enabled_service} not found"
+
     fastapi_instances = [
         registered_fastapi.get(fastapi_service)["obj"](config)
         for fastapi_service in enabled_services
