@@ -139,6 +139,7 @@ class Stable3Processor:
             )
         else:
             self.vae_image_processor = None
+        self.divisor = 16
 
     def text2image(
         self,
@@ -231,8 +232,12 @@ class Stable3Processor:
         if isinstance(image, str):
             image = Image.open(image)
         image = image.convert("RGB")
-        if self.image_size is not None:
-            image = image.resize(self.image_size)
+        size = image.size if self.image_size is None else self.image_size
+        size = (
+            size[0] // self.divisor * self.divisor,
+            size[1] // self.divisor * self.divisor,
+        )
+        image = image.resize(size)
 
         pixel_values = self.vae_image_processor.preprocess(image)[0]
 
@@ -253,9 +258,13 @@ class Stable3Processor:
             mask_image = Image.open(mask_image)
         mask_image = mask_image.convert("L")
 
-        if self.image_size is not None:
-            image = image.resize(self.image_size)
-            mask_image = mask_image.resize(self.image_size)
+        size = image.size if self.image_size is None else self.image_size
+        size = (
+            size[0] // self.divisor * self.divisor,
+            size[1] // self.divisor * self.divisor,
+        )
+        image = image.resize(size)
+        mask_image = mask_image.resize(size)
 
         pixel_values = self.vae_image_processor.preprocess(image)[0]
         pixel_masks = self.vae_image_processor.preprocess(mask_image)[0]
@@ -273,8 +282,12 @@ class Stable3Processor:
         if isinstance(image, str):
             image = Image.open(image)
         image = image.convert("RGB")
-        if self.image_size is not None:
-            image = image.resize(self.image_size)
+        size = image.size if self.image_size is None else self.image_size
+        size = (
+            size[0] // self.divisor * self.divisor,
+            size[1] // self.divisor * self.divisor,
+        )
+        image = image.resize(size)
 
         pixel_values = self.vae_image_processor.preprocess(image)[0]
         return GenericOutputs(pixel_values=pixel_values)
@@ -288,8 +301,12 @@ class Stable3Processor:
             if isinstance(image, str):
                 image = Image.open(image)
             image = image.convert("RGB")
-            if self.image_size is not None:
-                image = image.resize(self.image_size)
+            size = image.size if self.image_size is None else self.image_size
+            size = (
+                size[0] // self.divisor * self.divisor,
+                size[1] // self.divisor * self.divisor,
+            )
+            image = image.resize(size)
 
             pixel_values.append(self.vae_image_processor.preprocess(image)[0])
 
@@ -303,14 +320,17 @@ class Stable3Processor:
         if isinstance(image, str):
             image = Image.open(image)
         image = image.convert("RGB")
-        if self.image_size is not None:
-            image = image.resize(self.image_size)
+        size = image.size if self.image_size is None else self.image_size
+        size = (
+            size[0] // self.divisor * self.divisor,
+            size[1] // self.divisor * self.divisor,
+        )
+        image = image.resize(size)
 
         if isinstance(mask_image, str):
             mask_image = Image.open(mask_image)
         mask_image = mask_image.convert("L")
-        if self.image_size is not None:
-            mask_image = mask_image.resize(self.image_size)
+        mask_image = mask_image.resize(size)
 
         pixel_values = self.vae_image_processor.preprocess(image)[0]
         pixel_masks = self.vae_image_processor.preprocess(mask_image)[0]
@@ -324,8 +344,12 @@ class Stable3Processor:
         if isinstance(image, str):
             image = Image.open(image)
         image = image.convert("RGB")
-        if self.image_size is not None:
-            image = image.resize(self.image_size)
+        size = image.size if self.image_size is None else self.image_size
+        size = (
+            size[0] // self.divisor * self.divisor,
+            size[1] // self.divisor * self.divisor,
+        )
+        image = image.resize(size)
 
         pixel_values = self.vae_image_processor.preprocess(image)[0]
 
@@ -340,8 +364,12 @@ class Stable3Processor:
             if isinstance(image, str):
                 image = Image.open(image)
             image = image.convert("RGB")
-            if self.image_size is not None:
-                image = image.resize(self.image_size)
+            size = image.size if self.image_size is None else self.image_size
+            size = (
+                size[0] // self.divisor * self.divisor,
+                size[1] // self.divisor * self.divisor,
+            )
+            image = image.resize(size)
 
             pixel_values.append(self.vae_image_processor.preprocess(image)[0])
 
