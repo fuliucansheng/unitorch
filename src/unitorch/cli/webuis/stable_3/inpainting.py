@@ -99,7 +99,7 @@ class Stable3ImageInpaintingWebUI(SimpleWebUI):
         mask_image = create_element("image", "Input Image Mask")
 
         guidance_scale = create_element(
-            "slider", "Guidance Scale", min_value=0, max_value=10, step=0.1, default=7.5
+            "slider", "Guidance Scale", min_value=0, max_value=50, step=0.1, default=7.5
         )
         strength = create_element(
             "slider", "Strength", min_value=0, max_value=1, step=0.01, default=0.8

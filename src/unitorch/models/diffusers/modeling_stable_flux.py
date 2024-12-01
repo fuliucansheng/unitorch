@@ -24,6 +24,7 @@ from diffusers.pipelines import (
     FluxPipeline,
     FluxImg2ImgPipeline,
     FluxInpaintPipeline,
+    FluxFillPipeline,
 )
 from unitorch.models import (
     GenericModel,
@@ -558,7 +559,7 @@ class StableFluxForImageInpainting(GenericStableFluxModel):
             seed=seed,
         )
 
-        self.pipeline = FluxInpaintPipeline(
+        self.pipeline = FluxFillPipeline(
             vae=self.vae,
             text_encoder=self.text,
             text_encoder_2=self.text2,
@@ -582,7 +583,6 @@ class StableFluxForImageInpainting(GenericStableFluxModel):
         input2_ids: torch.Tensor,
         attention_mask: Optional[torch.Tensor] = None,
         attention2_mask: Optional[torch.Tensor] = None,
-        strength: Optional[float] = 1.0,
         guidance_scale: Optional[float] = 7.5,
     ):
         outputs = self.get_prompt_outputs(
@@ -603,7 +603,6 @@ class StableFluxForImageInpainting(GenericStableFluxModel):
             num_inference_steps=self.num_infer_timesteps,
             width=pixel_values.size(-1),
             height=pixel_values.size(-2),
-            strength=strength,
             guidance_scale=guidance_scale,
             output_type="np.array",
         ).images

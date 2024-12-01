@@ -641,7 +641,7 @@ class StableFluxForImageInpainting(_StableFluxForImageInpainting):
         input2_ids: torch.Tensor,
         attention_mask: Optional[torch.Tensor] = None,
         attention2_mask: Optional[torch.Tensor] = None,
-        strength: Optional[float] = 1.0,
+        # strength: Optional[float] = 1.0,
         guidance_scale: Optional[float] = 7.5,
     ):
         outputs = super().generate(
@@ -651,7 +651,7 @@ class StableFluxForImageInpainting(_StableFluxForImageInpainting):
             input2_ids=input2_ids,
             attention_mask=attention_mask,
             attention2_mask=attention2_mask,
-            strength=strength,
+            # strength=strength,
             guidance_scale=guidance_scale,
         )
 

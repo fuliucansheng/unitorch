@@ -101,7 +101,7 @@ class StableXLText2ImageWebUI(SimpleWebUI):
         )
 
         guidance_scale = create_element(
-            "slider", "Guidance Scale", min_value=0, max_value=10, step=0.1, default=7.5
+            "slider", "Guidance Scale", min_value=0, max_value=50, step=0.1, default=7.5
         )
 
         seed = create_element(

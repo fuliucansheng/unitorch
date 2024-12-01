@@ -351,6 +351,9 @@ pretrained_stable_infos = {
     "stable-flux-dev": __hf_hub_stable_flux_safetensors_dict__(
         "camenduru/FLUX.1-dev-diffusers"
     ),
+    "stable-flux-dev-fill": __hf_hub_stable_flux_safetensors_dict__(
+        "fuliucansheng/FLUX.1-Fill-dev-diffusers"
+    ),
     "stable-video-diffusion-img2vid-xt": __hf_hub_stable_video_safetensors_dict__(
         "stabilityai/stable-video-diffusion-img2vid-xt"
     ),

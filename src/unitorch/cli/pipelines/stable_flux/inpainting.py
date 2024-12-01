@@ -19,6 +19,7 @@ from diffusers.pipelines import (
     FluxPipeline,
     FluxInpaintPipeline,
     FluxControlNetInpaintPipeline,
+    FluxFillPipeline,
 )
 from unitorch import is_xformers_available
 from unitorch.utils import is_remote_url
@@ -395,7 +396,7 @@ class StableFluxForImageInpaintingPipeline(GenericStableFluxModel):
                 **{"condition_pixel_values": condition_pixel_values},
             }
         else:
-            self.pipeline = FluxInpaintPipeline(
+            self.pipeline = FluxFillPipeline(
                 vae=self.vae,
                 text_encoder=self.text,
                 text_encoder_2=self.text2,
@@ -511,7 +512,7 @@ class StableFluxForImageInpaintingPipeline(GenericStableFluxModel):
                 ),
                 num_inference_steps=num_timesteps,
                 guidance_scale=guidance_scale,
-                strength=strength,
+                # strength=strength,
                 output_type="np.array",
             )
         self.unload_lora_weights()
