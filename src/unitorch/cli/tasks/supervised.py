@@ -537,7 +537,10 @@ class SupervisedTask:
                     inputs = inputs.cuda()
                     targets = targets.cuda()
 
-                with torch.autocast(enabled=True):
+                with torch.autocast(
+                    enabled=True,
+                    device_type="cuda" if torch.cuda.is_available() else "cpu",
+                ):
                     outputs = self.model(**inputs.dict())
                     if isinstance(outputs, LossOutputs):
                         loss = outputs.loss / grad_acc_step

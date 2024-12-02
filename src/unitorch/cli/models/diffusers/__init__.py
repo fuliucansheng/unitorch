@@ -554,6 +554,7 @@ from unitorch.cli.models.diffusers.modeling_adapter import (
 from unitorch.cli.models.diffusers.modeling_adapter_xl import (
     StableXLAdapterForText2ImageGeneration,
 )
+from unitorch.cli.models.diffusers.modeling_vae import VAEForDiffusion
 from unitorch.cli.models.diffusers.processing_stable import StableProcessor
 from unitorch.cli.models.diffusers.processing_stable_xl import StableXLProcessor
 from unitorch.cli.models.diffusers.processing_stable_3 import Stable3Processor
