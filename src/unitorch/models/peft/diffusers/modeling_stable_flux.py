@@ -25,6 +25,7 @@ from diffusers.pipelines import (
     FluxPipeline,
     FluxImg2ImgPipeline,
     FluxInpaintPipeline,
+    FluxFillPipeline,
 )
 from unitorch.models import (
     GenericModel,
@@ -416,6 +417,239 @@ class StableFluxLoraForText2ImageGeneration(GenericStableFluxLoraModel):
             num_inference_steps=self.num_infer_timesteps,
             height=height,
             width=width,
+            guidance_scale=guidance_scale,
+            output_type="np.array",
+        ).images
+
+        return GenericOutputs(images=torch.from_numpy(images))
+
+
+class StableFluxLoraForImageInpainting(GenericStableFluxLoraModel):
+    def __init__(
+        self,
+        config_path: str,
+        text_config_path: str,
+        text2_config_path: str,
+        vae_config_path: str,
+        scheduler_config_path: str,
+        controlnet_configs_path: Union[str, List[str]] = None,
+        quant_config_path: Optional[str] = None,
+        image_size: Optional[int] = None,
+        in_channels: Optional[int] = None,
+        out_channels: Optional[int] = None,
+        num_train_timesteps: Optional[int] = 1000,
+        num_infer_timesteps: Optional[int] = 50,
+        snr_gamma: Optional[float] = 5.0,
+        lora_r: Optional[int] = 16,
+        lora_alpha: Optional[int] = 32,
+        lora_dropout: Optional[float] = 0.05,
+        fan_in_fan_out: Optional[bool] = True,
+        target_modules: Optional[Union[List[str], str]] = [
+            "to_q",
+            "to_k",
+            "to_v",
+            "q_proj",
+            "k_proj",
+            "v_proj",
+            "SelfAttention.q",
+            "SelfAttention.k",
+            "SelfAttention.v",
+        ],
+        enable_text_adapter: Optional[bool] = True,
+        enable_transformer_adapter: Optional[bool] = True,
+        seed: Optional[int] = 1123,
+        guidance_scale: Optional[float] = 3.5,
+    ):
+        super().__init__(
+            config_path=config_path,
+            text_config_path=text_config_path,
+            text2_config_path=text2_config_path,
+            vae_config_path=vae_config_path,
+            scheduler_config_path=scheduler_config_path,
+            controlnet_configs_path=controlnet_configs_path,
+            quant_config_path=quant_config_path,
+            image_size=image_size,
+            in_channels=in_channels,
+            out_channels=out_channels,
+            num_train_timesteps=num_train_timesteps,
+            num_infer_timesteps=num_infer_timesteps,
+            snr_gamma=snr_gamma,
+            lora_r=lora_r,
+            lora_alpha=lora_alpha,
+            lora_dropout=lora_dropout,
+            fan_in_fan_out=fan_in_fan_out,
+            target_modules=target_modules,
+            enable_text_adapter=enable_text_adapter,
+            enable_transformer_adapter=enable_transformer_adapter,
+            seed=seed,
+        )
+
+        self.pipeline = FluxFillPipeline(
+            vae=self.vae,
+            text_encoder=self.text,
+            text_encoder_2=self.text2,
+            transformer=self.transformer,
+            scheduler=self.scheduler,
+            tokenizer=None,
+            tokenizer_2=None,
+        )
+        self.pipeline.set_progress_bar_config(disable=True)
+        self.guidance_scale = guidance_scale
+        self.num_channels_transformer = self.transformer.config.in_channels
+
+    def forward(
+        self,
+        input_ids: torch.Tensor,
+        input2_ids: torch.Tensor,
+        pixel_values: torch.Tensor,
+        pixel_masks: torch.Tensor,
+        attention_mask: Optional[torch.Tensor] = None,
+        attention2_mask: Optional[torch.Tensor] = None,
+    ):
+        outputs = self.get_prompt_outputs(
+            input_ids=input_ids,
+            input2_ids=input2_ids,
+            attention_mask=attention_mask,
+            attention2_mask=attention2_mask,
+        )
+        latents = self.vae.encode(pixel_values).latent_dist.sample()
+        latents = (
+            latents - self.vae.config.shift_factor
+        ) * self.vae.config.scaling_factor
+        latent_image_ids = _prepare_latent_image_ids(
+            latents.shape[0],
+            latents.shape[2] // 2,
+            latents.shape[3] // 2,
+            self.device,
+            self.dtype,
+        )
+
+        noise = torch.randn(latents.shape).to(latents.device)
+        batch = latents.shape[0]
+
+        u = compute_density_for_timestep_sampling(
+            weighting_scheme="none",
+            batch_size=batch,
+            logit_mean=0.0,
+            logit_std=1.0,
+            mode_scale=1.29,
+        )
+        indices = (u * self.scheduler.config.num_train_timesteps).long()
+        timesteps = self.scheduler.timesteps[indices].to(device=self.device)
+
+        sigmas = self.get_sigmas(timesteps, n_dim=latents.ndim, dtype=latents.dtype)
+        noise_latents = (1.0 - sigmas) * latents + sigmas * noise
+        vae_scale_factor = 2 ** (len(self.vae.config.block_out_channels) - 1)
+
+        if self.num_channels_transformer == 384:
+            masked_pixel_values = pixel_values.clone()
+            masked_pixel_masks = pixel_masks.clone()
+            masked_pixel_masks = masked_pixel_masks.expand_as(masked_pixel_values)
+            masked_pixel_values[masked_pixel_masks > 0.5] = -1.0
+            masked_latents = self.vae.encode(masked_pixel_values).latent_dist.sample()
+            masked_latents = (
+                masked_latents - self.vae.config.shift_factor
+            ) * self.vae.config.scaling_factor
+
+            batch_size, _, height, width = pixel_masks.shape
+            height = 2 * (int(height) // (vae_scale_factor * 2))
+            width = 2 * (int(width) // (vae_scale_factor * 2))
+            pixel_masks = pixel_masks[:, 0, :, :].view(
+                batch_size, height, vae_scale_factor, width, vae_scale_factor
+            )
+            pixel_masks = pixel_masks.permute(
+                0, 2, 4, 1, 3
+            )  # batch_size, 8, 8, height, width
+            pixel_masks = pixel_masks.reshape(
+                batch_size, vae_scale_factor * vae_scale_factor, height, width
+            )
+
+            latent_model_input = torch.cat(
+                [noise_latents, masked_latents, pixel_masks], dim=1
+            )
+        else:
+            latent_model_input = noise_latents
+
+        latent_model_input = _pack_latents(
+            latent_model_input,
+            batch_size=latents.shape[0],
+            num_channels_latents=latent_model_input.shape[1],
+            height=latents.shape[2],
+            width=latents.shape[3],
+        )
+
+        text_ids = torch.zeros(outputs.prompt_embeds.shape[1], 3).to(
+            device=self.device, dtype=self.dtype
+        )
+
+        if self.transformer.config.guidance_embeds:
+            guidance = torch.full(
+                [1], self.guidance_scale, device=self.device, dtype=torch.float32
+            )
+            guidance = guidance.expand(latents.shape[0])
+        else:
+            guidance = None
+
+        outputs = self.transformer(
+            hidden_states=latent_model_input,
+            timestep=timesteps / 1000,
+            guidance=guidance,
+            encoder_hidden_states=outputs.prompt_embeds,
+            pooled_projections=outputs.pooled_prompt_embeds,
+            txt_ids=text_ids,
+            img_ids=latent_image_ids,
+            return_dict=False,
+        )[0]
+
+        outputs = _unpack_latents(
+            outputs,
+            height=latents.shape[2] * vae_scale_factor,
+            width=latents.shape[3] * vae_scale_factor,
+            vae_scale_factor=vae_scale_factor,
+        )
+
+        weighting = compute_loss_weighting_for_sd3(
+            weighting_scheme="none", sigmas=sigmas
+        )
+        target = noise - latents
+        loss = torch.mean(
+            (weighting.float() * (outputs.float() - target.float()) ** 2).reshape(
+                target.shape[0], -1
+            ),
+            1,
+        )
+        loss = loss.mean()
+        return loss
+
+    def generate(
+        self,
+        pixel_values: torch.Tensor,
+        pixel_masks: torch.Tensor,
+        input_ids: torch.Tensor,
+        input2_ids: torch.Tensor,
+        attention_mask: Optional[torch.Tensor] = None,
+        attention2_mask: Optional[torch.Tensor] = None,
+        strength: Optional[float] = 1.0,
+        guidance_scale: Optional[float] = 3.5,
+    ):
+        outputs = self.get_prompt_outputs(
+            input_ids=input_ids,
+            input2_ids=input2_ids,
+            attention_mask=attention_mask,
+            attention2_mask=attention2_mask,
+        )
+
+        images = self.pipeline(
+            image=pixel_values,
+            mask_image=pixel_masks,
+            prompt_embeds=outputs.prompt_embeds.to(torch.bfloat16),
+            pooled_prompt_embeds=outputs.pooled_prompt_embeds.to(torch.bfloat16),
+            generator=torch.Generator(device=self.pipeline.device).manual_seed(
+                self.seed
+            ),
+            num_inference_steps=self.num_infer_timesteps,
+            width=pixel_values.size(-1),
+            height=pixel_values.size(-2),
             guidance_scale=guidance_scale,
             output_type="np.array",
         ).images

@@ -456,7 +456,8 @@ class ClipInterrogatorScript(GenericScript):
         results = []
         for image in data[image_col]:
             image = Image.open(image)
-            result = pipe.get_best_prompt(image)
+            image_embeds = pipe.get_image_embeds(image)
+            result = pipe.get_best_prompt(image_embeds)
             results.append(result)
 
         data["result"] = results

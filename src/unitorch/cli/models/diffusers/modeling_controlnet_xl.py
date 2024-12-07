@@ -49,6 +49,8 @@ class ControlNetXLForText2ImageGeneration(_ControlNetXLForText2ImageGeneration):
         freeze_unet_encoder: Optional[bool] = True,
         snr_gamma: Optional[float] = 5.0,
         seed: Optional[int] = 1123,
+        use_fp16: Optional[bool] = True,
+        use_bf16: Optional[bool] = False,
     ):
         super().__init__(
             config_path=config_path,
@@ -68,6 +70,12 @@ class ControlNetXLForText2ImageGeneration(_ControlNetXLForText2ImageGeneration):
             freeze_unet_encoder=freeze_unet_encoder,
             snr_gamma=snr_gamma,
             seed=seed,
+        )
+        self.use_dtype = torch.float16 if use_fp16 else torch.float32
+        self.use_dtype = (
+            torch.bfloat16
+            if use_bf16 and torch.cuda.is_bf16_supported()
+            else self.use_dtype
         )
 
     @classmethod
@@ -153,6 +161,8 @@ class ControlNetXLForText2ImageGeneration(_ControlNetXLForText2ImageGeneration):
         freeze_unet_encoder = config.getoption("freeze_unet_encoder", True)
         snr_gamma = config.getoption("snr_gamma", 5.0)
         seed = config.getoption("seed", 1123)
+        use_fp16 = config.getoption("use_fp16", True)
+        use_bf16 = config.getoption("use_bf16", False)
 
         inst = cls(
             config_path=config_path,
@@ -172,6 +182,8 @@ class ControlNetXLForText2ImageGeneration(_ControlNetXLForText2ImageGeneration):
             freeze_unet_encoder=freeze_unet_encoder,
             snr_gamma=snr_gamma,
             seed=seed,
+            use_fp16=use_fp16,
+            use_bf16=use_bf16,
         )
 
         weight_path = config.getoption("pretrained_weight_path", None)
@@ -253,7 +265,6 @@ class ControlNetXLForText2ImageGeneration(_ControlNetXLForText2ImageGeneration):
 
         return inst
 
-    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
     def forward(
         self,
         input_ids: torch.Tensor,
@@ -264,19 +275,22 @@ class ControlNetXLForText2ImageGeneration(_ControlNetXLForText2ImageGeneration):
         attention_mask: Optional[torch.Tensor] = None,
         attention2_mask: Optional[torch.Tensor] = None,
     ):
-        loss = super().forward(
-            input_ids=input_ids,
-            input2_ids=input2_ids,
-            add_time_ids=add_time_ids,
-            pixel_values=pixel_values,
-            condition_pixel_values=condition_pixel_values,
-            attention_mask=attention_mask,
-            attention2_mask=attention2_mask,
-        )
-        return LossOutputs(loss=loss)
+        with autocast(
+            device_type=("cuda" if torch.cuda.is_available() else "cpu"),
+            dtype=self.use_dtype,
+        ):
+            loss = super().forward(
+                input_ids=input_ids,
+                input2_ids=input2_ids,
+                add_time_ids=add_time_ids,
+                pixel_values=pixel_values,
+                condition_pixel_values=condition_pixel_values,
+                attention_mask=attention_mask,
+                attention2_mask=attention2_mask,
+            )
+            return LossOutputs(loss=loss)
 
     @add_default_section_for_function("core/model/diffusers/text2image/controlnet_xl")
-    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
     def generate(
         self,
         input_ids: torch.Tensor,
@@ -289,19 +303,23 @@ class ControlNetXLForText2ImageGeneration(_ControlNetXLForText2ImageGeneration):
         guidance_scale: Optional[float] = 7.5,
         controlnet_conditioning_scale: Optional[float] = 0.5,
     ):
-        outputs = super().generate(
-            input_ids=input_ids,
-            negative_input_ids=negative_input_ids,
-            condition_pixel_values=condition_pixel_values,
-            attention_mask=attention_mask,
-            negative_attention_mask=negative_attention_mask,
-            height=height,
-            width=width,
-            guidance_scale=guidance_scale,
-            controlnet_conditioning_scale=controlnet_conditioning_scale,
-        )
+        with autocast(
+            device_type=("cuda" if torch.cuda.is_available() else "cpu"),
+            dtype=self.use_dtype,
+        ):
+            outputs = super().generate(
+                input_ids=input_ids,
+                negative_input_ids=negative_input_ids,
+                condition_pixel_values=condition_pixel_values,
+                attention_mask=attention_mask,
+                negative_attention_mask=negative_attention_mask,
+                height=height,
+                width=width,
+                guidance_scale=guidance_scale,
+                controlnet_conditioning_scale=controlnet_conditioning_scale,
+            )
 
-        return DiffusionOutputs(outputs=outputs.images)
+            return DiffusionOutputs(outputs=outputs.images)
 
 
 @register_model(
@@ -327,6 +345,8 @@ class ControlNetXLForImage2ImageGeneration(_ControlNetXLForImage2ImageGeneration
         freeze_unet_encoder: Optional[bool] = True,
         snr_gamma: Optional[float] = 5.0,
         seed: Optional[int] = 1123,
+        use_fp16: Optional[bool] = True,
+        use_bf16: Optional[bool] = False,
     ):
         super().__init__(
             config_path=config_path,
@@ -346,6 +366,12 @@ class ControlNetXLForImage2ImageGeneration(_ControlNetXLForImage2ImageGeneration
             freeze_unet_encoder=freeze_unet_encoder,
             snr_gamma=snr_gamma,
             seed=seed,
+        )
+        self.use_dtype = torch.float16 if use_fp16 else torch.float32
+        self.use_dtype = (
+            torch.bfloat16
+            if use_bf16 and torch.cuda.is_bf16_supported()
+            else self.use_dtype
         )
 
     @classmethod
@@ -431,6 +457,8 @@ class ControlNetXLForImage2ImageGeneration(_ControlNetXLForImage2ImageGeneration
         freeze_unet_encoder = config.getoption("freeze_unet_encoder", True)
         snr_gamma = config.getoption("snr_gamma", 5.0)
         seed = config.getoption("seed", 1123)
+        use_fp16 = config.getoption("use_fp16", True)
+        use_bf16 = config.getoption("use_bf16", False)
 
         inst = cls(
             config_path=config_path,
@@ -450,6 +478,8 @@ class ControlNetXLForImage2ImageGeneration(_ControlNetXLForImage2ImageGeneration
             freeze_unet_encoder=freeze_unet_encoder,
             snr_gamma=snr_gamma,
             seed=seed,
+            use_fp16=use_fp16,
+            use_bf16=use_bf16,
         )
 
         weight_path = config.getoption("pretrained_weight_path", None)
@@ -537,7 +567,6 @@ class ControlNetXLForImage2ImageGeneration(_ControlNetXLForImage2ImageGeneration
         raise NotImplementedError
 
     @add_default_section_for_function("core/model/diffusers/image2image/controlnet_xl")
-    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
     def generate(
         self,
         input_ids: torch.Tensor,
@@ -554,22 +583,26 @@ class ControlNetXLForImage2ImageGeneration(_ControlNetXLForImage2ImageGeneration
         guidance_scale: Optional[float] = 7.5,
         controlnet_conditioning_scale: Optional[float] = 0.5,
     ):
-        outputs = super().generate(
-            input_ids=input_ids,
-            input2_ids=input2_ids,
-            negative_input_ids=negative_input_ids,
-            negative_input2_ids=negative_input2_ids,
-            pixel_values=pixel_values,
-            condition_pixel_values=condition_pixel_values,
-            attention_mask=attention_mask,
-            attention2_mask=attention2_mask,
-            negative_attention_mask=negative_attention_mask,
-            negative_attention2_mask=negative_attention2_mask,
-            strength=strength,
-            guidance_scale=guidance_scale,
-            controlnet_conditioning_scale=controlnet_conditioning_scale,
-        )
-        return DiffusionOutputs(outputs=outputs.images)
+        with autocast(
+            device_type=("cuda" if torch.cuda.is_available() else "cpu"),
+            dtype=self.use_dtype,
+        ):
+            outputs = super().generate(
+                input_ids=input_ids,
+                input2_ids=input2_ids,
+                negative_input_ids=negative_input_ids,
+                negative_input2_ids=negative_input2_ids,
+                pixel_values=pixel_values,
+                condition_pixel_values=condition_pixel_values,
+                attention_mask=attention_mask,
+                attention2_mask=attention2_mask,
+                negative_attention_mask=negative_attention_mask,
+                negative_attention2_mask=negative_attention2_mask,
+                strength=strength,
+                guidance_scale=guidance_scale,
+                controlnet_conditioning_scale=controlnet_conditioning_scale,
+            )
+            return DiffusionOutputs(outputs=outputs.images)
 
 
 @register_model(
@@ -596,6 +629,8 @@ class ControlNetXLForImageInpainting(_ControlNetXLForImageInpainting):
         freeze_unet_encoder: Optional[bool] = True,
         snr_gamma: Optional[float] = 5.0,
         seed: Optional[int] = 1123,
+        use_fp16: Optional[bool] = True,
+        use_bf16: Optional[bool] = False,
     ):
         super().__init__(
             config_path=config_path,
@@ -616,6 +651,12 @@ class ControlNetXLForImageInpainting(_ControlNetXLForImageInpainting):
             freeze_unet_encoder=freeze_unet_encoder,
             snr_gamma=snr_gamma,
             seed=seed,
+        )
+        self.use_dtype = torch.float16 if use_fp16 else torch.float32
+        self.use_dtype = (
+            torch.bfloat16
+            if use_bf16 and torch.cuda.is_bf16_supported()
+            else self.use_dtype
         )
 
     @classmethod
@@ -731,6 +772,8 @@ class ControlNetXLForImageInpainting(_ControlNetXLForImageInpainting):
         freeze_unet_encoder = config.getoption("freeze_unet_encoder", True)
         snr_gamma = config.getoption("snr_gamma", 5.0)
         seed = config.getoption("seed", 1123)
+        use_fp16 = config.getoption("use_fp16", True)
+        use_bf16 = config.getoption("use_bf16", False)
 
         inst = cls(
             config_path=config_path,
@@ -753,6 +796,8 @@ class ControlNetXLForImageInpainting(_ControlNetXLForImageInpainting):
             freeze_unet_encoder=freeze_unet_encoder,
             snr_gamma=snr_gamma,
             seed=seed,
+            use_fp16=use_fp16,
+            use_bf16=use_bf16,
         )
 
         weight_path = config.getoption("pretrained_weight_path", None)
@@ -834,7 +879,6 @@ class ControlNetXLForImageInpainting(_ControlNetXLForImageInpainting):
 
         return inst
 
-    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
     def forward(
         self,
         input_ids: torch.Tensor,
@@ -846,20 +890,23 @@ class ControlNetXLForImageInpainting(_ControlNetXLForImageInpainting):
         attention_mask: Optional[torch.Tensor] = None,
         attention2_mask: Optional[torch.Tensor] = None,
     ):
-        loss = super().forward(
-            input_ids=input_ids,
-            input2_ids=input2_ids,
-            pixel_values=pixel_values,
-            pixel_masks=pixel_masks,
-            condition_pixel_values=condition_pixel_values,
-            inpainting_condition_pixel_values=inpainting_condition_pixel_values,
-            attention_mask=attention_mask,
-            attention2_mask=attention2_mask,
-        )
-        return LossOutputs(loss=loss)
+        with autocast(
+            device_type=("cuda" if torch.cuda.is_available() else "cpu"),
+            dtype=self.use_dtype,
+        ):
+            loss = super().forward(
+                input_ids=input_ids,
+                input2_ids=input2_ids,
+                pixel_values=pixel_values,
+                pixel_masks=pixel_masks,
+                condition_pixel_values=condition_pixel_values,
+                inpainting_condition_pixel_values=inpainting_condition_pixel_values,
+                attention_mask=attention_mask,
+                attention2_mask=attention2_mask,
+            )
+            return LossOutputs(loss=loss)
 
     @add_default_section_for_function("core/model/diffusers/inpainting/controlnet_xl")
-    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
     def generate(
         self,
         input_ids: torch.Tensor,
@@ -879,22 +926,26 @@ class ControlNetXLForImageInpainting(_ControlNetXLForImageInpainting):
         controlnet_conditioning_scale: Optional[Union[float, List[float]]] = None,
         inpainting_controlnet_conditioning_scale: Optional[float] = None,
     ):
-        outputs = super().generate(
-            input_ids=input_ids,
-            input2_ids=input2_ids,
-            negative_input_ids=negative_input_ids,
-            negative_input2_ids=negative_input2_ids,
-            pixel_values=pixel_values,
-            pixel_masks=pixel_masks,
-            condition_pixel_values=condition_pixel_values,
-            inpainting_condition_pixel_values=inpainting_condition_pixel_values,
-            attention_mask=attention_mask,
-            attention2_mask=attention2_mask,
-            negative_attention_mask=negative_attention_mask,
-            negative_attention2_mask=negative_attention2_mask,
-            strength=strength,
-            guidance_scale=guidance_scale,
-            controlnet_conditioning_scale=controlnet_conditioning_scale,
-            inpainting_controlnet_conditioning_scale=inpainting_controlnet_conditioning_scale,
-        )
-        return DiffusionOutputs(outputs=outputs.images)
+        with autocast(
+            device_type=("cuda" if torch.cuda.is_available() else "cpu"),
+            dtype=self.use_dtype,
+        ):
+            outputs = super().generate(
+                input_ids=input_ids,
+                input2_ids=input2_ids,
+                negative_input_ids=negative_input_ids,
+                negative_input2_ids=negative_input2_ids,
+                pixel_values=pixel_values,
+                pixel_masks=pixel_masks,
+                condition_pixel_values=condition_pixel_values,
+                inpainting_condition_pixel_values=inpainting_condition_pixel_values,
+                attention_mask=attention_mask,
+                attention2_mask=attention2_mask,
+                negative_attention_mask=negative_attention_mask,
+                negative_attention2_mask=negative_attention2_mask,
+                strength=strength,
+                guidance_scale=guidance_scale,
+                controlnet_conditioning_scale=controlnet_conditioning_scale,
+                inpainting_controlnet_conditioning_scale=inpainting_controlnet_conditioning_scale,
+            )
+            return DiffusionOutputs(outputs=outputs.images)

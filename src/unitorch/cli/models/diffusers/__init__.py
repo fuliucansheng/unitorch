@@ -351,6 +351,9 @@ pretrained_stable_infos = {
     "stable-flux-dev": __hf_hub_stable_flux_safetensors_dict__(
         "camenduru/FLUX.1-dev-diffusers"
     ),
+    "stable-flux-dev-fill": __hf_hub_stable_flux_safetensors_dict__(
+        "fuliucansheng/FLUX.1-Fill-dev-diffusers"
+    ),
     "stable-video-diffusion-img2vid-xt": __hf_hub_stable_video_safetensors_dict__(
         "stabilityai/stable-video-diffusion-img2vid-xt"
     ),
@@ -502,6 +505,9 @@ pretrained_stable_extensions_infos = {
     "stable-flux-controlnet-dev-union": __hf_hub_controlnet_safetensors_dict__(
         "InstantX/FLUX.1-dev-Controlnet-Union"
     ),
+    "stable-flux-controlnet-dev-union-pro": __hf_hub_controlnet_safetensors_dict__(
+        "Shakker-Labs/FLUX.1-dev-ControlNet-Union-Pro"
+    ),
 }
 
 from unitorch.cli.models.diffusion_utils import load_weight
@@ -548,6 +554,7 @@ from unitorch.cli.models.diffusers.modeling_adapter import (
 from unitorch.cli.models.diffusers.modeling_adapter_xl import (
     StableXLAdapterForText2ImageGeneration,
 )
+from unitorch.cli.models.diffusers.modeling_vae import VAEForDiffusion
 from unitorch.cli.models.diffusers.processing_stable import StableProcessor
 from unitorch.cli.models.diffusers.processing_stable_xl import StableXLProcessor
 from unitorch.cli.models.diffusers.processing_stable_3 import Stable3Processor

@@ -108,7 +108,10 @@ class SegmentationProcessor:
             ]
         else:
             masks = [m.numpy() for m in outputs.masks]
-        results["mask_image"] = [self.save_image(numpy_to_pil(mask)) for mask in masks]
+        results["mask_image"] = [
+            self.save_image(numpy_to_pil(mask if mask.shape[0] > 1 else mask[0]))
+            for mask in masks
+        ]
         return WriterOutputs(results)
 
     @register_process("core/postprocess/segmentation/class_mask")

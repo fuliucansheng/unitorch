@@ -77,10 +77,18 @@ def truncate_sequence_pair(
             tokens_pair.pop()
 
 
-nested_dict_value = (
-    lambda a, b, *c: (
-        nested_dict_value(a[b], *c) if isinstance(a[b], dict) and len(c) > 0 else a[b]
-    )
-    if b in a
-    else None
-)
+def nested_dict_value(a, b, *c):
+    if b in a:
+        if isinstance(a[b], dict) and len(c) > 0:
+            return nested_dict_value(a[b], *c)
+        return a[b]
+    return None
+
+
+def update_nested_dict(a, b, c, *d):
+    if b not in a:
+        a.update({b: {}})
+    if isinstance(a[b], dict) and len(d) > 0:
+        update_nested_dict(a[b], c, *d)
+    else:
+        a.update({b: c})

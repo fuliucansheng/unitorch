@@ -52,7 +52,9 @@ def webui(config_path: str, **kwargs):
     assert enabled_webuis is not None
     if isinstance(enabled_webuis, str):
         enabled_webuis = [enabled_webuis]
-    assert all(enabled_webui in registered_webui for enabled_webui in enabled_webuis)
+
+    for enabled_webui in enabled_webuis:
+        assert enabled_webui in registered_webui, f"{enabled_webui} not found"
 
     webui_instance = lambda webui_name, config: registered_webui.get(webui_name)["obj"](
         config
