@@ -473,6 +473,7 @@ class StableFluxForImageInpainting(_StableFluxForImageInpainting):
         freeze_text_encoder: Optional[bool] = True,
         snr_gamma: Optional[float] = 5.0,
         seed: Optional[int] = 1123,
+        guidance_scale: Optional[float] = 3.5,
     ):
         super().__init__(
             config_path=config_path,
@@ -490,6 +491,7 @@ class StableFluxForImageInpainting(_StableFluxForImageInpainting):
             freeze_text_encoder=freeze_text_encoder,
             snr_gamma=snr_gamma,
             seed=seed,
+            guidance_scale=guidance_scale,
         )
 
     @classmethod
@@ -547,6 +549,7 @@ class StableFluxForImageInpainting(_StableFluxForImageInpainting):
         freeze_text_encoder = config.getoption("freeze_text_encoder", True)
         snr_gamma = config.getoption("snr_gamma", 5.0)
         seed = config.getoption("seed", 1123)
+        guidance_scale = config.getoption("guidance_scale", 3.5)
 
         inst = cls(
             config_path=config_path,
@@ -564,6 +567,7 @@ class StableFluxForImageInpainting(_StableFluxForImageInpainting):
             freeze_text_encoder=freeze_text_encoder,
             snr_gamma=snr_gamma,
             seed=seed,
+            guidance_scale=guidance_scale,
         )
 
         weight_path = config.getoption("pretrained_weight_path", None)
@@ -623,10 +627,28 @@ class StableFluxForImageInpainting(_StableFluxForImageInpainting):
             )
         return inst
 
+    @autocast(
+        device_type=("cuda" if torch.cuda.is_available() else "cpu"),
+        dtype=(torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float32),
+    )
     def forward(
         self,
+        input_ids: torch.Tensor,
+        input2_ids: torch.Tensor,
+        pixel_values: torch.Tensor,
+        pixel_masks: torch.Tensor,
+        attention_mask: Optional[torch.Tensor] = None,
+        attention2_mask: Optional[torch.Tensor] = None,
     ):
-        raise NotImplementedError
+        loss = super().forward(
+            input_ids=input_ids,
+            input2_ids=input2_ids,
+            pixel_values=pixel_values,
+            pixel_masks=pixel_masks,
+            attention_mask=attention_mask,
+            attention2_mask=attention2_mask,
+        )
+        return LossOutputs(loss=loss)
 
     @add_default_section_for_function("core/model/diffusers/inpainting/stable_flux")
     @autocast(

@@ -540,6 +540,7 @@ class StableFluxForImageInpainting(GenericStableFluxModel):
         freeze_text_encoder: Optional[bool] = True,
         snr_gamma: Optional[float] = 5.0,
         seed: Optional[int] = 1123,
+        guidance_scale: Optional[float] = 3.5,
     ):
         super().__init__(
             config_path=config_path,
@@ -569,11 +570,132 @@ class StableFluxForImageInpainting(GenericStableFluxModel):
             tokenizer_2=None,
         )
         self.pipeline.set_progress_bar_config(disable=True)
+        self.guidance_scale = guidance_scale
+        self.num_channels_transformer = self.transformer.config.in_channels
 
     def forward(
         self,
+        input_ids: torch.Tensor,
+        input2_ids: torch.Tensor,
+        pixel_values: torch.Tensor,
+        pixel_masks: torch.Tensor,
+        attention_mask: Optional[torch.Tensor] = None,
+        attention2_mask: Optional[torch.Tensor] = None,
     ):
-        raise NotImplementedError
+        outputs = self.get_prompt_outputs(
+            input_ids=input_ids,
+            input2_ids=input2_ids,
+            attention_mask=attention_mask,
+            attention2_mask=attention2_mask,
+        )
+        latents = self.vae.encode(pixel_values).latent_dist.sample()
+        latents = (
+            latents - self.vae.config.shift_factor
+        ) * self.vae.config.scaling_factor
+        latent_image_ids = _prepare_latent_image_ids(
+            latents.shape[0],
+            latents.shape[2] // 2,
+            latents.shape[3] // 2,
+            self.device,
+            self.dtype,
+        )
+
+        noise = torch.randn(latents.shape).to(latents.device)
+        batch = latents.shape[0]
+
+        u = compute_density_for_timestep_sampling(
+            weighting_scheme="none",
+            batch_size=batch,
+            logit_mean=0.0,
+            logit_std=1.0,
+            mode_scale=1.29,
+        )
+        indices = (u * self.scheduler.config.num_train_timesteps).long()
+        timesteps = self.scheduler.timesteps[indices].to(device=self.device)
+
+        sigmas = self.get_sigmas(timesteps, n_dim=latents.ndim, dtype=latents.dtype)
+        noise_latents = (1.0 - sigmas) * latents + sigmas * noise
+        vae_scale_factor = 2 ** (len(self.vae.config.block_out_channels) - 1)
+
+        if self.num_channels_transformer == 384:
+            masked_pixel_values = pixel_values.clone()
+            masked_pixel_masks = pixel_masks.clone()
+            masked_pixel_masks = masked_pixel_masks.expand_as(masked_pixel_values)
+            masked_pixel_values[masked_pixel_masks > 0.5] = -1.0
+            masked_latents = self.vae.encode(masked_pixel_values).latent_dist.sample()
+            masked_latents = (
+                masked_latents - self.vae.config.shift_factor
+            ) * self.vae.config.scaling_factor
+
+            batch_size, _, height, width = pixel_masks.shape
+            height = 2 * (int(height) // (vae_scale_factor * 2))
+            width = 2 * (int(width) // (vae_scale_factor * 2))
+            pixel_masks = pixel_masks[:, 0, :, :].view(
+                batch_size, height, vae_scale_factor, width, vae_scale_factor
+            )
+            pixel_masks = pixel_masks.permute(
+                0, 2, 4, 1, 3
+            )  # batch_size, 8, 8, height, width
+            pixel_masks = pixel_masks.reshape(
+                batch_size, vae_scale_factor * vae_scale_factor, height, width
+            )
+
+            latent_model_input = torch.cat(
+                [noise_latents, masked_latents, pixel_masks], dim=1
+            )
+        else:
+            latent_model_input = noise_latents
+
+        latent_model_input = _pack_latents(
+            latent_model_input,
+            batch_size=latents.shape[0],
+            num_channels_latents=latent_model_input.shape[1],
+            height=latents.shape[2],
+            width=latents.shape[3],
+        )
+
+        text_ids = torch.zeros(outputs.prompt_embeds.shape[1], 3).to(
+            device=self.device, dtype=self.dtype
+        )
+
+        if self.transformer.config.guidance_embeds:
+            guidance = torch.full(
+                [1], self.guidance_scale, device=self.device, dtype=torch.float32
+            )
+            guidance = guidance.expand(latents.shape[0])
+        else:
+            guidance = None
+
+        outputs = self.transformer(
+            hidden_states=latent_model_input,
+            timestep=timesteps / 1000,
+            guidance=guidance,
+            encoder_hidden_states=outputs.prompt_embeds,
+            pooled_projections=outputs.pooled_prompt_embeds,
+            txt_ids=text_ids,
+            img_ids=latent_image_ids,
+            return_dict=False,
+        )[0]
+
+        outputs = _unpack_latents(
+            outputs,
+            height=latents.shape[2] * vae_scale_factor,
+            width=latents.shape[3] * vae_scale_factor,
+            vae_scale_factor=vae_scale_factor,
+        )
+
+        weighting = compute_loss_weighting_for_sd3(
+            weighting_scheme="none", sigmas=sigmas
+        )
+        target = noise - latents
+        loss = torch.mean(
+            (weighting.float() * (outputs.float() - target.float()) ** 2).reshape(
+                target.shape[0], -1
+            ),
+            1,
+        )
+        loss = loss.mean()
+        return loss
 
     def generate(
         self,
