@@ -405,8 +405,6 @@ class StableFluxImageControlGenerationFastAPI(GenericFastAPI):
         assert self._pipe is not None
         image_bytes = await image.read()
         image = Image.open(io.BytesIO(image_bytes))
-        mask_image_bytes = await mask_image.read()
-        mask_image = Image.open(io.BytesIO(mask_image_bytes))
         image = self._pipe(
             text,
             image,
