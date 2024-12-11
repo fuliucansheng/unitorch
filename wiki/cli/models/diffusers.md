@@ -63,20 +63,6 @@
 
 ::: unitorch.cli.models.diffusers.StableXLForImageInpainting
 
-## StableXLRefinerProcessor
-
-!!! tip
-    **`core/process/diffusion/stable_xl_refiner`** is the section for configuration of StableXLRefinerProcessor.
-
-::: unitorch.cli.models.diffusers.StableXLRefinerProcessor
-
-## StableXLRefinerForText2ImageGeneration
-
-!!! tip
-    **`core/model/diffusers/text2image/stable_xl_refiner`** is the section for configuration of StableXLRefinerForText2ImageGeneration.
-
-::: unitorch.cli.models.diffusers.StableXLRefinerForText2ImageGeneration
-
 ## ControlNetProcessor
 
 !!! tip

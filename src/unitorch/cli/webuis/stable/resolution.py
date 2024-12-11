@@ -88,7 +88,7 @@ class StableImageResolutionWebUI(SimpleWebUI):
         image = create_element("image", "Input Image")
 
         guidance_scale = create_element(
-            "slider", "Guidance Scale", min_value=0, max_value=10, step=0.1, default=7.5
+            "slider", "Guidance Scale", min_value=0, max_value=50, step=0.1, default=7.5
         )
         noise_level = create_element(
             "slider", "Noise Level", min_value=0, max_value=50, step=0.1, default=20

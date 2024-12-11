@@ -27,6 +27,7 @@ from unitorch.models.diffusers.modeling_stable_flux import (
     GenericStableFluxModel,
     StableFluxForText2ImageGeneration,
     StableFluxForImage2ImageGeneration,
+    StableFluxForImageControlGeneration,
     StableFluxForImageInpainting,
 )
 from unitorch.models.diffusers.modeling_controlnet import (
@@ -55,6 +56,7 @@ from unitorch.models.diffusers.modeling_adapter import (
 from unitorch.models.diffusers.modeling_adapter_xl import (
     StableXLAdapterForText2ImageGeneration,
 )
+from unitorch.models.diffusers.modeling_vae import VAEForDiffusion
 from unitorch.models.diffusers.processing_stable import (
     StableProcessor,
     StableVideoProcessor,

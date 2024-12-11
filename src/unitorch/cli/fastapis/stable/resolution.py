@@ -278,8 +278,8 @@ class StableForImageResolutionFastAPIPipeline(GenericStableModel):
         )
         image_inputs = self.processor.image2image_inputs(image)
         inputs = {**text_inputs, **image_inputs}
-        if freeu_params is not None:
-            self.pipeline.enable_freeu(*freeu_params)
+        # if freeu_params is not None:
+        #     self.pipeline.enable_freeu(*freeu_params)
         self.seed = seed
 
         inputs = {k: v.unsqueeze(0) if v is not None else v for k, v in inputs.items()}
@@ -326,7 +326,7 @@ class StableImageResolutionFastAPI(GenericFastAPI):
         router = config.getoption("router", "/core/fastapi/stable/resolution")
         self._pipe = None if not hasattr(self, "_pipe") else self._pipe
         self._router = APIRouter(prefix=router)
-        self._router.add_api_route("/", self.serve, methods=["POST"])
+        self._router.add_api_route("/generate", self.serve, methods=["POST"])
         self._router.add_api_route("/status", self.status, methods=["GET"])
         self._router.add_api_route("/start", self.start, methods=["GET"])
         self._router.add_api_route("/stop", self.stop, methods=["GET"])

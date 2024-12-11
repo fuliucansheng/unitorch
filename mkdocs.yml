@@ -20,7 +20,6 @@ nav:
       - Blip: models/blip.md
       - Bloom: models/bloom.md
       - Clip: models/clip.md
-      - Deberta: models/deberta.md
       - Diffusers: models/diffusers.md
       - Llama: models/llama.md
       - MBart: models/mbart.md
@@ -69,7 +68,6 @@ nav:
       - Blip: cli/models/blip.md
       - Bloom: cli/models/bloom.md
       - Clip: cli/models/clip.md
-      - Deberta: cli/models/deberta.md
       - Diffusers: cli/models/diffusers.md
       - Llama: cli/models/llama.md
       - MBart: cli/models/mbart.md

@@ -388,7 +388,7 @@ class StableXLImageInpaintingFastAPI(GenericFastAPI):
         router = config.getoption("router", "/core/fastapi/stable_xl/inpainting")
         self._pipe = None if not hasattr(self, "_pipe") else self._pipe
         self._router = APIRouter(prefix=router)
-        self._router.add_api_route("/", self.serve, methods=["POST"])
+        self._router.add_api_route("/generate", self.serve, methods=["POST"])
         self._router.add_api_route("/status", self.status, methods=["GET"])
         self._router.add_api_route("/start", self.start, methods=["GET"])
         self._router.add_api_route("/stop", self.stop, methods=["GET"])

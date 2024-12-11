@@ -217,7 +217,10 @@ class ControlNetFluxForText2ImageGeneration(_ControlNetFluxForText2ImageGenerati
                             nested_dict_value(
                                 pretrained_controlnet_info, "controlnet", "weight"
                             ),
-                            prefix_keys={"": f"controlnet.{i}."},
+                            prefix_keys={"": f"controlnet.nets.{i}."},
+                            replace_keys={
+                                f"controlnet\.nets\.{i}\.controlnet\.": f"controlnet.nets.{i}."
+                            },
                         )
                     )
             else:
@@ -227,6 +230,7 @@ class ControlNetFluxForText2ImageGeneration(_ControlNetFluxForText2ImageGenerati
                             pretrained_controlnet_infos[0], "controlnet", "weight"
                         ),
                         prefix_keys={"": "controlnet."},
+                        replace_keys={"controlnet\.controlnet\.": "controlnet."},
                     )
                 )
         elif weight_path is not None:
@@ -509,7 +513,10 @@ class ControlNetFluxForImage2ImageGeneration(_ControlNetFluxForImage2ImageGenera
                             nested_dict_value(
                                 pretrained_controlnet_info, "controlnet", "weight"
                             ),
-                            prefix_keys={"": f"controlnet.{i}."},
+                            prefix_keys={"": f"controlnet.nets.{i}."},
+                            replace_keys={
+                                f"controlnet\.nets\.{i}\.controlnet\.": f"controlnet.nets.{i}."
+                            },
                         )
                     )
             else:
@@ -519,6 +526,7 @@ class ControlNetFluxForImage2ImageGeneration(_ControlNetFluxForImage2ImageGenera
                             pretrained_controlnet_infos[0], "controlnet", "weight"
                         ),
                         prefix_keys={"": "controlnet."},
+                        replace_keys={"controlnet\.controlnet\.": "controlnet."},
                     )
                 )
         elif weight_path is not None:
@@ -824,7 +832,10 @@ class ControlNetFluxForImageInpainting(_ControlNetFluxForImageInpainting):
                             nested_dict_value(
                                 pretrained_controlnet_info, "controlnet", "weight"
                             ),
-                            prefix_keys={"": f"controlnet.{i}."},
+                            prefix_keys={"": f"controlnet.nets.{i}."},
+                            replace_keys={
+                                f"controlnet\.nets\.{i}\.controlnet\.": f"controlnet.nets.{i}."
+                            },
                         )
                     )
             else:
@@ -834,6 +845,7 @@ class ControlNetFluxForImageInpainting(_ControlNetFluxForImageInpainting):
                             pretrained_controlnet_infos[0], "controlnet", "weight"
                         ),
                         prefix_keys={"": "controlnet."},
+                        replace_keys={"controlnet.controlnet.": "controlnet."},
                     )
                 )
         elif weight_path is not None:

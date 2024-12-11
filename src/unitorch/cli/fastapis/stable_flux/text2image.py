@@ -332,8 +332,8 @@ class StableFluxForText2ImageFastAPIPipeline(GenericStableFluxModel):
         outputs = self.pipeline(
             prompt_embeds=prompt_embeds,
             pooled_prompt_embeds=pooled_prompt_embeds,
-            height=height,
-            width=width,
+            height=height // 16 * 16,
+            width=width // 16 * 16,
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),
@@ -355,7 +355,7 @@ class StableFluxText2ImageFastAPI(GenericFastAPI):
         router = config.getoption("router", "/core/fastapi/stable_flux/text2image")
         self._pipe = None if not hasattr(self, "_pipe") else self._pipe
         self._router = APIRouter(prefix=router)
-        self._router.add_api_route("/", self.serve, methods=["GET"])
+        self._router.add_api_route("/generate", self.serve, methods=["GET"])
         self._router.add_api_route("/status", self.status, methods=["GET"])
         self._router.add_api_route("/start", self.start, methods=["GET"])
         self._router.add_api_route("/stop", self.stop, methods=["GET"])

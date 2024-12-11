@@ -23,6 +23,7 @@ from diffusers.pipelines import (
     FluxControlNetImg2ImgPipeline,
     FluxInpaintPipeline,
     FluxControlNetInpaintPipeline,
+    FluxFillPipeline,
 )
 from unitorch import is_xformers_available
 from unitorch.utils import is_remote_url
@@ -92,7 +93,7 @@ class StableFluxForImageInpaintingFastAPIPipeline(GenericStableFluxModel):
 
         self.eval()
 
-        self.pipeline = FluxInpaintPipeline(
+        self.pipeline = FluxFillPipeline(
             vae=self.vae,
             text_encoder=self.text,
             text_encoder_2=self.text2,
@@ -128,7 +129,7 @@ class StableFluxForImageInpaintingFastAPIPipeline(GenericStableFluxModel):
     def from_core_configure(
         cls,
         config,
-        pretrained_name: Optional[str] = "stable-flux-schnell",
+        pretrained_name: Optional[str] = "stable-flux-dev-fill",
         config_path: Optional[str] = None,
         text_config_path: Optional[str] = None,
         text2_config_path: Optional[str] = None,
@@ -309,8 +310,8 @@ class StableFluxForImageInpaintingFastAPIPipeline(GenericStableFluxModel):
     ):
         if width is None or height is None:
             width, height = image.size
-        width = width // 8 * 8
-        height = height // 8 * 8
+        width = width // 16 * 16
+        height = height // 16 * 16
         image = image.resize((width, height))
         mask_image = mask_image.resize((width, height))
 
@@ -352,7 +353,7 @@ class StableFluxForImageInpaintingFastAPIPipeline(GenericStableFluxModel):
             ),
             num_inference_steps=num_timesteps,
             guidance_scale=guidance_scale,
-            strength=strength,
+            # strength=strength,
             output_type="np.array",
         )
 
@@ -369,7 +370,7 @@ class StableFluxImageInpaintingFastAPI(GenericFastAPI):
         router = config.getoption("router", "/core/fastapi/stable_flux/inpainting")
         self._pipe = None if not hasattr(self, "_pipe") else self._pipe
         self._router = APIRouter(prefix=router)
-        self._router.add_api_route("/", self.serve, methods=["POST"])
+        self._router.add_api_route("/generate", self.serve, methods=["POST"])
         self._router.add_api_route("/status", self.status, methods=["GET"])
         self._router.add_api_route("/start", self.start, methods=["GET"])
         self._router.add_api_route("/stop", self.stop, methods=["GET"])
