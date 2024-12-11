@@ -397,7 +397,6 @@ class StableFluxImageControlGenerationFastAPI(GenericFastAPI):
         self,
         text: str,
         image: UploadFile,
-        mask_image: UploadFile,
         guidance_scale: Optional[float] = 7.5,
         strength: Optional[float] = 1.0,
         num_timesteps: Optional[int] = 50,
@@ -411,7 +410,6 @@ class StableFluxImageControlGenerationFastAPI(GenericFastAPI):
         image = self._pipe(
             text,
             image,
-            mask_image,
             guidance_scale=guidance_scale,
             strength=strength,
             num_timesteps=num_timesteps,
