@@ -117,7 +117,7 @@ class StableFluxProcessor:
                 len(vae_config_dict.get("block_out_channels", [])) - 1
             )
             self.vae_image_processor = VaeImageProcessor(
-                vae_scale_factor=vae_scale_factor
+                vae_scale_factor=vae_scale_factor * 2
             )
         else:
             self.vae_image_processor = None

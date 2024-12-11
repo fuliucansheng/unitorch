@@ -324,7 +324,7 @@ class StableText2ImageFastAPI(GenericFastAPI):
         router = config.getoption("router", "/core/fastapi/stable/text2image")
         self._pipe = None if not hasattr(self, "_pipe") else self._pipe
         self._router = APIRouter(prefix=router)
-        self._router.add_api_route("/", self.serve, methods=["GET"])
+        self._router.add_api_route("/generate", self.serve, methods=["GET"])
         self._router.add_api_route("/status", self.status, methods=["GET"])
         self._router.add_api_route("/start", self.start, methods=["GET"])
         self._router.add_api_route("/stop", self.stop, methods=["GET"])

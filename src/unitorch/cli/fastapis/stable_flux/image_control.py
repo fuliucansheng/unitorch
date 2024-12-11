@@ -23,6 +23,8 @@ from diffusers.pipelines import (
     FluxControlNetImg2ImgPipeline,
     FluxInpaintPipeline,
     FluxControlNetInpaintPipeline,
+    FluxFillPipeline,
+    FluxControlPipeline,
 )
 from unitorch import is_xformers_available
 from unitorch.utils import is_remote_url
@@ -45,7 +47,7 @@ from unitorch.cli.models.diffusers import (
 from unitorch.cli.pipelines import Schedulers
 
 
-class StableFluxForText2ImageFastAPIPipeline(GenericStableFluxModel):
+class StableFluxForImageControlGenerationFastAPIPipeline(GenericStableFluxModel):
     def __init__(
         self,
         config_path: str,
@@ -92,7 +94,7 @@ class StableFluxForText2ImageFastAPIPipeline(GenericStableFluxModel):
 
         self.eval()
 
-        self.pipeline = FluxPipeline(
+        self.pipeline = FluxControlPipeline(
             vae=self.vae,
             text_encoder=self.text,
             text_encoder_2=self.text2,
@@ -124,11 +126,11 @@ class StableFluxForText2ImageFastAPIPipeline(GenericStableFluxModel):
             self.pipeline.enable_xformers_memory_efficient_attention()
 
     @classmethod
-    @add_default_section_for_init("core/fastapi/pipeline/stable_flux/text2image")
+    @add_default_section_for_init("core/fastapi/pipeline/stable_flux/image_control")
     def from_core_configure(
         cls,
         config,
-        pretrained_name: Optional[str] = "stable-flux-schnell",
+        pretrained_name: Optional[str] = "stable-flux-dev-fill",
         config_path: Optional[str] = None,
         text_config_path: Optional[str] = None,
         text2_config_path: Optional[str] = None,
@@ -142,7 +144,7 @@ class StableFluxForText2ImageFastAPIPipeline(GenericStableFluxModel):
         device: Optional[str] = "cpu",
         **kwargs,
     ):
-        config.set_default_section("core/fastapi/pipeline/stable_flux/text2image")
+        config.set_default_section("core/fastapi/pipeline/stable_flux/image_control")
         pretrained_name = config.getoption("pretrained_name", pretrained_name)
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
 
@@ -293,22 +295,31 @@ class StableFluxForText2ImageFastAPIPipeline(GenericStableFluxModel):
         device_type=("cuda" if torch.cuda.is_available() else "cpu"),
         dtype=(torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float32),
     )
-    @add_default_section_for_function("core/fastapi/pipeline/stable_flux/text2image")
+    @add_default_section_for_function("core/fastapi/pipeline/stable_flux/image_control")
     def __call__(
         self,
         text: str,
+        control_image: Image.Image,
         neg_text: Optional[str] = "",
-        height: Optional[int] = 1024,
-        width: Optional[int] = 1024,
+        width: Optional[int] = None,
+        height: Optional[int] = None,
         guidance_scale: Optional[float] = 7.5,
+        strength: Optional[float] = 1.0,
         num_timesteps: Optional[int] = 50,
         seed: Optional[int] = 1123,
     ):
+        if width is None or height is None:
+            width, height = control_image.size
+        width = width // 16 * 16
+        height = height // 16 * 16
+        control_image = control_image.resize((width, height))
+        
         text_inputs = self.processor.text2image_inputs(
             text,
             negative_prompt=neg_text,
         )
-        inputs = text_inputs
+        image_inputs = self.processor.image2image_inputs(control_image)
+        inputs = {**text_inputs, **image_inputs}
         self.seed = seed
 
         inputs = {k: v.unsqueeze(0) if v is not None else v for k, v in inputs.items()}
@@ -330,15 +341,17 @@ class StableFluxForText2ImageFastAPIPipeline(GenericStableFluxModel):
         pooled_prompt_embeds = prompt_outputs.pooled_prompt_embeds
 
         outputs = self.pipeline(
+            control_image=inputs["pixel_values"],
             prompt_embeds=prompt_embeds,
             pooled_prompt_embeds=pooled_prompt_embeds,
-            height=height // 16 * 16,
-            width=width // 16 * 16,
+            width=inputs["pixel_values"].size(-1),
+            height=inputs["pixel_values"].size(-2),
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),
             num_inference_steps=num_timesteps,
             guidance_scale=guidance_scale,
+            # strength=strength,
             output_type="np.array",
         )
 
@@ -346,16 +359,15 @@ class StableFluxForText2ImageFastAPIPipeline(GenericStableFluxModel):
         images = numpy_to_pil(images.cpu().numpy())
         return images[0]
 
-
-@register_fastapi("core/fastapi/stable_flux/text2image")
-class StableFluxText2ImageFastAPI(GenericFastAPI):
+@register_fastapi("core/fastapi/stable_flux/image_control")
+class StableFluxImageControlGenerationFastAPI(GenericFastAPI):
     def __init__(self, config: CoreConfigureParser):
         self.config = config
-        config.set_default_section(f"core/fastapi/stable_flux/text2image")
-        router = config.getoption("router", "/core/fastapi/stable_flux/text2image")
+        config.set_default_section(f"core/fastapi/stable_flux/image_control")
+        router = config.getoption("router", "/core/fastapi/stable_flux/image_control")
         self._pipe = None if not hasattr(self, "_pipe") else self._pipe
         self._router = APIRouter(prefix=router)
-        self._router.add_api_route("/generate", self.serve, methods=["GET"])
+        self._router.add_api_route("/generate", self.serve, methods=["POST"])
         self._router.add_api_route("/status", self.status, methods=["GET"])
         self._router.add_api_route("/start", self.start, methods=["GET"])
         self._router.add_api_route("/stop", self.stop, methods=["GET"])
@@ -365,7 +377,7 @@ class StableFluxText2ImageFastAPI(GenericFastAPI):
         return self._router
 
     def start(self):
-        self._pipe = StableFluxForText2ImageFastAPIPipeline.from_core_configure(
+        self._pipe = StableFluxForImageControlGenerationFastAPIPipeline.from_core_configure(
             self.config
         )
         return "start success"
@@ -381,21 +393,27 @@ class StableFluxText2ImageFastAPI(GenericFastAPI):
     def status(self):
         return "running" if self._pipe is not None else "stopped"
 
-    def serve(
+    async def serve(
         self,
         text: str,
-        height: Optional[int] = 512,
-        width: Optional[int] = 512,
+        image: UploadFile,
+        mask_image: UploadFile,
         guidance_scale: Optional[float] = 7.5,
+        strength: Optional[float] = 1.0,
         num_timesteps: Optional[int] = 50,
         seed: Optional[int] = 1123,
     ):
         assert self._pipe is not None
+        image_bytes = await image.read()
+        image = Image.open(io.BytesIO(image_bytes))
+        mask_image_bytes = await mask_image.read()
+        mask_image = Image.open(io.BytesIO(mask_image_bytes))
         image = self._pipe(
             text,
-            height=height,
-            width=width,
+            image,
+            mask_image,
             guidance_scale=guidance_scale,
+            strength=strength,
             num_timesteps=num_timesteps,
             seed=seed,
         )

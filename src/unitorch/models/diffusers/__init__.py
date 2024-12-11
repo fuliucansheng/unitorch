@@ -27,6 +27,7 @@ from unitorch.models.diffusers.modeling_stable_flux import (
     GenericStableFluxModel,
     StableFluxForText2ImageGeneration,
     StableFluxForImage2ImageGeneration,
+    StableFluxForImageControlGeneration,
     StableFluxForImageInpainting,
 )
 from unitorch.models.diffusers.modeling_controlnet import (
