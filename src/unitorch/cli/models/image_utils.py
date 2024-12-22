@@ -252,3 +252,46 @@ class ImageProcessor:
         mask = mask.convert("L").resize(image.size)
         result.paste(image, (0, 0), mask)
         return result
+
+    @register_process("core/process/image/crop")
+    def _crop(
+        self,
+        image: Image.Image,
+        box: Tuple[int, int, int, int],
+    ):
+        """
+        Crops the image to the specified box.
+
+        Args:
+            image (Image.Image): The image to crop.
+            box (Tuple[int, int, int, int]): The box to crop to.
+
+        Returns:
+            The cropped image as a PIL Image object.
+        """
+        return image.crop(box)
+
+    @register_process("core/process/image/center_crop")
+    def _center_crop(
+        self,
+        image: Image.Image,
+        size: Optional[Tuple[int, int]] = (224, 224),
+    ):
+        """
+        Crops the image to the center.
+
+        Args:
+            image (Image.Image): The image to crop.
+            size (Optional[Tuple[int, int]]): The size of the cropped image. Defaults to (224, 224).
+
+        Returns:
+            The cropped image as a PIL Image object.
+        """
+        width, height = image.size
+        left = (width - size[0]) // 2
+        top = (height - size[1]) // 2
+        left, top = max(0, left), max(0, top)
+        right = left + size[0]
+        bottom = top + size[1]
+        right, bottom = min(width, right), min(height, bottom)
+        return image.crop((left, top, right, bottom))
