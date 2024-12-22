@@ -327,6 +327,7 @@ class SupervisedTask:
         use_ema: Optional[bool] = False,
         ema_decay: Optional[float] = 0.9999,
         ema_tau: Optional[int] = 2000,
+        use_amp: Optional[bool] = True,
     ):
         """
         Train the model.
@@ -507,7 +508,8 @@ class SupervisedTask:
                 weight_name="pytorch_scheduler_latest.bin",
             )
 
-        scaler = GradScaler()
+        if use_amp:
+            scaler = GradScaler()
 
         log_loss = 0
         dev_epoch = 0
@@ -548,12 +550,18 @@ class SupervisedTask:
                         loss = loss_fn(outputs=outputs, targets=targets) / grad_acc_step
 
                 nn.utils.clip_grad_norm_(self.model.parameters(), max_grad_norm)
-                scaler.scale(loss).backward()
+                if use_amp:
+                    scaler.scale(loss).backward()
+                else:
+                    loss.backward()
                 log_loss += loss.data * grad_acc_step
                 if (step + 1) % grad_acc_step == 0:
                     is_update_step = True
-                    scaler.step(optim)
-                    scaler.update()
+                    if use_amp:
+                        scaler.step(optim)
+                        scaler.update()
+                    else:
+                        optim.step()
                     if scheduler is not None:
                         scheduler.step()
                     optim.zero_grad()
