@@ -30,10 +30,10 @@ class ResizeWebUI(SimpleWebUI):
         # create elements
         input_image = create_element("image", "Input Image")
         width = create_element(
-            "slider", "Width", min_value=0, max_value=1024, step=1, default=0
+            "slider", "Width", min_value=0, max_value=2048, step=1, default=0
         )
         height = create_element(
-            "slider", "Height", min_value=0, max_value=1024, step=1, default=0
+            "slider", "Height", min_value=0, max_value=2048, step=1, default=0
         )
         generate = create_element("button", "Generate")
         output_image = create_element("image", "Output Image")
@@ -79,17 +79,18 @@ class ExpandWebUI(SimpleWebUI):
         input_image = create_element("image", "Input Image")
         color = gr.ColorPicker(label="Color", value="#2f4f4f")
         width = create_element(
-            "slider", "Width", min_value=0, max_value=1024, step=1, default=0
+            "slider", "Width", min_value=0, max_value=2048, step=1, default=0
         )
         height = create_element(
-            "slider", "Height", min_value=0, max_value=1024, step=1, default=0
+            "slider", "Height", min_value=0, max_value=2048, step=1, default=0
         )
         generate = create_element("button", "Generate")
         output_image = create_element("image", "Output Image")
+        output_mask = create_element("image", "Output Mask")
 
         # create layouts
         left = create_column(input_image, color, width, height, generate)
-        right = create_column(output_image)
+        right = create_column(output_image, output_mask)
         iface = create_blocks(create_row(left, right))
 
         iface.__enter__()
@@ -97,7 +98,7 @@ class ExpandWebUI(SimpleWebUI):
         generate.click(
             fn=self.expand,
             inputs=[input_image, width, height, color],
-            outputs=[output_image],
+            outputs=[output_image, output_mask],
             trigger_mode="once",
         )
         input_image.upload(
@@ -125,7 +126,10 @@ class ExpandWebUI(SimpleWebUI):
         x = (width - image.width) // 2
         y = (height - image.height) // 2
         new_image.paste(image, (x, y))
-        return new_image
+        black = Image.new("RGB", (image.width, image.height), (0, 0, 0))
+        new_mask = Image.new("RGB", (width, height), (255, 255, 255))
+        new_mask.paste(black, (x, y))
+        return new_image, new_mask
 
 
 class CannyWebUI(SimpleWebUI):
@@ -133,10 +137,10 @@ class CannyWebUI(SimpleWebUI):
         # create elements
         input_image = create_element("image", "Input Image")
         width = create_element(
-            "slider", "Width", min_value=0, max_value=1024, step=1, default=0
+            "slider", "Width", min_value=0, max_value=2048, step=1, default=0
         )
         height = create_element(
-            "slider", "Height", min_value=0, max_value=1024, step=1, default=0
+            "slider", "Height", min_value=0, max_value=2048, step=1, default=0
         )
         generate = create_element("button", "Generate")
         output_image = create_element("image", "Output Image")
@@ -195,10 +199,10 @@ class BlendWebUI(SimpleWebUI):
             "slider", "Alpha", min_value=0, max_value=1, step=0.01, default=0.5
         )
         height = create_element(
-            "slider", "Height", min_value=0, max_value=1024, step=1, default=0
+            "slider", "Height", min_value=0, max_value=2048, step=1, default=0
         )
         width = create_element(
-            "slider", "Width", min_value=0, max_value=1024, step=1, default=0
+            "slider", "Width", min_value=0, max_value=2048, step=1, default=0
         )
         generate = create_element("button", "Generate")
         output_image = create_element("image", "Output Image")
@@ -243,10 +247,10 @@ class InvertWebUI(SimpleWebUI):
         # create elements
         input_image = create_element("image", "Input Image")
         height = create_element(
-            "slider", "Height", min_value=0, max_value=1024, step=1, default=0
+            "slider", "Height", min_value=0, max_value=2048, step=1, default=0
         )
         width = create_element(
-            "slider", "Width", min_value=0, max_value=1024, step=1, default=0
+            "slider", "Width", min_value=0, max_value=2048, step=1, default=0
         )
         generate = create_element("button", "Generate")
         output_image = create_element("image", "Output Image")
@@ -292,10 +296,10 @@ class CompositeWebUI(SimpleWebUI):
         input_image = create_element("image", "Input Image")
         input_mask = create_element("image", "Input Mask")
         height = create_element(
-            "slider", "Height", min_value=0, max_value=1024, step=1, default=0
+            "slider", "Height", min_value=0, max_value=2048, step=1, default=0
         )
         width = create_element(
-            "slider", "Width", min_value=0, max_value=1024, step=1, default=0
+            "slider", "Width", min_value=0, max_value=2048, step=1, default=0
         )
         generate = create_element("button", "Generate")
         output_image = create_element("image", "Output Image")

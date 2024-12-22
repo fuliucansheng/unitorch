@@ -522,6 +522,7 @@ class StableFluxForImage2ImageGeneration(GenericStableFluxModel):
 
         return GenericOutputs(images=torch.from_numpy(images))
 
+
 class StableFluxForImageControlGeneration(GenericStableFluxModel):
     def __init__(
         self,
@@ -623,9 +624,7 @@ class StableFluxForImageControlGeneration(GenericStableFluxModel):
                 control_latents - self.vae.config.shift_factor
             ) * self.vae.config.scaling_factor
 
-            latent_model_input = torch.cat(
-                [noise_latents, control_latents], dim=1
-            )
+            latent_model_input = torch.cat([noise_latents, control_latents], dim=1)
         else:
             latent_model_input = noise_latents
 
@@ -711,7 +710,6 @@ class StableFluxForImageControlGeneration(GenericStableFluxModel):
         ).images
 
         return GenericOutputs(images=torch.from_numpy(images))
-    
 
 
 class StableFluxForImageInpainting(GenericStableFluxModel):

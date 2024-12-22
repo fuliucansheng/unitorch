@@ -313,7 +313,7 @@ class StableFluxForImageControlGenerationFastAPIPipeline(GenericStableFluxModel)
         width = width // 16 * 16
         height = height // 16 * 16
         control_image = control_image.resize((width, height))
-        
+
         text_inputs = self.processor.text2image_inputs(
             text,
             negative_prompt=neg_text,
@@ -359,6 +359,7 @@ class StableFluxForImageControlGenerationFastAPIPipeline(GenericStableFluxModel)
         images = numpy_to_pil(images.cpu().numpy())
         return images[0]
 
+
 @register_fastapi("core/fastapi/stable_flux/image_control")
 class StableFluxImageControlGenerationFastAPI(GenericFastAPI):
     def __init__(self, config: CoreConfigureParser):
@@ -377,8 +378,10 @@ class StableFluxImageControlGenerationFastAPI(GenericFastAPI):
         return self._router
 
     def start(self):
-        self._pipe = StableFluxForImageControlGenerationFastAPIPipeline.from_core_configure(
-            self.config
+        self._pipe = (
+            StableFluxForImageControlGenerationFastAPIPipeline.from_core_configure(
+                self.config
+            )
         )
         return "start success"
 
