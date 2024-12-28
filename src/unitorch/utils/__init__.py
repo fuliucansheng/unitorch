@@ -55,6 +55,8 @@ from unitorch.utils.import_utils import (
     is_bitsandbytes_available,
     is_auto_gptq_available,
     is_onnxruntime_available,
+    is_bfloat16_available,
+    is_cuda_available,
 )
 from unitorch.utils.io import GenericWriter, IOProcess, PostProcess, GENERATE_FINISHED
 from unitorch.utils.torch_utils import get_local_rank

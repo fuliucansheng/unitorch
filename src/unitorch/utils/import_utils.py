@@ -129,3 +129,12 @@ except importlib_metadata.PackageNotFoundError:
 
 def is_onnxruntime_available():
     return _onnxruntime_available or is_offline_debug_mode()
+
+# is cuda & bfloat16 avaliable
+def is_bfloat16_available():
+    if not torch.cuda.is_available():
+        return False
+    return torch.cuda.is_bf16_supported()
+
+def is_cuda_available():
+    return torch.cuda.is_available()

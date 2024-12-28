@@ -28,7 +28,7 @@ from unitorch.utils import is_remote_url
 from unitorch.models.diffusers import GenericStable3Model
 from unitorch.models.diffusers import Stable3Processor
 
-from unitorch.utils import pop_value, nested_dict_value
+from unitorch.utils import pop_value, nested_dict_value, is_bfloat16_available, is_cuda_available
 from unitorch.cli import (
     cached_path,
     register_fastapi,
@@ -342,7 +342,7 @@ class Stable3ForImage2ImageFastAPIPipeline(GenericStable3Model):
     @torch.no_grad()
     @autocast(
         device_type=("cuda" if torch.cuda.is_available() else "cpu"),
-        dtype=(torch.bfloat16 if torch.cuda.is_available() and torch.cuda.is_bf16_supported() else torch.float32),
+        dtype=(torch.bfloat16 if is_bfloat16_available() else torch.float32),
     )
     @add_default_section_for_function("core/fastapi/pipeline/stable_3/image2image")
     def __call__(
