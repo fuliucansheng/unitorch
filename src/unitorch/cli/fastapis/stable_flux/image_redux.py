@@ -33,7 +33,12 @@ from unitorch.utils import is_remote_url
 from unitorch.models.diffusers import GenericStableFluxModel
 from unitorch.models.diffusers import StableFluxProcessor
 
-from unitorch.utils import pop_value, nested_dict_value, is_bfloat16_available, is_cuda_available
+from unitorch.utils import (
+    pop_value,
+    nested_dict_value,
+    is_bfloat16_available,
+    is_cuda_available,
+)
 from unitorch.cli import (
     cached_path,
     register_fastapi,

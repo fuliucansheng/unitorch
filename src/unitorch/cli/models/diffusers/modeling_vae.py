@@ -6,7 +6,12 @@ from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from torch import autocast
 
 from unitorch.models.diffusers import VAEForDiffusion as _VAEForDiffusion
-from unitorch.utils import pop_value, nested_dict_value
+from unitorch.utils import (
+    pop_value,
+    nested_dict_value,
+    is_bfloat16_available,
+    is_cuda_available,
+)
 from unitorch.cli import (
     cached_path,
     add_default_section_for_init,
@@ -35,9 +40,7 @@ class VAEForDiffusion(_VAEForDiffusion):
         super().__init__(config_path, patch_size, stride)
         self.use_dtype = torch.float16 if use_fp16 else torch.float32
         self.use_dtype = (
-            torch.bfloat16
-            if use_bf16 and torch.cuda.is_bf16_supported()
-            else self.use_dtype
+            torch.bfloat16 if use_bf16 and is_bfloat16_available() else self.use_dtype
         )
 
     @classmethod

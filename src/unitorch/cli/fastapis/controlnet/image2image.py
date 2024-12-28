@@ -261,9 +261,15 @@ class ControlNetForImage2ImageFastAPIPipeline(GenericStableModel):
                     )
                 )
 
-        pretrained_lora_names = config.getoption("pretrained_lora_names", pretrained_lora_names)
-        pretrained_lora_weights = config.getoption("pretrained_lora_weights", pretrained_lora_weights)
-        pretrained_lora_alphas = config.getoption("pretrained_lora_alphas", pretrained_lora_alphas)
+        pretrained_lora_names = config.getoption(
+            "pretrained_lora_names", pretrained_lora_names
+        )
+        pretrained_lora_weights = config.getoption(
+            "pretrained_lora_weights", pretrained_lora_weights
+        )
+        pretrained_lora_alphas = config.getoption(
+            "pretrained_lora_alphas", pretrained_lora_alphas
+        )
 
         if isinstance(pretrained_lora_names, str):
             pretrained_lora_weights_path = nested_dict_value(

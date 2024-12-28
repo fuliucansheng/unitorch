@@ -10,7 +10,12 @@ from unitorch.models.diffusers import (
     StableXLForImage2ImageGeneration as _StableXLForImage2ImageGeneration,
     StableXLForImageInpainting as _StableXLForImageInpainting,
 )
-from unitorch.utils import pop_value, nested_dict_value
+from unitorch.utils import (
+    pop_value,
+    nested_dict_value,
+    is_bfloat16_available,
+    is_cuda_available,
+)
 from unitorch.cli import (
     cached_path,
     add_default_section_for_init,
@@ -67,9 +72,7 @@ class StableXLForText2ImageGeneration(_StableXLForText2ImageGeneration):
         )
         self.use_dtype = torch.float16 if use_fp16 else torch.float32
         self.use_dtype = (
-            torch.bfloat16
-            if use_bf16 and torch.cuda.is_bf16_supported()
-            else self.use_dtype
+            torch.bfloat16 if use_bf16 and is_bfloat16_available() else self.use_dtype
         )
 
     @classmethod
@@ -308,9 +311,7 @@ class StableXLForImage2ImageGeneration(_StableXLForImage2ImageGeneration):
         )
         self.use_dtype = torch.float16 if use_fp16 else torch.float32
         self.use_dtype = (
-            torch.bfloat16
-            if use_bf16 and torch.cuda.is_bf16_supported()
-            else self.use_dtype
+            torch.bfloat16 if use_bf16 and is_bfloat16_available() else self.use_dtype
         )
 
     @classmethod
@@ -531,9 +532,7 @@ class StableXLForImageInpainting(_StableXLForImageInpainting):
         )
         self.use_dtype = torch.float16 if use_fp16 else torch.float32
         self.use_dtype = (
-            torch.bfloat16
-            if use_bf16 and torch.cuda.is_bf16_supported()
-            else self.use_dtype
+            torch.bfloat16 if use_bf16 and is_bfloat16_available() else self.use_dtype
         )
 
     @classmethod

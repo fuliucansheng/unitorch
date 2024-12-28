@@ -9,7 +9,12 @@ from unitorch.models.peft.diffusers import (
     StableXLLoraForText2ImageGeneration as _StableXLLoraForText2ImageGeneration,
     StableXLLoraForImageInpainting as _StableXLLoraForImageInpainting,
 )
-from unitorch.utils import pop_value, nested_dict_value
+from unitorch.utils import (
+    pop_value,
+    nested_dict_value,
+    is_bfloat16_available,
+    is_cuda_available,
+)
 from unitorch.cli import (
     cached_path,
     add_default_section_for_init,
@@ -86,9 +91,7 @@ class StableXLLoraForText2ImageGeneration(_StableXLLoraForText2ImageGeneration):
         )
         self.use_dtype = torch.float16 if use_fp16 else torch.float32
         self.use_dtype = (
-            torch.bfloat16
-            if use_bf16 and torch.cuda.is_bf16_supported()
-            else self.use_dtype
+            torch.bfloat16 if use_bf16 and is_bfloat16_available() else self.use_dtype
         )
 
     @classmethod
@@ -369,9 +372,7 @@ class StableXLLoraForImageInpainting(_StableXLLoraForImageInpainting):
         )
         self.use_dtype = torch.float16 if use_fp16 else torch.float32
         self.use_dtype = (
-            torch.bfloat16
-            if use_bf16 and torch.cuda.is_bf16_supported()
-            else self.use_dtype
+            torch.bfloat16 if use_bf16 and is_bfloat16_available() else self.use_dtype
         )
 
     @classmethod

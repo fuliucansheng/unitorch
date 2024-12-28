@@ -12,7 +12,12 @@ from unitorch.models.diffusers import (
     StableFluxForImageReduxGeneration as _StableFluxForImageReduxGeneration,
     StableFluxForImageInpainting as _StableFluxForImageInpainting,
 )
-from unitorch.utils import pop_value, nested_dict_value, is_bfloat16_available, is_cuda_available
+from unitorch.utils import (
+    pop_value,
+    nested_dict_value,
+    is_bfloat16_available,
+    is_cuda_available,
+)
 from unitorch.cli import (
     cached_path,
     add_default_section_for_init,
