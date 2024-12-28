@@ -12,6 +12,8 @@ from unitorch.cli import register_webui
 from unitorch.cli.webuis import SimpleWebUI
 from unitorch.cli.webuis.stable_flux.text2image import StableFluxText2ImageWebUI
 from unitorch.cli.webuis.stable_flux.image2image import StableFluxImage2ImageWebUI
+from unitorch.cli.webuis.stable_flux.image_control import StableFluxImageControlWebUI
+from unitorch.cli.webuis.stable_flux.image_redux import StableFluxImageReduxWebUI
 from unitorch.cli.webuis.stable_flux.inpainting import StableFluxImageInpaintingWebUI
 
 
@@ -21,6 +23,8 @@ class StableFluxWebUI(SimpleWebUI):
         webuis = [
             StableFluxText2ImageWebUI(config),
             StableFluxImage2ImageWebUI(config),
+            StableFluxImageControlWebUI(config),
+            StableFluxImageReduxWebUI(config),
             StableFluxImageInpaintingWebUI(config),
         ]
         iface = gr.TabbedInterface(

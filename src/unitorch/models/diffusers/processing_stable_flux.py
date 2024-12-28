@@ -7,7 +7,7 @@ import json
 import numpy as np
 from PIL import Image
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
-from transformers import CLIPTokenizer, T5Tokenizer
+from transformers import CLIPTokenizer, T5Tokenizer, SiglipImageProcessor
 from torchvision.transforms import (
     Resize,
     CenterCrop,
@@ -30,6 +30,7 @@ class StableFluxProcessor:
         merge_path: str,
         vocab2_path: str,
         vae_config_path: Optional[str] = None,
+        redux_config_path: Optional[str] = None,
         max_seq_length: Optional[int] = 77,
         max_seq_length2: Optional[int] = 256,
         position_start_id: Optional[int] = 0,
@@ -121,6 +122,14 @@ class StableFluxProcessor:
             )
         else:
             self.vae_image_processor = None
+
+        if redux_config_path is not None:
+            self.redux_image_processor = SiglipImageProcessor.from_json_file(
+                redux_config_path
+            )
+        else:
+            self.redux_image_processor = None
+
         self.divisor = 16
 
     def text2image(
@@ -201,6 +210,21 @@ class StableFluxProcessor:
         image = image.resize(size)
 
         pixel_values = self.vae_image_processor.preprocess(image)[0]
+
+        return GenericOutputs(
+            pixel_values=pixel_values,
+        )
+
+    def redux_image_inputs(
+        self,
+        image: Union[Image.Image, str],
+    ):
+        if isinstance(image, str):
+            image = Image.open(image)
+        image = image.convert("RGB")
+        pixel_values = self.redux_image_processor.preprocess(
+            image, return_tensors="pt"
+        ).pixel_values[0]
 
         return GenericOutputs(
             pixel_values=pixel_values,

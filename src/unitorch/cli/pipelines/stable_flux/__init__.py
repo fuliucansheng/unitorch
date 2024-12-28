@@ -13,6 +13,12 @@ from unitorch.cli.pipelines.stable_flux.text2image import (
 from unitorch.cli.pipelines.stable_flux.image2image import (
     StableFluxForImage2ImageGenerationPipeline,
 )
+from unitorch.cli.pipelines.stable_flux.image_control import (
+    StableFluxForImageControlGenerationPipeline,
+)
+from unitorch.cli.pipelines.stable_flux.image_redux import (
+    StableFluxForImageReduxGenerationPipeline,
+)
 from unitorch.cli.pipelines.stable_flux.inpainting import (
     StableFluxForImageInpaintingPipeline,
 )

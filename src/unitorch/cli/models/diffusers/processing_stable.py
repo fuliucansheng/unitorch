@@ -137,7 +137,7 @@ class StableProcessor(_StableProcessor):
         )
 
     @register_process("core/process/diffusion/stable/vae")
-    def _image2image_inputs(
+    def _vae(
         self,
         image: Union[Image.Image, str],
     ):

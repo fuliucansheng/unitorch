@@ -24,6 +24,7 @@ class StableFluxProcessor(_StableFluxProcessor):
         merge_path: str,
         vocab2_path: str,
         vae_config_path: str,
+        redux_config_path: Optional[str] = None,
         max_seq_length: Optional[int] = 77,
         max_seq_length2: Optional[int] = 256,
         position_start_id: Optional[int] = 0,
@@ -37,6 +38,7 @@ class StableFluxProcessor(_StableFluxProcessor):
             merge_path=merge_path,
             vocab2_path=vocab2_path,
             vae_config_path=vae_config_path,
+            redux_config_path=redux_config_path,
             max_seq_length=max_seq_length,
             max_seq_length2=max_seq_length2,
             position_start_id=position_start_id,
@@ -81,11 +83,19 @@ class StableFluxProcessor(_StableFluxProcessor):
         )
         vae_config_path = cached_path(vae_config_path)
 
+        redux_config_path = config.getoption("redux_config_path", None)
+        redux_config_path = pop_value(
+            redux_config_path,
+            nested_dict_value(pretrained_infos, "image", "vision_config"),
+        )
+        redux_config_path = cached_path(redux_config_path)
+
         return {
             "vocab_path": vocab_path,
             "merge_path": merge_path,
             "vocab2_path": vocab2_path,
             "vae_config_path": vae_config_path,
+            "redux_config_path": redux_config_path,
         }
 
     @register_process("core/process/diffusion/stable_flux/text2image")
@@ -155,6 +165,26 @@ class StableFluxProcessor(_StableFluxProcessor):
             input2_ids=text_outputs.input2_ids,
             attention_mask=text_outputs.attention_mask,
             attention2_mask=text_outputs.attention2_mask,
+        )
+
+    @register_process("core/process/diffusion/stable_flux/image_control")
+    def _image_control_inputs(
+        self,
+        image: Union[Image.Image, str],
+    ):
+        image_outputs = super().image2image_inputs(image=image)
+        return TensorsInputs(
+            control_pixel_values=image_outputs.pixel_values,
+        )
+
+    @register_process("core/process/diffusion/stable_flux/redux_image")
+    def _image_redux_inputs(
+        self,
+        image: Union[Image.Image, str],
+    ):
+        image_outputs = super().redux_image_inputs(image=image)
+        return TensorsInputs(
+            redux_pixel_values=image_outputs.pixel_values,
         )
 
     @register_process("core/process/diffusion/stable_flux/inpainting")
