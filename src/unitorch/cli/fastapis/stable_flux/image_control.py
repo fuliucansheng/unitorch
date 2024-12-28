@@ -302,7 +302,7 @@ class StableFluxForImageControlGenerationFastAPIPipeline(GenericStableFluxModel)
     @torch.no_grad()
     @autocast(
         device_type=("cuda" if torch.cuda.is_available() else "cpu"),
-        dtype=(torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float32),
+        dtype=(torch.bfloat16 if torch.cuda.is_available() and torch.cuda.is_bf16_supported() else torch.float32),
     )
     @add_default_section_for_function("core/fastapi/pipeline/stable_flux/image_control")
     def __call__(
