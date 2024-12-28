@@ -161,6 +161,9 @@ class StableFluxForImageReduxGenerationFastAPIPipeline(GenericStableFluxModel):
         quant_config_path: Optional[str] = None,
         pretrained_weight_path: Optional[str] = None,
         device: Optional[str] = "cpu",
+        pretrained_lora_names: Optional[Union[str, List[str]]] = None,
+        pretrained_lora_weights: Optional[Union[float, List[float]]] = 1.0,
+        pretrained_lora_alphas: Optional[Union[float, List[float]]] = 32.0,
         **kwargs,
     ):
         config.set_default_section("core/fastapi/pipeline/stable_flux/image_redux")
@@ -291,9 +294,15 @@ class StableFluxForImageReduxGenerationFastAPIPipeline(GenericStableFluxModel):
                 ),
             ]
 
-        pretrained_lora_names = config.getoption("pretrained_lora_names", None)
-        pretrained_lora_weights = config.getoption("pretrained_lora_weights", 1.0)
-        pretrained_lora_alphas = config.getoption("pretrained_lora_alphas", 32)
+        pretrained_lora_names = config.getoption(
+            "pretrained_lora_names", pretrained_lora_names
+        )
+        pretrained_lora_weights = config.getoption(
+            "pretrained_lora_weights", pretrained_lora_weights
+        )
+        pretrained_lora_alphas = config.getoption(
+            "pretrained_lora_alphas", pretrained_lora_alphas
+        )
 
         if isinstance(pretrained_lora_names, str):
             pretrained_lora_weights_path = nested_dict_value(
@@ -358,7 +367,7 @@ class StableFluxForImageReduxGenerationFastAPIPipeline(GenericStableFluxModel):
         neg_text: Optional[str] = "",
         width: Optional[int] = 1024,
         height: Optional[int] = 1024,
-        guidance_scale: Optional[float] = 7.5,
+        guidance_scale: Optional[float] = 2.5,
         num_timesteps: Optional[int] = 50,
         seed: Optional[int] = 1123,
     ):
@@ -424,17 +433,27 @@ class StableFluxImageReduxGenerationFastAPI(GenericFastAPI):
         self._router = APIRouter(prefix=router)
         self._router.add_api_route("/generate", self.serve, methods=["POST"])
         self._router.add_api_route("/status", self.status, methods=["GET"])
-        self._router.add_api_route("/start", self.start, methods=["GET"])
+        self._router.add_api_route("/start", self.start, methods=["POST"])
         self._router.add_api_route("/stop", self.stop, methods=["GET"])
 
     @property
     def router(self):
         return self._router
 
-    def start(self):
+    def start(
+        self,
+        pretrained_name: Optional[str] = "stable-flux-dev-redux",
+        pretrained_lora_names: Optional[Union[str, List[str]]] = None,
+        pretrained_lora_weights: Optional[Union[float, List[float]]] = 1.0,
+        pretrained_lora_alphas: Optional[Union[float, List[float]]] = 32.0,
+    ):
         self._pipe = (
             StableFluxForImageReduxGenerationFastAPIPipeline.from_core_configure(
-                self.config
+                self.config,
+                pretrained_name=pretrained_name,
+                pretrained_lora_names=pretrained_lora_names,
+                pretrained_lora_weights=pretrained_lora_weights,
+                pretrained_lora_alphas=pretrained_lora_alphas,
             )
         )
         return "start success"
@@ -454,9 +473,9 @@ class StableFluxImageReduxGenerationFastAPI(GenericFastAPI):
         self,
         text: str,
         image: UploadFile,
-        height: Optional[int] = 512,
-        width: Optional[int] = 512,
-        guidance_scale: Optional[float] = 7.5,
+        height: Optional[int] = 1024,
+        width: Optional[int] = 1024,
+        guidance_scale: Optional[float] = 2.5,
         num_timesteps: Optional[int] = 50,
         seed: Optional[int] = 1123,
     ):

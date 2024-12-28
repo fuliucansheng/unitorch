@@ -136,6 +136,9 @@ class StableForImageResolutionFastAPIPipeline(GenericStableModel):
         quant_config_path: Optional[str] = None,
         pretrained_weight_path: Optional[str] = None,
         device: Optional[str] = "cpu",
+        pretrained_lora_names: Optional[Union[str, List[str]]] = None,
+        pretrained_lora_weights: Optional[Union[float, List[float]]] = 1.0,
+        pretrained_lora_alphas: Optional[Union[float, List[float]]] = 32.0,
         **kwargs,
     ):
         config.set_default_section("core/fastapi/pipeline/stable/resolution")
@@ -205,9 +208,15 @@ class StableForImageResolutionFastAPIPipeline(GenericStableModel):
                 load_weight(nested_dict_value(pretrained_infos, "vae", "weight")),
             ]
 
-        pretrained_lora_names = config.getoption("pretrained_lora_names", None)
-        pretrained_lora_weights = config.getoption("pretrained_lora_weights", 1.0)
-        pretrained_lora_alphas = config.getoption("pretrained_lora_alphas", 32)
+        pretrained_lora_names = config.getoption(
+            "pretrained_lora_names", pretrained_lora_names
+        )
+        pretrained_lora_weights = config.getoption(
+            "pretrained_lora_weights", pretrained_lora_weights
+        )
+        pretrained_lora_alphas = config.getoption(
+            "pretrained_lora_alphas", pretrained_lora_alphas
+        )
 
         if isinstance(pretrained_lora_names, str):
             pretrained_lora_weights_path = nested_dict_value(
@@ -328,16 +337,26 @@ class StableImageResolutionFastAPI(GenericFastAPI):
         self._router = APIRouter(prefix=router)
         self._router.add_api_route("/generate", self.serve, methods=["POST"])
         self._router.add_api_route("/status", self.status, methods=["GET"])
-        self._router.add_api_route("/start", self.start, methods=["GET"])
+        self._router.add_api_route("/start", self.start, methods=["POST"])
         self._router.add_api_route("/stop", self.stop, methods=["GET"])
 
     @property
     def router(self):
         return self._router
 
-    def start(self):
+    def start(
+        self,
+        pretrained_name: Optional[str] = "stable-v1.5-x4-upscaler",
+        pretrained_lora_names: Optional[Union[str, List[str]]] = None,
+        pretrained_lora_weights: Optional[Union[float, List[float]]] = 1.0,
+        pretrained_lora_alphas: Optional[Union[float, List[float]]] = 32.0,
+    ):
         self._pipe = StableForImageResolutionFastAPIPipeline.from_core_configure(
-            self.config
+            self.config,
+            pretrained_name=pretrained_name,
+            pretrained_lora_names=pretrained_lora_names,
+            pretrained_lora_weights=pretrained_lora_weights,
+            pretrained_lora_alphas=pretrained_lora_alphas,
         )
         return "start success"
 
