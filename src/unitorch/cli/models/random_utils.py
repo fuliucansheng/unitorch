@@ -47,3 +47,13 @@ class RandomProcessor:
         high: int = 100,
     ):
         return int(random() * (high - low) + low)
+
+    @register_process("core/process/random/choice")
+    def _choice(
+        self,
+        choices: List[Any],
+        probs: Optional[List[float]] = None,
+    ):
+        if probs is None:
+            probs = [1.0 / len(choices)] * len(choices)
+        return np.random.choice(choices, p=probs)

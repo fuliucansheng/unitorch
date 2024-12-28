@@ -92,23 +92,6 @@ def is_opencv_available():
     return _opencv_available or is_offline_debug_mode()
 
 
-# torch
-_torch_available = importlib.util.find_spec("torch") is not None
-try:
-    _torch_version = importlib_metadata.version("torch")
-    logging.debug(f"Successfully imported torch version {_torch_version}")
-except importlib_metadata.PackageNotFoundError:
-    _torch_available = False
-
-
-def is_torch_available():
-    return _torch_available or is_offline_debug_mode()
-
-
-def is_torch2_available():
-    return _torch_available and _torch_version >= "2.0.0"
-
-
 # bitsandbytes
 _bitsandbytes_available = importlib.util.find_spec("bitsandbytes") is not None
 try:
@@ -146,3 +129,14 @@ except importlib_metadata.PackageNotFoundError:
 
 def is_onnxruntime_available():
     return _onnxruntime_available or is_offline_debug_mode()
+
+
+# is cuda & bfloat16 avaliable
+def is_bfloat16_available():
+    if not torch.cuda.is_available():
+        return False
+    return torch.cuda.is_bf16_supported()
+
+
+def is_cuda_available():
+    return torch.cuda.is_available()

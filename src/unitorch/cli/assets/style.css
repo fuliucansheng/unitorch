@@ -453,6 +453,11 @@ video {
   padding: 0;
 }
 
+canvas {
+  max-width: 100% !important;
+  max-height: 100% !important;
+}
+
 @media (max-width: 1536px)
 {
   .ut-place-holder-block {

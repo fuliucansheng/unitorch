@@ -136,6 +136,16 @@ class StableProcessor(_StableProcessor):
             negative_attention_mask=text_outputs.negative_attention_mask,
         )
 
+    @register_process("core/process/diffusion/stable/vae")
+    def _vae(
+        self,
+        image: Union[Image.Image, str],
+    ):
+        image_outputs = super().image2image_inputs(image=image)
+        return TensorsInputs(
+            pixel_values=image_outputs.pixel_values,
+        )
+
     @register_process("core/process/diffusion/stable/inpainting")
     def _inpainting(
         self,

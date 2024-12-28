@@ -15,6 +15,7 @@ from unitorch.models.peft.diffusers.modeling_stable_3 import (
 )
 from unitorch.models.peft.diffusers.modeling_stable_flux import (
     StableFluxLoraForText2ImageGeneration,
+    StableFluxLoraForImageInpainting,
 )
 from unitorch.models.peft.diffusers.modeling_controlnet import (
     ControlNetLoraForText2ImageGeneration,

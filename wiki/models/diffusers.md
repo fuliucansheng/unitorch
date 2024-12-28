@@ -36,10 +36,6 @@
 
 ::: unitorch.models.diffusers.StableXLForImageInpainting
 
-## ControlNetProcessor
-
-::: unitorch.models.diffusers.ControlNetProcessor
-
 ## ControlNetForText2ImageGeneration
 
 ::: unitorch.models.diffusers.ControlNetForText2ImageGeneration
@@ -51,10 +47,6 @@
 ## ControlNetForImageInpainting
 
 ::: unitorch.models.diffusers.ControlNetForImageInpainting
-
-## ControlNetXLProcessor
-
-::: unitorch.models.diffusers.ControlNetXLProcessor
 
 ## ControlNetXLForText2ImageGeneration
 

@@ -19,6 +19,7 @@ from diffusers.pipelines import (
     FluxPipeline,
     FluxInpaintPipeline,
     FluxControlNetInpaintPipeline,
+    FluxFillPipeline,
 )
 from unitorch import is_xformers_available
 from unitorch.utils import is_remote_url
@@ -262,6 +263,8 @@ class StableFluxForImageInpaintingPipeline(GenericStableFluxModel):
                 self.scheduler.config
             )
 
+        controlnet_checkpoints, controlnet_processes = zip(*controlnet_checkpoints)
+
         if any(ckpt is not None for ckpt in controlnet_checkpoints) and any(
             img is not None for img in controlnet_images
         ):
@@ -271,11 +274,22 @@ class StableFluxForImageInpaintingPipeline(GenericStableFluxModel):
                 inpaint_conditioning_scale,
                 inpaint_conditioning_image,
             ) = (None, None, None)
-            for checkpoint, conditioning_scale, conditioning_image in zip(
-                controlnet_checkpoints, controlnet_guidance_scales, controlnet_images
+            controlnet_conditioning_modes = []
+
+            for checkpoint, process, conditioning_scale, conditioning_image in zip(
+                controlnet_checkpoints,
+                controlnet_processes,
+                controlnet_guidance_scales,
+                controlnet_images,
             ):
                 if checkpoint is None or conditioning_image is None:
                     continue
+                if "union" in checkpoint:
+                    assert process in {"canny", "tile", "depth"}
+                    mode = {"canny": 0, "tile": 1, "depth": 2}.get(process, None)
+                    controlnet_conditioning_modes.append(mode)
+                else:
+                    controlnet_conditioning_modes.append(None)
                 if "inpainting" in checkpoint:
                     inpaint_controlnet_config_path = cached_path(
                         nested_dict_value(
@@ -382,7 +396,7 @@ class StableFluxForImageInpaintingPipeline(GenericStableFluxModel):
                 **{"condition_pixel_values": condition_pixel_values},
             }
         else:
-            self.pipeline = FluxInpaintPipeline(
+            self.pipeline = FluxFillPipeline(
                 vae=self.vae,
                 text_encoder=self.text,
                 text_encoder_2=self.text2,
@@ -482,6 +496,7 @@ class StableFluxForImageInpaintingPipeline(GenericStableFluxModel):
                 guidance_scale=guidance_scale,
                 strength=strength,
                 controlnet_conditioning_scale=conditioning_scales,
+                control_mode=controlnet_conditioning_modes,
                 output_type="np.array",
             )
         else:
@@ -497,7 +512,7 @@ class StableFluxForImageInpaintingPipeline(GenericStableFluxModel):
                 ),
                 num_inference_steps=num_timesteps,
                 guidance_scale=guidance_scale,
-                strength=strength,
+                # strength=strength,
                 output_type="np.array",
             )
         self.unload_lora_weights()
@@ -505,61 +520,3 @@ class StableFluxForImageInpaintingPipeline(GenericStableFluxModel):
         images = torch.from_numpy(outputs.images)
         images = numpy_to_pil(images.cpu().numpy())
         return images[0]
-
-
-@register_script("core/script/stable_flux/inpainting")
-class StableFluxForImageInpaintingGenerationScript(GenericScript):
-    def __init__(self, config: CoreConfigureParser):
-        self.config = config
-
-    def launch(self, **kwargs):
-        config = self.config
-
-        pipe = StableFluxForImageInpaintingPipeline.from_core_configure(config)
-
-        config.set_default_section("core/script/stable_flux/inpainting")
-
-        data_file = config.getoption("data_file", None)
-        names = config.getoption("names", None)
-        if isinstance(names, str) and names.strip() == "*":
-            names = None
-        if isinstance(names, str):
-            names = re.split(r"[,;]", names)
-            names = [n.strip() for n in names]
-
-        prompt_col = config.getoption("prompt_col", None)
-        image_col = config.getoption("image_col", None)
-        mask_col = config.getoption("mask_col", None)
-
-        data = pd.read_csv(
-            data_file,
-            names=names,
-            sep="\t",
-            quoting=3,
-            header=None,
-        )
-
-        assert prompt_col in data.columns, f"Column {prompt_col} not found in data."
-        assert image_col in data.columns, f"Column {image_col} not found in data."
-        assert mask_col in data.columns, f"Column {mask_col} not found in data."
-
-        output_folder = config.getoption("output_folder", None)
-        output_file = config.getoption("output_file", None)
-
-        def save(image):
-            name = hashlib.md5(image.tobytes()).hexdigest() + ".jpg"
-            image.save(f"{output_folder}/{name}")
-            return name
-
-        results = []
-        for prompt, image, mask in zip(
-            data[prompt_col], data[image_col], data[mask_col]
-        ):
-            image = Image.open(image)
-            mask = Image.open(mask)
-            result = pipe(prompt, image, mask)
-            results.append(save(result))
-
-        data["result"] = results
-
-        data.to_csv(output_file, sep="\t", header=None, index=None, quoting=3)

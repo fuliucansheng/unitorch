@@ -211,6 +211,45 @@ __hf_hub_stable_flux_safetensors_dict__ = lambda name: {
     ),
 }
 
+__hf_hub_stable_flux_ctrl_safetensors_dict__ = lambda name: {
+    "transformer": {
+        "config": hf_endpoint_url(f"/{name}/resolve/main/transformer/config.json"),
+        "weight": [
+            hf_endpoint_url(
+                f"/{name}/resolve/main/transformer/diffusion_pytorch_model-{str(i).rjust(5, '0')}-of-00003.safetensors"
+            )
+            for i in range(1, 4)
+        ],
+    },
+    "text": {
+        "config": hf_endpoint_url(f"/{name}/resolve/main/text_encoder/config.json"),
+        "vocab": hf_endpoint_url(f"/{name}/resolve/main/tokenizer/vocab.json"),
+        "merge": hf_endpoint_url(f"/{name}/resolve/main/tokenizer/merges.txt"),
+        "weight": hf_endpoint_url(
+            f"/{name}/resolve/main/text_encoder/model.safetensors"
+        ),
+    },
+    "text2": {
+        "config": hf_endpoint_url(f"/{name}/resolve/main/text_encoder_2/config.json"),
+        "vocab": hf_endpoint_url(f"/{name}/resolve/main/tokenizer_2/spiece.model"),
+        "weight": [
+            hf_endpoint_url(
+                f"/{name}/resolve/main/text_encoder_2/model-{str(i).rjust(5, '0')}-of-00004.safetensors"
+            )
+            for i in range(1, 5)
+        ],
+    },
+    "vae": {
+        "config": hf_endpoint_url(f"/{name}/resolve/main/vae/config.json"),
+        "weight": hf_endpoint_url(
+            f"/{name}/resolve/main/vae/diffusion_pytorch_model.safetensors"
+        ),
+    },
+    "scheduler": hf_endpoint_url(
+        f"/{name}/resolve/main/scheduler/scheduler_config.json"
+    ),
+}
+
 __hf_hub_controlnet_dict__ = lambda name: {
     "controlnet": {
         "config": hf_endpoint_url(f"/{name}/resolve/main/config.json"),
@@ -350,6 +389,36 @@ pretrained_stable_infos = {
     ),
     "stable-flux-dev": __hf_hub_stable_flux_safetensors_dict__(
         "camenduru/FLUX.1-dev-diffusers"
+    ),
+    "stable-flux-dev-redux": {
+        **__hf_hub_stable_flux_safetensors_dict__("camenduru/FLUX.1-dev-diffusers"),
+        **{
+            "image": {
+                "config": hf_endpoint_url(
+                    "/tentpole/flux1-dev-redux/resolve/main/image_encoder/config.json"
+                ),
+                "vision_config": hf_endpoint_url(
+                    "/tentpole/flux1-dev-redux/resolve/main/feature_extractor/preprocessor_config.json"
+                ),
+                "weight": hf_endpoint_url(
+                    "/tentpole/flux1-dev-redux/resolve/main/image_encoder/model.safetensors"
+                ),
+            },
+            "redux_image": {
+                "config": hf_endpoint_url(
+                    "/tentpole/flux1-dev-redux/resolve/main/image_embedder/config.json"
+                ),
+                "weight": hf_endpoint_url(
+                    "/tentpole/flux1-dev-redux/resolve/main/image_embedder/diffusion_pytorch_model.safetensors"
+                ),
+            },
+        },
+    },
+    "stable-flux-dev-fill": __hf_hub_stable_flux_safetensors_dict__(
+        "fuliucansheng/FLUX.1-Fill-dev-diffusers"
+    ),
+    "stable-flux-dev-canny": __hf_hub_stable_flux_ctrl_safetensors_dict__(
+        "fuliucansheng/FLUX.1-Canny-dev-diffusers"
     ),
     "stable-video-diffusion-img2vid-xt": __hf_hub_stable_video_safetensors_dict__(
         "stabilityai/stable-video-diffusion-img2vid-xt"
@@ -502,6 +571,9 @@ pretrained_stable_extensions_infos = {
     "stable-flux-controlnet-dev-union": __hf_hub_controlnet_safetensors_dict__(
         "InstantX/FLUX.1-dev-Controlnet-Union"
     ),
+    "stable-flux-controlnet-dev-union-pro": __hf_hub_controlnet_safetensors_dict__(
+        "Shakker-Labs/FLUX.1-dev-ControlNet-Union-Pro"
+    ),
 }
 
 from unitorch.cli.models.diffusion_utils import load_weight
@@ -548,6 +620,7 @@ from unitorch.cli.models.diffusers.modeling_adapter import (
 from unitorch.cli.models.diffusers.modeling_adapter_xl import (
     StableXLAdapterForText2ImageGeneration,
 )
+from unitorch.cli.models.diffusers.modeling_vae import VAEForDiffusion
 from unitorch.cli.models.diffusers.processing_stable import StableProcessor
 from unitorch.cli.models.diffusers.processing_stable_xl import StableXLProcessor
 from unitorch.cli.models.diffusers.processing_stable_3 import Stable3Processor

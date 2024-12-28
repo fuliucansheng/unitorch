@@ -8,7 +8,12 @@ from torch import autocast
 from unitorch.models.peft.diffusers import (
     ControlNetFluxLoraForText2ImageGeneration as _ControlNetFluxLoraForText2ImageGeneration,
 )
-from unitorch.utils import pop_value, nested_dict_value
+from unitorch.utils import (
+    pop_value,
+    nested_dict_value,
+    is_bfloat16_available,
+    is_cuda_available,
+)
 from unitorch.cli import (
     cached_path,
     add_default_section_for_init,
@@ -275,7 +280,7 @@ class ControlNetFluxLoraForText2ImageGeneration(
 
     @autocast(
         device_type=("cuda" if torch.cuda.is_available() else "cpu"),
-        dtype=(torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float32),
+        dtype=(torch.bfloat16 if is_bfloat16_available() else torch.float32),
     )
     def forward(
         self,
@@ -301,7 +306,7 @@ class ControlNetFluxLoraForText2ImageGeneration(
     )
     @autocast(
         device_type=("cuda" if torch.cuda.is_available() else "cpu"),
-        dtype=(torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float32),
+        dtype=(torch.bfloat16 if is_bfloat16_available() else torch.float32),
     )
     def generate(
         self,

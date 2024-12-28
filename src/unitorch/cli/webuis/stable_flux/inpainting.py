@@ -91,7 +91,7 @@ class StableFluxImageInpaintingWebUI(SimpleWebUI):
         mask_image = create_element("image", "Input Image Mask")
 
         guidance_scale = create_element(
-            "slider", "Guidance Scale", min_value=0, max_value=10, step=0.1, default=7.5
+            "slider", "Guidance Scale", min_value=0, max_value=50, step=0.1, default=7.5
         )
         strength = create_element(
             "slider", "Strength", min_value=0, max_value=1, step=0.01, default=0.8
@@ -115,6 +115,7 @@ class StableFluxImageInpaintingWebUI(SimpleWebUI):
         for controlnet in controlnets:
             controlnet_params += [
                 controlnet.checkpoint,
+                controlnet.process,
                 controlnet.output_image,
                 controlnet.guidance_scale,
             ]
@@ -282,11 +283,12 @@ class StableFluxImageInpaintingWebUI(SimpleWebUI):
         *params,
     ):
         assert self._pipe is not None
-        controlnet_params = params[: self.num_controlnets * 3]
-        lora_params = params[self.num_controlnets * 3 :]
-        controlnet_checkpoints = controlnet_params[::3]
-        controlnet_images = controlnet_params[1::3]
-        controlnet_guidance_scales = controlnet_params[2::3]
+        controlnet_params = params[: self.num_controlnets * 4]
+        lora_params = params[self.num_controlnets * 4 :]
+        controlnet_checkpoints = controlnet_params[::4]
+        controlnet_processes = controlnet_params[1::4]
+        controlnet_images = controlnet_params[2::4]
+        controlnet_guidance_scales = controlnet_params[3::4]
         lora_checkpoints = lora_params[::5]
         lora_weights = lora_params[1::5]
         lora_alphas = lora_params[2::5]
@@ -303,7 +305,9 @@ class StableFluxImageInpaintingWebUI(SimpleWebUI):
             num_timesteps=num_timesteps,
             seed=seed,
             scheduler=scheduler,
-            controlnet_checkpoints=controlnet_checkpoints,
+            controlnet_checkpoints=list(
+                zip(controlnet_checkpoints, controlnet_processes)
+            ),
             controlnet_images=controlnet_images,
             controlnet_guidance_scales=controlnet_guidance_scales,
             lora_checkpoints=lora_checkpoints,

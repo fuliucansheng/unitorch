@@ -23,13 +23,19 @@ from diffusers.pipelines import (
     FluxControlNetImg2ImgPipeline,
     FluxInpaintPipeline,
     FluxControlNetInpaintPipeline,
+    FluxFillPipeline,
 )
 from unitorch import is_xformers_available
 from unitorch.utils import is_remote_url
 from unitorch.models.diffusers import GenericStableFluxModel
 from unitorch.models.diffusers import StableFluxProcessor
 
-from unitorch.utils import pop_value, nested_dict_value
+from unitorch.utils import (
+    pop_value,
+    nested_dict_value,
+    is_bfloat16_available,
+    is_cuda_available,
+)
 from unitorch.cli import (
     cached_path,
     register_fastapi,
@@ -92,7 +98,7 @@ class StableFluxForImageInpaintingFastAPIPipeline(GenericStableFluxModel):
 
         self.eval()
 
-        self.pipeline = FluxInpaintPipeline(
+        self.pipeline = FluxFillPipeline(
             vae=self.vae,
             text_encoder=self.text,
             text_encoder_2=self.text2,
@@ -128,7 +134,7 @@ class StableFluxForImageInpaintingFastAPIPipeline(GenericStableFluxModel):
     def from_core_configure(
         cls,
         config,
-        pretrained_name: Optional[str] = "stable-flux-schnell",
+        pretrained_name: Optional[str] = "stable-flux-dev-fill",
         config_path: Optional[str] = None,
         text_config_path: Optional[str] = None,
         text2_config_path: Optional[str] = None,
@@ -140,6 +146,9 @@ class StableFluxForImageInpaintingFastAPIPipeline(GenericStableFluxModel):
         quant_config_path: Optional[str] = None,
         pretrained_weight_path: Optional[str] = None,
         device: Optional[str] = "cpu",
+        pretrained_lora_names: Optional[Union[str, List[str]]] = None,
+        pretrained_lora_weights: Optional[Union[float, List[float]]] = 1.0,
+        pretrained_lora_alphas: Optional[Union[float, List[float]]] = 32.0,
         **kwargs,
     ):
         config.set_default_section("core/fastapi/pipeline/stable_flux/inpainting")
@@ -237,9 +246,15 @@ class StableFluxForImageInpaintingFastAPIPipeline(GenericStableFluxModel):
                 ),
             ]
 
-        pretrained_lora_names = config.getoption("pretrained_lora_names", None)
-        pretrained_lora_weights = config.getoption("pretrained_lora_weights", 1.0)
-        pretrained_lora_alphas = config.getoption("pretrained_lora_alphas", 32)
+        pretrained_lora_names = config.getoption(
+            "pretrained_lora_names", pretrained_lora_names
+        )
+        pretrained_lora_weights = config.getoption(
+            "pretrained_lora_weights", pretrained_lora_weights
+        )
+        pretrained_lora_alphas = config.getoption(
+            "pretrained_lora_alphas", pretrained_lora_alphas
+        )
 
         if isinstance(pretrained_lora_names, str):
             pretrained_lora_weights_path = nested_dict_value(
@@ -291,7 +306,7 @@ class StableFluxForImageInpaintingFastAPIPipeline(GenericStableFluxModel):
     @torch.no_grad()
     @autocast(
         device_type=("cuda" if torch.cuda.is_available() else "cpu"),
-        dtype=(torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float32),
+        dtype=(torch.bfloat16 if is_bfloat16_available() else torch.float32),
     )
     @add_default_section_for_function("core/fastapi/pipeline/stable_flux/inpainting")
     def __call__(
@@ -302,15 +317,15 @@ class StableFluxForImageInpaintingFastAPIPipeline(GenericStableFluxModel):
         neg_text: Optional[str] = "",
         width: Optional[int] = None,
         height: Optional[int] = None,
-        guidance_scale: Optional[float] = 7.5,
+        guidance_scale: Optional[float] = 30.0,
         strength: Optional[float] = 1.0,
         num_timesteps: Optional[int] = 50,
         seed: Optional[int] = 1123,
     ):
         if width is None or height is None:
             width, height = image.size
-        width = width // 8 * 8
-        height = height // 8 * 8
+        width = width // 16 * 16
+        height = height // 16 * 16
         image = image.resize((width, height))
         mask_image = mask_image.resize((width, height))
 
@@ -352,7 +367,7 @@ class StableFluxForImageInpaintingFastAPIPipeline(GenericStableFluxModel):
             ),
             num_inference_steps=num_timesteps,
             guidance_scale=guidance_scale,
-            strength=strength,
+            # strength=strength,
             output_type="np.array",
         )
 
@@ -369,18 +384,28 @@ class StableFluxImageInpaintingFastAPI(GenericFastAPI):
         router = config.getoption("router", "/core/fastapi/stable_flux/inpainting")
         self._pipe = None if not hasattr(self, "_pipe") else self._pipe
         self._router = APIRouter(prefix=router)
-        self._router.add_api_route("/", self.serve, methods=["POST"])
+        self._router.add_api_route("/generate", self.serve, methods=["POST"])
         self._router.add_api_route("/status", self.status, methods=["GET"])
-        self._router.add_api_route("/start", self.start, methods=["GET"])
+        self._router.add_api_route("/start", self.start, methods=["POST"])
         self._router.add_api_route("/stop", self.stop, methods=["GET"])
 
     @property
     def router(self):
         return self._router
 
-    def start(self):
+    def start(
+        self,
+        pretrained_name: Optional[str] = "stable-flux-dev-fill",
+        pretrained_lora_names: Optional[Union[str, List[str]]] = None,
+        pretrained_lora_weights: Optional[Union[float, List[float]]] = 1.0,
+        pretrained_lora_alphas: Optional[Union[float, List[float]]] = 32.0,
+    ):
         self._pipe = StableFluxForImageInpaintingFastAPIPipeline.from_core_configure(
-            self.config
+            self.config,
+            pretrained_name=pretrained_name,
+            pretrained_lora_names=pretrained_lora_names,
+            pretrained_lora_weights=pretrained_lora_weights,
+            pretrained_lora_alphas=pretrained_lora_alphas,
         )
         return "start success"
 
@@ -400,7 +425,7 @@ class StableFluxImageInpaintingFastAPI(GenericFastAPI):
         text: str,
         image: UploadFile,
         mask_image: UploadFile,
-        guidance_scale: Optional[float] = 7.5,
+        guidance_scale: Optional[float] = 30.0,
         strength: Optional[float] = 1.0,
         num_timesteps: Optional[int] = 50,
         seed: Optional[int] = 1123,

@@ -29,12 +29,11 @@ dynamic = ["version", "dependencies"]
 
 [project.optional-dependencies]
 deepspeed = ["deepspeed>=0.11.0"]
-diffusers = ["diffusers>=0.32.0", "xformers>=0.0.25", "torchsde>=0.2.6"]
+diffusers = ["diffusers>=0.32.1", "torchsde>=0.2.6"]
 quantization = ["bitsandbytes>=0.41.1"]
 docs = ["mkdocstrings[python]>=0.18", "mkdocs-material", "markdown-exec", "mkdocs-gen-files", "mkdocs-coverage"]
-fastapi = ["fastapi>=0.103.1"]
-webui = ["gradio>=4.40.0"]
-all = ["unitorch[deepspeed,diffusers,quantization,fastapi,webui]"]
+others = ["gradio>=4.40.0", "fastapi>=0.103.1", "onnxruntime"]
+all = ["unitorch[deepspeed,diffusers,quantization,others]"]
 
 [project.scripts]
 unitorch-train = "unitorch.cli.consoles.train:cli_main"

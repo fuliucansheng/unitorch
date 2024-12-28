@@ -254,18 +254,28 @@ class StableImage2VideoFastAPI(GenericFastAPI):
         router = config.getoption("router", "/core/fastapi/stable/image2video")
         self._pipe = None if not hasattr(self, "_pipe") else self._pipe
         self._router = APIRouter(prefix=router)
-        self._router.add_api_route("/", self.serve, methods=["POST"])
+        self._router.add_api_route("/generate", self.serve, methods=["POST"])
         self._router.add_api_route("/status", self.status, methods=["GET"])
-        self._router.add_api_route("/start", self.start, methods=["GET"])
+        self._router.add_api_route("/start", self.start, methods=["POST"])
         self._router.add_api_route("/stop", self.stop, methods=["GET"])
 
     @property
     def router(self):
         return self._router
 
-    def start(self):
+    def start(
+        self,
+        pretrained_name: Optional[str] = "stable-video-diffusion-img2vid-xt-1-1",
+        pretrained_lora_names: Optional[Union[str, List[str]]] = None,
+        pretrained_lora_weights: Optional[Union[float, List[float]]] = 1.0,
+        pretrained_lora_alphas: Optional[Union[float, List[float]]] = 32.0,
+    ):
         self._pipe = StableForImage2VideoFastAPIPipeline.from_core_configure(
-            self.config
+            self.config,
+            pretrained_name=pretrained_name,
+            pretrained_lora_names=pretrained_lora_names,
+            pretrained_lora_weights=pretrained_lora_weights,
+            pretrained_lora_alphas=pretrained_lora_alphas,
         )
         return "start success"
 

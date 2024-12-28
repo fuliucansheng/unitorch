@@ -157,6 +157,9 @@ class ControlNet3ForText2ImageFastAPIPipeline(GenericStable3Model):
         quant_config_path: Optional[str] = None,
         pretrained_weight_path: Optional[str] = None,
         device: Optional[str] = "cpu",
+        pretrained_lora_names: Optional[Union[str, List[str]]] = None,
+        pretrained_lora_weights: Optional[Union[float, List[float]]] = 1.0,
+        pretrained_lora_alphas: Optional[Union[float, List[float]]] = 32.0,
         **kwargs,
     ):
         config.set_default_section("core/fastapi/pipeline/controlnet_3/text2image")
@@ -329,9 +332,15 @@ class ControlNet3ForText2ImageFastAPIPipeline(GenericStable3Model):
                     )
                 )
 
-        pretrained_lora_names = config.getoption("pretrained_lora_names", None)
-        pretrained_lora_weights = config.getoption("pretrained_lora_weights", 1.0)
-        pretrained_lora_alphas = config.getoption("pretrained_lora_alphas", 32)
+        pretrained_lora_names = config.getoption(
+            "pretrained_lora_names", pretrained_lora_names
+        )
+        pretrained_lora_weights = config.getoption(
+            "pretrained_lora_weights", pretrained_lora_weights
+        )
+        pretrained_lora_alphas = config.getoption(
+            "pretrained_lora_alphas", pretrained_lora_alphas
+        )
 
         if isinstance(pretrained_lora_names, str):
             pretrained_lora_weights_path = nested_dict_value(
@@ -460,67 +469,3 @@ class ControlNet3ForText2ImageFastAPIPipeline(GenericStable3Model):
         images = torch.from_numpy(outputs.images)
         images = numpy_to_pil(images.cpu().numpy())
         return images[0]
-
-
-@register_fastapi("core/fastapi/controlnet_3/text2image")
-class ControlNet3Text2ImageFastAPI(GenericFastAPI):
-    def __init__(self, config: CoreConfigureParser):
-        self.config = config
-        config.set_default_section(f"core/fastapi/controlnet_3/text2image")
-        router = config.getoption("router", "/core/fastapi/controlnet_3/text2image")
-        self._pipe = None if not hasattr(self, "_pipe") else self._pipe
-        self._router = APIRouter(prefix=router)
-        self._router.add_api_route("/", self.serve, methods=["POST"])
-        self._router.add_api_route("/status", self.status, methods=["GET"])
-        self._router.add_api_route("/start", self.start, methods=["GET"])
-        self._router.add_api_route("/stop", self.stop, methods=["GET"])
-
-    @property
-    def router(self):
-        return self._router
-
-    def start(self):
-        self._pipe = ControlNet3ForText2ImageFastAPIPipeline.from_core_configure(
-            self.config
-        )
-        return "start success"
-
-    def stop(self):
-        del self._pipe
-        self._pipe = None if not hasattr(self, "_pipe") else self._pipe
-        return "stop success"
-
-    def status(self):
-        return "running" if self._pipe is not None else "stopped"
-
-    async def serve(
-        self,
-        text: str,
-        controlnet_images: UploadFile,
-        controlnet_guidance_scales: Optional[float] = 0.8,
-        height: Optional[int] = 512,
-        width: Optional[int] = 512,
-        guidance_scale: Optional[float] = 7.5,
-        num_timesteps: Optional[int] = 50,
-        seed: Optional[int] = 1123,
-    ):
-        assert self._pipe is not None
-        controlnet_image_bytes = await controlnet_images.read()
-        controlnet_images = Image.open(io.BytesIO(controlnet_image_bytes))
-        image = self._pipe(
-            text,
-            controlnet_images=[controlnet_images],
-            controlnet_guidance_scales=[controlnet_guidance_scales],
-            height=height,
-            width=width,
-            guidance_scale=guidance_scale,
-            num_timesteps=num_timesteps,
-            seed=seed,
-        )
-        buffer = io.BytesIO()
-        image.save(buffer, format="PNG")
-
-        return StreamingResponse(
-            io.BytesIO(buffer.getvalue()),
-            media_type="image/png",
-        )

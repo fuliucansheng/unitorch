@@ -29,7 +29,12 @@ from unitorch.utils import is_remote_url
 from unitorch.models.diffusers import GenericStableFluxModel
 from unitorch.models.diffusers import StableFluxProcessor
 
-from unitorch.utils import pop_value, nested_dict_value
+from unitorch.utils import (
+    pop_value,
+    nested_dict_value,
+    is_bfloat16_available,
+    is_cuda_available,
+)
 from unitorch.cli import (
     cached_path,
     register_fastapi,
@@ -140,6 +145,9 @@ class StableFluxForText2ImageFastAPIPipeline(GenericStableFluxModel):
         quant_config_path: Optional[str] = None,
         pretrained_weight_path: Optional[str] = None,
         device: Optional[str] = "cpu",
+        pretrained_lora_names: Optional[Union[str, List[str]]] = None,
+        pretrained_lora_weights: Optional[Union[float, List[float]]] = 1.0,
+        pretrained_lora_alphas: Optional[Union[float, List[float]]] = 32.0,
         **kwargs,
     ):
         config.set_default_section("core/fastapi/pipeline/stable_flux/text2image")
@@ -237,9 +245,15 @@ class StableFluxForText2ImageFastAPIPipeline(GenericStableFluxModel):
                 ),
             ]
 
-        pretrained_lora_names = config.getoption("pretrained_lora_names", None)
-        pretrained_lora_weights = config.getoption("pretrained_lora_weights", 1.0)
-        pretrained_lora_alphas = config.getoption("pretrained_lora_alphas", 32)
+        pretrained_lora_names = config.getoption(
+            "pretrained_lora_names", pretrained_lora_names
+        )
+        pretrained_lora_weights = config.getoption(
+            "pretrained_lora_weights", pretrained_lora_weights
+        )
+        pretrained_lora_alphas = config.getoption(
+            "pretrained_lora_alphas", pretrained_lora_alphas
+        )
 
         if isinstance(pretrained_lora_names, str):
             pretrained_lora_weights_path = nested_dict_value(
@@ -291,7 +305,7 @@ class StableFluxForText2ImageFastAPIPipeline(GenericStableFluxModel):
     @torch.no_grad()
     @autocast(
         device_type=("cuda" if torch.cuda.is_available() else "cpu"),
-        dtype=(torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float32),
+        dtype=(torch.bfloat16 if is_bfloat16_available() else torch.float32),
     )
     @add_default_section_for_function("core/fastapi/pipeline/stable_flux/text2image")
     def __call__(
@@ -300,7 +314,7 @@ class StableFluxForText2ImageFastAPIPipeline(GenericStableFluxModel):
         neg_text: Optional[str] = "",
         height: Optional[int] = 1024,
         width: Optional[int] = 1024,
-        guidance_scale: Optional[float] = 7.5,
+        guidance_scale: Optional[float] = 0.0,
         num_timesteps: Optional[int] = 50,
         seed: Optional[int] = 1123,
     ):
@@ -332,8 +346,8 @@ class StableFluxForText2ImageFastAPIPipeline(GenericStableFluxModel):
         outputs = self.pipeline(
             prompt_embeds=prompt_embeds,
             pooled_prompt_embeds=pooled_prompt_embeds,
-            height=height,
-            width=width,
+            height=height // 16 * 16,
+            width=width // 16 * 16,
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),
@@ -355,18 +369,28 @@ class StableFluxText2ImageFastAPI(GenericFastAPI):
         router = config.getoption("router", "/core/fastapi/stable_flux/text2image")
         self._pipe = None if not hasattr(self, "_pipe") else self._pipe
         self._router = APIRouter(prefix=router)
-        self._router.add_api_route("/", self.serve, methods=["GET"])
+        self._router.add_api_route("/generate", self.serve, methods=["GET"])
         self._router.add_api_route("/status", self.status, methods=["GET"])
-        self._router.add_api_route("/start", self.start, methods=["GET"])
+        self._router.add_api_route("/start", self.start, methods=["POST"])
         self._router.add_api_route("/stop", self.stop, methods=["GET"])
 
     @property
     def router(self):
         return self._router
 
-    def start(self):
+    def start(
+        self,
+        pretrained_name: Optional[str] = "stable-flux-schnell",
+        pretrained_lora_names: Optional[Union[str, List[str]]] = None,
+        pretrained_lora_weights: Optional[Union[float, List[float]]] = 1.0,
+        pretrained_lora_alphas: Optional[Union[float, List[float]]] = 32.0,
+    ):
         self._pipe = StableFluxForText2ImageFastAPIPipeline.from_core_configure(
-            self.config
+            self.config,
+            pretrained_name=pretrained_name,
+            pretrained_lora_names=pretrained_lora_names,
+            pretrained_lora_weights=pretrained_lora_weights,
+            pretrained_lora_alphas=pretrained_lora_alphas,
         )
         return "start success"
 
@@ -386,7 +410,7 @@ class StableFluxText2ImageFastAPI(GenericFastAPI):
         text: str,
         height: Optional[int] = 512,
         width: Optional[int] = 512,
-        guidance_scale: Optional[float] = 7.5,
+        guidance_scale: Optional[float] = 0.0,
         num_timesteps: Optional[int] = 50,
         seed: Optional[int] = 1123,
     ):

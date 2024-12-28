@@ -7,7 +7,7 @@ import json
 import numpy as np
 from PIL import Image
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
-from transformers import CLIPTokenizer, T5Tokenizer
+from transformers import CLIPTokenizer, T5Tokenizer, SiglipImageProcessor
 from torchvision.transforms import (
     Resize,
     CenterCrop,
@@ -30,6 +30,7 @@ class StableFluxProcessor:
         merge_path: str,
         vocab2_path: str,
         vae_config_path: Optional[str] = None,
+        redux_config_path: Optional[str] = None,
         max_seq_length: Optional[int] = 77,
         max_seq_length2: Optional[int] = 256,
         position_start_id: Optional[int] = 0,
@@ -117,10 +118,19 @@ class StableFluxProcessor:
                 len(vae_config_dict.get("block_out_channels", [])) - 1
             )
             self.vae_image_processor = VaeImageProcessor(
-                vae_scale_factor=vae_scale_factor
+                vae_scale_factor=vae_scale_factor * 2
             )
         else:
             self.vae_image_processor = None
+
+        if redux_config_path is not None:
+            self.redux_image_processor = SiglipImageProcessor.from_json_file(
+                redux_config_path
+            )
+        else:
+            self.redux_image_processor = None
+
+        self.divisor = 16
 
     def text2image(
         self,
@@ -192,10 +202,29 @@ class StableFluxProcessor:
         if isinstance(image, str):
             image = Image.open(image)
         image = image.convert("RGB")
-        if self.image_size is not None:
-            image = image.resize(self.image_size)
+        size = image.size if self.image_size is None else self.image_size
+        size = (
+            size[0] // self.divisor * self.divisor,
+            size[1] // self.divisor * self.divisor,
+        )
+        image = image.resize(size)
 
         pixel_values = self.vae_image_processor.preprocess(image)[0]
+
+        return GenericOutputs(
+            pixel_values=pixel_values,
+        )
+
+    def redux_image_inputs(
+        self,
+        image: Union[Image.Image, str],
+    ):
+        if isinstance(image, str):
+            image = Image.open(image)
+        image = image.convert("RGB")
+        pixel_values = self.redux_image_processor.preprocess(
+            image, return_tensors="pt"
+        ).pixel_values[0]
 
         return GenericOutputs(
             pixel_values=pixel_values,
@@ -214,9 +243,13 @@ class StableFluxProcessor:
             mask_image = Image.open(mask_image)
         mask_image = mask_image.convert("L")
 
-        if self.image_size is not None:
-            image = image.resize(self.image_size)
-            mask_image = mask_image.resize(self.image_size)
+        size = image.size if self.image_size is None else self.image_size
+        size = (
+            size[0] // self.divisor * self.divisor,
+            size[1] // self.divisor * self.divisor,
+        )
+        image = image.resize(size)
+        mask_image = mask_image.resize(size)
 
         pixel_values = self.vae_image_processor.preprocess(image)[0]
         pixel_masks = self.vae_image_processor.preprocess(mask_image)[0]
@@ -234,8 +267,12 @@ class StableFluxProcessor:
         if isinstance(image, str):
             image = Image.open(image)
         image = image.convert("RGB")
-        if self.image_size is not None:
-            image = image.resize(self.image_size)
+        size = image.size if self.image_size is None else self.image_size
+        size = (
+            size[0] // self.divisor * self.divisor,
+            size[1] // self.divisor * self.divisor,
+        )
+        image = image.resize(size)
 
         pixel_values = self.vae_image_processor.preprocess(image)[0]
         return GenericOutputs(pixel_values=pixel_values)
@@ -249,8 +286,12 @@ class StableFluxProcessor:
             if isinstance(image, str):
                 image = Image.open(image)
             image = image.convert("RGB")
-            if self.image_size is not None:
-                image = image.resize(self.image_size)
+            size = image.size if self.image_size is None else self.image_size
+            size = (
+                size[0] // self.divisor * self.divisor,
+                size[1] // self.divisor * self.divisor,
+            )
+            image = image.resize(size)
 
             pixel_values.append(self.vae_image_processor.preprocess(image)[0])
 
@@ -264,14 +305,17 @@ class StableFluxProcessor:
         if isinstance(image, str):
             image = Image.open(image)
         image = image.convert("RGB")
-        if self.image_size is not None:
-            image = image.resize(self.image_size)
+        size = image.size if self.image_size is None else self.image_size
+        size = (
+            size[0] // self.divisor * self.divisor,
+            size[1] // self.divisor * self.divisor,
+        )
+        image = image.resize(size)
 
         if isinstance(mask_image, str):
             mask_image = Image.open(mask_image)
         mask_image = mask_image.convert("L")
-        if self.image_size is not None:
-            mask_image = mask_image.resize(self.image_size)
+        mask_image = mask_image.resize(size)
 
         pixel_values = self.vae_image_processor.preprocess(image)[0]
         pixel_masks = self.vae_image_processor.preprocess(mask_image)[0]
@@ -285,8 +329,12 @@ class StableFluxProcessor:
         if isinstance(image, str):
             image = Image.open(image)
         image = image.convert("RGB")
-        if self.image_size is not None:
-            image = image.resize(self.image_size)
+        size = image.size if self.image_size is None else self.image_size
+        size = (
+            size[0] // self.divisor * self.divisor,
+            size[1] // self.divisor * self.divisor,
+        )
+        image = image.resize(size)
 
         pixel_values = self.vae_image_processor.preprocess(image)[0]
 
@@ -301,8 +349,12 @@ class StableFluxProcessor:
             if isinstance(image, str):
                 image = Image.open(image)
             image = image.convert("RGB")
-            if self.image_size is not None:
-                image = image.resize(self.image_size)
+            size = image.size if self.image_size is None else self.image_size
+            size = (
+                size[0] // self.divisor * self.divisor,
+                size[1] // self.divisor * self.divisor,
+            )
+            image = image.resize(size)
 
             pixel_values.append(self.vae_image_processor.preprocess(image)[0])
 

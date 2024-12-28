@@ -37,7 +37,7 @@ def mktempfile(prefix: str = "", suffix: str = ""):
 
 
 ### version
-VERSION = "0.0.0.20"
+VERSION = "0.0.0.21"
 
 ### is offline mode
 UNITORCH_OFFLINE = os.environ.get("UNITORCH_OFFLINE", "0").upper()
@@ -118,8 +118,6 @@ from unitorch.utils import (
     is_diffusers_available,
     is_xformers_available,
     is_opencv_available,
-    is_torch_available,
-    is_torch2_available,
 )
 
 if is_diffusers_available():

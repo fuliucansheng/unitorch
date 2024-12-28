@@ -18,10 +18,9 @@ from collections.abc import Iterable
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union, Iterator
 from torch.utils.data import DataLoader, Dataset, SequentialSampler
 from torch.utils.data.distributed import DistributedSampler
-from torch import autocast
 from torch.cuda.amp import GradScaler
 from torch.multiprocessing import Process, Queue
-from unitorch import set_seed, is_torch2_available
+from unitorch import set_seed
 from unitorch.models import ExponentialMovingAverage
 from unitorch.utils import get_local_rank
 from unitorch.utils import (
@@ -228,6 +227,7 @@ class SupervisedTask:
         datasets,
         local_rank: Optional[int] = -1,
         seed: Optional[int] = 1123,
+        cpu_offload: Optional[bool] = False,
     ):
         """
         Initialize the SupervisedTask.
@@ -252,7 +252,7 @@ class SupervisedTask:
         if self.local_rank != -1:
             torch.cuda.set_device(self.local_rank)
 
-        if torch.cuda.is_available():
+        if torch.cuda.is_available() and not cpu_offload:
             self.model = self.model.cuda()
 
         self.best_score = -np.inf
@@ -291,12 +291,14 @@ class SupervisedTask:
             "local_rank",
             get_local_rank(),
         )
+        cpu_offload = config.getoption("cpu_offload", False)
 
         return dict(
             configure=config,
             model=model,
             datasets=dataset,
             local_rank=local_rank,
+            cpu_offload=cpu_offload,
         )
 
     @add_default_section_for_function("core/task/supervised")
@@ -353,7 +355,6 @@ class SupervisedTask:
             use_ema (optional): Whether to use exponential moving average. Defaults to False.
             ema_decay (optional): The decay rate for exponential moving average. Defaults to 0.9999.
             ema_tau (optional): The time constant for exponential moving average. Defaults to 2000.
-            use_amp (optional): Whether to use automatic mixed precision. Defaults to True.
             gpu_mode (optional): Whether to make GPU active. Defaults to False.
         """
         if not os.path.exists(to_ckpt_dir) and self.local_rank in [-1, 0]:
@@ -538,30 +539,15 @@ class SupervisedTask:
                     inputs = inputs.cuda()
                     targets = targets.cuda()
 
-                if is_torch2_available():
-                    with torch.cuda.amp.autocast(
-                        enabled=use_amp
-                    ) as autocast, torch.backends.cuda.sdp_kernel(
-                        enable_flash=False
-                    ) as disable:
-                        outputs = self.model(**inputs.dict())
-                        if isinstance(outputs, LossOutputs):
-                            loss = outputs.loss / grad_acc_step
-                        else:
-                            loss = (
-                                loss_fn(outputs=outputs, targets=targets)
-                                / grad_acc_step
-                            )
-                else:
-                    with torch.cuda.amp.autocast(enabled=use_amp) as autocast:
-                        outputs = self.model(**inputs.dict())
-                        if isinstance(outputs, LossOutputs):
-                            loss = outputs.loss / grad_acc_step
-                        else:
-                            loss = (
-                                loss_fn(outputs=outputs, targets=targets)
-                                / grad_acc_step
-                            )
+                with torch.autocast(
+                    enabled=True,
+                    device_type="cuda" if torch.cuda.is_available() else "cpu",
+                ):
+                    outputs = self.model(**inputs.dict())
+                    if isinstance(outputs, LossOutputs):
+                        loss = outputs.loss / grad_acc_step
+                    else:
+                        loss = loss_fn(outputs=outputs, targets=targets) / grad_acc_step
 
                 nn.utils.clip_grad_norm_(self.model.parameters(), max_grad_norm)
                 if use_amp:
@@ -730,7 +716,7 @@ class SupervisedTask:
         max_size: Optional[int] = 10000,
         from_ckpt_dir: Optional[str] = "./from_ckpt",
         output_header: Optional[List] = None,
-        output_path: Optional[str] = "./cache/predict.txt",
+        output_path: Optional[str] = "./output.txt",
         postprocess_workers: Optional[int] = 2,
     ):
         """
@@ -745,7 +731,7 @@ class SupervisedTask:
             max_size (optional): The maximum number of samples to process. Defaults to 10000.
             from_ckpt_dir (optional): The directory path to load checkpoints from. Defaults to "./from_ckpt".
             output_header (optional): The header for the output file. Defaults to None.
-            output_path (optional): The path to save the output file. Defaults to "./cache/predict.txt".
+            output_path (optional): The path to save the output file. Defaults to "./output.txt".
             postprocess_workers (optional): The number of worker processes for postprocessing. Defaults to 2.
         """
         assert self.n_gpu <= 1
