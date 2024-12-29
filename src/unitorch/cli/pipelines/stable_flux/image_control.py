@@ -230,7 +230,6 @@ class StableFluxForImageControlGenerationPipeline(GenericStableFluxModel):
         text: str,
         image: Image.Image,
         guidance_scale: Optional[float] = 7.5,
-        strength: Optional[float] = 1.0,
         num_timesteps: Optional[int] = 50,
         seed: Optional[int] = 1123,
         scheduler: Optional[str] = None,
@@ -332,7 +331,7 @@ class StableFluxForImageControlGenerationPipeline(GenericStableFluxModel):
             self.pipeline.enable_xformers_memory_efficient_attention()
 
         outputs = self.pipeline(
-            image=inputs["pixel_values"],
+            control_image=inputs["pixel_values"],
             prompt_embeds=prompt_embeds.to(torch.bfloat16),
             pooled_prompt_embeds=pooled_prompt_embeds.to(torch.bfloat16),
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
@@ -340,7 +339,6 @@ class StableFluxForImageControlGenerationPipeline(GenericStableFluxModel):
             ),
             num_inference_steps=num_timesteps,
             guidance_scale=guidance_scale,
-            strength=strength,
             output_type="np.array",
         )
         self.unload_lora_weights()

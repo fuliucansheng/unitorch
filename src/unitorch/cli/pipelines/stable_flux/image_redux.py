@@ -100,6 +100,12 @@ class StableFluxForImageReduxGenerationPipeline(GenericStableFluxModel):
 
         self._enable_cpu_offload = enable_cpu_offload
         self._enable_xformers = enable_xformers
+        self.prompt_embeds_scale = 1.0
+        self.pooled_prompt_embeds_scale = 1.0
+
+        if not self._enable_cpu_offload:
+            self.image.to(device=self._device)
+            self.redux_image.to(device=self._device)
 
     @classmethod
     @add_default_section_for_init("core/pipeline/stable_flux/image_redux")
@@ -372,8 +378,18 @@ class StableFluxForImageReduxGenerationPipeline(GenericStableFluxModel):
             enable_cpu_offload=self._enable_cpu_offload,
             cpu_offload_device=self._device,
         )
-        redux_image_embeds = self.image(inputs["redux_pixel_values"]).last_hidden_state
+        if self._enable_cpu_offload:
+            self.image.to(device=self._device)
+            self.redux_image.to(device=self._device)
+
+        redux_pixel_values = inputs["redux_pixel_values"].to(self._device)
+        redux_image_embeds = self.image(redux_pixel_values).last_hidden_state
         redux_image_embeds = self.redux_image(redux_image_embeds).image_embeds
+
+        if self._enable_cpu_offload:
+            self.image.to(device="cpu")
+            self.redux_image.to(device="cpu")
+            redux_image_embeds = redux_image_embeds.to("cpu")
 
         prompt_embeds = (
             torch.cat([prompt_outputs.prompt_embeds, redux_image_embeds], dim=1)

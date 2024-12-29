@@ -139,8 +139,10 @@ class ControlNetForText2ImageFastAPIPipeline(GenericStableModel):
         merge_path: Optional[str] = None,
         quant_config_path: Optional[str] = None,
         pretrained_weight_path: Optional[str] = None,
+        pad_token: Optional[str] = "<|endoftext|>",
         device: Optional[str] = "cpu",
         pretrained_lora_names: Optional[Union[str, List[str]]] = None,
+        pretrained_lora_weights_path: Optional[Union[str, List[str]]] = None,
         pretrained_lora_weights: Optional[Union[float, List[float]]] = 1.0,
         pretrained_lora_alphas: Optional[Union[float, List[float]]] = 32.0,
         **kwargs,
@@ -226,7 +228,7 @@ class ControlNetForText2ImageFastAPIPipeline(GenericStableModel):
             quant_config_path = cached_path(quant_config_path)
 
         max_seq_length = config.getoption("max_seq_length", 77)
-        pad_token = config.getoption("pad_token", "<|endoftext|>")
+        pad_token = config.getoption("pad_token", pad_token)
         weight_path = config.getoption("pretrained_weight_path", pretrained_weight_path)
         device = config.getoption("device", device)
         enable_cpu_offload = config.getoption("enable_cpu_offload", True)
@@ -271,14 +273,20 @@ class ControlNetForText2ImageFastAPIPipeline(GenericStableModel):
             "pretrained_lora_alphas", pretrained_lora_alphas
         )
 
-        if isinstance(pretrained_lora_names, str):
+        if (
+            isinstance(pretrained_lora_names, str)
+            and pretrained_lora_weights_path is None
+        ):
             pretrained_lora_weights_path = nested_dict_value(
                 pretrained_stable_extensions_infos,
                 pretrained_lora_names,
                 "lora",
                 "weight",
             )
-        elif isinstance(pretrained_lora_names, list):
+        elif (
+            isinstance(pretrained_lora_names, list)
+            and pretrained_lora_weights_path is None
+        ):
             pretrained_lora_weights_path = [
                 nested_dict_value(
                     pretrained_stable_extensions_infos, name, "lora", "weight"
@@ -287,8 +295,6 @@ class ControlNetForText2ImageFastAPIPipeline(GenericStableModel):
             ]
             assert len(pretrained_lora_weights_path) == len(pretrained_lora_weights)
             assert len(pretrained_lora_weights_path) == len(pretrained_lora_alphas)
-        else:
-            pretrained_lora_weights_path = None
 
         lora_weights_path = config.getoption(
             "pretrained_lora_weights_path", pretrained_lora_weights_path

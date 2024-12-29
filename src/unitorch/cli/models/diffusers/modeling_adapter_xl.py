@@ -257,7 +257,10 @@ class StableXLAdapterForText2ImageGeneration(_StableXLAdapterForText2ImageGenera
         )
         if lora_weights_path is not None:
             inst.load_lora_weights(
-                lora_weights_path, pretrained_lora_weights, replace_keys={}
+                lora_weights_path,
+                pretrained_lora_weights,
+                replace_keys={},
+                save_base_state=False,
             )
 
         return inst

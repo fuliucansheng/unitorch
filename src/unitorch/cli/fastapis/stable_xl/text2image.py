@@ -149,6 +149,7 @@ class StableXLForText2ImageFastAPIPipeline(GenericStableXLModel):
         pretrained_weight_path: Optional[str] = None,
         device: Optional[str] = "cpu",
         pretrained_lora_names: Optional[Union[str, List[str]]] = None,
+        pretrained_lora_weights_path: Optional[Union[str, List[str]]] = None,
         pretrained_lora_weights: Optional[Union[float, List[float]]] = 1.0,
         pretrained_lora_alphas: Optional[Union[float, List[float]]] = 32.0,
         **kwargs,
@@ -265,14 +266,20 @@ class StableXLForText2ImageFastAPIPipeline(GenericStableXLModel):
             "pretrained_lora_alphas", pretrained_lora_alphas
         )
 
-        if isinstance(pretrained_lora_names, str):
+        if (
+            isinstance(pretrained_lora_names, str)
+            and pretrained_lora_weights_path is None
+        ):
             pretrained_lora_weights_path = nested_dict_value(
                 pretrained_stable_extensions_infos,
                 pretrained_lora_names,
                 "lora",
                 "weight",
             )
-        elif isinstance(pretrained_lora_names, list):
+        elif (
+            isinstance(pretrained_lora_names, list)
+            and pretrained_lora_weights_path is None
+        ):
             pretrained_lora_weights_path = [
                 nested_dict_value(
                     pretrained_stable_extensions_infos, name, "lora", "weight"
@@ -281,8 +288,6 @@ class StableXLForText2ImageFastAPIPipeline(GenericStableXLModel):
             ]
             assert len(pretrained_lora_weights_path) == len(pretrained_lora_weights)
             assert len(pretrained_lora_weights_path) == len(pretrained_lora_alphas)
-        else:
-            pretrained_lora_weights_path = None
 
         lora_weights_path = config.getoption(
             "pretrained_lora_weights_path", pretrained_lora_weights_path

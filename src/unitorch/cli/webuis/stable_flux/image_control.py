@@ -123,7 +123,8 @@ class StableFluxImageControlWebUI(SimpleWebUI):
             create_column(generate),
         )
         left_generation = create_tab(
-            create_row(image),
+            create_row(image, control_image),
+            create_row(image_process),
             create_row(scheduler, steps),
             create_row(guidance_scale),
             create_row(seed),
