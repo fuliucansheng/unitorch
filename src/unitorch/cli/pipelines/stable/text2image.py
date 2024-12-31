@@ -197,12 +197,6 @@ class StableForText2ImageGenerationPipeline(GenericStableModel):
         num_timesteps: Optional[int] = 50,
         seed: Optional[int] = 1123,
         scheduler: Optional[str] = None,
-        freeu_params: Optional[Tuple[float, float, float, float]] = (
-            0.9,
-            0.2,
-            1.2,
-            1.4,
-        ),
         controlnet_checkpoints: Optional[List[str]] = [],
         controlnet_images: Optional[List[Image.Image]] = [],
         controlnet_guidance_scales: Optional[List[float]] = [],
@@ -286,8 +280,6 @@ class StableForText2ImageGenerationPipeline(GenericStableModel):
             enable_controlnet = False
             inputs = text_inputs
         self.pipeline.set_progress_bar_config(disable=True)
-        # if freeu_params is not None:
-        #     self.pipeline.enable_freeu(*freeu_params)
         self.seed = seed
 
         inputs = {k: v.unsqueeze(0) if v is not None else v for k, v in inputs.items()}

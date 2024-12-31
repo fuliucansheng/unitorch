@@ -30,7 +30,6 @@ from unitorch.cli.webuis import (
     create_pretrain_layout,
     create_controlnet_layout,
     create_lora_layout,
-    create_freeu_layout,
 )
 from unitorch.cli.webuis import SimpleWebUI
 
@@ -109,15 +108,6 @@ class StableText2ImageWebUI(SimpleWebUI):
             "slider", "Seed", min_value=0, max_value=9999, step=1, default=42
         )
 
-        freeu_layout_group = create_freeu_layout()
-        s1, s2, b1, b2, freeu_layout = (
-            freeu_layout_group.s1,
-            freeu_layout_group.s2,
-            freeu_layout_group.b1,
-            freeu_layout_group.b2,
-            freeu_layout_group.layout,
-        )
-
         ## extensions
         self.num_controlnets = 5
         controlnet_layout_group = create_controlnet_layout(
@@ -167,7 +157,6 @@ class StableText2ImageWebUI(SimpleWebUI):
             create_row(width),
             create_row(guidance_scale),
             create_row(seed),
-            create_row(freeu_layout),
             name="Generation",
         )
         left_extension = create_tab(
@@ -221,10 +210,6 @@ class StableText2ImageWebUI(SimpleWebUI):
                 steps,
                 seed,
                 scheduler,
-                s1,
-                s2,
-                b1,
-                b2,
                 *controlnet_params,
                 *lora_params,
             ],
@@ -278,10 +263,6 @@ class StableText2ImageWebUI(SimpleWebUI):
         num_timesteps: int,
         seed: int,
         scheduler: str,
-        freeu_s1: float,
-        freeu_s2: float,
-        freeu_b1: float,
-        freeu_b2: float,
         *params,
     ):
         assert self._pipe is not None
@@ -304,7 +285,6 @@ class StableText2ImageWebUI(SimpleWebUI):
             num_timesteps=num_timesteps,
             seed=seed,
             scheduler=scheduler,
-            freeu_params=(freeu_s1, freeu_s2, freeu_b1, freeu_b2),
             controlnet_checkpoints=controlnet_checkpoints,
             controlnet_images=controlnet_images,
             controlnet_guidance_scales=controlnet_guidance_scales,

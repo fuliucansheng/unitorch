@@ -336,12 +336,6 @@ class ControlNetForImage2ImageFastAPIPipeline(GenericStableModel):
         strength: Optional[float] = 1.0,
         num_timesteps: Optional[int] = 50,
         seed: Optional[int] = 1123,
-        freeu_params: Optional[Tuple[float, float, float, float]] = (
-            0.9,
-            0.2,
-            1.2,
-            1.4,
-        ),
     ):
         text_inputs = self.processor.text2image_inputs(
             text,
@@ -358,8 +352,6 @@ class ControlNetForImage2ImageFastAPIPipeline(GenericStableModel):
             **image_inputs,
             **{"condition_pixel_values": controlnets_inputs.pixel_values},
         }
-        # if freeu_params is not None:
-        #     self.pipeline.enable_freeu(*freeu_params)
         self.seed = seed
 
         inputs = {k: v.unsqueeze(0) if v is not None else v for k, v in inputs.items()}

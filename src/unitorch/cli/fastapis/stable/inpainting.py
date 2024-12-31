@@ -282,12 +282,6 @@ class StableForImageInpaintingFastAPIPipeline(GenericStableModel):
         strength: Optional[float] = 1.0,
         num_timesteps: Optional[int] = 50,
         seed: Optional[int] = 1123,
-        freeu_params: Optional[Tuple[float, float, float, float]] = (
-            0.9,
-            0.2,
-            1.2,
-            1.4,
-        ),
     ):
         if width is None or height is None:
             width, height = image.size
@@ -302,8 +296,6 @@ class StableForImageInpaintingFastAPIPipeline(GenericStableModel):
         )
         image_inputs = self.processor.inpainting_inputs(image, mask_image)
         inputs = {**text_inputs, **image_inputs}
-        # if freeu_params is not None:
-        #     self.pipeline.enable_freeu(*freeu_params)
         self.seed = seed
 
         inputs = {k: v.unsqueeze(0) if v is not None else v for k, v in inputs.items()}

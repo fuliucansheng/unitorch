@@ -375,12 +375,6 @@ class ControlNetForImageInpaintingFastAPIPipeline(GenericStableModel):
         strength: Optional[float] = 1.0,
         num_timesteps: Optional[int] = 50,
         seed: Optional[int] = 1123,
-        freeu_params: Optional[Tuple[float, float, float, float]] = (
-            0.9,
-            0.2,
-            1.2,
-            1.4,
-        ),
     ):
         if width is None or height is None:
             width, height = image.size
@@ -425,8 +419,6 @@ class ControlNetForImageInpaintingFastAPIPipeline(GenericStableModel):
             **image_inputs,
             **{"condition_pixel_values": condition_pixel_values},
         }
-        # if freeu_params is not None:
-        #     self.pipeline.enable_freeu(*freeu_params)
         self.seed = seed
 
         inputs = {k: v.unsqueeze(0) if v is not None else v for k, v in inputs.items()}

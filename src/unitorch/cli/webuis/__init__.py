@@ -66,7 +66,6 @@ from unitorch.cli.webuis.utils import (
     create_controlnet_layout,
     create_adapter_layout,
     create_lora_layout,
-    create_freeu_layout,
 )
 
 import unitorch.cli.webuis.tools

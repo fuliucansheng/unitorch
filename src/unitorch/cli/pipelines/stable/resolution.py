@@ -197,12 +197,6 @@ class StableForImageResolutionPipeline(GenericStableModel):
         num_timesteps: Optional[int] = 50,
         seed: Optional[int] = 1123,
         scheduler: Optional[str] = None,
-        freeu_params: Optional[Tuple[float, float, float, float]] = (
-            0.9,
-            0.2,
-            1.2,
-            1.4,
-        ),
         lora_checkpoints: Optional[Union[str, List[str]]] = [],
         lora_weights: Optional[Union[float, List[float]]] = 1.0,
         lora_alphas: Optional[Union[float, List[float]]] = 32,
@@ -233,8 +227,6 @@ class StableForImageResolutionPipeline(GenericStableModel):
         )
         inputs = {**text_inputs, **image_inputs}
         self.pipeline.set_progress_bar_config(disable=True)
-        # if freeu_params is not None:
-        #     self.pipeline.enable_freeu(*freeu_params)
         self.seed = seed
 
         inputs = {k: v.unsqueeze(0) if v is not None else v for k, v in inputs.items()}
