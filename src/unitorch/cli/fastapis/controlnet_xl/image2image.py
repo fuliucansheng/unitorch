@@ -132,10 +132,10 @@ class ControlNetXLForImage2ImageFastAPIPipeline(GenericStableXLModel):
     def from_core_configure(
         cls,
         config,
-        pretrained_name: Optional[str] = "stable-xl-base",
+        pretrained_name: Optional[str] = None,
         pretrained_controlnet_names: Optional[
             Union[str, List[str]]
-        ] = "stable-xl-controlnet-canny",
+        ] = None,
         config_path: Optional[str] = None,
         text_config_path: Optional[str] = None,
         text2_config_path: Optional[str] = None,
@@ -147,18 +147,19 @@ class ControlNetXLForImage2ImageFastAPIPipeline(GenericStableXLModel):
         merge2_path: Optional[str] = None,
         quant_config_path: Optional[str] = None,
         pretrained_weight_path: Optional[str] = None,
-        device: Optional[str] = "cpu",
+        device: Optional[str] = None,
         pretrained_lora_names: Optional[Union[str, List[str]]] = None,
+        pretrained_lora_weights_path: Optional[Union[str, List[str]]] = None,
         pretrained_lora_weights: Optional[Union[float, List[float]]] = 1.0,
         pretrained_lora_alphas: Optional[Union[float, List[float]]] = 32.0,
         **kwargs,
     ):
         config.set_default_section("core/fastapi/pipeline/controlnet_xl/image2image")
-        pretrained_name = config.getoption("pretrained_name", pretrained_name)
+        pretrained_name = pretrained_name or config.getoption("pretrained_name", "stable-xl-base")
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
 
-        pretrained_controlnet_names = config.getoption(
-            "pretrained_controlnet_names", pretrained_controlnet_names
+        pretrained_controlnet_names = pretrained_controlnet_names or config.getoption(
+            "pretrained_controlnet_names", "stable-xl-controlnet-canny"
         )
         if isinstance(pretrained_controlnet_names, str):
             pretrained_controlnet_names = [pretrained_controlnet_names]
@@ -170,28 +171,28 @@ class ControlNetXLForImage2ImageFastAPIPipeline(GenericStableXLModel):
             for pretrained_controlnet_name in pretrained_controlnet_names
         ]
 
-        config_path = config.getoption("config_path", config_path)
+        config_path = config_path or config.getoption("config_path", None)
         config_path = pop_value(
             config_path,
             nested_dict_value(pretrained_infos, "unet", "config"),
         )
         config_path = cached_path(config_path)
 
-        text_config_path = config.getoption("text_config_path", text_config_path)
+        text_config_path = text_config_path or config.getoption("text_config_path", None)
         text_config_path = pop_value(
             text_config_path,
             nested_dict_value(pretrained_infos, "text", "config"),
         )
         text_config_path = cached_path(text_config_path)
 
-        text2_config_path = config.getoption("text2_config_path", text2_config_path)
+        text2_config_path = text2_config_path or config.getoption("text2_config_path", None)
         text2_config_path = pop_value(
             text2_config_path,
             nested_dict_value(pretrained_infos, "text2", "config"),
         )
         text2_config_path = cached_path(text2_config_path)
 
-        vae_config_path = config.getoption("vae_config_path", vae_config_path)
+        vae_config_path = vae_config_path or config.getoption("vae_config_path", None)
         vae_config_path = pop_value(
             vae_config_path,
             nested_dict_value(pretrained_infos, "vae", "config"),
@@ -213,8 +214,8 @@ class ControlNetXLForImage2ImageFastAPIPipeline(GenericStableXLModel):
             for controlnet_config_path in controlnet_configs_path
         ]
 
-        scheduler_config_path = config.getoption(
-            "scheduler_config_path", scheduler_config_path
+        scheduler_config_path = scheduler_config_path or config.getoption(
+            "scheduler_config_path", None
         )
         scheduler_config_path = pop_value(
             scheduler_config_path,
@@ -222,43 +223,43 @@ class ControlNetXLForImage2ImageFastAPIPipeline(GenericStableXLModel):
         )
         scheduler_config_path = cached_path(scheduler_config_path)
 
-        vocab_path = config.getoption("vocab_path", vocab_path)
+        vocab_path = vocab_path or config.getoption("vocab_path", None)
         vocab_path = pop_value(
             vocab_path,
             nested_dict_value(pretrained_infos, "text", "vocab"),
         )
         vocab_path = cached_path(vocab_path)
 
-        merge_path = config.getoption("merge_path", merge_path)
+        merge_path = merge_path or config.getoption("merge_path", None)
         merge_path = pop_value(
             merge_path,
             nested_dict_value(pretrained_infos, "text", "merge"),
         )
         merge_path = cached_path(merge_path)
 
-        vocab2_path = config.getoption("vocab2_path", vocab2_path)
+        vocab2_path = vocab2_path or config.getoption("vocab2_path", None)
         vocab2_path = pop_value(
             vocab2_path,
             nested_dict_value(pretrained_infos, "text2", "vocab"),
         )
         vocab2_path = cached_path(vocab2_path)
 
-        merge2_path = config.getoption("merge2_path", merge2_path)
+        merge2_path = merge2_path or config.getoption("merge2_path", None)
         merge2_path = pop_value(
             merge2_path,
             nested_dict_value(pretrained_infos, "text2", "merge"),
         )
         merge2_path = cached_path(merge2_path)
 
-        quant_config_path = config.getoption("quant_config_path", quant_config_path)
+        quant_config_path = quant_config_path or config.getoption("quant_config_path", None)
         if quant_config_path is not None:
             quant_config_path = cached_path(quant_config_path)
 
         max_seq_length = config.getoption("max_seq_length", 77)
         pad_token = config.getoption("pad_token", "<|endoftext|>")
         pad_token2 = config.getoption("pad_token2", "!")
-        weight_path = config.getoption("pretrained_weight_path", pretrained_weight_path)
-        device = config.getoption("device", device)
+        weight_path = pretrained_weight_path or config.getoption("pretrained_weight_path", None)
+        device = device or config.getoption("device", "cpu")
         enable_cpu_offload = config.getoption("enable_cpu_offload", True)
         enable_xformers = config.getoption("enable_xformers", True)
 
@@ -304,24 +305,30 @@ class ControlNetXLForImage2ImageFastAPIPipeline(GenericStableXLModel):
                     )
                 )
 
-        pretrained_lora_names = config.getoption(
-            "pretrained_lora_names", pretrained_lora_names
+        pretrained_lora_names = pretrained_lora_names or config.getoption(
+            "pretrained_lora_names", None
         )
-        pretrained_lora_weights = config.getoption(
-            "pretrained_lora_weights", pretrained_lora_weights
+        pretrained_lora_weights = pretrained_lora_weights or config.getoption(
+            "pretrained_lora_weights", 1.0
         )
-        pretrained_lora_alphas = config.getoption(
-            "pretrained_lora_alphas", pretrained_lora_alphas
+        pretrained_lora_alphas = pretrained_lora_alphas or config.getoption(
+            "pretrained_lora_alphas", 32.0
         )
 
-        if isinstance(pretrained_lora_names, str):
+        if (
+            isinstance(pretrained_lora_names, str)
+            and pretrained_lora_weights_path is None
+        ):
             pretrained_lora_weights_path = nested_dict_value(
                 pretrained_stable_extensions_infos,
                 pretrained_lora_names,
                 "lora",
                 "weight",
             )
-        elif isinstance(pretrained_lora_names, list):
+        elif (
+            isinstance(pretrained_lora_names, list)
+            and pretrained_lora_weights_path is None
+        ):
             pretrained_lora_weights_path = [
                 nested_dict_value(
                     pretrained_stable_extensions_infos, name, "lora", "weight"
@@ -330,11 +337,9 @@ class ControlNetXLForImage2ImageFastAPIPipeline(GenericStableXLModel):
             ]
             assert len(pretrained_lora_weights_path) == len(pretrained_lora_weights)
             assert len(pretrained_lora_weights_path) == len(pretrained_lora_alphas)
-        else:
-            pretrained_lora_weights_path = None
 
-        lora_weights_path = config.getoption(
-            "pretrained_lora_weights_path", pretrained_lora_weights_path
+        lora_weights_path = pretrained_lora_weights_path or config.getoption(
+            "pretrained_lora_weights_path", None
         )
 
         inst = cls(

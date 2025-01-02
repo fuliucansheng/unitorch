@@ -84,7 +84,7 @@ class StableForImage2VideoGenerationPipeline(StableForImage2VideoGeneration):
     def from_core_configure(
         cls,
         config,
-        pretrained_name: Optional[str] = "stable-v1.5",
+        pretrained_name: Optional[str] = None,
         config_path: Optional[str] = None,
         image_config_path: Optional[str] = None,
         vae_config_path: Optional[str] = None,
@@ -92,36 +92,36 @@ class StableForImage2VideoGenerationPipeline(StableForImage2VideoGeneration):
         image_process_config_path: Optional[str] = None,
         quant_config_path: Optional[str] = None,
         pretrained_weight_path: Optional[str] = None,
-        device: Optional[str] = "cpu",
+        device: Optional[str] = None,
         **kwargs,
     ):
         config.set_default_section("core/pipeline/stable/image2video")
-        pretrained_name = config.getoption("pretrained_name", pretrained_name)
+        pretrained_name = pretrained_name or config.getoption("pretrained_name", "stable-v1.5")
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
 
-        config_path = config.getoption("config_path", config_path)
+        config_path = config_path or config.getoption("config_path", None)
         config_path = pop_value(
             config_path,
             nested_dict_value(pretrained_infos, "unet", "config"),
         )
         config_path = cached_path(config_path)
 
-        image_config_path = config.getoption("image_config_path", image_config_path)
+        image_config_path = image_config_path or config.getoption("image_config_path", None)
         image_config_path = pop_value(
             image_config_path,
             nested_dict_value(pretrained_infos, "image", "config"),
         )
         image_config_path = cached_path(image_config_path)
 
-        vae_config_path = config.getoption("vae_config_path", vae_config_path)
+        vae_config_path = vae_config_path or config.getoption("vae_config_path", None)
         vae_config_path = pop_value(
             vae_config_path,
             nested_dict_value(pretrained_infos, "vae", "config"),
         )
         vae_config_path = cached_path(vae_config_path)
 
-        scheduler_config_path = config.getoption(
-            "scheduler_config_path", scheduler_config_path
+        scheduler_config_path = scheduler_config_path or config.getoption(
+            "scheduler_config_path", None
         )
         scheduler_config_path = pop_value(
             scheduler_config_path,
@@ -129,8 +129,8 @@ class StableForImage2VideoGenerationPipeline(StableForImage2VideoGeneration):
         )
         scheduler_config_path = cached_path(scheduler_config_path)
 
-        image_process_config_path = config.getoption(
-            "image_process_config_path", image_process_config_path
+        image_process_config_path = image_process_config_path or config.getoption(
+            "image_process_config_path", None
         )
         image_process_config_path = pop_value(
             image_process_config_path,
@@ -138,12 +138,12 @@ class StableForImage2VideoGenerationPipeline(StableForImage2VideoGeneration):
         )
         image_process_config_path = cached_path(image_process_config_path)
 
-        quant_config_path = config.getoption("quant_config_path", quant_config_path)
+        quant_config_path = quant_config_path or config.getoption("quant_config_path", None)
         if quant_config_path is not None:
             quant_config_path = cached_path(quant_config_path)
 
-        weight_path = config.getoption("pretrained_weight_path", pretrained_weight_path)
-        device = config.getoption("device", device)
+        weight_path = pretrained_weight_path or config.getoption("pretrained_weight_path", None)
+        device = device or config.getoption("device", "cpu")
         enable_cpu_offload = config.getoption("enable_cpu_offload", True)
         enable_xformers = config.getoption("enable_xformers", True)
 

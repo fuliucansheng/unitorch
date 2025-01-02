@@ -201,7 +201,10 @@ class StableFluxForText2ImageGeneration(_StableFluxForText2ImageGeneration):
         )
         if lora_weights_path is not None:
             inst.load_lora_weights(
-                lora_weights_path, pretrained_lora_weights, replace_keys={}
+                lora_weights_path,
+                pretrained_lora_weights,
+                replace_keys={},
+                save_base_state=False,
             )
         return inst
 
@@ -422,7 +425,10 @@ class StableFluxForImage2ImageGeneration(_StableFluxForImage2ImageGeneration):
         )
         if lora_weights_path is not None:
             inst.load_lora_weights(
-                lora_weights_path, pretrained_lora_weights, replace_keys={}
+                lora_weights_path,
+                pretrained_lora_weights,
+                replace_keys={},
+                save_base_state=False,
             )
         return inst
 
@@ -629,7 +635,10 @@ class StableFluxForImageControlGeneration(_StableFluxForImageControlGeneration):
         )
         if lora_weights_path is not None:
             inst.load_lora_weights(
-                lora_weights_path, pretrained_lora_weights, replace_keys={}
+                lora_weights_path,
+                pretrained_lora_weights,
+                replace_keys={},
+                save_base_state=False,
             )
         return inst
 
@@ -888,7 +897,10 @@ class StableFluxForImageReduxGeneration(_StableFluxForImageReduxGeneration):
         )
         if lora_weights_path is not None:
             inst.load_lora_weights(
-                lora_weights_path, pretrained_lora_weights, replace_keys={}
+                lora_weights_path,
+                pretrained_lora_weights,
+                replace_keys={},
+                save_base_state=False,
             )
         return inst
 
@@ -1116,7 +1128,10 @@ class StableFluxForImageInpainting(_StableFluxForImageInpainting):
         )
         if lora_weights_path is not None:
             inst.load_lora_weights(
-                lora_weights_path, pretrained_lora_weights, replace_keys={}
+                lora_weights_path,
+                pretrained_lora_weights,
+                replace_keys={},
+                save_base_state=False,
             )
         return inst
 

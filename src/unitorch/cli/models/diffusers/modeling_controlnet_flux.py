@@ -269,7 +269,10 @@ class ControlNetFluxForText2ImageGeneration(_ControlNetFluxForText2ImageGenerati
         )
         if lora_weights_path is not None:
             inst.load_lora_weights(
-                lora_weights_path, pretrained_lora_weights, replace_keys={}
+                lora_weights_path,
+                pretrained_lora_weights,
+                replace_keys={},
+                save_base_state=False,
             )
 
         return inst
@@ -565,7 +568,10 @@ class ControlNetFluxForImage2ImageGeneration(_ControlNetFluxForImage2ImageGenera
         )
         if lora_weights_path is not None:
             inst.load_lora_weights(
-                lora_weights_path, pretrained_lora_weights, replace_keys={}
+                lora_weights_path,
+                pretrained_lora_weights,
+                replace_keys={},
+                save_base_state=False,
             )
 
         return inst
@@ -884,7 +890,10 @@ class ControlNetFluxForImageInpainting(_ControlNetFluxForImageInpainting):
         )
         if lora_weights_path is not None:
             inst.load_lora_weights(
-                lora_weights_path, pretrained_lora_weights, replace_keys={}
+                lora_weights_path,
+                pretrained_lora_weights,
+                replace_keys={},
+                save_base_state=False,
             )
 
         return inst

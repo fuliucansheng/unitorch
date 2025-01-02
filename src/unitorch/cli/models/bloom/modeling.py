@@ -102,6 +102,7 @@ class BloomForClassification(_BloomForClassification):
                 lora_weight_path,
                 lora_weights=pretrained_lora_weight,
                 lora_alphas=pretrained_lora_alpha,
+                save_base_state=False,
             )
 
         return inst
@@ -202,6 +203,7 @@ class BloomForGeneration(_BloomForGeneration):
                 lora_weight_path,
                 lora_weights=pretrained_lora_weight,
                 lora_alphas=pretrained_lora_alpha,
+                save_base_state=False,
             )
 
         return inst

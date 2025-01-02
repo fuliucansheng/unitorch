@@ -32,7 +32,6 @@ from unitorch.cli.webuis import (
     create_pretrain_layout,
     create_controlnet_layout,
     create_lora_layout,
-    create_freeu_layout,
 )
 from unitorch.cli.webuis import SimpleWebUI
 
@@ -123,7 +122,8 @@ class StableFluxImageControlWebUI(SimpleWebUI):
             create_column(generate),
         )
         left_generation = create_tab(
-            create_row(image),
+            create_row(image, control_image),
+            create_row(image_process),
             create_row(scheduler, steps),
             create_row(guidance_scale),
             create_row(seed),

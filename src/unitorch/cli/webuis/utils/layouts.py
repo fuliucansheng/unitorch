@@ -504,22 +504,3 @@ def create_lora_layout(
     return GenericOutputs(
         loras=[lora_group[0] for lora_group in lora_groups], layout=layout
     )
-
-
-def create_freeu_layout():
-    s1 = create_element(
-        "slider", "S1", default=0.9, min_value=0, max_value=10, step=0.1
-    )
-    s2 = create_element(
-        "slider", "S2", default=0.2, min_value=0, max_value=10, step=0.1
-    )
-    b1 = create_element(
-        "slider", "B1", default=1.2, min_value=0, max_value=10, step=0.1
-    )
-    b2 = create_element(
-        "slider", "B2", default=1.4, min_value=0, max_value=10, step=0.1
-    )
-    layout = create_accordion(
-        create_row(s1, s2), create_row(b1, b2), name="FreeU Params"
-    )
-    return GenericOutputs(s1=s1, s2=s2, b1=b1, b2=b2, layout=layout)

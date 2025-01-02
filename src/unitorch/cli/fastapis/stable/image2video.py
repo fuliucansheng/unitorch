@@ -106,7 +106,7 @@ class StableForImage2VideoFastAPIPipeline(StableForImage2VideoGeneration):
     def from_core_configure(
         cls,
         config,
-        pretrained_name: Optional[str] = "stable-video-diffusion-img2vid-xt-1-1",
+        pretrained_name: Optional[str] = None,
         config_path: Optional[str] = None,
         image_config_path: Optional[str] = None,
         vae_config_path: Optional[str] = None,
@@ -114,11 +114,11 @@ class StableForImage2VideoFastAPIPipeline(StableForImage2VideoGeneration):
         image_process_config_path: Optional[str] = None,
         quant_config_path: Optional[str] = None,
         pretrained_weight_path: Optional[str] = None,
-        device: Optional[str] = "cpu",
+        device: Optional[str] = None,
         **kwargs,
     ):
         config.set_default_section("core/fastapi/pipeline/stable/image2video")
-        pretrained_name = config.getoption("pretrained_name", pretrained_name)
+        pretrained_name = pretrained_name or config.getoption("pretrained_name", "stable-video-diffusion-img2vid-xt-1-1")
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
 
         config_path = config.getoption("config_path", config_path)
@@ -165,7 +165,7 @@ class StableForImage2VideoFastAPIPipeline(StableForImage2VideoGeneration):
             quant_config_path = cached_path(quant_config_path)
 
         weight_path = config.getoption("pretrained_weight_path", pretrained_weight_path)
-        device = config.getoption("device", device)
+        device = device or config.getoption("device", "cpu")
         enable_cpu_offload = config.getoption("enable_cpu_offload", False)
         enable_xformers = config.getoption("enable_xformers", False)
 
