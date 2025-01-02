@@ -63,41 +63,41 @@ class ClipForClassificationPipeline(_ClipForClassification):
     def from_core_configure(
         cls,
         config,
-        pretrained_name: Optional[str] = "clip-vit-base-patch16",
+        pretrained_name: Optional[str] = None,
         config_path: Optional[str] = None,
         vocab_path: Optional[str] = None,
         merge_path: Optional[str] = None,
         vision_config_path: Optional[str] = None,
         id2label: Optional[Dict[int, str]] = None,
         pretrained_weight_path: Optional[str] = None,
-        device: Optional[str] = "cpu",
+        device: Optional[str] = None,
         **kwargs,
     ):
         config.set_default_section("core/pipeline/clip")
-        pretrained_name = config.getoption("pretrained_name", pretrained_name)
+        pretrained_name = pretrained_name or config.getoption("pretrained_name", "clip-vit-base-patch16")
 
-        config_path = config.getoption("config_path", config_path)
+        config_path = config_path or config.getoption("config_path", None)
         config_path = pop_value(
             config_path,
             nested_dict_value(pretrained_clip_infos, pretrained_name, "config"),
         )
         config_path = cached_path(config_path)
 
-        vocab_path = config.getoption("vocab_path", vocab_path)
+        vocab_path = vocab_path or config.getoption("vocab_path", None)
         vocab_path = pop_value(
             vocab_path,
             nested_dict_value(pretrained_clip_infos, pretrained_name, "vocab"),
         )
         vocab_path = cached_path(vocab_path)
 
-        merge_path = config.getoption("merge_path", merge_path)
+        merge_path = merge_path or config.getoption("merge_path", None)
         merge_path = pop_value(
             merge_path,
             nested_dict_value(pretrained_clip_infos, pretrained_name, "merge"),
         )
         merge_path = cached_path(merge_path)
 
-        vision_config_path = config.getoption("vision_config_path", vision_config_path)
+        vision_config_path = vision_config_path or config.getoption("vision_config_path", None)
         vision_config_path = pop_value(
             vision_config_path,
             nested_dict_value(pretrained_clip_infos, pretrained_name, "vision_config"),
@@ -108,11 +108,11 @@ class ClipForClassificationPipeline(_ClipForClassification):
         projection_dim = config.getoption("projection_dim", 512)
         num_classes = config.getoption("num_classes", 1)
         max_seq_length = config.getoption("max_seq_length", 512)
-        id2label = config.getoption("id2label", id2label)
+        id2label = id2label or config.getoption("id2label", None)
 
-        device = config.getoption("device", device)
-        pretrained_weight_path = config.getoption(
-            "pretrained_weight_path", pretrained_weight_path
+        device = device or config.getoption("device", "cpu")
+        pretrained_weight_path = pretrained_weight_path or config.getoption(
+            "pretrained_weight_path", None
         )
         weight_path = pop_value(
             pretrained_weight_path,
@@ -201,33 +201,33 @@ class ClipForTextClassificationPipeline(_ClipForTextClassification):
     def from_core_configure(
         cls,
         config,
-        pretrained_name: Optional[str] = "clip-vit-base-patch16",
+        pretrained_name: Optional[str] = None,
         config_path: Optional[str] = None,
         vocab_path: Optional[str] = None,
         merge_path: Optional[str] = None,
         id2label: Optional[Dict[int, str]] = None,
         pretrained_weight_path: Optional[str] = None,
-        device: Optional[str] = "cpu",
+        device: Optional[str] = None,
         **kwargs,
     ):
         config.set_default_section("core/pipeline/clip/text")
-        pretrained_name = config.getoption("pretrained_name", pretrained_name)
+        pretrained_name = pretrained_name or config.getoption("pretrained_name", "clip-vit-base-patch16")
 
-        config_path = config.getoption("config_path", config_path)
+        config_path = config_path or config.getoption("config_path", None)
         config_path = pop_value(
             config_path,
             nested_dict_value(pretrained_clip_infos, pretrained_name, "config"),
         )
         config_path = cached_path(config_path)
 
-        vocab_path = config.getoption("vocab_path", vocab_path)
+        vocab_path = vocab_path or config.getoption("vocab_path", None)
         vocab_path = pop_value(
             vocab_path,
             nested_dict_value(pretrained_clip_infos, pretrained_name, "vocab"),
         )
         vocab_path = cached_path(vocab_path)
 
-        merge_path = config.getoption("merge_path", merge_path)
+        merge_path = merge_path or config.getoption("merge_path", None)
         merge_path = pop_value(
             merge_path,
             nested_dict_value(pretrained_clip_infos, pretrained_name, "merge"),
@@ -237,11 +237,11 @@ class ClipForTextClassificationPipeline(_ClipForTextClassification):
         projection_dim = config.getoption("projection_dim", 512)
         num_classes = config.getoption("num_classes", 1)
         max_seq_length = config.getoption("max_seq_length", 512)
-        id2label = config.getoption("id2label", id2label)
+        id2label = id2label or config.getoption("id2label", None)
 
-        device = config.getoption("device", device)
-        pretrained_weight_path = config.getoption(
-            "pretrained_weight_path", pretrained_weight_path
+        device = device or config.getoption("device", "cpu")
+        pretrained_weight_path = pretrained_weight_path or config.getoption(
+            "pretrained_weight_path", None
         )
         weight_path = pop_value(
             pretrained_weight_path,
@@ -322,25 +322,25 @@ class ClipForImageClassificationPipeline(_ClipForImageClassification):
     def from_core_configure(
         cls,
         config,
-        pretrained_name: Optional[str] = "clip-vit-base-patch16",
+        pretrained_name: Optional[str] = None,
         config_path: Optional[str] = None,
         vision_config_path: Optional[str] = None,
         id2label: Optional[Dict[int, str]] = None,
         pretrained_weight_path: Optional[str] = None,
-        device: Optional[str] = "cpu",
+        device: Optional[str] = None,
         **kwargs,
     ):
         config.set_default_section("core/pipeline/clip/image")
-        pretrained_name = config.getoption("pretrained_name", pretrained_name)
+        pretrained_name = pretrained_name or config.getoption("pretrained_name", "clip-vit-base-patch16")
 
-        config_path = config.getoption("config_path", config_path)
+        config_path = config_path or config.getoption("config_path", None)
         config_path = pop_value(
             config_path,
             nested_dict_value(pretrained_clip_infos, pretrained_name, "config"),
         )
         config_path = cached_path(config_path)
 
-        vision_config_path = config.getoption("vision_config_path", vision_config_path)
+        vision_config_path = vision_config_path or config.getoption("vision_config_path", None)
         vision_config_path = pop_value(
             vision_config_path,
             nested_dict_value(pretrained_clip_infos, pretrained_name, "vision_config"),
@@ -351,11 +351,11 @@ class ClipForImageClassificationPipeline(_ClipForImageClassification):
         projection_dim = config.getoption("projection_dim", 512)
         num_classes = config.getoption("num_classes", 1)
         max_seq_length = config.getoption("max_seq_length", 512)
-        id2label = config.getoption("id2label", id2label)
+        id2label = id2label or config.getoption("id2label", None)
 
-        device = config.getoption("device", device)
-        pretrained_weight_path = config.getoption(
-            "pretrained_weight_path", pretrained_weight_path
+        device = device or config.getoption("device", "cpu")
+        pretrained_weight_path = pretrained_weight_path or config.getoption(
+            "pretrained_weight_path", None
         )
         weight_path = pop_value(
             pretrained_weight_path,
@@ -433,40 +433,40 @@ class ClipForMatchingPipeline(_ClipForMatching):
     def from_core_configure(
         cls,
         config,
-        pretrained_name: Optional[str] = "clip-vit-base-patch16",
+        pretrained_name: Optional[str] = None,
         config_path: Optional[str] = None,
         vocab_path: Optional[str] = None,
         merge_path: Optional[str] = None,
         vision_config_path: Optional[str] = None,
         pretrained_weight_path: Optional[str] = None,
-        device: Optional[str] = "cpu",
+        device: Optional[str] = None,
         **kwargs,
     ):
         config.set_default_section("core/pipeline/matching/clip")
-        pretrained_name = config.getoption("pretrained_name", pretrained_name)
+        pretrained_name = pretrained_name or config.getoption("pretrained_name", "clip-vit-base-patch16")
 
-        config_path = config.getoption("config_path", config_path)
+        config_path = config_path or config.getoption("config_path", None)
         config_path = pop_value(
             config_path,
             nested_dict_value(pretrained_clip_infos, pretrained_name, "config"),
         )
         config_path = cached_path(config_path)
 
-        vocab_path = config.getoption("vocab_path", vocab_path)
+        vocab_path = vocab_path or config.getoption("vocab_path", None)
         vocab_path = pop_value(
             vocab_path,
             nested_dict_value(pretrained_clip_infos, pretrained_name, "vocab"),
         )
         vocab_path = cached_path(vocab_path)
 
-        merge_path = config.getoption("merge_path", merge_path)
+        merge_path = merge_path or config.getoption("merge_path", None)
         merge_path = pop_value(
             merge_path,
             nested_dict_value(pretrained_clip_infos, pretrained_name, "merge"),
         )
         merge_path = cached_path(merge_path)
 
-        vision_config_path = config.getoption("vision_config_path", vision_config_path)
+        vision_config_path = vision_config_path or config.getoption("vision_config_path", None)
         vision_config_path = pop_value(
             vision_config_path,
             nested_dict_value(pretrained_clip_infos, pretrained_name, "vision_config"),
@@ -477,9 +477,9 @@ class ClipForMatchingPipeline(_ClipForMatching):
         projection_dim = config.getoption("projection_dim", 512)
         max_seq_length = config.getoption("max_seq_length", 512)
 
-        device = config.getoption("device", device)
-        pretrained_weight_path = config.getoption(
-            "pretrained_weight_path", pretrained_weight_path
+        device = device or config.getoption("device", "cpu")
+        pretrained_weight_path = pretrained_weight_path or config.getoption(
+            "pretrained_weight_path", None
         )
         weight_path = pop_value(
             pretrained_weight_path,

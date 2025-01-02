@@ -125,7 +125,7 @@ class StableForImage2ImageFastAPIPipeline(GenericStableModel):
     def from_core_configure(
         cls,
         config,
-        pretrained_name: Optional[str] = "stable-v1.5",
+        pretrained_name: Optional[str] = None,
         config_path: Optional[str] = None,
         text_config_path: Optional[str] = None,
         vae_config_path: Optional[str] = None,
@@ -134,16 +134,16 @@ class StableForImage2ImageFastAPIPipeline(GenericStableModel):
         merge_path: Optional[str] = None,
         quant_config_path: Optional[str] = None,
         pretrained_weight_path: Optional[str] = None,
-        pad_token: Optional[str] = "<|endoftext|>",
-        device: Optional[str] = "cpu",
+        pad_token: Optional[str] = None,
+        device: Optional[str] = None,
         pretrained_lora_names: Optional[Union[str, List[str]]] = None,
         pretrained_lora_weights_path: Optional[Union[str, List[str]]] = None,
-        pretrained_lora_weights: Optional[Union[float, List[float]]] = 1.0,
-        pretrained_lora_alphas: Optional[Union[float, List[float]]] = 32.0,
+        pretrained_lora_weights: Optional[Union[float, List[float]]] = None,
+        pretrained_lora_alphas: Optional[Union[float, List[float]]] = None,
         **kwargs,
     ):
         config.set_default_section("core/fastapi/pipeline/stable/image2image")
-        pretrained_name = config.getoption("pretrained_name", pretrained_name)
+        pretrained_name = pretrained_name or config.getoption("pretrained_name", "stable-v1.5")
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
 
         config_path = config.getoption("config_path", config_path)
@@ -195,9 +195,9 @@ class StableForImage2ImageFastAPIPipeline(GenericStableModel):
             quant_config_path = cached_path(quant_config_path)
 
         max_seq_length = config.getoption("max_seq_length", 77)
-        pad_token = config.getoption("pad_token", pad_token)
+        pad_token = pad_token or config.getoption("pad_token", "<|endoftext|>")
         weight_path = config.getoption("pretrained_weight_path", pretrained_weight_path)
-        device = config.getoption("device", device)
+        device = device or config.getoption("device", "cpu")
         enable_cpu_offload = config.getoption("enable_cpu_offload", True)
         enable_xformers = config.getoption("enable_xformers", True)
 
@@ -209,14 +209,14 @@ class StableForImage2ImageFastAPIPipeline(GenericStableModel):
                 load_weight(nested_dict_value(pretrained_infos, "vae", "weight")),
             ]
 
-        pretrained_lora_names = config.getoption(
-            "pretrained_lora_names", pretrained_lora_names
+        pretrained_lora_names = pretrained_lora_names or config.getoption(
+            "pretrained_lora_names", None
         )
-        pretrained_lora_weights = config.getoption(
-            "pretrained_lora_weights", pretrained_lora_weights
+        pretrained_lora_weights = pretrained_lora_weights or config.getoption(
+            "pretrained_lora_weights", 1.0
         )
-        pretrained_lora_alphas = config.getoption(
-            "pretrained_lora_alphas", pretrained_lora_alphas
+        pretrained_lora_alphas = pretrained_lora_alphas or config.getoption(
+            "pretrained_lora_alphas", 32.0
         )
 
         if (
@@ -242,8 +242,8 @@ class StableForImage2ImageFastAPIPipeline(GenericStableModel):
             assert len(pretrained_lora_weights_path) == len(pretrained_lora_weights)
             assert len(pretrained_lora_weights_path) == len(pretrained_lora_alphas)
 
-        lora_weights_path = config.getoption(
-            "pretrained_lora_weights_path", pretrained_lora_weights_path
+        lora_weights_path = pretrained_lora_weights_path or config.getoption(
+            "pretrained_lora_weights_path", None
         )
 
         inst = cls(

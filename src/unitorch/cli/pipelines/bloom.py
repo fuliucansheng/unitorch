@@ -55,24 +55,24 @@ class BloomForGenerationPipeline(_BloomForGeneration):
     def from_core_configure(
         cls,
         config,
-        pretrained_name: Optional[str] = "bloom-560m",
+        pretrained_name: Optional[str] = None,
         config_path: Optional[str] = None,
         tokenizer_file: Optional[str] = None,
         pretrained_weight_path: Optional[str] = None,
-        device: Optional[str] = "cpu",
+        device: Optional[str] = None,
         **kwargs,
     ):
         config.set_default_section("core/pipeline/bloom")
-        pretrained_name = config.getoption("pretrained_name", pretrained_name)
+        pretrained_name = pretrained_name or config.getoption("pretrained_name", "bloom-560m")
 
-        config_path = config.getoption("config_path", config_path)
+        config_path = config_path or config.getoption("config_path", None)
         config_path = pop_value(
             config_path,
             nested_dict_value(pretrained_bloom_infos, pretrained_name, "config"),
         )
         config_path = cached_path(config_path)
 
-        tokenizer_file = config.getoption("tokenizer_file", tokenizer_file)
+        tokenizer_file = tokenizer_file or config.getoption("tokenizer_file", None)
         tokenizer_file = pop_value(
             tokenizer_file,
             nested_dict_value(pretrained_bloom_infos, pretrained_name, "tokenizer"),
@@ -81,9 +81,9 @@ class BloomForGenerationPipeline(_BloomForGeneration):
 
         max_seq_length = config.getoption("max_seq_length", 512)
         max_gen_seq_length = config.getoption("max_gen_seq_length", 512)
-        device = config.getoption("device", device)
-        pretrained_weight_path = config.getoption(
-            "pretrained_weight_path", pretrained_weight_path
+        device = device or config.getoption("device", "cpu")
+        pretrained_weight_path = pretrained_weight_path or config.getoption(
+            "pretrained_weight_path", None
         )
         weight_path = pop_value(
             pretrained_weight_path,

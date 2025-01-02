@@ -112,7 +112,7 @@ class StableFluxForImageReduxGenerationPipeline(GenericStableFluxModel):
     def from_core_configure(
         cls,
         config,
-        pretrained_name: Optional[str] = "stable-flux-dev-canny",
+        pretrained_name: Optional[str] = None,
         config_path: Optional[str] = None,
         text_config_path: Optional[str] = None,
         text2_config_path: Optional[str] = None,
@@ -126,43 +126,43 @@ class StableFluxForImageReduxGenerationPipeline(GenericStableFluxModel):
         redux_process_config_path: Optional[str] = None,
         quant_config_path: Optional[str] = None,
         pretrained_weight_path: Optional[str] = None,
-        device: Optional[str] = "cpu",
+        device: Optional[str] = None,
         **kwargs,
     ):
         config.set_default_section("core/pipeline/stable_flux/image_redux")
-        pretrained_name = config.getoption("pretrained_name", pretrained_name)
+        pretrained_name = pretrained_name or config.getoption("pretrained_name", "stable-flux-dev-redux")
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
 
-        config_path = config.getoption("config_path", config_path)
+        config_path = config_path or config.getoption("config_path", None)
         config_path = pop_value(
             config_path,
             nested_dict_value(pretrained_infos, "transformer", "config"),
         )
         config_path = cached_path(config_path)
 
-        text_config_path = config.getoption("text_config_path", text_config_path)
+        text_config_path = text_config_path or config.getoption("text_config_path", None)
         text_config_path = pop_value(
             text_config_path,
             nested_dict_value(pretrained_infos, "text", "config"),
         )
         text_config_path = cached_path(text_config_path)
 
-        text2_config_path = config.getoption("text2_config_path", text2_config_path)
+        text2_config_path = text2_config_path or config.getoption("text2_config_path", None)
         text2_config_path = pop_value(
             text2_config_path,
             nested_dict_value(pretrained_infos, "text2", "config"),
         )
         text2_config_path = cached_path(text2_config_path)
 
-        vae_config_path = config.getoption("vae_config_path", vae_config_path)
+        vae_config_path = vae_config_path or config.getoption("vae_config_path", None)
         vae_config_path = pop_value(
             vae_config_path,
             nested_dict_value(pretrained_infos, "vae", "config"),
         )
         vae_config_path = cached_path(vae_config_path)
 
-        scheduler_config_path = config.getoption(
-            "scheduler_config_path", scheduler_config_path
+        scheduler_config_path = scheduler_config_path or config.getoption(
+            "scheduler_config_path", None
         )
         scheduler_config_path = pop_value(
             scheduler_config_path,
@@ -170,36 +170,36 @@ class StableFluxForImageReduxGenerationPipeline(GenericStableFluxModel):
         )
         scheduler_config_path = cached_path(scheduler_config_path)
 
-        vocab_path = config.getoption("vocab_path", vocab_path)
+        vocab_path = vocab_path or config.getoption("vocab_path", None)
         vocab_path = pop_value(
             vocab_path,
             nested_dict_value(pretrained_infos, "text", "vocab"),
         )
         vocab_path = cached_path(vocab_path)
 
-        merge_path = config.getoption("merge_path", merge_path)
+        merge_path = merge_path or config.getoption("merge_path", None)
         merge_path = pop_value(
             merge_path,
             nested_dict_value(pretrained_infos, "text", "merge"),
         )
         merge_path = cached_path(merge_path)
 
-        vocab2_path = config.getoption("vocab2_path", vocab2_path)
+        vocab2_path = vocab2_path or config.getoption("vocab2_path", None)
         vocab2_path = pop_value(
             vocab2_path,
             nested_dict_value(pretrained_infos, "text2", "vocab"),
         )
         vocab2_path = cached_path(vocab2_path)
 
-        image_config_path = config.getoption("image_config_path", image_config_path)
+        image_config_path = image_config_path or config.getoption("image_config_path", None)
         image_config_path = pop_value(
             image_config_path,
             nested_dict_value(pretrained_infos, "image", "config"),
         )
         image_config_path = cached_path(image_config_path)
 
-        redux_image_config_path = config.getoption(
-            "redux_image_config_path", redux_image_config_path
+        redux_image_config_path = redux_image_config_path or config.getoption(
+            "redux_image_config_path", None
         )
         redux_image_config_path = pop_value(
             redux_image_config_path,
@@ -207,8 +207,8 @@ class StableFluxForImageReduxGenerationPipeline(GenericStableFluxModel):
         )
         redux_image_config_path = cached_path(redux_image_config_path)
 
-        redux_process_config_path = config.getoption(
-            "redux_process_config_path", redux_process_config_path
+        redux_process_config_path = redux_process_config_path or config.getoption(
+            "redux_process_config_path", None
         )
         redux_process_config_path = pop_value(
             redux_process_config_path,
@@ -216,15 +216,15 @@ class StableFluxForImageReduxGenerationPipeline(GenericStableFluxModel):
         )
         redux_process_config_path = cached_path(redux_process_config_path)
 
-        quant_config_path = config.getoption("quant_config_path", quant_config_path)
+        quant_config_path = quant_config_path or config.getoption("quant_config_path", None)
         if quant_config_path is not None:
             quant_config_path = cached_path(quant_config_path)
 
         max_seq_length = config.getoption("max_seq_length", 77)
         max_seq_length2 = config.getoption("max_seq_length2", 256)
         pad_token = config.getoption("pad_token", "<|endoftext|>")
-        weight_path = config.getoption("pretrained_weight_path", pretrained_weight_path)
-        device = config.getoption("device", device)
+        weight_path = pretrained_weight_path or config.getoption("pretrained_weight_path", None)
+        device = device or config.getoption("device", "cpu")
         enable_cpu_offload = config.getoption("enable_cpu_offload", True)
         enable_xformers = config.getoption("enable_xformers", True)
 

@@ -125,7 +125,7 @@ class StableForText2ImageFastAPIPipeline(GenericStableModel):
     def from_core_configure(
         cls,
         config,
-        pretrained_name: Optional[str] = "stable-v1.5",
+        pretrained_name: Optional[str] = None,
         config_path: Optional[str] = None,
         text_config_path: Optional[str] = None,
         vae_config_path: Optional[str] = None,
@@ -135,40 +135,40 @@ class StableForText2ImageFastAPIPipeline(GenericStableModel):
         quant_config_path: Optional[str] = None,
         pretrained_weight_path: Optional[str] = None,
         pad_token: Optional[str] = "<|endoftext|>",
-        device: Optional[str] = "cpu",
+        device: Optional[str] = None,
         pretrained_lora_names: Optional[Union[str, List[str]]] = None,
         pretrained_lora_weights_path: Optional[Union[str, List[str]]] = None,
-        pretrained_lora_weights: Optional[Union[float, List[float]]] = 1.0,
-        pretrained_lora_alphas: Optional[Union[float, List[float]]] = 32.0,
+        pretrained_lora_weights: Optional[Union[float, List[float]]] = None,
+        pretrained_lora_alphas: Optional[Union[float, List[float]]] = None,
         **kwargs,
     ):
         config.set_default_section("core/fastapi/pipeline/stable/text2image")
-        pretrained_name = config.getoption("pretrained_name", pretrained_name)
+        pretrained_name = pretrained_name or config.getoption("pretrained_name", "stable-v1.5")
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
 
-        config_path = config.getoption("config_path", config_path)
+        config_path = config_path or config.getoption("config_path", None)
         config_path = pop_value(
             config_path,
             nested_dict_value(pretrained_infos, "unet", "config"),
         )
         config_path = cached_path(config_path)
 
-        text_config_path = config.getoption("text_config_path", text_config_path)
+        text_config_path = text_config_path or config.getoption("text_config_path", None)
         text_config_path = pop_value(
             text_config_path,
             nested_dict_value(pretrained_infos, "text", "config"),
         )
         text_config_path = cached_path(text_config_path)
 
-        vae_config_path = config.getoption("vae_config_path", vae_config_path)
+        vae_config_path = vae_config_path or config.getoption("vae_config_path", None)
         vae_config_path = pop_value(
             vae_config_path,
             nested_dict_value(pretrained_infos, "vae", "config"),
         )
         vae_config_path = cached_path(vae_config_path)
 
-        scheduler_config_path = config.getoption(
-            "scheduler_config_path", scheduler_config_path
+        scheduler_config_path = scheduler_config_path or config.getoption(
+            "scheduler_config_path", None
         )
         scheduler_config_path = pop_value(
             scheduler_config_path,
@@ -176,28 +176,28 @@ class StableForText2ImageFastAPIPipeline(GenericStableModel):
         )
         scheduler_config_path = cached_path(scheduler_config_path)
 
-        vocab_path = config.getoption("vocab_path", vocab_path)
+        vocab_path = vocab_path or config.getoption("vocab_path", None)
         vocab_path = pop_value(
             vocab_path,
             nested_dict_value(pretrained_infos, "text", "vocab"),
         )
         vocab_path = cached_path(vocab_path)
 
-        merge_path = config.getoption("merge_path", merge_path)
+        merge_path = merge_path or config.getoption("merge_path", None)
         merge_path = pop_value(
             merge_path,
             nested_dict_value(pretrained_infos, "text", "merge"),
         )
         merge_path = cached_path(merge_path)
 
-        quant_config_path = config.getoption("quant_config_path", quant_config_path)
+        quant_config_path = quant_config_path or config.getoption("quant_config_path", None)
         if quant_config_path is not None:
             quant_config_path = cached_path(quant_config_path)
 
         max_seq_length = config.getoption("max_seq_length", 77)
-        pad_token = config.getoption("pad_token", pad_token)
-        weight_path = config.getoption("pretrained_weight_path", pretrained_weight_path)
-        device = config.getoption("device", device)
+        pad_token = pad_token or config.getoption("pad_token", "<|endoftext|>")
+        weight_path = pretrained_weight_path or config.getoption("pretrained_weight_path", None)
+        device = device or config.getoption("device", "cpu")
         enable_cpu_offload = config.getoption("enable_cpu_offload", True)
         enable_xformers = config.getoption("enable_xformers", True)
 
@@ -209,14 +209,14 @@ class StableForText2ImageFastAPIPipeline(GenericStableModel):
                 load_weight(nested_dict_value(pretrained_infos, "vae", "weight")),
             ]
 
-        pretrained_lora_names = config.getoption(
-            "pretrained_lora_names", pretrained_lora_names
+        pretrained_lora_names = pretrained_lora_names or config.getoption(
+            "pretrained_lora_names", None
         )
-        pretrained_lora_weights = config.getoption(
-            "pretrained_lora_weights", pretrained_lora_weights
+        pretrained_lora_weights = pretrained_lora_weights or config.getoption(
+            "pretrained_lora_weights", 1.0
         )
-        pretrained_lora_alphas = config.getoption(
-            "pretrained_lora_alphas", pretrained_lora_alphas
+        pretrained_lora_alphas = pretrained_lora_alphas or config.getoption(
+            "pretrained_lora_alphas", 32.0
         )
 
         if (
@@ -242,8 +242,8 @@ class StableForText2ImageFastAPIPipeline(GenericStableModel):
             assert len(pretrained_lora_weights_path) == len(pretrained_lora_weights)
             assert len(pretrained_lora_weights_path) == len(pretrained_lora_alphas)
 
-        lora_weights_path = config.getoption(
-            "pretrained_lora_weights_path", pretrained_lora_weights_path
+        lora_weights_path = pretrained_lora_weights_path or config.getoption(
+            "pretrained_lora_weights_path", None
         )
 
         inst = cls(

@@ -53,7 +53,7 @@ class BlipForImageCaptionPipeline(_BlipForImageCaption):
     def from_core_configure(
         cls,
         config,
-        pretrained_name: Optional[str] = "blip-image-captioning-base",
+        pretrained_name: Optional[str] = None,
         config_path: Optional[str] = None,
         vocab_path: Optional[str] = None,
         vision_config_path: Optional[str] = None,
@@ -62,23 +62,23 @@ class BlipForImageCaptionPipeline(_BlipForImageCaption):
         **kwargs,
     ):
         config.set_default_section("core/pipeline/blip")
-        pretrained_name = config.getoption("pretrained_name", pretrained_name)
+        pretrained_name = pretrained_name or config.getoption("pretrained_name", "blip-image-captioning-base")
 
-        config_path = config.getoption("config_path", config_path)
+        config_path = config_path or config.getoption("config_path", None)
         config_path = pop_value(
             config_path,
             nested_dict_value(pretrained_blip_infos, pretrained_name, "config"),
         )
         config_path = cached_path(config_path)
 
-        vocab_path = config.getoption("vocab_path", vocab_path)
+        vocab_path = vocab_path or config.getoption("vocab_path", None)
         vocab_path = pop_value(
             vocab_path,
             nested_dict_value(pretrained_blip_infos, pretrained_name, "vocab"),
         )
         vocab_path = cached_path(vocab_path)
 
-        vision_config_path = config.getoption("vision_config_path", vision_config_path)
+        vision_config_path = vision_config_path or config.getoption("vision_config_path", None)
         vision_config_path = pop_value(
             vision_config_path,
             nested_dict_value(pretrained_blip_infos, pretrained_name, "vision_config"),
@@ -88,8 +88,8 @@ class BlipForImageCaptionPipeline(_BlipForImageCaption):
         max_seq_length = config.getoption("max_seq_length", 512)
         max_gen_seq_length = config.getoption("max_gen_seq_length", 512)
         device = config.getoption("device", device)
-        pretrained_weight_path = config.getoption(
-            "pretrained_weight_path", pretrained_weight_path
+        pretrained_weight_path = pretrained_weight_path or config.getoption(
+            "pretrained_weight_path", None
         )
         weight_path = pop_value(
             pretrained_weight_path,

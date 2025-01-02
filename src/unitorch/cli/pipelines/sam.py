@@ -49,33 +49,33 @@ class SamForSegmentationPipeline(_SamForSegmentation):
     def from_core_configure(
         cls,
         config,
-        pretrained_name: Optional[str] = "sam-vit-base",
+        pretrained_name: Optional[str] = None,
         config_path: Optional[str] = None,
         vision_config_path: Optional[str] = None,
         pretrained_weight_path: Optional[str] = None,
-        device: Optional[str] = "cpu",
+        device: Optional[str] = None,
         **kwargs,
     ):
         config.set_default_section("core/pipeline/sam")
-        pretrained_name = config.getoption("pretrained_name", pretrained_name)
+        pretrained_name = pretrained_name or config.getoption("pretrained_name", "sam-vit-base")
 
-        config_path = config.getoption("config_path", config_path)
+        config_path = config_path or config.getoption("config_path", None)
         config_path = pop_value(
             config_path,
             nested_dict_value(pretrained_sam_infos, pretrained_name, "config"),
         )
         config_path = cached_path(config_path)
 
-        vision_config_path = config.getoption("vision_config_path", vision_config_path)
+        vision_config_path = vision_config_path or config.getoption("vision_config_path", None)
         vision_config_path = pop_value(
             vision_config_path,
             nested_dict_value(pretrained_sam_infos, pretrained_name, "vision_config"),
         )
         vision_config_path = cached_path(vision_config_path)
 
-        device = config.getoption("device", device)
-        pretrained_weight_path = config.getoption(
-            "pretrained_weight_path", pretrained_weight_path
+        device = device or config.getoption("device", "cpu")
+        pretrained_weight_path = pretrained_weight_path or config.getoption(
+            "pretrained_weight_path", None
         )
         weight_path = pop_value(
             pretrained_weight_path,

@@ -50,18 +50,18 @@ class GroundingDinoForDetectionPipeline(_GroundingDinoForDetection):
     def from_core_configure(
         cls,
         config,
-        pretrained_name: Optional[str] = "grounding-dino-tiny",
+        pretrained_name: Optional[str] = None,
         config_path: Optional[str] = None,
         vocab_path: Optional[str] = None,
         vision_config_path: Optional[str] = None,
         pretrained_weight_path: Optional[str] = None,
-        device: Optional[str] = "cpu",
+        device: Optional[str] = None,
         **kwargs,
     ):
         config.set_default_section("core/pipeline/grounding_dino")
-        pretrained_name = config.getoption("pretrained_name", pretrained_name)
+        pretrained_name = pretrained_name or config.getoption("pretrained_name", "grounding-dino-tiny")
 
-        config_path = config.getoption("config_path", config_path)
+        config_path = config_path or config.getoption("config_path", None)
         config_path = pop_value(
             config_path,
             nested_dict_value(
@@ -70,7 +70,7 @@ class GroundingDinoForDetectionPipeline(_GroundingDinoForDetection):
         )
         config_path = cached_path(config_path)
 
-        vocab_path = config.getoption("vocab_path", vocab_path)
+        vocab_path = vocab_path or config.getoption("vocab_path", None)
         vocab_path = pop_value(
             vocab_path,
             nested_dict_value(
@@ -79,7 +79,7 @@ class GroundingDinoForDetectionPipeline(_GroundingDinoForDetection):
         )
         vocab_path = cached_path(vocab_path)
 
-        vision_config_path = config.getoption("vision_config_path", vision_config_path)
+        vision_config_path = vision_config_path or config.getoption("vision_config_path", None)
         vision_config_path = pop_value(
             vision_config_path,
             nested_dict_value(
@@ -88,9 +88,9 @@ class GroundingDinoForDetectionPipeline(_GroundingDinoForDetection):
         )
         vision_config_path = cached_path(vision_config_path)
 
-        device = config.getoption("device", device)
-        pretrained_weight_path = config.getoption(
-            "pretrained_weight_path", pretrained_weight_path
+        device = device or config.getoption("device", "cpu")
+        pretrained_weight_path = pretrained_weight_path or config.getoption(
+            "pretrained_weight_path", None
         )
         weight_path = pop_value(
             pretrained_weight_path,
