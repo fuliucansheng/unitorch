@@ -246,7 +246,7 @@ class DeepspeedTask:
         max_warmup_learning_rate: Optional[float] = None,
         num_warmup_steps: Optional[int] = None,
         epochs: Optional[int] = 5,
-        zero_stage: Optional[int] = 2,
+        zero_stage: Optional[int] = None,
         merge_zero3_checkpoint: Optional[bool] = True,
         exclude_freeze_parameters: Optional[bool] = True,
         use_ema: Optional[bool] = False,
@@ -302,6 +302,9 @@ class DeepspeedTask:
         config_file = cached_path(config_path)
         config_dict = json.load(open(config_file, "r"))
         config_dict["train_micro_batch_size_per_gpu"] = train_batch_size
+
+        if zero_stage is None:
+            zero_stage = nested_dict_value(config_dict, "zero_optimization", "stage") or 2
 
         if os.path.exists(from_ckpt_dir):
             self.model.from_checkpoint(from_ckpt_dir)
