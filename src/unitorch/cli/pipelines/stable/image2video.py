@@ -96,7 +96,9 @@ class StableForImage2VideoGenerationPipeline(StableForImage2VideoGeneration):
         **kwargs,
     ):
         config.set_default_section("core/pipeline/stable/image2video")
-        pretrained_name = pretrained_name or config.getoption("pretrained_name", "stable-v1.5")
+        pretrained_name = pretrained_name or config.getoption(
+            "pretrained_name", "stable-v1.5"
+        )
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
 
         config_path = config_path or config.getoption("config_path", None)
@@ -106,7 +108,9 @@ class StableForImage2VideoGenerationPipeline(StableForImage2VideoGeneration):
         )
         config_path = cached_path(config_path)
 
-        image_config_path = image_config_path or config.getoption("image_config_path", None)
+        image_config_path = image_config_path or config.getoption(
+            "image_config_path", None
+        )
         image_config_path = pop_value(
             image_config_path,
             nested_dict_value(pretrained_infos, "image", "config"),
@@ -138,12 +142,16 @@ class StableForImage2VideoGenerationPipeline(StableForImage2VideoGeneration):
         )
         image_process_config_path = cached_path(image_process_config_path)
 
-        quant_config_path = quant_config_path or config.getoption("quant_config_path", None)
+        quant_config_path = quant_config_path or config.getoption(
+            "quant_config_path", None
+        )
         if quant_config_path is not None:
             quant_config_path = cached_path(quant_config_path)
 
-        weight_path = pretrained_weight_path or config.getoption("pretrained_weight_path", None)
-        device = device or config.getoption("device", "cpu")
+        weight_path = pretrained_weight_path or config.getoption(
+            "pretrained_weight_path", None
+        )
+        device = config.getoption("device", "cpu") if device is None else device
         enable_cpu_offload = config.getoption("enable_cpu_offload", True)
         enable_xformers = config.getoption("enable_xformers", True)
 

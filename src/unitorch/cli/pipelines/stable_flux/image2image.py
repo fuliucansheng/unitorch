@@ -107,7 +107,9 @@ class StableFluxForImage2ImageGenerationPipeline(GenericStableFluxModel):
         **kwargs,
     ):
         config.set_default_section("core/pipeline/stable_flux/image2image")
-        pretrained_name = pretrained_name or config.getoption("pretrained_name", "stable-flux-schnell")
+        pretrained_name = pretrained_name or config.getoption(
+            "pretrained_name", "stable-flux-schnell"
+        )
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
 
         config_path = config_path or config.getoption("config_path", None)
@@ -117,14 +119,18 @@ class StableFluxForImage2ImageGenerationPipeline(GenericStableFluxModel):
         )
         config_path = cached_path(config_path)
 
-        text_config_path = text_config_path or config.getoption("text_config_path", None)
+        text_config_path = text_config_path or config.getoption(
+            "text_config_path", None
+        )
         text_config_path = pop_value(
             text_config_path,
             nested_dict_value(pretrained_infos, "text", "config"),
         )
         text_config_path = cached_path(text_config_path)
 
-        text2_config_path = text2_config_path or config.getoption("text2_config_path", None)
+        text2_config_path = text2_config_path or config.getoption(
+            "text2_config_path", None
+        )
         text2_config_path = pop_value(
             text2_config_path,
             nested_dict_value(pretrained_infos, "text2", "config"),
@@ -168,15 +174,19 @@ class StableFluxForImage2ImageGenerationPipeline(GenericStableFluxModel):
         )
         vocab2_path = cached_path(vocab2_path)
 
-        quant_config_path = quant_config_path or config.getoption("quant_config_path", None)
+        quant_config_path = quant_config_path or config.getoption(
+            "quant_config_path", None
+        )
         if quant_config_path is not None:
             quant_config_path = cached_path(quant_config_path)
 
         max_seq_length = config.getoption("max_seq_length", 77)
         max_seq_length2 = config.getoption("max_seq_length2", 256)
         pad_token = config.getoption("pad_token", "<|endoftext|>")
-        weight_path = pretrained_weight_path or config.getoption("pretrained_weight_path", None)
-        device = device or config.getoption("device", "cpu")
+        weight_path = pretrained_weight_path or config.getoption(
+            "pretrained_weight_path", None
+        )
+        device = config.getoption("device", "cpu") if device is None else device
         enable_cpu_offload = config.getoption("enable_cpu_offload", True)
         enable_xformers = config.getoption("enable_xformers", True)
 
@@ -405,6 +415,8 @@ class StableFluxForImage2ImageGenerationPipeline(GenericStableFluxModel):
                 image=inputs["pixel_values"],
                 prompt_embeds=prompt_embeds.to(torch.bfloat16),
                 pooled_prompt_embeds=pooled_prompt_embeds.to(torch.bfloat16),
+                width=inputs["pixel_values"].size(-1),
+                height=inputs["pixel_values"].size(-2),
                 generator=torch.Generator(device=self.pipeline.device).manual_seed(
                     self.seed
                 ),
@@ -421,6 +433,8 @@ class StableFluxForImage2ImageGenerationPipeline(GenericStableFluxModel):
                 image=inputs["pixel_values"],
                 prompt_embeds=prompt_embeds.to(torch.bfloat16),
                 pooled_prompt_embeds=pooled_prompt_embeds.to(torch.bfloat16),
+                width=inputs["pixel_values"].size(-1),
+                height=inputs["pixel_values"].size(-2),
                 generator=torch.Generator(device=self.pipeline.device).manual_seed(
                     self.seed
                 ),

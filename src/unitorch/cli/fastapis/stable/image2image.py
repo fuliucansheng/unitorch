@@ -143,7 +143,9 @@ class StableForImage2ImageFastAPIPipeline(GenericStableModel):
         **kwargs,
     ):
         config.set_default_section("core/fastapi/pipeline/stable/image2image")
-        pretrained_name = pretrained_name or config.getoption("pretrained_name", "stable-v1.5")
+        pretrained_name = pretrained_name or config.getoption(
+            "pretrained_name", "stable-v1.5"
+        )
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
 
         config_path = config.getoption("config_path", config_path)
@@ -197,7 +199,7 @@ class StableForImage2ImageFastAPIPipeline(GenericStableModel):
         max_seq_length = config.getoption("max_seq_length", 77)
         pad_token = pad_token or config.getoption("pad_token", "<|endoftext|>")
         weight_path = config.getoption("pretrained_weight_path", pretrained_weight_path)
-        device = device or config.getoption("device", "cpu")
+        device = config.getoption("device", "cpu") if device is None else device
         enable_cpu_offload = config.getoption("enable_cpu_offload", True)
         enable_xformers = config.getoption("enable_xformers", True)
 

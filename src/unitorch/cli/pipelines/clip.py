@@ -74,7 +74,9 @@ class ClipForClassificationPipeline(_ClipForClassification):
         **kwargs,
     ):
         config.set_default_section("core/pipeline/clip")
-        pretrained_name = pretrained_name or config.getoption("pretrained_name", "clip-vit-base-patch16")
+        pretrained_name = pretrained_name or config.getoption(
+            "pretrained_name", "clip-vit-base-patch16"
+        )
 
         config_path = config_path or config.getoption("config_path", None)
         config_path = pop_value(
@@ -97,7 +99,9 @@ class ClipForClassificationPipeline(_ClipForClassification):
         )
         merge_path = cached_path(merge_path)
 
-        vision_config_path = vision_config_path or config.getoption("vision_config_path", None)
+        vision_config_path = vision_config_path or config.getoption(
+            "vision_config_path", None
+        )
         vision_config_path = pop_value(
             vision_config_path,
             nested_dict_value(pretrained_clip_infos, pretrained_name, "vision_config"),
@@ -110,7 +114,7 @@ class ClipForClassificationPipeline(_ClipForClassification):
         max_seq_length = config.getoption("max_seq_length", 512)
         id2label = id2label or config.getoption("id2label", None)
 
-        device = device or config.getoption("device", "cpu")
+        device = config.getoption("device", "cpu") if device is None else device
         pretrained_weight_path = pretrained_weight_path or config.getoption(
             "pretrained_weight_path", None
         )
@@ -211,7 +215,9 @@ class ClipForTextClassificationPipeline(_ClipForTextClassification):
         **kwargs,
     ):
         config.set_default_section("core/pipeline/clip/text")
-        pretrained_name = pretrained_name or config.getoption("pretrained_name", "clip-vit-base-patch16")
+        pretrained_name = pretrained_name or config.getoption(
+            "pretrained_name", "clip-vit-base-patch16"
+        )
 
         config_path = config_path or config.getoption("config_path", None)
         config_path = pop_value(
@@ -239,7 +245,7 @@ class ClipForTextClassificationPipeline(_ClipForTextClassification):
         max_seq_length = config.getoption("max_seq_length", 512)
         id2label = id2label or config.getoption("id2label", None)
 
-        device = device or config.getoption("device", "cpu")
+        device = config.getoption("device", "cpu") if device is None else device
         pretrained_weight_path = pretrained_weight_path or config.getoption(
             "pretrained_weight_path", None
         )
@@ -331,7 +337,9 @@ class ClipForImageClassificationPipeline(_ClipForImageClassification):
         **kwargs,
     ):
         config.set_default_section("core/pipeline/clip/image")
-        pretrained_name = pretrained_name or config.getoption("pretrained_name", "clip-vit-base-patch16")
+        pretrained_name = pretrained_name or config.getoption(
+            "pretrained_name", "clip-vit-base-patch16"
+        )
 
         config_path = config_path or config.getoption("config_path", None)
         config_path = pop_value(
@@ -340,7 +348,9 @@ class ClipForImageClassificationPipeline(_ClipForImageClassification):
         )
         config_path = cached_path(config_path)
 
-        vision_config_path = vision_config_path or config.getoption("vision_config_path", None)
+        vision_config_path = vision_config_path or config.getoption(
+            "vision_config_path", None
+        )
         vision_config_path = pop_value(
             vision_config_path,
             nested_dict_value(pretrained_clip_infos, pretrained_name, "vision_config"),
@@ -353,7 +363,7 @@ class ClipForImageClassificationPipeline(_ClipForImageClassification):
         max_seq_length = config.getoption("max_seq_length", 512)
         id2label = id2label or config.getoption("id2label", None)
 
-        device = device or config.getoption("device", "cpu")
+        device = config.getoption("device", "cpu") if device is None else device
         pretrained_weight_path = pretrained_weight_path or config.getoption(
             "pretrained_weight_path", None
         )
@@ -443,7 +453,9 @@ class ClipForMatchingPipeline(_ClipForMatching):
         **kwargs,
     ):
         config.set_default_section("core/pipeline/matching/clip")
-        pretrained_name = pretrained_name or config.getoption("pretrained_name", "clip-vit-base-patch16")
+        pretrained_name = pretrained_name or config.getoption(
+            "pretrained_name", "clip-vit-base-patch16"
+        )
 
         config_path = config_path or config.getoption("config_path", None)
         config_path = pop_value(
@@ -466,7 +478,9 @@ class ClipForMatchingPipeline(_ClipForMatching):
         )
         merge_path = cached_path(merge_path)
 
-        vision_config_path = vision_config_path or config.getoption("vision_config_path", None)
+        vision_config_path = vision_config_path or config.getoption(
+            "vision_config_path", None
+        )
         vision_config_path = pop_value(
             vision_config_path,
             nested_dict_value(pretrained_clip_infos, pretrained_name, "vision_config"),
@@ -477,7 +491,7 @@ class ClipForMatchingPipeline(_ClipForMatching):
         projection_dim = config.getoption("projection_dim", 512)
         max_seq_length = config.getoption("max_seq_length", 512)
 
-        device = device or config.getoption("device", "cpu")
+        device = config.getoption("device", "cpu") if device is None else device
         pretrained_weight_path = pretrained_weight_path or config.getoption(
             "pretrained_weight_path", None
         )

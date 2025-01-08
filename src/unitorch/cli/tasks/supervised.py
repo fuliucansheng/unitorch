@@ -180,11 +180,13 @@ def save_snapshot(
             best_score = new_score
             if model:
                 model.save_checkpoint(
-                    ckpt_dir=ckpt_dir, weight_name="pytorch_model.bin"
+                    ckpt_dir=ckpt_dir,
+                    weight_name="pytorch_model.bin",
                 )
             if ema_model:
                 ema_model.save_checkpoint(
-                    ckpt_dir=ckpt_dir, weight_name="pytorch_ema_model.bin"
+                    ckpt_dir=ckpt_dir,
+                    weight_name="pytorch_ema_model.bin",
                 )
             if optim:
                 optim.save_checkpoint(
@@ -198,11 +200,13 @@ def save_snapshot(
         if save_checkpoint in ["all", "latest"]:
             if model:
                 model.save_checkpoint(
-                    ckpt_dir=ckpt_dir, weight_name="pytorch_model_latest.bin"
+                    ckpt_dir=ckpt_dir,
+                    weight_name="pytorch_model_latest.bin",
                 )
             if ema_model:
                 ema_model.save_checkpoint(
-                    ckpt_dir=ckpt_dir, weight_name="pytorch_ema_model_latest.bin"
+                    ckpt_dir=ckpt_dir,
+                    weight_name="pytorch_ema_model_latest.bin",
                 )
                 kwargs["num_ema_steps"] = ema_model.num_steps
             if optim:
@@ -212,6 +216,18 @@ def save_snapshot(
             if scheduler:
                 scheduler.save_checkpoint(
                     ckpt_dir=ckpt_dir, weight_name="pytorch_scheduler_latest.bin"
+                )
+
+        if save_checkpoint in ["every"]:
+            if model:
+                model.save_checkpoint(
+                    ckpt_dir=ckpt_dir,
+                    weight_name=f"pytorch_model_{time.strftime('%Y%m%d_%H%M%S', time.localtime())}.bin",
+                )
+            if ema_model:
+                ema_model.save_checkpoint(
+                    ckpt_dir=ckpt_dir,
+                    weight_name=f"pytorch_ema_model_{time.strftime('%Y%m%d_%H%M%S', time.localtime())}.bin",
                 )
         if info_path is not None:
             json.dump({"best_score": best_score, **kwargs}, open(info_path, "w"))

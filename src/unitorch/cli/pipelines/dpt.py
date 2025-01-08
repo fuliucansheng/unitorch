@@ -58,7 +58,9 @@ class DPTForDepthEstimationPipeline(_DPTForDepthEstimation):
     ):
         config.set_default_section("core/pipeline/dpt")
 
-        pretrained_name = pretrained_name or config.getoption("pretrained_name", "dpt-large")
+        pretrained_name = pretrained_name or config.getoption(
+            "pretrained_name", "dpt-large"
+        )
         config_path = config_path or config.getoption("config_path", None)
         config_path = pop_value(
             config_path,
@@ -66,14 +68,16 @@ class DPTForDepthEstimationPipeline(_DPTForDepthEstimation):
         )
         config_path = cached_path(config_path)
 
-        vision_config_path = vision_config_path or config.getoption("vision_config_path", None)
+        vision_config_path = vision_config_path or config.getoption(
+            "vision_config_path", None
+        )
         vision_config_path = pop_value(
             vision_config_path,
             nested_dict_value(pretrained_dpt_infos, pretrained_name, "vision_config"),
         )
         vision_config_path = cached_path(vision_config_path)
 
-        device = device or config.getoption("device", "cpu")
+        device = config.getoption("device", "cpu") if device is None else device
         pretrained_weight_path = pretrained_weight_path or config.getoption(
             "pretrained_weight_path", None
         )

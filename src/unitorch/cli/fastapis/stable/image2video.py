@@ -118,7 +118,9 @@ class StableForImage2VideoFastAPIPipeline(StableForImage2VideoGeneration):
         **kwargs,
     ):
         config.set_default_section("core/fastapi/pipeline/stable/image2video")
-        pretrained_name = pretrained_name or config.getoption("pretrained_name", "stable-video-diffusion-img2vid-xt-1-1")
+        pretrained_name = pretrained_name or config.getoption(
+            "pretrained_name", "stable-video-diffusion-img2vid-xt-1-1"
+        )
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
 
         config_path = config.getoption("config_path", config_path)
@@ -165,7 +167,7 @@ class StableForImage2VideoFastAPIPipeline(StableForImage2VideoGeneration):
             quant_config_path = cached_path(quant_config_path)
 
         weight_path = config.getoption("pretrained_weight_path", pretrained_weight_path)
-        device = device or config.getoption("device", "cpu")
+        device = config.getoption("device", "cpu") if device is None else device
         enable_cpu_offload = config.getoption("enable_cpu_offload", False)
         enable_xformers = config.getoption("enable_xformers", False)
 

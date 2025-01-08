@@ -58,11 +58,13 @@ class BlipForImageCaptionPipeline(_BlipForImageCaption):
         vocab_path: Optional[str] = None,
         vision_config_path: Optional[str] = None,
         pretrained_weight_path: Optional[str] = None,
-        device: Optional[str] = "cpu",
+        device: Optional[str] = None,
         **kwargs,
     ):
         config.set_default_section("core/pipeline/blip")
-        pretrained_name = pretrained_name or config.getoption("pretrained_name", "blip-image-captioning-base")
+        pretrained_name = pretrained_name or config.getoption(
+            "pretrained_name", "blip-image-captioning-base"
+        )
 
         config_path = config_path or config.getoption("config_path", None)
         config_path = pop_value(
@@ -78,7 +80,9 @@ class BlipForImageCaptionPipeline(_BlipForImageCaption):
         )
         vocab_path = cached_path(vocab_path)
 
-        vision_config_path = vision_config_path or config.getoption("vision_config_path", None)
+        vision_config_path = vision_config_path or config.getoption(
+            "vision_config_path", None
+        )
         vision_config_path = pop_value(
             vision_config_path,
             nested_dict_value(pretrained_blip_infos, pretrained_name, "vision_config"),
@@ -87,7 +91,7 @@ class BlipForImageCaptionPipeline(_BlipForImageCaption):
 
         max_seq_length = config.getoption("max_seq_length", 512)
         max_gen_seq_length = config.getoption("max_gen_seq_length", 512)
-        device = config.getoption("device", device)
+        device = config.getoption("device", "cpu") if device is None else device
         pretrained_weight_path = pretrained_weight_path or config.getoption(
             "pretrained_weight_path", None
         )

@@ -53,7 +53,9 @@ class Mask2FormerForSegmentationPipeline(_Mask2FormerForSegmentation):
         **kwargs,
     ):
         config.set_default_section("core/pipeline/mask2former")
-        pretrained_name = pretrained_name or config.getoption("pretrained_name", "mask2former-swin-tiny-ade-semantic")
+        pretrained_name = pretrained_name or config.getoption(
+            "pretrained_name", "mask2former-swin-tiny-ade-semantic"
+        )
 
         config_path = config_path or config.getoption("config_path", None)
         config_path = pop_value(
@@ -62,7 +64,9 @@ class Mask2FormerForSegmentationPipeline(_Mask2FormerForSegmentation):
         )
         config_path = cached_path(config_path)
 
-        vision_config_path = vision_config_path or config.getoption("vision_config_path", None)
+        vision_config_path = vision_config_path or config.getoption(
+            "vision_config_path", None
+        )
         vision_config_path = pop_value(
             vision_config_path,
             nested_dict_value(
@@ -71,7 +75,7 @@ class Mask2FormerForSegmentationPipeline(_Mask2FormerForSegmentation):
         )
         vision_config_path = cached_path(vision_config_path)
 
-        device = device or config.getoption("device", "cpu")
+        device = config.getoption("device", "cpu") if device is None else device
         pretrained_weight_path = pretrained_weight_path or config.getoption(
             "pretrained_weight_path", None
         )

@@ -9,17 +9,24 @@ import hashlib
 import pandas as pd
 from PIL import Image
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from transformers import PretrainedConfig, SiglipVisionConfig, SiglipVisionModel
 from diffusers.utils import numpy_to_pil
-from diffusers.models import SD3ControlNetModel, SD3MultiControlNetModel
-from diffusers.pipelines import (
-    StableDiffusion3Pipeline,
-    StableDiffusion3Img2ImgPipeline,
-    StableDiffusion3ControlNetPipeline,
+from diffusers.models import (
+    FluxControlNetModel,
+    FluxTransformer2DModel,
+    AutoencoderKL,
 )
+from diffusers.pipelines import (
+    FluxPipeline,
+    FluxInpaintPipeline,
+    FluxControlNetInpaintPipeline,
+    FluxFillPipeline,
+)
+from diffusers.pipelines.flux.modeling_flux import ReduxImageEncoder
 from unitorch import is_xformers_available
 from unitorch.utils import is_remote_url
-from unitorch.models.diffusers import GenericStable3Model
-from unitorch.models.diffusers import Stable3Processor
+from unitorch.models.diffusers import GenericStableFluxModel
+from unitorch.models.diffusers import StableFluxProcessor
 
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.cli import (
@@ -37,25 +44,24 @@ from unitorch.cli.models.diffusers import (
 from unitorch.cli.pipelines import Schedulers
 
 
-class Stable3ForText2ImageGenerationPipeline(GenericStable3Model):
+class StableFluxForImageReduxInpaintingPipeline(GenericStableFluxModel):
     def __init__(
         self,
         config_path: str,
         text_config_path: str,
         text2_config_path: str,
-        text3_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
         vocab_path: str,
         merge_path: str,
         vocab2_path: str,
-        merge2_path: str,
-        vocab3_path: str,
+        image_config_path: str,
+        redux_image_config_path: str,
+        redux_process_config_path: str,
         quant_config_path: Optional[str] = None,
         max_seq_length: Optional[int] = 77,
         max_seq_length2: Optional[int] = 256,
         pad_token: Optional[str] = "<|endoftext|>",
-        pad_token2: Optional[str] = "!",
         weight_path: Optional[Union[str, List[str]]] = None,
         state_dict: Optional[Dict[str, Any]] = None,
         device: Optional[Union[str, int]] = "cpu",
@@ -66,22 +72,26 @@ class Stable3ForText2ImageGenerationPipeline(GenericStable3Model):
             config_path=config_path,
             text_config_path=text_config_path,
             text2_config_path=text2_config_path,
-            text3_config_path=text3_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
             quant_config_path=quant_config_path,
         )
-        self.processor = Stable3Processor(
+        image_config = SiglipVisionConfig.from_json_file(image_config_path)
+        self.image = SiglipVisionModel(image_config)
+        redux_image_config = PretrainedConfig.from_json_file(redux_image_config_path)
+        self.redux_image = ReduxImageEncoder(
+            redux_dim=redux_image_config.redux_dim,
+            txt_in_features=redux_image_config.txt_in_features,
+        )
+        self.processor = StableFluxProcessor(
             vocab_path=vocab_path,
             merge_path=merge_path,
             vocab2_path=vocab2_path,
-            merge2_path=merge2_path,
-            vocab3_path=vocab3_path,
             vae_config_path=vae_config_path,
+            redux_config_path=redux_process_config_path,
             max_seq_length=max_seq_length,
             max_seq_length2=max_seq_length2,
             pad_token=pad_token,
-            pad_token2=pad_token2,
         )
         self._device = "cpu" if device == "cpu" else int(device)
 
@@ -90,9 +100,15 @@ class Stable3ForText2ImageGenerationPipeline(GenericStable3Model):
 
         self._enable_cpu_offload = enable_cpu_offload
         self._enable_xformers = enable_xformers
+        self.prompt_embeds_scale = 1.0
+        self.pooled_prompt_embeds_scale = 1.0
+
+        if not self._enable_cpu_offload:
+            self.image.to(device=self._device)
+            self.redux_image.to(device=self._device)
 
     @classmethod
-    @add_default_section_for_init("core/pipeline/stable_3/text2image")
+    @add_default_section_for_init("core/pipeline/stable_flux/redux_inpainting")
     def from_core_configure(
         cls,
         config,
@@ -100,22 +116,22 @@ class Stable3ForText2ImageGenerationPipeline(GenericStable3Model):
         config_path: Optional[str] = None,
         text_config_path: Optional[str] = None,
         text2_config_path: Optional[str] = None,
-        text3_config_path: Optional[str] = None,
         vae_config_path: Optional[str] = None,
         scheduler_config_path: Optional[str] = None,
         vocab_path: Optional[str] = None,
         merge_path: Optional[str] = None,
         vocab2_path: Optional[str] = None,
-        merge2_path: Optional[str] = None,
-        vocab3_path: Optional[str] = None,
+        image_config_path: Optional[str] = None,
+        redux_image_config_path: Optional[str] = None,
+        redux_process_config_path: Optional[str] = None,
         quant_config_path: Optional[str] = None,
         pretrained_weight_path: Optional[str] = None,
         device: Optional[str] = None,
         **kwargs,
     ):
-        config.set_default_section("core/pipeline/stable_3/text2image")
+        config.set_default_section("core/pipeline/stable_flux/redux_inpainting")
         pretrained_name = pretrained_name or config.getoption(
-            "pretrained_name", "stable-v3-medium"
+            "pretrained_name", "stable-flux-schnell"
         )
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
 
@@ -143,15 +159,6 @@ class Stable3ForText2ImageGenerationPipeline(GenericStable3Model):
             nested_dict_value(pretrained_infos, "text2", "config"),
         )
         text2_config_path = cached_path(text2_config_path)
-
-        text3_config_path = text3_config_path or config.getoption(
-            "text3_config_path", None
-        )
-        text3_config_path = pop_value(
-            text3_config_path,
-            nested_dict_value(pretrained_infos, "text3", "config"),
-        )
-        text3_config_path = cached_path(text3_config_path)
 
         vae_config_path = vae_config_path or config.getoption("vae_config_path", None)
         vae_config_path = pop_value(
@@ -190,19 +197,32 @@ class Stable3ForText2ImageGenerationPipeline(GenericStable3Model):
         )
         vocab2_path = cached_path(vocab2_path)
 
-        merge2_path = merge2_path or config.getoption("merge2_path", None)
-        merge2_path = pop_value(
-            merge2_path,
-            nested_dict_value(pretrained_infos, "text2", "merge"),
+        image_config_path = image_config_path or config.getoption(
+            "image_config_path", None
         )
-        merge2_path = cached_path(merge2_path)
+        image_config_path = pop_value(
+            image_config_path,
+            nested_dict_value(pretrained_infos, "image", "config"),
+        )
+        image_config_path = cached_path(image_config_path)
 
-        vocab3_path = vocab3_path or config.getoption("vocab3_path", None)
-        vocab3_path = pop_value(
-            vocab3_path,
-            nested_dict_value(pretrained_infos, "text3", "vocab"),
+        redux_image_config_path = redux_image_config_path or config.getoption(
+            "redux_image_config_path", None
         )
-        vocab3_path = cached_path(vocab3_path)
+        redux_image_config_path = pop_value(
+            redux_image_config_path,
+            nested_dict_value(pretrained_infos, "redux_image", "config"),
+        )
+        redux_image_config_path = cached_path(redux_image_config_path)
+
+        redux_process_config_path = redux_process_config_path or config.getoption(
+            "redux_process_config_path", None
+        )
+        redux_process_config_path = pop_value(
+            redux_process_config_path,
+            nested_dict_value(pretrained_infos, "image", "vision_config"),
+        )
+        redux_process_config_path = cached_path(redux_process_config_path)
 
         quant_config_path = quant_config_path or config.getoption(
             "quant_config_path", None
@@ -213,7 +233,6 @@ class Stable3ForText2ImageGenerationPipeline(GenericStable3Model):
         max_seq_length = config.getoption("max_seq_length", 77)
         max_seq_length2 = config.getoption("max_seq_length2", 256)
         pad_token = config.getoption("pad_token", "<|endoftext|>")
-        pad_token2 = config.getoption("pad_token2", "!")
         weight_path = pretrained_weight_path or config.getoption(
             "pretrained_weight_path", None
         )
@@ -237,12 +256,16 @@ class Stable3ForText2ImageGenerationPipeline(GenericStable3Model):
                     prefix_keys={"": "text2."},
                 ),
                 load_weight(
-                    nested_dict_value(pretrained_infos, "text3", "weight"),
-                    prefix_keys={"": "text3."},
-                ),
-                load_weight(
                     nested_dict_value(pretrained_infos, "vae", "weight"),
                     prefix_keys={"": "vae."},
+                ),
+                load_weight(
+                    nested_dict_value(pretrained_infos, "image", "weight"),
+                    prefix_keys={"": "image."},
+                ),
+                load_weight(
+                    nested_dict_value(pretrained_infos, "redux_image", "weight"),
+                    prefix_keys={"": "redux_image."},
                 ),
             ]
 
@@ -250,19 +273,18 @@ class Stable3ForText2ImageGenerationPipeline(GenericStable3Model):
             config_path=config_path,
             text_config_path=text_config_path,
             text2_config_path=text2_config_path,
-            text3_config_path=text3_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
             vocab_path=vocab_path,
             merge_path=merge_path,
             vocab2_path=vocab2_path,
-            merge2_path=merge2_path,
-            vocab3_path=vocab3_path,
+            image_config_path=image_config_path,
+            redux_image_config_path=redux_image_config_path,
+            redux_process_config_path=redux_process_config_path,
             quant_config_path=quant_config_path,
             max_seq_length=max_seq_length,
             max_seq_length2=max_seq_length2,
             pad_token=pad_token,
-            pad_token2=pad_token2,
             weight_path=weight_path,
             state_dict=state_dict,
             device=device,
@@ -272,14 +294,17 @@ class Stable3ForText2ImageGenerationPipeline(GenericStable3Model):
         return inst
 
     @torch.no_grad()
-    @add_default_section_for_function("core/pipeline/stable_3/text2image")
+    @add_default_section_for_function("core/pipeline/stable_flux/redux_inpainting")
     def __call__(
         self,
         text: str,
-        neg_text: Optional[str] = "",
-        height: Optional[int] = 1024,
-        width: Optional[int] = 1024,
+        image: Image.Image,
+        mask_image: Image.Image,
+        redux_image: Image.Image,
+        width: Optional[int] = None,
+        height: Optional[int] = None,
         guidance_scale: Optional[float] = 7.5,
+        strength: Optional[float] = 1.0,
         num_timesteps: Optional[int] = 50,
         seed: Optional[int] = 1123,
         scheduler: Optional[str] = None,
@@ -292,24 +317,80 @@ class Stable3ForText2ImageGenerationPipeline(GenericStable3Model):
         lora_urls: Optional[Union[str, List[str]]] = [],
         lora_files: Optional[Union[str, List[str]]] = [],
     ):
+        if width is None or height is None:
+            width, height = image.size
+            width = width // 8 * 8
+            height = height // 8 * 8
+        image = image.resize((width, height))
+        mask_image = mask_image.resize((width, height))
+
         text_inputs = self.processor.text2image_inputs(
             text,
-            negative_prompt=neg_text,
         )
+        image_inputs = self.processor.inpainting_inputs(image, mask_image)
+        redux_image_inputs = self.processor.redux_image_inputs(redux_image)
         assert scheduler is None or scheduler in Schedulers
         if scheduler is not None:
             self.scheduler = Schedulers.get(scheduler).from_config(
                 self.scheduler.config
             )
 
+        controlnet_checkpoints, controlnet_processes = zip(*controlnet_checkpoints)
+
         if any(ckpt is not None for ckpt in controlnet_checkpoints) and any(
             img is not None for img in controlnet_images
         ):
             controlnets, conditioning_scales, conditioning_images = [], [], []
-            for checkpoint, conditioning_scale, conditioning_image in zip(
-                controlnet_checkpoints, controlnet_guidance_scales, controlnet_images
+            (
+                inpaint_controlnet,
+                inpaint_conditioning_scale,
+                inpaint_conditioning_image,
+            ) = (None, None, None)
+            controlnet_conditioning_modes = []
+
+            for checkpoint, process, conditioning_scale, conditioning_image in zip(
+                controlnet_checkpoints,
+                controlnet_processes,
+                controlnet_guidance_scales,
+                controlnet_images,
             ):
                 if checkpoint is None or conditioning_image is None:
+                    continue
+                if "union" in checkpoint:
+                    assert process in {"canny", "tile", "depth"}
+                    mode = {"canny": 0, "tile": 1, "depth": 2}.get(process, None)
+                    controlnet_conditioning_modes.append(mode)
+                else:
+                    controlnet_conditioning_modes.append(None)
+                if "inpainting" in checkpoint:
+                    inpaint_controlnet_config_path = cached_path(
+                        nested_dict_value(
+                            pretrained_stable_extensions_infos,
+                            checkpoint,
+                            "controlnet",
+                            "config",
+                        )
+                    )
+                    inpaint_controlnet_config_dict = json.load(
+                        open(inpaint_controlnet_config_path)
+                    )
+                    inpaint_controlnet = FluxControlNetModel.from_config(
+                        inpaint_controlnet_config_dict
+                    ).to(torch.bfloat16)
+                    inpaint_controlnet.load_state_dict(
+                        load_weight(
+                            nested_dict_value(
+                                pretrained_stable_extensions_infos,
+                                checkpoint,
+                                "controlnet",
+                                "weight",
+                            )
+                        )
+                    )
+                    inpaint_controlnet.to(device=self._device)
+                    logging.info(f"Loading inpaint controlnet from {checkpoint}")
+                    inpaint_conditioning_scale = conditioning_scale
+                    inpaint_conditioning_image = conditioning_image.resize(image.size)
                     continue
                 controlnet_config_path = cached_path(
                     nested_dict_value(
@@ -320,7 +401,9 @@ class Stable3ForText2ImageGenerationPipeline(GenericStable3Model):
                     )
                 )
                 controlnet_config_dict = json.load(open(controlnet_config_path))
-                controlnet = SD3ControlNetModel.from_config(controlnet_config_dict)
+                controlnet = FluxControlNetModel.from_config(controlnet_config_dict).to(
+                    torch.bfloat16
+                )
                 controlnet.load_state_dict(
                     load_weight(
                         nested_dict_value(
@@ -335,50 +418,78 @@ class Stable3ForText2ImageGenerationPipeline(GenericStable3Model):
                 logging.info(f"Loading controlnet from {checkpoint}")
                 controlnets.append(controlnet)
                 conditioning_scales.append(conditioning_scale)
-                conditioning_images.append(conditioning_image.resize((width, height)))
-
-            if len(controlnets) > 1:
-                controlnets = SD3MultiControlNetModel(controlnets)
-            else:
-                controlnets = controlnets[0]
-            self.pipeline = StableDiffusion3ControlNetPipeline(
+                conditioning_images.append(conditioning_image.resize(image.size))
+            if inpaint_controlnet is not None:
+                controlnets.append(inpaint_controlnet)
+                conditioning_scales.append(inpaint_conditioning_scale)
+            self.pipeline = FluxControlNetInpaintPipeline(
                 vae=self.vae,
                 text_encoder=self.text,
                 text_encoder_2=self.text2,
-                text_encoder_3=self.text3,
                 transformer=self.transformer,
                 controlnet=controlnets,
                 scheduler=self.scheduler,
                 tokenizer=None,
                 tokenizer_2=None,
-                tokenizer_3=None,
             )
-            controlnets_inputs = self.processor.controlnets_inputs(conditioning_images)
+            if len(conditioning_images) > 0:
+                controlnets_inputs = self.processor.controlnets_inputs(
+                    conditioning_images
+                )
+            else:
+                controlnets_inputs = None
+
+            if inpaint_conditioning_image is not None:
+                inpaint_controlnet_inputs = self.processor.inpainting_control_inputs(
+                    inpaint_conditioning_image, mask_image
+                )
+            else:
+                inpaint_controlnet_inputs = None
+
+            if controlnets_inputs is not None and inpaint_controlnet_inputs is not None:
+                condition_pixel_values = torch.cat(
+                    [
+                        controlnets_inputs.pixel_values,
+                        inpaint_controlnet_inputs.pixel_values.unsqueeze(0),
+                    ],
+                    dim=0,
+                )
+            elif controlnets_inputs is not None:
+                condition_pixel_values = controlnets_inputs.pixel_values
+            elif inpaint_controlnet_inputs is not None:
+                condition_pixel_values = (
+                    inpaint_controlnet_inputs.pixel_values.unsqueeze(0)
+                )
+
             enable_controlnet = True
             inputs = {
                 **text_inputs,
-                **{"condition_pixel_values": controlnets_inputs.pixel_values},
+                **image_inputs,
+                **{"condition_pixel_values": condition_pixel_values},
+                **{"redux_pixel_values": redux_image_inputs["pixel_values"]},
             }
         else:
-            self.pipeline = StableDiffusion3Pipeline(
+            self.pipeline = FluxFillPipeline(
                 vae=self.vae,
                 text_encoder=self.text,
                 text_encoder_2=self.text2,
-                text_encoder_3=self.text3,
                 transformer=self.transformer,
                 scheduler=self.scheduler,
                 tokenizer=None,
                 tokenizer_2=None,
-                tokenizer_3=None,
             )
             enable_controlnet = False
-            inputs = text_inputs
+            inputs = {
+                **text_inputs,
+                **image_inputs,
+                **{"redux_pixel_values": redux_image_inputs["pixel_values"]},
+            }
         self.pipeline.set_progress_bar_config(disable=True)
         self.seed = seed
 
         inputs = {k: v.unsqueeze(0) if v is not None else v for k, v in inputs.items()}
         inputs = {
-            k: v.to(device=self.device) if v is not None else v
+            k: v.to(device=self._device) if v is not None else v
             for k, v in inputs.items()
         }
         if isinstance(lora_checkpoints, str):
@@ -429,22 +540,37 @@ class Stable3ForText2ImageGenerationPipeline(GenericStable3Model):
         prompt_outputs = self.get_prompt_outputs(
             inputs["input_ids"],
             input2_ids=inputs["input2_ids"],
-            input3_ids=inputs["input3_ids"],
-            negative_input_ids=inputs["negative_input_ids"],
-            negative_input2_ids=inputs["negative_input2_ids"],
-            negative_input3_ids=inputs["negative_input3_ids"],
             enable_cpu_offload=self._enable_cpu_offload,
             cpu_offload_device=self._device,
         )
-        prompt_embeds = prompt_outputs.prompt_embeds
-        negative_prompt_embeds = prompt_outputs.negative_prompt_embeds
-        pooled_prompt_embeds = prompt_outputs.pooled_prompt_embeds
-        negative_pooled_prompt_embeds = prompt_outputs.negative_pooled_prompt_embeds
+
+        if self._enable_cpu_offload:
+            self.image.to(device=self._device)
+            self.redux_image.to(device=self._device)
+
+        redux_pixel_values = inputs["redux_pixel_values"].to(self._device)
+        redux_image_embeds = self.image(redux_pixel_values).last_hidden_state
+        redux_image_embeds = self.redux_image(redux_image_embeds).image_embeds
+
+        if self._enable_cpu_offload:
+            self.image.to(device="cpu")
+            self.redux_image.to(device="cpu")
+            redux_image_embeds = redux_image_embeds.to("cpu")
+
+        prompt_embeds = (
+            torch.cat([prompt_outputs.prompt_embeds, redux_image_embeds], dim=1)
+            * self.prompt_embeds_scale
+        )
+        pooled_prompt_embeds = (
+            prompt_outputs.pooled_prompt_embeds * self.pooled_prompt_embeds_scale
+        )
 
         if self._enable_cpu_offload and self._device != "cpu":
             self.pipeline.enable_model_cpu_offload(self._device)
         else:
             self.to(device=self._device)
+
+        self.pipeline.to(torch.bfloat16)
 
         if self._enable_xformers and self._device != "cpu":
             assert is_xformers_available(), "Please install xformers first."
@@ -452,34 +578,37 @@ class Stable3ForText2ImageGenerationPipeline(GenericStable3Model):
 
         if enable_controlnet:
             outputs = self.pipeline(
-                prompt_embeds=prompt_embeds,
-                negative_prompt_embeds=negative_prompt_embeds,
-                pooled_prompt_embeds=pooled_prompt_embeds,
-                negative_pooled_prompt_embeds=negative_pooled_prompt_embeds,
-                height=height,
-                width=width,
+                image=inputs["pixel_values"],
+                mask_image=inputs["pixel_masks"],
+                prompt_embeds=prompt_embeds.to(torch.bfloat16),
+                pooled_prompt_embeds=pooled_prompt_embeds.to(torch.bfloat16),
+                width=inputs["pixel_values"].size(-1),
+                height=inputs["pixel_values"].size(-2),
                 generator=torch.Generator(device=self.pipeline.device).manual_seed(
                     self.seed
                 ),
                 control_image=list(inputs["condition_pixel_values"].transpose(0, 1)),
                 num_inference_steps=num_timesteps,
                 guidance_scale=guidance_scale,
+                strength=strength,
                 controlnet_conditioning_scale=conditioning_scales,
+                control_mode=controlnet_conditioning_modes,
                 output_type="np.array",
             )
         else:
             outputs = self.pipeline(
-                prompt_embeds=prompt_embeds,
-                negative_prompt_embeds=negative_prompt_embeds,
-                pooled_prompt_embeds=pooled_prompt_embeds,
-                negative_pooled_prompt_embeds=negative_pooled_prompt_embeds,
-                height=height,
-                width=width,
+                image=inputs["pixel_values"],
+                mask_image=inputs["pixel_masks"],
+                prompt_embeds=prompt_embeds.to(torch.bfloat16),
+                pooled_prompt_embeds=pooled_prompt_embeds.to(torch.bfloat16),
+                width=inputs["pixel_values"].size(-1),
+                height=inputs["pixel_values"].size(-2),
                 generator=torch.Generator(device=self.pipeline.device).manual_seed(
                     self.seed
                 ),
                 num_inference_steps=num_timesteps,
                 guidance_scale=guidance_scale,
+                # strength=strength,
                 output_type="np.array",
             )
         self.unload_lora_weights()

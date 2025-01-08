@@ -414,6 +414,32 @@ pretrained_stable_infos = {
             },
         },
     },
+    "stable-flux-dev-redux-fill": {
+        **__hf_hub_stable_flux_safetensors_dict__(
+            "fuliucansheng/FLUX.1-Fill-dev-diffusers"
+        ),
+        **{
+            "image": {
+                "config": hf_endpoint_url(
+                    "/tentpole/flux1-dev-redux/resolve/main/image_encoder/config.json"
+                ),
+                "vision_config": hf_endpoint_url(
+                    "/tentpole/flux1-dev-redux/resolve/main/feature_extractor/preprocessor_config.json"
+                ),
+                "weight": hf_endpoint_url(
+                    "/tentpole/flux1-dev-redux/resolve/main/image_encoder/model.safetensors"
+                ),
+            },
+            "redux_image": {
+                "config": hf_endpoint_url(
+                    "/tentpole/flux1-dev-redux/resolve/main/image_embedder/config.json"
+                ),
+                "weight": hf_endpoint_url(
+                    "/tentpole/flux1-dev-redux/resolve/main/image_embedder/diffusion_pytorch_model.safetensors"
+                ),
+            },
+        },
+    },
     "stable-flux-dev-fill": __hf_hub_stable_flux_safetensors_dict__(
         "fuliucansheng/FLUX.1-Fill-dev-diffusers"
     ),

@@ -145,7 +145,7 @@ class StableFluxForImageInpaintingFastAPIPipeline(GenericStableFluxModel):
         vocab2_path: Optional[str] = None,
         quant_config_path: Optional[str] = None,
         pretrained_weight_path: Optional[str] = None,
-        device: Optional[str] = "cpu",
+        device: Optional[str] = None,
         pretrained_lora_names: Optional[Union[str, List[str]]] = None,
         pretrained_lora_weights_path: Optional[Union[str, List[str]]] = None,
         pretrained_lora_weights: Optional[Union[float, List[float]]] = None,
@@ -153,7 +153,9 @@ class StableFluxForImageInpaintingFastAPIPipeline(GenericStableFluxModel):
         **kwargs,
     ):
         config.set_default_section("core/fastapi/pipeline/stable_flux/inpainting")
-        pretrained_name = pretrained_name or config.getoption("pretrained_name", "stable-flux-dev-fill")
+        pretrained_name = pretrained_name or config.getoption(
+            "pretrained_name", "stable-flux-dev-fill"
+        )
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
 
         config_path = config_path or config.getoption("config_path", None)
@@ -163,14 +165,18 @@ class StableFluxForImageInpaintingFastAPIPipeline(GenericStableFluxModel):
         )
         config_path = cached_path(config_path)
 
-        text_config_path = text_config_path or config.getoption("text_config_path", None)
+        text_config_path = text_config_path or config.getoption(
+            "text_config_path", None
+        )
         text_config_path = pop_value(
             text_config_path,
             nested_dict_value(pretrained_infos, "text", "config"),
         )
         text_config_path = cached_path(text_config_path)
 
-        text2_config_path = text2_config_path or config.getoption("text2_config_path", None)
+        text2_config_path = text2_config_path or config.getoption(
+            "text2_config_path", None
+        )
         text2_config_path = pop_value(
             text2_config_path,
             nested_dict_value(pretrained_infos, "text2", "config"),
@@ -214,15 +220,19 @@ class StableFluxForImageInpaintingFastAPIPipeline(GenericStableFluxModel):
         )
         vocab2_path = cached_path(vocab2_path)
 
-        quant_config_path = quant_config_path or config.getoption("quant_config_path", None)
+        quant_config_path = quant_config_path or config.getoption(
+            "quant_config_path", None
+        )
         if quant_config_path is not None:
             quant_config_path = cached_path(quant_config_path)
 
         max_seq_length = config.getoption("max_seq_length", 77)
         max_seq_length2 = config.getoption("max_seq_length2", 256)
         pad_token = config.getoption("pad_token", "<|endoftext|>")
-        weight_path = pretrained_weight_path or config.getoption("pretrained_weight_path", None)
-        device = device or config.getoption("device", "cpu")
+        weight_path = pretrained_weight_path or config.getoption(
+            "pretrained_weight_path", None
+        )
+        device = config.getoption("device", "cpu") if device is None else device
         enable_cpu_offload = config.getoption("enable_cpu_offload", True)
         enable_xformers = config.getoption("enable_xformers", False)
 

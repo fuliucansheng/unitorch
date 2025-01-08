@@ -63,7 +63,9 @@ class BloomForGenerationPipeline(_BloomForGeneration):
         **kwargs,
     ):
         config.set_default_section("core/pipeline/bloom")
-        pretrained_name = pretrained_name or config.getoption("pretrained_name", "bloom-560m")
+        pretrained_name = pretrained_name or config.getoption(
+            "pretrained_name", "bloom-560m"
+        )
 
         config_path = config_path or config.getoption("config_path", None)
         config_path = pop_value(
@@ -81,7 +83,7 @@ class BloomForGenerationPipeline(_BloomForGeneration):
 
         max_seq_length = config.getoption("max_seq_length", 512)
         max_gen_seq_length = config.getoption("max_gen_seq_length", 512)
-        device = device or config.getoption("device", "cpu")
+        device = config.getoption("device", "cpu") if device is None else device
         pretrained_weight_path = pretrained_weight_path or config.getoption(
             "pretrained_weight_path", None
         )
