@@ -87,7 +87,7 @@ class ExponentialMovingAverage(nn.Module):
         """
         if weight_name is None:
             weight_name = self.checkpoint_name
-        state_dict = self.state_dict()
+        state_dict = self.model.state_dict()
         weight_path = os.path.join(ckpt_dir, weight_name)
         torch.save(state_dict, weight_path)
         logging.info(f"{type(self).__name__} model save checkpoint to {weight_path}")
@@ -116,15 +116,7 @@ class ExponentialMovingAverage(nn.Module):
         self.num_steps += 1
         rate = self.decay(self.num_steps)
 
-        if is_deepspeed_available():
-            from deepspeed.utils import safe_get_full_fp32_param
-
-            new_state = {
-                k: safe_get_full_fp32_param(v).cpu()
-                for k, v in model.named_parameters()
-            }
-        else:
-            new_state = model.state_dict()
+        new_state = model.state_dict()
         for key, value in self.model.state_dict().items():
             if not value.dtype.is_floating_point:
                 continue
