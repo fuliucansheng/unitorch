@@ -15,6 +15,7 @@ import torch.nn.functional as F
 from copy import deepcopy
 from itertools import chain
 from collections.abc import Iterable
+from deepspeed.utils.zero_to_fp32 import get_fp32_state_dict_from_zero_checkpoint
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union, Iterator
 from torch.utils.data import DataLoader, Dataset, SequentialSampler
 from torch.utils.data.distributed import DistributedSampler
@@ -61,6 +62,76 @@ from unitorch.cli.tasks.supervised import (
     monitor,
     save_snapshot,
 )
+
+
+def save_snapshot_zero_3(
+    model,
+    ckpt_dir,
+    iter_dev,
+    score_fn,
+    monitor_fns,
+    save_checkpoint="all",
+    merge_checkpoint=False,
+    exclude_freeze_parameters=True,
+    best_score=-np.inf,
+    info_path=None,
+    local_rank=-1,
+    **kwargs,
+):
+    if not os.path.exists(ckpt_dir):
+        os.makedirs(ckpt_dir, exist_ok=True)
+
+    base_model = model
+
+    results = infer(base_model, iter_dev)
+    new_score = score_fn(outputs=results.outputs, targets=results.targets)
+
+    if local_rank in [-1, 0]:
+        monitor(results.outputs, results.targets, monitor_fns)
+
+    if new_score > best_score:
+        best_score = new_score
+        model.save_checkpoint(
+            os.path.join(ckpt_dir, "pytorch_model"),
+        )
+        if merge_checkpoint and local_rank in [-1, 0]:
+            state_dict = get_fp32_state_dict_from_zero_checkpoint(
+                os.path.join(ckpt_dir, "pytorch_model"),
+                exclude_frozen_parameters=exclude_freeze_parameters,
+            )
+            torch.save(state_dict, os.path.join(ckpt_dir, "pytorch_model.bin"))
+
+    if local_rank in [-1, 0]:
+        if info_path is not None:
+            json.dump({"best_score": best_score, **kwargs}, open(info_path, "w"))
+
+    if save_checkpoint in ["all", "latest"]:
+        model.save_checkpoint(os.path.join(ckpt_dir, "pytorch_model_latest"))
+        if merge_checkpoint and local_rank in [-1, 0]:
+            state_dict = get_fp32_state_dict_from_zero_checkpoint(
+                os.path.join(ckpt_dir, "pytorch_model_latest"),
+                exclude_frozen_parameters=exclude_freeze_parameters,
+            )
+            torch.save(state_dict, os.path.join(ckpt_dir, "pytorch_model_latest.bin"))
+
+    if save_checkpoint in ["every"]:
+        model.save_checkpoint(
+            ckpt_dir,
+            f"pytorch_model_{time.strftime('%Y%m%d_%H%M%S', time.localtime())}",
+        )
+        if merge_checkpoint and local_rank in [-1, 0]:
+            state_dict = get_fp32_state_dict_from_zero_checkpoint(
+                os.path.join(ckpt_dir, "pytorch_model_latest"),
+                exclude_frozen_parameters=exclude_freeze_parameters,
+            )
+            torch.save(
+                state_dict,
+                os.path.join(
+                    ckpt_dir,
+                    f"pytorch_model_latest_{time.strftime('%Y%m%d_%H%M%S', time.localtime())}.bin",
+                ),
+            )
+    return best_score
 
 
 @register_task("core/task/deepspeed/supervised")
@@ -175,7 +246,9 @@ class DeepspeedTask:
         max_warmup_learning_rate: Optional[float] = None,
         num_warmup_steps: Optional[int] = None,
         epochs: Optional[int] = 5,
-        zero_stage: Optional[int] = 2,
+        zero_stage: Optional[int] = None,
+        merge_zero3_checkpoint: Optional[bool] = True,
+        exclude_freeze_parameters: Optional[bool] = True,
         use_ema: Optional[bool] = False,
         ema_decay: Optional[float] = 0.9999,
         ema_tau: Optional[int] = 2000,
@@ -230,10 +303,13 @@ class DeepspeedTask:
         config_dict = json.load(open(config_file, "r"))
         config_dict["train_micro_batch_size_per_gpu"] = train_batch_size
 
+        if zero_stage is None:
+            zero_stage = nested_dict_value(config_dict, "zero_optimization", "stage") or 2
+
         if os.path.exists(from_ckpt_dir):
             self.model.from_checkpoint(from_ckpt_dir)
 
-        if os.path.exists(to_ckpt_dir):
+        if os.path.exists(to_ckpt_dir) and zero_stage != 3:
             self.model.from_checkpoint(
                 to_ckpt_dir,
                 weight_name="pytorch_model_latest.bin",
@@ -315,6 +391,15 @@ class DeepspeedTask:
             config=config_dict,
             model_parameters=params,
         )
+
+        if (
+            os.path.exists(os.path.join(to_ckpt_dir, "pytorch_model_latest"))
+            and zero_stage == 3
+        ):
+            self.model.load_checkpoint(
+                to_ckpt_dir,
+                "pytorch_model_latest",
+            )
 
         global_rank = -1
         if self.n_gpu > 1:
@@ -412,22 +497,39 @@ class DeepspeedTask:
                         iter_dev.sampler.set_epoch(dev_epoch)
 
                     dev_epoch += 1
-                    self.best_score = save_snapshot(
-                        self.model.module,
-                        to_ckpt_dir,
-                        iter_dev,
-                        score_fn,
-                        monitor_fns,
-                        optim=optim if save_optimizer else None,
-                        scheduler=scheduler if save_scheduler else None,
-                        save_checkpoint=save_checkpoint,
-                        ema_model=self.ema_model if use_ema else None,
-                        best_score=self.best_score,
-                        info_path=info_path,
-                        local_rank=self.local_rank,
-                        global_epoch=e,
-                        global_step=step + 1,
-                    )
+                    if zero_stage == 3:
+                        self.best_score = save_snapshot_zero_3(
+                            self.model,
+                            to_ckpt_dir,
+                            iter_dev,
+                            score_fn,
+                            monitor_fns,
+                            save_checkpoint=save_checkpoint,
+                            merge_checkpoint=merge_zero3_checkpoint,
+                            exclude_freeze_parameters=exclude_freeze_parameters,
+                            best_score=self.best_score,
+                            info_path=info_path,
+                            local_rank=self.local_rank,
+                            global_epoch=e,
+                            global_step=step + 1,
+                        )
+                    else:
+                        self.best_score = save_snapshot(
+                            self.model.module,
+                            to_ckpt_dir,
+                            iter_dev,
+                            score_fn,
+                            monitor_fns,
+                            optim=optim if save_optimizer else None,
+                            scheduler=scheduler if save_scheduler else None,
+                            save_checkpoint=save_checkpoint,
+                            ema_model=self.ema_model if use_ema else None,
+                            best_score=self.best_score,
+                            info_path=info_path,
+                            local_rank=self.local_rank,
+                            global_epoch=e,
+                            global_step=step + 1,
+                        )
 
             if not is_update_step:
                 optim.step()
@@ -449,22 +551,39 @@ class DeepspeedTask:
             dev_epoch += 1
 
             global_step = 0
-            self.best_score = save_snapshot(
-                self.model.module,
-                to_ckpt_dir,
-                iter_dev,
-                score_fn,
-                monitor_fns,
-                optim=optim if save_optimizer else None,
-                scheduler=scheduler if save_scheduler else None,
-                save_checkpoint=save_checkpoint,
-                ema_model=self.ema_model if use_ema else None,
-                best_score=self.best_score,
-                info_path=info_path,
-                local_rank=self.local_rank,
-                global_epoch=e,
-                global_step=0,
-            )
+            if zero_stage == 3:
+                self.best_score = save_snapshot_zero_3(
+                    self.model,
+                    to_ckpt_dir,
+                    iter_dev,
+                    score_fn,
+                    monitor_fns,
+                    save_checkpoint=save_checkpoint,
+                    merge_checkpoint=merge_zero3_checkpoint,
+                    exclude_freeze_parameters=exclude_freeze_parameters,
+                    best_score=self.best_score,
+                    info_path=info_path,
+                    local_rank=self.local_rank,
+                    global_epoch=e,
+                    global_step=step + 1,
+                )
+            else:
+                self.best_score = save_snapshot(
+                    self.model.module,
+                    to_ckpt_dir,
+                    iter_dev,
+                    score_fn,
+                    monitor_fns,
+                    optim=optim if save_optimizer else None,
+                    scheduler=scheduler if save_scheduler else None,
+                    save_checkpoint=save_checkpoint,
+                    ema_model=self.ema_model if use_ema else None,
+                    best_score=self.best_score,
+                    info_path=info_path,
+                    local_rank=self.local_rank,
+                    global_epoch=e,
+                    global_step=0,
+                )
 
     @torch.no_grad()
     @add_default_section_for_function("core/task/deepspeed/supervised")

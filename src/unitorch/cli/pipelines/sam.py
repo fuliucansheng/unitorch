@@ -57,7 +57,9 @@ class SamForSegmentationPipeline(_SamForSegmentation):
         **kwargs,
     ):
         config.set_default_section("core/pipeline/sam")
-        pretrained_name = pretrained_name or config.getoption("pretrained_name", "sam-vit-base")
+        pretrained_name = pretrained_name or config.getoption(
+            "pretrained_name", "sam-vit-base"
+        )
 
         config_path = config_path or config.getoption("config_path", None)
         config_path = pop_value(
@@ -66,14 +68,16 @@ class SamForSegmentationPipeline(_SamForSegmentation):
         )
         config_path = cached_path(config_path)
 
-        vision_config_path = vision_config_path or config.getoption("vision_config_path", None)
+        vision_config_path = vision_config_path or config.getoption(
+            "vision_config_path", None
+        )
         vision_config_path = pop_value(
             vision_config_path,
             nested_dict_value(pretrained_sam_infos, pretrained_name, "vision_config"),
         )
         vision_config_path = cached_path(vision_config_path)
 
-        device = device or config.getoption("device", "cpu")
+        device = config.getoption("device", "cpu") if device is None else device
         pretrained_weight_path = pretrained_weight_path or config.getoption(
             "pretrained_weight_path", None
         )

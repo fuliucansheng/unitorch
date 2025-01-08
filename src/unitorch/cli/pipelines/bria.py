@@ -59,8 +59,10 @@ class BRIAForSegmentationPipeline(_BRIAForSegmentation):
         in_channels = config.getoption("in_channels", 3)
         out_channels = config.getoption("out_channels", 1)
         image_size = config.getoption("image_size", 1024)
-        device = device or config.getoption("device", "cpu")
-        weight_path = pretrained_weight_path or config.getoption("pretrained_weight_path", None)
+        device = config.getoption("device", "cpu") if device is None else device
+        weight_path = pretrained_weight_path or config.getoption(
+            "pretrained_weight_path", None
+        )
 
         inst = cls(
             in_channels=in_channels,

@@ -12,7 +12,11 @@ from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from collections import OrderedDict
 from transformers.utils import is_remote_url, ModelOutput as GenericOutputs
 from unitorch import hf_cached_path
-from unitorch.utils import replace, load_weight, is_diffusers_available
+from unitorch.utils import (
+    replace,
+    load_weight,
+    is_diffusers_available,
+)
 
 
 class CheckpointMixin:
@@ -69,6 +73,7 @@ class CheckpointMixin:
         """
         if weight_name is None:
             weight_name = self.checkpoint_name
+
         state_dict = self.state_dict()
         weight_path = os.path.join(ckpt_dir, weight_name)
         if weight_path.endswith(".safetensors"):

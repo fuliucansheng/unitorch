@@ -146,7 +146,9 @@ class ClipInterrogatorPipeline(_ClipForPretrain):
         **kwargs,
     ):
         config.set_default_section("core/pipeline/interrogator/clip")
-        pretrained_name = pretrained_name or config.getoption("pretrained_name", "clip-vit-base-patch16")
+        pretrained_name = pretrained_name or config.getoption(
+            "pretrained_name", "clip-vit-base-patch16"
+        )
 
         config_path = config_path or config.getoption("config_path", None)
         config_path = pop_value(
@@ -169,7 +171,9 @@ class ClipInterrogatorPipeline(_ClipForPretrain):
         )
         merge_path = cached_path(merge_path)
 
-        vision_config_path = vision_config_path or config.getoption("vision_config_path", None)
+        vision_config_path = vision_config_path or config.getoption(
+            "vision_config_path", None
+        )
         vision_config_path = pop_value(
             vision_config_path,
             nested_dict_value(pretrained_clip_infos, pretrained_name, "vision_config"),
@@ -177,7 +181,7 @@ class ClipInterrogatorPipeline(_ClipForPretrain):
         vision_config_path = cached_path(vision_config_path)
 
         max_seq_length = config.getoption("max_seq_length", 77)
-        device = device or config.getoption("device", "cpu")
+        device = config.getoption("device", "cpu") if device is None else device
         pretrained_weight_path = pretrained_weight_path or config.getoption(
             "pretrained_weight_path", None
         )

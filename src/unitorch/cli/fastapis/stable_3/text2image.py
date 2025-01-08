@@ -174,21 +174,27 @@ class Stable3ForText2ImageFastAPIPipeline(GenericStable3Model):
         )
         config_path = cached_path(config_path)
 
-        text_config_path = text_config_path or config.getoption("text_config_path", None)
+        text_config_path = text_config_path or config.getoption(
+            "text_config_path", None
+        )
         text_config_path = pop_value(
             text_config_path,
             nested_dict_value(pretrained_infos, "text", "config"),
         )
         text_config_path = cached_path(text_config_path)
 
-        text2_config_path = text2_config_path or config.getoption("text2_config_path", None)
+        text2_config_path = text2_config_path or config.getoption(
+            "text2_config_path", None
+        )
         text2_config_path = pop_value(
             text2_config_path,
             nested_dict_value(pretrained_infos, "text2", "config"),
         )
         text2_config_path = cached_path(text2_config_path)
 
-        text3_config_path = text3_config_path or config.getoption("text3_config_path", None)
+        text3_config_path = text3_config_path or config.getoption(
+            "text3_config_path", None
+        )
         text3_config_path = pop_value(
             text3_config_path,
             nested_dict_value(pretrained_infos, "text3", "config"),
@@ -246,7 +252,9 @@ class Stable3ForText2ImageFastAPIPipeline(GenericStable3Model):
         )
         vocab3_path = cached_path(vocab3_path)
 
-        quant_config_path = quant_config_path or config.getoption("quant_config_path", None)
+        quant_config_path = quant_config_path or config.getoption(
+            "quant_config_path", None
+        )
         if quant_config_path is not None:
             quant_config_path = cached_path(quant_config_path)
 
@@ -254,8 +262,10 @@ class Stable3ForText2ImageFastAPIPipeline(GenericStable3Model):
         max_seq_length2 = config.getoption("max_seq_length2", 256)
         pad_token = config.getoption("pad_token", "<|endoftext|>")
         pad_token2 = config.getoption("pad_token2", "!")
-        weight_path = pretrained_weight_path or config.getoption("pretrained_weight_path", None)
-        device = device or config.getoption("device", "cpu")
+        weight_path = pretrained_weight_path or config.getoption(
+            "pretrained_weight_path", None
+        )
+        device = config.getoption("device", "cpu") if device is None else device
         enable_cpu_offload = config.getoption("enable_cpu_offload", True)
         enable_xformers = config.getoption("enable_xformers", False)
 

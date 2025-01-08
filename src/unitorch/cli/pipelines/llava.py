@@ -71,7 +71,9 @@ class LlavaMistralClipForGenerationPipeline(_LlavaMistralClipForGeneration):
         **kwargs,
     ):
         config.set_default_section("core/pipeline/llava/mistral_clip")
-        pretrained_name = pretrained_name or config.getoption("pretrained_name", "llava-v1.6-mistral-7b-hf")
+        pretrained_name = pretrained_name or config.getoption(
+            "pretrained_name", "llava-v1.6-mistral-7b-hf"
+        )
 
         config_path = config_path or config.getoption("config_path", None)
         config_path = pop_value(
@@ -87,20 +89,24 @@ class LlavaMistralClipForGenerationPipeline(_LlavaMistralClipForGeneration):
         )
         vocab_path = cached_path(vocab_path)
 
-        vision_config_path = vision_config_path or config.getoption("vision_config_path", None)
+        vision_config_path = vision_config_path or config.getoption(
+            "vision_config_path", None
+        )
         vision_config_path = pop_value(
             vision_config_path,
             nested_dict_value(pretrained_llava_infos, pretrained_name, "vision_config"),
         )
         vision_config_path = cached_path(vision_config_path)
 
-        quant_config_path = quant_config_path or config.getoption("quant_config_path", None)
+        quant_config_path = quant_config_path or config.getoption(
+            "quant_config_path", None
+        )
         if quant_config_path is not None:
             quant_config_path = cached_path(quant_config_path)
 
         max_seq_length = config.getoption("max_seq_length", 512)
         max_gen_seq_length = config.getoption("max_gen_seq_length", 512)
-        device = device or config.getoption("device", "cpu")
+        device = config.getoption("device", "cpu") if device is None else device
         pretrained_weight_path = pretrained_weight_path or config.getoption(
             "pretrained_weight_path", None
         )

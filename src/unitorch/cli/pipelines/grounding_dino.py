@@ -59,7 +59,9 @@ class GroundingDinoForDetectionPipeline(_GroundingDinoForDetection):
         **kwargs,
     ):
         config.set_default_section("core/pipeline/grounding_dino")
-        pretrained_name = pretrained_name or config.getoption("pretrained_name", "grounding-dino-tiny")
+        pretrained_name = pretrained_name or config.getoption(
+            "pretrained_name", "grounding-dino-tiny"
+        )
 
         config_path = config_path or config.getoption("config_path", None)
         config_path = pop_value(
@@ -79,7 +81,9 @@ class GroundingDinoForDetectionPipeline(_GroundingDinoForDetection):
         )
         vocab_path = cached_path(vocab_path)
 
-        vision_config_path = vision_config_path or config.getoption("vision_config_path", None)
+        vision_config_path = vision_config_path or config.getoption(
+            "vision_config_path", None
+        )
         vision_config_path = pop_value(
             vision_config_path,
             nested_dict_value(
@@ -88,7 +92,7 @@ class GroundingDinoForDetectionPipeline(_GroundingDinoForDetection):
         )
         vision_config_path = cached_path(vision_config_path)
 
-        device = device or config.getoption("device", "cpu")
+        device = config.getoption("device", "cpu") if device is None else device
         pretrained_weight_path = pretrained_weight_path or config.getoption(
             "pretrained_weight_path", None
         )

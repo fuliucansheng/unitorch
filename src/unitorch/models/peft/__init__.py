@@ -14,7 +14,11 @@ from peft import (
     PromptLearningConfig,
     PeftModelForSequenceClassification,
 )
-from unitorch.utils import replace, load_weight, is_diffusers_available
+from unitorch.utils import (
+    replace,
+    load_weight,
+    is_diffusers_available,
+)
 from unitorch.models import CheckpointMixin
 
 
