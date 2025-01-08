@@ -157,7 +157,7 @@ def save_snapshot(
     monitor_fns,
     optim,
     scheduler,
-    save_checkpoint="all",
+    save_checkpoint="default",
     ema_model=None,
     best_score=-np.inf,
     info_path=None,
@@ -176,7 +176,7 @@ def save_snapshot(
     if local_rank in [-1, 0]:
         new_score = score_fn(outputs=results.outputs, targets=results.targets)
         monitor(results.outputs, results.targets, monitor_fns)
-        if new_score > best_score:
+        if save_checkpoint in ["all", "default", "best"] and new_score > best_score:
             best_score = new_score
             if model:
                 model.save_checkpoint(
@@ -197,7 +197,7 @@ def save_snapshot(
                     ckpt_dir=ckpt_dir, weight_name="pytorch_scheduler.bin"
                 )
 
-        if save_checkpoint in ["all", "latest"]:
+        if save_checkpoint in ["all", "default", "latest"]:
             if model:
                 model.save_checkpoint(
                     ckpt_dir=ckpt_dir,
@@ -218,7 +218,7 @@ def save_snapshot(
                     ckpt_dir=ckpt_dir, weight_name="pytorch_scheduler_latest.bin"
                 )
 
-        if save_checkpoint in ["every"]:
+        if save_checkpoint in ["all", "every"]:
             if model:
                 model.save_checkpoint(
                     ckpt_dir=ckpt_dir,
@@ -333,7 +333,7 @@ class SupervisedTask:
         num_workers: Optional[int] = 4,
         save_optimizer: Optional[bool] = True,
         save_scheduler: Optional[bool] = True,
-        save_checkpoint: Optional[str] = "all",
+        save_checkpoint: Optional[str] = "default",
         log_freq: Optional[int] = 100,
         ckpt_freq: Optional[int] = 10000,
         grad_acc_step: Optional[int] = 1,
