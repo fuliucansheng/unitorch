@@ -309,6 +309,22 @@ __hf_hub_stable_video_safetensors_dict__ = lambda name: {
     ),
 }
 
+__hf_flux_dev_redux_safetensors_dict__ = lambda x: {
+    "image": {
+        "config": hf_endpoint_url(f"/{x}/resolve/main/image_encoder/config.json"),
+        "vision_config": hf_endpoint_url(
+            f"/{x}/resolve/main/feature_extractor/preprocessor_config.json"
+        ),
+        "weight": hf_endpoint_url(f"/{x}/resolve/main/image_encoder/model.safetensors"),
+    },
+    "redux_image": {
+        "config": hf_endpoint_url(f"/{x}/resolve/main/image_embedder/config.json"),
+        "weight": hf_endpoint_url(
+            f"/{x}/resolve/main/image_embedder/diffusion_pytorch_model.safetensors"
+        ),
+    },
+}
+
 pretrained_stable_infos = {
     "stable-v1.5": __hf_hub_stable_v1_5_dict__("botp/stable-diffusion-v1-5"),
     "stable-v1.5-realistic-v5.1-no-vae": __hf_hub_stable_v1_5_safetensors_dict__(
@@ -390,62 +406,37 @@ pretrained_stable_infos = {
     "stable-flux-dev": __hf_hub_stable_flux_safetensors_dict__(
         "camenduru/FLUX.1-dev-diffusers"
     ),
-    "stable-flux-dev-redux": {
-        **__hf_hub_stable_flux_safetensors_dict__("camenduru/FLUX.1-dev-diffusers"),
-        **{
-            "image": {
-                "config": hf_endpoint_url(
-                    "/tentpole/flux1-dev-redux/resolve/main/image_encoder/config.json"
-                ),
-                "vision_config": hf_endpoint_url(
-                    "/tentpole/flux1-dev-redux/resolve/main/feature_extractor/preprocessor_config.json"
-                ),
-                "weight": hf_endpoint_url(
-                    "/tentpole/flux1-dev-redux/resolve/main/image_encoder/model.safetensors"
-                ),
-            },
-            "redux_image": {
-                "config": hf_endpoint_url(
-                    "/tentpole/flux1-dev-redux/resolve/main/image_embedder/config.json"
-                ),
-                "weight": hf_endpoint_url(
-                    "/tentpole/flux1-dev-redux/resolve/main/image_embedder/diffusion_pytorch_model.safetensors"
-                ),
-            },
-        },
-    },
-    "stable-flux-dev-redux-fill": {
-        **__hf_hub_stable_flux_safetensors_dict__(
-            "fuliucansheng/FLUX.1-Fill-dev-diffusers"
-        ),
-        **{
-            "image": {
-                "config": hf_endpoint_url(
-                    "/tentpole/flux1-dev-redux/resolve/main/image_encoder/config.json"
-                ),
-                "vision_config": hf_endpoint_url(
-                    "/tentpole/flux1-dev-redux/resolve/main/feature_extractor/preprocessor_config.json"
-                ),
-                "weight": hf_endpoint_url(
-                    "/tentpole/flux1-dev-redux/resolve/main/image_encoder/model.safetensors"
-                ),
-            },
-            "redux_image": {
-                "config": hf_endpoint_url(
-                    "/tentpole/flux1-dev-redux/resolve/main/image_embedder/config.json"
-                ),
-                "weight": hf_endpoint_url(
-                    "/tentpole/flux1-dev-redux/resolve/main/image_embedder/diffusion_pytorch_model.safetensors"
-                ),
-            },
-        },
-    },
     "stable-flux-dev-fill": __hf_hub_stable_flux_safetensors_dict__(
         "fuliucansheng/FLUX.1-Fill-dev-diffusers"
     ),
     "stable-flux-dev-canny": __hf_hub_stable_flux_ctrl_safetensors_dict__(
         "fuliucansheng/FLUX.1-Canny-dev-diffusers"
     ),
+    "stable-flux-dev-depth": __hf_hub_stable_flux_ctrl_safetensors_dict__(
+        "fuliucansheng/FLUX.1-Depth-dev-diffusers"
+    ),
+    "stable-flux-dev-redux": {
+        **__hf_hub_stable_flux_safetensors_dict__("camenduru/FLUX.1-dev-diffusers"),
+        **__hf_flux_dev_redux_safetensors_dict__("tentpole/flux1-dev-redux"),
+    },
+    "stable-flux-dev-redux-fill": {
+        **__hf_hub_stable_flux_safetensors_dict__(
+            "fuliucansheng/FLUX.1-Fill-dev-diffusers"
+        ),
+        **__hf_flux_dev_redux_safetensors_dict__("tentpole/flux1-dev-redux"),
+    },
+    "stable-flux-dev-redux-canny": {
+        **__hf_hub_stable_flux_ctrl_safetensors_dict__(
+            "fuliucansheng/FLUX.1-Canny-dev-diffusers"
+        ),
+        **__hf_flux_dev_redux_safetensors_dict__("tentpole/flux1-dev-redux"),
+    },
+    "stable-flux-dev-redux-depth": {
+        **__hf_hub_stable_flux_ctrl_safetensors_dict__(
+            "fuliucansheng/FLUX.1-Depth-dev-diffusers"
+        ),
+        **__hf_flux_dev_redux_safetensors_dict__("tentpole/flux1-dev-redux"),
+    },
     "stable-video-diffusion-img2vid-xt": __hf_hub_stable_video_safetensors_dict__(
         "stabilityai/stable-video-diffusion-img2vid-xt"
     ),
