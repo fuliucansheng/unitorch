@@ -14,7 +14,7 @@ from unitorch.cli.models.diffusers import (
     pretrained_stable_infos,
     pretrained_stable_extensions_infos,
 )
-from unitorch.cli.pipelines.stable_flux import StableFluxForImageReduxInpaintingPipeline
+from unitorch.cli.pipelines.stable_flux import StableFluxForReduxInpaintingPipeline
 from unitorch.cli.pipelines.tools import controlnet_processes
 from unitorch.cli.webuis import (
     supported_scheduler_names,
@@ -34,7 +34,7 @@ from unitorch.cli.webuis import (
 from unitorch.cli.webuis import SimpleWebUI
 
 
-class StableFluxImageReduxInpaintingWebUI(SimpleWebUI):
+class StableFluxReduxInpaintingWebUI(SimpleWebUI):
     pretrained_names = list(pretrained_stable_infos.keys())
     supported_pretrained_names = matched_pretrained_names(
         pretrained_names, "stable-flux-"
@@ -235,7 +235,7 @@ class StableFluxImageReduxInpaintingWebUI(SimpleWebUI):
         if self._status == "Running":
             self.stop()
         self._name = pretrained_name
-        self._pipe = StableFluxForImageReduxInpaintingPipeline.from_core_configure(
+        self._pipe = StableFluxForReduxInpaintingPipeline.from_core_configure(
             self._config,
             pretrained_name=pretrained_name,
         )

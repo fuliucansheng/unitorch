@@ -545,7 +545,7 @@ class StableFluxLoraForImageInpainting(GenericStableFluxLoraModel):
             masked_pixel_values = pixel_values.clone()
             masked_pixel_masks = pixel_masks.clone()
             masked_pixel_masks = masked_pixel_masks.expand_as(masked_pixel_values)
-            masked_pixel_values[masked_pixel_masks > 0.5] = -1.0
+            masked_pixel_values[masked_pixel_masks > 0.5] = 0.0
             masked_latents = self.vae.encode(masked_pixel_values).latent_dist.sample()
             masked_latents = (
                 masked_latents - self.vae.config.shift_factor

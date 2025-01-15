@@ -18,12 +18,6 @@ __hf_hub_stable_v1_5_dict__ = lambda name: {
             f"/{name}/resolve/main/text_encoder/pytorch_model.bin"
         ),
     },
-    "vae": {
-        "config": hf_endpoint_url(f"/{name}/resolve/main/vae/config.json"),
-        "weight": hf_endpoint_url(
-            f"/{name}/resolve/main/vae/diffusion_pytorch_model.bin"
-        ),
-    },
     "scheduler": hf_endpoint_url(
         f"/{name}/resolve/main/scheduler/scheduler_config.json"
     ),
@@ -42,12 +36,6 @@ __hf_hub_stable_v1_5_safetensors_dict__ = lambda name: {
         "merge": hf_endpoint_url(f"/{name}/resolve/main/tokenizer/merges.txt"),
         "weight": hf_endpoint_url(
             f"/{name}/resolve/main/text_encoder/model.safetensors"
-        ),
-    },
-    "vae": {
-        "config": hf_endpoint_url(f"/{name}/resolve/main/vae/config.json"),
-        "weight": hf_endpoint_url(
-            f"/{name}/resolve/main/vae/diffusion_pytorch_model.safetensors"
         ),
     },
     "scheduler": hf_endpoint_url(
@@ -83,12 +71,6 @@ __hf_hub_stable_xl_dict__ = lambda name: {
             f"/{name}/resolve/main/text_encoder_2/pytorch_model.bin"
         ),
     },
-    "vae": {
-        "config": hf_endpoint_url(f"/{name}/resolve/main/vae/config.json"),
-        "weight": hf_endpoint_url(
-            f"/{name}/resolve/main/vae/diffusion_pytorch_model.bin"
-        ),
-    },
     "scheduler": hf_endpoint_url(
         f"/{name}/resolve/main/scheduler/scheduler_config.json"
     ),
@@ -115,12 +97,6 @@ __hf_hub_stable_xl_safetensors_dict__ = lambda name: {
         "merge": hf_endpoint_url(f"/{name}/resolve/main/tokenizer_2/merges.txt"),
         "weight": hf_endpoint_url(
             f"/{name}/resolve/main/text_encoder_2/model.fp16.safetensors"
-        ),
-    },
-    "vae": {
-        "config": hf_endpoint_url(f"/{name}/resolve/main/vae/config.json"),
-        "weight": hf_endpoint_url(
-            f"/{name}/resolve/main/vae/diffusion_pytorch_model.fp16.safetensors"
         ),
     },
     "scheduler": hf_endpoint_url(
@@ -161,12 +137,6 @@ __hf_hub_stable_3_safetensors_dict__ = lambda name: {
             for i in range(1, 3)
         ],
     },
-    "vae": {
-        "config": hf_endpoint_url(f"/{name}/resolve/main/vae/config.json"),
-        "weight": hf_endpoint_url(
-            f"/{name}/resolve/main/vae/diffusion_pytorch_model.safetensors"
-        ),
-    },
     "scheduler": hf_endpoint_url(
         f"/{name}/resolve/main/scheduler/scheduler_config.json"
     ),
@@ -199,12 +169,6 @@ __hf_hub_stable_flux_safetensors_dict__ = lambda name: {
             )
             for i in range(1, 3)
         ],
-    },
-    "vae": {
-        "config": hf_endpoint_url(f"/{name}/resolve/main/vae/config.json"),
-        "weight": hf_endpoint_url(
-            f"/{name}/resolve/main/vae/diffusion_pytorch_model.safetensors"
-        ),
     },
     "scheduler": hf_endpoint_url(
         f"/{name}/resolve/main/scheduler/scheduler_config.json"
@@ -239,15 +203,27 @@ __hf_hub_stable_flux_ctrl_safetensors_dict__ = lambda name: {
             for i in range(1, 5)
         ],
     },
+    "scheduler": hf_endpoint_url(
+        f"/{name}/resolve/main/scheduler/scheduler_config.json"
+    ),
+}
+
+__hf_hub_vae_dict = lambda name: {
+    "vae": {
+        "config": hf_endpoint_url(f"/{name}/resolve/main/vae/config.json"),
+        "weight": hf_endpoint_url(
+            f"/{name}/resolve/main/vae/diffusion_pytorch_model.bin"
+        ),
+    },
+}
+
+__hf_hub_vae_safetensors_dict__ = lambda name: {
     "vae": {
         "config": hf_endpoint_url(f"/{name}/resolve/main/vae/config.json"),
         "weight": hf_endpoint_url(
             f"/{name}/resolve/main/vae/diffusion_pytorch_model.safetensors"
         ),
     },
-    "scheduler": hf_endpoint_url(
-        f"/{name}/resolve/main/scheduler/scheduler_config.json"
-    ),
 }
 
 __hf_hub_controlnet_dict__ = lambda name: {
@@ -298,160 +274,206 @@ __hf_hub_stable_video_safetensors_dict__ = lambda name: {
             f"/{name}/resolve/main/image_encoder/model.safetensors"
         ),
     },
-    "vae": {
-        "config": hf_endpoint_url(f"/{name}/resolve/main/vae/config.json"),
-        "weight": hf_endpoint_url(
-            f"/{name}/resolve/main/vae/diffusion_pytorch_model.safetensors"
-        ),
-    },
     "scheduler": hf_endpoint_url(
         f"/{name}/resolve/main/scheduler/scheduler_config.json"
     ),
 }
 
+__hf_flux_dev_redux_safetensors_dict__ = lambda x: {
+    "image": {
+        "config": hf_endpoint_url(f"/{x}/resolve/main/image_encoder/config.json"),
+        "vision_config": hf_endpoint_url(
+            f"/{x}/resolve/main/feature_extractor/preprocessor_config.json"
+        ),
+        "weight": hf_endpoint_url(f"/{x}/resolve/main/image_encoder/model.safetensors"),
+    },
+    "redux_image": {
+        "config": hf_endpoint_url(f"/{x}/resolve/main/image_embedder/config.json"),
+        "weight": hf_endpoint_url(
+            f"/{x}/resolve/main/image_embedder/diffusion_pytorch_model.safetensors"
+        ),
+    },
+}
+
 pretrained_stable_infos = {
-    "stable-v1.5": __hf_hub_stable_v1_5_dict__("botp/stable-diffusion-v1-5"),
-    "stable-v1.5-realistic-v5.1-no-vae": __hf_hub_stable_v1_5_safetensors_dict__(
-        "SG161222/Realistic_Vision_V5.1_noVAE"
-    ),
-    "stable-v1.5-realistic-v5.1": __hf_hub_stable_v1_5_dict__(
-        "stablediffusionapi/realistic-vision-v51"
-    ),
-    "stable-v1.5-film": __hf_hub_stable_v1_5_safetensors_dict__("Yntec/Film"),
-    "stable-v1.5-cyber-realistic": __hf_hub_stable_v1_5_safetensors_dict__(
-        "Yntec/CyberRealistic"
-    ),
-    "stable-v1.5-majicmix-realistic-v6": __hf_hub_stable_v1_5_dict__(
-        "digiplay/majicMIX_realistic_v6"
-    ),
-    "stable-v1.5-nitrosocke-ghibli": __hf_hub_stable_v1_5_dict__(
-        "nitrosocke/Ghibli-Diffusion"
-    ),
-    "stable-v1.5-inpainting": __hf_hub_stable_v1_5_dict__(
-        "botp/stable-diffusion-v1-5-inpainting"
-    ),
-    "stable-v1.5-realistic-v5.1-inpainting": __hf_hub_stable_v1_5_safetensors_dict__(
-        "Uminosachi/realisticVisionV51_v51VAE-inpainting"
-    ),
-    "stable-v1.5-dreamshaper-8-inpainting": __hf_hub_stable_v1_5_safetensors_dict__(
-        "Lykon/dreamshaper-8-inpainting"
-    ),
-    "stable-v1.5-x4-upscaler": __hf_hub_stable_v1_5_dict__(
-        "stabilityai/stable-diffusion-x4-upscaler"
-    ),
-    "stable-v2": __hf_hub_stable_v2_dict__("stabilityai/stable-diffusion-2"),
-    "stable-v2.1": __hf_hub_stable_v2_1_dict__("stabilityai/stable-diffusion-2-1"),
-    "stable-xl-base": __hf_hub_stable_xl_safetensors_dict__(
-        "stabilityai/stable-diffusion-xl-base-1.0"
-    ),
+    "stable-v1.5": {
+        **__hf_hub_stable_v1_5_dict__("botp/stable-diffusion-v1-5"),
+        **__hf_hub_vae_dict("botp/stable-diffusion-v1-5"),
+    },
+    "stable-v1.5-realistic-v5.1-no-vae": {
+        **__hf_hub_stable_v1_5_safetensors_dict__(
+            "SG161222/Realistic_Vision_V5.1_noVAE"
+        ),
+        **__hf_hub_vae_safetensors_dict__("SG161222/Realistic_Vision_V5.1_noVAE"),
+    },
+    "stable-v1.5-realistic-v5.1": {
+        **__hf_hub_stable_v1_5_dict__("stablediffusionapi/realistic-vision-v51"),
+        **__hf_hub_vae_dict("stablediffusionapi/realistic-vision-v51"),
+    },
+    "stable-v1.5-film": {
+        **__hf_hub_stable_v1_5_safetensors_dict__("Yntec/Film"),
+        **__hf_hub_vae_safetensors_dict__("Yntec/Film"),
+    },
+    "stable-v1.5-cyber-realistic": {
+        **__hf_hub_stable_v1_5_safetensors_dict__("Yntec/CyberRealistic"),
+        **__hf_hub_vae_safetensors_dict__("Yntec/CyberRealistic"),
+    },
+    "stable-v1.5-majicmix-realistic-v6": {
+        **__hf_hub_stable_v1_5_dict__("digiplay/majicMIX_realistic_v6"),
+        **__hf_hub_vae_dict("digiplay/majicMIX_realistic_v6"),
+    },
+    "stable-v1.5-nitrosocke-ghibli": {
+        **__hf_hub_stable_v1_5_dict__("nitrosocke/Ghibli-Diffusion"),
+        **__hf_hub_vae_dict("nitrosocke/Ghibli-Diffusion"),
+    },
+    "stable-v1.5-inpainting": {
+        **__hf_hub_stable_v1_5_dict__("botp/stable-diffusion-v1-5-inpainting"),
+        **__hf_hub_vae_dict("botp/stable-diffusion-v1-5-inpainting"),
+    },
+    "stable-v1.5-realistic-v5.1-inpainting": {
+        **__hf_hub_stable_v1_5_safetensors_dict__(
+            "Uminosachi/realisticVisionV51_v51VAE-inpainting"
+        ),
+        **__hf_hub_vae_safetensors_dict__(
+            "Uminosachi/realisticVisionV51_v51VAE-inpainting"
+        ),
+    },
+    "stable-v1.5-dreamshaper-8-inpainting": {
+        **__hf_hub_stable_v1_5_safetensors_dict__("Lykon/dreamshaper-8-inpainting"),
+        **__hf_hub_vae_safetensors_dict__("Lykon/dreamshaper-8-inpainting"),
+    },
+    "stable-v1.5-x4-upscaler": {
+        **__hf_hub_stable_v1_5_dict__("stabilityai/stable-diffusion-x4-upscaler"),
+        **__hf_hub_vae_safetensors_dict__("stabilityai/stable-diffusion-x4-upscaler"),
+    },
+    "stable-v2": {
+        **__hf_hub_stable_v2_dict__("stabilityai/stable-diffusion-2"),
+        **__hf_hub_vae_dict("stabilityai/stable-diffusion-2"),
+    },
+    "stable-v2.1": {
+        **__hf_hub_stable_v2_1_dict__("stabilityai/stable-diffusion-2-1"),
+        **__hf_hub_vae_dict("stabilityai/stable-diffusion-2-1"),
+    },
+    "stable-xl-base": {
+        **__hf_hub_stable_xl_safetensors_dict__(
+            "stabilityai/stable-diffusion-xl-base-1.0"
+        ),
+        **__hf_hub_vae_safetensors_dict__("stabilityai/stable-diffusion-xl-base-1.0"),
+    },
     "stable-xl-base-vae-fp16": {
         **__hf_hub_stable_xl_safetensors_dict__(
             "stabilityai/stable-diffusion-xl-base-1.0"
         ),
-        **{
-            "vae": {
-                "config": hf_endpoint_url(
-                    "/madebyollin/sdxl-vae-fp16-fix/resolve/main/config.json"
-                ),
-                "weight": hf_endpoint_url(
-                    "/madebyollin/sdxl-vae-fp16-fix/resolve/main/diffusion_pytorch_model.safetensors"
-                ),
-            },
-        },
+        **__hf_hub_vae_safetensors_dict__("madebyollin/sdxl-vae-fp16-fix"),
     },
-    "stable-xl-turbo": __hf_hub_stable_xl_safetensors_dict__("stabilityai/sdxl-turbo"),
-    "stable-xl-realism-engine-v30": __hf_hub_stable_xl_safetensors_dict__(
-        "misri/realismEngineSDXL_v30VAE"
-    ),
-    "stable-xl-opendalle-v1.1": __hf_hub_stable_xl_safetensors_dict__(
-        "dataautogpt3/OpenDalleV1.1"
-    ),
-    "stable-xl-realvis-v3.0": __hf_hub_stable_xl_safetensors_dict__(
-        "SG161222/RealVisXL_V3.0"
-    ),
-    "stable-xl-juggernaut-v8": __hf_hub_stable_xl_dict__(
-        "RunDiffusion/Juggernaut-XL-v8"
-    ),
-    "stable-xl-playground-v2-aesthetic": __hf_hub_stable_xl_safetensors_dict__(
-        "playgroundai/playground-v2-1024px-aesthetic"
-    ),
-    "stable-v3-medium": __hf_hub_stable_3_safetensors_dict__(
-        "ckpt/stable-diffusion-3-medium-diffusers"
-    ),
-    "stable-v3.5-medium": __hf_hub_stable_3_safetensors_dict__(
-        "ckpt/stable-diffusion-3.5-medium"
-    ),
-    "stable-v3.5-large": __hf_hub_stable_3_safetensors_dict__(
-        "yuvraj108c/stable-diffusion-3.5-large"
-    ),
-    "stable-flux-schnell": __hf_hub_stable_flux_safetensors_dict__(
-        "black-forest-labs/FLUX.1-schnell"
-    ),
-    "stable-flux-dev": __hf_hub_stable_flux_safetensors_dict__(
-        "camenduru/FLUX.1-dev-diffusers"
-    ),
+    "stable-xl-turbo": {
+        **__hf_hub_stable_xl_safetensors_dict__("stabilityai/sdxl-turbo"),
+        **__hf_hub_vae_safetensors_dict__("stabilityai/sdxl-turbo"),
+    },
+    "stable-xl-realism-engine-v30": {
+        **__hf_hub_stable_xl_safetensors_dict__("misri/realismEngineSDXL_v30VAE"),
+        **__hf_hub_vae_safetensors_dict__("misri/realismEngineSDXL_v30VAE"),
+    },
+    "stable-xl-opendalle-v1.1": {
+        **__hf_hub_stable_xl_safetensors_dict__("dataautogpt3/OpenDalleV1.1"),
+        **__hf_hub_vae_safetensors_dict__("dataautogpt3/OpenDalleV1.1"),
+    },
+    "stable-xl-realvis-v3.0": {
+        **__hf_hub_stable_xl_safetensors_dict__("SG161222/RealVisXL_V3.0"),
+        **__hf_hub_vae_safetensors_dict__("SG161222/RealVisXL_V3.0"),
+    },
+    "stable-xl-juggernaut-v8": {
+        **__hf_hub_stable_xl_dict__("RunDiffusion/Juggernaut-XL-v8"),
+        **__hf_hub_vae_dict("RunDiffusion/Juggernaut-XL-v8"),
+    },
+    "stable-xl-playground-v2-aesthetic": {
+        **__hf_hub_stable_xl_safetensors_dict__(
+            "playgroundai/playground-v2-1024px-aesthetic"
+        ),
+        **__hf_hub_vae_safetensors_dict__(
+            "playgroundai/playground-v2-1024px-aesthetic"
+        ),
+    },
+    "stable-v3-medium": {
+        **__hf_hub_stable_3_safetensors_dict__(
+            "ckpt/stable-diffusion-3-medium-diffusers"
+        ),
+        **__hf_hub_vae_safetensors_dict__("ckpt/stable-diffusion-3-medium-diffusers"),
+    },
+    "stable-v3.5-medium": {
+        **__hf_hub_stable_3_safetensors_dict__("ckpt/stable-diffusion-3.5-medium"),
+        **__hf_hub_vae_safetensors_dict__("ckpt/stable-diffusion-3.5-medium"),
+    },
+    "stable-v3.5-large": {
+        **__hf_hub_stable_3_safetensors_dict__("yuvraj108c/stable-diffusion-3.5-large"),
+        **__hf_hub_vae_safetensors_dict__("yuvraj108c/stable-diffusion-3.5-large"),
+    },
+    "stable-flux-schnell": {
+        **__hf_hub_stable_flux_safetensors_dict__("black-forest-labs/FLUX.1-schnell"),
+        **__hf_hub_vae_safetensors_dict__("black-forest-labs/FLUX.1-schnell"),
+    },
+    "stable-flux-dev": {
+        **__hf_hub_stable_flux_safetensors_dict__("camenduru/FLUX.1-dev-diffusers"),
+        **__hf_hub_vae_safetensors_dict__("camenduru/FLUX.1-dev-diffusers"),
+    },
+    "stable-flux-dev-fill": {
+        **__hf_hub_stable_flux_safetensors_dict__(
+            "fuliucansheng/FLUX.1-Fill-dev-diffusers"
+        ),
+        **__hf_hub_vae_safetensors_dict__("fuliucansheng/FLUX.1-Fill-dev-diffusers"),
+    },
+    "stable-flux-dev-canny": {
+        **__hf_hub_stable_flux_ctrl_safetensors_dict__(
+            "fuliucansheng/FLUX.1-Canny-dev-diffusers"
+        ),
+        **__hf_hub_vae_safetensors_dict__("fuliucansheng/FLUX.1-Canny-dev-diffusers"),
+    },
+    "stable-flux-dev-depth": {
+        **__hf_hub_stable_flux_ctrl_safetensors_dict__(
+            "fuliucansheng/FLUX.1-Depth-dev-diffusers"
+        ),
+        **__hf_hub_vae_safetensors_dict__("fuliucansheng/FLUX.1-Depth-dev-diffusers"),
+    },
     "stable-flux-dev-redux": {
         **__hf_hub_stable_flux_safetensors_dict__("camenduru/FLUX.1-dev-diffusers"),
-        **{
-            "image": {
-                "config": hf_endpoint_url(
-                    "/tentpole/flux1-dev-redux/resolve/main/image_encoder/config.json"
-                ),
-                "vision_config": hf_endpoint_url(
-                    "/tentpole/flux1-dev-redux/resolve/main/feature_extractor/preprocessor_config.json"
-                ),
-                "weight": hf_endpoint_url(
-                    "/tentpole/flux1-dev-redux/resolve/main/image_encoder/model.safetensors"
-                ),
-            },
-            "redux_image": {
-                "config": hf_endpoint_url(
-                    "/tentpole/flux1-dev-redux/resolve/main/image_embedder/config.json"
-                ),
-                "weight": hf_endpoint_url(
-                    "/tentpole/flux1-dev-redux/resolve/main/image_embedder/diffusion_pytorch_model.safetensors"
-                ),
-            },
-        },
+        **__hf_hub_vae_safetensors_dict__("camenduru/FLUX.1-dev-diffusers"),
+        **__hf_flux_dev_redux_safetensors_dict__("tentpole/flux1-dev-redux"),
     },
     "stable-flux-dev-redux-fill": {
         **__hf_hub_stable_flux_safetensors_dict__(
             "fuliucansheng/FLUX.1-Fill-dev-diffusers"
         ),
-        **{
-            "image": {
-                "config": hf_endpoint_url(
-                    "/tentpole/flux1-dev-redux/resolve/main/image_encoder/config.json"
-                ),
-                "vision_config": hf_endpoint_url(
-                    "/tentpole/flux1-dev-redux/resolve/main/feature_extractor/preprocessor_config.json"
-                ),
-                "weight": hf_endpoint_url(
-                    "/tentpole/flux1-dev-redux/resolve/main/image_encoder/model.safetensors"
-                ),
-            },
-            "redux_image": {
-                "config": hf_endpoint_url(
-                    "/tentpole/flux1-dev-redux/resolve/main/image_embedder/config.json"
-                ),
-                "weight": hf_endpoint_url(
-                    "/tentpole/flux1-dev-redux/resolve/main/image_embedder/diffusion_pytorch_model.safetensors"
-                ),
-            },
-        },
+        **__hf_hub_vae_safetensors_dict__("fuliucansheng/FLUX.1-Fill-dev-diffusers"),
+        **__hf_flux_dev_redux_safetensors_dict__("tentpole/flux1-dev-redux"),
     },
-    "stable-flux-dev-fill": __hf_hub_stable_flux_safetensors_dict__(
-        "fuliucansheng/FLUX.1-Fill-dev-diffusers"
-    ),
-    "stable-flux-dev-canny": __hf_hub_stable_flux_ctrl_safetensors_dict__(
-        "fuliucansheng/FLUX.1-Canny-dev-diffusers"
-    ),
-    "stable-video-diffusion-img2vid-xt": __hf_hub_stable_video_safetensors_dict__(
-        "stabilityai/stable-video-diffusion-img2vid-xt"
-    ),
-    "stable-video-diffusion-img2vid-xt-1-1": __hf_hub_stable_video_safetensors_dict__(
-        "vdo/stable-video-diffusion-img2vid-xt-1-1"
-    ),
+    "stable-flux-dev-redux-canny": {
+        **__hf_hub_stable_flux_ctrl_safetensors_dict__(
+            "fuliucansheng/FLUX.1-Canny-dev-diffusers"
+        ),
+        **__hf_hub_vae_safetensors_dict__("fuliucansheng/FLUX.1-Canny-dev-diffusers"),
+        **__hf_flux_dev_redux_safetensors_dict__("tentpole/flux1-dev-redux"),
+    },
+    "stable-flux-dev-redux-depth": {
+        **__hf_hub_stable_flux_ctrl_safetensors_dict__(
+            "fuliucansheng/FLUX.1-Depth-dev-diffusers"
+        ),
+        **__hf_hub_vae_safetensors_dict__("fuliucansheng/FLUX.1-Depth-dev-diffusers"),
+        **__hf_flux_dev_redux_safetensors_dict__("tentpole/flux1-dev-redux"),
+    },
+    "stable-video-diffusion-img2vid-xt": {
+        **__hf_hub_stable_video_safetensors_dict__(
+            "stabilityai/stable-video-diffusion-img2vid-xt"
+        ),
+        **__hf_hub_vae_safetensors_dict__(
+            "stabilityai/stable-video-diffusion-img2vid-xt"
+        ),
+    },
+    "stable-video-diffusion-img2vid-xt-1-1": {
+        **__hf_hub_stable_video_safetensors_dict__(
+            "vdo/stable-video-diffusion-img2vid-xt-1-1"
+        ),
+        **__hf_hub_vae_safetensors_dict__("vdo/stable-video-diffusion-img2vid-xt-1-1"),
+    },
 }
 
 pretrained_stable_extensions_infos = {

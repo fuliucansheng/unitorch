@@ -70,7 +70,7 @@ def save_snapshot_zero_3(
     iter_dev,
     score_fn,
     monitor_fns,
-    save_checkpoint="all",
+    save_checkpoint="default",
     merge_checkpoint=False,
     exclude_freeze_parameters=True,
     best_score=-np.inf,
@@ -86,10 +86,12 @@ def save_snapshot_zero_3(
     results = infer(base_model, iter_dev)
     new_score = score_fn(outputs=results.outputs, targets=results.targets)
 
+    snapshot_time = time.strftime("%Y%m%d_%H%M%S", time.localtime())
+
     if local_rank in [-1, 0]:
         monitor(results.outputs, results.targets, monitor_fns)
 
-    if new_score > best_score:
+    if save_checkpoint in ["all", "default", "best"] and new_score > best_score:
         best_score = new_score
         model.save_checkpoint(
             os.path.join(ckpt_dir, "pytorch_model"),
@@ -105,7 +107,7 @@ def save_snapshot_zero_3(
         if info_path is not None:
             json.dump({"best_score": best_score, **kwargs}, open(info_path, "w"))
 
-    if save_checkpoint in ["all", "latest"]:
+    if save_checkpoint in ["all", "default", "latest"]:
         model.save_checkpoint(os.path.join(ckpt_dir, "pytorch_model_latest"))
         if merge_checkpoint and local_rank in [-1, 0]:
             state_dict = get_fp32_state_dict_from_zero_checkpoint(
@@ -114,10 +116,10 @@ def save_snapshot_zero_3(
             )
             torch.save(state_dict, os.path.join(ckpt_dir, "pytorch_model_latest.bin"))
 
-    if save_checkpoint in ["every"]:
+    if save_checkpoint in ["all", "every"]:
         model.save_checkpoint(
             ckpt_dir,
-            f"pytorch_model_{time.strftime('%Y%m%d_%H%M%S', time.localtime())}",
+            f"pytorch_model_{snapshot_time}",
         )
         if merge_checkpoint and local_rank in [-1, 0]:
             state_dict = get_fp32_state_dict_from_zero_checkpoint(
@@ -128,7 +130,7 @@ def save_snapshot_zero_3(
                 state_dict,
                 os.path.join(
                     ckpt_dir,
-                    f"pytorch_model_latest_{time.strftime('%Y%m%d_%H%M%S', time.localtime())}.bin",
+                    f"pytorch_model_latest_{snapshot_time}.bin",
                 ),
             )
     return best_score
@@ -237,7 +239,7 @@ class DeepspeedTask:
         num_workers: Optional[int] = 4,
         save_optimizer: Optional[bool] = False,
         save_scheduler: Optional[bool] = False,
-        save_checkpoint: Optional[str] = "all",
+        save_checkpoint: Optional[str] = "default",
         log_freq: Optional[int] = 100,
         ckpt_freq: Optional[int] = 10000,
         grad_acc_step: Optional[int] = 1,
@@ -304,7 +306,9 @@ class DeepspeedTask:
         config_dict["train_micro_batch_size_per_gpu"] = train_batch_size
 
         if zero_stage is None:
-            zero_stage = nested_dict_value(config_dict, "zero_optimization", "stage") or 2
+            zero_stage = (
+                nested_dict_value(config_dict, "zero_optimization", "stage") or 2
+            )
 
         if os.path.exists(from_ckpt_dir):
             self.model.from_checkpoint(from_ckpt_dir)

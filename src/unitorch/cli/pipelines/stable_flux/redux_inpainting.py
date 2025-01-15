@@ -1,27 +1,23 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
-import io
 import re
-import gc
 import json
 import logging
 import torch
 import hashlib
 import pandas as pd
 from PIL import Image
-from torch import autocast
-from fastapi import APIRouter, UploadFile, File
-from fastapi.responses import StreamingResponse
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from transformers import PretrainedConfig, SiglipVisionConfig, SiglipVisionModel
 from diffusers.utils import numpy_to_pil
-from diffusers.models import ControlNetModel
+from diffusers.models import (
+    FluxControlNetModel,
+    FluxTransformer2DModel,
+    AutoencoderKL,
+)
 from diffusers.pipelines import (
     FluxPipeline,
-    FluxControlNetPipeline,
-    FluxImg2ImgPipeline,
-    FluxControlNetImg2ImgPipeline,
     FluxInpaintPipeline,
     FluxControlNetInpaintPipeline,
     FluxFillPipeline,
@@ -32,19 +28,14 @@ from unitorch.utils import is_remote_url
 from unitorch.models.diffusers import GenericStableFluxModel
 from unitorch.models.diffusers import StableFluxProcessor
 
-from unitorch.utils import (
-    pop_value,
-    nested_dict_value,
-    is_bfloat16_available,
-    is_cuda_available,
-)
+from unitorch.utils import pop_value, nested_dict_value
 from unitorch.cli import (
     cached_path,
-    register_fastapi,
     add_default_section_for_init,
     add_default_section_for_function,
 )
-from unitorch.cli import CoreConfigureParser, GenericFastAPI
+from unitorch.cli import CoreConfigureParser, GenericScript
+from unitorch.cli import register_script
 from unitorch.cli.models.diffusers import (
     pretrained_stable_infos,
     pretrained_stable_extensions_infos,
@@ -53,7 +44,7 @@ from unitorch.cli.models.diffusers import (
 from unitorch.cli.pipelines import Schedulers
 
 
-class StableFluxForImageReduxInpaintingFastAPIPipeline(GenericStableFluxModel):
+class StableFluxForReduxInpaintingPipeline(GenericStableFluxModel):
     def __init__(
         self,
         config_path: str,
@@ -73,9 +64,6 @@ class StableFluxForImageReduxInpaintingFastAPIPipeline(GenericStableFluxModel):
         pad_token: Optional[str] = "<|endoftext|>",
         weight_path: Optional[Union[str, List[str]]] = None,
         state_dict: Optional[Dict[str, Any]] = None,
-        lora_checkpoints: Optional[Union[str, List[str]]] = None,
-        lora_weights: Optional[Union[float, List[float]]] = 1.0,
-        lora_alphas: Optional[Union[float, List[float]]] = 32,
         device: Optional[Union[str, int]] = "cpu",
         enable_cpu_offload: Optional[bool] = False,
         enable_xformers: Optional[bool] = False,
@@ -108,49 +96,19 @@ class StableFluxForImageReduxInpaintingFastAPIPipeline(GenericStableFluxModel):
         self._device = "cpu" if device == "cpu" else int(device)
 
         self.from_pretrained(weight_path, state_dict=state_dict)
-
         self.eval()
-
-        self.prompt_embeds_scale = 1.0
-        self.pooled_prompt_embeds_scale = 1.0
-
-        self.pipeline = FluxFillPipeline(
-            vae=self.vae,
-            text_encoder=self.text,
-            text_encoder_2=self.text2,
-            transformer=self.transformer,
-            scheduler=self.scheduler,
-            tokenizer=None,
-            tokenizer_2=None,
-        )
-        self.pipeline.set_progress_bar_config(disable=True)
-
-        if lora_checkpoints is not None:
-            self.load_lora_weights(
-                lora_checkpoints,
-                lora_weights=lora_weights,
-                lora_alphas=lora_alphas,
-                save_base_state=False,
-            )
 
         self._enable_cpu_offload = enable_cpu_offload
         self._enable_xformers = enable_xformers
+        self.prompt_embeds_scale = 1.0
+        self.pooled_prompt_embeds_scale = 1.0
 
         if not self._enable_cpu_offload:
             self.image.to(device=self._device)
             self.redux_image.to(device=self._device)
 
-        if self._enable_cpu_offload and self._device != "cpu":
-            self.pipeline.enable_model_cpu_offload(self._device)
-        else:
-            self.to(device=self._device)
-
-        if self._enable_xformers and self._device != "cpu":
-            assert is_xformers_available(), "Please install xformers first."
-            self.pipeline.enable_xformers_memory_efficient_attention()
-
     @classmethod
-    @add_default_section_for_init("core/fastapi/pipeline/stable_flux/redux_inpainting")
+    @add_default_section_for_init("core/pipeline/stable_flux/redux_inpainting")
     def from_core_configure(
         cls,
         config,
@@ -169,15 +127,11 @@ class StableFluxForImageReduxInpaintingFastAPIPipeline(GenericStableFluxModel):
         quant_config_path: Optional[str] = None,
         pretrained_weight_path: Optional[str] = None,
         device: Optional[str] = None,
-        pretrained_lora_names: Optional[Union[str, List[str]]] = None,
-        pretrained_lora_weights_path: Optional[Union[str, List[str]]] = None,
-        pretrained_lora_weights: Optional[Union[float, List[float]]] = None,
-        pretrained_lora_alphas: Optional[Union[float, List[float]]] = None,
         **kwargs,
     ):
-        config.set_default_section("core/fastapi/pipeline/stable_flux/redux_inpainting")
+        config.set_default_section("core/pipeline/stable_flux/redux_inpainting")
         pretrained_name = pretrained_name or config.getoption(
-            "pretrained_name", "stable-flux-dev-fill"
+            "pretrained_name", "stable-flux-schnell"
         )
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
 
@@ -284,7 +238,7 @@ class StableFluxForImageReduxInpaintingFastAPIPipeline(GenericStableFluxModel):
         )
         device = config.getoption("device", "cpu") if device is None else device
         enable_cpu_offload = config.getoption("enable_cpu_offload", True)
-        enable_xformers = config.getoption("enable_xformers", False)
+        enable_xformers = config.getoption("enable_xformers", True)
 
         state_dict = None
         if weight_path is None and pretrained_infos is not None:
@@ -315,43 +269,6 @@ class StableFluxForImageReduxInpaintingFastAPIPipeline(GenericStableFluxModel):
                 ),
             ]
 
-        pretrained_lora_names = pretrained_lora_names or config.getoption(
-            "pretrained_lora_names", None
-        )
-        pretrained_lora_weights = pretrained_lora_weights or config.getoption(
-            "pretrained_lora_weights", 1.0
-        )
-        pretrained_lora_alphas = pretrained_lora_alphas or config.getoption(
-            "pretrained_lora_alphas", 32.0
-        )
-
-        if (
-            isinstance(pretrained_lora_names, str)
-            and pretrained_lora_weights_path is None
-        ):
-            pretrained_lora_weights_path = nested_dict_value(
-                pretrained_stable_extensions_infos,
-                pretrained_lora_names,
-                "lora",
-                "weight",
-            )
-        elif (
-            isinstance(pretrained_lora_names, list)
-            and pretrained_lora_weights_path is None
-        ):
-            pretrained_lora_weights_path = [
-                nested_dict_value(
-                    pretrained_stable_extensions_infos, name, "lora", "weight"
-                )
-                for name in pretrained_lora_names
-            ]
-            assert len(pretrained_lora_weights_path) == len(pretrained_lora_weights)
-            assert len(pretrained_lora_weights_path) == len(pretrained_lora_alphas)
-
-        lora_weights_path = pretrained_lora_weights_path or config.getoption(
-            "pretrained_lora_weights_path", None
-        )
-
         inst = cls(
             config_path=config_path,
             text_config_path=text_config_path,
@@ -365,14 +282,11 @@ class StableFluxForImageReduxInpaintingFastAPIPipeline(GenericStableFluxModel):
             redux_image_config_path=redux_image_config_path,
             redux_process_config_path=redux_process_config_path,
             quant_config_path=quant_config_path,
-            pad_token=pad_token,
             max_seq_length=max_seq_length,
             max_seq_length2=max_seq_length2,
+            pad_token=pad_token,
             weight_path=weight_path,
             state_dict=state_dict,
-            lora_checkpoints=lora_weights_path,
-            lora_weights=pretrained_lora_weights,
-            lora_alphas=pretrained_lora_alphas,
             device=device,
             enable_cpu_offload=enable_cpu_offload,
             enable_xformers=enable_xformers,
@@ -380,58 +294,252 @@ class StableFluxForImageReduxInpaintingFastAPIPipeline(GenericStableFluxModel):
         return inst
 
     @torch.no_grad()
-    @autocast(
-        device_type=("cuda" if torch.cuda.is_available() else "cpu"),
-        dtype=(torch.bfloat16 if is_bfloat16_available() else torch.float32),
-    )
-    @add_default_section_for_function(
-        "core/fastapi/pipeline/stable_flux/redux_inpainting"
-    )
+    @add_default_section_for_function("core/pipeline/stable_flux/redux_inpainting")
     def __call__(
         self,
         text: str,
         image: Image.Image,
         mask_image: Image.Image,
         redux_image: Image.Image,
-        neg_text: Optional[str] = "",
         width: Optional[int] = None,
         height: Optional[int] = None,
-        guidance_scale: Optional[float] = 30.0,
+        guidance_scale: Optional[float] = 7.5,
         strength: Optional[float] = 1.0,
         num_timesteps: Optional[int] = 50,
         seed: Optional[int] = 1123,
+        scheduler: Optional[str] = None,
+        controlnet_checkpoints: Optional[List[str]] = [],
+        controlnet_images: Optional[List[Image.Image]] = [],
+        controlnet_guidance_scales: Optional[List[float]] = [],
+        lora_checkpoints: Optional[Union[str, List[str]]] = [],
+        lora_weights: Optional[Union[float, List[float]]] = 1.0,
+        lora_alphas: Optional[Union[float, List[float]]] = 32,
+        lora_urls: Optional[Union[str, List[str]]] = [],
+        lora_files: Optional[Union[str, List[str]]] = [],
     ):
         if width is None or height is None:
             width, height = image.size
-        width = width // 16 * 16
-        height = height // 16 * 16
+            width = width // 8 * 8
+            height = height // 8 * 8
         image = image.resize((width, height))
         mask_image = mask_image.resize((width, height))
 
         text_inputs = self.processor.text2image_inputs(
             text,
-            negative_prompt=neg_text,
         )
         image_inputs = self.processor.inpainting_inputs(image, mask_image)
         redux_image_inputs = self.processor.redux_image_inputs(redux_image)
-        inputs = {
-            **text_inputs,
-            **image_inputs,
-            **{"redux_pixel_values": redux_image_inputs["pixel_values"]},
-        }
+        assert scheduler is None or scheduler in Schedulers
+        if scheduler is not None:
+            self.scheduler = Schedulers.get(scheduler).from_config(
+                self.scheduler.config
+            )
+
+        controlnet_checkpoints, controlnet_processes = zip(*controlnet_checkpoints)
+
+        if any(ckpt is not None for ckpt in controlnet_checkpoints) and any(
+            img is not None for img in controlnet_images
+        ):
+            controlnets, conditioning_scales, conditioning_images = [], [], []
+            (
+                inpaint_controlnet,
+                inpaint_conditioning_scale,
+                inpaint_conditioning_image,
+            ) = (None, None, None)
+            controlnet_conditioning_modes = []
+
+            for checkpoint, process, conditioning_scale, conditioning_image in zip(
+                controlnet_checkpoints,
+                controlnet_processes,
+                controlnet_guidance_scales,
+                controlnet_images,
+            ):
+                if checkpoint is None or conditioning_image is None:
+                    continue
+                if "union" in checkpoint:
+                    assert process in {"canny", "tile", "depth"}
+                    mode = {"canny": 0, "tile": 1, "depth": 2}.get(process, None)
+                    controlnet_conditioning_modes.append(mode)
+                else:
+                    controlnet_conditioning_modes.append(None)
+                if "inpainting" in checkpoint:
+                    inpaint_controlnet_config_path = cached_path(
+                        nested_dict_value(
+                            pretrained_stable_extensions_infos,
+                            checkpoint,
+                            "controlnet",
+                            "config",
+                        )
+                    )
+                    inpaint_controlnet_config_dict = json.load(
+                        open(inpaint_controlnet_config_path)
+                    )
+                    inpaint_controlnet = FluxControlNetModel.from_config(
+                        inpaint_controlnet_config_dict
+                    ).to(torch.bfloat16)
+                    inpaint_controlnet.load_state_dict(
+                        load_weight(
+                            nested_dict_value(
+                                pretrained_stable_extensions_infos,
+                                checkpoint,
+                                "controlnet",
+                                "weight",
+                            )
+                        )
+                    )
+                    inpaint_controlnet.to(device=self._device)
+                    logging.info(f"Loading inpaint controlnet from {checkpoint}")
+                    inpaint_conditioning_scale = conditioning_scale
+                    inpaint_conditioning_image = conditioning_image.resize(image.size)
+                    continue
+                controlnet_config_path = cached_path(
+                    nested_dict_value(
+                        pretrained_stable_extensions_infos,
+                        checkpoint,
+                        "controlnet",
+                        "config",
+                    )
+                )
+                controlnet_config_dict = json.load(open(controlnet_config_path))
+                controlnet = FluxControlNetModel.from_config(controlnet_config_dict).to(
+                    torch.bfloat16
+                )
+                controlnet.load_state_dict(
+                    load_weight(
+                        nested_dict_value(
+                            pretrained_stable_extensions_infos,
+                            checkpoint,
+                            "controlnet",
+                            "weight",
+                        )
+                    ),
+                )
+                controlnet.to(device=self._device)
+                logging.info(f"Loading controlnet from {checkpoint}")
+                controlnets.append(controlnet)
+                conditioning_scales.append(conditioning_scale)
+                conditioning_images.append(conditioning_image.resize(image.size))
+            if inpaint_controlnet is not None:
+                controlnets.append(inpaint_controlnet)
+                conditioning_scales.append(inpaint_conditioning_scale)
+            self.pipeline = FluxControlNetInpaintPipeline(
+                vae=self.vae,
+                text_encoder=self.text,
+                text_encoder_2=self.text2,
+                transformer=self.transformer,
+                controlnet=controlnets,
+                scheduler=self.scheduler,
+                tokenizer=None,
+                tokenizer_2=None,
+            )
+            if len(conditioning_images) > 0:
+                controlnets_inputs = self.processor.controlnets_inputs(
+                    conditioning_images
+                )
+            else:
+                controlnets_inputs = None
+
+            if inpaint_conditioning_image is not None:
+                inpaint_controlnet_inputs = self.processor.inpainting_control_inputs(
+                    inpaint_conditioning_image, mask_image
+                )
+            else:
+                inpaint_controlnet_inputs = None
+
+            if controlnets_inputs is not None and inpaint_controlnet_inputs is not None:
+                condition_pixel_values = torch.cat(
+                    [
+                        controlnets_inputs.pixel_values,
+                        inpaint_controlnet_inputs.pixel_values.unsqueeze(0),
+                    ],
+                    dim=0,
+                )
+            elif controlnets_inputs is not None:
+                condition_pixel_values = controlnets_inputs.pixel_values
+            elif inpaint_controlnet_inputs is not None:
+                condition_pixel_values = (
+                    inpaint_controlnet_inputs.pixel_values.unsqueeze(0)
+                )
+
+            enable_controlnet = True
+            inputs = {
+                **text_inputs,
+                **image_inputs,
+                **{"condition_pixel_values": condition_pixel_values},
+                **{"redux_pixel_values": redux_image_inputs["pixel_values"]},
+            }
+        else:
+            self.pipeline = FluxFillPipeline(
+                vae=self.vae,
+                text_encoder=self.text,
+                text_encoder_2=self.text2,
+                transformer=self.transformer,
+                scheduler=self.scheduler,
+                tokenizer=None,
+                tokenizer_2=None,
+            )
+            enable_controlnet = False
+            inputs = {
+                **text_inputs,
+                **image_inputs,
+                **{"redux_pixel_values": redux_image_inputs["pixel_values"]},
+            }
+        self.pipeline.set_progress_bar_config(disable=True)
         self.seed = seed
 
         inputs = {k: v.unsqueeze(0) if v is not None else v for k, v in inputs.items()}
         inputs = {
-            k: v.to(device=self.device) if v is not None else v
+            k: v.to(device=self._device) if v is not None else v
             for k, v in inputs.items()
         }
+        if isinstance(lora_checkpoints, str):
+            lora_checkpoints = [lora_checkpoints]
+        if isinstance(lora_weights, float):
+            lora_weights = [lora_weights]
+        if isinstance(lora_alphas, float):
+            lora_alphas = [lora_alphas]
+        if isinstance(lora_urls, str):
+            lora_urls = [lora_urls]
+        if isinstance(lora_files, str):
+            lora_files = [lora_files]
+
+        assert (
+            len(lora_checkpoints) == len(lora_weights)
+            and len(lora_checkpoints) == len(lora_alphas)
+            and len(lora_checkpoints) == len(lora_urls)
+            and len(lora_checkpoints) == len(lora_files)
+        )
+        processed_lora_files, processed_lora_weights, processed_lora_alphas = [], [], []
+        for ckpt, url, file, weight, alpha in zip(
+            lora_checkpoints, lora_urls, lora_files, lora_weights, lora_alphas
+        ):
+            if ckpt is not None:
+                processed_lora_files.append(
+                    nested_dict_value(
+                        pretrained_stable_extensions_infos, ckpt, "weight"
+                    )
+                )
+                processed_lora_weights.append(weight)
+                processed_lora_alphas.append(alpha)
+            elif url is not None and is_remote_url(url):
+                processed_lora_files.append(url)
+                processed_lora_weights.append(weight)
+                processed_lora_alphas.append(alpha)
+            elif file is not None:
+                processed_lora_files.append(file)
+                processed_lora_weights.append(weight)
+                processed_lora_alphas.append(alpha)
+
+        if len(processed_lora_files) > 0:
+            self.load_lora_weights(
+                processed_lora_files,
+                lora_weights=processed_lora_weights,
+                lora_alphas=processed_lora_alphas,
+            )
 
         prompt_outputs = self.get_prompt_outputs(
-            input_ids=inputs.get("input_ids"),
-            input2_ids=inputs.get("input2_ids"),
-            attention_mask=inputs.get("attention_mask"),
-            attention2_mask=inputs.get("attention2_mask"),
+            inputs["input_ids"],
+            input2_ids=inputs["input2_ids"],
             enable_cpu_offload=self._enable_cpu_offload,
             cpu_offload_device=self._device,
         )
@@ -457,103 +565,54 @@ class StableFluxForImageReduxInpaintingFastAPIPipeline(GenericStableFluxModel):
             prompt_outputs.pooled_prompt_embeds * self.pooled_prompt_embeds_scale
         )
 
-        outputs = self.pipeline(
-            image=inputs["pixel_values"],
-            mask_image=inputs["pixel_masks"],
-            prompt_embeds=prompt_embeds,
-            pooled_prompt_embeds=pooled_prompt_embeds,
-            width=inputs["pixel_values"].size(-1),
-            height=inputs["pixel_values"].size(-2),
-            generator=torch.Generator(device=self.pipeline.device).manual_seed(
-                self.seed
-            ),
-            num_inference_steps=num_timesteps,
-            guidance_scale=guidance_scale,
-            # strength=strength,
-            output_type="np.array",
-        )
+        if self._enable_cpu_offload and self._device != "cpu":
+            self.pipeline.enable_model_cpu_offload(self._device)
+        else:
+            self.to(device=self._device)
+
+        self.pipeline.to(torch.bfloat16)
+
+        if self._enable_xformers and self._device != "cpu":
+            assert is_xformers_available(), "Please install xformers first."
+            self.pipeline.enable_xformers_memory_efficient_attention()
+
+        if enable_controlnet:
+            outputs = self.pipeline(
+                image=inputs["pixel_values"],
+                mask_image=inputs["pixel_masks"],
+                prompt_embeds=prompt_embeds.to(torch.bfloat16),
+                pooled_prompt_embeds=pooled_prompt_embeds.to(torch.bfloat16),
+                width=inputs["pixel_values"].size(-1),
+                height=inputs["pixel_values"].size(-2),
+                generator=torch.Generator(device=self.pipeline.device).manual_seed(
+                    self.seed
+                ),
+                control_image=list(inputs["condition_pixel_values"].transpose(0, 1)),
+                num_inference_steps=num_timesteps,
+                guidance_scale=guidance_scale,
+                strength=strength,
+                controlnet_conditioning_scale=conditioning_scales,
+                control_mode=controlnet_conditioning_modes,
+                output_type="np.array",
+            )
+        else:
+            outputs = self.pipeline(
+                image=inputs["pixel_values"],
+                mask_image=inputs["pixel_masks"],
+                prompt_embeds=prompt_embeds.to(torch.bfloat16),
+                pooled_prompt_embeds=pooled_prompt_embeds.to(torch.bfloat16),
+                width=inputs["pixel_values"].size(-1),
+                height=inputs["pixel_values"].size(-2),
+                generator=torch.Generator(device=self.pipeline.device).manual_seed(
+                    self.seed
+                ),
+                num_inference_steps=num_timesteps,
+                guidance_scale=guidance_scale,
+                # strength=strength,
+                output_type="np.array",
+            )
+        self.unload_lora_weights()
 
         images = torch.from_numpy(outputs.images)
         images = numpy_to_pil(images.cpu().numpy())
         return images[0]
-
-
-@register_fastapi("core/fastapi/stable_flux/redux_inpainting")
-class StableFluxImageReduxInpaintingFastAPI(GenericFastAPI):
-    def __init__(self, config: CoreConfigureParser):
-        self.config = config
-        config.set_default_section(f"core/fastapi/stable_flux/redux_inpainting")
-        router = config.getoption(
-            "router", "/core/fastapi/stable_flux/redux_inpainting"
-        )
-        self._pipe = None if not hasattr(self, "_pipe") else self._pipe
-        self._router = APIRouter(prefix=router)
-        self._router.add_api_route("/generate", self.serve, methods=["POST"])
-        self._router.add_api_route("/status", self.status, methods=["GET"])
-        self._router.add_api_route("/start", self.start, methods=["POST"])
-        self._router.add_api_route("/stop", self.stop, methods=["GET"])
-
-    @property
-    def router(self):
-        return self._router
-
-    def start(
-        self,
-        pretrained_name: Optional[str] = "stable-flux-dev-redux-fill",
-        pretrained_lora_names: Optional[Union[str, List[str]]] = None,
-        pretrained_lora_weights: Optional[Union[float, List[float]]] = 1.0,
-        pretrained_lora_alphas: Optional[Union[float, List[float]]] = 32.0,
-    ):
-        self._pipe = (
-            StableFluxForImageReduxInpaintingFastAPIPipeline.from_core_configure(
-                self.config,
-                pretrained_name=pretrained_name,
-                pretrained_lora_names=pretrained_lora_names,
-                pretrained_lora_weights=pretrained_lora_weights,
-                pretrained_lora_alphas=pretrained_lora_alphas,
-            )
-        )
-        return "start success"
-
-    def stop(self):
-        self._pipe.to("cpu")
-        del self._pipe
-        gc.collect()
-        torch.cuda.empty_cache()
-        self._pipe = None if not hasattr(self, "_pipe") else self._pipe
-        return "stop success"
-
-    def status(self):
-        return "running" if self._pipe is not None else "stopped"
-
-    async def serve(
-        self,
-        text: str,
-        image: UploadFile,
-        mask_image: UploadFile,
-        guidance_scale: Optional[float] = 30.0,
-        strength: Optional[float] = 1.0,
-        num_timesteps: Optional[int] = 50,
-        seed: Optional[int] = 1123,
-    ):
-        assert self._pipe is not None
-        image_bytes = await image.read()
-        image = Image.open(io.BytesIO(image_bytes))
-        mask_image_bytes = await mask_image.read()
-        mask_image = Image.open(io.BytesIO(mask_image_bytes))
-        image = self._pipe(
-            text,
-            image,
-            mask_image,
-            guidance_scale=guidance_scale,
-            strength=strength,
-            num_timesteps=num_timesteps,
-            seed=seed,
-        )
-        buffer = io.BytesIO()
-        image.save(buffer, format="PNG")
-
-        return StreamingResponse(
-            io.BytesIO(buffer.getvalue()),
-            media_type="image/png",
-        )
