@@ -24,20 +24,15 @@ from unitorch.cli.models import (
 
 @register_model("core/model/segmentation/bria", segmentation_model_decorator)
 class BRIAForSegmentation(_BRIAForSegmentation):
-    def __init__(self, in_ch: int = 3, out_ch: int = 1):
-        super().__init__(in_ch, out_ch)
+    def __init__(self):
+        super().__init__()
 
     @classmethod
     @add_default_section_for_init("core/model/segmentation/bria")
     def from_core_configure(cls, config, **kwargs):
         config.set_default_section("core/model/segmentation/bria")
-        in_ch = config.getoption("in_ch", 3)
-        out_ch = config.getoption("out_ch", 1)
 
-        inst = cls(
-            in_ch=in_ch,
-            out_ch=out_ch,
-        )
+        inst = cls()
         weight_path = config.getoption("pretrained_weight_path", None)
         if weight_path is not None:
             inst.from_pretrained(weight_path)
@@ -55,13 +50,13 @@ class BRIAForSegmentation(_BRIAForSegmentation):
         outputs = super().forward(images)
         if sizes is None:
             return SegmentationOutputs(
-                masks=outputs,
+                masks=outputs.logits,
             )
         masks = [
             F.interpolate(mask.unsqueeze(0), size=list(size), mode="bilinear").squeeze(
                 0
             )
-            for mask, size in zip(outputs, sizes)
+            for mask, size in zip(outputs.logits, sizes)
         ]
         masks = [m.permute(1, 2, 0) for m in masks]
         masks = [(m - m.min()) / (m.max() - m.min()) for m in masks]

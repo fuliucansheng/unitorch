@@ -654,7 +654,7 @@ class SupervisedTask:
                 best_score=self.best_score,
                 info_path=info_path,
                 local_rank=self.local_rank,
-                global_epoch=e,
+                global_epoch=e + 1,
                 global_step=0,
             )
 
