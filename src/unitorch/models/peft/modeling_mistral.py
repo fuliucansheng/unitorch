@@ -232,9 +232,12 @@ class MistralLoraForGeneration(GenericPeftModel):
         sequences = outputs.sequences.reshape(
             -1, num_return_sequences, outputs.sequences.size(-1)
         )
-        outputs.sequences = torch.zeros(
-            sequences.size(0), num_return_sequences, max_gen_seq_length
-        ).to(device=sequences.device)
+        outputs.sequences = (
+            torch.zeros(sequences.size(0), num_return_sequences, max_gen_seq_length).to(
+                device=sequences.device
+            )
+            + decoder_start_token_id
+        )
         outputs.sequences[:, :, : sequences.size(-1) - input_seq_length].copy_(
             sequences[:, :, input_seq_length : sequences.size(-1)]
         )

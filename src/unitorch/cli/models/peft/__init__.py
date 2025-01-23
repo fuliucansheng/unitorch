@@ -23,6 +23,7 @@ from unitorch.cli.models.peft.modeling_llama import (
 from unitorch.cli.models.peft.modeling_llava import (
     LlavaMistralClipLoraForClassification,
     LlavaMistralClipLoraForGeneration,
+    LlavaLlamaSiglipLoraForGeneration,
 )
 from unitorch.cli.models.peft.modeling_mistral import (
     MistralLoraForClassification,

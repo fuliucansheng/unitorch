@@ -311,6 +311,7 @@ from unitorch.models.peft.modeling_llama import (
 from unitorch.models.peft.modeling_llava import (
     LlavaMistralClipLoraForClassification,
     LlavaMistralClipLoraForGeneration,
+    LlavaLlamaSiglipLoraForGeneration,
 )
 from unitorch.models.peft.modeling_mistral import (
     MistralLoraForClassification,
