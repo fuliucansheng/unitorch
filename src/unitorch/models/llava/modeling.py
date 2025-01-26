@@ -71,15 +71,13 @@ class LlavaMistralClipForClassification(GenericModel, PeftWeightLoaderMixin):
             torch.randn(self.config.text_config.hidden_size, dtype=self.dtype)
             * embed_std
         )
-        language_model = MistralModel(self.config.text_config)
+        self.language_model = MistralModel(self.config.text_config)
         if quant_config_path is not None:
             quant_config = QuantizationConfig.from_json_file(quant_config_path)
             ignore_modules = ["lm_head"]
             self.language_model = quantize_model(
-                language_model, quant_config, ignore_modules=ignore_modules
+                self.language_model, quant_config, ignore_modules=ignore_modules
             )
-        else:
-            self.language_model = language_model
 
         self.dropout = nn.Dropout(hidden_dropout_prob)
         self.classifier = nn.Linear(self.config.text_config.hidden_size, num_classes)
@@ -180,9 +178,7 @@ class LlavaMistralClipForClassification(GenericModel, PeftWeightLoaderMixin):
         return logits
 
 
-class LlavaMistralClipForGeneration(
-    GenericModel, QuantizationMixin, PeftWeightLoaderMixin
-):
+class LlavaMistralClipForGeneration(GenericModel, PeftWeightLoaderMixin):
     replace_keys_in_peft_state_dict = {
         "peft_model.base_model.model.": "language_model."
     }
@@ -219,7 +215,11 @@ class LlavaMistralClipForGeneration(
 
         if quant_config_path is not None:
             self.quant_config = QuantizationConfig.from_json_file(quant_config_path)
-            self.quantize(self.quant_config, ignore_modules=["lm_head"])
+            self.language_model = quantize_model(
+                self.language_model,
+                self.quant_config,
+                ignore_modules=["lm_head"],
+            )
 
         if freeze_vision_encoder:
             for param in self.vision_tower.parameters():
@@ -463,9 +463,7 @@ class LlavaMistralClipForGeneration(
         )
 
 
-class LlavaLlamaSiglipForGeneration(
-    GenericModel, QuantizationMixin, PeftWeightLoaderMixin
-):
+class LlavaLlamaSiglipForGeneration(GenericModel, PeftWeightLoaderMixin):
     replace_keys_in_peft_state_dict = {
         "peft_model.base_model.model.": "language_model."
     }
@@ -497,7 +495,11 @@ class LlavaLlamaSiglipForGeneration(
 
         if quant_config_path is not None:
             self.quant_config = QuantizationConfig.from_json_file(quant_config_path)
-            self.quantize(self.quant_config, ignore_modules=["lm_head"])
+            self.language_model = quantize_model(
+                self.language_model,
+                self.quant_config,
+                ignore_modules=["lm_head"],
+            )
 
         if freeze_vision_encoder:
             for param in self.vision_tower.parameters():
