@@ -155,7 +155,7 @@ class MistralProcessor(HfTextClassificationProcessor, HfTextGenerationProcessor)
             max_seq_length,
             self.max_seq_length,
         )
-        tokens = self._instrution_tokenize(instruction, input, max_seq_length)
+        tokens = [self.bos_token] + self._instrution_tokenize(instruction, input, max_seq_length - 1)
         padding = [self.pad_token] * (max_seq_length - len(tokens))
         tokens = padding + tokens
         input_ids = self.tokenizer.convert_tokens_to_ids(tokens)
@@ -281,7 +281,7 @@ class MistralProcessor(HfTextClassificationProcessor, HfTextGenerationProcessor)
             self.max_gen_seq_length,
         )
 
-        tokens = self._instrution_tokenize(instruction, input, max_seq_length)
+        tokens = [self.bos_token] + self._instrution_tokenize(instruction, input, max_seq_length - 1)
         tokens_pair = self.tokenizer.tokenize(str(output))[: max_gen_seq_length - 1] + [
             self.eos_token
         ]
