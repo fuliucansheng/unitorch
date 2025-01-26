@@ -568,8 +568,8 @@ class DeepspeedTask:
                     best_score=self.best_score,
                     info_path=info_path,
                     local_rank=self.local_rank,
-                    global_epoch=e,
-                    global_step=step + 1,
+                    global_epoch=e + 1,
+                    global_step=0,
                 )
             else:
                 self.best_score = save_snapshot(
@@ -585,7 +585,7 @@ class DeepspeedTask:
                     best_score=self.best_score,
                     info_path=info_path,
                     local_rank=self.local_rank,
-                    global_epoch=e,
+                    global_epoch=e + 1,
                     global_step=0,
                 )
 

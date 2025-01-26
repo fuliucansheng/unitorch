@@ -147,9 +147,12 @@ class XPegasusForGeneration(GenericModel):
         sequences = outputs.sequences.reshape(
             -1, num_return_sequences, outputs.sequences.size(-1)
         )
-        outputs.sequences = torch.zeros(
-            sequences.size(0), num_return_sequences, max_gen_seq_length
-        ).to(device=sequences.device)
+        outputs.sequences = (
+            torch.zeros(sequences.size(0), num_return_sequences, max_gen_seq_length).to(
+                device=sequences.device
+            )
+            + decoder_start_token_id
+        )
         outputs.sequences[:, :, : sequences.size(-1)].copy_(sequences)
 
         if num_return_sequences == 1:

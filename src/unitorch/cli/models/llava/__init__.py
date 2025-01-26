@@ -22,6 +22,23 @@ pretrained_llava_infos = {
             for i in range(1, 5)
         ],
     },
+    "llava-v1.6-joycaption-2": {
+        "config": hf_endpoint_url(
+            "/fancyfeast/llama-joycaption-alpha-two-hf-llava/resolve/main/config.json"
+        ),
+        "tokenizer": hf_endpoint_url(
+            "/fancyfeast/llama-joycaption-alpha-two-hf-llava/resolve/main/tokenizer.json"
+        ),
+        "vision_config": hf_endpoint_url(
+            "/fancyfeast/llama-joycaption-alpha-two-hf-llava/resolve/main/preprocessor_config.json"
+        ),
+        "weight": [
+            hf_endpoint_url(
+                f"/fancyfeast/llama-joycaption-alpha-two-hf-llava/resolve/main/model-{str(i).rjust(5, '0')}-of-00004.safetensors"
+            )
+            for i in range(1, 5)
+        ],
+    },
 }
 
 pretrained_llava_extensions_infos = {}

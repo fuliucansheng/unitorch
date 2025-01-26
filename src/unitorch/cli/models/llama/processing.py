@@ -25,8 +25,8 @@ class LlamaProcessor(_LlamaProcessor):
 
     def __init__(
         self,
-        vocab_path,
-        tokenizer_file,
+        vocab_path: Optional[str] = None,
+        tokenizer_file: Optional[str] = None,
         max_seq_length: Optional[int] = 128,
         max_gen_seq_length: Optional[int] = 128,
     ):

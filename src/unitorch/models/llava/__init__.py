@@ -4,5 +4,9 @@
 from unitorch.models.llava.modeling import (
     LlavaMistralClipForClassification,
     LlavaMistralClipForGeneration,
+    LlavaLlamaSiglipForGeneration,
 )
-from unitorch.models.llava.processing import LlavaMistralClipProcessor
+from unitorch.models.llava.processing import (
+    LlavaMistralClipProcessor,
+    LlavaLlamaSiglipProcessor,
+)
