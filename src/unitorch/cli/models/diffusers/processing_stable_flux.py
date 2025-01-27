@@ -87,8 +87,10 @@ class StableFluxProcessor(_StableFluxProcessor):
         redux_config_path = pop_value(
             redux_config_path,
             nested_dict_value(pretrained_infos, "image", "vision_config"),
+            check_none=False,
         )
-        redux_config_path = cached_path(redux_config_path)
+        if redux_config_path is not None:
+            redux_config_path = cached_path(redux_config_path)
 
         return {
             "vocab_path": vocab_path,
