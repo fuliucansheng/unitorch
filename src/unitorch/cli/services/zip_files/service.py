@@ -110,7 +110,8 @@ class ZipFilesServer(http.server.BaseHTTPRequestHandler):
             None
         """
         self.send_response(200)
-        self.send_header("Content-Type", "text/html; charset=utf-8")
+        # self.send_header("Content-Type", "text/html; charset=utf-8")
+        # self.send_header("Content-Type", "image/jpeg")
         self.end_headers()
         params = parse_params(self.path)
         file = params.get("file")
