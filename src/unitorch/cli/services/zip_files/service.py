@@ -109,16 +109,20 @@ class ZipFilesServer(http.server.BaseHTTPRequestHandler):
         Returns:
             None
         """
-        self.send_response(200)
-        # self.send_header("Content-Type", "text/html; charset=utf-8")
-        # self.send_header("Content-Type", "image/jpeg")
-        self.end_headers()
-        params = parse_params(self.path)
-        file = params.get("file")
-        resp = self.none_resp
-        if file is not None:
-            resp = self._get_file(file)
-        self.wfile.write(resp)
+        if self.path == "/":
+            self.send_response(200)
+            self.end_headers()
+            params = parse_params(self.path)
+            file = params.get("file")
+            resp = self.none_resp
+            if file is not None:
+                resp = self._get_file(file)
+            self.wfile.write(resp)
+        elif self.path == "/all-files":
+            self.send_response(200)
+            self.end_headers()
+            names = list(self.zip_dict.keys())
+            self.wfile.write("\n".join(names).encode("utf-8"))
 
     def log_request(self, format, *args):
         """
