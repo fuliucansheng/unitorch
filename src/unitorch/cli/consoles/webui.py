@@ -74,11 +74,12 @@ def webui(config_path: str, **kwargs):
             tab_names=[webui.iname for webui in webuis],
             title=title,
         )
+        demo_webui.css = "\n".join([webui.iface.css for webui in webuis])
     demo_webui.title = title
     demo_webui.theme_css = read_file(
         os.path.join(importlib_resources.files("unitorch"), "cli/assets/style.css")
     )
-    demo_webui.css = demo_webui.theme_css
+    demo_webui.css += demo_webui.theme_css
 
     config.set_default_section("core/cli")
     host = config.getoption("host", "0.0.0.0")

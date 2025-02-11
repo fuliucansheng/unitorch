@@ -347,8 +347,8 @@ def create_tabs(*elements, elem_id=None, elem_classes="ut-bg-transparent"):
     return tabs
 
 
-def create_blocks(*layouts):
-    blocks = gr.Blocks()
+def create_blocks(*layouts, js=None, css=None, fill_height=False, fill_width=False):
+    blocks = gr.Blocks(js=js, css=css, fill_height=fill_height, fill_width=fill_width)
     elements = list(layouts)
     while len(elements) > 0:
         element = elements.pop(0)
