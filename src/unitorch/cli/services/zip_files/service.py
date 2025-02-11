@@ -123,6 +123,7 @@ class ZipFilesServer(http.server.BaseHTTPRequestHandler):
             if file is not None:
                 resp = self._get_file(file)
             self.wfile.write(resp)
+
     def log_request(self, format, *args):
         """
         Logs the HTTP request.

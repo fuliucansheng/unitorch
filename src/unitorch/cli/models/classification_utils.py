@@ -68,6 +68,7 @@ class ClassificationProcessor:
         self,
         act_fn: Optional[str] = None,
         return_scores: Optional[bool] = False,
+        id2label: Optional[Dict[int, str]] = None,
     ):
         """
         Initialize the ClassificationProcessor.
@@ -78,6 +79,7 @@ class ClassificationProcessor:
         """
         self.act_fn = ACT2FN.get(act_fn, None)
         self.return_scores = return_scores
+        self.id2label = id2label
 
     @classmethod
     @add_default_section_for_init("core/process/classification")
@@ -148,8 +150,12 @@ class ClassificationProcessor:
 
         results["pscore"] = outputs.max(-1)
         results["pclass"] = outputs.argmax(-1)
+        if self.id2label is not None:
+            results["pclass"] = results["pclass"].map(self.id2label)
+
         if self.return_scores:
             results["scores"] = outputs.tolist()
+
         return WriterOutputs(results)
 
     @register_process("core/postprocess/classification/embedding")

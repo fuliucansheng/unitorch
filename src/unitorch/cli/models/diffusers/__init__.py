@@ -354,6 +354,10 @@ pretrained_stable_infos = {
         **__hf_hub_stable_v2_1_dict__("stabilityai/stable-diffusion-2-1"),
         **__hf_hub_vae_dict("stabilityai/stable-diffusion-2-1"),
     },
+    "stable-v2.1-inpainting": {
+        **__hf_hub_stable_v2_1_dict__("stabilityai/stable-diffusion-2-inpainting"),
+        **__hf_hub_vae_dict("stabilityai/stable-diffusion-2-inpainting"),
+    },
     "stable-xl-base": {
         **__hf_hub_stable_xl_safetensors_dict__(
             "stabilityai/stable-diffusion-xl-base-1.0"
@@ -378,9 +382,13 @@ pretrained_stable_infos = {
         **__hf_hub_stable_xl_safetensors_dict__("dataautogpt3/OpenDalleV1.1"),
         **__hf_hub_vae_safetensors_dict__("dataautogpt3/OpenDalleV1.1"),
     },
-    "stable-xl-realvis-v3.0": {
-        **__hf_hub_stable_xl_safetensors_dict__("SG161222/RealVisXL_V3.0"),
-        **__hf_hub_vae_safetensors_dict__("SG161222/RealVisXL_V3.0"),
+    "stable-xl-realvis-v4.0": {
+        **__hf_hub_stable_xl_safetensors_dict__("SG161222/RealVisXL_V4.0"),
+        **__hf_hub_vae_safetensors_dict__("SG161222/RealVisXL_V4.0"),
+    },
+    "stable-xl-realvis-v4.0-inpainting": {
+        **__hf_hub_stable_xl_safetensors_dict__("OzzyGT/RealVisXL_V4.0_inpainting"),
+        **__hf_hub_vae_safetensors_dict__("OzzyGT/RealVisXL_V4.0_inpainting"),
     },
     "stable-xl-juggernaut-v8": {
         **__hf_hub_stable_xl_dict__("RunDiffusion/Juggernaut-XL-v8"),
