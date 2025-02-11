@@ -226,6 +226,15 @@ __hf_hub_vae_safetensors_dict__ = lambda name: {
     },
 }
 
+__hf_hub_vae_safetensors_fp16_dict__ = lambda name: {
+    "vae": {
+        "config": hf_endpoint_url(f"/{name}/resolve/main/vae/config.json"),
+        "weight": hf_endpoint_url(
+            f"/{name}/resolve/main/vae/diffusion_pytorch_model.fp16.safetensors"
+        ),
+    },
+}
+
 __hf_hub_controlnet_dict__ = lambda name: {
     "controlnet": {
         "config": hf_endpoint_url(f"/{name}/resolve/main/config.json"),
@@ -388,7 +397,7 @@ pretrained_stable_infos = {
     },
     "stable-xl-realvis-v4.0-inpainting": {
         **__hf_hub_stable_xl_safetensors_dict__("OzzyGT/RealVisXL_V4.0_inpainting"),
-        **__hf_hub_vae_safetensors_dict__("OzzyGT/RealVisXL_V4.0_inpainting"),
+        **__hf_hub_vae_safetensors_fp16_dict__("OzzyGT/RealVisXL_V4.0_inpainting"),
     },
     "stable-xl-juggernaut-v8": {
         **__hf_hub_stable_xl_dict__("RunDiffusion/Juggernaut-XL-v8"),
