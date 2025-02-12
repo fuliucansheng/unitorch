@@ -161,8 +161,12 @@ class ControlNetXLForImageInpaintingFastAPIPipeline(GenericStableXLModel):
         )
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
 
-        pretrained_controlnet_names = pretrained_controlnet_names or config.getoption(
-            "pretrained_controlnet_names", "stable-xl-controlnet-canny"
+        pretrained_controlnet_names = (
+            pretrained_controlnet_names
+            if pretrained_controlnet_names is not None
+            else config.getoption(
+                "pretrained_controlnet_names", "stable-xl-controlnet-canny"
+            )
         )
         if isinstance(pretrained_controlnet_names, str):
             pretrained_controlnet_names = [pretrained_controlnet_names]
