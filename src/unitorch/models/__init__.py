@@ -235,6 +235,7 @@ import unitorch.models.onnx
 import unitorch.models.pegasus
 import unitorch.models.roberta
 import unitorch.models.segformer
+import unitorch.models.siglip
 import unitorch.models.swin
 import unitorch.models.t5
 import unitorch.models.visualbert
