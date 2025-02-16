@@ -74,4 +74,10 @@ class BRIAFastAPI(GenericFastAPI):
         async with self._lock:
             mask = self._pipe(image, threshold=threshold)
 
-        return mask
+        buffer = io.BytesIO()
+        mask.save(buffer, format="PNG")
+
+        return StreamingResponse(
+            io.BytesIO(buffer.getvalue()),
+            media_type="image/png",
+        )

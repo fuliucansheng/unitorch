@@ -90,7 +90,7 @@ class LlavaMistralClipFastAPI(GenericFastAPI):
 
 
 @register_fastapi("core/fastapi/llava/joycaption2")
-class LlavaMistralClipFastAPI(GenericFastAPI):
+class LlavaLlamaSiglipFastAPI(GenericFastAPI):
     def __init__(self, config: CoreConfigureParser):
         self.config = config
         config.set_default_section(f"core/fastapi/llava/joycaption2")
@@ -108,7 +108,7 @@ class LlavaMistralClipFastAPI(GenericFastAPI):
         return self._router
 
     def start(self):
-        self._pipe = LlavaMistralClipForGenerationPipeline.from_core_configure(
+        self._pipe = LlavaLlamaSiglipForGenerationPipeline.from_core_configure(
             self.config,
             pretrained_name="llava-v1.6-joycaption-2",
         )
