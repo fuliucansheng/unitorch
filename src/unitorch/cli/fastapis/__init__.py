@@ -1,6 +1,8 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
+import unitorch.cli.fastapis.bria
+import unitorch.cli.fastapis.llava
 import unitorch.cli.fastapis.stable
 import unitorch.cli.fastapis.controlnet
 import unitorch.cli.fastapis.stable_xl

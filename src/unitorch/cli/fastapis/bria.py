@@ -14,24 +14,8 @@ from PIL import Image
 from fastapi import APIRouter, UploadFile, File
 from fastapi.responses import StreamingResponse
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
-from diffusers.utils import numpy_to_pil
-from diffusers.models import ControlNetModel
-from diffusers.pipelines import (
-    StableDiffusionPipeline,
-    StableDiffusionImg2ImgPipeline,
-    StableDiffusionInpaintPipeline,
-    StableDiffusionUpscalePipeline,
-    StableDiffusionDepth2ImgPipeline,
-    StableVideoDiffusionPipeline,
-    StableDiffusionControlNetPipeline,
-    StableDiffusionControlNetImg2ImgPipeline,
-    StableDiffusionControlNetInpaintPipeline,
-)
 from unitorch import is_xformers_available
 from unitorch.utils import is_remote_url
-from unitorch.models.diffusers import GenericStableModel
-from unitorch.models.diffusers import StableProcessor
-
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.cli import (
     cached_path,
@@ -40,21 +24,15 @@ from unitorch.cli import (
     add_default_section_for_function,
 )
 from unitorch.cli import CoreConfigureParser, GenericFastAPI
-from unitorch.cli.models.diffusers import (
-    pretrained_stable_infos,
-    pretrained_stable_extensions_infos,
-    load_weight,
-)
-from unitorch.cli.pipelines import Schedulers
-from unitorch.cli.pipelines.stable.interrogator import ClipInterrogatorPipeline
+from unitorch.cli.pipelines.bria import BRIAForSegmentationPipeline
 
 
-@register_fastapi("core/fastapi/interrogator/clip")
-class ClipInterrogatorFastAPI(GenericFastAPI):
+@register_fastapi("core/fastapi/bria")
+class BRIAFastAPI(GenericFastAPI):
     def __init__(self, config: CoreConfigureParser):
         self.config = config
-        config.set_default_section(f"core/fastapi/interrogator/clip")
-        router = config.getoption("router", "/core/fastapi/interrogator/clip")
+        config.set_default_section(f"core/fastapi/bria")
+        router = config.getoption("router", "/core/fastapi/bria")
         self._pipe = None if not hasattr(self, "_pipe") else self._pipe
         self._router = APIRouter(prefix=router)
         self._router.add_api_route("/generate", self.serve, methods=["POST"])
@@ -68,7 +46,10 @@ class ClipInterrogatorFastAPI(GenericFastAPI):
         return self._router
 
     def start(self):
-        self._pipe = ClipInterrogatorPipeline.from_core_configure(self.config)
+        self._pipe = BRIAForSegmentationPipeline.from_core_configure(
+            self.config,
+            pretrained_weight_path="https://huggingface.co/briaai/RMBG-2.0/resolve/main/pytorch_model.bin",
+        )
         return "start success"
 
     def stop(self):
@@ -85,11 +66,12 @@ class ClipInterrogatorFastAPI(GenericFastAPI):
     async def serve(
         self,
         image: UploadFile,
+        threshold: float = 0.5,
     ):
         assert self._pipe is not None
         image_bytes = await image.read()
         image = Image.open(io.BytesIO(image_bytes))
         async with self._lock:
-            outputs = self._pipe(image)
+            mask = self._pipe(image, threshold=threshold)
 
-        return outputs.best_prompt
+        return mask
