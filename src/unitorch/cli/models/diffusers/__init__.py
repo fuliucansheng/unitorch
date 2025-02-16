@@ -387,6 +387,14 @@ pretrained_stable_infos = {
         **__hf_hub_stable_xl_safetensors_dict__("misri/realismEngineSDXL_v30VAE"),
         **__hf_hub_vae_safetensors_dict__("misri/realismEngineSDXL_v30VAE"),
     },
+    "stable-xl-base-inpainting-0.1": {
+        **__hf_hub_stable_xl_safetensors_dict__(
+            "diffusers/stable-diffusion-xl-1.0-inpainting-0.1"
+        ),
+        **__hf_hub_vae_safetensors_fp16_dict__(
+            "diffusers/stable-diffusion-xl-1.0-inpainting-0.1"
+        ),
+    },
     "stable-xl-opendalle-v1.1": {
         **__hf_hub_stable_xl_safetensors_dict__("dataautogpt3/OpenDalleV1.1"),
         **__hf_hub_vae_safetensors_dict__("dataautogpt3/OpenDalleV1.1"),

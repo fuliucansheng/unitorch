@@ -7,6 +7,8 @@ import gc
 import json
 import logging
 import torch
+import hashlib
+import asyncio
 import pandas as pd
 from PIL import Image
 from torch import autocast
@@ -260,6 +262,7 @@ class StableImage2VideoFastAPI(GenericFastAPI):
         self._router.add_api_route("/status", self.status, methods=["GET"])
         self._router.add_api_route("/start", self.start, methods=["POST"])
         self._router.add_api_route("/stop", self.stop, methods=["GET"])
+        self._lock = asyncio.Lock()
 
     @property
     def router(self):
@@ -307,17 +310,18 @@ class StableImage2VideoFastAPI(GenericFastAPI):
         assert self._pipe is not None
         image_bytes = await image.read()
         image = Image.open(io.BytesIO(image_bytes))
-        video = self._pipe(
-            image,
-            num_frames=num_frames,
-            num_fps=num_fps,
-            min_guidance_scale=min_guidance_scale,
-            max_guidance_scale=max_guidance_scale,
-            motion_bucket_id=motion_bucket_id,
-            decode_chunk_size=decode_chunk_size,
-            num_timesteps=num_timesteps,
-            seed=seed,
-        )
+        async with self._lock:
+            video = self._pipe(
+                image,
+                num_frames=num_frames,
+                num_fps=num_fps,
+                min_guidance_scale=min_guidance_scale,
+                max_guidance_scale=max_guidance_scale,
+                motion_bucket_id=motion_bucket_id,
+                decode_chunk_size=decode_chunk_size,
+                num_timesteps=num_timesteps,
+                seed=seed,
+            )
         buffer = io.BytesIO()
         with open(video, "rb") as f:
             buffer.write(f.read())
