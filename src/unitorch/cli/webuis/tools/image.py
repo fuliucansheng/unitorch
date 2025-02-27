@@ -291,6 +291,57 @@ class InvertWebUI(SimpleWebUI):
         return image
 
 
+class CropWebUI(SimpleWebUI):
+    def __init__(self, config: CoreConfigureParser):
+        # create elements
+        input_image = create_element("image", "Input Image")
+        x = create_element(
+            "slider", "X", min_value=0, max_value=2048, step=1, default=0
+        )
+        y = create_element(
+            "slider", "Y", min_value=0, max_value=2048, step=1, default=0
+        )
+        width = create_element(
+            "slider", "Width", min_value=0, max_value=2048, step=1, default=0
+        )
+        height = create_element(
+            "slider", "Height", min_value=0, max_value=2048, step=1, default=0
+        )
+        generate = create_element("button", "Generate")
+        output_image = create_element("image", "Output Image")
+
+        # create layouts
+        left = create_column(input_image, x, y, width, height, generate)
+        right = create_column(output_image)
+        iface = create_blocks(create_row(left, right))
+
+        # create events
+        iface.__enter__()
+
+        generate.click(
+            fn=self.crop,
+            inputs=[input_image, x, y, width, height],
+            outputs=[output_image],
+            trigger_mode="once",
+        )
+
+        iface.__exit__()
+        super().__init__(config, iname="Crop", iface=iface)
+
+    def crop(
+        self,
+        image,
+        x: Optional[int] = 0,
+        y: Optional[int] = 0,
+        width: Optional[int] = 0,
+        height: Optional[int] = 0,
+    ):
+        if width > 0 and height > 0:
+            image = image.crop((x, y, x + width, y + height))
+
+        return image
+
+
 class CompositeWebUI(SimpleWebUI):
     def __init__(self, config: CoreConfigureParser):
         input_image = create_element("image", "Input Image")
@@ -348,6 +399,7 @@ class ImageWebUI(SimpleWebUI):
             CannyWebUI(config),
             BlendWebUI(config),
             InvertWebUI(config),
+            CropWebUI(config),
             CompositeWebUI(config),
         ]
         iface = gr.TabbedInterface(

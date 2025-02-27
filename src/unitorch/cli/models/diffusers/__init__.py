@@ -351,6 +351,10 @@ pretrained_stable_infos = {
         **__hf_hub_stable_v1_5_safetensors_dict__("Lykon/dreamshaper-8-inpainting"),
         **__hf_hub_vae_safetensors_dict__("Lykon/dreamshaper-8-inpainting"),
     },
+    "stable-v1.5-anything-4.0-inpainting": {
+        **__hf_hub_stable_v1_5_safetensors_dict__("Sanster/anything-4.0-inpainting"),
+        **__hf_hub_vae_safetensors_dict__("Sanster/anything-4.0-inpainting"),
+    },
     "stable-v1.5-x4-upscaler": {
         **__hf_hub_stable_v1_5_dict__("stabilityai/stable-diffusion-x4-upscaler"),
         **__hf_hub_vae_safetensors_dict__("stabilityai/stable-diffusion-x4-upscaler"),
