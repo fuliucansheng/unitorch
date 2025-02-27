@@ -326,10 +326,10 @@ class LlavaLlamaSiglipProcessor(
             raise ValueError("Either vocab_path or tokenizer_file must be provided")
         tokenizer.cls_token = tokenizer.bos_token
         tokenizer.sep_token = tokenizer.eos_token
-        tokenizer.pad_token = tokenizer.unk_token
         tokenizer.cls_token_id = tokenizer.bos_token_id
         tokenizer.sep_token_id = tokenizer.eos_token_id
-        tokenizer.pad_token_id = tokenizer.unk_token_id
+        tokenizer.pad_token_id = 128004
+        tokenizer.pad_token = tokenizer.convert_ids_to_tokens(tokenizer.pad_token_id)
         HfTextClassificationProcessor.__init__(
             self,
             tokenizer=tokenizer,

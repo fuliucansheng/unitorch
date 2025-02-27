@@ -8,6 +8,7 @@ import json
 import logging
 import torch
 import hashlib
+import asyncio
 import pandas as pd
 from PIL import Image
 from torch import autocast
@@ -442,6 +443,7 @@ class Stable3Text2ImageFastAPI(GenericFastAPI):
         self._router.add_api_route("/status", self.status, methods=["GET"])
         self._router.add_api_route("/start", self.start, methods=["POST"])
         self._router.add_api_route("/stop", self.stop, methods=["GET"])
+        self._lock = asyncio.Lock()
 
     @property
     def router(self):
@@ -474,7 +476,7 @@ class Stable3Text2ImageFastAPI(GenericFastAPI):
     def status(self):
         return "running" if self._pipe is not None else "stopped"
 
-    def serve(
+    async def serve(
         self,
         text: str,
         height: Optional[int] = 512,
@@ -484,14 +486,15 @@ class Stable3Text2ImageFastAPI(GenericFastAPI):
         seed: Optional[int] = 1123,
     ):
         assert self._pipe is not None
-        image = self._pipe(
-            text,
-            height=height,
-            width=width,
-            guidance_scale=guidance_scale,
-            num_timesteps=num_timesteps,
-            seed=seed,
-        )
+        async with self._lock:
+            image = self._pipe(
+                text,
+                height=height,
+                width=width,
+                guidance_scale=guidance_scale,
+                num_timesteps=num_timesteps,
+                seed=seed,
+            )
         buffer = io.BytesIO()
         image.save(buffer, format="PNG")
 

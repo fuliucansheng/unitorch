@@ -25,17 +25,12 @@ from unitorch.cli import register_script
 class BRIAForSegmentationPipeline(_BRIAForSegmentation):
     def __init__(
         self,
-        in_channels: Optional[int] = 3,
-        out_channels: Optional[int] = 1,
         image_size: Optional[int] = 1024,
         weight_path: Optional[Union[str, List[str]]] = None,
         state_dict: Optional[Dict[str, Any]] = None,
         device: Optional[Union[str, int]] = "cpu",
     ):
-        super().__init__(
-            in_ch=in_channels,
-            out_ch=out_channels,
-        )
+        super().__init__()
         self.processor = BRIAProcessor(
             image_size=image_size,
         )
@@ -56,8 +51,6 @@ class BRIAForSegmentationPipeline(_BRIAForSegmentation):
     ):
         config.set_default_section("core/pipeline/bria")
 
-        in_channels = config.getoption("in_channels", 3)
-        out_channels = config.getoption("out_channels", 1)
         image_size = config.getoption("image_size", 1024)
         device = config.getoption("device", "cpu") if device is None else device
         weight_path = pretrained_weight_path or config.getoption(
@@ -65,8 +58,6 @@ class BRIAForSegmentationPipeline(_BRIAForSegmentation):
         )
 
         inst = cls(
-            in_channels=in_channels,
-            out_channels=out_channels,
             image_size=image_size,
             weight_path=weight_path,
             device=device,
@@ -85,7 +76,7 @@ class BRIAForSegmentationPipeline(_BRIAForSegmentation):
         pixel_values = inputs.image.unsqueeze(0).to(self._device)
         outputs = self.forward(
             pixel_values,
-        )
+        ).logits
         masks = [
             (mask.squeeze(0).cpu().numpy() > threshold).astype(np.uint8)
             for mask in outputs

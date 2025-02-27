@@ -8,6 +8,7 @@ import json
 import logging
 import torch
 import hashlib
+import asyncio
 import pandas as pd
 from PIL import Image
 from torch import autocast
@@ -403,6 +404,7 @@ class StableFluxImageInpaintingFastAPI(GenericFastAPI):
         self._router.add_api_route("/status", self.status, methods=["GET"])
         self._router.add_api_route("/start", self.start, methods=["POST"])
         self._router.add_api_route("/stop", self.stop, methods=["GET"])
+        self._lock = asyncio.Lock()
 
     @property
     def router(self):
@@ -450,15 +452,16 @@ class StableFluxImageInpaintingFastAPI(GenericFastAPI):
         image = Image.open(io.BytesIO(image_bytes))
         mask_image_bytes = await mask_image.read()
         mask_image = Image.open(io.BytesIO(mask_image_bytes))
-        image = self._pipe(
-            text,
-            image,
-            mask_image,
-            guidance_scale=guidance_scale,
-            strength=strength,
-            num_timesteps=num_timesteps,
-            seed=seed,
-        )
+        async with self._lock:
+            image = self._pipe(
+                text,
+                image,
+                mask_image,
+                guidance_scale=guidance_scale,
+                strength=strength,
+                num_timesteps=num_timesteps,
+                seed=seed,
+            )
         buffer = io.BytesIO()
         image.save(buffer, format="PNG")
 

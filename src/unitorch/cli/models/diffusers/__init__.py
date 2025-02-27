@@ -351,6 +351,10 @@ pretrained_stable_infos = {
         **__hf_hub_stable_v1_5_safetensors_dict__("Lykon/dreamshaper-8-inpainting"),
         **__hf_hub_vae_safetensors_dict__("Lykon/dreamshaper-8-inpainting"),
     },
+    "stable-v1.5-anything-4.0-inpainting": {
+        **__hf_hub_stable_v1_5_safetensors_dict__("Sanster/anything-4.0-inpainting"),
+        **__hf_hub_vae_safetensors_dict__("Sanster/anything-4.0-inpainting"),
+    },
     "stable-v1.5-x4-upscaler": {
         **__hf_hub_stable_v1_5_dict__("stabilityai/stable-diffusion-x4-upscaler"),
         **__hf_hub_vae_safetensors_dict__("stabilityai/stable-diffusion-x4-upscaler"),
@@ -386,6 +390,14 @@ pretrained_stable_infos = {
     "stable-xl-realism-engine-v30": {
         **__hf_hub_stable_xl_safetensors_dict__("misri/realismEngineSDXL_v30VAE"),
         **__hf_hub_vae_safetensors_dict__("misri/realismEngineSDXL_v30VAE"),
+    },
+    "stable-xl-base-inpainting-0.1": {
+        **__hf_hub_stable_xl_safetensors_dict__(
+            "diffusers/stable-diffusion-xl-1.0-inpainting-0.1"
+        ),
+        **__hf_hub_vae_safetensors_fp16_dict__(
+            "diffusers/stable-diffusion-xl-1.0-inpainting-0.1"
+        ),
     },
     "stable-xl-opendalle-v1.1": {
         **__hf_hub_stable_xl_safetensors_dict__("dataautogpt3/OpenDalleV1.1"),
