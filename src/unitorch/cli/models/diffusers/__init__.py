@@ -668,21 +668,6 @@ pretrained_stable_extensions_infos = {
     "stable-flux-controlnet-dev-union-pro": __hf_hub_controlnet_safetensors_dict__(
         "Shakker-Labs/FLUX.1-dev-ControlNet-Union-Pro"
     ),
-    "stable-flux-lora-dev-mjv6-mix2": {
-        "lora": {
-            "weight": "https://huggingface.co/strangerzonehf/Flux-Midjourney-Mix2-LoRA/resolve/main/mjV6.safetensors"
-        }
-    },
-    "stable-flux-lora-dev-super-realism": {
-        "lora": {
-            "weight": "https://huggingface.co/strangerzonehf/Flux-Super-Realism-LoRA/resolve/main/super-realism.safetensors"
-        }
-    },
-    "stable-flux-lora-dev-fill-obj-removal": {
-        "lora": {
-            "weight": "https://huggingface.co/lrzjason/ObjectRemovalFluxFill/resolve/main/fill_remove.safetensors"
-        }
-    },
 }
 
 from unitorch.cli.models.diffusion_utils import load_weight
