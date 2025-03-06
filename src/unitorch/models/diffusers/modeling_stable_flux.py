@@ -286,6 +286,7 @@ class StableFluxForText2ImageGeneration(GenericStableFluxModel):
         freeze_text_encoder: Optional[bool] = True,
         snr_gamma: Optional[float] = 5.0,
         seed: Optional[int] = 1123,
+        gradient_checkpointing: Optional[bool] = True,
         guidance_scale: Optional[float] = 3.5,
     ):
         super().__init__(
@@ -305,6 +306,8 @@ class StableFluxForText2ImageGeneration(GenericStableFluxModel):
             snr_gamma=snr_gamma,
             seed=seed,
         )
+        if gradient_checkpointing:
+            self.transformer.enable_gradient_checkpointing()
 
         self.pipeline = FluxPipeline(
             vae=self.vae,
@@ -463,6 +466,8 @@ class StableFluxForImage2ImageGeneration(GenericStableFluxModel):
         freeze_text_encoder: Optional[bool] = True,
         snr_gamma: Optional[float] = 5.0,
         seed: Optional[int] = 1123,
+        gradient_checkpointing: Optional[bool] = True,
+        guidance_scale: Optional[float] = 3.5,
     ):
         super().__init__(
             config_path=config_path,
@@ -481,6 +486,9 @@ class StableFluxForImage2ImageGeneration(GenericStableFluxModel):
             snr_gamma=snr_gamma,
             seed=seed,
         )
+
+        if gradient_checkpointing:
+            self.transformer.enable_gradient_checkpointing()
 
         self.pipeline = FluxImg2ImgPipeline(
             vae=self.vae,
@@ -549,6 +557,7 @@ class StableFluxForImageControlGeneration(GenericStableFluxModel):
         freeze_text_encoder: Optional[bool] = True,
         snr_gamma: Optional[float] = 5.0,
         seed: Optional[int] = 1123,
+        gradient_checkpointing: Optional[bool] = True,
         guidance_scale: Optional[float] = 3.5,
     ):
         super().__init__(
@@ -568,6 +577,9 @@ class StableFluxForImageControlGeneration(GenericStableFluxModel):
             snr_gamma=snr_gamma,
             seed=seed,
         )
+
+        if gradient_checkpointing:
+            self.transformer.enable_gradient_checkpointing()
 
         self.pipeline = FluxControlPipeline(
             vae=self.vae,
@@ -741,6 +753,7 @@ class StableFluxForImageReduxGeneration(GenericStableFluxModel):
         freeze_transformer_encoder: Optional[bool] = True,
         snr_gamma: Optional[float] = 5.0,
         seed: Optional[int] = 1123,
+        gradient_checkpointing: Optional[bool] = True,
         guidance_scale: Optional[float] = 3.5,
     ):
         super().__init__(
@@ -768,6 +781,9 @@ class StableFluxForImageReduxGeneration(GenericStableFluxModel):
             redux_dim=redux_image_config.redux_dim,
             txt_in_features=redux_image_config.txt_in_features,
         )
+
+        if gradient_checkpointing:
+            self.transformer.enable_gradient_checkpointing()
 
         self.pipeline = FluxPipeline(
             vae=self.vae,
@@ -952,6 +968,7 @@ class StableFluxForImageInpainting(GenericStableFluxModel):
         freeze_text_encoder: Optional[bool] = True,
         snr_gamma: Optional[float] = 5.0,
         seed: Optional[int] = 1123,
+        gradient_checkpointing: Optional[bool] = True,
         guidance_scale: Optional[float] = 3.5,
     ):
         super().__init__(
@@ -971,6 +988,9 @@ class StableFluxForImageInpainting(GenericStableFluxModel):
             snr_gamma=snr_gamma,
             seed=seed,
         )
+
+        if gradient_checkpointing:
+            self.transformer.enable_gradient_checkpointing()
 
         self.pipeline = FluxFillPipeline(
             vae=self.vae,

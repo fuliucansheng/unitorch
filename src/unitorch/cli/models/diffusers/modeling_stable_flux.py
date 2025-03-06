@@ -54,6 +54,7 @@ class StableFluxForText2ImageGeneration(_StableFluxForText2ImageGeneration):
         freeze_text_encoder: Optional[bool] = True,
         snr_gamma: Optional[float] = 5.0,
         seed: Optional[int] = 1123,
+        gradient_checkpointing: Optional[bool] = True,
         guidance_scale: Optional[float] = 3.5,
     ):
         super().__init__(
@@ -72,6 +73,7 @@ class StableFluxForText2ImageGeneration(_StableFluxForText2ImageGeneration):
             freeze_text_encoder=freeze_text_encoder,
             snr_gamma=snr_gamma,
             seed=seed,
+            gradient_checkpointing=gradient_checkpointing,
             guidance_scale=guidance_scale,
         )
 
@@ -130,6 +132,7 @@ class StableFluxForText2ImageGeneration(_StableFluxForText2ImageGeneration):
         freeze_text_encoder = config.getoption("freeze_text_encoder", True)
         snr_gamma = config.getoption("snr_gamma", 5.0)
         seed = config.getoption("seed", 1123)
+        gradient_checkpointing = config.getoption("gradient_checkpointing", True)
         guidance_scale = config.getoption("guidance_scale", 3.5)
 
         inst = cls(
@@ -278,6 +281,8 @@ class StableFluxForImage2ImageGeneration(_StableFluxForImage2ImageGeneration):
         freeze_text_encoder: Optional[bool] = True,
         snr_gamma: Optional[float] = 5.0,
         seed: Optional[int] = 1123,
+        gradient_checkpointing: Optional[bool] = True,
+        guidance_scale: Optional[float] = 3.5,
     ):
         super().__init__(
             config_path=config_path,
@@ -295,6 +300,8 @@ class StableFluxForImage2ImageGeneration(_StableFluxForImage2ImageGeneration):
             freeze_text_encoder=freeze_text_encoder,
             snr_gamma=snr_gamma,
             seed=seed,
+            gradient_checkpointing=gradient_checkpointing,
+            guidance_scale=guidance_scale,
         )
 
     @classmethod
@@ -352,6 +359,8 @@ class StableFluxForImage2ImageGeneration(_StableFluxForImage2ImageGeneration):
         freeze_text_encoder = config.getoption("freeze_text_encoder", True)
         snr_gamma = config.getoption("snr_gamma", 5.0)
         seed = config.getoption("seed", 1123)
+        gradient_checkpointing = config.getoption("gradient_checkpointing", True)
+        guidance_scale = config.getoption("guidance_scale", 3.5)
 
         inst = cls(
             config_path=config_path,
@@ -369,6 +378,8 @@ class StableFluxForImage2ImageGeneration(_StableFluxForImage2ImageGeneration):
             freeze_text_encoder=freeze_text_encoder,
             snr_gamma=snr_gamma,
             seed=seed,
+            gradient_checkpointing=gradient_checkpointing,
+            guidance_scale=guidance_scale,
         )
 
         weight_path = config.getoption("pretrained_weight_path", None)
@@ -486,6 +497,7 @@ class StableFluxForImageControlGeneration(_StableFluxForImageControlGeneration):
         freeze_text_encoder: Optional[bool] = True,
         snr_gamma: Optional[float] = 5.0,
         seed: Optional[int] = 1123,
+        gradient_checkpointing: Optional[bool] = True,
         guidance_scale: Optional[float] = 3.5,
     ):
         super().__init__(
@@ -504,6 +516,7 @@ class StableFluxForImageControlGeneration(_StableFluxForImageControlGeneration):
             freeze_text_encoder=freeze_text_encoder,
             snr_gamma=snr_gamma,
             seed=seed,
+            gradient_checkpointing=gradient_checkpointing,
             guidance_scale=guidance_scale,
         )
 
@@ -562,6 +575,8 @@ class StableFluxForImageControlGeneration(_StableFluxForImageControlGeneration):
         freeze_text_encoder = config.getoption("freeze_text_encoder", True)
         snr_gamma = config.getoption("snr_gamma", 5.0)
         seed = config.getoption("seed", 1123)
+        gradient_checkpointing = config.getoption("gradient_checkpointing", True)
+        guidance_scale = config.getoption("guidance_scale", 3.5)
 
         inst = cls(
             config_path=config_path,
@@ -579,6 +594,8 @@ class StableFluxForImageControlGeneration(_StableFluxForImageControlGeneration):
             freeze_text_encoder=freeze_text_encoder,
             snr_gamma=snr_gamma,
             seed=seed,
+            gradient_checkpointing=gradient_checkpointing,
+            guidance_scale=guidance_scale,
         )
 
         weight_path = config.getoption("pretrained_weight_path", None)
@@ -715,6 +732,7 @@ class StableFluxForImageReduxGeneration(_StableFluxForImageReduxGeneration):
         freeze_transformer_encoder: Optional[bool] = True,
         snr_gamma: Optional[float] = 5.0,
         seed: Optional[int] = 1123,
+        gradient_checkpointing: Optional[bool] = True,
         guidance_scale: Optional[float] = 3.5,
     ):
         super().__init__(
@@ -736,6 +754,7 @@ class StableFluxForImageReduxGeneration(_StableFluxForImageReduxGeneration):
             freeze_transformer_encoder=freeze_transformer_encoder,
             snr_gamma=snr_gamma,
             seed=seed,
+            gradient_checkpointing=gradient_checkpointing,
             guidance_scale=guidance_scale,
         )
 
@@ -811,6 +830,7 @@ class StableFluxForImageReduxGeneration(_StableFluxForImageReduxGeneration):
         )
         snr_gamma = config.getoption("snr_gamma", 5.0)
         seed = config.getoption("seed", 1123)
+        gradient_checkpointing = config.getoption("gradient_checkpointing", True)
         guidance_scale = config.getoption("guidance_scale", 3.5)
 
         inst = cls(
@@ -832,6 +852,7 @@ class StableFluxForImageReduxGeneration(_StableFluxForImageReduxGeneration):
             freeze_transformer_encoder=freeze_transformer_encoder,
             snr_gamma=snr_gamma,
             seed=seed,
+            gradient_checkpointing=gradient_checkpointing,
             guidance_scale=guidance_scale,
         )
 
@@ -978,6 +999,7 @@ class StableFluxForImageInpainting(_StableFluxForImageInpainting):
         freeze_text_encoder: Optional[bool] = True,
         snr_gamma: Optional[float] = 5.0,
         seed: Optional[int] = 1123,
+        gradient_checkpointing: Optional[bool] = True,
         guidance_scale: Optional[float] = 3.5,
     ):
         super().__init__(
@@ -996,6 +1018,7 @@ class StableFluxForImageInpainting(_StableFluxForImageInpainting):
             freeze_text_encoder=freeze_text_encoder,
             snr_gamma=snr_gamma,
             seed=seed,
+            gradient_checkpointing=gradient_checkpointing,
             guidance_scale=guidance_scale,
         )
 
@@ -1054,6 +1077,7 @@ class StableFluxForImageInpainting(_StableFluxForImageInpainting):
         freeze_text_encoder = config.getoption("freeze_text_encoder", True)
         snr_gamma = config.getoption("snr_gamma", 5.0)
         seed = config.getoption("seed", 1123)
+        gradient_checkpointing = config.getoption("gradient_checkpointing", True)
         guidance_scale = config.getoption("guidance_scale", 3.5)
 
         inst = cls(
@@ -1072,6 +1096,7 @@ class StableFluxForImageInpainting(_StableFluxForImageInpainting):
             freeze_text_encoder=freeze_text_encoder,
             snr_gamma=snr_gamma,
             seed=seed,
+            gradient_checkpointing=gradient_checkpointing,
             guidance_scale=guidance_scale,
         )
 
@@ -1171,7 +1196,7 @@ class StableFluxForImageInpainting(_StableFluxForImageInpainting):
         input2_ids: torch.Tensor,
         attention_mask: Optional[torch.Tensor] = None,
         attention2_mask: Optional[torch.Tensor] = None,
-        # strength: Optional[float] = 1.0,
+        strength: Optional[float] = 1.0,
         guidance_scale: Optional[float] = 7.5,
     ):
         outputs = super().generate(
@@ -1181,7 +1206,7 @@ class StableFluxForImageInpainting(_StableFluxForImageInpainting):
             input2_ids=input2_ids,
             attention_mask=attention_mask,
             attention2_mask=attention2_mask,
-            # strength=strength,
+            strength=strength,
             guidance_scale=guidance_scale,
         )
 

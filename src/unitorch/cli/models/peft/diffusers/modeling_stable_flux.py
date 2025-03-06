@@ -67,6 +67,7 @@ class StableFluxLoraForText2ImageGeneration(_StableFluxLoraForText2ImageGenerati
         enable_text_adapter: Optional[bool] = True,
         enable_transformer_adapter: Optional[bool] = True,
         seed: Optional[int] = 1123,
+        gradient_checkpointing: Optional[bool] = True,
         guidance_scale: Optional[float] = 3.5,
     ):
         super().__init__(
@@ -91,6 +92,7 @@ class StableFluxLoraForText2ImageGeneration(_StableFluxLoraForText2ImageGenerati
             enable_text_adapter=enable_text_adapter,
             enable_transformer_adapter=enable_transformer_adapter,
             seed=seed,
+            gradient_checkpointing=gradient_checkpointing,
             guidance_scale=guidance_scale,
         )
 
@@ -187,6 +189,7 @@ class StableFluxLoraForText2ImageGeneration(_StableFluxLoraForText2ImageGenerati
             "enable_transformer_adapter", True
         )
         seed = config.getoption("seed", 1123)
+        gradient_checkpointing = config.getoption("gradient_checkpointing", True)
         guidance_scale = config.getoption("guidance_scale", 3.5)
 
         inst = cls(
@@ -210,6 +213,7 @@ class StableFluxLoraForText2ImageGeneration(_StableFluxLoraForText2ImageGenerati
             enable_text_adapter=enable_text_adapter,
             enable_transformer_adapter=enable_transformer_adapter,
             seed=seed,
+            gradient_checkpointing=gradient_checkpointing,
             guidance_scale=guidance_scale,
         )
 
@@ -343,6 +347,7 @@ class StableFluxLoraForImageInpainting(_StableFluxLoraForImageInpainting):
         enable_text_adapter: Optional[bool] = True,
         enable_transformer_adapter: Optional[bool] = True,
         seed: Optional[int] = 1123,
+        gradient_checkpointing: Optional[bool] = True,
         guidance_scale: Optional[float] = 3.5,
     ):
         super().__init__(
@@ -367,6 +372,7 @@ class StableFluxLoraForImageInpainting(_StableFluxLoraForImageInpainting):
             enable_text_adapter=enable_text_adapter,
             enable_transformer_adapter=enable_transformer_adapter,
             seed=seed,
+            gradient_checkpointing=gradient_checkpointing,
             guidance_scale=guidance_scale,
         )
 
@@ -463,6 +469,7 @@ class StableFluxLoraForImageInpainting(_StableFluxLoraForImageInpainting):
             "enable_transformer_adapter", True
         )
         seed = config.getoption("seed", 1123)
+        gradient_checkpointing = config.getoption("gradient_checkpointing", True)
         guidance_scale = config.getoption("guidance_scale", 3.5)
 
         inst = cls(
@@ -486,6 +493,7 @@ class StableFluxLoraForImageInpainting(_StableFluxLoraForImageInpainting):
             enable_text_adapter=enable_text_adapter,
             enable_transformer_adapter=enable_transformer_adapter,
             seed=seed,
+            gradient_checkpointing=gradient_checkpointing,
             guidance_scale=guidance_scale,
         )
 

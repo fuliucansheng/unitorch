@@ -470,7 +470,7 @@ class StableFluxForReduxInpaintingFastAPIPipeline(GenericStableFluxModel):
             ),
             num_inference_steps=num_timesteps,
             guidance_scale=guidance_scale,
-            # strength=strength,
+            strength=strength,
             output_type="np.array",
         )
 
