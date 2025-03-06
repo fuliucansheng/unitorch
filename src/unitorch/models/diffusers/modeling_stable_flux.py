@@ -375,7 +375,7 @@ class StableFluxForText2ImageGeneration(GenericStableFluxModel):
             device=self.device, dtype=self.dtype
         )
 
-        if self.transformer.config.guidance_embeds:
+        if self.transformer.config.guidance_embeds and self.guidance_scale is not None:
             guidance = torch.full(
                 [1], self.guidance_scale, device=self.device, dtype=torch.float32
             )
@@ -660,7 +660,7 @@ class StableFluxForImageControlGeneration(GenericStableFluxModel):
             device=self.device, dtype=self.dtype
         )
 
-        if self.transformer.config.guidance_embeds:
+        if self.transformer.config.guidance_embeds and self.guidance_scale is not None:
             guidance = torch.full(
                 [1], self.guidance_scale, device=self.device, dtype=torch.float32
             )
@@ -867,7 +867,7 @@ class StableFluxForImageReduxGeneration(GenericStableFluxModel):
             device=self.device, dtype=self.dtype
         )
 
-        if self.transformer.config.guidance_embeds:
+        if self.transformer.config.guidance_embeds and self.guidance_scale is not None:
             guidance = torch.full(
                 [1], self.guidance_scale, device=self.device, dtype=torch.float32
             )
@@ -1091,7 +1091,7 @@ class StableFluxForImageInpainting(GenericStableFluxModel):
             device=self.device, dtype=self.dtype
         )
 
-        if self.transformer.config.guidance_embeds:
+        if self.transformer.config.guidance_embeds and self.guidance_scale is not None:
             guidance = torch.full(
                 [1], self.guidance_scale, device=self.device, dtype=torch.float32
             )
