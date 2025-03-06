@@ -706,6 +706,7 @@ class StableFluxForImageControlGeneration(GenericStableFluxModel):
         input2_ids: torch.Tensor,
         attention_mask: Optional[torch.Tensor] = None,
         attention2_mask: Optional[torch.Tensor] = None,
+        strength: Optional[float] = 1.0,
         guidance_scale: Optional[float] = 7.5,
     ):
         outputs = self.get_prompt_outputs(
@@ -878,8 +879,8 @@ class StableFluxForImageReduxGeneration(GenericStableFluxModel):
             hidden_states=noise_latents,
             timestep=timesteps / 1000,
             guidance=guidance,
-            encoder_hidden_states=outputs.prompt_embeds,
-            pooled_projections=outputs.pooled_prompt_embeds,
+            encoder_hidden_states=prompt_embeds,
+            pooled_projections=pooled_prompt_embeds,
             txt_ids=text_ids,
             img_ids=latent_image_ids,
             return_dict=False,
@@ -1137,6 +1138,7 @@ class StableFluxForImageInpainting(GenericStableFluxModel):
         input2_ids: torch.Tensor,
         attention_mask: Optional[torch.Tensor] = None,
         attention2_mask: Optional[torch.Tensor] = None,
+        strength: Optional[float] = 1.0,
         guidance_scale: Optional[float] = 7.5,
     ):
         outputs = self.get_prompt_outputs(

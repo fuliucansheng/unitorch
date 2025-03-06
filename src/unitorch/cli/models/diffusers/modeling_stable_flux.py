@@ -151,6 +151,7 @@ class StableFluxForText2ImageGeneration(_StableFluxForText2ImageGeneration):
             freeze_text_encoder=freeze_text_encoder,
             snr_gamma=snr_gamma,
             seed=seed,
+            gradient_checkpointing=gradient_checkpointing,
             guidance_scale=guidance_scale,
         )
 
