@@ -282,9 +282,7 @@ class StableFluxForText2ImageFastAPIPipeline(GenericStableFluxModel):
             and pretrained_lora_weights_path is None
         ):
             pretrained_lora_weights_path = [
-                nested_dict_value(
-                    pretrained_stable_extensions_infos, name, "lora", "weight"
-                )
+                nested_dict_value(pretrained_stable_extensions_infos, name, "weight")
                 for name in pretrained_lora_names
             ]
             assert len(pretrained_lora_weights_path) == len(pretrained_lora_weights)
