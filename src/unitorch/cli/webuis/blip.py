@@ -32,7 +32,7 @@ class BlipCaptionWebUI(SimpleWebUI):
     supported_pretrained_names = matched_pretrained_names(pretrained_names, "^blip-")
 
     def __init__(self, config: CoreConfigureParser):
-        self._pipe = None if not hasattr(self, "_pipe") else self._pipe
+        self._pipe = None
         self._status = "Stopped" if self._pipe is None else "Running"
         if len(self.supported_pretrained_names) == 0:
             raise ValueError("No supported pretrained models found.")
@@ -95,7 +95,7 @@ class BlipCaptionWebUI(SimpleWebUI):
         del self._pipe
         gc.collect()
         torch.cuda.empty_cache()
-        self._pipe = None if not hasattr(self, "_pipe") else self._pipe
+        self._pipe = None
         self._status = "Stopped" if self._pipe is None else "Running"
         return self._status
 

@@ -452,7 +452,7 @@ class StableFluxImageReduxGenerationFastAPI(GenericFastAPI):
         self.config = config
         config.set_default_section(f"core/fastapi/stable_flux/image_redux")
         router = config.getoption("router", "/core/fastapi/stable_flux/image_redux")
-        self._pipe = None if not hasattr(self, "_pipe") else self._pipe
+        self._pipe = None
         self._router = APIRouter(prefix=router)
         self._router.add_api_route("/generate", self.serve, methods=["POST"])
         self._router.add_api_route("/status", self.status, methods=["GET"])
@@ -487,7 +487,7 @@ class StableFluxImageReduxGenerationFastAPI(GenericFastAPI):
         del self._pipe
         gc.collect()
         torch.cuda.empty_cache()
-        self._pipe = None if not hasattr(self, "_pipe") else self._pipe
+        self._pipe = None
         return "stop success"
 
     def status(self):
