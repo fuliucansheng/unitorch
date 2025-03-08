@@ -28,6 +28,7 @@ class BRIAForSegmentationPipeline(_BRIAForSegmentation):
         image_size: Optional[int] = 1024,
         weight_path: Optional[Union[str, List[str]]] = None,
         state_dict: Optional[Dict[str, Any]] = None,
+        enable_cpu_offload: Optional[bool] = True,
         device: Optional[Union[str, int]] = "cpu",
     ):
         super().__init__()
@@ -37,7 +38,9 @@ class BRIAForSegmentationPipeline(_BRIAForSegmentation):
         self._device = "cpu" if device == "cpu" else int(device)
 
         self.from_pretrained(weight_path, state_dict=state_dict)
-        self.to(device=self._device)
+        self._enable_cpu_offload = enable_cpu_offload
+        if not self._enable_cpu_offload and self._device != "cpu":
+            self.to(device=self._device)
         self.eval()
 
     @classmethod
@@ -52,6 +55,7 @@ class BRIAForSegmentationPipeline(_BRIAForSegmentation):
         config.set_default_section("core/pipeline/bria")
 
         image_size = config.getoption("image_size", 1024)
+        enable_cpu_offload = config.getoption("enable_cpu_offload", True)
         device = config.getoption("device", "cpu") if device is None else device
         weight_path = pretrained_weight_path or config.getoption(
             "pretrained_weight_path", None
@@ -60,6 +64,7 @@ class BRIAForSegmentationPipeline(_BRIAForSegmentation):
         inst = cls(
             image_size=image_size,
             weight_path=weight_path,
+            enable_cpu_offload=enable_cpu_offload,
             device=device,
         )
 
@@ -72,6 +77,9 @@ class BRIAForSegmentationPipeline(_BRIAForSegmentation):
         image: Union[Image.Image, str],
         threshold: Optional[float] = 0.5,
     ):
+        if self._enable_cpu_offload:
+            self.to(self._device)
+
         inputs = self.processor.segmentation_inputs(image)
         pixel_values = inputs.image.unsqueeze(0).to(self._device)
         outputs = self.forward(
@@ -83,5 +91,9 @@ class BRIAForSegmentationPipeline(_BRIAForSegmentation):
         ][0]
         result_image = Image.fromarray(masks * 255)
         result_image = result_image.resize(image.size)
+
+        if self._enable_cpu_offload:
+            self.to("cpu")
+            torch.cuda.empty_cache()
 
         return result_image

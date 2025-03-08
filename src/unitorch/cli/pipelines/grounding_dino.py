@@ -30,6 +30,7 @@ class GroundingDinoForDetectionPipeline(_GroundingDinoForDetection):
         vision_config_path: str,
         weight_path: Optional[Union[str, List[str]]] = None,
         state_dict: Optional[Dict[str, Any]] = None,
+        enable_cpu_offload: Optional[bool] = True,
         device: Optional[Union[str, int]] = "cpu",
     ):
         super().__init__(
@@ -42,7 +43,9 @@ class GroundingDinoForDetectionPipeline(_GroundingDinoForDetection):
         self._device = "cpu" if device == "cpu" else int(device)
 
         self.from_pretrained(weight_path, state_dict=state_dict)
-        self.to(device=self._device)
+        self._enable_cpu_offload = enable_cpu_offload
+        if not self._enable_cpu_offload and self._device != "cpu":
+            self.to(device=self._device)
         self.eval()
 
     @classmethod
@@ -92,6 +95,7 @@ class GroundingDinoForDetectionPipeline(_GroundingDinoForDetection):
         )
         vision_config_path = cached_path(vision_config_path)
 
+        enable_cpu_offload = config.getoption("enable_cpu_offload", True)
         device = config.getoption("device", "cpu") if device is None else device
         pretrained_weight_path = pretrained_weight_path or config.getoption(
             "pretrained_weight_path", None
@@ -109,6 +113,7 @@ class GroundingDinoForDetectionPipeline(_GroundingDinoForDetection):
             vocab_path,
             vision_config_path,
             weight_path=weight_path,
+            enable_cpu_offload=enable_cpu_offload,
             device=device,
         )
 
@@ -123,6 +128,8 @@ class GroundingDinoForDetectionPipeline(_GroundingDinoForDetection):
         text_threshold: Optional[float] = 0.25,
         box_threshold: Optional[float] = 0.25,
     ):
+        if self._enable_cpu_offload:
+            self.to(self._device)
         inputs = self.processor.detection_inputs(text, image)
         outputs = self.detect(
             inputs.pixel_values.unsqueeze(0).to(self._device),
@@ -160,5 +167,7 @@ class GroundingDinoForDetectionPipeline(_GroundingDinoForDetection):
             draw.rectangle(bbox, outline="red", width=3)
             draw.text((bbox[0] + 5, bbox[1] + 5), f"{classid}", fill="blue")
             draw.text((bbox[0] + 5, bbox[1] + 15), f"{score:.2f}", fill="green")
-
+        if self._enable_cpu_offload:
+            self.to("cpu")
+            torch.cuda.empty_cache()
         return result_image
