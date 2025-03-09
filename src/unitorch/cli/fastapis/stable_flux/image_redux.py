@@ -392,6 +392,8 @@ class StableFluxForImageReduxGenerationFastAPIPipeline(GenericStableFluxModel):
         height: Optional[int] = 1024,
         guidance_scale: Optional[float] = 2.5,
         num_timesteps: Optional[int] = 50,
+        prompt_embeds_scale: Optional[float] = 1.0,
+        pooled_prompt_embeds_scale: Optional[float] = 1.0,
         seed: Optional[int] = 1123,
     ):
         text_inputs = self.processor.text2image_inputs(
@@ -422,10 +424,10 @@ class StableFluxForImageReduxGenerationFastAPIPipeline(GenericStableFluxModel):
 
         prompt_embeds = (
             torch.cat([prompt_outputs.prompt_embeds, redux_image_embeds], dim=1)
-            * self.prompt_embeds_scale
+            * prompt_embeds_scale
         )
         pooled_prompt_embeds = (
-            prompt_outputs.pooled_prompt_embeds * self.pooled_prompt_embeds_scale
+            prompt_outputs.pooled_prompt_embeds * pooled_prompt_embeds_scale
         )
 
         outputs = self.pipeline(
@@ -501,6 +503,8 @@ class StableFluxImageReduxGenerationFastAPI(GenericFastAPI):
         width: Optional[int] = 1024,
         guidance_scale: Optional[float] = 2.5,
         num_timesteps: Optional[int] = 50,
+        prompt_embeds_scale: Optional[float] = 1.0,
+        pooled_prompt_embeds_scale: Optional[float] = 1.0,
         seed: Optional[int] = 1123,
     ):
         assert self._pipe is not None
@@ -514,6 +518,8 @@ class StableFluxImageReduxGenerationFastAPI(GenericFastAPI):
                 height=height,
                 guidance_scale=guidance_scale,
                 num_timesteps=num_timesteps,
+                prompt_embeds_scale=prompt_embeds_scale,
+                pooled_prompt_embeds_scale=pooled_prompt_embeds_scale,
                 seed=seed,
             )
         buffer = io.BytesIO()
