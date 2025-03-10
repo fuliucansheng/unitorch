@@ -614,6 +614,7 @@ class StableForImageResolution(_StableForImageResolution):
         freeze_vae_encoder: Optional[bool] = True,
         freeze_text_encoder: Optional[bool] = True,
         snr_gamma: Optional[float] = 5.0,
+        noise_level: Optional[int] = 20,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
@@ -630,6 +631,7 @@ class StableForImageResolution(_StableForImageResolution):
             freeze_vae_encoder=freeze_vae_encoder,
             freeze_text_encoder=freeze_text_encoder,
             snr_gamma=snr_gamma,
+            noise_level=noise_level,
             seed=seed,
         )
 
@@ -680,6 +682,7 @@ class StableForImageResolution(_StableForImageResolution):
         freeze_vae_encoder = config.getoption("freeze_vae_encoder", True)
         freeze_text_encoder = config.getoption("freeze_text_encoder", True)
         snr_gamma = config.getoption("snr_gamma", 5.0)
+        noise_level = config.getoption("noise_level", 20)
         seed = config.getoption("seed", 1123)
 
         inst = cls(
@@ -696,6 +699,7 @@ class StableForImageResolution(_StableForImageResolution):
             freeze_vae_encoder=freeze_vae_encoder,
             freeze_text_encoder=freeze_text_encoder,
             snr_gamma=snr_gamma,
+            noise_level=noise_level,
             seed=seed,
         )
 
@@ -750,8 +754,18 @@ class StableForImageResolution(_StableForImageResolution):
     @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
     def forward(
         self,
+        input_ids: torch.Tensor,
+        pixel_values: torch.Tensor,
+        low_res_pixel_values: torch.Tensor,
+        attention_mask: Optional[torch.Tensor] = None,
     ):
-        raise NotImplementedError
+        loss = super().forward(
+            input_ids=input_ids,
+            pixel_values=pixel_values,
+            low_res_pixel_values=low_res_pixel_values,
+            attention_mask=attention_mask,
+        )
+        return LossOutputs(loss=loss)
 
     @add_default_section_for_function("core/model/diffusers/resolution/stable")
     @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
