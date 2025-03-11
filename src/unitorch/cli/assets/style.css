@@ -436,6 +436,10 @@ img {
   max-height: 500px;
 }
 
+.image-container {
+  padding-top: 35px !important;
+}
+
 video {
   max-height: 500px;
 }

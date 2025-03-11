@@ -264,21 +264,37 @@ class PeftWeightLoaderMixin(nn.Module):
                 lora_file, replace_keys=replace_keys, prefix_keys=prefix_keys
             )
             for key, value in lora_state_dict.items():
-                if "lora_B" in key:
+                if any(k in key for k in ["lora_B", "lora_up", "lora.up"]):
                     continue
-                if "lora_A" not in key:
+                if not any(k in key for k in ["lora_A", "lora_down", "lora.down"]):
                     if key in state_dict and state_dict[key].shape == value.shape:
                         state_dict[key] = value
                     else:
                         logging.warning(f"Key {key} not found in the model state_dict.")
                     continue
                 lora_A = value
-                lora_B = lora_state_dict[key.replace("lora_A", "lora_B")]
+                map_dict = {
+                    "lora_A": "lora_B",
+                    "lora_down": "lora_up",
+                    "lora.down": "lora.up",
+                }
+                lora_B = None
+                for key1, key2 in map_dict.items():
+                    if key1 in key:
+                        lora_B = lora_state_dict[key.replace(key1, key2)]
+                        break
+                if lora_B is None:
+                    logging.warning(
+                        f"Key {key} not found in the lora_state_dict. Skipping."
+                    )
+                    continue
                 scale = alpha / lora_B.shape[1]
                 if "lora_A.default." in key:
                     key = key.replace("lora_A.default.", "")
-                elif "lora_A." in key:
-                    key = key.replace("lora_A.", "")
+                for k in ["lora_A.", "lora_down.", "lora.down."]:
+                    if k in key:
+                        key = key.replace(k, "")
+                        break
                 if key in state_dict:
                     state_dict[key] += (
                         scale * weight * lora_B.float() @ lora_A.float()

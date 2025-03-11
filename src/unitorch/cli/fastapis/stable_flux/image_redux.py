@@ -392,6 +392,8 @@ class StableFluxForImageReduxGenerationFastAPIPipeline(GenericStableFluxModel):
         height: Optional[int] = 1024,
         guidance_scale: Optional[float] = 2.5,
         num_timesteps: Optional[int] = 50,
+        prompt_embeds_scale: Optional[float] = 1.0,
+        pooled_prompt_embeds_scale: Optional[float] = 1.0,
         seed: Optional[int] = 1123,
     ):
         text_inputs = self.processor.text2image_inputs(
@@ -422,10 +424,10 @@ class StableFluxForImageReduxGenerationFastAPIPipeline(GenericStableFluxModel):
 
         prompt_embeds = (
             torch.cat([prompt_outputs.prompt_embeds, redux_image_embeds], dim=1)
-            * self.prompt_embeds_scale
+            * prompt_embeds_scale
         )
         pooled_prompt_embeds = (
-            prompt_outputs.pooled_prompt_embeds * self.pooled_prompt_embeds_scale
+            prompt_outputs.pooled_prompt_embeds * pooled_prompt_embeds_scale
         )
 
         outputs = self.pipeline(
@@ -452,7 +454,7 @@ class StableFluxImageReduxGenerationFastAPI(GenericFastAPI):
         self.config = config
         config.set_default_section(f"core/fastapi/stable_flux/image_redux")
         router = config.getoption("router", "/core/fastapi/stable_flux/image_redux")
-        self._pipe = None if not hasattr(self, "_pipe") else self._pipe
+        self._pipe = None
         self._router = APIRouter(prefix=router)
         self._router.add_api_route("/generate", self.serve, methods=["POST"])
         self._router.add_api_route("/status", self.status, methods=["GET"])
@@ -487,7 +489,7 @@ class StableFluxImageReduxGenerationFastAPI(GenericFastAPI):
         del self._pipe
         gc.collect()
         torch.cuda.empty_cache()
-        self._pipe = None if not hasattr(self, "_pipe") else self._pipe
+        self._pipe = None
         return "stop success"
 
     def status(self):
@@ -501,6 +503,8 @@ class StableFluxImageReduxGenerationFastAPI(GenericFastAPI):
         width: Optional[int] = 1024,
         guidance_scale: Optional[float] = 2.5,
         num_timesteps: Optional[int] = 50,
+        prompt_embeds_scale: Optional[float] = 1.0,
+        pooled_prompt_embeds_scale: Optional[float] = 1.0,
         seed: Optional[int] = 1123,
     ):
         assert self._pipe is not None
@@ -514,6 +518,8 @@ class StableFluxImageReduxGenerationFastAPI(GenericFastAPI):
                 height=height,
                 guidance_scale=guidance_scale,
                 num_timesteps=num_timesteps,
+                prompt_embeds_scale=prompt_embeds_scale,
+                pooled_prompt_embeds_scale=pooled_prompt_embeds_scale,
                 seed=seed,
             )
         buffer = io.BytesIO()

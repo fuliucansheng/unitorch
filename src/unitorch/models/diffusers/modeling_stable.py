@@ -4,6 +4,7 @@
 import json
 import torch
 import torch.nn.functional as F
+from torch import autocast
 from PIL import Image
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 import diffusers.schedulers as schedulers
@@ -645,6 +646,7 @@ class StableForImageResolution(GenericStableModel):
         freeze_vae_encoder: Optional[bool] = True,
         freeze_text_encoder: Optional[bool] = True,
         snr_gamma: Optional[float] = 5.0,
+        noise_level: Optional[int] = 20,
         seed: Optional[int] = 1123,
     ):
         super().__init__(
@@ -675,11 +677,93 @@ class StableForImageResolution(GenericStableModel):
             feature_extractor=None,
         )
         self.pipeline.set_progress_bar_config(disable=True)
+        self.num_channels_unet = self.unet.config.in_channels
+        self.noise_level = noise_level
+        self.low_res_scheduler = schedulers.DDPMScheduler.from_config(
+            {
+                "beta_end": 0.02,
+                "beta_schedule": "scaled_linear",
+                "beta_start": 0.0001,
+                "clip_sample": True,
+                "num_train_timesteps": 1000,
+                "prediction_type": "epsilon",
+                "trained_betas": None,
+                "variance_type": "fixed_small",
+            }
+        )
 
     def forward(
         self,
+        input_ids: torch.Tensor,
+        pixel_values: torch.Tensor,
+        low_res_pixel_values: torch.Tensor,
+        attention_mask: Optional[torch.Tensor] = None,
     ):
-        raise NotImplementedError
+        with autocast(
+            device_type=("cuda" if torch.cuda.is_available() else "cpu"),
+            dtype=torch.float32,
+        ):
+            latents = self.vae.encode(pixel_values).latent_dist.sample()
+            latents = latents * self.vae.config.scaling_factor
+
+        noise = torch.randn(low_res_pixel_values.shape).to(low_res_pixel_values.device)
+        noise_level = torch.tensor(
+            [self.noise_level], dtype=torch.long, device=pixel_values.device
+        )
+        low_res_pixel_values = self.low_res_scheduler.add_noise(
+            low_res_pixel_values, noise, noise_level
+        )
+
+        noise = torch.randn(latents.shape).to(latents.device)
+        batch = latents.size(0)
+
+        timesteps = torch.randint(
+            0,
+            self.scheduler.config.num_train_timesteps,
+            (batch,),
+            device=pixel_values.device,
+        ).long()
+
+        noise_latents = self.scheduler.add_noise(
+            latents,
+            noise,
+            timesteps,
+        )
+
+        if self.num_channels_unet == 7:
+            latent_model_input = torch.cat([noise_latents, low_res_pixel_values], dim=1)
+        else:
+            latent_model_input = noise_latents
+
+        encoder_hidden_states = self.text(input_ids)[0]
+        # encoder_hidden_states = self.text(input_ids, attention_mask)[0]
+        outputs = self.unet(
+            latent_model_input,
+            timesteps,
+            encoder_hidden_states,
+            class_labels=noise_level,
+        ).sample
+        if self.scheduler.config.prediction_type == "v_prediction":
+            noise = self.scheduler.get_velocity(latents, noise, timesteps)
+        if self.snr_gamma > 0:
+            snr = compute_snr(timesteps, self.scheduler)
+            base_weight = (
+                torch.stack(
+                    [snr, self.snr_gamma * torch.ones_like(timesteps)], dim=1
+                ).min(dim=1)[0]
+                / snr
+            )
+
+            if self.scheduler.config.prediction_type == "v_prediction":
+                mse_loss_weights = base_weight + 1
+            else:
+                mse_loss_weights = base_weight
+            loss = F.mse_loss(outputs, noise, reduction="none")
+            loss = loss.mean(dim=list(range(1, len(loss.shape)))) * mse_loss_weights
+            loss = loss.mean()
+        else:
+            loss = F.mse_loss(outputs, noise, reduction="mean")
+        return loss
 
     def generate(
         self,

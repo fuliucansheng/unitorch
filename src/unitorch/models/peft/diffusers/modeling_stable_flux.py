@@ -259,6 +259,7 @@ class StableFluxLoraForText2ImageGeneration(GenericStableFluxLoraModel):
         enable_text_adapter: Optional[bool] = True,
         enable_transformer_adapter: Optional[bool] = True,
         seed: Optional[int] = 1123,
+        gradient_checkpointing: Optional[bool] = True,
         guidance_scale: Optional[float] = 3.5,
     ):
         super().__init__(
@@ -284,6 +285,9 @@ class StableFluxLoraForText2ImageGeneration(GenericStableFluxLoraModel):
             enable_transformer_adapter=enable_transformer_adapter,
             seed=seed,
         )
+
+        if gradient_checkpointing:
+            self.transformer.enable_gradient_checkpointing()
 
         self.pipeline = FluxPipeline(
             vae=self.vae,
@@ -458,6 +462,7 @@ class StableFluxLoraForImageInpainting(GenericStableFluxLoraModel):
         enable_text_adapter: Optional[bool] = True,
         enable_transformer_adapter: Optional[bool] = True,
         seed: Optional[int] = 1123,
+        gradient_checkpointing: Optional[bool] = True,
         guidance_scale: Optional[float] = 3.5,
     ):
         super().__init__(
@@ -483,6 +488,8 @@ class StableFluxLoraForImageInpainting(GenericStableFluxLoraModel):
             enable_transformer_adapter=enable_transformer_adapter,
             seed=seed,
         )
+        if gradient_checkpointing:
+            self.transformer.enable_gradient_checkpointing()
 
         self.pipeline = FluxFillPipeline(
             vae=self.vae,

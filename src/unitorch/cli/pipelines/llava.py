@@ -37,6 +37,7 @@ class LlavaMistralClipForGenerationPipeline(_LlavaMistralClipForGeneration):
         max_gen_seq_length: Optional[int] = 512,
         weight_path: Optional[Union[str, List[str]]] = None,
         state_dict: Optional[Dict[str, Any]] = None,
+        enable_cpu_offload: Optional[bool] = True,
         device: Optional[Union[str, int]] = "cpu",
     ):
         if device == "cpu":
@@ -54,7 +55,9 @@ class LlavaMistralClipForGenerationPipeline(_LlavaMistralClipForGeneration):
         self._device = "cpu" if device == "cpu" else int(device)
 
         self.from_pretrained(weight_path, state_dict=state_dict)
-        self.to(device=self._device)
+        self._enable_cpu_offload = enable_cpu_offload
+        if not self._enable_cpu_offload and self._device != "cpu":
+            self.to(device=self._device)
         self.eval()
 
     @classmethod
@@ -107,6 +110,7 @@ class LlavaMistralClipForGenerationPipeline(_LlavaMistralClipForGeneration):
 
         max_seq_length = config.getoption("max_seq_length", 512)
         max_gen_seq_length = config.getoption("max_gen_seq_length", 512)
+        enable_cpu_offload = config.getoption("enable_cpu_offload", True)
         device = config.getoption("device", "cpu") if device is None else device
         pretrained_weight_path = pretrained_weight_path or config.getoption(
             "pretrained_weight_path", None
@@ -125,6 +129,7 @@ class LlavaMistralClipForGenerationPipeline(_LlavaMistralClipForGeneration):
             max_seq_length=max_seq_length,
             max_gen_seq_length=max_gen_seq_length,
             weight_path=weight_path,
+            enable_cpu_offload=enable_cpu_offload,
             device=device,
         )
 
@@ -159,6 +164,8 @@ class LlavaMistralClipForGenerationPipeline(_LlavaMistralClipForGeneration):
         lora_urls: Optional[Union[str, List[str]]] = [],
         lora_files: Optional[Union[str, List[str]]] = [],
     ):
+        if self._enable_cpu_offload:
+            self.to(self._device)
         inputs = self.processor.generation_inputs(
             text=prompt,
             image=image,
@@ -236,7 +243,9 @@ class LlavaMistralClipForGenerationPipeline(_LlavaMistralClipForGeneration):
         )
         self.unload_lora_weights()
         decoded = self.processor.detokenize(outputs.sequences)
-
+        if self._enable_cpu_offload:
+            self.to("cpu")
+            torch.cuda.empty_cache()
         return decoded[0].strip()
 
 
@@ -252,6 +261,7 @@ class LlavaLlamaSiglipForGenerationPipeline(_LlavaLlamaSiglipForGeneration):
         max_gen_seq_length: Optional[int] = 512,
         weight_path: Optional[Union[str, List[str]]] = None,
         state_dict: Optional[Dict[str, Any]] = None,
+        enable_cpu_offload: Optional[bool] = True,
         device: Optional[Union[str, int]] = "cpu",
     ):
         if device == "cpu":
@@ -270,7 +280,9 @@ class LlavaLlamaSiglipForGenerationPipeline(_LlavaLlamaSiglipForGeneration):
         self._device = "cpu" if device == "cpu" else int(device)
 
         self.from_pretrained(weight_path, state_dict=state_dict)
-        self.to(device=self._device)
+        self._enable_cpu_offload = enable_cpu_offload
+        if not self._enable_cpu_offload and self._device != "cpu":
+            self.to(device=self._device)
         self.eval()
 
     @classmethod
@@ -336,6 +348,7 @@ class LlavaLlamaSiglipForGenerationPipeline(_LlavaLlamaSiglipForGeneration):
         max_seq_length = config.getoption("max_seq_length", 128)
         max_gen_seq_length = config.getoption("max_gen_seq_length", 512)
         device = config.getoption("device", "cpu") if device is None else device
+        enable_cpu_offload = config.getoption("enable_cpu_offload", True)
         pretrained_weight_path = pretrained_weight_path or config.getoption(
             "pretrained_weight_path", None
         )
@@ -354,6 +367,7 @@ class LlavaLlamaSiglipForGenerationPipeline(_LlavaLlamaSiglipForGeneration):
             max_seq_length=max_seq_length,
             max_gen_seq_length=max_gen_seq_length,
             weight_path=weight_path,
+            enable_cpu_offload=enable_cpu_offload,
             device=device,
         )
 
@@ -392,6 +406,8 @@ class LlavaLlamaSiglipForGenerationPipeline(_LlavaLlamaSiglipForGeneration):
         lora_urls: Optional[Union[str, List[str]]] = [],
         lora_files: Optional[Union[str, List[str]]] = [],
     ):
+        if self._enable_cpu_offload:
+            self.to(self._device)
         inputs = self.processor.generation_inputs(
             text=prompt,
             image=image,
@@ -469,5 +485,8 @@ class LlavaLlamaSiglipForGenerationPipeline(_LlavaLlamaSiglipForGeneration):
         )
         self.unload_lora_weights()
         decoded = self.processor.detokenize(outputs.sequences)
+        if self._enable_cpu_offload:
+            self.to("cpu")
+            torch.cuda.empty_cache()
 
         return decoded[0].strip()

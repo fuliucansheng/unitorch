@@ -38,6 +38,7 @@ class ClipForClassificationPipeline(_ClipForClassification):
         id2label: Optional[Dict[int, str]] = None,
         weight_path: Optional[Union[str, List[str]]] = None,
         state_dict: Optional[Dict[str, Any]] = None,
+        enable_cpu_offload: Optional[bool] = True,
         device: Optional[Union[str, int]] = "cpu",
     ):
         super().__init__(
@@ -55,7 +56,9 @@ class ClipForClassificationPipeline(_ClipForClassification):
         self._device = "cpu" if device == "cpu" else int(device)
 
         self.from_pretrained(weight_path, state_dict=state_dict)
-        self.to(device=self._device)
+        self._enable_cpu_offload = enable_cpu_offload
+        if not self._enable_cpu_offload and self._device != "cpu":
+            self.to(device=self._device)
         self.eval()
 
     @classmethod
@@ -113,7 +116,7 @@ class ClipForClassificationPipeline(_ClipForClassification):
         num_classes = config.getoption("num_classes", 1)
         max_seq_length = config.getoption("max_seq_length", 512)
         id2label = id2label or config.getoption("id2label", None)
-
+        enable_cpu_offload = config.getoption("enable_cpu_offload", True)
         device = config.getoption("device", "cpu") if device is None else device
         pretrained_weight_path = pretrained_weight_path or config.getoption(
             "pretrained_weight_path", None
@@ -134,6 +137,7 @@ class ClipForClassificationPipeline(_ClipForClassification):
             max_seq_length=max_seq_length,
             id2label=id2label,
             weight_path=weight_path,
+            enable_cpu_offload=enable_cpu_offload,
             device=device,
         )
 
@@ -147,6 +151,8 @@ class ClipForClassificationPipeline(_ClipForClassification):
         image: Image.Image,
         max_seq_length: Optional[int] = 512,
     ):
+        if self._enable_cpu_offload:
+            self.to(self._device)
         inputs = self.processor.classification(
             text=text,
             image=image,
@@ -166,6 +172,9 @@ class ClipForClassificationPipeline(_ClipForClassification):
         scores = outputs.softmax(dim=-1).squeeze(0)
         if self.id2label is not None:
             return self.id2label[scores.argmax(-1).item()], scores.max(-1)[0].item()
+        if self._enable_cpu_offload:
+            self.to("cpu")
+            torch.cuda.empty_cache()
         return scores.argmax(-1).item(), scores.max(-1)[0].item()
 
 
@@ -181,6 +190,7 @@ class ClipForTextClassificationPipeline(_ClipForTextClassification):
         id2label: Optional[Dict[int, str]] = None,
         weight_path: Optional[Union[str, List[str]]] = None,
         state_dict: Optional[Dict[str, Any]] = None,
+        enable_cpu_offload: Optional[bool] = True,
         device: Optional[Union[str, int]] = "cpu",
     ):
         super().__init__(
@@ -197,7 +207,9 @@ class ClipForTextClassificationPipeline(_ClipForTextClassification):
         self._device = "cpu" if device == "cpu" else int(device)
 
         self.from_pretrained(weight_path, state_dict=state_dict)
-        self.to(device=self._device)
+        self._enable_cpu_offload = enable_cpu_offload
+        if not self._enable_cpu_offload and self._device != "cpu":
+            self.to(device=self._device)
         self.eval()
 
     @classmethod
@@ -244,7 +256,7 @@ class ClipForTextClassificationPipeline(_ClipForTextClassification):
         num_classes = config.getoption("num_classes", 1)
         max_seq_length = config.getoption("max_seq_length", 512)
         id2label = id2label or config.getoption("id2label", None)
-
+        enable_cpu_offload = config.getoption("enable_cpu_offload", True)
         device = config.getoption("device", "cpu") if device is None else device
         pretrained_weight_path = pretrained_weight_path or config.getoption(
             "pretrained_weight_path", None
@@ -264,6 +276,7 @@ class ClipForTextClassificationPipeline(_ClipForTextClassification):
             max_seq_length=max_seq_length,
             id2label=id2label,
             weight_path=weight_path,
+            enable_cpu_offload=enable_cpu_offload,
             device=device,
         )
 
@@ -276,6 +289,8 @@ class ClipForTextClassificationPipeline(_ClipForTextClassification):
         text: str,
         max_seq_length: Optional[int] = 512,
     ):
+        if self._enable_cpu_offload:
+            self.to(self._device)
         inputs = self.processor.text_classification(
             text=text,
             max_seq_length=max_seq_length,
@@ -293,6 +308,9 @@ class ClipForTextClassificationPipeline(_ClipForTextClassification):
         scores = outputs.softmax(dim=-1).squeeze(0)
         if self.id2label is not None:
             return self.id2label[scores.argmax(-1).item()], scores.max(-1)[0].item()
+        if self._enable_cpu_offload:
+            self.to("cpu")
+            torch.cuda.empty_cache()
         return scores.argmax(-1).item(), scores.max(-1)[0].item()
 
 
@@ -306,6 +324,7 @@ class ClipForImageClassificationPipeline(_ClipForImageClassification):
         id2label: Optional[Dict[int, str]] = None,
         weight_path: Optional[Union[str, List[str]]] = None,
         state_dict: Optional[Dict[str, Any]] = None,
+        enable_cpu_offload: Optional[bool] = True,
         device: Optional[Union[str, int]] = "cpu",
     ):
         super().__init__(
@@ -320,7 +339,9 @@ class ClipForImageClassificationPipeline(_ClipForImageClassification):
         self._device = "cpu" if device == "cpu" else int(device)
 
         self.from_pretrained(weight_path, state_dict=state_dict)
-        self.to(device=self._device)
+        self._enable_cpu_offload = enable_cpu_offload
+        if not self._enable_cpu_offload and self._device != "cpu":
+            self.to(device=self._device)
         self.eval()
 
     @classmethod
@@ -362,7 +383,7 @@ class ClipForImageClassificationPipeline(_ClipForImageClassification):
         num_classes = config.getoption("num_classes", 1)
         max_seq_length = config.getoption("max_seq_length", 512)
         id2label = id2label or config.getoption("id2label", None)
-
+        enable_cpu_offload = config.getoption("enable_cpu_offload", True)
         device = config.getoption("device", "cpu") if device is None else device
         pretrained_weight_path = pretrained_weight_path or config.getoption(
             "pretrained_weight_path", None
@@ -381,6 +402,7 @@ class ClipForImageClassificationPipeline(_ClipForImageClassification):
             max_seq_length=max_seq_length,
             id2label=id2label,
             weight_path=weight_path,
+            enable_cpu_offload=enable_cpu_offload,
             device=device,
         )
 
@@ -392,6 +414,8 @@ class ClipForImageClassificationPipeline(_ClipForImageClassification):
         self,
         image: Image.Image,
     ):
+        if self._enable_cpu_offload:
+            self.to(self._device)
         inputs = self.processor.image_classification(
             image=image,
         )
@@ -406,6 +430,9 @@ class ClipForImageClassificationPipeline(_ClipForImageClassification):
         scores = outputs.softmax(dim=-1).squeeze(0)
         if self.id2label is not None:
             return self.id2label[scores.argmax(-1).item()], scores.max(-1)[0].item()
+        if self._enable_cpu_offload:
+            self.to("cpu")
+            torch.cuda.empty_cache()
         return scores.argmax(-1).item(), scores.max(-1)[0].item()
 
 
@@ -420,6 +447,7 @@ class ClipForMatchingPipeline(_ClipForMatching):
         max_seq_length: Optional[int] = 512,
         weight_path: Optional[Union[str, List[str]]] = None,
         state_dict: Optional[Dict[str, Any]] = None,
+        enable_cpu_offload: Optional[bool] = True,
         device: Optional[Union[str, int]] = "cpu",
     ):
         super().__init__(
@@ -435,7 +463,9 @@ class ClipForMatchingPipeline(_ClipForMatching):
         self._device = "cpu" if device == "cpu" else int(device)
 
         self.from_pretrained(weight_path, state_dict=state_dict)
-        self.to(device=self._device)
+        self._enable_cpu_offload = enable_cpu_offload
+        if not self._enable_cpu_offload and self._device != "cpu":
+            self.to(device=self._device)
         self.eval()
 
     @classmethod
@@ -490,7 +520,7 @@ class ClipForMatchingPipeline(_ClipForMatching):
 
         projection_dim = config.getoption("projection_dim", 512)
         max_seq_length = config.getoption("max_seq_length", 512)
-
+        enable_cpu_offload = config.getoption("enable_cpu_offload", True)
         device = config.getoption("device", "cpu") if device is None else device
         pretrained_weight_path = pretrained_weight_path or config.getoption(
             "pretrained_weight_path", None
@@ -509,6 +539,7 @@ class ClipForMatchingPipeline(_ClipForMatching):
             projection_dim=projection_dim,
             max_seq_length=max_seq_length,
             weight_path=weight_path,
+            enable_cpu_offload=enable_cpu_offload,
             device=device,
         )
 
@@ -527,6 +558,8 @@ class ClipForMatchingPipeline(_ClipForMatching):
         lora_urls: Optional[Union[str, List[str]]] = [],
         lora_files: Optional[Union[str, List[str]]] = [],
     ):
+        if self._enable_cpu_offload:
+            self.to(self._device)
         inputs = self.processor.classification(
             text=text,
             image=image,
@@ -589,4 +622,7 @@ class ClipForMatchingPipeline(_ClipForMatching):
         )
         scores = outputs.sigmoid().squeeze(0)
         self.unload_lora_weights()
+        if self._enable_cpu_offload:
+            self.to("cpu")
+            torch.cuda.empty_cache()
         return scores[0].item()

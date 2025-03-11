@@ -29,6 +29,7 @@ class DetrForDetectionPipeline(_DetrForDetection):
         vision_config_path: str,
         weight_path: Optional[Union[str, List[str]]] = None,
         state_dict: Optional[Dict[str, Any]] = None,
+        enable_cpu_offload: Optional[bool] = True,
         device: Optional[Union[str, int]] = "cpu",
     ):
         super().__init__(
@@ -40,7 +41,9 @@ class DetrForDetectionPipeline(_DetrForDetection):
         self._device = "cpu" if device == "cpu" else int(device)
 
         self.from_pretrained(weight_path, state_dict=state_dict)
-        self.to(device=self._device)
+        self._enable_cpu_offload = enable_cpu_offload
+        if not self._enable_cpu_offload and self._device != "cpu":
+            self.to(device=self._device)
         self.eval()
 
     @classmethod
@@ -76,6 +79,7 @@ class DetrForDetectionPipeline(_DetrForDetection):
         )
         vision_config_path = cached_path(vision_config_path)
 
+        enable_cpu_offload = config.getoption("enable_cpu_offload", True)
         device = config.getoption("device", "cpu") if device is None else device
         pretrained_weight_path = pretrained_weight_path or config.getoption(
             "pretrained_weight_path", None
@@ -90,6 +94,7 @@ class DetrForDetectionPipeline(_DetrForDetection):
             config_path,
             vision_config_path,
             weight_path=weight_path,
+            enable_cpu_offload=enable_cpu_offload,
             device=device,
         )
 
@@ -102,6 +107,8 @@ class DetrForDetectionPipeline(_DetrForDetection):
         image: Union[Image.Image, str],
         threshold: Optional[float] = 0.5,
     ):
+        if self._enable_cpu_offload:
+            self.to(self._device)
         inputs = self.processor.image(image)
         pixel_values = [inputs.image.to(self._device)]
         outputs = self.detect(
@@ -132,4 +139,7 @@ class DetrForDetectionPipeline(_DetrForDetection):
             draw.text((bbox[0] + 5, bbox[1] + 5), f"{classid}", fill="blue")
             draw.text((bbox[0] + 5, bbox[1] + 15), f"{score:.2f}", fill="green")
 
+        if self._enable_cpu_offload:
+            self.to("cpu")
+            torch.cuda.empty_cache()
         return result_image

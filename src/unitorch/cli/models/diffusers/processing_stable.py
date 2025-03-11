@@ -28,6 +28,7 @@ class StableProcessor(_StableProcessor):
         position_start_id: Optional[int] = 0,
         pad_token: Optional[str] = "<|endoftext|>",
         image_size: Optional[Tuple[int, int]] = None,
+        low_res_image_size: Optional[Tuple[int, int]] = None,
         center_crop: Optional[bool] = False,
         random_flip: Optional[bool] = False,
     ):
@@ -39,6 +40,7 @@ class StableProcessor(_StableProcessor):
             position_start_id=position_start_id,
             pad_token=pad_token,
             image_size=image_size,
+            low_res_image_size=low_res_image_size,
             center_crop=center_crop,
             random_flip=random_flip,
         )
@@ -196,6 +198,27 @@ class StableProcessor(_StableProcessor):
             pixel_masks=image_outputs.pixel_masks,
             negative_input_ids=text_outputs.negative_input_ids,
             negative_attention_mask=text_outputs.negative_attention_mask,
+        )
+
+    @register_process("core/process/diffusion/stable/resolution")
+    def _resolution(
+        self,
+        prompt: str,
+        low_res_image: Union[Image.Image, str],
+        image: Union[Image.Image, str],
+        max_seq_length: Optional[int] = None,
+    ):
+        outputs = super().text2image(
+            prompt=prompt,
+            image=image,
+            max_seq_length=max_seq_length,
+        )
+        image_outputs = super().resolution_inputs(image=low_res_image)
+        return TensorsInputs(
+            input_ids=outputs.input_ids,
+            attention_mask=outputs.attention_mask,
+            pixel_values=outputs.pixel_values,
+            low_res_pixel_values=image_outputs.pixel_values,
         )
 
     @register_process("core/process/diffusion/stable/resolution/inputs")

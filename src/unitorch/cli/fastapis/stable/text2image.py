@@ -338,7 +338,7 @@ class StableText2ImageFastAPI(GenericFastAPI):
         self.config = config
         config.set_default_section(f"core/fastapi/stable/text2image")
         router = config.getoption("router", "/core/fastapi/stable/text2image")
-        self._pipe = None if not hasattr(self, "_pipe") else self._pipe
+        self._pipe = None
         self._router = APIRouter(prefix=router)
         self._router.add_api_route("/generate", self.serve, methods=["GET"])
         self._router.add_api_route("/status", self.status, methods=["GET"])
@@ -371,7 +371,7 @@ class StableText2ImageFastAPI(GenericFastAPI):
         del self._pipe
         gc.collect()
         torch.cuda.empty_cache()
-        self._pipe = None if not hasattr(self, "_pipe") else self._pipe
+        self._pipe = None
         return "stop success"
 
     def status(self):

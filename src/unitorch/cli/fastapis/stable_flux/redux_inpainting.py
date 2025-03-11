@@ -400,6 +400,8 @@ class StableFluxForReduxInpaintingFastAPIPipeline(GenericStableFluxModel):
         guidance_scale: Optional[float] = 30.0,
         strength: Optional[float] = 1.0,
         num_timesteps: Optional[int] = 50,
+        prompt_embeds_scale: Optional[float] = 1.0,
+        pooled_prompt_embeds_scale: Optional[float] = 1.0,
         seed: Optional[int] = 1123,
     ):
         if width is None or height is None:
@@ -452,10 +454,10 @@ class StableFluxForReduxInpaintingFastAPIPipeline(GenericStableFluxModel):
 
         prompt_embeds = (
             torch.cat([prompt_outputs.prompt_embeds, redux_image_embeds], dim=1)
-            * self.prompt_embeds_scale
+            * prompt_embeds_scale
         )
         pooled_prompt_embeds = (
-            prompt_outputs.pooled_prompt_embeds * self.pooled_prompt_embeds_scale
+            prompt_outputs.pooled_prompt_embeds * pooled_prompt_embeds_scale
         )
 
         outputs = self.pipeline(
@@ -487,7 +489,7 @@ class StableFluxReduxInpaintingFastAPI(GenericFastAPI):
         router = config.getoption(
             "router", "/core/fastapi/stable_flux/redux_inpainting"
         )
-        self._pipe = None if not hasattr(self, "_pipe") else self._pipe
+        self._pipe = None
         self._router = APIRouter(prefix=router)
         self._router.add_api_route("/generate", self.serve, methods=["POST"])
         self._router.add_api_route("/status", self.status, methods=["GET"])
@@ -520,7 +522,7 @@ class StableFluxReduxInpaintingFastAPI(GenericFastAPI):
         del self._pipe
         gc.collect()
         torch.cuda.empty_cache()
-        self._pipe = None if not hasattr(self, "_pipe") else self._pipe
+        self._pipe = None
         return "stop success"
 
     def status(self):
@@ -535,6 +537,8 @@ class StableFluxReduxInpaintingFastAPI(GenericFastAPI):
         guidance_scale: Optional[float] = 30.0,
         strength: Optional[float] = 1.0,
         num_timesteps: Optional[int] = 50,
+        prompt_embeds_scale: Optional[float] = 1.0,
+        pooled_prompt_embeds_scale: Optional[float] = 1.0,
         seed: Optional[int] = 1123,
     ):
         assert self._pipe is not None
@@ -553,6 +557,8 @@ class StableFluxReduxInpaintingFastAPI(GenericFastAPI):
                 guidance_scale=guidance_scale,
                 strength=strength,
                 num_timesteps=num_timesteps,
+                prompt_embeds_scale=prompt_embeds_scale,
+                pooled_prompt_embeds_scale=pooled_prompt_embeds_scale,
                 seed=seed,
             )
         buffer = io.BytesIO()

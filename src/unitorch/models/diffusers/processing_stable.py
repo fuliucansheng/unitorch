@@ -36,6 +36,7 @@ class StableProcessor(HfTextClassificationProcessor):
         position_start_id: Optional[int] = 0,
         pad_token: Optional[str] = "<|endoftext|>",
         image_size: Optional[Tuple[int, int]] = None,
+        low_res_image_size: Optional[Tuple[int, int]] = None,
         center_crop: Optional[bool] = False,
         random_flip: Optional[bool] = False,
     ):
@@ -113,6 +114,7 @@ class StableProcessor(HfTextClassificationProcessor):
             self.vae_image_processor = None
             self.vae_condition_image_processor = None
         self.divisor = 8
+        self.low_res_image_size = low_res_image_size
 
     def text2image(
         self,
@@ -208,7 +210,9 @@ class StableProcessor(HfTextClassificationProcessor):
         if isinstance(image, str):
             image = Image.open(image)
         image = image.convert("RGB")
-        size = image.size if self.image_size is None else self.image_size
+        size = (
+            image.size if self.low_res_image_size is None else self.low_res_image_size
+        )
         size = (
             size[0] // self.divisor * self.divisor,
             size[1] // self.divisor * self.divisor,

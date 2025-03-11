@@ -286,6 +286,7 @@ class StableFluxForText2ImageGeneration(GenericStableFluxModel):
         freeze_text_encoder: Optional[bool] = True,
         snr_gamma: Optional[float] = 5.0,
         seed: Optional[int] = 1123,
+        gradient_checkpointing: Optional[bool] = True,
         guidance_scale: Optional[float] = 3.5,
     ):
         super().__init__(
@@ -305,6 +306,8 @@ class StableFluxForText2ImageGeneration(GenericStableFluxModel):
             snr_gamma=snr_gamma,
             seed=seed,
         )
+        if gradient_checkpointing:
+            self.transformer.enable_gradient_checkpointing()
 
         self.pipeline = FluxPipeline(
             vae=self.vae,
@@ -372,7 +375,7 @@ class StableFluxForText2ImageGeneration(GenericStableFluxModel):
             device=self.device, dtype=self.dtype
         )
 
-        if self.transformer.config.guidance_embeds:
+        if self.transformer.config.guidance_embeds and self.guidance_scale is not None:
             guidance = torch.full(
                 [1], self.guidance_scale, device=self.device, dtype=torch.float32
             )
@@ -463,6 +466,8 @@ class StableFluxForImage2ImageGeneration(GenericStableFluxModel):
         freeze_text_encoder: Optional[bool] = True,
         snr_gamma: Optional[float] = 5.0,
         seed: Optional[int] = 1123,
+        gradient_checkpointing: Optional[bool] = True,
+        guidance_scale: Optional[float] = 3.5,
     ):
         super().__init__(
             config_path=config_path,
@@ -481,6 +486,9 @@ class StableFluxForImage2ImageGeneration(GenericStableFluxModel):
             snr_gamma=snr_gamma,
             seed=seed,
         )
+
+        if gradient_checkpointing:
+            self.transformer.enable_gradient_checkpointing()
 
         self.pipeline = FluxImg2ImgPipeline(
             vae=self.vae,
@@ -549,6 +557,7 @@ class StableFluxForImageControlGeneration(GenericStableFluxModel):
         freeze_text_encoder: Optional[bool] = True,
         snr_gamma: Optional[float] = 5.0,
         seed: Optional[int] = 1123,
+        gradient_checkpointing: Optional[bool] = True,
         guidance_scale: Optional[float] = 3.5,
     ):
         super().__init__(
@@ -568,6 +577,9 @@ class StableFluxForImageControlGeneration(GenericStableFluxModel):
             snr_gamma=snr_gamma,
             seed=seed,
         )
+
+        if gradient_checkpointing:
+            self.transformer.enable_gradient_checkpointing()
 
         self.pipeline = FluxControlPipeline(
             vae=self.vae,
@@ -648,7 +660,7 @@ class StableFluxForImageControlGeneration(GenericStableFluxModel):
             device=self.device, dtype=self.dtype
         )
 
-        if self.transformer.config.guidance_embeds:
+        if self.transformer.config.guidance_embeds and self.guidance_scale is not None:
             guidance = torch.full(
                 [1], self.guidance_scale, device=self.device, dtype=torch.float32
             )
@@ -694,6 +706,7 @@ class StableFluxForImageControlGeneration(GenericStableFluxModel):
         input2_ids: torch.Tensor,
         attention_mask: Optional[torch.Tensor] = None,
         attention2_mask: Optional[torch.Tensor] = None,
+        strength: Optional[float] = 1.0,
         guidance_scale: Optional[float] = 7.5,
     ):
         outputs = self.get_prompt_outputs(
@@ -741,6 +754,7 @@ class StableFluxForImageReduxGeneration(GenericStableFluxModel):
         freeze_transformer_encoder: Optional[bool] = True,
         snr_gamma: Optional[float] = 5.0,
         seed: Optional[int] = 1123,
+        gradient_checkpointing: Optional[bool] = True,
         guidance_scale: Optional[float] = 3.5,
     ):
         super().__init__(
@@ -768,6 +782,9 @@ class StableFluxForImageReduxGeneration(GenericStableFluxModel):
             redux_dim=redux_image_config.redux_dim,
             txt_in_features=redux_image_config.txt_in_features,
         )
+
+        if gradient_checkpointing:
+            self.transformer.enable_gradient_checkpointing()
 
         self.pipeline = FluxPipeline(
             vae=self.vae,
@@ -850,7 +867,7 @@ class StableFluxForImageReduxGeneration(GenericStableFluxModel):
             device=self.device, dtype=self.dtype
         )
 
-        if self.transformer.config.guidance_embeds:
+        if self.transformer.config.guidance_embeds and self.guidance_scale is not None:
             guidance = torch.full(
                 [1], self.guidance_scale, device=self.device, dtype=torch.float32
             )
@@ -862,8 +879,8 @@ class StableFluxForImageReduxGeneration(GenericStableFluxModel):
             hidden_states=noise_latents,
             timestep=timesteps / 1000,
             guidance=guidance,
-            encoder_hidden_states=outputs.prompt_embeds,
-            pooled_projections=outputs.pooled_prompt_embeds,
+            encoder_hidden_states=prompt_embeds,
+            pooled_projections=pooled_prompt_embeds,
             txt_ids=text_ids,
             img_ids=latent_image_ids,
             return_dict=False,
@@ -952,6 +969,7 @@ class StableFluxForImageInpainting(GenericStableFluxModel):
         freeze_text_encoder: Optional[bool] = True,
         snr_gamma: Optional[float] = 5.0,
         seed: Optional[int] = 1123,
+        gradient_checkpointing: Optional[bool] = True,
         guidance_scale: Optional[float] = 3.5,
     ):
         super().__init__(
@@ -971,6 +989,9 @@ class StableFluxForImageInpainting(GenericStableFluxModel):
             snr_gamma=snr_gamma,
             seed=seed,
         )
+
+        if gradient_checkpointing:
+            self.transformer.enable_gradient_checkpointing()
 
         self.pipeline = FluxFillPipeline(
             vae=self.vae,
@@ -1070,7 +1091,7 @@ class StableFluxForImageInpainting(GenericStableFluxModel):
             device=self.device, dtype=self.dtype
         )
 
-        if self.transformer.config.guidance_embeds:
+        if self.transformer.config.guidance_embeds and self.guidance_scale is not None:
             guidance = torch.full(
                 [1], self.guidance_scale, device=self.device, dtype=torch.float32
             )
@@ -1117,6 +1138,7 @@ class StableFluxForImageInpainting(GenericStableFluxModel):
         input2_ids: torch.Tensor,
         attention_mask: Optional[torch.Tensor] = None,
         attention2_mask: Optional[torch.Tensor] = None,
+        strength: Optional[float] = 1.0,
         guidance_scale: Optional[float] = 7.5,
     ):
         outputs = self.get_prompt_outputs(

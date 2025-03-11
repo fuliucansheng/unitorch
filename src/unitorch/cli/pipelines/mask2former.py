@@ -26,6 +26,7 @@ class Mask2FormerForSegmentationPipeline(_Mask2FormerForSegmentation):
         vision_config_path: str,
         weight_path: Optional[Union[str, List[str]]] = None,
         state_dict: Optional[Dict[str, Any]] = None,
+        enable_cpu_offload: Optional[bool] = True,
         device: Optional[Union[str, int]] = "cpu",
     ):
         super().__init__(
@@ -37,7 +38,9 @@ class Mask2FormerForSegmentationPipeline(_Mask2FormerForSegmentation):
         self._device = "cpu" if device == "cpu" else int(device)
 
         self.from_pretrained(weight_path, state_dict=state_dict)
-        self.to(device=self._device)
+        self._enable_cpu_offload = enable_cpu_offload
+        if not self._enable_cpu_offload and self._device != "cpu":
+            self.to(device=self._device)
         self.eval()
 
     @classmethod
@@ -75,6 +78,7 @@ class Mask2FormerForSegmentationPipeline(_Mask2FormerForSegmentation):
         )
         vision_config_path = cached_path(vision_config_path)
 
+        enable_cpu_offload = config.getoption("enable_cpu_offload", True)
         device = config.getoption("device", "cpu") if device is None else device
         pretrained_weight_path = pretrained_weight_path or config.getoption(
             "pretrained_weight_path", None
@@ -89,6 +93,7 @@ class Mask2FormerForSegmentationPipeline(_Mask2FormerForSegmentation):
             config_path,
             vision_config_path,
             weight_path=weight_path,
+            enable_cpu_offload=enable_cpu_offload,
             device=device,
         )
 
@@ -100,6 +105,8 @@ class Mask2FormerForSegmentationPipeline(_Mask2FormerForSegmentation):
         self,
         image: Union[Image.Image, str],
     ):
+        if self._enable_cpu_offload:
+            self.to(self._device)
         if isinstance(image, str):
             image = Image.open(image).convert("RGB")
         width, height = image.size
@@ -117,6 +124,9 @@ class Mask2FormerForSegmentationPipeline(_Mask2FormerForSegmentation):
         classes = classes.cpu().numpy()[0]
         id2label = self.model.config.id2label
         labels = [id2label.get(int(cls), None) for cls in classes]
+        if self._enable_cpu_offload:
+            self.to("cpu")
+            torch.cuda.empty_cache()
         return [
             (mask, label) for mask, label in zip(masks, labels) if label is not None
         ]
