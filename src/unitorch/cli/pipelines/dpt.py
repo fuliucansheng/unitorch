@@ -116,7 +116,7 @@ class DPTForDepthEstimationPipeline(_DPTForDepthEstimation):
         )
         masks = outputs[0].cpu().numpy().squeeze(0)
         result_image = Image.fromarray((masks * 255) / np.max(masks))
-        result_image = result_image.resize(image.size)
+        result_image = result_image.resize(image.size, resample=Image.LANCZOS)
         if self._enable_cpu_offload:
             self.to("cpu")
             torch.cuda.empty_cache()

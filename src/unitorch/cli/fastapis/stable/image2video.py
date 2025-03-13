@@ -216,7 +216,7 @@ class StableForImage2VideoFastAPIPipeline(StableForImage2VideoGeneration):
         image = image.convert("RGB")
         inputs = self.processor.image2video_inputs(
             image,
-            vae_image=image.resize((width, height)),
+            vae_image=image.resize((width, height), resample=Image.LANCZOS),
         )
 
         self.seed = seed

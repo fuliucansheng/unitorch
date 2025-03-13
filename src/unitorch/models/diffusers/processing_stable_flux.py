@@ -207,7 +207,7 @@ class StableFluxProcessor:
             size[0] // self.divisor * self.divisor,
             size[1] // self.divisor * self.divisor,
         )
-        image = image.resize(size)
+        image = image.resize(size, resample=Image.LANCZOS)
 
         pixel_values = self.vae_image_processor.preprocess(image)[0]
 
@@ -248,8 +248,8 @@ class StableFluxProcessor:
             size[0] // self.divisor * self.divisor,
             size[1] // self.divisor * self.divisor,
         )
-        image = image.resize(size)
-        mask_image = mask_image.resize(size)
+        image = image.resize(size, resample=Image.LANCZOS)
+        mask_image = mask_image.resize(size, resample=Image.LANCZOS)
 
         pixel_values = self.vae_image_processor.preprocess(image)[0]
         pixel_masks = self.vae_image_processor.preprocess(mask_image)[0]
@@ -272,7 +272,7 @@ class StableFluxProcessor:
             size[0] // self.divisor * self.divisor,
             size[1] // self.divisor * self.divisor,
         )
-        image = image.resize(size)
+        image = image.resize(size, resample=Image.LANCZOS)
 
         pixel_values = self.vae_image_processor.preprocess(image)[0]
         return GenericOutputs(pixel_values=pixel_values)
@@ -291,7 +291,7 @@ class StableFluxProcessor:
                 size[0] // self.divisor * self.divisor,
                 size[1] // self.divisor * self.divisor,
             )
-            image = image.resize(size)
+            image = image.resize(size, resample=Image.LANCZOS)
 
             pixel_values.append(self.vae_image_processor.preprocess(image)[0])
 
@@ -310,12 +310,12 @@ class StableFluxProcessor:
             size[0] // self.divisor * self.divisor,
             size[1] // self.divisor * self.divisor,
         )
-        image = image.resize(size)
+        image = image.resize(size, resample=Image.LANCZOS)
 
         if isinstance(mask_image, str):
             mask_image = Image.open(mask_image)
         mask_image = mask_image.convert("L")
-        mask_image = mask_image.resize(size)
+        mask_image = mask_image.resize(size, resample=Image.LANCZOS)
 
         pixel_values = self.vae_image_processor.preprocess(image)[0]
         pixel_masks = self.vae_image_processor.preprocess(mask_image)[0]
@@ -334,7 +334,7 @@ class StableFluxProcessor:
             size[0] // self.divisor * self.divisor,
             size[1] // self.divisor * self.divisor,
         )
-        image = image.resize(size)
+        image = image.resize(size, resample=Image.LANCZOS)
 
         pixel_values = self.vae_image_processor.preprocess(image)[0]
 
@@ -354,7 +354,7 @@ class StableFluxProcessor:
                 size[0] // self.divisor * self.divisor,
                 size[1] // self.divisor * self.divisor,
             )
-            image = image.resize(size)
+            image = image.resize(size, resample=Image.LANCZOS)
 
             pixel_values.append(self.vae_image_processor.preprocess(image)[0])
 

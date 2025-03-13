@@ -337,7 +337,9 @@ class Stable3ForImage2ImageGenerationPipeline(GenericStable3Model):
                 logging.info(f"Loading controlnet from {checkpoint}")
                 controlnets.append(controlnet)
                 conditioning_scales.append(conditioning_scale)
-                conditioning_images.append(conditioning_image.resize(image.size))
+                conditioning_images.append(
+                    conditioning_image.resize(image.size, resample=Image.LANCZOS)
+                )
             if len(controlnets) > 1:
                 controlnets = SD3MultiControlNetModel(controlnets)
             else:

@@ -214,7 +214,7 @@ class ImageProcessor:
         Returns:
             The resized image as a PIL Image object.
         """
-        return image.resize(size, Image.BICUBIC)
+        return image.resize(size, resample=Image.LANCZOS)
 
     @register_process("core/process/image/canny")
     def _canny(
@@ -249,7 +249,7 @@ class ImageProcessor:
         mask: Image.Image,
     ):
         result = Image.new("RGBA", image.size, (0, 0, 0, 0))
-        mask = mask.convert("L").resize(image.size)
+        mask = mask.convert("L").resize(image.size, resample=Image.LANCZOS)
         result.paste(image, (0, 0), mask)
         return result
 
