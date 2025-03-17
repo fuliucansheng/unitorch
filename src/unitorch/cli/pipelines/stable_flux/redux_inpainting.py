@@ -321,8 +321,8 @@ class StableFluxForReduxInpaintingPipeline(GenericStableFluxModel):
             width, height = image.size
             width = width // 8 * 8
             height = height // 8 * 8
-        image = image.resize((width, height))
-        mask_image = mask_image.resize((width, height))
+        image = image.resize((width, height), resample=Image.LANCZOS)
+        mask_image = mask_image.resize((width, height), resample=Image.LANCZOS)
 
         text_inputs = self.processor.text2image_inputs(
             text,
@@ -390,7 +390,9 @@ class StableFluxForReduxInpaintingPipeline(GenericStableFluxModel):
                     inpaint_controlnet.to(device=self._device)
                     logging.info(f"Loading inpaint controlnet from {checkpoint}")
                     inpaint_conditioning_scale = conditioning_scale
-                    inpaint_conditioning_image = conditioning_image.resize(image.size)
+                    inpaint_conditioning_image = conditioning_image.resize(
+                        image.size, resample=Image.LANCZOS
+                    )
                     continue
                 controlnet_config_path = cached_path(
                     nested_dict_value(
@@ -418,7 +420,9 @@ class StableFluxForReduxInpaintingPipeline(GenericStableFluxModel):
                 logging.info(f"Loading controlnet from {checkpoint}")
                 controlnets.append(controlnet)
                 conditioning_scales.append(conditioning_scale)
-                conditioning_images.append(conditioning_image.resize(image.size))
+                conditioning_images.append(
+                    conditioning_image.resize(image.size, resample=Image.LANCZOS)
+                )
             if inpaint_controlnet is not None:
                 controlnets.append(inpaint_controlnet)
                 conditioning_scales.append(inpaint_conditioning_scale)

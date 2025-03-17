@@ -310,7 +310,9 @@ class StableXLForText2ImageGenerationPipeline(GenericStableXLModel):
                 logging.info(f"Loading controlnet from {checkpoint}")
                 controlnets.append(controlnet)
                 conditioning_scales.append(conditioning_scale)
-                conditioning_images.append(conditioning_image.resize((width, height)))
+                conditioning_images.append(
+                    conditioning_image.resize((width, height), resample=Image.LANCZOS)
+                )
             self.pipeline = StableDiffusionXLControlNetPipeline(
                 vae=self.vae,
                 text_encoder=self.text,
@@ -361,7 +363,9 @@ class StableXLForText2ImageGenerationPipeline(GenericStableXLModel):
                 logging.info(f"Loading adapter from {checkpoint}")
                 adapters.append(adapter)
                 conditioning_scales.append(conditioning_scale)
-                conditioning_images.append(conditioning_image.resize((width, height)))
+                conditioning_images.append(
+                    conditioning_image.resize((width, height), resample=Image.LANCZOS)
+                )
 
             num_adapters = len(adapters)
             if len(adapters) == 1:

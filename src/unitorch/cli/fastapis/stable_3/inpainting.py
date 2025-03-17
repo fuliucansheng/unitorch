@@ -383,8 +383,8 @@ class Stable3ForImageInpaintingFastAPIPipeline(GenericStable3Model):
             width, height = image.size
         width = width // 8 * 8
         height = height // 8 * 8
-        image = image.resize((width, height))
-        mask_image = mask_image.resize((width, height))
+        image = image.resize((width, height), resample=Image.LANCZOS)
+        mask_image = mask_image.resize((width, height), resample=Image.LANCZOS)
 
         text_inputs = self.processor.text2image_inputs(
             text,

@@ -307,7 +307,9 @@ class StableFluxForText2ImageGenerationPipeline(GenericStableFluxModel):
                 logging.info(f"Loading controlnet from {checkpoint}")
                 controlnets.append(controlnet)
                 conditioning_scales.append(conditioning_scale)
-                conditioning_images.append(conditioning_image.resize((width, height)))
+                conditioning_images.append(
+                    conditioning_image.resize((width, height), resample=Image.LANCZOS)
+                )
             self.pipeline = FluxControlNetPipeline(
                 vae=self.vae,
                 text_encoder=self.text,

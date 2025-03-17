@@ -256,7 +256,9 @@ class StableForText2ImageGenerationPipeline(GenericStableModel):
                 logging.info(f"Loading controlnet from {checkpoint}")
                 controlnets.append(controlnet)
                 conditioning_scales.append(conditioning_scale)
-                conditioning_images.append(conditioning_image.resize((width, height)))
+                conditioning_images.append(
+                    conditioning_image.resize((width, height), resample=Image.LANCZOS)
+                )
             self.pipeline = StableDiffusionControlNetPipeline(
                 vae=self.vae,
                 text_encoder=self.text,

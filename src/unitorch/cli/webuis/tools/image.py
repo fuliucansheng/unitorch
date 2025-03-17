@@ -68,7 +68,7 @@ class ResizeWebUI(SimpleWebUI):
         height: Optional[int] = 0,
     ):
         if width > 0 and height > 0:
-            image = image.resize((width, height))
+            image = image.resize((width, height), resample=Image.LANCZOS)
 
         return image
 
@@ -175,7 +175,7 @@ class CannyWebUI(SimpleWebUI):
         height: Optional[int] = 0,
     ):
         if width > 0 and height > 0:
-            image = image.resize((width, height))
+            image = image.resize((width, height), resample=Image.LANCZOS)
 
         if is_opencv_available():
             import cv2
@@ -236,8 +236,8 @@ class BlendWebUI(SimpleWebUI):
         width: Optional[int] = 0,
     ):
         if height > 0 and width > 0:
-            image1 = image1.resize((width, height))
-            image2 = image2.resize((width, height))
+            image1 = image1.resize((width, height), resample=Image.LANCZOS)
+            image2 = image2.resize((width, height), resample=Image.LANCZOS)
         image = Image.blend(image1, image2, alpha)
         return image
 
@@ -286,7 +286,7 @@ class InvertWebUI(SimpleWebUI):
         width: Optional[int] = 0,
     ):
         if height > 0 and width > 0:
-            image = image.resize((width, height))
+            image = image.resize((width, height), resample=Image.LANCZOS)
         image = ImageOps.invert(image)
         return image
 
@@ -383,8 +383,8 @@ class CompositeWebUI(SimpleWebUI):
         width: Optional[int] = 0,
     ):
         if height > 0 and width > 0:
-            image = image.resize((width, height))
-            mask = mask.resize((width, height))
+            image = image.resize((width, height), resample=Image.LANCZOS)
+            mask = mask.resize((width, height), resample=Image.LANCZOS)
         mask = mask.convert("L")
         result = Image.new("RGBA", image.size, (0, 0, 0, 0))
         result.paste(image, (0, 0), mask)

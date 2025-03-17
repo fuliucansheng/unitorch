@@ -90,7 +90,7 @@ class BRIAForSegmentationPipeline(_BRIAForSegmentation):
             for mask in outputs
         ][0]
         result_image = Image.fromarray(masks * 255)
-        result_image = result_image.resize(image.size)
+        result_image = result_image.resize(image.size, resample=Image.LANCZOS)
 
         if self._enable_cpu_offload:
             self.to("cpu")

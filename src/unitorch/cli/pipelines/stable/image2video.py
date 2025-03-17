@@ -203,7 +203,7 @@ class StableForImage2VideoGenerationPipeline(StableForImage2VideoGeneration):
         image = image.convert("RGB")
         inputs = self.processor.image2video_inputs(
             image,
-            vae_image=image.resize((width, height)),
+            vae_image=image.resize((width, height), resample=Image.LANCZOS),
         )
 
         assert scheduler is None or scheduler in Schedulers

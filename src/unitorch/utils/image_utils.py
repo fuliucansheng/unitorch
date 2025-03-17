@@ -65,7 +65,7 @@ def resize_shortest_edge(
     if scale * size > max_size:
         scale = max_size / size
     new_w, new_h = int(w * scale), int(h * scale)
-    return image.resize((new_w, new_h), Image.BILINEAR)
+    return image.resize((new_w, new_h), resample=Image.LANCZOS)
 
 
 def image_list_to_tensor(
