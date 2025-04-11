@@ -48,7 +48,7 @@ class BRIAFastAPI(GenericFastAPI):
     def start(self):
         self._pipe = BRIAForSegmentationPipeline.from_core_configure(
             self.config,
-            pretrained_weight_path="https://huggingface.co/briaai/RMBG-2.0/resolve/main/pytorch_model.bin",
+            pretrained_weight_path="https://huggingface.co/datasets/fuliucansheng/hubfiles/resolve/main/bria_rmbg2.0_pytorch_model.bin",
         )
         return "start success"
 
