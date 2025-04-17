@@ -437,26 +437,9 @@ pretrained_stable_infos = {
         **__hf_hub_stable_3_safetensors_dict__("yuvraj108c/stable-diffusion-3.5-large"),
         **__hf_hub_vae_safetensors_dict__("yuvraj108c/stable-diffusion-3.5-large"),
     },
-    "stable-flux-lite-8b": {
-        **__hf_hub_stable_flux_safetensors_dict__("Freepik/flux.1-lite-8B"),
-        **__hf_hub_vae_safetensors_dict__("Freepik/flux.1-lite-8B"),
-        **{
-            "transformer": {
-                "config": hf_endpoint_url(
-                    f"/Freepik/flux.1-lite-8B/resolve/main/transformer/config.json"
-                ),
-                "weight": [
-                    hf_endpoint_url(
-                        f"/Freepik/flux.1-lite-8B/resolve/main/transformer/diffusion_pytorch_model-{str(i).rjust(5, '0')}-of-00002.safetensors"
-                    )
-                    for i in range(1, 3)
-                ],
-            },
-        },
-    },
     "stable-flux-schnell": {
-        **__hf_hub_stable_flux_safetensors_dict__("black-forest-labs/FLUX.1-schnell"),
-        **__hf_hub_vae_safetensors_dict__("black-forest-labs/FLUX.1-schnell"),
+        **__hf_hub_stable_flux_safetensors_dict__("lzyvegetable/FLUX.1-schnell"),
+        **__hf_hub_vae_safetensors_dict__("lzyvegetable/FLUX.1-schnell"),
     },
     "stable-flux-dev": {
         **__hf_hub_stable_flux_safetensors_dict__("camenduru/FLUX.1-dev-diffusers"),

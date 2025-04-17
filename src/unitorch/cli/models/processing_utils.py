@@ -46,8 +46,9 @@ def _process_returns(kwargs, dtype="TensorsInputs"):
 class PreProcessor:
     def __init__(
         self,
+        map_dict: Optional[Dict[str, str]] = None,
     ):
-        pass
+        self.map_dict = map_dict if map_dict is not None else {}
 
     @classmethod
     @add_default_section_for_init("core/process")
@@ -66,6 +67,21 @@ class PreProcessor:
         if dtype == "int":
             num = num.int()
         return _process_returns({key: num}, dtype=returns)
+
+    @register_process("core/process/map")
+    def _map(
+        self,
+        text: str,
+        sep: Optional[str] = None,
+        default: Optional[str] = None,
+    ):
+        if sep is not None:
+            text = text.split(sep=sep)
+        if isinstance(text, list):
+            res = [self.map_dict.get(t, default) for t in text]
+        else:
+            res = self.map_dict.get(text, default)
+        return res
 
     @register_process("core/process/features")
     def _features(

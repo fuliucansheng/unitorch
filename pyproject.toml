@@ -29,7 +29,7 @@ dynamic = ["version", "dependencies"]
 
 [project.optional-dependencies]
 deepspeed = ["deepspeed>=0.11.0"]
-diffusers = ["diffusers>=0.33.1", "torchsde>=0.2.6"]
+diffusers = ["diffusers>=0.33.0", "torchsde>=0.2.6"]
 quantization = ["bitsandbytes>=0.41.1"]
 docs = ["mkdocstrings[python]>=0.18", "mkdocs-material", "markdown-exec", "mkdocs-gen-files", "mkdocs-coverage"]
 others = ["gradio>=4.40.0", "fastapi>=0.103.1", "onnxruntime"]
