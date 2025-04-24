@@ -1,5 +1,6 @@
 configparser
 pillow
+imageio
 matplotlib
 sentencepiece
 importlib_resources

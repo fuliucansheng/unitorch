@@ -6,6 +6,7 @@ import torch
 import torch.nn.functional as F
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 import diffusers.schedulers as schedulers
+from peft import LoraConfig
 from transformers import (
     PretrainedConfig,
     UMT5Config,
@@ -35,11 +36,16 @@ from unitorch.models import (
     QuantizationConfig,
     QuantizationMixin,
 )
-from unitorch.models.peft import PeftWeightLoaderMixin
+from unitorch.models.peft import GenericPeftModel
 from unitorch.models.diffusers import compute_snr
+from unitorch.models.diffusers.modeling_stable_flux import (
+    _prepare_latent_image_ids,
+    _pack_latents,
+    _unpack_latents,
+)
 
 
-class GenericWanModel(GenericModel, QuantizationMixin, PeftWeightLoaderMixin):
+class GenericWanLoraModel(GenericPeftModel, QuantizationMixin):
     prefix_keys_in_state_dict = {
         # vae weights
         "^encoder.*": "vae.",
@@ -67,10 +73,24 @@ class GenericWanModel(GenericModel, QuantizationMixin, PeftWeightLoaderMixin):
         out_channels: Optional[int] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
-        freeze_vae_encoder: Optional[bool] = True,
-        freeze_text_encoder: Optional[bool] = True,
-        freeze_transformer_encoder: Optional[bool] = False,
         snr_gamma: Optional[float] = 5.0,
+        lora_r: Optional[int] = 16,
+        lora_alpha: Optional[int] = 32,
+        lora_dropout: Optional[float] = 0.05,
+        fan_in_fan_out: Optional[bool] = True,
+        target_modules: Optional[Union[List[str], str]] = [
+            "to_q",
+            "to_k",
+            "to_v",
+            "q_proj",
+            "k_proj",
+            "v_proj",
+            "SelfAttention.q",
+            "SelfAttention.k",
+            "SelfAttention.v",
+        ],
+        enable_text_adapter: Optional[bool] = True,
+        enable_transformer_adapter: Optional[bool] = True,
         seed: Optional[int] = 1123,
     ):
         super().__init__()
@@ -108,23 +128,33 @@ class GenericWanModel(GenericModel, QuantizationMixin, PeftWeightLoaderMixin):
         scheduler_config_dict["num_train_timesteps"] = num_train_timesteps
         self.scheduler = scheduler_class.from_config(scheduler_config_dict)
 
-        if freeze_vae_encoder:
-            for param in self.vae.parameters():
-                param.requires_grad = False
+        for param in self.vae.parameters():
+            param.requires_grad = False
 
-        if freeze_text_encoder:
-            for param in self.text.parameters():
-                param.requires_grad = False
+        for param in self.text.parameters():
+            param.requires_grad = False
 
-        if freeze_transformer_encoder:
-            for param in self.transformer.parameters():
-                param.requires_grad = False
+        for param in self.transformer.parameters():
+            param.requires_grad = False
 
         if quant_config_path is not None:
             self.quant_config = QuantizationConfig.from_json_file(quant_config_path)
             self.quantize(
                 self.quant_config, ignore_modules=["lm_head", "transformer", "vae"]
             )
+
+        lora_config = LoraConfig(
+            r=lora_r,
+            lora_alpha=lora_alpha,
+            init_lora_weights="gaussian",
+            lora_dropout=lora_dropout,
+            fan_in_fan_out=fan_in_fan_out,
+            target_modules=target_modules,
+        )
+        if enable_text_adapter:
+            self.text.add_adapter(lora_config)
+        if enable_transformer_adapter:
+            self.transformer.add_adapter(lora_config)
 
     def get_sigmas(self, timesteps, n_dim=4, dtype=torch.float32):
         sigmas = self.scheduler.sigmas.to(device=self.device, dtype=dtype)
@@ -143,13 +173,7 @@ class GenericWanModel(GenericModel, QuantizationMixin, PeftWeightLoaderMixin):
         negative_input_ids: torch.Tensor,
         attention_mask: Optional[torch.Tensor] = None,
         negative_attention_mask: Optional[torch.Tensor] = None,
-        enable_cpu_offload: Optional[bool] = False,
-        cpu_offload_device: Optional[str] = "cpu",
     ):
-        if enable_cpu_offload:
-            self.text.to(cpu_offload_device)
-            input_ids = input_ids.to(cpu_offload_device)
-            negative_input_ids = negative_input_ids.to(cpu_offload_device)
         prompt_embeds = self.text(
             input_ids,
             attention_mask,
@@ -162,19 +186,13 @@ class GenericWanModel(GenericModel, QuantizationMixin, PeftWeightLoaderMixin):
         negative_prompt_embeds = (
             negative_prompt_embeds * negative_attention_mask.unsqueeze(-1)
         )
-        if enable_cpu_offload:
-            self.text.to("cpu")
         return GenericOutputs(
-            prompt_embeds=prompt_embeds.to("cpu")
-            if enable_cpu_offload
-            else prompt_embeds,
-            negative_prompt_embeds=negative_prompt_embeds.to("cpu")
-            if enable_cpu_offload
-            else negative_prompt_embeds,
+            prompt_embeds=prompt_embeds,
+            negative_prompt_embeds=negative_prompt_embeds,
         )
 
 
-class WanForText2VideoGeneration(GenericWanModel):
+class WanLoraForText2VideoGeneration(GenericWanLoraModel):
     def __init__(
         self,
         config_path: str,
@@ -186,11 +204,27 @@ class WanForText2VideoGeneration(GenericWanModel):
         out_channels: Optional[int] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
-        freeze_vae_encoder: Optional[bool] = True,
-        freeze_text_encoder: Optional[bool] = True,
         snr_gamma: Optional[float] = 5.0,
+        lora_r: Optional[int] = 16,
+        lora_alpha: Optional[int] = 32,
+        lora_dropout: Optional[float] = 0.05,
+        fan_in_fan_out: Optional[bool] = True,
+        target_modules: Optional[Union[List[str], str]] = [
+            "to_q",
+            "to_k",
+            "to_v",
+            "q_proj",
+            "k_proj",
+            "v_proj",
+            "SelfAttention.q",
+            "SelfAttention.k",
+            "SelfAttention.v",
+        ],
+        enable_text_adapter: Optional[bool] = True,
+        enable_transformer_adapter: Optional[bool] = True,
         seed: Optional[int] = 1123,
         gradient_checkpointing: Optional[bool] = True,
+        guidance_scale: Optional[float] = 3.5,
     ):
         super().__init__(
             config_path=config_path,
@@ -202,11 +236,17 @@ class WanForText2VideoGeneration(GenericWanModel):
             out_channels=out_channels,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
-            freeze_vae_encoder=freeze_vae_encoder,
-            freeze_text_encoder=freeze_text_encoder,
             snr_gamma=snr_gamma,
+            lora_r=lora_r,
+            lora_alpha=lora_alpha,
+            lora_dropout=lora_dropout,
+            fan_in_fan_out=fan_in_fan_out,
+            target_modules=target_modules,
+            enable_text_adapter=enable_text_adapter,
+            enable_transformer_adapter=enable_transformer_adapter,
             seed=seed,
         )
+
         if gradient_checkpointing:
             self.transformer.enable_gradient_checkpointing()
 
@@ -295,7 +335,7 @@ class WanForText2VideoGeneration(GenericWanModel):
         return GenericOutputs(frames=frames)
 
 
-class WanForImage2VideoGeneration(GenericWanModel):
+class WanLoraForImage2VideoGeneration(GenericWanLoraModel):
     def __init__(
         self,
         config_path: str,
@@ -308,9 +348,24 @@ class WanForImage2VideoGeneration(GenericWanModel):
         out_channels: Optional[int] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
-        freeze_vae_encoder: Optional[bool] = True,
-        freeze_text_encoder: Optional[bool] = True,
         snr_gamma: Optional[float] = 5.0,
+        lora_r: Optional[int] = 16,
+        lora_alpha: Optional[int] = 32,
+        lora_dropout: Optional[float] = 0.05,
+        fan_in_fan_out: Optional[bool] = True,
+        target_modules: Optional[Union[List[str], str]] = [
+            "to_q",
+            "to_k",
+            "to_v",
+            "q_proj",
+            "k_proj",
+            "v_proj",
+            "SelfAttention.q",
+            "SelfAttention.k",
+            "SelfAttention.v",
+        ],
+        enable_text_adapter: Optional[bool] = True,
+        enable_transformer_adapter: Optional[bool] = True,
         seed: Optional[int] = 1123,
         gradient_checkpointing: Optional[bool] = True,
     ):
@@ -325,9 +380,14 @@ class WanForImage2VideoGeneration(GenericWanModel):
             out_channels=out_channels,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
-            freeze_vae_encoder=freeze_vae_encoder,
-            freeze_text_encoder=freeze_text_encoder,
             snr_gamma=snr_gamma,
+            lora_r=lora_r,
+            lora_alpha=lora_alpha,
+            lora_dropout=lora_dropout,
+            fan_in_fan_out=fan_in_fan_out,
+            target_modules=target_modules,
+            enable_text_adapter=enable_text_adapter,
+            enable_transformer_adapter=enable_transformer_adapter,
             seed=seed,
         )
         if gradient_checkpointing:

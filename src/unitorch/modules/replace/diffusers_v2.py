@@ -16,6 +16,7 @@ from diffusers.pipelines.stable_diffusion_3.pipeline_stable_diffusion_3_img2img 
     T5TokenizerFast,
     VaeImageProcessor,
 )
+from diffusers.pipelines.wan.pipeline_wan_i2v import WanImageToVideoPipeline
 from unitorch.models import GenericOutputs
 from unitorch.utils.decorators import replace
 
@@ -87,4 +88,27 @@ class StableDiffusion3InpaintPipelineV2(StableDiffusion3InpaintPipeline):
             tokenizer_3=tokenizer_3
             if tokenizer_3 is not None
             else GenericOutputs(model_max_length=77),
+        )
+
+
+@replace(diffusers.pipelines.wan.pipeline_wan_i2v.WanImageToVideoPipeline)
+class WanImageToVideoPipelineV2(WanImageToVideoPipeline):
+    def __init__(
+        self,
+        tokenizer: AutoTokenizer,
+        text_encoder: UMT5EncoderModel,
+        image_encoder: CLIPVisionModel,
+        image_processor: CLIPImageProcessor,
+        transformer: WanTransformer3DModel,
+        vae: AutoencoderKLWan,
+        scheduler: FlowMatchEulerDiscreteScheduler,
+    ):
+        super().__init__(
+            tokenizer=tokenizer,
+            text_encoder=text_encoder,
+            image_encoder=image_encoder,
+            image_processor=image_processor,
+            transformer=transformer,
+            vae=vae,
+            scheduler=scheduler,
         )

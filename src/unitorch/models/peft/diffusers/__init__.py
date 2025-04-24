@@ -35,3 +35,7 @@ from unitorch.models.peft.diffusers.modeling_adapter import (
 from unitorch.models.peft.diffusers.modeling_adapter_xl import (
     StableXLAdapterLoraForText2ImageGeneration,
 )
+from unitorch.models.peft.diffusers.modeling_wan import (
+    WanLoraForText2VideoGeneration,
+    WanLoraForImage2VideoGeneration,
+)

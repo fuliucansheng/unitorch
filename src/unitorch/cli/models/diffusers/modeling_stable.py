@@ -959,4 +959,4 @@ class StableForImage2VideoGeneration(_StableForImage2VideoGeneration):
             guidance_scale=guidance_scale,
         )
 
-        return DiffusionOutputs(outputs=outputs.images)
+        return DiffusionOutputs(outputs=outputs.frames.float())
