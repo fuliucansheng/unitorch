@@ -1160,6 +1160,7 @@ class StableFluxForImageInpainting(GenericStableFluxModel):
             width=pixel_values.size(-1),
             height=pixel_values.size(-2),
             guidance_scale=guidance_scale,
+            strength=strength,
             output_type="np.array",
         ).images
 

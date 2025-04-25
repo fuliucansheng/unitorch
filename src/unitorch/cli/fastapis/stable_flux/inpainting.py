@@ -342,8 +342,8 @@ class StableFluxForImageInpaintingFastAPIPipeline(GenericStableFluxModel):
             width, height = image.size
         width = width // 16 * 16
         height = height // 16 * 16
-        image = image.resize((width, height))
-        mask_image = mask_image.resize((width, height))
+        image = image.resize((width, height), resample=Image.LANCZOS)
+        mask_image = mask_image.resize((width, height), resample=Image.LANCZOS)
 
         text_inputs = self.processor.text2image_inputs(
             text,

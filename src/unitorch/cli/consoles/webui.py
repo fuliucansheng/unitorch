@@ -76,13 +76,18 @@ def webui(config_path: str, **kwargs):
         )
         demo_webui.css = "\n".join([webui.iface.css or "" for webui in webuis])
     demo_webui.title = title
-    demo_webui.theme_css = read_file(
+    _css_file = os.path.join(
         os.path.join(importlib_resources.files("unitorch"), "cli/assets/style.css")
     )
+    if os.path.exists(_css_file):
+        demo_webui.theme_css = read_file(_css_file)
+    else:
+        demo_webui.theme_css = ""
     if not demo_webui.css:
         demo_webui.css = demo_webui.theme_css
     else:
         demo_webui.css += demo_webui.theme_css
+        demo_webui.theme_css = demo_webui.css
 
     config.set_default_section("core/cli")
     host = config.getoption("host", "0.0.0.0")

@@ -1,6 +1,7 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
+from unitorch.utils import is_opencv_available
 from unitorch.cli import hf_endpoint_url
 
 __hf_hub_stable_v1_5_dict__ = lambda name: {
@@ -142,14 +143,14 @@ __hf_hub_stable_3_safetensors_dict__ = lambda name: {
     ),
 }
 
-__hf_hub_stable_flux_safetensors_dict__ = lambda name: {
+__hf_hub_stable_flux_safetensors_dict__ = lambda name, n1=3, n2=2: {
     "transformer": {
         "config": hf_endpoint_url(f"/{name}/resolve/main/transformer/config.json"),
         "weight": [
             hf_endpoint_url(
-                f"/{name}/resolve/main/transformer/diffusion_pytorch_model-{str(i).rjust(5, '0')}-of-00003.safetensors"
+                f"{name}/resolve/main/transformer/diffusion_pytorch_model-{str(i).rjust(5, '0')}-of-{str(n1).rjust(5, '0')}.safetensors"
             )
-            for i in range(1, 4)
+            for i in range(1, n1 + 1)
         ],
     },
     "text": {
@@ -165,9 +166,9 @@ __hf_hub_stable_flux_safetensors_dict__ = lambda name: {
         "vocab": hf_endpoint_url(f"/{name}/resolve/main/tokenizer_2/spiece.model"),
         "weight": [
             hf_endpoint_url(
-                f"/{name}/resolve/main/text_encoder_2/model-{str(i).rjust(5, '0')}-of-00002.safetensors"
+                f"{name}/resolve/main/text_encoder_2/model-{str(i).rjust(5, '0')}-of-{str(n2).rjust(5, '0')}.safetensors"
             )
-            for i in range(1, 3)
+            for i in range(1, n2 + 1)
         ],
     },
     "scheduler": hf_endpoint_url(
@@ -175,14 +176,14 @@ __hf_hub_stable_flux_safetensors_dict__ = lambda name: {
     ),
 }
 
-__hf_hub_stable_flux_ctrl_safetensors_dict__ = lambda name: {
+__hf_hub_stable_flux_ctrl_safetensors_dict__ = lambda name, n1=3, n2=4: {
     "transformer": {
         "config": hf_endpoint_url(f"/{name}/resolve/main/transformer/config.json"),
         "weight": [
             hf_endpoint_url(
-                f"/{name}/resolve/main/transformer/diffusion_pytorch_model-{str(i).rjust(5, '0')}-of-00003.safetensors"
+                f"{name}/resolve/main/transformer/diffusion_pytorch_model-{str(i).rjust(5, '0')}-of-{str(n1).rjust(5, '0')}.safetensors"
             )
-            for i in range(1, 4)
+            for i in range(1, n1 + 1)
         ],
     },
     "text": {
@@ -198,11 +199,47 @@ __hf_hub_stable_flux_ctrl_safetensors_dict__ = lambda name: {
         "vocab": hf_endpoint_url(f"/{name}/resolve/main/tokenizer_2/spiece.model"),
         "weight": [
             hf_endpoint_url(
-                f"/{name}/resolve/main/text_encoder_2/model-{str(i).rjust(5, '0')}-of-00004.safetensors"
+                f"{name}/resolve/main/text_encoder_2/model-{str(i).rjust(5, '0')}-of-{str(n2).rjust(5, '0')}.safetensors"
             )
-            for i in range(1, 5)
+            for i in range(1, n2 + 1)
         ],
     },
+    "scheduler": hf_endpoint_url(
+        f"/{name}/resolve/main/scheduler/scheduler_config.json"
+    ),
+}
+
+__hf_hub_wan_v2_1_safetensors_dict__ = lambda name, n1=2, n2=5, im=False: {
+    "transformer": {
+        "config": hf_endpoint_url(f"/{name}/resolve/main/transformer/config.json"),
+        "weight": [
+            hf_endpoint_url(
+                f"/{name}/resolve/main/transformer/diffusion_pytorch_model-{str(i).rjust(5, '0')}-of-{str(n1).rjust(5, '0')}.safetensors"
+            )
+            for i in range(1, n1 + 1)
+        ],
+    },
+    "text": {
+        "config": hf_endpoint_url(f"/{name}/resolve/main/text_encoder/config.json"),
+        "vocab": hf_endpoint_url(f"/{name}/resolve/main/tokenizer/spiece.model"),
+        "weight": [
+            hf_endpoint_url(
+                f"/{name}/resolve/main/text_encoder/model-{str(i).rjust(5, '0')}-of-{str(n2).rjust(5, '0')}.safetensors"
+            )
+            for i in range(1, n2 + 1)
+        ],
+    },
+    "image": {
+        "config": hf_endpoint_url(f"/{name}/resolve/main/image_encoder/config.json"),
+        "vision_config": hf_endpoint_url(
+            f"/{name}/resolve/main/image_processor/preprocessor_config.json"
+        ),
+        "weight": hf_endpoint_url(
+            f"/{name}/resolve/main/image_encoder/model.safetensors"
+        ),
+    }
+    if im
+    else {},
     "scheduler": hf_endpoint_url(
         f"/{name}/resolve/main/scheduler/scheduler_config.json"
     ),
@@ -437,26 +474,9 @@ pretrained_stable_infos = {
         **__hf_hub_stable_3_safetensors_dict__("yuvraj108c/stable-diffusion-3.5-large"),
         **__hf_hub_vae_safetensors_dict__("yuvraj108c/stable-diffusion-3.5-large"),
     },
-    "stable-flux-lite-8b": {
-        **__hf_hub_stable_flux_safetensors_dict__("Freepik/flux.1-lite-8B"),
-        **__hf_hub_vae_safetensors_dict__("Freepik/flux.1-lite-8B"),
-        **{
-            "transformer": {
-                "config": hf_endpoint_url(
-                    f"/Freepik/flux.1-lite-8B/resolve/main/transformer/config.json"
-                ),
-                "weight": [
-                    hf_endpoint_url(
-                        f"/Freepik/flux.1-lite-8B/resolve/main/transformer/diffusion_pytorch_model-{str(i).rjust(5, '0')}-of-00002.safetensors"
-                    )
-                    for i in range(1, 3)
-                ],
-            },
-        },
-    },
     "stable-flux-schnell": {
-        **__hf_hub_stable_flux_safetensors_dict__("black-forest-labs/FLUX.1-schnell"),
-        **__hf_hub_vae_safetensors_dict__("black-forest-labs/FLUX.1-schnell"),
+        **__hf_hub_stable_flux_safetensors_dict__("lzyvegetable/FLUX.1-schnell"),
+        **__hf_hub_vae_safetensors_dict__("lzyvegetable/FLUX.1-schnell"),
     },
     "stable-flux-dev": {
         **__hf_hub_stable_flux_safetensors_dict__("camenduru/FLUX.1-dev-diffusers"),
@@ -519,6 +539,28 @@ pretrained_stable_infos = {
             "vdo/stable-video-diffusion-img2vid-xt-1-1"
         ),
         **__hf_hub_vae_safetensors_dict__("vdo/stable-video-diffusion-img2vid-xt-1-1"),
+    },
+    "wan-v2.1-t2v-1.3b": {
+        **__hf_hub_wan_v2_1_safetensors_dict__("Wan-AI/Wan2.1-T2V-1.3B-Diffusers"),
+        **__hf_hub_vae_safetensors_dict__("Wan-AI/Wan2.1-T2V-1.3B-Diffusers"),
+    },
+    "wan-v2.1-t2v-14b": {
+        **__hf_hub_wan_v2_1_safetensors_dict__(
+            "Wan-AI/Wan2.1-T2V-14B-Diffusers", n1=12
+        ),
+        **__hf_hub_vae_safetensors_dict__("Wan-AI/Wan2.1-T2V-14B-Diffusers"),
+    },
+    "wan-v2.1-i2v-14b-480p": {
+        **__hf_hub_wan_v2_1_safetensors_dict__(
+            "Wan-AI/Wan2.1-I2V-14B-480P-Diffusers", n1=14, im=True
+        ),
+        **__hf_hub_vae_safetensors_dict__("Wan-AI/Wan2.1-T2V-1.3B-Diffusers"),
+    },
+    "wan-v2.1-i2v-14b-720p": {
+        **__hf_hub_wan_v2_1_safetensors_dict__(
+            "Wan-AI/Wan2.1-I2V-14B-720P-Diffusers", n1=14, im=True
+        ),
+        **__hf_hub_vae_safetensors_dict__("Wan-AI/Wan2.1-I2V-14B-720P-Diffusers"),
     },
 }
 
@@ -714,6 +756,10 @@ from unitorch.cli.models.diffusers.modeling_adapter import (
 from unitorch.cli.models.diffusers.modeling_adapter_xl import (
     StableXLAdapterForText2ImageGeneration,
 )
+from unitorch.cli.models.diffusers.modeling_wan import (
+    WanForText2VideoGeneration,
+    WanForImage2VideoGeneration,
+)
 from unitorch.cli.models.diffusers.modeling_vae import VAEForDiffusion
 from unitorch.cli.models.diffusers.processing_stable import StableProcessor
 from unitorch.cli.models.diffusers.processing_stable_xl import StableXLProcessor
@@ -727,3 +773,6 @@ from unitorch.cli.models.diffusers.processing_controlnet_flux import (
 )
 from unitorch.cli.models.diffusers.processing_adapter import AdapterProcessor
 from unitorch.cli.models.diffusers.processing_adapter_xl import AdapterXLProcessor
+
+if is_opencv_available():
+    from unitorch.cli.models.diffusers.processing_wan import WanProcessor

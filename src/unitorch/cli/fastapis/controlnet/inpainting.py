@@ -401,11 +401,14 @@ class ControlNetForImageInpaintingFastAPIPipeline(GenericStableModel):
         image_inputs = self.processor.inpainting_inputs(image, mask_image)
         if len(controlnet_images) > 0:
             controlnet_images = [
-                img.resize((width, height)) for img in controlnet_images
+                img.resize((width, height), resample=Image.LANCZOS)
+                for img in controlnet_images
             ]
             controlnets_inputs = self.processor.controlnets_inputs(controlnet_images)
         if inpaint_controlnet_image is not None:
-            inpaint_controlnet_image = inpaint_controlnet_image.resize((width, height))
+            inpaint_controlnet_image = inpaint_controlnet_image.resize(
+                (width, height), resample=Image.LANCZOS
+            )
             inpaint_controlnet_inputs = self.processor.inpainting_control_inputs(
                 inpaint_controlnet_image, mask_image
             )

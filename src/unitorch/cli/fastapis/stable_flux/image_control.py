@@ -341,7 +341,7 @@ class StableFluxForImageControlGenerationFastAPIPipeline(GenericStableFluxModel)
             width, height = control_image.size
         width = width // 16 * 16
         height = height // 16 * 16
-        control_image = control_image.resize((width, height))
+        control_image = control_image.resize((width, height), resample=Image.LANCZOS)
 
         text_inputs = self.processor.text2image_inputs(
             text,

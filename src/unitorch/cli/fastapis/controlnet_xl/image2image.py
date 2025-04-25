@@ -400,7 +400,10 @@ class ControlNetXLForImage2ImageFastAPIPipeline(GenericStableXLModel):
         )
         image_inputs = self.processor.image2image_inputs(image)
         width, height = image.size
-        controlnet_images = [img.resize((width, height)) for img in controlnet_images]
+        controlnet_images = [
+            img.resize((width, height), resample=Image.LANCZOS)
+            for img in controlnet_images
+        ]
         assert len(controlnet_images) == len(controlnet_guidance_scales)
         assert len(controlnet_images) == self.num_controlnets
         controlnets_inputs = self.processor.controlnets_inputs(controlnet_images)

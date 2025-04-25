@@ -1,6 +1,7 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
+from unitorch.utils import is_opencv_available
 from unitorch.models.diffusers.modeling_stable import compute_snr
 from unitorch.models.diffusers.modeling_stable import (
     GenericStableModel,
@@ -57,6 +58,10 @@ from unitorch.models.diffusers.modeling_adapter import (
 from unitorch.models.diffusers.modeling_adapter_xl import (
     StableXLAdapterForText2ImageGeneration,
 )
+from unitorch.models.diffusers.modeling_wan import (
+    WanForText2VideoGeneration,
+    WanForImage2VideoGeneration,
+)
 from unitorch.models.diffusers.modeling_vae import VAEForDiffusion
 from unitorch.models.diffusers.processing_stable import (
     StableProcessor,
@@ -65,3 +70,6 @@ from unitorch.models.diffusers.processing_stable import (
 from unitorch.models.diffusers.processing_stable_xl import StableXLProcessor
 from unitorch.models.diffusers.processing_stable_3 import Stable3Processor
 from unitorch.models.diffusers.processing_stable_flux import StableFluxProcessor
+
+if is_opencv_available():
+    from unitorch.models.diffusers.processing_wan import WanProcessor

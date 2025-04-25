@@ -432,12 +432,17 @@ class ControlNetFluxForImageInpaintingFastAPIPipeline(GenericStableFluxModel):
             negative_prompt=neg_text,
         )
         image_inputs = self.processor.inpainting_inputs(image, mask_image)
-        controlnet_images = [img.resize((width, height)) for img in controlnet_images]
+        controlnet_images = [
+            img.resize((width, height), resample=Image.LANCZOS)
+            for img in controlnet_images
+        ]
         assert len(controlnet_images) == len(controlnet_guidance_scales)
         assert len(controlnet_images) == self.num_controlnets
         controlnets_inputs = self.processor.controlnets_inputs(controlnet_images)
         if inpaint_controlnet_image is not None:
-            inpaint_controlnet_image = inpaint_controlnet_image.resize((width, height))
+            inpaint_controlnet_image = inpaint_controlnet_image.resize(
+                (width, height), resample=Image.LANCZOS
+            )
             inpaint_controlnet_inputs = self.processor.inpainting_control_inputs(
                 inpaint_controlnet_image, mask_image
             )

@@ -29,23 +29,53 @@ from unitorch.cli.models.modeling_utils import TensorsOutputs, TensorsTargets
 from unitorch.cli import cached_path
 
 
-def numpy2vid(video, mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]):
-    batch_size, channels, num_frames, height, width = video.shape
-    mean = np.array(mean).reshape(1, -1, 1, 1, 1)
-    std = np.array(std).reshape(1, -1, 1, 1, 1)
-    # unnormalize back to [0,1]
-    video = video * std + mean
-    video = np.clip(video, 0, 1)
+# def numpy2vid(video, mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]):
+#     batch_size, channels, num_frames, height, width = video.shape
+#     mean = np.array(mean).reshape(1, -1, 1, 1, 1)
+#     std = np.array(std).reshape(1, -1, 1, 1, 1)
+#     # unnormalize back to [0,1]
+#     video = video * std + mean
+#     video = np.clip(video, 0, 1)
+#     # prepare the final outputs
+#     i, c, f, h, w = video.shape
+#     images = np.transpose(video, (2, 3, 0, 4, 1)).reshape(f, h, i * w, c)
+#     images = np.split(images, f, axis=0)
+#     images = [(image.squeeze(0) * 255).astype("uint8") for image in images]  # f h w c
+#     return images
+
+
+def numpy2vid(video: np.ndarray) -> List[np.ndarray]:
+    if video.ndim == 4:
+        video = np.expand_dims(video, axis=0)
+    i, f, c, h, w = video.shape
+    images = np.transpose(video, (1, 3, 0, 4, 2))
+    images = np.transpose(video, (1, 3, 0, 4, 2))
+    # Reshape to (frames, height, batch_size * width, channels)
+    images = images.reshape(f, h, i * w, c)
+    # Convert to uint8 and scale pixel values
+    images = [(frame * 255).astype("uint8") for frame in images]
+    return images
+
+
+def tensor2vid(video: torch.Tensor) -> List[np.ndarray]:
+    if video.dim() == 4:
+        video = video.unsqueeze(0)
     # prepare the final outputs
-    i, c, f, h, w = video.shape
-    images = np.transpose(video, (2, 3, 0, 4, 1)).reshape(f, h, i * w, c)
-    images = np.split(images, f, axis=0)
-    images = [(image.squeeze(0) * 255).astype("uint8") for image in images]  # f h w c
+    i, f, c, h, w = video.shape
+    images = video.permute(1, 3, 0, 4, 2).reshape(
+        f, h, i * w, c
+    )  # 1st (frames, h, batch_size, w, c) 2nd (frames, h, batch_size * w, c)
+    images = images.unbind(dim=0)  # prepare a list of indvidual (consecutive frames)
+    images = [
+        (image.cpu().numpy() * 255).astype("uint8") for image in images
+    ]  # f h w c
     return images
 
 
 def export_to_video(
-    video_frames: List[np.ndarray], output_video_path: str = None
+    video_frames: List[np.ndarray],
+    output_video_path: str = None,
+    fps: int = 8,
 ) -> str:
     assert is_opencv_available(), "Please install python3-opencv first."
     import cv2
@@ -55,7 +85,7 @@ def export_to_video(
 
     fourcc = cv2.VideoWriter_fourcc(*"avc1")
     h, w, c = video_frames[0].shape
-    video_writer = cv2.VideoWriter(output_video_path, fourcc, fps=8, frameSize=(w, h))
+    video_writer = cv2.VideoWriter(output_video_path, fourcc, fps=fps, frameSize=(w, h))
     for i in range(len(video_frames)):
         img = cv2.cvtColor(video_frames[i], cv2.COLOR_RGB2BGR)
         video_writer.write(img)
@@ -78,12 +108,14 @@ class DiffusionProcessor:
         self,
         output_folder: Optional[str] = None,
         http_url: Optional[str] = None,
+        video_fps: Optional[int] = 8,
     ):
         assert output_folder is not None or http_url is not None
         self.output_folder = output_folder
         if output_folder is not None and not os.path.exists(output_folder):
             os.makedirs(self.output_folder, exist_ok=True)
         self.http_url = http_url
+        self.video_fps = video_fps
         if self.output_folder is None:
             self.output_folder = tempfile.mkdtemp()
 
@@ -135,7 +167,7 @@ class DiffusionProcessor:
             md5.update(image.tobytes())
         name = md5.hexdigest() + ".mp4"
         output_path = f"{self.output_folder}/{name}"
-        export_to_video(video, output_path)
+        export_to_video(video, output_path, fps=self.video_fps)
         if self.http_url is not None:
             byte = open(output_path, "rb")
             for _ in range(3):
