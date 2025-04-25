@@ -16,7 +16,15 @@ from diffusers.pipelines.stable_diffusion_3.pipeline_stable_diffusion_3_img2img 
     T5TokenizerFast,
     VaeImageProcessor,
 )
-from diffusers.pipelines.wan.pipeline_wan_i2v import WanImageToVideoPipeline
+from diffusers.pipelines.wan.pipeline_wan_i2v import (
+    AutoTokenizer,
+    CLIPImageProcessor,
+    AutoencoderKLWan,
+    UMT5EncoderModel,
+    WanTransformer3DModel,
+    CLIPVisionModel,
+    WanImageToVideoPipeline,
+)
 from unitorch.models import GenericOutputs
 from unitorch.utils.decorators import replace
 
@@ -112,3 +120,17 @@ class WanImageToVideoPipelineV2(WanImageToVideoPipeline):
             vae=vae,
             scheduler=scheduler,
         )
+
+    def check_inputs(
+        self,
+        prompt,
+        negative_prompt,
+        image,
+        height,
+        width,
+        prompt_embeds=None,
+        negative_prompt_embeds=None,
+        image_embeds=None,
+        callback_on_step_end_tensor_inputs=None,
+    ):
+        pass

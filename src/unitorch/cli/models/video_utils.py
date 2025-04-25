@@ -139,3 +139,58 @@ class VideoProcessor:
         except:
             logging.debug(f"core/process/video/read use fake video for {video}")
             return []
+
+    @register_process("core/process/video/sample")
+    def _sample(
+        self,
+        video: Union[cv2.VideoCapture, str, List[Image.Image]],
+        freq: Optional[int] = 0,
+        num: Optional[int] = None,
+        mode: Optional[str] = "random",
+    ):
+        """
+        Samples frames from a video.
+
+        Args:
+            video: The video to sample frames from.
+            freq (Optional[int]): The frequency of frames to sample. Defaults to 0.
+            num (Optional[int]): The number of frames to sample. Defaults to None.
+            mode (Optional[str]): The mode of sampling. Defaults to "random".
+        Returns:
+            A list of sampled frames.
+        """
+        if isinstance(video, str):
+            video = cv2.VideoCapture(video)
+
+        if isinstance(video, cv2.VideoCapture):
+            frames = []
+            while video.isOpened():
+                ret, frame = video.read()
+                if not ret:
+                    break
+                rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                pil_img = Image.fromarray(rgb)
+                frames.append(pil_img)
+        else:
+            frames = video
+
+        if freq > 0:
+            frames = frames[:: (freq + 1)]
+
+        if num is not None and len(frames) > num:
+            if mode == "random":
+                start = int(random() * (len(frames) - num))
+                end = start + num
+                frames = frames[start:end]
+            elif mode == "first":
+                frames = frames[:num]
+            elif mode == "last":
+                frames = frames[-num:]
+            elif mode == "middle":
+                start = (len(frames) - num) // 2
+                end = start + num
+                frames = frames[start:end]
+            else:
+                raise ValueError(f"Unknown sampling mode: {mode}")
+
+        return frames

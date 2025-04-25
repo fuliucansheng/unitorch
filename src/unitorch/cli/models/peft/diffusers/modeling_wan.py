@@ -65,7 +65,6 @@ class WanLoraForText2VideoGeneration(_WanLoraForText2VideoGeneration):
         enable_transformer_adapter: Optional[bool] = True,
         seed: Optional[int] = 1123,
         gradient_checkpointing: Optional[bool] = True,
-        guidance_scale: Optional[float] = 3.5,
     ):
         super().__init__(
             config_path=config_path,
@@ -87,7 +86,6 @@ class WanLoraForText2VideoGeneration(_WanLoraForText2VideoGeneration):
             enable_transformer_adapter=enable_transformer_adapter,
             seed=seed,
             gradient_checkpointing=gradient_checkpointing,
-            guidance_scale=guidance_scale,
         )
 
     @classmethod
@@ -172,7 +170,6 @@ class WanLoraForText2VideoGeneration(_WanLoraForText2VideoGeneration):
         )
         seed = config.getoption("seed", 1123)
         gradient_checkpointing = config.getoption("gradient_checkpointing", True)
-        guidance_scale = config.getoption("guidance_scale", 3.5)
 
         inst = cls(
             config_path=config_path,
@@ -194,7 +191,6 @@ class WanLoraForText2VideoGeneration(_WanLoraForText2VideoGeneration):
             enable_transformer_adapter=enable_transformer_adapter,
             seed=seed,
             gradient_checkpointing=gradient_checkpointing,
-            guidance_scale=guidance_scale,
         )
 
         weight_path = config.getoption("pretrained_weight_path", None)
@@ -264,7 +260,7 @@ class WanLoraForText2VideoGeneration(_WanLoraForText2VideoGeneration):
         negative_attention_mask: Optional[torch.Tensor] = None,
         height: Optional[int] = 480,
         width: Optional[int] = 832,
-        num_frames: Optional[int] = 30,
+        num_frames: Optional[int] = 81,
         guidance_scale: Optional[float] = 5.0,
     ):
         outputs = super().generate(
@@ -317,7 +313,6 @@ class WanLoraForImage2VideoGeneration(_WanLoraForImage2VideoGeneration):
         enable_transformer_adapter: Optional[bool] = True,
         seed: Optional[int] = 1123,
         gradient_checkpointing: Optional[bool] = True,
-        guidance_scale: Optional[float] = 3.5,
     ):
         super().__init__(
             config_path=config_path,
@@ -340,7 +335,6 @@ class WanLoraForImage2VideoGeneration(_WanLoraForImage2VideoGeneration):
             enable_transformer_adapter=enable_transformer_adapter,
             seed=seed,
             gradient_checkpointing=gradient_checkpointing,
-            guidance_scale=guidance_scale,
         )
 
     @classmethod
@@ -432,7 +426,6 @@ class WanLoraForImage2VideoGeneration(_WanLoraForImage2VideoGeneration):
         )
         seed = config.getoption("seed", 1123)
         gradient_checkpointing = config.getoption("gradient_checkpointing", True)
-        guidance_scale = config.getoption("guidance_scale", 3.5)
 
         inst = cls(
             config_path=config_path,
@@ -455,7 +448,6 @@ class WanLoraForImage2VideoGeneration(_WanLoraForImage2VideoGeneration):
             enable_transformer_adapter=enable_transformer_adapter,
             seed=seed,
             gradient_checkpointing=gradient_checkpointing,
-            guidance_scale=guidance_scale,
         )
 
         weight_path = config.getoption("pretrained_weight_path", None)
@@ -508,6 +500,7 @@ class WanLoraForImage2VideoGeneration(_WanLoraForImage2VideoGeneration):
         self,
         pixel_values: torch.Tensor,
         condition_pixel_values: torch.Tensor,
+        vae_pixel_values: torch.Tensor,
         input_ids: torch.Tensor,
         attention_mask: Optional[torch.Tensor] = None,
     ):
@@ -516,6 +509,7 @@ class WanLoraForImage2VideoGeneration(_WanLoraForImage2VideoGeneration):
             pixel_values=pixel_values,
             attention_mask=attention_mask,
             condition_pixel_values=condition_pixel_values,
+            vae_pixel_values=vae_pixel_values,
         )
         return LossOutputs(loss=loss)
 
@@ -534,7 +528,7 @@ class WanLoraForImage2VideoGeneration(_WanLoraForImage2VideoGeneration):
         vae_pixel_values: torch.Tensor,
         attention_mask: Optional[torch.Tensor] = None,
         negative_attention_mask: Optional[torch.Tensor] = None,
-        num_frames: Optional[int] = 30,
+        num_frames: Optional[int] = 81,
         guidance_scale: Optional[float] = 5.0,
     ):
         outputs = super().generate(

@@ -268,7 +268,7 @@ class WanForText2VideoGeneration(GenericWanModel):
         negative_attention_mask: Optional[torch.Tensor] = None,
         height: Optional[int] = 480,
         width: Optional[int] = 832,
-        num_frames: Optional[int] = 30,
+        num_frames: Optional[int] = 81,
         guidance_scale: Optional[float] = 5.0,
     ):
         outputs = self.get_prompt_outputs(
@@ -348,6 +348,7 @@ class WanForImage2VideoGeneration(GenericWanModel):
         self,
         pixel_values: torch.Tensor,
         condition_pixel_values: torch.Tensor,
+        vae_pixel_values: torch.Tensor,
         input_ids: torch.Tensor,
         attention_mask: Optional[torch.Tensor] = None,
     ):
@@ -367,13 +368,66 @@ class WanForImage2VideoGeneration(GenericWanModel):
         sigmas = self.get_sigmas(timesteps, n_dim=latents.ndim, dtype=latents.dtype)
         noise_latents = (1.0 - sigmas) * latents + sigmas * noise
 
+        num_frames = pixel_values.shape[-3]
+
+        video_condition = torch.cat(
+            [
+                vae_pixel_values.unsqueeze(2),
+                vae_pixel_values.new_zeros(
+                    vae_pixel_values.shape[0],
+                    vae_pixel_values.shape[1],
+                    num_frames - 1,
+                    vae_pixel_values.shape[-2],
+                    vae_pixel_values.shape[-1],
+                    device=vae_pixel_values.device,
+                ),
+            ],
+            dim=2,
+        )
+        latent_condition = self.vae.encode(video_condition).latent_dist.mode()
+        latents_mean = (
+            torch.tensor(self.vae.config.latents_mean)
+            .view(1, self.vae.config.z_dim, 1, 1, 1)
+            .to(latents.device, latents.dtype)
+        )
+        latents_std = 1.0 / torch.tensor(self.vae.config.latents_std).view(
+            1, self.vae.config.z_dim, 1, 1, 1
+        ).to(latents.device, latents.dtype)
+        latent_condition = latent_condition.repeat(latents.shape[0], 1, 1, 1, 1).to(
+            latents.dtype
+        )
+        latent_condition = (latent_condition - latents_mean) * latents_std
+
+        mask_lat_size = torch.ones(
+            latents.shape[0], 1, num_frames, latents.shape[-2], latents.shape[-1]
+        )
+        mask_lat_size[:, :, list(range(1, num_frames))] = 0
+        first_frame_mask = mask_lat_size[:, :, 0:1]
+        first_frame_mask = torch.repeat_interleave(
+            first_frame_mask, dim=2, repeats=self.pipeline.vae_scale_factor_temporal
+        )
+        mask_lat_size = torch.concat(
+            [first_frame_mask, mask_lat_size[:, :, 1:, :]], dim=2
+        )
+        mask_lat_size = mask_lat_size.view(
+            latents.shape[0],
+            -1,
+            self.pipeline.vae_scale_factor_temporal,
+            latents.shape[-2],
+            latents.shape[-1],
+        )
+        mask_lat_size = mask_lat_size.transpose(1, 2)
+        mask_lat_size = mask_lat_size.to(latent_condition.device)
+        condition_latents = torch.concat([mask_lat_size, latent_condition], dim=1)
+        latent_model_input = torch.cat([noise_latents, condition_latents], dim=1)
+
         encoder_hidden_states = self.text(input_ids, attention_mask)[0]
         condition_hidden_states = self.image(
             condition_pixel_values,
             output_hidden_states=True,
         ).hidden_states[-2]
         outputs = self.transformer(
-            noise_latents,
+            latent_model_input,
             timesteps,
             encoder_hidden_states=encoder_hidden_states,
             encoder_hidden_states_image=condition_hidden_states,
@@ -399,7 +453,7 @@ class WanForImage2VideoGeneration(GenericWanModel):
         vae_pixel_values: torch.Tensor,
         attention_mask: Optional[torch.Tensor] = None,
         negative_attention_mask: Optional[torch.Tensor] = None,
-        num_frames: Optional[int] = 30,
+        num_frames: Optional[int] = 81,
         guidance_scale: Optional[float] = 5.0,
     ):
         outputs = self.get_prompt_outputs(

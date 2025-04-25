@@ -65,8 +65,10 @@ class WanProcessor(HfTextClassificationProcessor):
         if self.video_size is not None:
             self.frame_processor = Compose(
                 [
-                    CenterCrop(size=self.video_size),
-                    Resize(size=self.video_size, antialias=True),
+                    CenterCrop(size=(self.video_size[1], self.video_size[0])),
+                    Resize(
+                        size=(self.video_size[1], self.video_size[0]), antialias=True
+                    ),
                     ToTensor(),
                     Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
                 ]
@@ -145,15 +147,28 @@ class WanProcessor(HfTextClassificationProcessor):
             video=video,
             max_seq_length=max_seq_length,
         )
+        if isinstance(image, str):
+            image = Image.open(image)
+        image = image.convert("RGB")
+
         condition_pixel_values = self.vision_processor.preprocess(
             image, return_tensors="pt"
         ).pixel_values[0]
+
+        size = image.size if self.video_size is None else self.video_size
+        size = (
+            size[0] // self.divisor * self.divisor,
+            size[1] // self.divisor * self.divisor,
+        )
+        image = image.resize(size, resample=Image.LANCZOS)
+        vae_pixel_values = self.vae_image_processor.preprocess(image)[0]
 
         return GenericOutputs(
             pixel_values=outputs.pixel_values,
             input_ids=outputs.input_ids,
             attention_mask=outputs.attention_mask,
             condition_pixel_values=condition_pixel_values,
+            vae_pixel_values=vae_pixel_values,
         )
 
     def text2video_inputs(

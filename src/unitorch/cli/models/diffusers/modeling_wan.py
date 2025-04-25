@@ -215,7 +215,7 @@ class WanForText2VideoGeneration(_WanForText2VideoGeneration):
         negative_attention_mask: Optional[torch.Tensor] = None,
         height: Optional[int] = 480,
         width: Optional[int] = 832,
-        num_frames: Optional[int] = 30,
+        num_frames: Optional[int] = 81,
         guidance_scale: Optional[float] = 5.0,
     ):
         outputs = super().generate(
@@ -413,12 +413,14 @@ class WanForImage2VideoGeneration(_WanForImage2VideoGeneration):
         self,
         pixel_values: torch.Tensor,
         condition_pixel_values: torch.Tensor,
+        vae_pixel_values: torch.Tensor,
         input_ids: torch.Tensor,
         attention_mask: Optional[torch.Tensor] = None,
     ):
         loss = super().forward(
             pixel_values=pixel_values,
             condition_pixel_values=condition_pixel_values,
+            vae_pixel_values=vae_pixel_values,
             input_ids=input_ids,
             attention_mask=attention_mask,
         )
@@ -437,7 +439,7 @@ class WanForImage2VideoGeneration(_WanForImage2VideoGeneration):
         vae_pixel_values: torch.Tensor,
         attention_mask: Optional[torch.Tensor] = None,
         negative_attention_mask: Optional[torch.Tensor] = None,
-        num_frames: Optional[int] = 30,
+        num_frames: Optional[int] = 81,
         guidance_scale: Optional[float] = 5.0,
     ):
         outputs = super().generate(

@@ -129,6 +129,7 @@ class WanProcessor(_WanProcessor):
             input_ids=outputs.input_ids,
             attention_mask=outputs.attention_mask,
             condition_pixel_values=outputs.condition_pixel_values,
+            vae_pixel_values=outputs.vae_pixel_values,
         )
 
     @register_process("core/process/diffusion/wan/image2video/inputs")
