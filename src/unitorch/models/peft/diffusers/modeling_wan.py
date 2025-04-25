@@ -286,6 +286,16 @@ class WanLoraForText2VideoGeneration(GenericWanLoraModel):
             device=pixel_values.device,
         ).long()
 
+        latents_mean = (
+            torch.tensor(self.vae.config.latents_mean)
+            .view(1, self.vae.config.z_dim, 1, 1, 1)
+            .to(latents.device, latents.dtype)
+        )
+        latents_std = 1.0 / torch.tensor(self.vae.config.latents_std).view(
+            1, self.vae.config.z_dim, 1, 1, 1
+        ).to(latents.device, latents.dtype)
+        latents = (latents - latents_mean) * latents_std
+
         noise_latents = self.scheduler.add_noise(
             latents,
             noise,
@@ -447,6 +457,16 @@ class WanLoraForImage2VideoGeneration(GenericWanLoraModel):
             device=pixel_values.device,
         ).long()
 
+        latents_mean = (
+            torch.tensor(self.vae.config.latents_mean)
+            .view(1, self.vae.config.z_dim, 1, 1, 1)
+            .to(latents.device, latents.dtype)
+        )
+        latents_std = 1.0 / torch.tensor(self.vae.config.latents_std).view(
+            1, self.vae.config.z_dim, 1, 1, 1
+        ).to(latents.device, latents.dtype)
+        latents = (latents - latents_mean) * latents_std
+
         noise_latents = self.scheduler.add_noise(
             latents,
             noise,
@@ -470,14 +490,6 @@ class WanLoraForImage2VideoGeneration(GenericWanLoraModel):
             dim=2,
         )
         latent_condition = self.vae.encode(video_condition).latent_dist.mode()
-        latents_mean = (
-            torch.tensor(self.vae.config.latents_mean)
-            .view(1, self.vae.config.z_dim, 1, 1, 1)
-            .to(latents.device, latents.dtype)
-        )
-        latents_std = 1.0 / torch.tensor(self.vae.config.latents_std).view(
-            1, self.vae.config.z_dim, 1, 1, 1
-        ).to(latents.device, latents.dtype)
         latent_condition = latent_condition.repeat(latents.shape[0], 1, 1, 1, 1).to(
             latents.dtype
         )
