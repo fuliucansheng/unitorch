@@ -149,7 +149,9 @@ class GenericWanModel(GenericModel, QuantizationMixin, PeftWeightLoaderMixin):
         if enable_cpu_offload:
             self.text.to(cpu_offload_device)
             input_ids = input_ids.to(cpu_offload_device)
+            attention_mask = attention_mask.to(cpu_offload_device)
             negative_input_ids = negative_input_ids.to(cpu_offload_device)
+            negative_attention_mask = negative_attention_mask.to(cpu_offload_device)
         prompt_embeds = self.text(
             input_ids,
             attention_mask,

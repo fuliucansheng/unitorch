@@ -1,7 +1,10 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
-from unitorch.utils import is_diffusers_available
+from unitorch.utils import (
+    is_diffusers_available,
+    is_opencv_available,
+)
 
 if is_diffusers_available():
     from diffusers.schedulers import (
@@ -32,6 +35,9 @@ if is_diffusers_available():
 
     import unitorch.cli.pipelines.stable_3
     import unitorch.cli.pipelines.stable_flux
+
+    if is_opencv_available():
+        import unitorch.cli.pipelines.wan
 else:
     Schedulers = {}
 

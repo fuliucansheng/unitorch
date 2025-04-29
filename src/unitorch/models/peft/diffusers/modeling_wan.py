@@ -38,11 +38,6 @@ from unitorch.models import (
 )
 from unitorch.models.peft import GenericPeftModel
 from unitorch.models.diffusers import compute_snr
-from unitorch.models.diffusers.modeling_stable_flux import (
-    _prepare_latent_image_ids,
-    _pack_latents,
-    _unpack_latents,
-)
 
 
 class GenericWanLoraModel(GenericPeftModel, QuantizationMixin):
@@ -127,6 +122,10 @@ class GenericWanLoraModel(GenericPeftModel, QuantizationMixin):
 
         for param in self.text.parameters():
             param.requires_grad = False
+
+        if image_config_path is not None:
+            for param in self.image.parameters():
+                param.requires_grad = False
 
         for param in self.transformer.parameters():
             param.requires_grad = False
