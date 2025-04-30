@@ -61,7 +61,7 @@ class WanProcessor(_WanProcessor):
         image_config_path = config.getoption("image_config_path", None)
         image_config_path = pop_value(
             image_config_path,
-            nested_dict_value(pretrained_infos, "image", "config"),
+            nested_dict_value(pretrained_infos, "image", "vision_config"),
             check_none=False,
         )
         if image_config_path is not None:

@@ -23,7 +23,10 @@ def matched_pretrained_names(
     return blacked
 
 
-from unitorch.utils import is_diffusers_available
+from unitorch.utils import (
+    is_diffusers_available,
+    is_opencv_available,
+)
 from unitorch.cli import GenericWebUI
 from unitorch.cli import CoreConfigureParser
 from unitorch.cli.pipelines import Schedulers
@@ -89,3 +92,6 @@ if is_diffusers_available():
 
     import unitorch.cli.webuis.stable_3
     import unitorch.cli.webuis.stable_flux
+
+    if is_opencv_available():
+        import unitorch.cli.webuis.wan

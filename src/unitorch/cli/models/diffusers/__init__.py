@@ -554,7 +554,7 @@ pretrained_stable_infos = {
         **__hf_hub_wan_v2_1_safetensors_dict__(
             "Wan-AI/Wan2.1-I2V-14B-480P-Diffusers", n1=14, im=True
         ),
-        **__hf_hub_vae_safetensors_dict__("Wan-AI/Wan2.1-T2V-1.3B-Diffusers"),
+        **__hf_hub_vae_safetensors_dict__("Wan-AI/Wan2.1-I2V-14B-480P-Diffusers"),
     },
     "wan-v2.1-i2v-14b-720p": {
         **__hf_hub_wan_v2_1_safetensors_dict__(
