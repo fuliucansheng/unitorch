@@ -478,7 +478,7 @@ class WanLoraForImage2VideoGeneration(_WanLoraForImage2VideoGeneration):
         return LossOutputs(loss=loss)
 
     @add_default_section_for_function(
-        "core/model/diffusers/peft/lora/inpainting/stable_flux"
+        "core/model/diffusers/peft/lora/image2video/wan"
     )
     @autocast(
         device_type=("cuda" if torch.cuda.is_available() else "cpu"),
