@@ -101,6 +101,7 @@ def save_snapshot_zero_3(
                 os.path.join(ckpt_dir, "pytorch_model"),
                 exclude_frozen_parameters=exclude_freeze_parameters,
             )
+            state_dict = {(k[6:] if k.startswith("model.") else k):v for k, v in state_dict.items()}
             torch.save(state_dict, os.path.join(ckpt_dir, "pytorch_model.bin"))
 
     if local_rank in [-1, 0]:
@@ -114,6 +115,7 @@ def save_snapshot_zero_3(
                 os.path.join(ckpt_dir, "pytorch_model_latest"),
                 exclude_frozen_parameters=exclude_freeze_parameters,
             )
+            state_dict = {(k[6:] if k.startswith("model.") else k):v for k, v in state_dict.items()}
             torch.save(state_dict, os.path.join(ckpt_dir, "pytorch_model_latest.bin"))
 
     if save_checkpoint in ["all", "every"]:
@@ -126,6 +128,7 @@ def save_snapshot_zero_3(
                 os.path.join(ckpt_dir, "pytorch_model_latest"),
                 exclude_frozen_parameters=exclude_freeze_parameters,
             )
+            state_dict = {(k[6:] if k.startswith("model.") else k):v for k, v in state_dict.items()}
             torch.save(
                 state_dict,
                 os.path.join(
