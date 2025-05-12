@@ -6,6 +6,7 @@ import torch
 import time
 import json
 import logging
+import shutil
 import deepspeed
 import numpy as np
 import pandas as pd
@@ -105,7 +106,6 @@ def save_snapshot_zero_3(
                 (k[6:] if k.startswith("model.") else k): v
                 for k, v in state_dict.items()
             }
-            torch.save(state_dict, os.path.join(ckpt_dir, "pytorch_model.bin"))
 
     if local_rank in [-1, 0]:
         if info_path is not None:
@@ -131,7 +131,7 @@ def save_snapshot_zero_3(
         )
         if merge_checkpoint and local_rank in [-1, 0]:
             state_dict = get_fp32_state_dict_from_zero_checkpoint(
-                os.path.join(ckpt_dir, "pytorch_model_latest"),
+                os.path.join(ckpt_dir, f"pytorch_model_latest"),
                 exclude_frozen_parameters=exclude_freeze_parameters,
             )
             state_dict = {
@@ -144,6 +144,10 @@ def save_snapshot_zero_3(
                     ckpt_dir,
                     f"pytorch_model_latest_{snapshot_time}.bin",
                 ),
+            )
+            shutil.rmtree(
+                os.path.join(ckpt_dir, f"pytorch_model_latest_{snapshot_time}"),
+                ignore_errors=True,
             )
     return best_score
 
