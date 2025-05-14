@@ -118,6 +118,7 @@ from unitorch.utils import (
     is_diffusers_available,
     is_xformers_available,
     is_opencv_available,
+    is_wandb_available,
 )
 
 if is_diffusers_available():

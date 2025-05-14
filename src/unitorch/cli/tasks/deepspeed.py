@@ -63,6 +63,7 @@ from unitorch.cli.tasks.supervised import (
     monitor,
     save_snapshot,
 )
+import unitorch.cli.wandb as wandb
 
 
 def save_snapshot_zero_3(
@@ -507,6 +508,14 @@ class DeepspeedTask:
                     logging.info(
                         f"epoch {e} step {step}: loss -- { log_loss / log_freq }"
                     )
+                    if wandb.is_available():
+                        wandb.log(
+                            {
+                                "epoch": e,
+                                "step": step,
+                                "train/loss": log_loss / log_freq,
+                            },
+                        )
                     log_loss = 0
 
                 if (step + 1) % ckpt_freq == 0:

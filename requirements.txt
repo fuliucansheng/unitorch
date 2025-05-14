@@ -1,6 +1,6 @@
 configparser
 pillow
-imageio[ffmpeg]
+imageio[ffmpeg,pyav]
 matplotlib
 sentencepiece
 importlib_resources

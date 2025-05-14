@@ -63,9 +63,6 @@ def export_to_video(
     output_video_path: str = None,
     fps: int = 8,
 ) -> str:
-    assert is_opencv_available(), "Please install python3-opencv first."
-    import cv2
-
     if output_video_path is None:
         output_video_path = tempfile.NamedTemporaryFile(suffix=".mp4").name
 
