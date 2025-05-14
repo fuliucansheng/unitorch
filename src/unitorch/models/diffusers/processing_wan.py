@@ -129,7 +129,7 @@ class WanProcessor(HfTextClassificationProcessor):
                     width, height = frame.size
                     scale = max(self.video_size[0] / width, self.video_size[1] / height)
                     frame = frame.resize(
-                        (round(height * scale), round(width * scale)),
+                        (round(width * scale), round(height * scale)),
                         resample=Image.LANCZOS,
                     )
                     frame = self.center_crop_processor(frame)
