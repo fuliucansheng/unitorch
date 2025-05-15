@@ -208,7 +208,7 @@ class WanForImage2VideoFastAPIPipeline(WanForImage2VideoGeneration):
         )
         device = config.getoption("device", "cpu") if device is None else device
         enable_cpu_offload = config.getoption("enable_cpu_offload", True)
-        enable_xformers = config.getoption("enable_xformers", True)
+        enable_xformers = config.getoption("enable_xformers", False)
 
         state_dict = None
         if weight_path is None and pretrained_infos is not None:
