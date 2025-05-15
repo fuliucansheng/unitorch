@@ -16,6 +16,7 @@ from unitorch.utils import (
     replace,
     load_weight,
     is_diffusers_available,
+    is_megatron_available,
 )
 
 

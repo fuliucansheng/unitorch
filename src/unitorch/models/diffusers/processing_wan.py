@@ -62,19 +62,23 @@ class WanProcessor(HfTextClassificationProcessor):
         else:
             self.video_size = None
 
+        self.divisor = 16
         if self.video_size is not None:
-            self.frame_processor = Compose(
-                [
-                    CenterCrop(size=(self.video_size[1], self.video_size[0])),
-                    Resize(
-                        size=(self.video_size[1], self.video_size[0]), antialias=True
-                    ),
-                    ToTensor(),
-                    Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
-                ]
+            self.video_size = (
+                self.video_size[0] // self.divisor * self.divisor,
+                self.video_size[1] // self.divisor * self.divisor,
+            )
+            self.center_crop_processor = CenterCrop(
+                size=(self.video_size[1], self.video_size[0])
             )
         else:
-            self.frame_processor = None
+            self.center_crop_processor = None
+        self.frame_processor = Compose(
+            [
+                ToTensor(),
+                Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
+            ]
+        )
 
         if vae_config_path is not None:
             vae_config_dict = json.load(open(vae_config_path))
@@ -91,14 +95,8 @@ class WanProcessor(HfTextClassificationProcessor):
             self.vision_processor = CLIPImageProcessor.from_json_file(image_config_path)
         else:
             self.vision_processor = None
-        self.divisor = 8
 
-    def text2video(
-        self,
-        prompt: str,
-        video: Union[cv2.VideoCapture, str, List[Image.Image]],
-        max_seq_length: Optional[int] = None,
-    ):
+    def get_video_frames(self, video: Union[cv2.VideoCapture, str]):
         if isinstance(video, str):
             video = cv2.VideoCapture(video)
 
@@ -114,9 +112,34 @@ class WanProcessor(HfTextClassificationProcessor):
         else:
             frames = video
 
+        return frames
+
+    def text2video(
+        self,
+        prompt: str,
+        video: Union[cv2.VideoCapture, str, List[Image.Image]],
+        max_seq_length: Optional[int] = None,
+    ):
+        frames = self.get_video_frames(video)
+
         pixel_values = []
         for frame in frames:
             if self.frame_processor is not None:
+                if self.video_size is not None:
+                    width, height = frame.size
+                    scale = max(self.video_size[0] / width, self.video_size[1] / height)
+                    frame = frame.resize(
+                        (round(width * scale), round(height * scale)),
+                        resample=Image.LANCZOS,
+                    )
+                    frame = self.center_crop_processor(frame)
+                else:
+                    width, height = frame.size
+                    new_width = width // self.divisor * self.divisor
+                    new_height = height // self.divisor * self.divisor
+                    frame = frame.resize(
+                        (new_width, new_height), resample=Image.LANCZOS
+                    )
                 pixel_frame = self.frame_processor(frame)
                 pixel_values.append(pixel_frame)
             else:
@@ -138,29 +161,40 @@ class WanProcessor(HfTextClassificationProcessor):
     def image2video(
         self,
         prompt: str,
-        image: Union[Image.Image, str],
         video: Union[cv2.VideoCapture, str, List[Image.Image]],
+        image: Optional[Union[Image.Image, str]] = None,
         max_seq_length: Optional[int] = None,
     ):
+        frames = self.get_video_frames(video)
+
         outputs = self.text2video(
             prompt=prompt,
-            video=video,
+            video=frames,
             max_seq_length=max_seq_length,
         )
         if isinstance(image, str):
-            image = Image.open(image)
-        image = image.convert("RGB")
+            image = Image.open(image).convert("RGB")
+
+        if image is None:
+            image = frames[0].convert("RGB")
+
+        if self.video_size is not None:
+            width, height = image.size
+            scale = max(self.video_size[0] / width, self.video_size[1] / height)
+            image = image.resize(
+                (round(height * scale), round(width * scale)), resample=Image.LANCZOS
+            )
+            image = self.center_crop_processor(image)
+        else:
+            width, height = image.size
+            new_width = width // self.divisor * self.divisor
+            new_height = height // self.divisor * self.divisor
+            image = image.resize((new_width, new_height), resample=Image.LANCZOS)
 
         condition_pixel_values = self.vision_processor.preprocess(
             image, return_tensors="pt"
         ).pixel_values[0]
 
-        size = image.size if self.video_size is None else self.video_size
-        size = (
-            size[0] // self.divisor * self.divisor,
-            size[1] // self.divisor * self.divisor,
-        )
-        image = image.resize(size, resample=Image.LANCZOS)
         vae_pixel_values = self.vae_image_processor.preprocess(image)[0]
 
         return GenericOutputs(
@@ -199,18 +233,24 @@ class WanProcessor(HfTextClassificationProcessor):
         if isinstance(image, str):
             image = Image.open(image)
         image = image.convert("RGB")
+
+        if self.video_size is not None:
+            width, height = image.size
+            scale = max(self.video_size[0] / width, self.video_size[1] / height)
+            image = image.resize(
+                (round(height * scale), round(width * scale)), resample=Image.LANCZOS
+            )
+            image = self.center_crop_processor(image)
+        else:
+            width, height = image.size
+            new_width = width // self.divisor * self.divisor
+            new_height = height // self.divisor * self.divisor
+            image = image.resize((new_width, new_height), resample=Image.LANCZOS)
+
+        vae_pixel_values = self.vae_image_processor.preprocess(image)[0]
         pixel_values = self.vision_processor.preprocess(
             image, return_tensors="pt"
         ).pixel_values[0]
-
-        size = image.size if self.video_size is None else self.video_size
-        size = (
-            size[0] // self.divisor * self.divisor,
-            size[1] // self.divisor * self.divisor,
-        )
-        image = image.resize(size, resample=Image.LANCZOS)
-
-        vae_pixel_values = self.vae_image_processor.preprocess(image)[0]
         text_outputs = self.text2video_inputs(
             prompt=prompt,
             negative_prompt=negative_prompt,

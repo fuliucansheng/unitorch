@@ -8,6 +8,7 @@ import torch
 import torch.nn as nn
 import requests
 import hashlib
+import imageio
 import tempfile
 import logging
 import numpy as np
@@ -17,7 +18,7 @@ from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from diffusers.utils import numpy_to_pil, pt_to_pil, export_to_gif
 from unitorch import is_opencv_available
-from unitorch.utils import load_weight
+from unitorch.utils import load_weight, tensor2vid
 from unitorch.cli import WriterMixin, WriterOutputs
 from unitorch.cli import (
     add_default_section_for_init,
@@ -27,21 +28,6 @@ from unitorch.cli import (
 from unitorch.cli.models.modeling_utils import TensorsOutputs, TensorsTargets
 
 from unitorch.cli import cached_path
-
-
-# def numpy2vid(video, mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]):
-#     batch_size, channels, num_frames, height, width = video.shape
-#     mean = np.array(mean).reshape(1, -1, 1, 1, 1)
-#     std = np.array(std).reshape(1, -1, 1, 1, 1)
-#     # unnormalize back to [0,1]
-#     video = video * std + mean
-#     video = np.clip(video, 0, 1)
-#     # prepare the final outputs
-#     i, c, f, h, w = video.shape
-#     images = np.transpose(video, (2, 3, 0, 4, 1)).reshape(f, h, i * w, c)
-#     images = np.split(images, f, axis=0)
-#     images = [(image.squeeze(0) * 255).astype("uint8") for image in images]  # f h w c
-#     return images
 
 
 def numpy2vid(video: np.ndarray) -> List[np.ndarray]:
@@ -57,38 +43,18 @@ def numpy2vid(video: np.ndarray) -> List[np.ndarray]:
     return images
 
 
-def tensor2vid(video: torch.Tensor) -> List[np.ndarray]:
-    if video.dim() == 4:
-        video = video.unsqueeze(0)
-    # prepare the final outputs
-    i, f, c, h, w = video.shape
-    images = video.permute(1, 3, 0, 4, 2).reshape(
-        f, h, i * w, c
-    )  # 1st (frames, h, batch_size, w, c) 2nd (frames, h, batch_size * w, c)
-    images = images.unbind(dim=0)  # prepare a list of indvidual (consecutive frames)
-    images = [
-        (image.cpu().numpy() * 255).astype("uint8") for image in images
-    ]  # f h w c
-    return images
-
-
 def export_to_video(
     video_frames: List[np.ndarray],
     output_video_path: str = None,
     fps: int = 8,
 ) -> str:
-    assert is_opencv_available(), "Please install python3-opencv first."
-    import cv2
-
     if output_video_path is None:
         output_video_path = tempfile.NamedTemporaryFile(suffix=".mp4").name
 
-    fourcc = cv2.VideoWriter_fourcc(*"avc1")
-    h, w, c = video_frames[0].shape
-    video_writer = cv2.VideoWriter(output_video_path, fourcc, fps=fps, frameSize=(w, h))
-    for i in range(len(video_frames)):
-        img = cv2.cvtColor(video_frames[i], cv2.COLOR_RGB2BGR)
-        video_writer.write(img)
+    video_writer = imageio.get_writer(output_video_path, fps=fps)
+    for frame in video_frames:
+        video_writer.append_data(frame)
+    video_writer.close()
     return output_video_path
 
 

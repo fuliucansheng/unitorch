@@ -131,6 +131,19 @@ def is_onnxruntime_available():
     return _onnxruntime_available or is_offline_debug_mode()
 
 
+# wandb
+_wandb_available = importlib.util.find_spec("wandb") is not None
+try:
+    _wandb_version = importlib_metadata.version("wandb")
+    logging.debug(f"Successfully imported wandb version {_wandb_version}")
+except importlib_metadata.PackageNotFoundError:
+    _wandb_available = False
+
+
+def is_wandb_available():
+    return _wandb_available or is_offline_debug_mode()
+
+
 # is cuda & bfloat16 avaliable
 def is_bfloat16_available():
     if not torch.cuda.is_available():

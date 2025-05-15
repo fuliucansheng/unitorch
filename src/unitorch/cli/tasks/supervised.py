@@ -55,6 +55,7 @@ from unitorch.cli.models import (
     CombineTensorsInputs,
     CombineTensorsTargets,
 )
+import unitorch.cli.wandb as wandb
 
 
 class DatasetFeature(Dataset):
@@ -146,6 +147,12 @@ def monitor(outputs, targets, monitor_fns):
         score = monitor_fn(outputs=outputs, targets=targets)
         info = str(type(monitor_fn).__name__)
         logging.info(f"{info} is {score}")
+        if wandb.is_available():
+            wandb.log(
+                {
+                    f"val/{info}": score,
+                }
+            )
     return
 
 
@@ -591,6 +598,14 @@ class SupervisedTask:
                     logging.info(
                         f"epoch {e} step {step}: loss -- { log_loss / log_freq }"
                     )
+                    if wandb.is_available():
+                        wandb.log(
+                            {
+                                "epoch": e,
+                                "step": step,
+                                "loss": log_loss / log_freq,
+                            }
+                        )
                     log_loss = 0
 
                 if (step + 1) % ckpt_freq == 0:

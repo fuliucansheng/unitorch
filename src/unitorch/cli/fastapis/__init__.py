@@ -12,3 +12,4 @@ import unitorch.cli.fastapis.stable_3
 import unitorch.cli.fastapis.controlnet_3
 import unitorch.cli.fastapis.stable_flux
 import unitorch.cli.fastapis.controlnet_flux
+import unitorch.cli.fastapis.wan

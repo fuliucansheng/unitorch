@@ -20,7 +20,7 @@ ACT2FN = {
     "sigmoid": lambda v: 1 / (1 + np.exp(-v)),
     "softmax": lambda v: np.exp(v) / np.sum(np.exp(v), axis=-1, keepdims=True),
 }
-from unitorch import is_diffusers_available, is_opencv_available
+from unitorch import is_diffusers_available, is_opencv_available, is_megatron_available
 
 # import modeling utils
 from unitorch.cli.models.modeling_utils import (

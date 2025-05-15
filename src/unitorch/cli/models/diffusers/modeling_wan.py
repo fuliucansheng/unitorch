@@ -70,7 +70,7 @@ class WanForText2VideoGeneration(_WanForText2VideoGeneration):
     @add_default_section_for_init("core/model/diffusers/text2video/wan")
     def from_core_configure(cls, config, **kwargs):
         config.set_default_section("core/model/diffusers/text2video/wan")
-        pretrained_name = config.getoption("pretrained_name", "wan-v2.1-t2i-1.3B")
+        pretrained_name = config.getoption("pretrained_name", "wan-v2.1-t2v-1.3b")
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
 
         config_path = config.getoption("config_path", None)
@@ -155,6 +155,7 @@ class WanForText2VideoGeneration(_WanForText2VideoGeneration):
 
         pretrained_lora_names = config.getoption("pretrained_lora_names", None)
         pretrained_lora_weights = config.getoption("pretrained_lora_weights", 1.0)
+        pretrained_lora_alphas = config.getoption("pretrained_lora_alphas", 32.0)
 
         if isinstance(pretrained_lora_names, str):
             pretrained_lora_weights_path = nested_dict_value(
@@ -178,8 +179,9 @@ class WanForText2VideoGeneration(_WanForText2VideoGeneration):
         )
         if lora_weights_path is not None:
             inst.load_lora_weights(
-                lora_weights_path,
-                pretrained_lora_weights,
+                lora_files=lora_weights_path,
+                lora_weights=pretrained_lora_weights,
+                lora_alphas=pretrained_lora_alphas,
                 replace_keys={},
                 save_base_state=False,
             )
@@ -274,7 +276,7 @@ class WanForImage2VideoGeneration(_WanForImage2VideoGeneration):
     @add_default_section_for_init("core/model/diffusers/image2video/wan")
     def from_core_configure(cls, config, **kwargs):
         config.set_default_section("core/model/diffusers/image2video/wan")
-        pretrained_name = config.getoption("pretrained_name", "wan-v2.1-i2v-14B")
+        pretrained_name = config.getoption("pretrained_name", "wan-v2.1-i2v-14b-480p")
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
 
         config_path = config.getoption("config_path", None)
@@ -375,6 +377,7 @@ class WanForImage2VideoGeneration(_WanForImage2VideoGeneration):
 
         pretrained_lora_names = config.getoption("pretrained_lora_names", None)
         pretrained_lora_weights = config.getoption("pretrained_lora_weights", 1.0)
+        pretrained_lora_alphas = config.getoption("pretrained_lora_alphas", 32.0)
 
         if isinstance(pretrained_lora_names, str):
             pretrained_lora_weights_path = nested_dict_value(
@@ -398,8 +401,9 @@ class WanForImage2VideoGeneration(_WanForImage2VideoGeneration):
         )
         if lora_weights_path is not None:
             inst.load_lora_weights(
-                lora_weights_path,
-                pretrained_lora_weights,
+                lora_files=lora_weights_path,
+                lora_weights=pretrained_lora_weights,
+                lora_alphas=pretrained_lora_alphas,
                 replace_keys={},
                 save_base_state=False,
             )

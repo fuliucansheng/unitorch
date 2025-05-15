@@ -55,6 +55,7 @@ from unitorch.utils.import_utils import (
     is_bitsandbytes_available,
     is_auto_gptq_available,
     is_onnxruntime_available,
+    is_wandb_available,
     is_bfloat16_available,
     is_cuda_available,
 )

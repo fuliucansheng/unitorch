@@ -227,7 +227,7 @@ class WanForText2VideoGeneration(GenericWanModel):
         input_ids: torch.Tensor,
         attention_mask: Optional[torch.Tensor] = None,
     ):
-        latents = self.vae.encode(pixel_values).latent_dist.mode()
+        latents = self.vae.encode(pixel_values).latent_dist.sample()
         noise = torch.randn(latents.shape).to(latents.device)
         batch = latents.shape[0]
         latents_mean = (
@@ -240,31 +240,18 @@ class WanForText2VideoGeneration(GenericWanModel):
         ).to(latents.device, latents.dtype)
         latents = (latents - latents_mean) * latents_std
 
-        # u = compute_density_for_timestep_sampling(
-        #     weighting_scheme="none",
-        #     batch_size=batch,
-        #     logit_mean=0.0,
-        #     logit_std=1.0,
-        #     mode_scale=1.29,
-        # )
-        # indices = (u * self.scheduler.config.num_train_timesteps).long()
-        # timesteps = self.scheduler.timesteps[indices].to(device=self.device)
-
-        # sigmas = self.get_sigmas(timesteps, n_dim=latents.ndim, dtype=latents.dtype)
-        # noise_latents = (1.0 - sigmas) * latents + sigmas * noise
-
-        timesteps = torch.randint(
-            0,
-            self.scheduler.config.num_train_timesteps,
-            (batch,),
-            device=pixel_values.device,
-        ).long()
-
-        noise_latents = self.scheduler.add_noise(
-            latents,
-            noise,
-            timesteps,
+        u = compute_density_for_timestep_sampling(
+            weighting_scheme="none",
+            batch_size=batch,
+            logit_mean=0.0,
+            logit_std=1.0,
+            mode_scale=1.29,
         )
+        indices = (u * self.scheduler.config.num_train_timesteps).long()
+        timesteps = self.scheduler.timesteps[indices].to(device=self.device)
+
+        sigmas = self.get_sigmas(timesteps, n_dim=latents.ndim, dtype=latents.dtype)
+        noise_latents = (1.0 - sigmas) * latents + sigmas * noise
 
         encoder_hidden_states = self.text(input_ids, attention_mask)[0]
         outputs = self.transformer(
@@ -272,18 +259,17 @@ class WanForText2VideoGeneration(GenericWanModel):
             timesteps,
             encoder_hidden_states,
         ).sample
-        # weighting = compute_loss_weighting_for_sd3(
-        #     weighting_scheme="none", sigmas=sigmas
-        # )
-        # target = noise - latents
-        # loss = torch.mean(
-        #     (weighting.float() * (outputs.float() - target.float()) ** 2).reshape(
-        #         target.shape[0], -1
-        #     ),
-        #     1,
-        # )
-        # loss = loss.mean()
-        loss = F.mse_loss(outputs, noise, reduction="mean")
+        weighting = compute_loss_weighting_for_sd3(
+            weighting_scheme="none", sigmas=sigmas
+        )
+        target = noise - latents
+        loss = torch.mean(
+            (weighting.float() * (outputs.float() - target.float()) ** 2).reshape(
+                target.shape[0], -1
+            ),
+            1,
+        )
+        loss = loss.mean()
         return loss
 
     def generate(
@@ -378,7 +364,7 @@ class WanForImage2VideoGeneration(GenericWanModel):
         input_ids: torch.Tensor,
         attention_mask: Optional[torch.Tensor] = None,
     ):
-        latents = self.vae.encode(pixel_values).latent_dist.mode()
+        latents = self.vae.encode(pixel_values).latent_dist.sample()
         noise = torch.randn(latents.shape).to(latents.device)
         batch = latents.shape[0]
         latents_mean = (
@@ -391,31 +377,18 @@ class WanForImage2VideoGeneration(GenericWanModel):
         ).to(latents.device, latents.dtype)
         latents = (latents - latents_mean) * latents_std
 
-        # u = compute_density_for_timestep_sampling(
-        #     weighting_scheme="none",
-        #     batch_size=batch,
-        #     logit_mean=0.0,
-        #     logit_std=1.0,
-        #     mode_scale=1.29,
-        # )
-        # indices = (u * self.scheduler.config.num_train_timesteps).long()
-        # timesteps = self.scheduler.timesteps[indices].to(device=self.device)
-
-        # sigmas = self.get_sigmas(timesteps, n_dim=latents.ndim, dtype=latents.dtype)
-        # noise_latents = (1.0 - sigmas) * latents + sigmas * noise
-
-        timesteps = torch.randint(
-            0,
-            self.scheduler.config.num_train_timesteps,
-            (batch,),
-            device=pixel_values.device,
-        ).long()
-
-        noise_latents = self.scheduler.add_noise(
-            latents,
-            noise,
-            timesteps,
+        u = compute_density_for_timestep_sampling(
+            weighting_scheme="none",
+            batch_size=batch,
+            logit_mean=0.0,
+            logit_std=1.0,
+            mode_scale=1.29,
         )
+        indices = (u * self.scheduler.config.num_train_timesteps).long()
+        timesteps = self.scheduler.timesteps[indices].to(device=self.device)
+
+        sigmas = self.get_sigmas(timesteps, n_dim=latents.ndim, dtype=latents.dtype)
+        noise_latents = (1.0 - sigmas) * latents + sigmas * noise
 
         num_frames = pixel_values.shape[-3]
 
@@ -473,18 +446,17 @@ class WanForImage2VideoGeneration(GenericWanModel):
             encoder_hidden_states=encoder_hidden_states,
             encoder_hidden_states_image=condition_hidden_states,
         ).sample
-        # weighting = compute_loss_weighting_for_sd3(
-        #     weighting_scheme="none", sigmas=sigmas
-        # )
-        # target = noise - latents
-        # loss = torch.mean(
-        #     (weighting.float() * (outputs.float() - target.float()) ** 2).reshape(
-        #         target.shape[0], -1
-        #     ),
-        #     1,
-        # )
-        # loss = loss.mean()
-        loss = F.mse_loss(outputs, noise, reduction="mean")
+        weighting = compute_loss_weighting_for_sd3(
+            weighting_scheme="none", sigmas=sigmas
+        )
+        target = noise - latents
+        loss = torch.mean(
+            (weighting.float() * (outputs.float() - target.float()) ** 2).reshape(
+                target.shape[0], -1
+            ),
+            1,
+        )
+        loss = loss.mean()
         return loss
 
     def generate(

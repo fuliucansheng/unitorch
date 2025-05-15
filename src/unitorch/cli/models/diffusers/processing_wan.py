@@ -114,14 +114,14 @@ class WanProcessor(_WanProcessor):
     def _image2video(
         self,
         prompt: str,
-        image: Union[Image.Image, str],
         video: Union[cv2.VideoCapture, str, List[Image.Image]],
+        image: Optional[Union[Image.Image, str]] = None,
         max_seq_length: Optional[int] = None,
     ):
         outputs = super().image2video(
             prompt=prompt,
-            image=image,
             video=video,
+            image=image,
             max_seq_length=max_seq_length,
         )
         return TensorsInputs(

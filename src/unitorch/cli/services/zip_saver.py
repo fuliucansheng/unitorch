@@ -67,7 +67,7 @@ def get_zipfiles(zipfiles, num_thread=48):
 
 class ZipSaverServer(http.server.BaseHTTPRequestHandler):
     zip_set = {}
-    zip_file_prefix = "zip_images"
+    zip_file_prefix = "zip_files"
     zip_folder = None
     curr_file = None
     next_zip_file_index = 0
@@ -125,7 +125,7 @@ class ZipSaverService(GenericService):
         self.port = config.getoption("port", 11231)
         self.name = config.getoption("processname", "core_zip_saver_service")
         self.zip_folder = config.getoption("zip_folder", None)
-        self.zip_file_prefix = config.getoption("zip_file_prefix", "zip_images")
+        self.zip_file_prefix = config.getoption("zip_file_prefix", "zip_files")
         self.zip_extension = config.getoption("zip_extension", ".zip")
         self.max_files_per_zip = config.getoption("max_files_per_zip", 10000000)
         assert self.zip_folder is not None

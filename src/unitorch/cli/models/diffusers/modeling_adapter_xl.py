@@ -234,6 +234,7 @@ class StableXLAdapterForText2ImageGeneration(_StableXLAdapterForText2ImageGenera
 
         pretrained_lora_names = config.getoption("pretrained_lora_names", None)
         pretrained_lora_weights = config.getoption("pretrained_lora_weights", 1.0)
+        pretrained_lora_alphas = config.getoption("pretrained_lora_alphas", 32.0)
 
         if isinstance(pretrained_lora_names, str):
             pretrained_lora_weights_path = nested_dict_value(
@@ -257,8 +258,9 @@ class StableXLAdapterForText2ImageGeneration(_StableXLAdapterForText2ImageGenera
         )
         if lora_weights_path is not None:
             inst.load_lora_weights(
-                lora_weights_path,
-                pretrained_lora_weights,
+                lora_files=lora_weights_path,
+                lora_weights=pretrained_lora_weights,
+                lora_alphas=pretrained_lora_alphas,
                 replace_keys={},
                 save_base_state=False,
             )

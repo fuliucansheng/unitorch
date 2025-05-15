@@ -103,8 +103,10 @@ class VideoProcessor:
                 video = io.BytesIO(base64.b64decode(video))
 
                 frames = []
-                with imageio.v3.imopen(video, plugin="ffmpeg", format="mp4") as reader:
-                    for frame in reader:
+                with imageio.v3.imopen(
+                    video, "r", plugin="pyav", format="mp4"
+                ) as reader:
+                    for frame in reader.iter():
                         img = Image.fromarray(frame)
                         frames.append(img)
                 return frames
@@ -113,8 +115,10 @@ class VideoProcessor:
                 video = io.BytesIO(bytes.fromhex(video))
 
                 frames = []
-                with imageio.v3.imopen(video, plugin="ffmpeg", format="mp4") as reader:
-                    for frame in reader:
+                with imageio.v3.imopen(
+                    video, "r", plugin="pyav", format="mp4"
+                ) as reader:
+                    for frame in reader.iter():
                         img = Image.fromarray(frame)
                         frames.append(img)
                 return frames
@@ -130,8 +134,8 @@ class VideoProcessor:
 
             video = io.BytesIO(doc.content)
             frames = []
-            with imageio.v3.imopen(video, plugin="ffmpeg", format="mp4") as reader:
-                for frame in reader:
+            with imageio.v3.imopen(video, "r", plugin="pyav", format="mp4") as reader:
+                for frame in reader.iter():
                     img = Image.fromarray(frame)
                     frames.append(img)
             return frames

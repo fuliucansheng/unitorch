@@ -1,13 +1,19 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
+import io
 import re
+import gc
 import json
 import logging
 import torch
+import hashlib
+import asyncio
 import pandas as pd
 from PIL import Image
 from torch import autocast
+from fastapi import APIRouter, UploadFile, File
+from fastapi.responses import StreamingResponse
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from diffusers.utils import numpy_to_pil
 from diffusers.models import ControlNetModel
@@ -15,22 +21,22 @@ from diffusers.pipelines import (
     WanImageToVideoPipeline,
 )
 from unitorch import is_xformers_available
-from unitorch.utils import (
-    is_remote_url,
-    is_bfloat16_available,
-)
+from unitorch.utils import is_remote_url, tensor2vid
 from unitorch.models.diffusers import WanForImage2VideoGeneration
 from unitorch.models.diffusers import WanProcessor
-
-from unitorch.utils import pop_value, nested_dict_value, tensor2vid
+from unitorch.utils import (
+    pop_value,
+    nested_dict_value,
+    is_bfloat16_available,
+    is_cuda_available,
+)
 from unitorch.cli import (
     cached_path,
+    register_fastapi,
     add_default_section_for_init,
     add_default_section_for_function,
 )
-
-from unitorch.cli import CoreConfigureParser, GenericScript
-from unitorch.cli import register_script
+from unitorch.cli import CoreConfigureParser, GenericFastAPI
 from unitorch.cli.models.diffusers import (
     pretrained_stable_infos,
     pretrained_stable_extensions_infos,
@@ -40,7 +46,7 @@ from unitorch.cli.pipelines import Schedulers
 from unitorch.cli.models.diffusion_utils import export_to_video
 
 
-class WanForImage2VideoGenerationPipeline(WanForImage2VideoGeneration):
+class WanForImage2VideoFastAPIPipeline(WanForImage2VideoGeneration):
     def __init__(
         self,
         config_path: str,
@@ -57,6 +63,9 @@ class WanForImage2VideoGenerationPipeline(WanForImage2VideoGeneration):
         num_infer_timesteps: Optional[int] = 50,
         weight_path: Optional[Union[str, List[str]]] = None,
         state_dict: Optional[Dict[str, Any]] = None,
+        lora_checkpoints: Optional[Union[str, List[str]]] = None,
+        lora_weights: Optional[Union[float, List[float]]] = 1.0,
+        lora_alphas: Optional[Union[float, List[float]]] = 32,
         device: Optional[Union[str, int]] = "cpu",
         enable_cpu_offload: Optional[bool] = False,
         enable_xformers: Optional[bool] = False,
@@ -83,14 +92,28 @@ class WanForImage2VideoGenerationPipeline(WanForImage2VideoGeneration):
         self.from_pretrained(weight_path, state_dict=state_dict)
         self.eval()
 
+        if lora_checkpoints is not None:
+            self.load_lora_weights(
+                lora_checkpoints,
+                lora_weights=lora_weights,
+                lora_alphas=lora_alphas,
+                save_base_state=False,
+            )
+
         self._enable_cpu_offload = enable_cpu_offload
         self._enable_xformers = enable_xformers
 
-        if not self._enable_cpu_offload:
-            self.image.to(device=self._device)
+        if self._enable_cpu_offload and self._device != "cpu":
+            self.pipeline.enable_model_cpu_offload(self._device)
+        else:
+            self.to(device=self._device)
+
+        if self._enable_xformers and self._device != "cpu":
+            assert is_xformers_available(), "Please install xformers first."
+            self.pipeline.enable_xformers_memory_efficient_attention()
 
     @classmethod
-    @add_default_section_for_init("core/pipeline/wan/image2video")
+    @add_default_section_for_init("core/fastapi/pipeline/wan/image2video")
     def from_core_configure(
         cls,
         config,
@@ -105,9 +128,13 @@ class WanForImage2VideoGenerationPipeline(WanForImage2VideoGeneration):
         quant_config_path: Optional[str] = None,
         pretrained_weight_path: Optional[str] = None,
         device: Optional[str] = None,
+        pretrained_lora_names: Optional[Union[str, List[str]]] = None,
+        pretrained_lora_weights_path: Optional[Union[str, List[str]]] = None,
+        pretrained_lora_weights: Optional[Union[float, List[float]]] = None,
+        pretrained_lora_alphas: Optional[Union[float, List[float]]] = None,
         **kwargs,
     ):
-        config.set_default_section("core/pipeline/wan/image2video")
+        config.set_default_section("core/fastapi/pipeline/wan/image2video")
         pretrained_name = pretrained_name or config.getoption(
             "pretrained_name", "wan-v2.1-i2v-14b-480p"
         )
@@ -203,17 +230,58 @@ class WanForImage2VideoGenerationPipeline(WanForImage2VideoGeneration):
                     prefix_keys={"": "vae."},
                 ),
             ]
+
+        pretrained_lora_names = pretrained_lora_names or config.getoption(
+            "pretrained_lora_names", None
+        )
+        pretrained_lora_weights = pretrained_lora_weights or config.getoption(
+            "pretrained_lora_weights", 1.0
+        )
+        pretrained_lora_alphas = pretrained_lora_alphas or config.getoption(
+            "pretrained_lora_alphas", 32.0
+        )
+
+        if (
+            isinstance(pretrained_lora_names, str)
+            and pretrained_lora_weights_path is None
+        ):
+            pretrained_lora_weights_path = nested_dict_value(
+                pretrained_stable_extensions_infos,
+                pretrained_lora_names,
+                "lora",
+                "weight",
+            )
+        elif (
+            isinstance(pretrained_lora_names, list)
+            and pretrained_lora_weights_path is None
+        ):
+            pretrained_lora_weights_path = [
+                nested_dict_value(
+                    pretrained_stable_extensions_infos, name, "lora", "weight"
+                )
+                for name in pretrained_lora_names
+            ]
+            assert len(pretrained_lora_weights_path) == len(pretrained_lora_weights)
+            assert len(pretrained_lora_weights_path) == len(pretrained_lora_alphas)
+
+        lora_weights_path = pretrained_lora_weights_path or config.getoption(
+            "pretrained_lora_weights_path", None
+        )
+
         inst = cls(
             config_path=config_path,
             text_config_path=text_config_path,
             image_config_path=image_config_path,
             image_process_config_path=image_process_config_path,
-            scheduler_config_path=scheduler_config_path,
             vae_config_path=vae_config_path,
+            scheduler_config_path=scheduler_config_path,
             vocab_path=vocab_path,
             quant_config_path=quant_config_path,
             weight_path=weight_path,
             state_dict=state_dict,
+            lora_checkpoints=lora_weights_path,
+            lora_weights=pretrained_lora_weights,
+            lora_alphas=pretrained_lora_alphas,
             device=device,
             enable_cpu_offload=enable_cpu_offload,
             enable_xformers=enable_xformers,
@@ -225,50 +293,26 @@ class WanForImage2VideoGenerationPipeline(WanForImage2VideoGeneration):
         device_type=("cuda" if torch.cuda.is_available() else "cpu"),
         dtype=(torch.bfloat16 if is_bfloat16_available() else torch.float32),
     )
-    @add_default_section_for_function("core/pipeline/wan/image2video")
+    @add_default_section_for_function("core/fastapi/pipeline/wan/image2video")
     def __call__(
         self,
-        prompt: str,
+        text: str,
         image: Image.Image,
-        negative_prompt: Optional[str] = None,
-        height: Optional[int] = 480,
-        width: Optional[int] = 832,
+        neg_text: Optional[str] = "",
         num_frames: Optional[int] = 81,
         num_fps: Optional[int] = 16,
+        guidance_scale: Optional[float] = 5.0,
+        strength: Optional[float] = 1.0,
         num_timesteps: Optional[int] = 50,
         seed: Optional[int] = 1123,
-        scheduler: Optional[str] = None,
-        guidance_scale: Optional[float] = 5.0,
-        lora_checkpoints: Optional[Union[str, List[str]]] = [],
-        lora_weights: Optional[Union[float, List[float]]] = 1.0,
-        lora_alphas: Optional[Union[float, List[float]]] = 32,
-        lora_urls: Optional[Union[str, List[str]]] = [],
-        lora_files: Optional[Union[str, List[str]]] = [],
     ):
         image = image.convert("RGB")
         inputs = self.processor.image2video_inputs(
-            prompt,
-            image.resize((width, height), resample=Image.LANCZOS),
-            negative_prompt=negative_prompt,
+            text,
+            image,
+            negative_prompt=neg_text,
             max_seq_length=77,
         )
-
-        assert scheduler is None or scheduler in Schedulers
-        if scheduler is not None:
-            self.scheduler = Schedulers.get(scheduler).from_config(
-                self.scheduler.config
-            )
-
-        self.pipeline = WanImageToVideoPipeline(
-            vae=self.vae,
-            text_encoder=self.text,
-            image_encoder=self.image,
-            transformer=self.transformer,
-            scheduler=self.scheduler,
-            tokenizer=None,
-            image_processor=None,
-        )
-        self.pipeline.set_progress_bar_config(disable=True)
         self.seed = seed
 
         inputs = {k: v.unsqueeze(0) if v is not None else v for k, v in inputs.items()}
@@ -276,61 +320,8 @@ class WanForImage2VideoGenerationPipeline(WanForImage2VideoGeneration):
             k: v.to(device=self.device) if v is not None else v
             for k, v in inputs.items()
         }
-        if isinstance(lora_checkpoints, str):
-            lora_checkpoints = [lora_checkpoints]
-        if isinstance(lora_weights, float):
-            lora_weights = [lora_weights]
-        if isinstance(lora_alphas, float):
-            lora_alphas = [lora_alphas]
-        if isinstance(lora_urls, str):
-            lora_urls = [lora_urls]
-        if isinstance(lora_files, str):
-            lora_files = [lora_files]
 
-        assert (
-            len(lora_checkpoints) == len(lora_weights)
-            and len(lora_checkpoints) == len(lora_alphas)
-            and len(lora_checkpoints) == len(lora_urls)
-            and len(lora_checkpoints) == len(lora_files)
-        )
-        processed_lora_files, processed_lora_weights, processed_lora_alphas = [], [], []
-        for ckpt, url, file, weight, alpha in zip(
-            lora_checkpoints, lora_urls, lora_files, lora_weights, lora_alphas
-        ):
-            if ckpt is not None:
-                processed_lora_files.append(
-                    nested_dict_value(
-                        pretrained_stable_extensions_infos, ckpt, "weight"
-                    )
-                )
-                processed_lora_weights.append(weight)
-                processed_lora_alphas.append(alpha)
-            elif url is not None and is_remote_url(url):
-                processed_lora_files.append(url)
-                processed_lora_weights.append(weight)
-                processed_lora_alphas.append(alpha)
-            elif file is not None:
-                processed_lora_files.append(file)
-                processed_lora_weights.append(weight)
-                processed_lora_alphas.append(alpha)
-
-        if len(processed_lora_files) > 0:
-            self.load_lora_weights(
-                processed_lora_files,
-                lora_weights=processed_lora_weights,
-                lora_alphas=processed_lora_alphas,
-            )
-
-        if self._enable_cpu_offload and self._device != "cpu":
-            self.pipeline.enable_model_cpu_offload(self._device)
-        else:
-            self.to(device=self._device)
-
-        if self._enable_xformers and self._device != "cpu":
-            assert is_xformers_available(), "Please install xformers first."
-            self.pipeline.enable_xformers_memory_efficient_attention()
-
-        outputs = self.get_prompt_outputs(
+        prompt_outputs = self.get_prompt_outputs(
             input_ids=inputs["input_ids"],
             negative_input_ids=inputs["negative_input_ids"],
             attention_mask=inputs["attention_mask"],
@@ -353,8 +344,8 @@ class WanForImage2VideoGenerationPipeline(WanForImage2VideoGeneration):
 
         outputs = self.pipeline(
             image=inputs["vae_pixel_values"],
-            prompt_embeds=outputs.prompt_embeds,
-            negative_prompt_embeds=outputs.negative_prompt_embeds,
+            prompt_embeds=prompt_outputs.prompt_embeds,
+            negative_prompt_embeds=prompt_outputs.negative_prompt_embeds,
             image_embeds=condition_hidden_states,
             generator=torch.Generator(device=self.pipeline.device).manual_seed(seed),
             num_inference_steps=num_timesteps,
@@ -365,8 +356,89 @@ class WanForImage2VideoGenerationPipeline(WanForImage2VideoGeneration):
             output_type="pt",
         )
 
-        self.unload_lora_weights()
-
         frames = tensor2vid(outputs.frames.float())
         name = export_to_video(frames, fps=num_fps)
         return name
+
+
+@register_fastapi("core/fastapi/wan/image2video")
+class WanForImage2VideoFastAPI(GenericFastAPI):
+    def __init__(self, config: CoreConfigureParser):
+        self.config = config
+        config.set_default_section(f"core/fastapi/wan/image2video")
+        router = config.getoption("router", "/core/fastapi/wan/image2video")
+        self._pipe = None
+        self._router = APIRouter(prefix=router)
+        self._router.add_api_route("/generate", self.serve, methods=["POST"])
+        self._router.add_api_route("/status", self.status, methods=["GET"])
+        self._router.add_api_route("/start", self.start, methods=["POST"])
+        self._router.add_api_route("/stop", self.stop, methods=["GET"])
+        self._lock = asyncio.Lock()
+
+    @property
+    def router(self):
+        return self._router
+
+    def start(
+        self,
+        pretrained_name: Optional[str] = "wan-v2.1-i2v-14b-480p",
+        pretrained_lora_names: Optional[Union[str, List[str]]] = None,
+        pretrained_lora_weights: Optional[Union[float, List[float]]] = 1.0,
+        pretrained_lora_alphas: Optional[Union[float, List[float]]] = 32.0,
+    ):
+        self._pipe = WanForImage2VideoFastAPIPipeline.from_core_configure(
+            self.config,
+            pretrained_name=pretrained_name,
+            pretrained_lora_names=pretrained_lora_names,
+            pretrained_lora_weights=pretrained_lora_weights,
+            pretrained_lora_alphas=pretrained_lora_alphas,
+        )
+        return "start success"
+
+    def stop(self):
+        self._pipe.to("cpu")
+        del self._pipe
+        gc.collect()
+        torch.cuda.empty_cache()
+        self._pipe = None
+        return "stop success"
+
+    def status(self):
+        return "running" if self._pipe is not None else "stopped"
+
+    async def serve(
+        self,
+        text: str,
+        image: UploadFile,
+        neg_text: Optional[str] = "",
+        num_frames: Optional[int] = 81,
+        num_fps: Optional[int] = 16,
+        guidance_scale: Optional[float] = 5.0,
+        strength: Optional[float] = 1.0,
+        num_timesteps: Optional[int] = 50,
+        seed: Optional[int] = 1123,
+    ):
+        assert self._pipe is not None
+        image_bytes = await image.read()
+        image = Image.open(io.BytesIO(image_bytes))
+        async with self._lock:
+            video = self._pipe(
+                text,
+                image,
+                neg_text=neg_text,
+                num_frames=num_frames,
+                num_fps=num_fps,
+                guidance_scale=guidance_scale,
+                strength=strength,
+                num_timesteps=num_timesteps,
+                seed=seed,
+            )
+        buffer = io.BytesIO()
+        with open(video, "rb") as f:
+            buffer.write(f.read())
+        buffer.seek(0)
+        return StreamingResponse(
+            buffer,
+            media_type="video/mp4",
+            headers={"Content-Disposition": "attachment; filename=output.mp4"},
+        )
