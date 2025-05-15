@@ -18,7 +18,7 @@ from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from diffusers.utils import numpy_to_pil, pt_to_pil, export_to_gif
 from unitorch import is_opencv_available
-from unitorch.utils import load_weight
+from unitorch.utils import load_weight, tensor2vid
 from unitorch.cli import WriterMixin, WriterOutputs
 from unitorch.cli import (
     add_default_section_for_init,
@@ -40,21 +40,6 @@ def numpy2vid(video: np.ndarray) -> List[np.ndarray]:
     images = images.reshape(f, h, i * w, c)
     # Convert to uint8 and scale pixel values
     images = [(frame * 255).astype("uint8") for frame in images]
-    return images
-
-
-def tensor2vid(video: torch.Tensor) -> List[np.ndarray]:
-    if video.dim() == 4:
-        video = video.unsqueeze(0)
-    # prepare the final outputs
-    i, f, c, h, w = video.shape
-    images = video.permute(1, 3, 0, 4, 2).reshape(
-        f, h, i * w, c
-    )  # 1st (frames, h, batch_size, w, c) 2nd (frames, h, batch_size * w, c)
-    images = images.unbind(dim=0)  # prepare a list of indvidual (consecutive frames)
-    images = [
-        (image.cpu().numpy() * 255).astype("uint8") for image in images
-    ]  # f h w c
     return images
 
 

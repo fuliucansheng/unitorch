@@ -18,11 +18,11 @@ from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from diffusers.utils import numpy_to_pil
 from diffusers.models import ControlNetModel
 from diffusers.pipelines import (
-    WanImageToVideoPipeline,
+    WanPipeline,
 )
 from unitorch import is_xformers_available
 from unitorch.utils import is_remote_url, tensor2vid
-from unitorch.models.diffusers import WanForImage2VideoGeneration
+from unitorch.models.diffusers import WanForText2VideoGeneration
 from unitorch.models.diffusers import WanProcessor
 from unitorch.utils import (
     pop_value,
@@ -46,16 +46,14 @@ from unitorch.cli.pipelines import Schedulers
 from unitorch.cli.models.diffusion_utils import export_to_video
 
 
-class WanForImage2VideoFastAPIPipeline(WanForImage2VideoGeneration):
+class WanForText2VideoFastAPIPipeline(WanForText2VideoGeneration):
     def __init__(
         self,
         config_path: str,
         text_config_path: str,
-        image_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
         vocab_path: str,
-        image_process_config_path: str,
         quant_config_path: Optional[str] = None,
         in_channels: Optional[int] = None,
         out_channels: Optional[int] = None,
@@ -73,7 +71,6 @@ class WanForImage2VideoFastAPIPipeline(WanForImage2VideoGeneration):
         super().__init__(
             config_path=config_path,
             text_config_path=text_config_path,
-            image_config_path=image_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
             quant_config_path=quant_config_path,
@@ -84,7 +81,6 @@ class WanForImage2VideoFastAPIPipeline(WanForImage2VideoGeneration):
         )
         self.processor = WanProcessor(
             vocab_path=vocab_path,
-            image_config_path=image_process_config_path,
             vae_config_path=vae_config_path,
         )
         self._device = "cpu" if device == "cpu" else int(device)
@@ -113,18 +109,16 @@ class WanForImage2VideoFastAPIPipeline(WanForImage2VideoGeneration):
             self.pipeline.enable_xformers_memory_efficient_attention()
 
     @classmethod
-    @add_default_section_for_init("core/fastapi/pipeline/wan/image2video")
+    @add_default_section_for_init("core/fastapi/pipeline/wan/text2video")
     def from_core_configure(
         cls,
         config,
         pretrained_name: Optional[str] = None,
         config_path: Optional[str] = None,
         text_config_path: Optional[str] = None,
-        image_config_path: Optional[str] = None,
         vae_config_path: Optional[str] = None,
         scheduler_config_path: Optional[str] = None,
         vocab_path: Optional[str] = None,
-        image_process_config_path: Optional[str] = None,
         quant_config_path: Optional[str] = None,
         pretrained_weight_path: Optional[str] = None,
         device: Optional[str] = None,
@@ -134,9 +128,9 @@ class WanForImage2VideoFastAPIPipeline(WanForImage2VideoGeneration):
         pretrained_lora_alphas: Optional[Union[float, List[float]]] = None,
         **kwargs,
     ):
-        config.set_default_section("core/fastapi/pipeline/wan/image2video")
+        config.set_default_section("core/fastapi/pipeline/wan/text2video")
         pretrained_name = pretrained_name or config.getoption(
-            "pretrained_name", "wan-v2.1-i2v-14b-480p"
+            "pretrained_name", "wan-v2.1-t2v-1.3b"
         )
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
 
@@ -155,15 +149,6 @@ class WanForImage2VideoFastAPIPipeline(WanForImage2VideoGeneration):
             nested_dict_value(pretrained_infos, "text", "config"),
         )
         text_config_path = cached_path(text_config_path)
-
-        image_config_path = image_config_path or config.getoption(
-            "image_config_path", None
-        )
-        image_config_path = pop_value(
-            image_config_path,
-            nested_dict_value(pretrained_infos, "image", "config"),
-        )
-        image_config_path = cached_path(image_config_path)
 
         vae_config_path = vae_config_path or config.getoption("vae_config_path", None)
         vae_config_path = pop_value(
@@ -188,15 +173,6 @@ class WanForImage2VideoFastAPIPipeline(WanForImage2VideoGeneration):
         )
         vocab_path = cached_path(vocab_path)
 
-        image_process_config_path = image_process_config_path or config.getoption(
-            "image_process_config_path", None
-        )
-        image_process_config_path = pop_value(
-            image_process_config_path,
-            nested_dict_value(pretrained_infos, "image", "vision_config"),
-        )
-        image_process_config_path = cached_path(image_process_config_path)
-
         quant_config_path = quant_config_path or config.getoption(
             "quant_config_path", None
         )
@@ -220,10 +196,6 @@ class WanForImage2VideoFastAPIPipeline(WanForImage2VideoGeneration):
                 load_weight(
                     nested_dict_value(pretrained_infos, "text", "weight"),
                     prefix_keys={"": "text."},
-                ),
-                load_weight(
-                    nested_dict_value(pretrained_infos, "image", "weight"),
-                    prefix_keys={"": "image."},
                 ),
                 load_weight(
                     nested_dict_value(pretrained_infos, "vae", "weight"),
@@ -271,8 +243,6 @@ class WanForImage2VideoFastAPIPipeline(WanForImage2VideoGeneration):
         inst = cls(
             config_path=config_path,
             text_config_path=text_config_path,
-            image_config_path=image_config_path,
-            image_process_config_path=image_process_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
             vocab_path=vocab_path,
@@ -293,23 +263,21 @@ class WanForImage2VideoFastAPIPipeline(WanForImage2VideoGeneration):
         device_type=("cuda" if torch.cuda.is_available() else "cpu"),
         dtype=(torch.bfloat16 if is_bfloat16_available() else torch.float32),
     )
-    @add_default_section_for_function("core/fastapi/pipeline/wan/image2video")
+    @add_default_section_for_function("core/fastapi/pipeline/wan/text2video")
     def __call__(
         self,
         text: str,
-        image: Image.Image,
         neg_text: Optional[str] = "",
+        height: Optional[int] = 480,
+        width: Optional[int] = 832,
         num_frames: Optional[int] = 81,
         num_fps: Optional[int] = 16,
         guidance_scale: Optional[float] = 5.0,
-        strength: Optional[float] = 1.0,
         num_timesteps: Optional[int] = 50,
         seed: Optional[int] = 1123,
     ):
-        image = image.convert("RGB")
-        inputs = self.processor.image2video_inputs(
+        inputs = self.processor.text2video_inputs(
             text,
-            image,
             negative_prompt=neg_text,
             max_seq_length=77,
         )
@@ -330,27 +298,13 @@ class WanForImage2VideoFastAPIPipeline(WanForImage2VideoGeneration):
             cpu_offload_device=self._device,
         )
 
-        if self._enable_cpu_offload:
-            self.image.to(device=self._device)
-
-        condition_hidden_states = self.image(
-            inputs["condition_pixel_values"].to(device=self._device),
-            output_hidden_states=True,
-        ).hidden_states[-2]
-
-        if self._enable_cpu_offload:
-            self.image.to(device="cpu")
-            condition_hidden_states = condition_hidden_states.to("cpu")
-
         outputs = self.pipeline(
-            image=inputs["vae_pixel_values"],
             prompt_embeds=prompt_outputs.prompt_embeds,
             negative_prompt_embeds=prompt_outputs.negative_prompt_embeds,
-            image_embeds=condition_hidden_states,
             generator=torch.Generator(device=self.pipeline.device).manual_seed(seed),
             num_inference_steps=num_timesteps,
-            height=inputs["vae_pixel_values"].size(-2),
-            width=inputs["vae_pixel_values"].size(-1),
+            height=height,
+            width=width,
             num_frames=num_frames,
             guidance_scale=guidance_scale,
             output_type="pt",
@@ -361,12 +315,12 @@ class WanForImage2VideoFastAPIPipeline(WanForImage2VideoGeneration):
         return name
 
 
-@register_fastapi("core/fastapi/wan/image2video")
-class WanForImage2VideoFastAPI(GenericFastAPI):
+@register_fastapi("core/fastapi/wan/text2video")
+class WanForText2VideoFastAPI(GenericFastAPI):
     def __init__(self, config: CoreConfigureParser):
         self.config = config
-        config.set_default_section(f"core/fastapi/wan/image2video")
-        router = config.getoption("router", "/core/fastapi/wan/image2video")
+        config.set_default_section(f"core/fastapi/wan/text2video")
+        router = config.getoption("router", "/core/fastapi/wan/text2video")
         self._pipe = None
         self._router = APIRouter(prefix=router)
         self._router.add_api_route("/generate", self.serve, methods=["POST"])
@@ -381,12 +335,12 @@ class WanForImage2VideoFastAPI(GenericFastAPI):
 
     def start(
         self,
-        pretrained_name: Optional[str] = "wan-v2.1-i2v-14b-480p",
+        pretrained_name: Optional[str] = "wan-v2.1-t2v-1.3b",
         pretrained_lora_names: Optional[Union[str, List[str]]] = None,
         pretrained_lora_weights: Optional[Union[float, List[float]]] = 1.0,
         pretrained_lora_alphas: Optional[Union[float, List[float]]] = 32.0,
     ):
-        self._pipe = WanForImage2VideoFastAPIPipeline.from_core_configure(
+        self._pipe = WanForText2VideoFastAPIPipeline.from_core_configure(
             self.config,
             pretrained_name=pretrained_name,
             pretrained_lora_names=pretrained_lora_names,
@@ -409,27 +363,25 @@ class WanForImage2VideoFastAPI(GenericFastAPI):
     async def serve(
         self,
         text: str,
-        image: UploadFile,
         neg_text: Optional[str] = "",
+        height: Optional[int] = 480,
+        width: Optional[int] = 832,
         num_frames: Optional[int] = 81,
         num_fps: Optional[int] = 16,
         guidance_scale: Optional[float] = 5.0,
-        strength: Optional[float] = 1.0,
         num_timesteps: Optional[int] = 50,
         seed: Optional[int] = 1123,
     ):
         assert self._pipe is not None
-        image_bytes = await image.read()
-        image = Image.open(io.BytesIO(image_bytes))
         async with self._lock:
             video = self._pipe(
                 text,
-                image,
                 neg_text=neg_text,
+                height=height,
+                width=width,
                 num_frames=num_frames,
                 num_fps=num_fps,
                 guidance_scale=guidance_scale,
-                strength=strength,
                 num_timesteps=num_timesteps,
                 seed=seed,
             )

@@ -109,7 +109,7 @@ class WanForImage2VideoGenerationPipeline(WanForImage2VideoGeneration):
     ):
         config.set_default_section("core/pipeline/wan/image2video")
         pretrained_name = pretrained_name or config.getoption(
-            "pretrained_name", "wan-v2.1-i2v-14B"
+            "pretrained_name", "wan-v2.1-i2v-14b-480p"
         )
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
 
