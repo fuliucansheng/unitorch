@@ -563,7 +563,7 @@ class SupervisedTask:
                     targets = targets.cuda()
 
                 with torch.autocast(
-                    enabled=True,
+                    enabled=use_amp,
                     device_type="cuda" if torch.cuda.is_available() else "cpu",
                 ):
                     outputs = self.model(**inputs.dict())
