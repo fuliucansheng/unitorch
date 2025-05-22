@@ -383,7 +383,7 @@ class DeepspeedTask:
         logging.info(f"the best score is {self.best_score}")
 
         self.ema_model = None
-        if use_ema:
+        if use_ema and zero_stage != 3:
             num_ema_steps = info.get("num_ema_steps", 0)
             self.ema_model = ExponentialMovingAverage(
                 self.model,
