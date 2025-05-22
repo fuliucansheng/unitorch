@@ -418,8 +418,7 @@ class DeepspeedTask:
             and zero_stage == 3
         ):
             self.model.load_checkpoint(
-                to_ckpt_dir,
-                "pytorch_model_latest",
+                os.path.join(to_ckpt_dir, "pytorch_model_latest"),
             )
 
         global_rank = -1
