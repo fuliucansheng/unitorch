@@ -88,7 +88,7 @@ def save_snapshot_zero_3(
     results = infer(base_model, iter_dev)
     new_score = score_fn(outputs=results.outputs, targets=results.targets)
 
-    snapshot_time = time.strftime("%Y%m%d_%H%M%S", time.localtime())
+    snapshot_time = time.strftime("%Y%m%d_%H%M", time.localtime())
 
     if local_rank in [-1, 0]:
         monitor(results.outputs, results.targets, monitor_fns)
