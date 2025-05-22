@@ -229,12 +229,12 @@ def save_snapshot(
             if model:
                 model.save_checkpoint(
                     ckpt_dir=ckpt_dir,
-                    weight_name=f"pytorch_model_{time.strftime('%Y%m%d_%H%M%S', time.localtime())}.bin",
+                    weight_name=f"pytorch_model_{time.strftime('%Y%m%d_%H%M', time.localtime())}.bin",
                 )
             if ema_model:
                 ema_model.save_checkpoint(
                     ckpt_dir=ckpt_dir,
-                    weight_name=f"pytorch_ema_model_{time.strftime('%Y%m%d_%H%M%S', time.localtime())}.bin",
+                    weight_name=f"pytorch_ema_model_{time.strftime('%Y%m%d_%H%M', time.localtime())}.bin",
                 )
         if info_path is not None:
             json.dump({"best_score": best_score, **kwargs}, open(info_path, "w"))
