@@ -179,6 +179,7 @@ def save_snapshot(
     else:
         base_model = model
 
+    snapshot_time = time.strftime("%Y%m%d_%H%M", time.localtime())
     results = infer(base_model, iter_dev)
     if local_rank in [-1, 0]:
         new_score = score_fn(outputs=results.outputs, targets=results.targets)
@@ -229,12 +230,12 @@ def save_snapshot(
             if model:
                 model.save_checkpoint(
                     ckpt_dir=ckpt_dir,
-                    weight_name=f"pytorch_model_{time.strftime('%Y%m%d_%H%M%S', time.localtime())}.bin",
+                    weight_name=f"pytorch_model_{snapshot_time}.bin",
                 )
             if ema_model:
                 ema_model.save_checkpoint(
                     ckpt_dir=ckpt_dir,
-                    weight_name=f"pytorch_ema_model_{time.strftime('%Y%m%d_%H%M%S', time.localtime())}.bin",
+                    weight_name=f"pytorch_ema_model_{snapshot_time}.bin",
                 )
         if info_path is not None:
             json.dump({"best_score": best_score, **kwargs}, open(info_path, "w"))
@@ -563,7 +564,7 @@ class SupervisedTask:
                     targets = targets.cuda()
 
                 with torch.autocast(
-                    enabled=True,
+                    enabled=use_amp,
                     device_type="cuda" if torch.cuda.is_available() else "cpu",
                 ):
                     outputs = self.model(**inputs.dict())

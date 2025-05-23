@@ -3,8 +3,9 @@
 
 import os
 import time
+import json
 import logging
-from unitorch.utils import is_wandb_available
+from unitorch.utils import is_wandb_available, read_json_file
 from unitorch.cli.core import CoreConfigureParser
 
 _wandb_available = False
@@ -22,6 +23,7 @@ def setup(config):
     project = config.getoption("project", None)
     token = config.getoption("token", None)
     name = config.getoption("name", time.strftime("%m/%d/%Y/%H", time.localtime()))
+    db_file = config.getoption("db_file", None)
 
     if wandb is None:
         logging.warning("wandb is not available.")
@@ -37,12 +39,24 @@ def setup(config):
 
     try:
         wandb.login(key=token, relogin=True)
+        if db_file is not None:
+            db_info = read_json_file(db_file)
+            run_id = db_info.get("run_id", None)
+            if run_id is None:
+                run_id = wandb.util.generate_id()
+                db_info["run_id"] = run_id
+                with open(db_file, "w") as f:
+                    f.write(json.dumps(db_info))
+        else:
+            run_id = None
         wandb.init(
             entity=team,
             project=project,
             name=name,
             group=name,
             reinit=True,
+            id=run_id,
+            resume="allow",
         )
         _wandb_available = True
         logging.info("Login to wandb successfully.")

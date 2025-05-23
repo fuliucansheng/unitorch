@@ -88,7 +88,7 @@ def save_snapshot_zero_3(
     results = infer(base_model, iter_dev)
     new_score = score_fn(outputs=results.outputs, targets=results.targets)
 
-    snapshot_time = time.strftime("%Y%m%d_%H%M%S", time.localtime())
+    snapshot_time = time.strftime("%Y%m%d_%H%M", time.localtime())
 
     if local_rank in [-1, 0]:
         monitor(results.outputs, results.targets, monitor_fns)
@@ -126,10 +126,6 @@ def save_snapshot_zero_3(
             torch.save(state_dict, os.path.join(ckpt_dir, "pytorch_model_latest.bin"))
 
     if save_checkpoint in ["all", "every"]:
-        model.save_checkpoint(
-            ckpt_dir,
-            f"pytorch_model_{snapshot_time}",
-        )
         if merge_checkpoint and local_rank in [-1, 0]:
             state_dict = get_fp32_state_dict_from_zero_checkpoint(
                 os.path.join(ckpt_dir, f"pytorch_model_latest"),
@@ -146,9 +142,10 @@ def save_snapshot_zero_3(
                     f"pytorch_model_latest_{snapshot_time}.bin",
                 ),
             )
-            shutil.rmtree(
-                os.path.join(ckpt_dir, f"pytorch_model_latest_{snapshot_time}"),
-                ignore_errors=True,
+        else:
+            model.save_checkpoint(
+                ckpt_dir,
+                f"pytorch_model_{snapshot_time}",
             )
     return best_score
 
@@ -383,7 +380,7 @@ class DeepspeedTask:
         logging.info(f"the best score is {self.best_score}")
 
         self.ema_model = None
-        if use_ema:
+        if use_ema and zero_stage != 3:
             num_ema_steps = info.get("num_ema_steps", 0)
             self.ema_model = ExponentialMovingAverage(
                 self.model,
@@ -418,8 +415,7 @@ class DeepspeedTask:
             and zero_stage == 3
         ):
             self.model.load_checkpoint(
-                to_ckpt_dir,
-                "pytorch_model_latest",
+                os.path.join(to_ckpt_dir, "pytorch_model_latest"),
             )
 
         global_rank = -1
