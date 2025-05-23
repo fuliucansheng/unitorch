@@ -63,7 +63,7 @@ class DetrForDetection(_DetrForDetection):
 
         return inst
 
-    # @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
+    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
     def forward(self, images, bboxes, classes):
         outputs = super().forward(
             images=images,
