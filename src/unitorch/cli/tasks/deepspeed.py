@@ -23,7 +23,11 @@ from torch.utils.data.distributed import DistributedSampler
 from torch.multiprocessing import Process, Queue
 from unitorch import set_seed
 from unitorch.models import ExponentialMovingAverage
-from unitorch.utils import get_local_rank, nested_dict_value, update_nested_dict
+from unitorch.utils import (
+    get_local_rank,
+    nested_dict_value,
+    update_nested_dict,
+)
 from unitorch.utils import (
     DistributedSkipSampler,
     RandomSkipSampler,
@@ -401,7 +405,7 @@ class DeepspeedTask:
 
         for n, p in self.model.named_parameters():
             logging.debug(
-                f"{n}: trainable - {p.requires_grad} | tensor dtype - {p.dtype} | tensor shape - {p.shape}"
+                f"{n}: trainable - {p.requires_grad} | tensor dtype - {p.dtype} | tensor shape - {p.shape} | tensor device - {p.device}"
             )
 
         self.model, optim, _, scheduler = deepspeed.initialize(
@@ -415,7 +419,7 @@ class DeepspeedTask:
             and zero_stage == 3
         ):
             self.model.load_checkpoint(
-                os.path.join(to_ckpt_dir, "pytorch_model_latest"),
+                os.path.join(to_ckpt_dir, "pytorch_model_latest")
             )
 
         global_rank = -1

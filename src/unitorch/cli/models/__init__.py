@@ -74,6 +74,9 @@ if is_diffusers_available():
     from unitorch.cli.models.diffusion_utils import diffusion_model_decorator
     import unitorch.cli.models.diffusers
 
+if is_megatron_available():
+    import unitorch.cli.models.megatron
+
 # import model classes & process functions
 import unitorch.cli.models.bart
 import unitorch.cli.models.bert
@@ -100,6 +103,7 @@ import unitorch.cli.models.roberta
 import unitorch.cli.models.swin
 import unitorch.cli.models.sam
 import unitorch.cli.models.siglip
+import unitorch.cli.models.siglip2
 import unitorch.cli.models.segformer
 import unitorch.cli.models.t5
 import unitorch.cli.models.visualbert

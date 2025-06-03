@@ -456,7 +456,7 @@ class SupervisedTask:
 
         for n, p in self.model.named_parameters():
             logging.debug(
-                f"{n}: trainable - {p.requires_grad} | tensor dtype - {p.dtype} | tensor shape - {p.shape}"
+                f"{n}: trainable - {p.requires_grad} | tensor dtype - {p.dtype} | tensor shape - {p.shape} | tensor device - {p.device}"
             )
 
         global_rank = -1

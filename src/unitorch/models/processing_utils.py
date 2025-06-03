@@ -240,28 +240,39 @@ class HfTextClassificationProcessor:
 
         tokens = self.tokenizer.tokenize(str(text))
         if text_pair is None:
-            tokens = tokens[: max_seq_length - 2]
-            tokens = [self.cls_token] + tokens + [self.sep_token]
+            if self.cls_token is not None:
+                tokens = tokens[: max_seq_length - 2]
+                tokens = [self.cls_token] + tokens + [self.sep_token]
+            else:
+                tokens = tokens[: max_seq_length - 1]
+                tokens = tokens + [self.sep_token]
             input_ids = self.tokenizer.convert_tokens_to_ids(tokens)
             token_type_ids = [self.source_type_id] * len(input_ids)
             attention_mask = [1] * len(input_ids)
         else:
             tokens_pair = self.tokenizer.tokenize(str(text_pair))
-            truncate_sequence_pair(tokens, tokens_pair, max_seq_length - 3)
-            token_type_ids = (
-                [self.source_type_id]
-                + [self.source_type_id] * len(tokens)
-                + [self.source_type_id]
-                + [self.target_type_id] * len(tokens_pair)
-                + [self.target_type_id]
-            )
-            tokens = (
-                [self.cls_token]
-                + tokens
-                + [self.sep_token]
-                + tokens_pair
-                + [self.sep_token]
-            )
+            if self.cls_token is not None:
+                truncate_sequence_pair(tokens, tokens_pair, max_seq_length - 3)
+                token_type_ids = (
+                    [self.source_type_id]
+                    + [self.source_type_id] * len(tokens)
+                    + [self.source_type_id]
+                    + [self.target_type_id] * len(tokens_pair)
+                    + [self.target_type_id]
+                )
+                tokens = (
+                    [self.cls_token]
+                    + tokens
+                    + [self.sep_token]
+                    + tokens_pair
+                    + [self.sep_token]
+                )
+            else:
+                truncate_sequence_pair(tokens, tokens_pair, max_seq_length - 2)
+                token_type_ids = [self.source_type_id] * len(tokens) + [
+                    self.target_type_id
+                ] * len(tokens_pair)
+                tokens = tokens + [self.sep_token] + tokens_pair + [self.sep_token]
             input_ids = self.tokenizer.convert_tokens_to_ids(tokens)
             attention_mask = [1] * len(input_ids)
 

@@ -125,17 +125,18 @@ class WanImage2VideoWebUI(SimpleWebUI):
         output_video = create_element("video", "Output Video")
 
         # create layouts
-        top = create_column(pretrain_layout)
+        top1 = create_column(pretrain_layout)
+        top2 = create_row(
+            create_column(prompt, negative_prompt, scale=4),
+            create_column(generate),
+        )
         left_generation = create_tab(
-            create_row(prompt),
-            create_row(negative_prompt),
             create_row(image),
             create_row(height, width),
             create_row(guidance_scale),
             create_row(num_frames, num_fps),
             create_row(scheduler, steps),
             create_row(seed),
-            create_row(generate),
             name="Generation",
         )
         left_extension = create_tab(
@@ -148,7 +149,7 @@ class WanImage2VideoWebUI(SimpleWebUI):
 
         left = create_tabs(left_generation, left_extension, left_settings)
         right = create_column(output_video)
-        iface = create_blocks(top, create_row(left, right))
+        iface = create_blocks(top1, top2, create_row(left, right))
 
         # create events
         iface.__enter__()

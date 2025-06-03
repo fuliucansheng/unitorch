@@ -32,11 +32,8 @@ def is_deepspeed_available():
 
 # megatron
 _megatron_available = importlib.util.find_spec("megatron") is not None
-try:
-    _megatron_version = importlib_metadata.version("megatron")
-    logging.debug(f"Successfully imported megatron version {_megatron_version}")
-except importlib_metadata.PackageNotFoundError:
-    _megatron_available = False
+if _megatron_available:
+    logging.debug(f"Successfully imported megatron")
 
 
 def is_megatron_available():

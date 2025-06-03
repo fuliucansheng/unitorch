@@ -354,6 +354,7 @@ def create_blocks(*layouts, js=None, css=None, fill_height=False, fill_width=Fal
         element = elements.pop(0)
         if hasattr(element, "children"):
             elements += element.children
+        element.page = ""
         blocks.blocks[element._id] = element
 
     for layout in layouts:

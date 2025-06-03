@@ -1,3 +1,115 @@
+
+@font-face {
+  font-family: 'ui-sans-serif';
+  src: url('static/fonts/ui-sans-serif/ui-sans-serif-Regular.woff2') format('woff2');
+  font-weight: Regular;
+  font-style: normal;
+}
+
+
+@font-face {
+  font-family: 'ui-sans-serif';
+  src: url('static/fonts/ui-sans-serif/ui-sans-serif-Bold.woff2') format('woff2');
+  font-weight: Bold;
+  font-style: normal;
+}
+
+
+@font-face {
+  font-family: 'system-ui';
+  src: url('static/fonts/system-ui/system-ui-Regular.woff2') format('woff2');
+  font-weight: Regular;
+  font-style: normal;
+}
+
+
+@font-face {
+  font-family: 'system-ui';
+  src: url('static/fonts/system-ui/system-ui-Bold.woff2') format('woff2');
+  font-weight: Bold;
+  font-style: normal;
+}
+
+
+@font-face {
+  font-family: 'sans-serif';
+  src: url('static/fonts/sans-serif/sans-serif-Regular.woff2') format('woff2');
+  font-weight: Regular;
+  font-style: normal;
+}
+
+
+@font-face {
+  font-family: 'sans-serif';
+  src: url('static/fonts/sans-serif/sans-serif-Bold.woff2') format('woff2');
+  font-weight: Bold;
+  font-style: normal;
+}
+
+
+@font-face {
+  font-family: 'IBM Plex Mono';
+  src: url('static/fonts/IBMPlexMono/IBMPlexMono-Regular.woff2') format('woff2');
+  font-weight: Regular;
+  font-style: normal;
+}
+
+
+@font-face {
+  font-family: 'IBM Plex Mono';
+  src: url('static/fonts/IBMPlexMono/IBMPlexMono-Bold.woff2') format('woff2');
+  font-weight: Bold;
+  font-style: normal;
+}
+
+
+@font-face {
+  font-family: 'ui-monospace';
+  src: url('static/fonts/ui-monospace/ui-monospace-Regular.woff2') format('woff2');
+  font-weight: Regular;
+  font-style: normal;
+}
+
+
+@font-face {
+  font-family: 'ui-monospace';
+  src: url('static/fonts/ui-monospace/ui-monospace-Bold.woff2') format('woff2');
+  font-weight: Bold;
+  font-style: normal;
+}
+
+
+@font-face {
+  font-family: 'Consolas';
+  src: url('static/fonts/Consolas/Consolas-Regular.woff2') format('woff2');
+  font-weight: Regular;
+  font-style: normal;
+}
+
+
+@font-face {
+  font-family: 'Consolas';
+  src: url('static/fonts/Consolas/Consolas-Bold.woff2') format('woff2');
+  font-weight: Bold;
+  font-style: normal;
+}
+
+
+@font-face {
+  font-family: 'monospace';
+  src: url('static/fonts/monospace/monospace-Regular.woff2') format('woff2');
+  font-weight: Regular;
+  font-style: normal;
+}
+
+
+@font-face {
+  font-family: 'monospace';
+  src: url('static/fonts/monospace/monospace-Bold.woff2') format('woff2');
+  font-weight: Bold;
+  font-style: normal;
+}
+
 :root {
   --name: sudeepshouche/minimalist;
   --background-fill-primary: white;
@@ -104,7 +216,7 @@
   --font-mono: \'IBM Plex Mono\', \'ui-monospace\', \'Consolas\', monospace;
   --form-gap-width: 0px;
   --input-background-fill: var(--neutral-100);
-  --input-background-fill-focus: var(--secondary-500);
+  --input-background-fill-focus: var(--input-background-fill);
   --input-background-fill-hover: var(--input-background-fill);
   --input-border-color: var(--border-color-primary);
   --input-border-color-focus: var(--secondary-300);
@@ -176,7 +288,7 @@
   --shadow-drop-lg: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
   --shadow-inset: rgba(0,0,0,0.05) 0px 2px 4px 0px inset;
   --shadow-spread: 3px;
-  --slider-color: auto;
+  --slider-color: var(--body-text-color-subdued);
   --spacing-lg: 8px;
   --spacing-md: 6px;
   --spacing-sm: 4px;
@@ -202,6 +314,7 @@
   --code-background-fill: var(--neutral-100);
   --error-icon-color: #b91c1c;
 }
+
 .dark {
   --background-fill-primary: var(--neutral-950);
   --background-fill-secondary: var(--neutral-900);
@@ -291,7 +404,7 @@
   --input_shadow: None;
   --input_shadow_focus: None;
   --loader_color: None;
-  --slider_color: None;
+  --slider_color: var(--body-text-color-subdued);
   --name: sudeepshouche/minimalist;
   --block-border-width: 0px;
   --block-info-text-size: var(--text-sm);
@@ -401,7 +514,6 @@
   --shadow-drop: rgba(0,0,0,0.05) 0px 1px 2px 0px;
   --shadow-drop-lg: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
   --shadow-inset: rgba(0,0,0,0.05) 0px 2px 4px 0px inset;
-  --slider-color: auto;
   --spacing-lg: 8px;
   --spacing-md: 6px;
   --spacing-sm: 4px;

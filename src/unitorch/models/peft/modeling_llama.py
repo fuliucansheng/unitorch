@@ -6,7 +6,11 @@ import torch
 import torch.nn as nn
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from peft import LoraConfig, PeftModelForCausalLM
-from transformers import LlamaModel, LlamaConfig, LlamaForCausalLM
+from transformers.models.llama.modeling_llama import (
+    LlamaModel,
+    LlamaConfig,
+    LlamaForCausalLM,
+)
 from unitorch.models import (
     GenericModel,
     GenericOutputs,

@@ -137,9 +137,6 @@ class HFIterableDatasets(IterableDataset):
     ):
         self.dataset = dataset
 
-    def set_epoch(self, epoch: int) -> None:
-        self.dataset.set_epoch(epoch)
-
     @classmethod
     def from_csv(
         cls,
@@ -147,6 +144,8 @@ class HFIterableDatasets(IterableDataset):
         data_files: Optional[Union[str, List[str]]] = None,
         names: Optional[List[str]] = None,
         sep: Optional[str] = "\t",
+        quoting: Optional[int] = 3,
+        escapechar: Optional[str] = None,
         split: Optional[str] = None,
     ) -> Optional["HFIterableDatasets"]:
         if data_files is None:
@@ -161,7 +160,8 @@ class HFIterableDatasets(IterableDataset):
             data_files=data_files,
             delimiter=sep,
             column_names=names,
-            quoting=3,
+            quoting=quoting,
+            escapechar=escapechar,
             streaming=True,
         )
 
