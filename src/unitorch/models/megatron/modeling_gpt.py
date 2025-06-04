@@ -58,6 +58,7 @@ class MegatronGPTForGeneration(GenericMegatronModel):
             tensor_model_parallel_size=mpu.get_tensor_model_parallel_world_size(),
             pipeline_model_parallel_size=mpu.get_pipeline_model_parallel_world_size(),
             virtual_pipeline_model_parallel_size=mpu.get_virtual_pipeline_model_parallel_world_size(),
+            context_parallel_size=mpu.get_context_parallel_world_size(),
             pipeline_dtype=torch.bfloat16,
             bf16=True,
             autocast_dtype=torch.bfloat16,
@@ -124,9 +125,19 @@ class MegatronGPTForGeneration(GenericMegatronModel):
                 seq_len, dtype=torch.long, device=input_ids.device
             )
             position_ids = position_ids.unsqueeze(0).expand(batch_size, seq_len)
-            attn_mask_4d = attention_mask.unsqueeze(1).unsqueeze(
-                2
-            )  # (batch_size, 1, 1, seq_len)
+            causal_mask = torch.tril(
+                torch.ones(
+                    (seq_len, seq_len), dtype=torch.bool, device=attention_mask.device
+                )
+            )
+            causal_mask = causal_mask.unsqueeze(0).unsqueeze(
+                0
+            )  # shape (1, 1, seq_len, seq_len)
+            pad_mask = attention_mask.unsqueeze(1).unsqueeze(2).bool()
+            pad_mask = pad_mask.expand(-1, -1, seq_len, -1)
+            attn_mask_4d = (
+                causal_mask & pad_mask
+            )  # shape: (batch_size, 1, seq_len, seq_len)
             attn_mask_4d = attn_mask_4d.expand(
                 batch_size,
                 self.config.num_attention_heads // self.tp_size,

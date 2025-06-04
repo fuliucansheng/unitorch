@@ -26,6 +26,12 @@ from megatron.core.pipeline_parallel.schedules import (
     forward_backward_pipelining_with_interleaving,
     forward_backward_pipelining_without_interleaving,
 )
+from megatron.core.optimizer import OptimizerConfig, get_megatron_optimizer
+from megatron.core.distributed import (
+    DistributedDataParallelConfig,
+    DistributedDataParallel,
+)
+from megatron.core.optimizer import DistributedOptimizer
 from unitorch import set_seed
 from unitorch.models import ExponentialMovingAverage
 from unitorch.utils import (
@@ -65,23 +71,11 @@ from unitorch.cli.models import (
     CombineTensorsInputs,
     CombineTensorsTargets,
 )
-from unitorch.cli.tasks.supervised import (
-    collate_fn,
-)
+from unitorch.cli.tasks.supervised import collate_fn
 import unitorch.cli.wandb as wandb
 
 
 def get_batch_on_this_cp_rank(batch: Dict[str, Any]):
-    """Slice batch input along sequence dimension into multiple chunks,
-    which are parallelized across GPUs in a context parallel group.
-    """
-
-    # With causal masking, each token only attends to its prior tokens. Simply split
-    # sequence into CP chunks can result in severe load imbalance. That's to say, chunks
-    # at the end of sequence have bigger workload than others. To address this issue,
-    # we split sequence into 2*CP ranks. Assuming CP=2, we then get 4 chunks, chunk_0
-    # and chunk_3 are assigned to GPU0, chunk_1 and chunk_2 are assigned to GPU1, so
-    # that we can get balanced workload among GPUs in a context parallel group.
     cp_size = mpu.get_context_parallel_world_size()
     if cp_size > 1:
         cp_rank = mpu.get_context_parallel_rank()
@@ -159,6 +153,15 @@ class MegatronTask:
         self.best_score = -np.inf
         self.dp_rank = mpu.get_data_parallel_rank()
         self.dp_size = mpu.get_data_parallel_world_size()
+        self.pp_rank = mpu.get_pipeline_model_parallel_rank()
+        self.pp_size = mpu.get_pipeline_model_parallel_world_size()
+        self.vp_rank = mpu.get_virtual_pipeline_model_parallel_rank()
+        self.vp_size = mpu.get_virtual_pipeline_model_parallel_world_size()
+        self.cp_rank = mpu.get_context_parallel_rank()
+        self.cp_group = mpu.get_context_parallel_group()
+        self.cp_size = mpu.get_context_parallel_world_size()
+        self.tp_rank = mpu.get_tensor_model_parallel_rank()
+        self.tp_size = mpu.get_tensor_model_parallel_world_size()
         self.is_pp_last_rank = mpu.is_pipeline_last_stage(ignore_virtual=True)
 
     @classmethod
@@ -189,9 +192,14 @@ class MegatronTask:
             "pipeline_model_parallel_size",
             1,
         )
+        context_parallel_size = config.getoption(
+            "context_parallel_size",
+            1,
+        )
         mpu.initialize_model_parallel(
-            tensor_model_parallel_size,
-            pipeline_model_parallel_size,
+            tensor_model_parallel_size=tensor_model_parallel_size,
+            pipeline_model_parallel_size=pipeline_model_parallel_size,
+            context_parallel_size=context_parallel_size,
         )
 
         model = config.getoption("model", None)
@@ -238,6 +246,8 @@ class MegatronTask:
         grad_acc_step: Optional[int] = 1,
         max_grad_norm: Optional[float] = 1.0,
         num_training_samples: Optional[int] = 1000000000,
+        num_dev_samples: Optional[int] = 10000,
+        seq_length: Optional[int] = 4096,
         epochs: Optional[int] = 5,
     ):
         """
@@ -298,10 +308,7 @@ class MegatronTask:
             )
 
         if os.path.exists(to_ckpt_dir):
-            self.model.from_checkpoint(
-                to_ckpt_dir,
-                weight_name="pytorch_model_latest.bin",
-            )
+            self.model.from_checkpoint(to_ckpt_dir)
             optim.from_checkpoint(
                 to_ckpt_dir,
                 weight_name="pytorch_optim_latest.bin",
@@ -322,6 +329,15 @@ class MegatronTask:
         for n, p in self.model.named_parameters():
             logging.debug(
                 f"{n}: trainable - {p.requires_grad} | tensor dtype - {p.dtype} | tensor shape - {p.shape} | tensor device - {p.device}"
+            )
+
+        if self.dp_size > 1:
+            self.model = DistributedDataParallel(
+                config=self.model.config,
+                module=self.model,
+                ddp_config=DistributedDataParallelConfig(
+                    use_distributed_optimizer=False,
+                ),
             )
 
         dataset_train = self.datasets.get("train")
@@ -347,23 +363,17 @@ class MegatronTask:
             collate_fn=collate_fn,
         )
 
+        iter_train = iter(iter_train)
+        iter_dev = iter(iter_dev)
+
         if scheduler is not None:
-            if not isinstance(dataset_train, Iterable):
-                num_training_steps = int(
-                    epochs
-                    * len(dataset_train)
-                    // train_batch_size
-                    // max(1, self.dp_size)
-                    // grad_acc_step
-                )
-            else:
-                num_training_steps = int(
-                    epochs
-                    * num_training_samples
-                    // train_batch_size
-                    // max(1, self.dp_size)
-                    // grad_acc_step
-                )
+            num_training_steps = int(
+                epochs
+                * num_training_samples
+                // train_batch_size
+                // max(1, self.dp_size)
+                // grad_acc_step
+            )
 
             scheduler = init_registered_module(
                 scheduler,
@@ -381,14 +391,12 @@ class MegatronTask:
 
         log_loss = 0
         dev_epoch = 0
-        num_steps = num_training_samples // train_batch_size // self.dp_size
+        num_train_steps = num_training_samples // train_batch_size // self.dp_size
+        num_dev_steps = num_dev_samples // dev_batch_size // self.dp_size
 
-        if mpu.get_pipeline_model_parallel_world_size() == 1:
+        if self.pp_size == 1:
             forward_backward_pipeline = forward_backward_no_pipelining
-        elif (
-            mpu.get_pipeline_model_parallel_world_size() > 1
-            and mpu.get_virtual_pipeline_model_parallel_world_size() is not None
-        ):
+        elif self.pp_size > 1 and self.vp_size is not None:
             forward_backward_pipeline = forward_backward_pipelining_with_interleaving
         else:
             forward_backward_pipeline = forward_backward_pipelining_without_interleaving
@@ -401,12 +409,12 @@ class MegatronTask:
             outputs = _model(**inputs)
             if isinstance(outputs, LossOutputs):
                 loss = outputs.loss
-                if mpu.get_context_parallel_world_size() > 1:
-                    loss = dist.all_reduce(
+                if self.cp_size > 1:
+                    dist.all_reduce(
                         loss,
-                        group=mpu.get_context_parallel_group(),
+                        group=self.cp_group,
                     )
-                    loss = loss / mpu.get_context_parallel_world_size()
+                    loss = loss / self.cp_size
                 return loss.unsqueeze(0), lambda x: (
                     x.squeeze(0),
                     x.detach().squeeze(0),
@@ -424,36 +432,42 @@ class MegatronTask:
             if hasattr(dataset_train, "set_skip_step"):
                 dataset_train.set_skip_step(global_step * train_batch_size)
 
-            if hasattr(iter_train.sampler, "set_epoch"):
-                iter_train.sampler.set_epoch(e)
-
-            if hasattr(iter_train.sampler, "set_skip_step"):
-                iter_train.sampler.set_skip_step(global_step * train_batch_size)
-
             self.model.train()
-            for step in range(num_steps):
+            for step in range(num_train_steps):
                 step = step + global_step
 
                 loss = forward_backward_pipeline(
                     forward_step_func=forward_step_func,
-                    data_iterator=iter(iter_train),
+                    data_iterator=iter_train,
                     model=self.model,
                     num_microbatches=grad_acc_step,
-                    seq_length=100,
+                    seq_length=seq_length,
                     micro_batch_size=train_batch_size,
                 )
 
+                for param in self.model.parameters():
+                    if hasattr(param, "main_grad") and param.main_grad is not None:
+                        param.grad = param.main_grad
+
                 if self.is_pp_last_rank:
                     log_loss += loss[0].item()
-                    optim.step()
-                    if scheduler is not None:
-                        scheduler.step()
-                    optim.zero_grad()
+
+                nn.utils.clip_grad_norm_(
+                    self.model.parameters(),
+                    max_norm=max_grad_norm,
+                )
+
+                optim.step()
+                if scheduler is not None:
+                    scheduler.step()
+                optim.zero_grad()
 
                 if (
                     (step + 1) % log_freq == 0
                     and self.dp_rank == 0
                     and self.is_pp_last_rank
+                    and self.cp_rank == 0
+                    and self.tp_rank == 0
                 ):
                     logging.info(
                         f"epoch {e} step {step}: loss -- { log_loss / log_freq }"
@@ -469,34 +483,109 @@ class MegatronTask:
                     log_loss = 0
 
                 if (step + 1) % ckpt_freq == 0:
+                    dist.barrier()
+
                     if hasattr(dataset_dev, "set_epoch"):
                         dataset_dev.set_epoch(dev_epoch)
 
-                    if hasattr(iter_dev.sampler, "set_epoch"):
-                        iter_dev.sampler.set_epoch(dev_epoch)
+                    self.model.eval()
+                    _log_loss = 0
+                    for _ in range(num_dev_steps):
+                        _loss = forward_backward_pipeline(
+                            forward_step_func=forward_step_func,
+                            data_iterator=iter_dev,
+                            model=self.model,
+                            num_microbatches=grad_acc_step,
+                            seq_length=seq_length,
+                            micro_batch_size=dev_batch_size,
+                            forward_only=True,
+                        )
 
+                        if self.is_pp_last_rank:
+                            _log_loss += _loss[0].item() / num_dev_steps
+
+                    self.model.train()
                     dev_epoch += 1
 
-                    self.model.save_checkpoint(
-                        ckpt_dir=to_ckpt_dir,
-                        weight_name="common.pt",
-                    )
+                    if (
+                        self.dp_rank == 0
+                        and self.is_pp_last_rank
+                        and self.cp_rank == 0
+                        and self.tp_rank == 0
+                    ):
+                        logging.info(f"loss is { _log_loss }")
+                        if wandb.is_available():
+                            wandb.log(
+                                {
+                                    "val/loss": _log_loss,
+                                },
+                            )
+
+                    if -_log_loss > self.best_score:
+                        getattr(self.model, "module", self.model).save_checkpoint(
+                            ckpt_dir=to_ckpt_dir,
+                            weight_name="common.pt",
+                        )
+                        self.best_score = -_log_loss
+                        info["best_score"] = self.best_score
+                        info["global_epoch"] = e
+                        info["global_step"] = step + 1
+                        with open(info_path, "w") as f:
+                            json.dump(info, f, indent=4)
 
                     dist.barrier()
 
             log_loss = 0
 
+            dist.barrier()
+
             if hasattr(dataset_dev, "set_epoch"):
                 dataset_dev.set_epoch(dev_epoch)
 
-            if hasattr(iter_dev.sampler, "set_epoch"):
-                iter_dev.sampler.set_epoch(dev_epoch)
+            self.model.eval()
+            _log_loss = 0
+            for _ in range(num_dev_steps):
+                _loss = forward_backward_pipeline(
+                    forward_step_func=forward_step_func,
+                    data_iterator=iter_dev,
+                    model=self.model,
+                    num_microbatches=grad_acc_step,
+                    seq_length=seq_length,
+                    micro_batch_size=dev_batch_size,
+                    forward_only=True,
+                )
 
+                if self.is_pp_last_rank:
+                    _log_loss += _loss[0].item() / num_dev_steps
+
+            self.model.train()
             dev_epoch += 1
-            self.model.save_checkpoint(
-                ckpt_dir=to_ckpt_dir,
-                weight_name="common.pt",
-            )
+
+            if (
+                self.dp_rank == 0
+                and self.is_pp_last_rank
+                and self.cp_rank == 0
+                and self.tp_rank == 0
+            ):
+                logging.info(f"loss is { _log_loss }")
+                if wandb.is_available():
+                    wandb.log(
+                        {
+                            "val/loss": _log_loss,
+                        },
+                    )
+
+            if -_log_loss > self.best_score:
+                getattr(self.model, "module", self.model).save_checkpoint(
+                    ckpt_dir=to_ckpt_dir,
+                    weight_name="common.pt",
+                )
+                self.best_score = -_log_loss
+                info["best_score"] = self.best_score
+                info["global_epoch"] = e
+                info["global_step"] = step + 1
+                with open(info_path, "w") as f:
+                    json.dump(info, f, indent=4)
 
             dist.barrier()
 

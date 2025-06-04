@@ -103,7 +103,6 @@ import unitorch.cli.models.roberta
 import unitorch.cli.models.swin
 import unitorch.cli.models.sam
 import unitorch.cli.models.siglip
-import unitorch.cli.models.siglip2
 import unitorch.cli.models.segformer
 import unitorch.cli.models.t5
 import unitorch.cli.models.visualbert
