@@ -238,16 +238,13 @@ class MegatronTask:
         dev_batch_size: Optional[int] = 128,
         pin_memory: Optional[bool] = True,
         num_workers: Optional[int] = 4,
-        save_optimizer: Optional[bool] = True,
-        save_scheduler: Optional[bool] = True,
-        save_checkpoint: Optional[str] = "default",
         log_freq: Optional[int] = 100,
         ckpt_freq: Optional[int] = 10000,
         grad_acc_step: Optional[int] = 1,
         max_grad_norm: Optional[float] = 1.0,
         num_training_samples: Optional[int] = 1000000000,
         num_dev_samples: Optional[int] = 10000,
-        seq_length: Optional[int] = 4096,
+        seq_length: Optional[int] = None,
         epochs: Optional[int] = 5,
     ):
         """
@@ -302,16 +299,10 @@ class MegatronTask:
 
         if os.path.exists(from_ckpt_dir):
             self.model.from_checkpoint(from_ckpt_dir)
-            optim.from_checkpoint(
-                from_ckpt_dir,
-                weight_name="pytorch_optim.bin",
-            )
 
-        if os.path.exists(to_ckpt_dir):
-            self.model.from_checkpoint(to_ckpt_dir)
-            optim.from_checkpoint(
-                to_ckpt_dir,
-                weight_name="pytorch_optim_latest.bin",
+        if os.path.exists(os.path.join(to_ckpt_dir, "pytorch_model_latest")):
+            self.model.from_checkpoint(
+                os.path.join(to_ckpt_dir, "pytorch_model_latest")
             )
 
         info_path = os.path.join(to_ckpt_dir, "info.json")
@@ -381,12 +372,6 @@ class MegatronTask:
                 registered_scheduler,
                 optimizer=optim,
                 num_training_steps=num_training_steps,
-            )
-
-        if scheduler and os.path.exists(to_ckpt_dir):
-            scheduler.from_checkpoint(
-                to_ckpt_dir,
-                weight_name="pytorch_scheduler_latest.bin",
             )
 
         log_loss = 0
@@ -523,7 +508,7 @@ class MegatronTask:
 
                     if -_log_loss > self.best_score:
                         getattr(self.model, "module", self.model).save_checkpoint(
-                            ckpt_dir=to_ckpt_dir,
+                            ckpt_dir=os.path.join(to_ckpt_dir, "pytorch_model"),
                             weight_name="common.pt",
                         )
                         self.best_score = -_log_loss
@@ -532,6 +517,16 @@ class MegatronTask:
                         info["global_step"] = step + 1
                         with open(info_path, "w") as f:
                             json.dump(info, f, indent=4)
+
+                    getattr(self.model, "module", self.model).save_checkpoint(
+                        ckpt_dir=os.path.join(to_ckpt_dir, "pytorch_model_latest"),
+                        weight_name="common.pt",
+                    )
+                    info["best_score"] = self.best_score
+                    info["global_epoch"] = e
+                    info["global_step"] = step + 1
+                    with open(info_path, "w") as f:
+                        json.dump(info, f, indent=4)
 
                     dist.barrier()
 
@@ -577,7 +572,7 @@ class MegatronTask:
 
             if -_log_loss > self.best_score:
                 getattr(self.model, "module", self.model).save_checkpoint(
-                    ckpt_dir=to_ckpt_dir,
+                    ckpt_dir=os.path.join(to_ckpt_dir, "pytorch_model"),
                     weight_name="common.pt",
                 )
                 self.best_score = -_log_loss
@@ -586,6 +581,16 @@ class MegatronTask:
                 info["global_step"] = step + 1
                 with open(info_path, "w") as f:
                     json.dump(info, f, indent=4)
+
+            getattr(self.model, "module", self.model).save_checkpoint(
+                ckpt_dir=os.path.join(to_ckpt_dir, "pytorch_model_latest"),
+                weight_name="common.pt",
+            )
+            info["best_score"] = self.best_score
+            info["global_epoch"] = e
+            info["global_step"] = step + 1
+            with open(info_path, "w") as f:
+                json.dump(info, f, indent=4)
 
             dist.barrier()
 
