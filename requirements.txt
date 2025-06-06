@@ -8,7 +8,7 @@ fire>=0.2.1
 numpy<2.0.0
 pandas<=1.5.3
 scikit-learn>=0.24.2
-transformers>=4.46.0,<=4.49.0
+transformers>=4.52.4
 datasets>=2.12.0
 peft>=0.7.0
 safetensors>=0.3.1
