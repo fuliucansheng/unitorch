@@ -9,7 +9,7 @@ authors = [
 ]
 description = "unitorch provides efficient implementation of popular unified NLU / NLG / CV / CTR / MM / RL models with PyTorch."
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 keywords = ["PyTorch"]
 license = {text = "MIT"}
 classifiers = [
