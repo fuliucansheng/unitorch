@@ -313,8 +313,15 @@ class CombineTensorsMixin(TensorsMixin, ListTensorsMixin):
         tensors_keys = list(first_mix_tensors.__tensors__.keys())
         list_tensors_keys = list(first_mix_tensors.__list_tensors__.keys())
         for mix_tensors in list_of_mix_tensors:
-            assert tensors_keys == list(mix_tensors.__tensors__.keys())
-            assert list_tensors_keys == list(mix_tensors.__list_tensors__.keys())
+            if tensors_keys != list(mix_tensors.__tensors__.keys()):
+                raise ValueError(
+                    f"Keys of tensors are not the same. {tensors_keys} != {list(mix_tensors.__tensors__.keys())}"
+                )
+
+            if list_tensors_keys != list(mix_tensors.__list_tensors__.keys()):
+                raise ValueError(
+                    f"Keys of list tensors are not the same. {list_tensors_keys} != {list(mix_tensors.__list_tensors__.keys())}"
+                )
 
         new_tensors = {}
         for key in tensors_keys:

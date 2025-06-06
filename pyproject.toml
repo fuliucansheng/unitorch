@@ -19,22 +19,22 @@ classifiers = [
   "Intended Audience :: Science/Research",
   "License :: OSI Approved :: MIT License",
   "Operating System :: OS Independent",
-  "Programming Language :: Python :: 3.8",
-  "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
   "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
 dynamic = ["version", "dependencies"]
 
 [project.optional-dependencies]
-deepspeed = ["deepspeed>=0.11.0,<=0.16.7"]
-diffusers = ["diffusers>=0.33.0,<=0.33.1", "torchsde>=0.2.6"]
+deepspeed = ["deepspeed>=0.11.0"]
+diffusers = ["diffusers>=0.33.0", "torchsde>=0.2.6"]
 detection = ["timm>=1.0.0"]
 quantization = ["bitsandbytes>=0.41.1"]
+megatron = ["megatron-core>=0.12.0"]
 docs = ["mkdocstrings[python]>=0.18", "mkdocs-material", "markdown-exec", "mkdocs-gen-files", "mkdocs-coverage"]
-others = ["gradio>=4.40.0,<=4.44.1", "fastapi>=0.103.1,<=0.108.0", "wandb", "uvicorn", "python-multipart", "onnxruntime"]
-all = ["unitorch[deepspeed,diffusers,quantization,others]"]
+others = ["gradio>=5.0.0", "fastapi>=0.103.1", "wandb", "uvicorn", "python-multipart", "onnxruntime"]
+all = ["unitorch[deepspeed,diffusers,quantization,megatron,others]"]
 
 [project.scripts]
 unitorch-train = "unitorch.cli.consoles.train:cli_main"

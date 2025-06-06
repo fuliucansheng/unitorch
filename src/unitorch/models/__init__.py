@@ -143,16 +143,20 @@ class CheckpointMixin:
                     if key not in load_keys:
                         load_keys.append(key)
                 else:
+                    logging.debug(
+                        f"Key {key} in pretrained weights {value.shape} does not match model's state_dict {self_state_dict.get(key, torch.empty(0)).shape}."
+                    )
                     non_load_keys.append(key)
 
         self.load_state_dict(self_state_dict, False)
         load_percent = (
             len(load_keys) / len(self_state_dict) * 100
         )  # Calculate the percentage of loaded keys
-        logging.debug(f"Non load keys in pretrain weights: {list(non_load_keys)}")
-        logging.debug(
-            f"{type(self).__name__} missed keys: {list(self_state_dict.keys() - load_keys)}"
-        )
+        missed_keys = set(self_state_dict.keys()) - set(load_keys)
+        for key in missed_keys:
+            logging.debug(
+                f"{type(self).__name__} key {key} not found in pretrained weights. shape: {self_state_dict[key].shape}"
+            )
         logging.info(f"{type(self).__name__} loaded weights ({int(load_percent)}%)")
 
 
@@ -247,3 +251,6 @@ import unitorch.models.peft
 
 if is_diffusers_available():
     import unitorch.models.diffusers
+
+if is_megatron_available():
+    import unitorch.models.megatron

@@ -1,0 +1,6 @@
+{
+    "num_layers": 12,
+    "hidden_size": 1024,
+    "num_attention_heads": 16,
+    "use_cpu_initialization": true
+}

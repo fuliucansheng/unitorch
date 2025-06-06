@@ -8,6 +8,8 @@ import datasets
 import torch.distributed as dist
 from copy import deepcopy
 from datasets import Dataset
+from itertools import cycle
+from megatron.core import mpu
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from unitorch.datasets.hf import HFDatasets, HFIterableDatasets
 from torch.utils.data import Dataset as TorchDataset, IterableDataset
@@ -53,127 +55,72 @@ class ASTFunction:
         return eval(deepcopy(self.__ast_func__))
 
 
-class ASTHFDatasets(TorchDataset):
-    def __init__(
-        self,
-        dataset: Dataset,
-        process_functions: List[ASTFunction],
-    ):
-        super().__init__()
-        self.dataset = dataset
-        self.process_functions = deepcopy(process_functions)
-
-    def __getitem__(self, idx):
-        model_inputs_list, model_targets_list = [], []
-        row = self.dataset[idx]
-        for pfunc in self.process_functions:
-            results = pfunc.process(row)
-            if isinstance(results, ModelInputs) or isinstance(results, ModelTargets):
-                results = [results]
-
-            for result in results:
-                if isinstance(result, ModelInputs):
-                    is_new = True
-                    for _inputs in model_inputs_list:
-                        if type(_inputs) == type(result):
-                            _inputs.add(result)
-                            is_new = False
-                            break
-
-                    if is_new:
-                        model_inputs_list.append(result)
-
-                if isinstance(result, ModelTargets):
-                    is_new = True
-                    for _targets in model_targets_list:
-                        if type(_targets) == type(result):
-                            _targets.add(result)
-                            is_new = False
-                            break
-
-                    if is_new:
-                        model_targets_list.append(result)
-        if len(model_inputs_list) == 0:
-            model_inputs_list = CombineTensorsInputs()
-        elif len(model_inputs_list) == 1:
-            model_inputs_list = model_inputs_list[0]
-
-        if len(model_targets_list) == 0:
-            model_targets_list = CombineTensorsTargets()
-        elif len(model_targets_list) == 1:
-            model_targets_list = model_targets_list[0]
-
-        return model_inputs_list, model_targets_list
-
-    def __len__(
-        self,
-    ):
-        return len(self.dataset)
-
-
 class ASTHFIterableDatasets(IterableDataset):
     def __init__(
         self,
         dataset: Dataset,
         process_functions: List[ASTFunction],
-        enable_ddp_partition: Optional[bool] = True,
     ):
         super().__init__()
         self.dataset = dataset
         self.process_functions = deepcopy(process_functions)
-        self.dataset.shuffle(10000)
-        if enable_ddp_partition and dist.is_initialized():
-            self.global_rank = dist.get_rank()
-            self.world_size = dist.get_world_size()
-        else:
-            self.global_rank = 0
-            self.world_size = 1
+        self.global_rank = dist.get_rank()
+        self.world_size = dist.get_world_size()
+        self.dp_rank = mpu.get_data_parallel_rank()
+        self.dp_world_size = mpu.get_data_parallel_world_size()
+        self.tp_rank = mpu.get_tensor_model_parallel_rank()
+        self.pp_rank = mpu.get_pipeline_model_parallel_rank()
+        self.is_pp_first_rank = mpu.is_pipeline_first_stage(ignore_virtual=True)
+        self.is_pp_last_rank = mpu.is_pipeline_last_stage(ignore_virtual=True)
 
     def __iter__(self):
         worker_info = torch.utils.data.get_worker_info()
-        mod = self.world_size
-        shift = self.global_rank
+        mod = self.dp_world_size
+        shift = self.dp_rank
         if worker_info:
             mod *= worker_info.num_workers
-            shift = self.global_rank * worker_info.num_workers + worker_info.id
-        for i, row in enumerate(self.dataset):
+            shift = self.dp_rank * worker_info.num_workers + worker_info.id
+        for i, row in enumerate(cycle(self.dataset)):
             if (i + shift) % mod != 0:
                 continue
-            inputs, targets = None, None
-            for pfunc in self.process_functions:
-                results = pfunc.process(row)
+            if not (self.is_pp_first_rank or self.is_pp_last_rank) or self.tp_rank > 0:
+                yield CombineTensorsInputs(), CombineTensorsTargets()
+            else:
+                inputs, targets = None, None
+                for pfunc in self.process_functions:
+                    results = pfunc.process(row)
 
-                if isinstance(results, ModelInputs) or isinstance(
-                    results, ModelTargets
-                ):
-                    results = [results]
+                    if isinstance(results, ModelInputs) or isinstance(
+                        results, ModelTargets
+                    ):
+                        results = [results]
 
-                for result in results:
-                    if isinstance(result, ModelInputs):
-                        if inputs is None:
-                            inputs = result
-                        else:
-                            inputs.add(result)
+                    for result in results:
+                        if isinstance(result, ModelInputs):
+                            if inputs is None:
+                                inputs = result
+                            else:
+                                inputs.add(result)
 
-                    if isinstance(result, ModelTargets):
-                        if targets is None:
-                            targets = result
-                        else:
-                            targets.add(result)
-            if inputs is None:
-                inputs = CombineTensorsInputs()
+                        if isinstance(result, ModelTargets):
+                            if targets is None:
+                                targets = result
+                            else:
+                                targets.add(result)
+                if inputs is None:
+                    inputs = CombineTensorsInputs()
 
-            if targets is None:
-                targets = CombineTensorsTargets()
+                if targets is None:
+                    targets = CombineTensorsTargets()
 
-            yield inputs, targets
+                yield inputs, targets
 
     def set_skip_step(self, step):
         self.dataset = self.dataset.skip(step * self.world_size)
 
 
-@register_dataset("core/dataset/ast")
-class ASTDatasets:
+@register_dataset("core/dataset/megatron/ast")
+class MegatronASTDatasets:
     """Class for managing AST datasets."""
 
     splits = ["train", "dev", "test"]
@@ -205,8 +152,7 @@ class ASTDatasets:
             k.replace("/", "_"): k for k, v in registered_process.items()
         }
 
-        config.set_default_section(f"core/dataset/ast")
-        _iterable = config.getoption("iterable", False)
+        config.set_default_section(f"core/dataset/megatron/ast")
         _template = config.getoption("template", "csv")
         _data_name = config.getoption("data_name", None)
         _config_name = config.getoption("config_name", None)
@@ -219,12 +165,11 @@ class ASTDatasets:
         _escapechar = config.getoption("escapechar", None)
         _field = config.getoption("field", None)
         _process_functions = config.getoption("preprocess_functions", None)
-        _enable_ddp_partition = config.getoption("enable_ddp_partition", True)
 
-        _HFDatasets = HFIterableDatasets if _iterable else HFDatasets
-        _ASTDatasets = ASTHFIterableDatasets if _iterable else ASTHFDatasets
+        _HFDatasets = HFIterableDatasets
+        _ASTDatasets = ASTHFIterableDatasets
 
-        config.set_default_section(f"core/dataset/ast/{split}")
+        config.set_default_section(f"core/dataset/megatron/ast/{split}")
 
         template = config.getoption("template", _template)
         if config.getoption("data_name", _data_name) is not None:
@@ -311,26 +256,15 @@ class ASTDatasets:
                     config,
                 )
 
-        enable_ddp_partition = config.getoption(
-            "enable_ddp_partition", _enable_ddp_partition
+        self.__ASTDatasets__[split] = _ASTDatasets(
+            dataset=dataset.dataset,
+            process_functions=process_functions,
         )
-
-        if isinstance(_ASTDatasets, HFIterableDatasets):
-            self.__ASTDatasets__[split] = _ASTDatasets(
-                dataset=dataset.dataset,
-                process_functions=process_functions,
-                enable_ddp_partition=enable_ddp_partition,
-            )
-        else:
-            self.__ASTDatasets__[split] = _ASTDatasets(
-                dataset=dataset.dataset,
-                process_functions=process_functions,
-            )
 
         return self.__ASTDatasets__.get(split)
 
     @classmethod
-    @add_default_section_for_init("core/dataset/ast")
+    @add_default_section_for_init("core/dataset/megatron/ast")
     def from_core_configure(cls, config, **kwargs):
         """
         Create an instance of ASTDatasets from a core configuration.

@@ -1,7 +1,6 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
-
 import os
 import io
 import re
@@ -358,9 +357,7 @@ def cached_path(
 def read_file(file, lines=False):
     result = open(file, "r").read()
     if lines:
-        result = result.split("\n")
-        if result[-1] == "":
-            result = result[:-1]
+        result = result.splitlines()
     return result
 
 

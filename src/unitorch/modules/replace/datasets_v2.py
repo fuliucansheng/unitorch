@@ -36,9 +36,17 @@ class ExamplesIterableV2(datasets.iterable_dataset.ExamplesIterable):
 
 @replace(datasets.iterable_dataset.SkipExamplesIterable)
 class SkipExamplesIterableV2(datasets.iterable_dataset.SkipExamplesIterable):
-    def __init__(self, ex_iterable: _BaseExamplesIterable, n: int):
+    def __init__(
+        self,
+        ex_iterable: _BaseExamplesIterable,
+        n: int,
+        block_sources_order_when_shuffling: bool = True,
+        split_when_sharding: bool = True,
+    ):
         self.ex_iterable = ex_iterable
         self.n = n
+        self.block_sources_order_when_shuffling = block_sources_order_when_shuffling
+        self.split_when_sharding = split_when_sharding
 
     def __iter__(self):
         if (
@@ -57,7 +65,3 @@ class SkipExamplesIterableV2(datasets.iterable_dataset.SkipExamplesIterable):
     def shuffle_data_sources(self, seed: Optional[int]) -> "SkipExamplesIterable":
         """Doesn't shuffle the wrapped examples iterable since it would skip exampels from other shards instead."""
         return self
-
-    @property
-    def n_shards(self) -> int:
-        return self.ex_iterable.n_shards
