@@ -95,7 +95,7 @@ def webui(config_path: str, **kwargs):
     share = config.getoption("share", False)
     ssl_keyfile = config.getoption("ssl_keyfile", None)
     ssl_certfile = config.getoption("ssl_certfile", None)
-    ssl_verify = config.getoption("ssl_verify", True)
+    ssl_verify = config.getoption("ssl_verify", False)
     auth = config.getoption("auth", None)
     demo_webui.launch(
         server_name=host,

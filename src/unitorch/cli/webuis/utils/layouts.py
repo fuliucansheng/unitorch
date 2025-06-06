@@ -129,7 +129,6 @@ def create_element(
             elem_classes=elem_classes,
             datatype="markdown",
             wrap=True,
-            height=1000,
         )
 
     if dtype == "image":
