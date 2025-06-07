@@ -227,7 +227,7 @@ class StableImageInpaintingWebUI(SimpleWebUI):
             trigger_mode="once",
         )
         image.change(
-            lambda x: x["background"].size,
+            lambda x: x["background"].size if x is not None else (1024, 1024),
             inputs=[image],
             outputs=[width, height],
         )
@@ -263,6 +263,8 @@ class StableImageInpaintingWebUI(SimpleWebUI):
         return self._status
 
     def composite_images(self, images):
+        if images is None or "layers" not in images:
+            return None
         layers = images["layers"]
         if len(layers) == 0:
             return None
