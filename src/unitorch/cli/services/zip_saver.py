@@ -2,6 +2,7 @@
 # Licensed under the MIT License.
 
 import os
+import uuid
 import time
 import logging
 import http.server
@@ -73,15 +74,22 @@ class ZipSaverServer(http.server.BaseHTTPRequestHandler):
     next_zip_file_index = 0
     num_files_in_zip = 0
     max_files_per_zip = 10000
+    random_name = False
 
     @classmethod
     def create_new_file(cls):
         if cls.curr_file is not None:
             cls.curr_file.close()
         cls.num_files_in_zip = 0
-        name = os.path.join(
-            cls.zip_folder, f"{cls.zip_file_prefix}_{cls.next_zip_file_index}.zip"
-        )
+        if cls.random_name:
+            name = os.path.join(
+                cls.zip_folder,
+                f"{cls.zip_file_prefix}_{uuid.uuid4().hex[:8]}_{cls.next_zip_file_index}.zip",
+            )
+        else:
+            name = os.path.join(
+                cls.zip_folder, f"{cls.zip_file_prefix}_{cls.next_zip_file_index}.zip"
+            )
         cls.curr_file = zipfile.ZipFile(name, "w")
         cls.next_zip_file_index += 1
 
@@ -125,6 +133,7 @@ class ZipSaverService(GenericService):
         self.port = config.getoption("port", 11231)
         self.name = config.getoption("processname", "core_zip_saver_service")
         self.zip_folder = config.getoption("zip_folder", None)
+        self.random_name = config.getoption("random_name", False)
         self.zip_file_prefix = config.getoption("zip_file_prefix", "zip_files")
         self.zip_extension = config.getoption("zip_extension", ".zip")
         self.max_files_per_zip = config.getoption("max_files_per_zip", 10000000)
@@ -174,9 +183,17 @@ class ZipSaverService(GenericService):
         ZipSaverServer.max_files_per_zip = self.max_files_per_zip
         ZipSaverServer.zip_file_prefix = self.zip_file_prefix
         ZipSaverServer.next_zip_file_index = self.next_zip_file_index + 1
-        name = os.path.join(
-            self.zip_folder, f"{self.zip_file_prefix}_{self.next_zip_file_index}.zip"
-        )
+        ZipSaverServer.random_name = self.random_name
+        if self.random_name:
+            name = os.path.join(
+                self.zip_folder,
+                f"{self.zip_file_prefix}_{uuid.uuid4().hex[:8]}_{self.next_zip_file_index}.zip",
+            )
+        else:
+            name = os.path.join(
+                self.zip_folder,
+                f"{self.zip_file_prefix}_{self.next_zip_file_index}.zip",
+            )
         ZipSaverServer.curr_file = name
         ZipSaverServer.curr_file = zipfile.ZipFile(name, "w")
         self.httpd = http.server.HTTPServer((self.ip, self.port), ZipSaverServer)

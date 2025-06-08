@@ -263,7 +263,7 @@ class StableImageInpaintingWebUI(SimpleWebUI):
         return self._status
 
     def composite_images(self, images):
-        if images is None or "layers" not in images:
+        if images is None:
             return None
         layers = images["layers"]
         if len(layers) == 0:
