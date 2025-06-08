@@ -268,7 +268,7 @@ class PeftWeightLoaderMixin(nn.Module):
                     continue
                 if not any(k in key for k in ["lora_A", "lora_down", "lora.down"]):
                     if key in state_dict and state_dict[key].shape == value.shape:
-                        state_dict[key] = value
+                        state_dict[key] = value * int(weight > 0.0)
                     else:
                         logging.warning(f"Key {key} not found in the model state_dict.")
                     continue
