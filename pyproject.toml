@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=62.1.0", "torch>=1.13", "torchvision", "torchaudio"]
+requires = ["setuptools>=62.1.0", "torch>=2.4", "torchvision>=0.19", "torchaudio>=2.4"]
 build-backend = "setuptools.build_meta"
 
 [project]

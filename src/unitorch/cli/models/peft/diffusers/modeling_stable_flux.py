@@ -41,6 +41,8 @@ class StableFluxLoraForText2ImageGeneration(_StableFluxLoraForText2ImageGenerati
         text2_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
+        image_config_path: Optional[str] = None,
+        redux_image_config_path: Optional[str] = None,
         controlnet_configs_path: Union[str, List[str]] = None,
         quant_config_path: Optional[str] = None,
         image_size: Optional[int] = None,
@@ -60,12 +62,13 @@ class StableFluxLoraForText2ImageGeneration(_StableFluxLoraForText2ImageGenerati
             "q_proj",
             "k_proj",
             "v_proj",
-            "SelfAttention.q",
-            "SelfAttention.k",
-            "SelfAttention.v",
+            "add_q_proj",
+            "add_k_proj",
+            "add_v_proj",
         ],
         enable_text_adapter: Optional[bool] = True,
         enable_transformer_adapter: Optional[bool] = True,
+        enable_redux_image_adapter: Optional[bool] = True,
         seed: Optional[int] = 1123,
         gradient_checkpointing: Optional[bool] = True,
         guidance_scale: Optional[float] = 3.5,
@@ -76,6 +79,8 @@ class StableFluxLoraForText2ImageGeneration(_StableFluxLoraForText2ImageGenerati
             text2_config_path=text2_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
+            image_config_path=image_config_path,
+            redux_image_config_path=redux_image_config_path,
             controlnet_configs_path=controlnet_configs_path,
             quant_config_path=quant_config_path,
             image_size=image_size,
@@ -91,6 +96,7 @@ class StableFluxLoraForText2ImageGeneration(_StableFluxLoraForText2ImageGenerati
             target_modules=target_modules,
             enable_text_adapter=enable_text_adapter,
             enable_transformer_adapter=enable_transformer_adapter,
+            enable_redux_image_adapter=enable_redux_image_adapter,
             seed=seed,
             gradient_checkpointing=gradient_checkpointing,
             guidance_scale=guidance_scale,
@@ -142,6 +148,24 @@ class StableFluxLoraForText2ImageGeneration(_StableFluxLoraForText2ImageGenerati
         )
         scheduler_config_path = cached_path(scheduler_config_path)
 
+        image_config_path = config.getoption("image_config_path", None)
+        image_config_path = pop_value(
+            image_config_path,
+            nested_dict_value(pretrained_infos, "image", "config"),
+            check_none=False,
+        )
+        if image_config_path is not None:
+            image_config_path = cached_path(image_config_path)
+
+        redux_image_config_path = config.getoption("redux_image_config_path", None)
+        redux_image_config_path = pop_value(
+            redux_image_config_path,
+            nested_dict_value(pretrained_infos, "redux_image", "config"),
+            check_none=False,
+        )
+        if redux_image_config_path is not None:
+            redux_image_config_path = cached_path(redux_image_config_path)
+
         quant_config_path = config.getoption("quant_config_path", None)
         if quant_config_path is not None:
             quant_config_path = cached_path(quant_config_path)
@@ -165,9 +189,9 @@ class StableFluxLoraForText2ImageGeneration(_StableFluxLoraForText2ImageGenerati
                 "q_proj",
                 "k_proj",
                 "v_proj",
-                "SelfAttention.q",
-                "SelfAttention.k",
-                "SelfAttention.v",
+                "add_q_proj",
+                "add_k_proj",
+                "add_v_proj",
             ],
         )
         replace_keys = config.getoption(
@@ -176,17 +200,20 @@ class StableFluxLoraForText2ImageGeneration(_StableFluxLoraForText2ImageGenerati
                 "to_q.": "to_q.base_layer.",
                 "to_k.": "to_k.base_layer.",
                 "to_v.": "to_v.base_layer.",
-                "q_proj.": "q_proj.base_layer.",
-                "k_proj.": "k_proj.base_layer.",
-                "v_proj.": "v_proj.base_layer.",
-                "SelfAttention.q.": "SelfAttention.q.base_layer.",
-                "SelfAttention.k.": "SelfAttention.k.base_layer.",
-                "SelfAttention.v.": "SelfAttention.v.base_layer.",
+                "\.q_proj.": ".q_proj.base_layer.",
+                "\.k_proj.": ".k_proj.base_layer.",
+                "\.v_proj.": ".v_proj.base_layer.",
+                "add_q_proj.": "add_q_proj.base_layer.",
+                "add_k_proj.": "add_k_proj.base_layer.",
+                "add_v_proj.": "add_v_proj.base_layer.",
             },
         )
         enable_text_adapter = config.getoption("enable_text_adapter", True)
         enable_transformer_adapter = config.getoption(
             "enable_transformer_adapter", True
+        )
+        enable_redux_image_adapter = config.getoption(
+            "enable_redux_image_adapter", True
         )
         seed = config.getoption("seed", 1123)
         gradient_checkpointing = config.getoption("gradient_checkpointing", True)
@@ -198,6 +225,8 @@ class StableFluxLoraForText2ImageGeneration(_StableFluxLoraForText2ImageGenerati
             text2_config_path=text2_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
+            image_config_path=image_config_path,
+            redux_image_config_path=redux_image_config_path,
             quant_config_path=quant_config_path,
             image_size=image_size,
             in_channels=in_channels,
@@ -212,6 +241,7 @@ class StableFluxLoraForText2ImageGeneration(_StableFluxLoraForText2ImageGenerati
             target_modules=target_modules,
             enable_text_adapter=enable_text_adapter,
             enable_transformer_adapter=enable_transformer_adapter,
+            enable_redux_image_adapter=enable_redux_image_adapter,
             seed=seed,
             gradient_checkpointing=gradient_checkpointing,
             guidance_scale=guidance_scale,
@@ -241,6 +271,15 @@ class StableFluxLoraForText2ImageGeneration(_StableFluxLoraForText2ImageGenerati
                     nested_dict_value(pretrained_infos, "vae", "weight"),
                     prefix_keys={"": "vae."},
                 ),
+                load_weight(
+                    nested_dict_value(pretrained_infos, "image", "weight"),
+                    prefix_keys={"": "image."},
+                    replace_keys=replace_keys if enable_redux_image_adapter else {},
+                ),
+                load_weight(
+                    nested_dict_value(pretrained_infos, "redux_image", "weight"),
+                    prefix_keys={"": "redux_image."},
+                ),
             ]
         elif weight_path is not None:
             state_dict = load_weight(weight_path)
@@ -268,6 +307,7 @@ class StableFluxLoraForText2ImageGeneration(_StableFluxLoraForText2ImageGenerati
         pixel_values: torch.Tensor,
         input_ids: torch.Tensor,
         input2_ids: torch.Tensor,
+        redux_pixel_values: Optional[torch.Tensor] = None,
         attention_mask: Optional[torch.Tensor] = None,
         attention2_mask: Optional[torch.Tensor] = None,
     ):
@@ -275,6 +315,7 @@ class StableFluxLoraForText2ImageGeneration(_StableFluxLoraForText2ImageGenerati
             input_ids=input_ids,
             input2_ids=input2_ids,
             pixel_values=pixel_values,
+            redux_pixel_values=redux_pixel_values,
             attention_mask=attention_mask,
             attention2_mask=attention2_mask,
         )
@@ -291,6 +332,7 @@ class StableFluxLoraForText2ImageGeneration(_StableFluxLoraForText2ImageGenerati
         self,
         input_ids: torch.Tensor,
         input2_ids: torch.Tensor,
+        redux_pixel_values: Optional[torch.Tensor] = None,
         attention_mask: Optional[torch.Tensor] = None,
         attention2_mask: Optional[torch.Tensor] = None,
         height: Optional[int] = 1024,
@@ -300,6 +342,7 @@ class StableFluxLoraForText2ImageGeneration(_StableFluxLoraForText2ImageGenerati
         outputs = super().generate(
             input_ids=input_ids,
             input2_ids=input2_ids,
+            redux_pixel_values=redux_pixel_values,
             attention_mask=attention_mask,
             attention2_mask=attention2_mask,
             height=height,
@@ -321,6 +364,8 @@ class StableFluxLoraForImageInpainting(_StableFluxLoraForImageInpainting):
         text2_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
+        image_config_path: Optional[str] = None,
+        redux_image_config_path: Optional[str] = None,
         controlnet_configs_path: Union[str, List[str]] = None,
         quant_config_path: Optional[str] = None,
         image_size: Optional[int] = None,
@@ -340,12 +385,13 @@ class StableFluxLoraForImageInpainting(_StableFluxLoraForImageInpainting):
             "q_proj",
             "k_proj",
             "v_proj",
-            "SelfAttention.q",
-            "SelfAttention.k",
-            "SelfAttention.v",
+            "add_q_proj",
+            "add_k_proj",
+            "add_v_proj",
         ],
         enable_text_adapter: Optional[bool] = True,
         enable_transformer_adapter: Optional[bool] = True,
+        enable_redux_image_adapter: Optional[bool] = True,
         seed: Optional[int] = 1123,
         gradient_checkpointing: Optional[bool] = True,
         guidance_scale: Optional[float] = 3.5,
@@ -356,6 +402,8 @@ class StableFluxLoraForImageInpainting(_StableFluxLoraForImageInpainting):
             text2_config_path=text2_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
+            image_config_path=image_config_path,
+            redux_image_config_path=redux_image_config_path,
             controlnet_configs_path=controlnet_configs_path,
             quant_config_path=quant_config_path,
             image_size=image_size,
@@ -371,6 +419,7 @@ class StableFluxLoraForImageInpainting(_StableFluxLoraForImageInpainting):
             target_modules=target_modules,
             enable_text_adapter=enable_text_adapter,
             enable_transformer_adapter=enable_transformer_adapter,
+            enable_redux_image_adapter=enable_redux_image_adapter,
             seed=seed,
             gradient_checkpointing=gradient_checkpointing,
             guidance_scale=guidance_scale,
@@ -422,6 +471,24 @@ class StableFluxLoraForImageInpainting(_StableFluxLoraForImageInpainting):
         )
         scheduler_config_path = cached_path(scheduler_config_path)
 
+        image_config_path = config.getoption("image_config_path", None)
+        image_config_path = pop_value(
+            image_config_path,
+            nested_dict_value(pretrained_infos, "image", "config"),
+            check_none=False,
+        )
+        if image_config_path is not None:
+            image_config_path = cached_path(image_config_path)
+
+        redux_image_config_path = config.getoption("redux_image_config_path", None)
+        redux_image_config_path = pop_value(
+            redux_image_config_path,
+            nested_dict_value(pretrained_infos, "redux_image", "config"),
+            check_none=False,
+        )
+        if redux_image_config_path is not None:
+            redux_image_config_path = cached_path(redux_image_config_path)
+
         quant_config_path = config.getoption("quant_config_path", None)
         if quant_config_path is not None:
             quant_config_path = cached_path(quant_config_path)
@@ -445,9 +512,9 @@ class StableFluxLoraForImageInpainting(_StableFluxLoraForImageInpainting):
                 "q_proj",
                 "k_proj",
                 "v_proj",
-                "SelfAttention.q",
-                "SelfAttention.k",
-                "SelfAttention.v",
+                "add_q_proj",
+                "add_k_proj",
+                "add_v_proj",
             ],
         )
         replace_keys = config.getoption(
@@ -456,17 +523,20 @@ class StableFluxLoraForImageInpainting(_StableFluxLoraForImageInpainting):
                 "to_q.": "to_q.base_layer.",
                 "to_k.": "to_k.base_layer.",
                 "to_v.": "to_v.base_layer.",
-                "q_proj.": "q_proj.base_layer.",
-                "k_proj.": "k_proj.base_layer.",
-                "v_proj.": "v_proj.base_layer.",
-                "SelfAttention.q.": "SelfAttention.q.base_layer.",
-                "SelfAttention.k.": "SelfAttention.k.base_layer.",
-                "SelfAttention.v.": "SelfAttention.v.base_layer.",
+                "\.q_proj.": ".q_proj.base_layer.",
+                "\.k_proj.": ".k_proj.base_layer.",
+                "\.v_proj.": ".v_proj.base_layer.",
+                "add_q_proj.": "add_q_proj.base_layer.",
+                "add_k_proj.": "add_k_proj.base_layer.",
+                "add_v_proj.": "add_v_proj.base_layer.",
             },
         )
         enable_text_adapter = config.getoption("enable_text_adapter", True)
         enable_transformer_adapter = config.getoption(
             "enable_transformer_adapter", True
+        )
+        enable_redux_image_adapter = config.getoption(
+            "enable_redux_image_adapter", True
         )
         seed = config.getoption("seed", 1123)
         gradient_checkpointing = config.getoption("gradient_checkpointing", True)
@@ -478,6 +548,8 @@ class StableFluxLoraForImageInpainting(_StableFluxLoraForImageInpainting):
             text2_config_path=text2_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
+            image_config_path=image_config_path,
+            redux_image_config_path=redux_image_config_path,
             quant_config_path=quant_config_path,
             image_size=image_size,
             in_channels=in_channels,
@@ -492,6 +564,7 @@ class StableFluxLoraForImageInpainting(_StableFluxLoraForImageInpainting):
             target_modules=target_modules,
             enable_text_adapter=enable_text_adapter,
             enable_transformer_adapter=enable_transformer_adapter,
+            enable_redux_image_adapter=enable_redux_image_adapter,
             seed=seed,
             gradient_checkpointing=gradient_checkpointing,
             guidance_scale=guidance_scale,
@@ -521,6 +594,15 @@ class StableFluxLoraForImageInpainting(_StableFluxLoraForImageInpainting):
                     nested_dict_value(pretrained_infos, "vae", "weight"),
                     prefix_keys={"": "vae."},
                 ),
+                load_weight(
+                    nested_dict_value(pretrained_infos, "image", "weight"),
+                    prefix_keys={"": "image."},
+                    replace_keys=replace_keys if enable_redux_image_adapter else {},
+                ),
+                load_weight(
+                    nested_dict_value(pretrained_infos, "redux_image", "weight"),
+                    prefix_keys={"": "redux_image."},
+                ),
             ]
         elif weight_path is not None:
             state_dict = load_weight(weight_path)
@@ -549,6 +631,7 @@ class StableFluxLoraForImageInpainting(_StableFluxLoraForImageInpainting):
         pixel_masks: torch.Tensor,
         input_ids: torch.Tensor,
         input2_ids: torch.Tensor,
+        redux_pixel_values: Optional[torch.Tensor] = None,
         attention_mask: Optional[torch.Tensor] = None,
         attention2_mask: Optional[torch.Tensor] = None,
     ):
@@ -557,6 +640,7 @@ class StableFluxLoraForImageInpainting(_StableFluxLoraForImageInpainting):
             input2_ids=input2_ids,
             pixel_values=pixel_values,
             pixel_masks=pixel_masks,
+            redux_pixel_values=redux_pixel_values,
             attention_mask=attention_mask,
             attention2_mask=attention2_mask,
         )
@@ -575,6 +659,7 @@ class StableFluxLoraForImageInpainting(_StableFluxLoraForImageInpainting):
         pixel_masks: torch.Tensor,
         input_ids: torch.Tensor,
         input2_ids: torch.Tensor,
+        redux_pixel_values: Optional[torch.Tensor] = None,
         attention_mask: Optional[torch.Tensor] = None,
         attention2_mask: Optional[torch.Tensor] = None,
         strength: Optional[float] = 1.0,
@@ -585,6 +670,7 @@ class StableFluxLoraForImageInpainting(_StableFluxLoraForImageInpainting):
             pixel_masks=pixel_masks,
             input_ids=input_ids,
             input2_ids=input2_ids,
+            redux_pixel_values=redux_pixel_values,
             attention_mask=attention_mask,
             attention2_mask=attention2_mask,
             strength=strength,

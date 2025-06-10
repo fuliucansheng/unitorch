@@ -83,6 +83,12 @@ class StableFluxImageReduxWebUI(SimpleWebUI):
         guidance_scale = create_element(
             "slider", "Guidance Scale", min_value=0, max_value=50, step=0.1, default=7.5
         )
+        height = create_element(
+            "slider", "Image Height", min_value=1, max_value=2048, step=1, default=1024
+        )
+        width = create_element(
+            "slider", "Image Width", min_value=1, max_value=2048, step=1, default=1024
+        )
         seed = create_element(
             "slider", "Seed", min_value=0, max_value=9999, step=1, default=42
         )
@@ -116,6 +122,7 @@ class StableFluxImageReduxWebUI(SimpleWebUI):
         left_generation = create_tab(
             create_row(image),
             create_row(scheduler, steps),
+            create_row(height, width),
             create_row(guidance_scale),
             create_row(seed),
             name="Generation",
@@ -152,6 +159,8 @@ class StableFluxImageReduxWebUI(SimpleWebUI):
             inputs=[
                 prompt,
                 image,
+                height,
+                width,
                 guidance_scale,
                 steps,
                 seed,
@@ -196,6 +205,8 @@ class StableFluxImageReduxWebUI(SimpleWebUI):
         self,
         text: str,
         image: Image.Image,
+        height: int,
+        width: int,
         guidance_scale: float,
         num_timesteps: int,
         seed: int,
@@ -212,6 +223,8 @@ class StableFluxImageReduxWebUI(SimpleWebUI):
         image = self._pipe(
             text,
             image,
+            height=height,
+            width=width,
             guidance_scale=guidance_scale,
             num_timesteps=num_timesteps,
             seed=seed,

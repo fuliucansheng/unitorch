@@ -53,7 +53,7 @@ class ResizeWebUI(SimpleWebUI):
         )
 
         input_image.upload(
-            lambda x: x.size,
+            lambda x: x.size if x is not None else (0, 0),
             inputs=[input_image],
             outputs=[width, height],
         )
@@ -102,7 +102,7 @@ class ExpandWebUI(SimpleWebUI):
             trigger_mode="once",
         )
         input_image.upload(
-            lambda x: x.size,
+            lambda x: x.size if x is not None else (0, 0),
             inputs=[input_image],
             outputs=[width, height],
         )
@@ -160,7 +160,7 @@ class CannyWebUI(SimpleWebUI):
         )
 
         input_image.upload(
-            lambda x: x.size,
+            lambda x: x.size if x is not None else (0, 0),
             inputs=[input_image],
             outputs=[width, height],
         )
@@ -270,7 +270,7 @@ class InvertWebUI(SimpleWebUI):
             trigger_mode="once",
         )
         input_image.upload(
-            lambda x: x.size,
+            lambda x: x.size if x is not None else (0, 0),
             inputs=[input_image],
             outputs=[width, height],
         )
