@@ -253,6 +253,35 @@ class ImageProcessor:
         result.paste(image, (0, 0), mask)
         return result
 
+    @register_process("core/process/image/dilate")
+    def _dilate(
+        self,
+        image: Image.Image,
+        kernel_size: Optional[int] = 3,
+        iterations: Optional[int] = 1,
+    ):
+        """
+        Dilates the image by the specified number of iterations.
+
+        Args:
+            image (Image.Image): The image to dilate.
+            iterations (Optional[int]): The number of iterations to dilate. Defaults to 1.
+
+        Returns:
+            The dilated image as a PIL Image object.
+        """
+        if is_opencv_available():
+            import cv2
+
+            image = np.array(image, np.uint8)
+            kernel = cv2.getStructuringElement(
+                cv2.MORPH_ELLIPSE, (kernel_size, kernel_size)
+            )
+            image = cv2.dilate(image, kernel, iterations=iterations)
+            return Image.fromarray(image)
+        else:
+            raise NotImplementedError("Dilate operation requires OpenCV.")
+
     @register_process("core/process/image/crop")
     def _crop(
         self,

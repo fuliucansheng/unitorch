@@ -141,8 +141,7 @@ class StableFluxText2ImageWebUI(SimpleWebUI):
         )
         left_generation = create_tab(
             create_row(scheduler, steps),
-            create_row(height),
-            create_row(width),
+            create_row(height, width),
             create_row(guidance_scale),
             create_row(seed),
             name="Generation",
