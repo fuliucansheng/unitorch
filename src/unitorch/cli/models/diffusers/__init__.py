@@ -148,7 +148,7 @@ __hf_hub_stable_flux_safetensors_dict__ = lambda name, n1=3, n2=2: {
         "config": hf_endpoint_url(f"/{name}/resolve/main/transformer/config.json"),
         "weight": [
             hf_endpoint_url(
-                f"{name}/resolve/main/transformer/diffusion_pytorch_model-{str(i).rjust(5, '0')}-of-{str(n1).rjust(5, '0')}.safetensors"
+                f"/{name}/resolve/main/transformer/diffusion_pytorch_model-{str(i).rjust(5, '0')}-of-{str(n1).rjust(5, '0')}.safetensors"
             )
             for i in range(1, n1 + 1)
         ],
@@ -166,7 +166,7 @@ __hf_hub_stable_flux_safetensors_dict__ = lambda name, n1=3, n2=2: {
         "vocab": hf_endpoint_url(f"/{name}/resolve/main/tokenizer_2/spiece.model"),
         "weight": [
             hf_endpoint_url(
-                f"{name}/resolve/main/text_encoder_2/model-{str(i).rjust(5, '0')}-of-{str(n2).rjust(5, '0')}.safetensors"
+                f"/{name}/resolve/main/text_encoder_2/model-{str(i).rjust(5, '0')}-of-{str(n2).rjust(5, '0')}.safetensors"
             )
             for i in range(1, n2 + 1)
         ],
@@ -181,7 +181,7 @@ __hf_hub_stable_flux_ctrl_safetensors_dict__ = lambda name, n1=3, n2=4: {
         "config": hf_endpoint_url(f"/{name}/resolve/main/transformer/config.json"),
         "weight": [
             hf_endpoint_url(
-                f"{name}/resolve/main/transformer/diffusion_pytorch_model-{str(i).rjust(5, '0')}-of-{str(n1).rjust(5, '0')}.safetensors"
+                f"/{name}/resolve/main/transformer/diffusion_pytorch_model-{str(i).rjust(5, '0')}-of-{str(n1).rjust(5, '0')}.safetensors"
             )
             for i in range(1, n1 + 1)
         ],
@@ -199,7 +199,7 @@ __hf_hub_stable_flux_ctrl_safetensors_dict__ = lambda name, n1=3, n2=4: {
         "vocab": hf_endpoint_url(f"/{name}/resolve/main/tokenizer_2/spiece.model"),
         "weight": [
             hf_endpoint_url(
-                f"{name}/resolve/main/text_encoder_2/model-{str(i).rjust(5, '0')}-of-{str(n2).rjust(5, '0')}.safetensors"
+                f"/{name}/resolve/main/text_encoder_2/model-{str(i).rjust(5, '0')}-of-{str(n2).rjust(5, '0')}.safetensors"
             )
             for i in range(1, n2 + 1)
         ],

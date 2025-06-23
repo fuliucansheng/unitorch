@@ -72,7 +72,11 @@ def add_default_section_for_function(
                 )
                 ret = func(args[0], **kwargs)
             else:
-                raise ValueError("Can't find the unitorch setting")
+                # raise ValueError("Can't find the unitorch setting")
+                logging.warning(
+                    "Can't find the unitorch setting, using default parameters."
+                )
+                ret = func(*args, **kwargs)
             return ret
 
         return _new_func

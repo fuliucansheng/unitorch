@@ -8,9 +8,11 @@ from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 import diffusers.schedulers as schedulers
 from peft import LoraConfig
 from transformers import CLIPTextConfig, CLIPTextModel, CLIPTextModelWithProjection
+from transformers import PretrainedConfig, SiglipVisionConfig, SiglipVisionModel
 from transformers.models.t5.configuration_t5 import T5Config
 from transformers.models.t5.modeling_t5 import T5EncoderModel
 from diffusers.schedulers import SchedulerMixin, FlowMatchEulerDiscreteScheduler
+from diffusers.pipelines.flux.modeling_flux import ReduxImageEncoder
 from diffusers.training_utils import (
     compute_loss_weighting_for_sd3,
     compute_density_for_timestep_sampling,
@@ -65,6 +67,8 @@ class GenericStableFluxLoraModel(GenericPeftModel, QuantizationMixin):
         text2_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
+        image_config_path: Optional[str] = None,
+        redux_image_config_path: Optional[str] = None,
         controlnet_configs_path: Union[str, List[str]] = None,
         quant_config_path: Optional[str] = None,
         image_size: Optional[int] = None,
@@ -84,12 +88,13 @@ class GenericStableFluxLoraModel(GenericPeftModel, QuantizationMixin):
             "q_proj",
             "k_proj",
             "v_proj",
-            "SelfAttention.q",
-            "SelfAttention.k",
-            "SelfAttention.v",
+            "add_q_proj",
+            "add_k_proj",
+            "add_v_proj",
         ],
         enable_text_adapter: Optional[bool] = True,
         enable_transformer_adapter: Optional[bool] = True,
+        enable_redux_image_adapter: Optional[bool] = True,
         seed: Optional[int] = 1123,
     ):
         super().__init__()
@@ -117,6 +122,20 @@ class GenericStableFluxLoraModel(GenericPeftModel, QuantizationMixin):
 
         vae_config_dict = json.load(open(vae_config_path))
         self.vae = AutoencoderKL.from_config(vae_config_dict).to(torch.bfloat16)
+
+        if image_config_path is not None and redux_image_config_path is not None:
+            image_config = SiglipVisionConfig.from_json_file(image_config_path)
+            self.image = SiglipVisionModel(image_config)
+            redux_image_config = PretrainedConfig.from_json_file(
+                redux_image_config_path
+            )
+            self.redux_image = ReduxImageEncoder(
+                redux_dim=redux_image_config.redux_dim,
+                txt_in_features=redux_image_config.txt_in_features,
+            )
+        else:
+            self.image = None
+            self.redux_image = None
 
         if isinstance(controlnet_configs_path, list):
             if len(controlnet_configs_path) == 0:
@@ -187,6 +206,8 @@ class GenericStableFluxLoraModel(GenericPeftModel, QuantizationMixin):
             self.text2.add_adapter(lora_config)
         if enable_transformer_adapter:
             self.transformer.add_adapter(lora_config)
+        if enable_redux_image_adapter and self.image is not None:
+            self.image.add_adapter(lora_config)
 
     def get_sigmas(self, timesteps, n_dim=4, dtype=torch.float32):
         sigmas = self.scheduler.sigmas.to(device=self.device, dtype=dtype)
@@ -226,6 +247,8 @@ class GenericStableFluxLoraModel(GenericPeftModel, QuantizationMixin):
 
 
 class StableFluxLoraForText2ImageGeneration(GenericStableFluxLoraModel):
+    modules_to_save_checkpoints = ["lora", "redux_image"]
+
     def __init__(
         self,
         config_path: str,
@@ -233,6 +256,8 @@ class StableFluxLoraForText2ImageGeneration(GenericStableFluxLoraModel):
         text2_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
+        image_config_path: Optional[str] = None,
+        redux_image_config_path: Optional[str] = None,
         controlnet_configs_path: Union[str, List[str]] = None,
         quant_config_path: Optional[str] = None,
         image_size: Optional[int] = None,
@@ -252,12 +277,13 @@ class StableFluxLoraForText2ImageGeneration(GenericStableFluxLoraModel):
             "q_proj",
             "k_proj",
             "v_proj",
-            "SelfAttention.q",
-            "SelfAttention.k",
-            "SelfAttention.v",
+            "add_q_proj",
+            "add_k_proj",
+            "add_v_proj",
         ],
         enable_text_adapter: Optional[bool] = True,
         enable_transformer_adapter: Optional[bool] = True,
+        enable_redux_image_adapter: Optional[bool] = True,
         seed: Optional[int] = 1123,
         gradient_checkpointing: Optional[bool] = True,
         guidance_scale: Optional[float] = 3.5,
@@ -268,6 +294,8 @@ class StableFluxLoraForText2ImageGeneration(GenericStableFluxLoraModel):
             text2_config_path=text2_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
+            image_config_path=image_config_path,
+            redux_image_config_path=redux_image_config_path,
             controlnet_configs_path=controlnet_configs_path,
             quant_config_path=quant_config_path,
             image_size=image_size,
@@ -283,11 +311,16 @@ class StableFluxLoraForText2ImageGeneration(GenericStableFluxLoraModel):
             target_modules=target_modules,
             enable_text_adapter=enable_text_adapter,
             enable_transformer_adapter=enable_transformer_adapter,
+            enable_redux_image_adapter=enable_redux_image_adapter,
             seed=seed,
         )
 
         if gradient_checkpointing:
             self.transformer.enable_gradient_checkpointing()
+
+        if enable_redux_image_adapter and self.redux_image is not None:
+            for param in self.redux_image.parameters():
+                param.requires_grad = True
 
         self.pipeline = FluxPipeline(
             vae=self.vae,
@@ -300,12 +333,15 @@ class StableFluxLoraForText2ImageGeneration(GenericStableFluxLoraModel):
         )
         self.pipeline.set_progress_bar_config(disable=True)
         self.guidance_scale = guidance_scale
+        self.prompt_embeds_scale = 1.0
+        self.pooled_prompt_embeds_scale = 1.0
 
     def forward(
         self,
         input_ids: torch.Tensor,
         input2_ids: torch.Tensor,
         pixel_values: torch.Tensor,
+        redux_pixel_values: Optional[torch.Tensor] = None,
         attention_mask: Optional[torch.Tensor] = None,
         attention2_mask: Optional[torch.Tensor] = None,
     ):
@@ -315,6 +351,24 @@ class StableFluxLoraForText2ImageGeneration(GenericStableFluxLoraModel):
             attention_mask=attention_mask,
             attention2_mask=attention2_mask,
         )
+        prompt_embeds = outputs.prompt_embeds.to(torch.bfloat16)
+        pooled_prompt_embeds = outputs.pooled_prompt_embeds.to(torch.bfloat16)
+
+        if (
+            redux_pixel_values is not None
+            and self.image is not None
+            and self.redux_image is not None
+        ):
+            redux_image_embeds = self.image(redux_pixel_values).last_hidden_state
+            redux_image_embeds = self.redux_image(redux_image_embeds).image_embeds
+            prompt_embeds = (
+                torch.cat([prompt_embeds, redux_image_embeds], dim=1)
+                * self.prompt_embeds_scale
+            )
+            pooled_prompt_embeds = (
+                pooled_prompt_embeds * self.pooled_prompt_embeds_scale
+            )
+
         latents = self.vae.encode(pixel_values).latent_dist.sample()
         latents = (
             latents - self.vae.config.shift_factor
@@ -351,7 +405,7 @@ class StableFluxLoraForText2ImageGeneration(GenericStableFluxLoraModel):
             width=latents.shape[3],
         )
 
-        text_ids = torch.zeros(outputs.prompt_embeds.shape[1], 3).to(
+        text_ids = torch.zeros(prompt_embeds.shape[1], 3).to(
             device=self.device, dtype=self.dtype
         )
 
@@ -367,8 +421,8 @@ class StableFluxLoraForText2ImageGeneration(GenericStableFluxLoraModel):
             hidden_states=noise_latents,
             timestep=timesteps / 1000,
             guidance=guidance,
-            encoder_hidden_states=outputs.prompt_embeds,
-            pooled_projections=outputs.pooled_prompt_embeds,
+            encoder_hidden_states=prompt_embeds,
+            pooled_projections=pooled_prompt_embeds,
             txt_ids=text_ids,
             img_ids=latent_image_ids,
             return_dict=False,
@@ -399,6 +453,7 @@ class StableFluxLoraForText2ImageGeneration(GenericStableFluxLoraModel):
         self,
         input_ids: torch.Tensor,
         input2_ids: torch.Tensor,
+        redux_pixel_values: Optional[torch.Tensor] = None,
         attention_mask: Optional[torch.Tensor] = None,
         attention2_mask: Optional[torch.Tensor] = None,
         height: Optional[int] = 1024,
@@ -412,9 +467,26 @@ class StableFluxLoraForText2ImageGeneration(GenericStableFluxLoraModel):
             attention2_mask=attention2_mask,
         )
 
+        prompt_embeds = outputs.prompt_embeds.to(torch.bfloat16)
+        pooled_prompt_embeds = outputs.pooled_prompt_embeds.to(torch.bfloat16)
+        if (
+            redux_pixel_values is not None
+            and self.image is not None
+            and self.redux_image is not None
+        ):
+            redux_image_embeds = self.image(redux_pixel_values).last_hidden_state
+            redux_image_embeds = self.redux_image(redux_image_embeds).image_embeds
+            prompt_embeds = (
+                torch.cat([prompt_embeds, redux_image_embeds], dim=1)
+                * self.prompt_embeds_scale
+            )
+            pooled_prompt_embeds = (
+                pooled_prompt_embeds * self.pooled_prompt_embeds_scale
+            )
+
         images = self.pipeline(
-            prompt_embeds=outputs.prompt_embeds.to(torch.bfloat16),
-            pooled_prompt_embeds=outputs.pooled_prompt_embeds.to(torch.bfloat16),
+            prompt_embeds=prompt_embeds.to(torch.bfloat16),
+            pooled_prompt_embeds=pooled_prompt_embeds.to(torch.bfloat16),
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),
@@ -429,6 +501,8 @@ class StableFluxLoraForText2ImageGeneration(GenericStableFluxLoraModel):
 
 
 class StableFluxLoraForImageInpainting(GenericStableFluxLoraModel):
+    modules_to_save_checkpoints = ["lora", "redux_image"]
+
     def __init__(
         self,
         config_path: str,
@@ -436,6 +510,8 @@ class StableFluxLoraForImageInpainting(GenericStableFluxLoraModel):
         text2_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
+        image_config_path: Optional[str] = None,
+        redux_image_config_path: Optional[str] = None,
         controlnet_configs_path: Union[str, List[str]] = None,
         quant_config_path: Optional[str] = None,
         image_size: Optional[int] = None,
@@ -455,12 +531,13 @@ class StableFluxLoraForImageInpainting(GenericStableFluxLoraModel):
             "q_proj",
             "k_proj",
             "v_proj",
-            "SelfAttention.q",
-            "SelfAttention.k",
-            "SelfAttention.v",
+            "add_q_proj",
+            "add_k_proj",
+            "add_v_proj",
         ],
         enable_text_adapter: Optional[bool] = True,
         enable_transformer_adapter: Optional[bool] = True,
+        enable_redux_image_adapter: Optional[bool] = True,
         seed: Optional[int] = 1123,
         gradient_checkpointing: Optional[bool] = True,
         guidance_scale: Optional[float] = 3.5,
@@ -470,6 +547,8 @@ class StableFluxLoraForImageInpainting(GenericStableFluxLoraModel):
             text_config_path=text_config_path,
             text2_config_path=text2_config_path,
             vae_config_path=vae_config_path,
+            image_config_path=image_config_path,
+            redux_image_config_path=redux_image_config_path,
             scheduler_config_path=scheduler_config_path,
             controlnet_configs_path=controlnet_configs_path,
             quant_config_path=quant_config_path,
@@ -486,10 +565,15 @@ class StableFluxLoraForImageInpainting(GenericStableFluxLoraModel):
             target_modules=target_modules,
             enable_text_adapter=enable_text_adapter,
             enable_transformer_adapter=enable_transformer_adapter,
+            enable_redux_image_adapter=enable_redux_image_adapter,
             seed=seed,
         )
         if gradient_checkpointing:
             self.transformer.enable_gradient_checkpointing()
+
+        if enable_redux_image_adapter and self.redux_image is not None:
+            for param in self.redux_image.parameters():
+                param.requires_grad = True
 
         self.pipeline = FluxFillPipeline(
             vae=self.vae,
@@ -502,6 +586,8 @@ class StableFluxLoraForImageInpainting(GenericStableFluxLoraModel):
         )
         self.pipeline.set_progress_bar_config(disable=True)
         self.guidance_scale = guidance_scale
+        self.prompt_embeds_scale = 1.0
+        self.pooled_prompt_embeds_scale = 1.0
         self.num_channels_transformer = self.transformer.config.in_channels
 
     def forward(
@@ -510,6 +596,7 @@ class StableFluxLoraForImageInpainting(GenericStableFluxLoraModel):
         input2_ids: torch.Tensor,
         pixel_values: torch.Tensor,
         pixel_masks: torch.Tensor,
+        redux_pixel_values: Optional[torch.Tensor] = None,
         attention_mask: Optional[torch.Tensor] = None,
         attention2_mask: Optional[torch.Tensor] = None,
     ):
@@ -519,6 +606,23 @@ class StableFluxLoraForImageInpainting(GenericStableFluxLoraModel):
             attention_mask=attention_mask,
             attention2_mask=attention2_mask,
         )
+        prompt_embeds = outputs.prompt_embeds.to(torch.bfloat16)
+        pooled_prompt_embeds = outputs.pooled_prompt_embeds.to(torch.bfloat16)
+        if (
+            redux_pixel_values is not None
+            and self.image is not None
+            and self.redux_image is not None
+        ):
+            redux_image_embeds = self.image(redux_pixel_values).last_hidden_state
+            redux_image_embeds = self.redux_image(redux_image_embeds).image_embeds
+            prompt_embeds = (
+                torch.cat([prompt_embeds, redux_image_embeds], dim=1)
+                * self.prompt_embeds_scale
+            )
+            pooled_prompt_embeds = (
+                pooled_prompt_embeds * self.pooled_prompt_embeds_scale
+            )
+
         latents = self.vae.encode(pixel_values).latent_dist.sample()
         latents = (
             latents - self.vae.config.shift_factor
@@ -585,7 +689,7 @@ class StableFluxLoraForImageInpainting(GenericStableFluxLoraModel):
             width=latents.shape[3],
         )
 
-        text_ids = torch.zeros(outputs.prompt_embeds.shape[1], 3).to(
+        text_ids = torch.zeros(prompt_embeds.shape[1], 3).to(
             device=self.device, dtype=self.dtype
         )
 
@@ -601,8 +705,8 @@ class StableFluxLoraForImageInpainting(GenericStableFluxLoraModel):
             hidden_states=latent_model_input,
             timestep=timesteps / 1000,
             guidance=guidance,
-            encoder_hidden_states=outputs.prompt_embeds,
-            pooled_projections=outputs.pooled_prompt_embeds,
+            encoder_hidden_states=prompt_embeds,
+            pooled_projections=pooled_prompt_embeds,
             txt_ids=text_ids,
             img_ids=latent_image_ids,
             return_dict=False,
@@ -634,6 +738,7 @@ class StableFluxLoraForImageInpainting(GenericStableFluxLoraModel):
         pixel_masks: torch.Tensor,
         input_ids: torch.Tensor,
         input2_ids: torch.Tensor,
+        redux_pixel_values: Optional[torch.Tensor] = None,
         attention_mask: Optional[torch.Tensor] = None,
         attention2_mask: Optional[torch.Tensor] = None,
         strength: Optional[float] = 1.0,
@@ -646,11 +751,29 @@ class StableFluxLoraForImageInpainting(GenericStableFluxLoraModel):
             attention2_mask=attention2_mask,
         )
 
+        prompt_embeds = outputs.prompt_embeds.to(torch.bfloat16)
+        pooled_prompt_embeds = outputs.pooled_prompt_embeds.to(torch.bfloat16)
+
+        if (
+            redux_pixel_values is not None
+            and self.image is not None
+            and self.redux_image is not None
+        ):
+            redux_image_embeds = self.image(redux_pixel_values).last_hidden_state
+            redux_image_embeds = self.redux_image(redux_image_embeds).image_embeds
+            prompt_embeds = (
+                torch.cat([prompt_embeds, redux_image_embeds], dim=1)
+                * self.prompt_embeds_scale
+            )
+            pooled_prompt_embeds = (
+                pooled_prompt_embeds * self.pooled_prompt_embeds_scale
+            )
+
         images = self.pipeline(
             image=pixel_values,
             mask_image=pixel_masks,
-            prompt_embeds=outputs.prompt_embeds.to(torch.bfloat16),
-            pooled_prompt_embeds=outputs.pooled_prompt_embeds.to(torch.bfloat16),
+            prompt_embeds=prompt_embeds.to(torch.bfloat16),
+            pooled_prompt_embeds=pooled_prompt_embeds.to(torch.bfloat16),
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),
