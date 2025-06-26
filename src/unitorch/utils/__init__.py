@@ -16,6 +16,7 @@ import tempfile
 import torch
 import safetensors
 from filelock import FileLock
+from urllib.parse import urljoin
 from contextlib import contextmanager
 from torch.multiprocessing import spawn
 from functools import partial, wraps
@@ -135,7 +136,8 @@ def get_from_cache(
             # and ensure we download the exact atomic version even if it changed
             # between the HEAD and the GET (unlikely, but hey).
             if 300 <= r.status_code <= 399:
-                url_to_download = r.headers["Location"]
+                # url_to_download = r.headers["Location"]
+                url_to_download = urljoin(r.url, r.headers["Location"])
         except (requests.exceptions.SSLError, requests.exceptions.ProxyError):
             # Actually raise for those subclasses of ConnectionError
             raise
