@@ -25,3 +25,6 @@ from unitorch.cli.pipelines.stable_flux.inpainting import (
 from unitorch.cli.pipelines.stable_flux.redux_inpainting import (
     StableFluxForReduxInpaintingPipeline,
 )
+from unitorch.cli.pipelines.stable_flux.kontext2image import (
+    StableFluxForKontext2ImageGenerationPipeline,
+)

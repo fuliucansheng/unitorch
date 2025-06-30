@@ -246,3 +246,17 @@ class StableFluxProcessor(_StableFluxProcessor):
             attention_mask=text_outputs.attention_mask,
             attention2_mask=text_outputs.attention2_mask,
         )
+
+    @register_process("core/process/diffusion/stable_flux/kontext/inputs")
+    def _kontext_inputs(
+        self,
+        image: Union[Image.Image, str],
+        size: Optional[Tuple[int, int]] = None,
+    ):
+        image_outputs = super().kontext_inputs(
+            image=image,
+            size=size,
+        )
+        return TensorsInputs(
+            kontext_pixel_values=image_outputs.pixel_values,
+        )
