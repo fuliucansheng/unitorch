@@ -37,7 +37,7 @@ def mktempfile(prefix: str = "", suffix: str = ""):
 
 
 ### version
-VERSION = "0.0.1.3"
+VERSION = "0.0.1.4"
 
 ### is offline mode
 UNITORCH_OFFLINE = os.environ.get("UNITORCH_OFFLINE", "0").upper()
