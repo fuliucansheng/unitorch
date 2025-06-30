@@ -5,7 +5,7 @@ import io
 import torch
 import gc
 import gradio as gr
-from PIL import Image, ImageOps
+from PIL import Image
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from unitorch.utils import nested_dict_value
 from unitorch.cli import CoreConfigureParser, GenericWebUI
@@ -14,7 +14,9 @@ from unitorch.cli.models.diffusers import (
     pretrained_stable_infos,
     pretrained_stable_extensions_infos,
 )
-from unitorch.cli.pipelines.stable import StableForImageInpaintingPipeline
+from unitorch.cli.pipelines.stable_flux import (
+    StableFluxForKontext2ImageGenerationPipeline,
+)
 from unitorch.cli.pipelines.tools import controlnet_processes
 from unitorch.cli.webuis import (
     supported_scheduler_names,
@@ -34,24 +36,18 @@ from unitorch.cli.webuis import (
 from unitorch.cli.webuis import SimpleWebUI
 
 
-class StableImageInpaintingWebUI(SimpleWebUI):
+class StableFluxKontext2ImageWebUI(SimpleWebUI):
     pretrained_names = list(pretrained_stable_infos.keys())
     supported_pretrained_names = matched_pretrained_names(
-        pretrained_names, ["^stable-v1.5-", "^stable-v2-", "^stable-v2.1"]
+        pretrained_names, "^stable-flux-"
     )
     pretrained_extension_names = list(pretrained_stable_extensions_infos.keys())
     supported_controlnet_names = matched_pretrained_names(
-        pretrained_extension_names,
-        [
-            "^stable-v1.5-controlnet-",
-            "^stable-v2-controlnet-",
-            "^stable-v2.1-controlnet-",
-        ],
+        pretrained_extension_names, "^stable-flux-controlnet-"
     )
     supported_controlnet_process_names = list(controlnet_processes.keys())
     supported_lora_names = matched_pretrained_names(
-        pretrained_extension_names,
-        ["^stable-v1.5-lora-", "^stable-v2-lora-", "^stable-v2.1-lora-"],
+        pretrained_extension_names, "^stable-flux-lora-"
     )
     supported_schedulers = supported_scheduler_names
 
@@ -77,13 +73,8 @@ class StableImageInpaintingWebUI(SimpleWebUI):
         prompt = create_element(
             "text", "Input Prompt", lines=3, placeholder="Prompt", show_label=False
         )
-        negative_prompt = create_element(
-            "text",
-            "Input Negative Prompt",
-            lines=3,
-            placeholder="Negative Prompt",
-            show_label=False,
-        )
+        left_image = create_element("image", "Left Image")
+        right_image = create_element("image", "Right Image")
         scheduler = create_element(
             "dropdown",
             "Sampling Method",
@@ -99,14 +90,9 @@ class StableImageInpaintingWebUI(SimpleWebUI):
         width = create_element(
             "slider", "Image Width", min_value=1, max_value=2048, step=1, default=1024
         )
-        image = create_element("image_editor", "Input Image")
-        mask_image = create_element("image", "Input Image Mask")
 
         guidance_scale = create_element(
             "slider", "Guidance Scale", min_value=0, max_value=50, step=0.1, default=7.5
-        )
-        strength = create_element(
-            "slider", "Strength", min_value=0, max_value=1, step=0.01, default=0.8
         )
 
         seed = create_element(
@@ -127,6 +113,7 @@ class StableImageInpaintingWebUI(SimpleWebUI):
         for controlnet in controlnets:
             controlnet_params += [
                 controlnet.checkpoint,
+                controlnet.process,
                 controlnet.output_image,
                 controlnet.guidance_scale,
             ]
@@ -153,14 +140,14 @@ class StableImageInpaintingWebUI(SimpleWebUI):
         # create layouts
         top1 = create_column(pretrain_layout)
         top2 = create_row(
-            create_column(prompt, negative_prompt, scale=4),
+            create_column(prompt, scale=4),
             create_column(generate),
         )
         left_generation = create_tab(
-            create_row(image, mask_image),
+            create_row(left_image, right_image),
             create_row(scheduler, steps),
             create_row(height, width),
-            create_row(guidance_scale, strength),
+            create_row(guidance_scale),
             create_row(seed),
             name="Generation",
         )
@@ -182,8 +169,6 @@ class StableImageInpaintingWebUI(SimpleWebUI):
 
         start.click(fn=self.start, inputs=[name], outputs=[status], trigger_mode="once")
         stop.click(fn=self.stop, outputs=[status], trigger_mode="once")
-
-        image.change(fn=self.composite_images, inputs=[image], outputs=[mask_image])
 
         for controlnet in controlnets:
             controlnet.input_image.upload(
@@ -210,13 +195,11 @@ class StableImageInpaintingWebUI(SimpleWebUI):
             fn=self.serve,
             inputs=[
                 prompt,
-                image,
-                mask_image,
-                negative_prompt,
+                left_image,
+                right_image,
                 height,
                 width,
                 guidance_scale,
-                strength,
                 steps,
                 seed,
                 scheduler,
@@ -226,13 +209,6 @@ class StableImageInpaintingWebUI(SimpleWebUI):
             outputs=[output_image],
             trigger_mode="once",
         )
-        image.change(
-            lambda x: x["background"].size
-            if nested_dict_value(x, "background") is not None
-            else (1024, 1024),
-            inputs=[image],
-            outputs=[width, height],
-        )
         iface.load(
             fn=lambda: [gr.update(value=self._name), gr.update(value=self._status)],
             outputs=[name, status],
@@ -240,7 +216,7 @@ class StableImageInpaintingWebUI(SimpleWebUI):
 
         iface.__exit__()
 
-        super().__init__(config, iname="Inpainting", iface=iface)
+        super().__init__(config, iname="Kontext2Image", iface=iface)
 
     def start(self, pretrained_name, **kwargs):
         if self._name == pretrained_name and self._status == "Running":
@@ -248,7 +224,7 @@ class StableImageInpaintingWebUI(SimpleWebUI):
         if self._status == "Running":
             self.stop()
         self._name = pretrained_name
-        self._pipe = StableForImageInpaintingPipeline.from_core_configure(
+        self._pipe = StableFluxForKontext2ImageGenerationPipeline.from_core_configure(
             self._config,
             pretrained_name=pretrained_name,
         )
@@ -264,20 +240,6 @@ class StableImageInpaintingWebUI(SimpleWebUI):
         self._status = "Stopped" if self._pipe is None else "Running"
         return self._status
 
-    def composite_images(self, images):
-        if images is None:
-            return None
-        layers = images["layers"]
-        if len(layers) == 0:
-            return None
-        image = layers[0]
-        for i in range(1, len(layers)):
-            image = Image.alpha_composite(image, layers[i])
-        image = image.convert("L")
-        image = image.point(lambda p: p < 5 and 255)
-        image = ImageOps.invert(image)
-        return image
-
     def processing_controlnet_inputs(self, image, process):
         pfunc = controlnet_processes.get(process, None)
         if pfunc is not None and image is not None:
@@ -287,42 +249,54 @@ class StableImageInpaintingWebUI(SimpleWebUI):
     def serve(
         self,
         text: str,
-        image: Image.Image,
-        mask_image: Image.Image,
-        negative_text: str,
+        left_image: Optional[Image.Image],
+        right_image: Optional[Image.Image],
         height: int,
         width: int,
         guidance_scale: float,
-        strength: float,
         num_timesteps: int,
         seed: int,
         scheduler: str,
         *params,
     ):
         assert self._pipe is not None
-        controlnet_params = params[: self.num_controlnets * 3]
-        lora_params = params[self.num_controlnets * 3 :]
-        controlnet_checkpoints = controlnet_params[::3]
-        controlnet_images = controlnet_params[1::3]
-        controlnet_guidance_scales = controlnet_params[2::3]
+        controlnet_params = params[: self.num_controlnets * 4]
+        lora_params = params[self.num_controlnets * 4 :]
+        controlnet_checkpoints = controlnet_params[::4]
+        controlnet_processes = controlnet_params[1::4]
+        controlnet_images = controlnet_params[2::4]
+        controlnet_guidance_scales = controlnet_params[3::4]
         lora_checkpoints = lora_params[::5]
         lora_weights = lora_params[1::5]
         lora_alphas = lora_params[2::5]
         lora_urls = lora_params[3::5]
         lora_files = lora_params[4::5]
+        if left_image is None:
+            image = right_image
+        elif right_image is None:
+            image = left_image
+        else:
+            _width1, _height1 = left_image.size
+            _width2, _height2 = right_image.size
+            _n_width2 = int(_width2 * _height1 / _height2)
+            left_image = left_image.convert("RGB")
+            right_image = right_image.convert("RGB")
+            right_image = right_image.resize((_n_width2, _height1))
+            image = Image.new("RGB", (_width1 + _n_width2, _height1))
+            image.paste(left_image, (0, 0))
+            image.paste(right_image, (_width1, 0))
         image = self._pipe(
             text,
-            image["background"],
-            mask_image,
-            negative_text,
-            width=width,
+            image=image,
             height=height,
+            width=width,
             guidance_scale=guidance_scale,
-            strength=strength,
             num_timesteps=num_timesteps,
             seed=seed,
             scheduler=scheduler,
-            controlnet_checkpoints=controlnet_checkpoints,
+            controlnet_checkpoints=list(
+                zip(controlnet_checkpoints, controlnet_processes)
+            ),
             controlnet_images=controlnet_images,
             controlnet_guidance_scales=controlnet_guidance_scales,
             lora_checkpoints=lora_checkpoints,

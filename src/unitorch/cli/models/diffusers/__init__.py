@@ -500,6 +500,12 @@ pretrained_stable_infos = {
         ),
         **__hf_hub_vae_safetensors_dict__("fuliucansheng/FLUX.1-Depth-dev-diffusers"),
     },
+    "stable-flux-dev-kontext": {
+        **__hf_hub_stable_flux_safetensors_dict__(
+            "fuliucansheng/FLUX.1-Kontext-dev-diffusers"
+        ),
+        **__hf_hub_vae_safetensors_dict__("fuliucansheng/FLUX.1-Kontext-dev-diffusers"),
+    },
     "stable-flux-dev-redux": {
         **__hf_hub_stable_flux_safetensors_dict__("camenduru/FLUX.1-dev-diffusers"),
         **__hf_hub_vae_safetensors_dict__("camenduru/FLUX.1-dev-diffusers"),

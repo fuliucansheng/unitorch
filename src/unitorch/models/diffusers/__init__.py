@@ -31,6 +31,7 @@ from unitorch.models.diffusers.modeling_stable_flux import (
     StableFluxForImageControlGeneration,
     StableFluxForImageReduxGeneration,
     StableFluxForImageInpainting,
+    StableFluxForKontext2ImageGeneration,
 )
 from unitorch.models.diffusers.modeling_controlnet import (
     ControlNetForText2ImageGeneration,

@@ -18,6 +18,7 @@ from diffusers.pipelines import (
     FluxPipeline,
     FluxControlNetPipeline,
 )
+from diffusers.pipelines.flux.pipeline_flux_kontext import FluxKontextPipeline
 from unitorch import is_xformers_available
 from unitorch.utils import is_remote_url
 from unitorch.models.diffusers import GenericStableFluxModel
@@ -39,7 +40,7 @@ from unitorch.cli.models.diffusers import (
 from unitorch.cli.pipelines import Schedulers
 
 
-class StableFluxForText2ImageGenerationPipeline(GenericStableFluxModel):
+class StableFluxForKontext2ImageGenerationPipeline(GenericStableFluxModel):
     def __init__(
         self,
         config_path: str,
@@ -86,7 +87,7 @@ class StableFluxForText2ImageGenerationPipeline(GenericStableFluxModel):
         self._enable_xformers = enable_xformers
 
     @classmethod
-    @add_default_section_for_init("core/pipeline/stable_flux/text2image")
+    @add_default_section_for_init("core/pipeline/stable_flux/kontext2image")
     def from_core_configure(
         cls,
         config,
@@ -104,9 +105,9 @@ class StableFluxForText2ImageGenerationPipeline(GenericStableFluxModel):
         device: Optional[str] = None,
         **kwargs,
     ):
-        config.set_default_section("core/pipeline/stable_flux/text2image")
+        config.set_default_section("core/pipeline/stable_flux/kontext2image")
         pretrained_name = pretrained_name or config.getoption(
-            "pretrained_name", "stable-flux-schnell"
+            "pretrained_name", "stable-flux-dev-kontext"
         )
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
 
@@ -231,10 +232,11 @@ class StableFluxForText2ImageGenerationPipeline(GenericStableFluxModel):
         return inst
 
     @torch.no_grad()
-    @add_default_section_for_function("core/pipeline/stable_flux/text2image")
+    @add_default_section_for_function("core/pipeline/stable_flux/kontext2image")
     def __call__(
         self,
         text: str,
+        image: Union[str, Image.Image, List[Union[str, Image.Image]]],
         height: Optional[int] = 1024,
         width: Optional[int] = 1024,
         guidance_scale: Optional[float] = 7.5,
@@ -253,6 +255,10 @@ class StableFluxForText2ImageGenerationPipeline(GenericStableFluxModel):
         text_inputs = self.processor.text2image_inputs(
             text,
         )
+        if image is not None:
+            kontext_inputs = self.processor.kontext_inputs(image=image)
+        else:
+            kontext_inputs = None
         assert scheduler is None or scheduler in Schedulers
         if scheduler is not None:
             self.scheduler = Schedulers.get(scheduler).from_config(
@@ -325,8 +331,10 @@ class StableFluxForText2ImageGenerationPipeline(GenericStableFluxModel):
                 **text_inputs,
                 **{"condition_pixel_values": controlnets_inputs.pixel_values},
             }
+            if kontext_inputs is not None:
+                inputs["kontext_pixel_values"] = kontext_inputs.pixel_values
         else:
-            self.pipeline = FluxPipeline(
+            self.pipeline = FluxKontextPipeline(
                 vae=self.vae,
                 text_encoder=self.text,
                 text_encoder_2=self.text2,
@@ -337,6 +345,8 @@ class StableFluxForText2ImageGenerationPipeline(GenericStableFluxModel):
             )
             enable_controlnet = False
             inputs = text_inputs
+            if kontext_inputs is not None:
+                inputs["kontext_pixel_values"] = kontext_inputs.pixel_values
         self.pipeline.set_progress_bar_config(disable=True)
         self.seed = seed
 
@@ -410,6 +420,9 @@ class StableFluxForText2ImageGenerationPipeline(GenericStableFluxModel):
 
         if enable_controlnet:
             outputs = self.pipeline(
+                image=inputs["kontext_pixel_values"].to(torch.bfloat16)
+                if kontext_inputs is not None
+                else None,
                 prompt_embeds=prompt_embeds.to(torch.bfloat16),
                 pooled_prompt_embeds=pooled_prompt_embeds.to(torch.bfloat16),
                 height=height,
@@ -426,6 +439,7 @@ class StableFluxForText2ImageGenerationPipeline(GenericStableFluxModel):
             )
         else:
             outputs = self.pipeline(
+                image=inputs["kontext_pixel_values"].to(torch.bfloat16),
                 prompt_embeds=prompt_embeds.to(torch.bfloat16),
                 pooled_prompt_embeds=pooled_prompt_embeds.to(torch.bfloat16),
                 height=height,
