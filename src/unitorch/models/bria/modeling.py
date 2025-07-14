@@ -1437,9 +1437,9 @@ class BasicLayer(nn.Module):
                     qk_scale=qk_scale,
                     drop=drop,
                     attn_drop=attn_drop,
-                    drop_path=drop_path[i]
-                    if isinstance(drop_path, list)
-                    else drop_path,
+                    drop_path=(
+                        drop_path[i] if isinstance(drop_path, list) else drop_path
+                    ),
                     norm_layer=norm_layer,
                 )
                 for i in range(depth)
@@ -2105,9 +2105,11 @@ class ASPP(nn.Module):
         self.global_avg_pool = nn.Sequential(
             nn.AdaptiveAvgPool2d((1, 1)),
             nn.Conv2d(in_channels, self.in_channelster, 1, stride=1, bias=False),
-            nn.BatchNorm2d(self.in_channelster)
-            if config.batch_size > 1
-            else nn.Identity(),
+            (
+                nn.BatchNorm2d(self.in_channelster)
+                if config.batch_size > 1
+                else nn.Identity()
+            ),
             nn.ReLU(inplace=True),
         )
         self.conv1 = nn.Conv2d(self.in_channelster * 5, out_channels, 1, bias=False)
@@ -2180,9 +2182,11 @@ class ASPPDeformable(nn.Module):
         self.global_avg_pool = nn.Sequential(
             nn.AdaptiveAvgPool2d((1, 1)),
             nn.Conv2d(in_channels, self.in_channelster, 1, stride=1, bias=False),
-            nn.BatchNorm2d(self.in_channelster)
-            if config.batch_size > 1
-            else nn.Identity(),
+            (
+                nn.BatchNorm2d(self.in_channelster)
+                if config.batch_size > 1
+                else nn.Identity()
+            ),
             nn.ReLU(inplace=True),
         )
         self.conv1 = nn.Conv2d(

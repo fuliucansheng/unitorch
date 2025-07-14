@@ -237,9 +237,11 @@ class StableXLAdapterForText2ImageGeneration(GenericStableXLModel):
             ] * self.num_adapters
 
         images = self.pipeline(
-            image=adapter_pixel_values
-            if self.num_adapters == 1
-            else list(adapter_pixel_values.transpose(0, 1)),
+            image=(
+                adapter_pixel_values
+                if self.num_adapters == 1
+                else list(adapter_pixel_values.transpose(0, 1))
+            ),
             prompt_embeds=outputs.prompt_embeds,
             negative_prompt_embeds=outputs.negative_prompt_embeds,
             pooled_prompt_embeds=outputs.pooled_prompt_embeds,

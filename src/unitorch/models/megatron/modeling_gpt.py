@@ -98,13 +98,15 @@ class MegatronGPTForGeneration(GenericMegatronModel):
             rotary_percent=rotary_percent,
             rotary_base=rotary_base,
             rope_scaling=rope_scaling,
-            mtp_block_spec=get_gpt_mtp_block_spec(
-                self.config,
-                self.layer_spec,
-                use_transformer_engine=use_transformer_engine,
-            )
-            if num_experts is not None
-            else None,
+            mtp_block_spec=(
+                get_gpt_mtp_block_spec(
+                    self.config,
+                    self.layer_spec,
+                    use_transformer_engine=use_transformer_engine,
+                )
+                if num_experts is not None
+                else None
+            ),
         )
         self.model_type = self.model.model_type
         self.model = self.model.to(torch.bfloat16)

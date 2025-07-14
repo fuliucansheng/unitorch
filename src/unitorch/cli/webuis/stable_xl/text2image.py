@@ -228,7 +228,7 @@ class StableXLText2ImageWebUI(SimpleWebUI):
             )
 
         generate.click(
-            fn=self.serve,
+            fn=self.generate,
             inputs=[
                 prompt,
                 negative_prompt,
@@ -288,7 +288,7 @@ class StableXLText2ImageWebUI(SimpleWebUI):
             return pfunc(image)
         return image
 
-    def serve(
+    def generate(
         self,
         text: str,
         negative_text: str,

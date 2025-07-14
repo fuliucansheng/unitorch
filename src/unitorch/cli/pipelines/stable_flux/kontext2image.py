@@ -420,9 +420,11 @@ class StableFluxForKontext2ImageGenerationPipeline(GenericStableFluxModel):
 
         if enable_controlnet:
             outputs = self.pipeline(
-                image=inputs["kontext_pixel_values"].to(torch.bfloat16)
-                if kontext_inputs is not None
-                else None,
+                image=(
+                    inputs["kontext_pixel_values"].to(torch.bfloat16)
+                    if kontext_inputs is not None
+                    else None
+                ),
                 prompt_embeds=prompt_embeds.to(torch.bfloat16),
                 pooled_prompt_embeds=pooled_prompt_embeds.to(torch.bfloat16),
                 height=height,

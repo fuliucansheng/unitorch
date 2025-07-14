@@ -155,7 +155,7 @@ class StableFluxImageReduxWebUI(SimpleWebUI):
             )
 
         generate.click(
-            fn=self.serve,
+            fn=self.generate,
             inputs=[
                 prompt,
                 image,
@@ -201,7 +201,7 @@ class StableFluxImageReduxWebUI(SimpleWebUI):
         self._status = "Stopped" if self._pipe is None else "Running"
         return self._status
 
-    def serve(
+    def generate(
         self,
         text: str,
         image: Image.Image,

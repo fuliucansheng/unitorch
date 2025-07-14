@@ -256,9 +256,9 @@ class ControlNetFluxForText2ImageGeneration(GenericStableFluxModel):
             pooled_projections=outputs.pooled_prompt_embeds,
             controlnet_cond=condition_latents,
             controlnet_mode=controlnet_mode,
-            conditioning_scale=1.0
-            if self.num_controlnets == 1
-            else [1.0] * self.num_controlnets,
+            conditioning_scale=(
+                1.0 if self.num_controlnets == 1 else [1.0] * self.num_controlnets
+            ),
             txt_ids=text_ids,
             img_ids=latent_image_ids,
             return_dict=False,
@@ -367,9 +367,11 @@ class ControlNetFluxForText2ImageGeneration(GenericStableFluxModel):
                 controlnet_conditioning_mode = [None] * self.num_controlnets
 
         images = self.pipeline(
-            control_image=condition_pixel_values
-            if self.num_controlnets == 1
-            else list(condition_pixel_values.transpose(0, 1)),
+            control_image=(
+                condition_pixel_values
+                if self.num_controlnets == 1
+                else list(condition_pixel_values.transpose(0, 1))
+            ),
             control_mode=controlnet_conditioning_mode,
             prompt_embeds=outputs.prompt_embeds,
             pooled_prompt_embeds=outputs.pooled_prompt_embeds,
@@ -531,9 +533,11 @@ class ControlNetFluxForImage2ImageGeneration(GenericStableFluxModel):
 
         images = self.pipeline(
             image=pixel_values,
-            control_image=condition_pixel_values
-            if self.num_controlnets == 1
-            else list(condition_pixel_values.transpose(0, 1)),
+            control_image=(
+                condition_pixel_values
+                if self.num_controlnets == 1
+                else list(condition_pixel_values.transpose(0, 1))
+            ),
             control_mode=controlnet_conditioning_mode,
             prompt_embeds=outputs.prompt_embeds,
             pooled_prompt_embeds=outputs.pooled_prompt_embeds,
@@ -738,9 +742,11 @@ class ControlNetFluxForImageInpainting(GenericStableFluxModel):
         images = self.pipeline(
             image=pixel_values,
             mask_image=pixel_masks,
-            control_image=condition_pixel_values
-            if self.num_controlnets == 1
-            else list(condition_pixel_values.transpose(0, 1)),
+            control_image=(
+                condition_pixel_values
+                if self.num_controlnets == 1
+                else list(condition_pixel_values.transpose(0, 1))
+            ),
             control_mode=controlnet_conditioning_mode,
             prompt_embeds=outputs.prompt_embeds,
             pooled_prompt_embeds=outputs.pooled_prompt_embeds,

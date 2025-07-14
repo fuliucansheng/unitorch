@@ -229,17 +229,21 @@ __hf_hub_wan_v2_1_safetensors_dict__ = lambda name, n1=2, n2=5, im=False: {
             for i in range(1, n2 + 1)
         ],
     },
-    "image": {
-        "config": hf_endpoint_url(f"/{name}/resolve/main/image_encoder/config.json"),
-        "vision_config": hf_endpoint_url(
-            f"/{name}/resolve/main/image_processor/preprocessor_config.json"
-        ),
-        "weight": hf_endpoint_url(
-            f"/{name}/resolve/main/image_encoder/model.safetensors"
-        ),
-    }
-    if im
-    else {},
+    "image": (
+        {
+            "config": hf_endpoint_url(
+                f"/{name}/resolve/main/image_encoder/config.json"
+            ),
+            "vision_config": hf_endpoint_url(
+                f"/{name}/resolve/main/image_processor/preprocessor_config.json"
+            ),
+            "weight": hf_endpoint_url(
+                f"/{name}/resolve/main/image_encoder/model.safetensors"
+            ),
+        }
+        if im
+        else {}
+    ),
     "scheduler": hf_endpoint_url(
         f"/{name}/resolve/main/scheduler/scheduler_config.json"
     ),

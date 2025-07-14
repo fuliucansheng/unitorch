@@ -159,7 +159,7 @@ class SamWebUI(SimpleWebUI):
             trigger_mode="once",
         )
         input_click_segment.click(
-            self.serve_click,
+            self.generate_click,
             inputs=[
                 origin_input_image,
                 click_points,
@@ -188,7 +188,7 @@ class SamWebUI(SimpleWebUI):
             trigger_mode="once",
         )
         input_box_segment.click(
-            self.serve_box,
+            self.generate_box,
             inputs=[
                 origin_input_image,
                 boxes_points,
@@ -246,7 +246,7 @@ class SamWebUI(SimpleWebUI):
 
         return new_image, click_points
 
-    def serve_click(
+    def generate_click(
         self,
         image: Image.Image,
         click_points,
@@ -279,7 +279,7 @@ class SamWebUI(SimpleWebUI):
             result = mask
         return result
 
-    def serve_box(
+    def generate_box(
         self,
         image: Image.Image,
         boxes_points,

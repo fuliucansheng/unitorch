@@ -16,6 +16,9 @@ from unitorch.cli.fastapis.stable_flux.image_redux import (
 from unitorch.cli.fastapis.stable_flux.inpainting import (
     StableFluxForImageInpaintingFastAPIPipeline,
 )
+from unitorch.cli.fastapis.stable_flux.kontext2image import (
+    StableFluxForKontext2ImageFastAPIPipeline,
+)
 from unitorch.cli.fastapis.stable_flux.redux_inpainting import (
     StableFluxForReduxInpaintingFastAPIPipeline,
 )

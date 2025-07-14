@@ -188,7 +188,7 @@ class StableFluxImage2ImageWebUI(SimpleWebUI):
             )
 
         generate.click(
-            fn=self.serve,
+            fn=self.generate,
             inputs=[
                 prompt,
                 image,
@@ -240,7 +240,7 @@ class StableFluxImage2ImageWebUI(SimpleWebUI):
             return pfunc(image)
         return image
 
-    def serve(
+    def generate(
         self,
         text: str,
         image: Image.Image,

@@ -50,17 +50,23 @@ class StableDiffusion3Img2ImgPipelineV2(StableDiffusion3Img2ImgPipeline):
             scheduler=scheduler,
             vae=vae,
             text_encoder=text_encoder,
-            tokenizer=tokenizer
-            if tokenizer is not None
-            else GenericOutputs(model_max_length=77),
+            tokenizer=(
+                tokenizer
+                if tokenizer is not None
+                else GenericOutputs(model_max_length=77)
+            ),
             text_encoder_2=text_encoder_2,
-            tokenizer_2=tokenizer_2
-            if tokenizer_2 is not None
-            else GenericOutputs(model_max_length=77),
+            tokenizer_2=(
+                tokenizer_2
+                if tokenizer_2 is not None
+                else GenericOutputs(model_max_length=77)
+            ),
             text_encoder_3=text_encoder_3,
-            tokenizer_3=tokenizer_3
-            if tokenizer_3 is not None
-            else GenericOutputs(model_max_length=77),
+            tokenizer_3=(
+                tokenizer_3
+                if tokenizer_3 is not None
+                else GenericOutputs(model_max_length=77)
+            ),
         )
 
 
@@ -85,17 +91,23 @@ class StableDiffusion3InpaintPipelineV2(StableDiffusion3InpaintPipeline):
             scheduler=scheduler,
             vae=vae,
             text_encoder=text_encoder,
-            tokenizer=tokenizer
-            if tokenizer is not None
-            else GenericOutputs(model_max_length=77),
+            tokenizer=(
+                tokenizer
+                if tokenizer is not None
+                else GenericOutputs(model_max_length=77)
+            ),
             text_encoder_2=text_encoder_2,
-            tokenizer_2=tokenizer_2
-            if tokenizer_2 is not None
-            else GenericOutputs(model_max_length=77),
+            tokenizer_2=(
+                tokenizer_2
+                if tokenizer_2 is not None
+                else GenericOutputs(model_max_length=77)
+            ),
             text_encoder_3=text_encoder_3,
-            tokenizer_3=tokenizer_3
-            if tokenizer_3 is not None
-            else GenericOutputs(model_max_length=77),
+            tokenizer_3=(
+                tokenizer_3
+                if tokenizer_3 is not None
+                else GenericOutputs(model_max_length=77)
+            ),
         )
 
 

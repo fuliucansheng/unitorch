@@ -167,7 +167,7 @@ class WanImage2VideoWebUI(SimpleWebUI):
             )
 
         generate.click(
-            fn=self.serve,
+            fn=self.generate,
             inputs=[
                 prompt,
                 negative_prompt,
@@ -216,7 +216,7 @@ class WanImage2VideoWebUI(SimpleWebUI):
         self._status = "Stopped" if self._pipe is None else "Running"
         return self._status
 
-    def serve(
+    def generate(
         self,
         prompt: str,
         negative_prompt: str,

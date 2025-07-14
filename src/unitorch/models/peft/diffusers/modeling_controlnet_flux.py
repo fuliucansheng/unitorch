@@ -434,9 +434,9 @@ class ControlNetFluxLoraForText2ImageGeneration(GenericControlNetFluxLoraModel):
             pooled_projections=outputs.pooled_prompt_embeds,
             controlnet_cond=condition_latents,
             controlnet_mode=controlnet_mode,
-            conditioning_scale=1.0
-            if self.num_controlnets == 1
-            else [1.0] * self.num_controlnets,
+            conditioning_scale=(
+                1.0 if self.num_controlnets == 1 else [1.0] * self.num_controlnets
+            ),
             txt_ids=text_ids,
             img_ids=latent_image_ids,
             return_dict=False,

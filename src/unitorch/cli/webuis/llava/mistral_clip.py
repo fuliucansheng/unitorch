@@ -90,7 +90,7 @@ class LlavaMistralClipGenerationWebUI(SimpleWebUI):
         start.click(self.start, inputs=[name], outputs=[status], trigger_mode="once")
         stop.click(self.stop, outputs=[status], trigger_mode="once")
         generate.click(
-            self.serve,
+            self.generate,
             inputs=[
                 prompt,
                 image,
@@ -131,7 +131,7 @@ class LlavaMistralClipGenerationWebUI(SimpleWebUI):
         self._status = "Stopped" if self._pipe is None else "Running"
         return self._status
 
-    def serve(
+    def generate(
         self,
         text: str,
         image: Image.Image,

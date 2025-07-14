@@ -196,7 +196,7 @@ class StableFluxReduxInpaintingWebUI(SimpleWebUI):
             )
 
         generate.click(
-            fn=self.serve,
+            fn=self.generate,
             inputs=[
                 prompt,
                 image,
@@ -216,9 +216,11 @@ class StableFluxReduxInpaintingWebUI(SimpleWebUI):
             trigger_mode="once",
         )
         image.change(
-            lambda x: x["background"].size
-            if nested_dict_value(x, "background") is not None
-            else (1024, 1024),
+            lambda x: (
+                x["background"].size
+                if nested_dict_value(x, "background") is not None
+                else (1024, 1024)
+            ),
             inputs=[image],
             outputs=[width, height],
         )
@@ -273,7 +275,7 @@ class StableFluxReduxInpaintingWebUI(SimpleWebUI):
             return pfunc(image)
         return image
 
-    def serve(
+    def generate(
         self,
         text: str,
         image: Image.Image,
