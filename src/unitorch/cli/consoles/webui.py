@@ -108,6 +108,7 @@ def webui(config_path: str, **kwargs):
         ssl_certfile=ssl_certfile,
         ssl_verify=ssl_verify,
         auth=auth,
+        allowed_paths=["/"],
     )
 
     os._exit(0)
