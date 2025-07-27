@@ -381,7 +381,7 @@ class StableFluxForKontext2ImageFastAPIPipeline(GenericStableFluxModel):
 
         images = torch.from_numpy(outputs.images)
         images = numpy_to_pil(images.cpu().numpy())
-        return images[0]
+        return images[0].resize((width, height))
 
 
 @register_fastapi("core/fastapi/stable_flux/kontext2image")
