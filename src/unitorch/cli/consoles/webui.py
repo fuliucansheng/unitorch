@@ -47,7 +47,6 @@ def webui(config_path: str, **kwargs):
     reload_module(unitorch.cli.webuis)
 
     enabled_webuis = config.getdefault("core/cli", "enabled_webuis", None)
-    single_webui = config.getdefault("core/cli", "single_webui", False)
     title = config.getdefault("core/cli", "title", "Unitorch WebUI")
     assert enabled_webuis is not None
     if isinstance(enabled_webuis, str):
@@ -62,10 +61,7 @@ def webui(config_path: str, **kwargs):
 
     webuis = [webui_instance(enabled_webui, config) for enabled_webui in enabled_webuis]
 
-    if single_webui:
-        assert (
-            len(webuis) == 1
-        ), "single_webui can only be used when there is only one webui enabled"
+    if len(webuis) == 1:
         webuis = webuis[0]
         demo_webui = webuis.iface
     else:

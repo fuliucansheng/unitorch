@@ -84,7 +84,6 @@ class LabelingWebUI(SimpleWebUI):
         self.dataset["Index"] = self.dataset.index.map(lambda x: f"No.{x}")
         self.result_file = result_file
 
-        # start http server: unitorch-service start services/http_files.ini --daemon_mode False --html_dir /
         self.http_url = "/gradio_api/file={0}"
         # show columns
         self.group_text_cols = config.getoption("group_text_cols", None)
