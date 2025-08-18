@@ -25,8 +25,10 @@ class LlamaProcessor(_LlamaProcessor):
 
     def __init__(
         self,
-        vocab_path: Optional[str] = None,
-        tokenizer_file: Optional[str] = None,
+        tokenizer_file: str,
+        tokenizer_config: Optional[str] = None,
+        special_tokens_map: Optional[str] = None,
+        chat_template: Optional[str] = None,
         max_seq_length: Optional[int] = 128,
         max_gen_seq_length: Optional[int] = 128,
     ):
@@ -39,8 +41,10 @@ class LlamaProcessor(_LlamaProcessor):
             max_gen_seq_length (int, optional): The maximum generated sequence length. Defaults to 128.
         """
         super().__init__(
-            vocab_path=vocab_path,
             tokenizer_file=tokenizer_file,
+            tokenizer_config=tokenizer_config,
+            special_tokens_map=special_tokens_map,
+            chat_template=chat_template,
             max_seq_length=max_seq_length,
             max_gen_seq_length=max_gen_seq_length,
         )
@@ -60,28 +64,61 @@ class LlamaProcessor(_LlamaProcessor):
         """
         config.set_default_section("core/process/llama")
         pretrained_name = config.getoption("pretrained_name", "llama-7b")
-        vocab_path = config.getoption("vocab_path", None)
-        vocab_path = pop_value(
-            vocab_path,
-            nested_dict_value(pretrained_llama_infos, pretrained_name, "vocab"),
-            check_none=False,
-        )
-        vocab_path = cached_path(vocab_path) if vocab_path is not None else None
 
         tokenizer_file = config.getoption("tokenizer_file", None)
         tokenizer_file = pop_value(
             tokenizer_file,
             nested_dict_value(pretrained_llama_infos, pretrained_name, "tokenizer"),
+        )
+        tokenizer_file = cached_path(tokenizer_file)
+
+        tokenizer_config = config.getoption("tokenizer_config", None)
+        tokenizer_config = pop_value(
+            tokenizer_config,
+            nested_dict_value(
+                pretrained_llama_infos, pretrained_name, "tokenizer_config"
+            ),
             check_none=False,
         )
-        tokenizer_file = (
-            cached_path(tokenizer_file) if tokenizer_file is not None else None
+        tokenizer_config = (
+            cached_path(tokenizer_config) if tokenizer_config is not None else None
+        )
+
+        special_tokens_map = config.getoption("special_tokens_map", None)
+        special_tokens_map = pop_value(
+            special_tokens_map,
+            nested_dict_value(
+                pretrained_llama_infos, pretrained_name, "special_tokens_map"
+            ),
+            check_none=False,
+        )
+        special_tokens_map = (
+            cached_path(special_tokens_map) if special_tokens_map is not None else None
+        )
+
+        chat_template = config.getoption("chat_template", None)
+        chat_template = pop_value(
+            chat_template,
+            nested_dict_value(pretrained_llama_infos, pretrained_name, "chat_template"),
+            check_none=False,
+        )
+        chat_template = (
+            cached_path(chat_template) if chat_template is not None else None
         )
 
         return {
-            "vocab_path": vocab_path,
             "tokenizer_file": tokenizer_file,
+            "tokenizer_config": tokenizer_config,
+            "special_tokens_map": special_tokens_map,
+            "chat_template": chat_template,
         }
+
+    @register_process("core/process/llama/chat_template")
+    def _chat_template(
+        self,
+        messages: List[Dict[str, Any]],
+    ):
+        return super().chat_template(messages=messages)
 
     @register_process("core/process/llama/classification")
     def _classification(
@@ -192,57 +229,15 @@ class LlamaProcessor(_LlamaProcessor):
             masks=outputs.attention_mask_label,
         )
 
-    @register_process("core/process/llama/instruction/generation/inputs")
-    def _instruction_generation_inputs(
+    @register_process("core/process/llama/messages/generation")
+    def _messages_generation(
         self,
-        instruction: str,
-        input: str,
+        messages: List[Dict[str, Any]],
         max_seq_length: Optional[int] = None,
     ):
-        """
-        Preprocess the input text for generation tasks.
-
-        Args:
-            text (str): The input text.
-            max_seq_length (int, optional): The maximum sequence length. Defaults to None.
-
-        Returns:
-            TensorsInputs: The processed input tensors.
-        """
-        outputs = super().instruction_generation_inputs(
-            instruction=instruction,
-            input=input,
+        outputs = super().messages_generation(
+            messages=messages,
             max_seq_length=max_seq_length,
-        )
-        return TensorsInputs(input_ids=outputs.input_ids)
-
-    @register_process("core/process/llama/instruction/generation")
-    def _instruction_generation(
-        self,
-        instruction: str,
-        input: str,
-        output: Optional[str] = None,
-        max_seq_length: Optional[int] = None,
-        max_gen_seq_length: Optional[int] = None,
-    ):
-        """
-        Preprocess the input and target texts for generation tasks.
-
-        Args:
-            input (str): The input text.
-            output (str, optional): The paired input text. Defaults to None.
-            max_seq_length (int, optional): The maximum sequence length. Defaults to None.
-            max_gen_seq_length (int, optional): The maximum generation sequence length. Defaults to None.
-
-        Returns:
-            Tuple[TensorsInputs, GenerationTargets]: The processed input tensors and generation targets.
-        """
-        outputs = super().instruction_generation(
-            instruction=instruction,
-            input=input,
-            output=output,
-            max_seq_length=max_seq_length,
-            max_gen_seq_length=max_gen_seq_length,
         )
         return TensorsInputs(
             input_ids=outputs.input_ids,

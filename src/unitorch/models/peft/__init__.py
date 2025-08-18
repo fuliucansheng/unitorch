@@ -333,6 +333,12 @@ from unitorch.models.peft.modeling_mistral import (
     MistralLoraForClassification,
     MistralLoraForGeneration,
 )
+from unitorch.models.peft.modeling_qwen import (
+    QWen3LoraForGeneration,
+)
+from unitorch.models.peft.modeling_qwen_vl import (
+    QWen2_5VLLoraForGeneration,
+)
 
 if is_diffusers_available():
     from unitorch.models.peft.diffusers import (

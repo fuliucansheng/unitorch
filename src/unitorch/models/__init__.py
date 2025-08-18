@@ -238,6 +238,7 @@ import unitorch.models.mistral
 import unitorch.models.mt5
 import unitorch.models.onnx
 import unitorch.models.pegasus
+import unitorch.models.qwen
 import unitorch.models.roberta
 import unitorch.models.segformer
 import unitorch.models.siglip

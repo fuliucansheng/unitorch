@@ -29,3 +29,9 @@ from unitorch.cli.models.peft.modeling_mistral import (
     MistralLoraForClassification,
     MistralLoraForGeneration,
 )
+from unitorch.cli.models.peft.modeling_qwen import (
+    QWen3LoraForGeneration,
+)
+from unitorch.cli.models.peft.modeling_qwen_vl import (
+    QWen2_5VLLoraForGeneration,
+)

@@ -23,6 +23,7 @@ from functools import partial, wraps
 from hashlib import sha256
 from pathlib import Path
 from zipfile import ZipFile, is_zipfile
+from transformers import AddedToken
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
 from transformers.utils.hub import is_remote_url, urlparse, http_get, http_user_agent
 from huggingface_hub import HfFolder
@@ -398,3 +399,27 @@ def load_weight(
         results[key] = value
 
     return results
+
+
+def get_added_token(
+    spec: Union[str, Dict[str, Any]],
+) -> Dict[str, AddedToken]:
+    if isinstance(spec, str):
+        return AddedToken(
+            spec,
+            lstrip=False,
+            rstrip=False,
+            normalized=False,
+            single_word=False,
+        )
+    elif isinstance(spec, dict):
+        return AddedToken(
+            spec["content"],
+            lstrip=spec.get("lstrip", False),
+            rstrip=spec.get("rstrip", False),
+            normalized=spec.get("normalized", False),
+            special=spec.get("special", False),
+            single_word=spec.get("single_word", False),
+        )
+    else:
+        raise ValueError(f"Unknown spec type: {type(spec)}")

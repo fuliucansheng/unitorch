@@ -29,7 +29,10 @@ class LlavaMistralClipProcessor(_LlavaMistralClipProcessor):
 
     def __init__(
         self,
-        vocab_path,
+        tokenizer_file: str,
+        tokenizer_config: Optional[str] = None,
+        special_tokens_map: Optional[str] = None,
+        chat_template: Optional[str] = None,
         vision_config_path: Optional[str] = None,
         max_seq_length: Optional[int] = 128,
         max_gen_seq_length: Optional[int] = 128,
@@ -43,7 +46,10 @@ class LlavaMistralClipProcessor(_LlavaMistralClipProcessor):
             max_gen_seq_length (int, optional): The maximum generated sequence length. Defaults to 128.
         """
         super().__init__(
-            vocab_path=vocab_path,
+            tokenizer_file=tokenizer_file,
+            tokenizer_config=tokenizer_config,
+            special_tokens_map=special_tokens_map,
+            chat_template=chat_template,
             vision_config_path=vision_config_path,
             max_seq_length=max_seq_length,
             max_gen_seq_length=max_gen_seq_length,
@@ -66,12 +72,46 @@ class LlavaMistralClipProcessor(_LlavaMistralClipProcessor):
         pretrained_name = config.getoption(
             "pretrained_name", "llava-v1.6-mistral-7b-hf"
         )
-        vocab_path = config.getoption("vocab_path", None)
-        vocab_path = pop_value(
-            vocab_path,
-            nested_dict_value(pretrained_llava_infos, pretrained_name, "vocab"),
+        tokenizer_file = config.getoption("tokenizer_file", None)
+        tokenizer_file = pop_value(
+            tokenizer_file,
+            nested_dict_value(pretrained_llava_infos, pretrained_name, "tokenizer"),
         )
-        vocab_path = cached_path(vocab_path)
+        tokenizer_file = cached_path(tokenizer_file)
+
+        tokenizer_config = config.getoption("tokenizer_config", None)
+        tokenizer_config = pop_value(
+            tokenizer_config,
+            nested_dict_value(
+                pretrained_llava_infos, pretrained_name, "tokenizer_config"
+            ),
+            check_none=False,
+        )
+        tokenizer_config = (
+            cached_path(tokenizer_config) if tokenizer_config is not None else None
+        )
+
+        special_tokens_map = config.getoption("special_tokens_map", None)
+        special_tokens_map = pop_value(
+            special_tokens_map,
+            nested_dict_value(
+                pretrained_llava_infos, pretrained_name, "special_tokens_map"
+            ),
+            check_none=False,
+        )
+        special_tokens_map = (
+            cached_path(special_tokens_map) if special_tokens_map is not None else None
+        )
+
+        chat_template = config.getoption("chat_template", None)
+        chat_template = pop_value(
+            chat_template,
+            nested_dict_value(pretrained_llava_infos, pretrained_name, "chat_template"),
+            check_none=False,
+        )
+        chat_template = (
+            cached_path(chat_template) if chat_template is not None else None
+        )
 
         vision_config_path = config.getoption("vision_config_path", None)
         vision_config_path = pop_value(
@@ -81,9 +121,19 @@ class LlavaMistralClipProcessor(_LlavaMistralClipProcessor):
         vision_config_path = cached_path(vision_config_path)
 
         return {
-            "vocab_path": vocab_path,
+            "tokenizer_file": tokenizer_file,
+            "tokenizer_config": tokenizer_config,
+            "special_tokens_map": special_tokens_map,
+            "chat_template": chat_template,
             "vision_config_path": vision_config_path,
         }
+
+    @register_process("core/process/llava/mistral_clip/chat_template")
+    def _chat_template(
+        self,
+        messages: List[Dict[str, Any]],
+    ):
+        return super().chat_template(messages=messages)
 
     @register_process("core/process/llava/mistral_clip/classification")
     def _classification(
@@ -206,6 +256,24 @@ class LlavaMistralClipProcessor(_LlavaMistralClipProcessor):
             masks=outputs.attention_mask_label,
         )
 
+    @register_process("core/process/llava/mistral_clip/messages/generation")
+    def _messages_generation(
+        self,
+        messages: List[Dict[str, Any]],
+        max_seq_length: Optional[int] = None,
+    ):
+        outputs = super().messages_generation(
+            messages=messages,
+            max_seq_length=max_seq_length,
+        )
+        return TensorsInputs(
+            input_ids=outputs.input_ids,
+            attention_mask=outputs.attention_mask,
+        ), GenerationTargets(
+            refs=outputs.input_ids_label,
+            masks=outputs.attention_mask_label,
+        )
+
     @register_process("core/postprocess/llava/mistral_clip/detokenize")
     def _detokenize(
         self,
@@ -242,8 +310,10 @@ class LlavaLlamaSiglipProcessor(_LlavaLlamaSiglipProcessor):
 
     def __init__(
         self,
-        vocab_path: Optional[str] = None,
-        tokenizer_file: Optional[str] = None,
+        tokenizer_file: str,
+        tokenizer_config: Optional[str] = None,
+        special_tokens_map: Optional[str] = None,
+        chat_template: Optional[str] = None,
         vision_config_path: Optional[str] = None,
         max_seq_length: Optional[int] = 128,
         max_gen_seq_length: Optional[int] = 128,
@@ -257,8 +327,10 @@ class LlavaLlamaSiglipProcessor(_LlavaLlamaSiglipProcessor):
             max_gen_seq_length (int, optional): The maximum generated sequence length. Defaults to 128.
         """
         super().__init__(
-            vocab_path=vocab_path,
             tokenizer_file=tokenizer_file,
+            tokenizer_config=tokenizer_config,
+            special_tokens_map=special_tokens_map,
+            chat_template=chat_template,
             vision_config_path=vision_config_path,
             max_seq_length=max_seq_length,
             max_gen_seq_length=max_gen_seq_length,
@@ -279,22 +351,46 @@ class LlavaLlamaSiglipProcessor(_LlavaLlamaSiglipProcessor):
         """
         config.set_default_section("core/process/llava/llama_siglip")
         pretrained_name = config.getoption("pretrained_name", "llava-v1.6-joycaption-2")
-        vocab_path = config.getoption("vocab_path", None)
-        vocab_path = pop_value(
-            vocab_path,
-            nested_dict_value(pretrained_llava_infos, pretrained_name, "vocab"),
-            check_none=False,
-        )
-        vocab_path = cached_path(vocab_path) if vocab_path is not None else None
 
         tokenizer_file = config.getoption("tokenizer_file", None)
         tokenizer_file = pop_value(
             tokenizer_file,
             nested_dict_value(pretrained_llava_infos, pretrained_name, "tokenizer"),
+        )
+        tokenizer_file = cached_path(tokenizer_file)
+
+        tokenizer_config = config.getoption("tokenizer_config", None)
+        tokenizer_config = pop_value(
+            tokenizer_config,
+            nested_dict_value(
+                pretrained_llava_infos, pretrained_name, "tokenizer_config"
+            ),
             check_none=False,
         )
-        tokenizer_file = (
-            cached_path(tokenizer_file) if tokenizer_file is not None else None
+        tokenizer_config = (
+            cached_path(tokenizer_config) if tokenizer_config is not None else None
+        )
+
+        special_tokens_map = config.getoption("special_tokens_map", None)
+        special_tokens_map = pop_value(
+            special_tokens_map,
+            nested_dict_value(
+                pretrained_llava_infos, pretrained_name, "special_tokens_map"
+            ),
+            check_none=False,
+        )
+        special_tokens_map = (
+            cached_path(special_tokens_map) if special_tokens_map is not None else None
+        )
+
+        chat_template = config.getoption("chat_template", None)
+        chat_template = pop_value(
+            chat_template,
+            nested_dict_value(pretrained_llava_infos, pretrained_name, "chat_template"),
+            check_none=False,
+        )
+        chat_template = (
+            cached_path(chat_template) if chat_template is not None else None
         )
 
         vision_config_path = config.getoption("vision_config_path", None)
@@ -305,10 +401,19 @@ class LlavaLlamaSiglipProcessor(_LlavaLlamaSiglipProcessor):
         vision_config_path = cached_path(vision_config_path)
 
         return {
-            "vocab_path": vocab_path,
             "tokenizer_file": tokenizer_file,
+            "tokenizer_config": tokenizer_config,
+            "special_tokens_map": special_tokens_map,
+            "chat_template": chat_template,
             "vision_config_path": vision_config_path,
         }
+
+    @register_process("core/process/llava/llama_siglip/chat_template")
+    def _chat_template(
+        self,
+        messages: List[Dict[str, Any]],
+    ):
+        return super().chat_template(messages=messages)
 
     @register_process("core/process/llava/llama_siglip/classification")
     def _classification(
@@ -392,6 +497,24 @@ class LlavaLlamaSiglipProcessor(_LlavaLlamaSiglipProcessor):
         return GenerationTargets(
             refs=outputs.input_ids,
             masks=outputs.attention_mask,
+        )
+
+    @register_process("core/process/llava/llama_siglip/messages/generation")
+    def _messages_generation(
+        self,
+        messages: List[Dict[str, Any]],
+        max_seq_length: Optional[int] = None,
+    ):
+        outputs = super().messages_generation(
+            messages=messages,
+            max_seq_length=max_seq_length,
+        )
+        return TensorsInputs(
+            input_ids=outputs.input_ids,
+            attention_mask=outputs.attention_mask,
+        ), GenerationTargets(
+            refs=outputs.input_ids_label,
+            masks=outputs.attention_mask_label,
         )
 
     @register_process("core/process/llava/llama_siglip/generation")

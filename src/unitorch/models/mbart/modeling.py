@@ -129,7 +129,6 @@ class MBartForGeneration(GenericModel):
             min_length=min_gen_seq_length,
             num_beams=num_beams,
             do_sample=do_sample,
-            decoder_start_token_id=decoder_start_token_id,
             no_repeat_ngram_size=no_repeat_ngram_size,
             early_stopping=early_stopping,
             length_penalty=length_penalty,

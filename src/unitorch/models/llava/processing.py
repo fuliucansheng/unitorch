@@ -15,8 +15,14 @@ from transformers import (
     LlamaTokenizerFast,
     CLIPImageProcessor,
     SiglipImageProcessor,
+    AddedToken,
 )
-from unitorch.utils import pop_value, truncate_sequence_pair
+from unitorch.utils import (
+    pop_value,
+    truncate_sequence_pair,
+    read_json_file,
+    get_added_token,
+)
 from unitorch.models import (
     HfImageClassificationProcessor,
     HfTextClassificationProcessor,
@@ -32,7 +38,10 @@ class LlavaMistralClipProcessor(
 ):
     def __init__(
         self,
-        vocab_path: str,
+        tokenizer_file: str,
+        tokenizer_config: Optional[str] = None,
+        special_tokens_map: Optional[str] = None,
+        chat_template: Optional[str] = None,
         vision_config_path: Optional[str] = None,
         max_seq_length: Optional[int] = 128,
         max_gen_seq_length: Optional[int] = 48,
@@ -45,8 +54,36 @@ class LlavaMistralClipProcessor(
             max_seq_length (int, optional): Maximum sequence length for text classification. Defaults to 128.
             max_gen_seq_length (int, optional): Maximum sequence length for text generation. Defaults to 48.
         """
-        tokenizer = LlamaTokenizer(vocab_file=vocab_path)
-        tokenizer.add_tokens("<image>", special_tokens=True)
+        tokenizer_config = read_json_file(tokenizer_config) if tokenizer_config else {}
+        special_tokens_map = (
+            read_json_file(special_tokens_map) if special_tokens_map else {}
+        )
+        added_tokens_decoder = tokenizer_config.pop("added_tokens_decoder", {})
+        tokenizer_config = {
+            k: (
+                get_added_token(v)
+                if isinstance(v, dict) and v.get("__type") == "AddedToken"
+                else v
+            )
+            for k, v in tokenizer_config.items()
+        }
+
+        tokenizer = LlamaTokenizerFast(
+            tokenizer_file=tokenizer_file,
+            **tokenizer_config,
+        )
+        for idx, spec in added_tokens_decoder.items():
+            token = spec["content"]
+            tokenizer.added_tokens_decoder[idx] = get_added_token(spec)
+            tokenizer.added_tokens_encoder[token] = idx
+
+        special_tokens = {}
+        for name, spec in special_tokens_map.items():
+            special_tokens[name] = get_added_token(spec)
+        tokenizer.add_special_tokens(special_tokens)
+
+        if chat_template:
+            tokenizer.chat_template = read_json_file(chat_template)["chat_template"]
         tokenizer.cls_token = tokenizer.bos_token
         tokenizer.sep_token = tokenizer.eos_token
         tokenizer.pad_token = tokenizer.unk_token
@@ -75,6 +112,17 @@ class LlavaMistralClipProcessor(
             self,
             vision_processor=vision_processor,
         )
+
+    def chat_template(
+        self,
+        messages: List[Dict[str, Any]],
+    ):
+        text = self.tokenizer.apply_chat_template(
+            messages,
+            tokenize=False,
+            add_generation_prompt=True,
+        )
+        return text
 
     def image_classification(
         self,
@@ -293,6 +341,38 @@ class LlavaMistralClipProcessor(
             attention_mask_label=torch.tensor(attention_mask_label, dtype=torch.long),
         )
 
+    def messages_generation(
+        self,
+        messages: List[Dict[str, Any]],
+        max_seq_length: Optional[int] = None,
+    ) -> GenericOutputs:
+        """
+        Preprocesses messages for generation.
+
+        Args:
+            messages (List[Dict[str, Any]]): The list of messages to process.
+            max_seq_length (Optional[int]): The maximum sequence length. Defaults to None.
+
+        Returns:
+            GenericOutputs: The processed input IDs tensor.
+        """
+        while messages and messages[-1]["role"] != "assistant":
+            messages.pop()
+
+        text = self.chat_template(messages[:-1])
+        text_pair = self.chat_template(messages[-1:])
+        outputs = self.generation(
+            text=text,
+            text_pair=text_pair,
+            max_seq_length=max_seq_length,
+        )
+        return GenericOutputs(
+            input_ids=outputs.input_ids,
+            attention_mask=outputs.attention_mask,
+            input_ids_label=outputs.input_ids_label,
+            attention_mask_label=outputs.attention_mask_label,
+        )
+
 
 class LlavaLlamaSiglipProcessor(
     HfTextClassificationProcessor,
@@ -300,8 +380,10 @@ class LlavaLlamaSiglipProcessor(
 ):
     def __init__(
         self,
-        vocab_path: Optional[str] = None,
-        tokenizer_file: Optional[str] = None,
+        tokenizer_file: str,
+        tokenizer_config: Optional[str] = None,
+        special_tokens_map: Optional[str] = None,
+        chat_template: Optional[str] = None,
         vision_config_path: Optional[str] = None,
         max_seq_length: Optional[int] = 128,
         max_gen_seq_length: Optional[int] = 48,
@@ -314,22 +396,41 @@ class LlavaLlamaSiglipProcessor(
             max_seq_length (int, optional): Maximum sequence length for text classification. Defaults to 128.
             max_gen_seq_length (int, optional): Maximum sequence length for text generation. Defaults to 48.
         """
-        if vocab_path is not None:
-            tokenizer = LlamaTokenizer(vocab_file=vocab_path)
-        elif tokenizer_file is not None:
-            tokenizer = LlamaTokenizerFast(
-                tokenizer_file=tokenizer_file,
-                bos_token="<|begin_of_text|>",
-                eos_token="<|end_of_text|>",
+        tokenizer_config = read_json_file(tokenizer_config) if tokenizer_config else {}
+        special_tokens_map = (
+            read_json_file(special_tokens_map) if special_tokens_map else {}
+        )
+        added_tokens_decoder = tokenizer_config.pop("added_tokens_decoder", {})
+        tokenizer_config = {
+            k: (
+                get_added_token(v)
+                if isinstance(v, dict) and v.get("__type") == "AddedToken"
+                else v
             )
-        else:
-            raise ValueError("Either vocab_path or tokenizer_file must be provided")
+            for k, v in tokenizer_config.items()
+        }
+        tokenizer = LlamaTokenizerFast(
+            tokenizer_file=tokenizer_file,
+            **tokenizer_config,
+        )
+
+        for idx, spec in added_tokens_decoder.items():
+            token = spec["content"]
+            tokenizer.added_tokens_decoder[idx] = get_added_token(spec)
+            tokenizer.added_tokens_encoder[token] = idx
+
+        special_tokens = {}
+        for name, spec in special_tokens_map.items():
+            special_tokens[name] = get_added_token(spec)
+        tokenizer.add_special_tokens(special_tokens)
+
+        if chat_template:
+            tokenizer.chat_template = read_json_file(chat_template)["chat_template"]
         tokenizer.cls_token = tokenizer.bos_token
         tokenizer.sep_token = tokenizer.eos_token
         tokenizer.cls_token_id = tokenizer.bos_token_id
         tokenizer.sep_token_id = tokenizer.eos_token_id
-        tokenizer.pad_token_id = 128004
-        tokenizer.pad_token = tokenizer.convert_ids_to_tokens(tokenizer.pad_token_id)
+        tokenizer.pad_token_id = tokenizer.convert_tokens_to_ids(tokenizer.pad_token)
         HfTextClassificationProcessor.__init__(
             self,
             tokenizer=tokenizer,
@@ -348,6 +449,17 @@ class LlavaLlamaSiglipProcessor(
             )
         else:
             self.vision_processor = None
+
+    def chat_template(
+        self,
+        messages: List[Dict[str, Any]],
+    ):
+        text = self.tokenizer.apply_chat_template(
+            messages,
+            tokenize=False,
+            add_generation_prompt=True,
+        )
+        return text
 
     def image_classification(
         self,
@@ -560,4 +672,36 @@ class LlavaLlamaSiglipProcessor(
             pixel_values=pixel_values,
             input_ids_label=torch.tensor(input_ids_label, dtype=torch.long),
             attention_mask_label=torch.tensor(attention_mask_label, dtype=torch.long),
+        )
+
+    def messages_generation(
+        self,
+        messages: List[Dict[str, Any]],
+        max_seq_length: Optional[int] = None,
+    ) -> GenericOutputs:
+        """
+        Preprocesses messages for generation.
+
+        Args:
+            messages (List[Dict[str, Any]]): The list of messages to process.
+            max_seq_length (Optional[int]): The maximum sequence length. Defaults to None.
+
+        Returns:
+            GenericOutputs: The processed input IDs tensor.
+        """
+        while messages and messages[-1]["role"] != "assistant":
+            messages.pop()
+
+        text = self.chat_template(messages[:-1])
+        text_pair = self.chat_template(messages[-1:])
+        outputs = self.generation(
+            text=text,
+            text_pair=text_pair,
+            max_seq_length=max_seq_length,
+        )
+        return GenericOutputs(
+            input_ids=outputs.input_ids,
+            attention_mask=outputs.attention_mask,
+            input_ids_label=outputs.input_ids_label,
+            attention_mask_label=outputs.attention_mask_label,
         )

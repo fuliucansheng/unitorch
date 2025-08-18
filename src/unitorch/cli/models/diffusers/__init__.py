@@ -486,6 +486,10 @@ pretrained_stable_infos = {
         **__hf_hub_stable_flux_safetensors_dict__("camenduru/FLUX.1-dev-diffusers"),
         **__hf_hub_vae_safetensors_dict__("camenduru/FLUX.1-dev-diffusers"),
     },
+    "stable-flux-dev-krea": {
+        **__hf_hub_stable_flux_safetensors_dict__("NikolaSigmoid/FLUX.1-Krea-dev"),
+        **__hf_hub_vae_safetensors_dict__("NikolaSigmoid/FLUX.1-Krea-dev"),
+    },
     "stable-flux-dev-fill": {
         **__hf_hub_stable_flux_safetensors_dict__(
             "fuliucansheng/FLUX.1-Fill-dev-diffusers"

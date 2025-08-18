@@ -8,7 +8,15 @@ pretrained_llama_infos = {
     # llama
     "llama-7b": {
         "config": hf_endpoint_url("/huggyllama/llama-7b/resolve/main/config.json"),
-        "vocab": hf_endpoint_url("/huggyllama/llama-7b/resolve/main/tokenizer.model"),
+        "tokenizer": hf_endpoint_url(
+            "/huggyllama/llama-7b/resolve/main/tokenizer.json"
+        ),
+        "tokenizer_config": hf_endpoint_url(
+            "/huggyllama/llama-7b/resolve/main/tokenizer_config.json"
+        ),
+        "special_tokens_map": hf_endpoint_url(
+            "/huggyllama/llama-7b/resolve/main/special_tokens_map.json"
+        ),
         "weight": [
             hf_endpoint_url(
                 f"/huggyllama/llama-7b/resolve/main/pytorch_model-{str(i).rjust(5, '0')}-of-00002.bin"
@@ -18,7 +26,15 @@ pretrained_llama_infos = {
     },
     "llama-13b": {
         "config": hf_endpoint_url("/huggyllama/llama-13b/resolve/main/config.json"),
-        "vocab": hf_endpoint_url("/huggyllama/llama-13b/resolve/main/tokenizer.model"),
+        "tokenizer": hf_endpoint_url(
+            "/huggyllama/llama-13b/resolve/main/tokenizer.json"
+        ),
+        "tokenizer_config": hf_endpoint_url(
+            "/huggyllama/llama-13b/resolve/main/tokenizer_config.json"
+        ),
+        "special_tokens_map": hf_endpoint_url(
+            "/huggyllama/llama-13b/resolve/main/special_tokens_map.json"
+        ),
         "weight": [
             hf_endpoint_url(
                 f"/huggyllama/llama-13b/resolve/main/pytorch_model-{str(i).rjust(5, '0')}-of-00003.bin"
@@ -30,8 +46,14 @@ pretrained_llama_infos = {
         "config": hf_endpoint_url(
             "/NousResearch/Llama-2-7b-hf/resolve/main/config.json"
         ),
-        "vocab": hf_endpoint_url(
-            "/NousResearch/Llama-2-7b-hf/resolve/main/tokenizer.model"
+        "tokenizer": hf_endpoint_url(
+            "/NousResearch/Llama-2-7b-hf/resolve/main/tokenizer.json"
+        ),
+        "tokenizer_config": hf_endpoint_url(
+            "/NousResearch/Llama-2-7b-hf/resolve/main/tokenizer_config.json"
+        ),
+        "special_tokens_map": hf_endpoint_url(
+            "/NousResearch/Llama-2-7b-hf/resolve/main/special_tokens_map.json"
         ),
         "weight": [
             hf_endpoint_url(
@@ -44,8 +66,14 @@ pretrained_llama_infos = {
         "config": hf_endpoint_url(
             "/NousResearch/Llama-2-7b-chat-hf/resolve/main/config.json"
         ),
-        "vocab": hf_endpoint_url(
-            "/NousResearch/Llama-2-7b-chat-hf/resolve/main/tokenizer.model"
+        "tokenizer": hf_endpoint_url(
+            "/NousResearch/Llama-2-7b-chat-hf/resolve/main/tokenizer.json"
+        ),
+        "tokenizer_config": hf_endpoint_url(
+            "/NousResearch/Llama-2-7b-chat-hf/resolve/main/tokenizer_config.json"
+        ),
+        "special_tokens_map": hf_endpoint_url(
+            "/NousResearch/Llama-2-7b-chat-hf/resolve/main/special_tokens_map.json"
         ),
         "weight": [
             hf_endpoint_url(
@@ -58,8 +86,14 @@ pretrained_llama_infos = {
         "config": hf_endpoint_url(
             "/NousResearch/Llama-2-13b-hf/resolve/main/config.json"
         ),
-        "vocab": hf_endpoint_url(
-            "/NousResearch/Llama-2-13b-hf/resolve/main/tokenizer.model"
+        "tokenizer": hf_endpoint_url(
+            "/NousResearch/Llama-2-13b-hf/resolve/main/tokenizer.json"
+        ),
+        "tokenizer_config": hf_endpoint_url(
+            "/NousResearch/Llama-2-13b-hf/resolve/main/tokenizer_config.json"
+        ),
+        "special_tokens_map": hf_endpoint_url(
+            "/NousResearch/Llama-2-13b-hf/resolve/main/special_tokens_map.json"
         ),
         "weight": [
             hf_endpoint_url(
@@ -72,8 +106,14 @@ pretrained_llama_infos = {
         "config": hf_endpoint_url(
             "/NousResearch/Llama-2-13b-chat-hf/resolve/main/config.json"
         ),
-        "vocab": hf_endpoint_url(
-            "/NousResearch/Llama-2-13b-chat-hf/resolve/main/tokenizer.model"
+        "tokenizer": hf_endpoint_url(
+            "/NousResearch/Llama-2-13b-chat-hf/resolve/main/tokenizer.json"
+        ),
+        "tokenizer_config": hf_endpoint_url(
+            "/NousResearch/Llama-2-13b-chat-hf/resolve/main/tokenizer_config.json"
+        ),
+        "special_tokens_map": hf_endpoint_url(
+            "/NousResearch/Llama-2-13b-chat-hf/resolve/main/special_tokens_map.json"
         ),
         "weight": [
             hf_endpoint_url(
@@ -85,6 +125,12 @@ pretrained_llama_infos = {
     "llama3-8b": {
         "config": hf_endpoint_url("/unsloth/llama-3-8b/resolve/main/config.json"),
         "tokenizer": hf_endpoint_url("/unsloth/llama-3-8b/resolve/main/tokenizer.json"),
+        "tokenizer_config": hf_endpoint_url(
+            "/unsloth/llama-3-8b/resolve/main/tokenizer_config.json"
+        ),
+        "special_tokens_map": hf_endpoint_url(
+            "/unsloth/llama-3-8b/resolve/main/special_tokens_map.json"
+        ),
         "weight": [
             hf_endpoint_url(
                 f"/unsloth/llama-3-8b/resolve/main/model-{str(i).rjust(5, '0')}-of-00004.safetensors"
@@ -97,48 +143,15 @@ pretrained_llama_infos = {
         "tokenizer": hf_endpoint_url(
             "/Replete-AI/Llama-3-13B/resolve/main/tokenizer.json"
         ),
+        "tokenizer_config": hf_endpoint_url(
+            "/Replete-AI/Llama-3-13B/resolve/main/tokenizer_config.json"
+        ),
+        "special_tokens_map": hf_endpoint_url(
+            "/Replete-AI/Llama-3-13B/resolve/main/special_tokens_map.json"
+        ),
         "weight": [
             hf_endpoint_url(
                 f"/Replete-AI/Llama-3-13B/resolve/main/model-{str(i).rjust(5, '0')}-of-00003.safetensors"
-            )
-            for i in range(1, 4)
-        ],
-    },
-    "open-llama-3b": {
-        "config": hf_endpoint_url(
-            "/openlm-research/open_llama_3b/resolve/main/config.json"
-        ),
-        "vocab": hf_endpoint_url(
-            "/openlm-research/open_llama_3b/resolve/main/tokenizer.model"
-        ),
-        "weight": hf_endpoint_url(
-            "/openlm-research/open_llama_3b/resolve/main/pytorch_model.bin"
-        ),
-    },
-    "open-llama-7b": {
-        "config": hf_endpoint_url(
-            "/openlm-research/open_llama_7b/resolve/main/config.json"
-        ),
-        "vocab": hf_endpoint_url(
-            "/openlm-research/open_llama_7b/resolve/main/tokenizer.model"
-        ),
-        "weight": [
-            hf_endpoint_url(
-                f"/openlm-research/open_llama_7b/resolve/main/pytorch_model-{str(i).rjust(5, '0')}-of-00002.bin"
-            )
-            for i in range(1, 3)
-        ],
-    },
-    "open-llama-13b": {
-        "config": hf_endpoint_url(
-            "/openlm-research/open_llama_13b/resolve/main/config.json"
-        ),
-        "vocab": hf_endpoint_url(
-            "/openlm-research/open_llama_13b/resolve/main/tokenizer.model"
-        ),
-        "weight": [
-            hf_endpoint_url(
-                f"/openlm-research/open_llama_13b/resolve/main/pytorch_model-{str(i).rjust(5, '0')}-of-00003.bin"
             )
             for i in range(1, 4)
         ],
@@ -147,8 +160,14 @@ pretrained_llama_infos = {
         "config": hf_endpoint_url(
             "/unsloth/llama-3-8b-Instruct/resolve/main/config.json"
         ),
-        "vocab": hf_endpoint_url(
-            "/unsloth/llama-3-8b-Instruct/resolve/main/tokenizer.model"
+        "tokenizer": hf_endpoint_url(
+            "/unsloth/llama-3-8b-Instruct/resolve/main/tokenizer.json"
+        ),
+        "tokenizer_config": hf_endpoint_url(
+            "/unsloth/llama-3-8b-Instruct/resolve/main/tokenizer_config.json"
+        ),
+        "special_tokens_map": hf_endpoint_url(
+            "/unsloth/llama-3-8b-Instruct/resolve/main/special_tokens_map.json"
         ),
         "weight": [
             hf_endpoint_url(

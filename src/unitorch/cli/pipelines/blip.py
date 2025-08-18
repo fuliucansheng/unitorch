@@ -125,7 +125,7 @@ class BlipForImageCaptionPipeline(_BlipForImageCaption):
         image: Image.Image,
         num_beams: Optional[int] = 2,
         decoder_start_token_id: Optional[int] = 1,
-        decoder_end_token_id: Optional[Union[int, List[int]]] = [2],
+        decoder_end_token_id: Optional[Union[int, List[int]]] = 2,
         num_return_sequences: Optional[int] = 1,
         min_gen_seq_length: Optional[int] = 0,
         max_gen_seq_length: Optional[int] = 512,
