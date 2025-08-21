@@ -23,5 +23,3 @@ pretrained_xpegasus_infos = {
 
 import unitorch.cli.models.xpegasus.modeling
 import unitorch.cli.models.xpegasus.processing
-from unitorch.cli.models.xpegasus.modeling import XPegasusForGeneration
-from unitorch.cli.models.xpegasus.processing import XPegasusProcessor

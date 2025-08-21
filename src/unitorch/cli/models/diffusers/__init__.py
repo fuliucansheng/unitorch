@@ -773,71 +773,31 @@ pretrained_stable_extensions_infos = {
 
 from unitorch.cli.models.diffusion_utils import load_weight
 
-from unitorch.cli.models.diffusers.modeling_stable import (
-    StableForText2ImageGeneration,
-    StableForImage2ImageGeneration,
-    StableForImageInpainting,
-    StableForImageResolution,
-)
-from unitorch.cli.models.diffusers.modeling_stable_xl import (
-    StableXLForText2ImageGeneration,
-    StableXLForImage2ImageGeneration,
-    StableXLForImageInpainting,
-)
+import unitorch.cli.models.diffusers.modeling_stable
+import unitorch.cli.models.diffusers.modeling_stable_xl
+import unitorch.cli.models.diffusers.modeling_stable_3
+import unitorch.cli.models.diffusers.modeling_stable_flux
+import unitorch.cli.models.diffusers.modeling_qwen_image
+import unitorch.cli.models.diffusers.modeling_controlnet
+import unitorch.cli.models.diffusers.modeling_controlnet_xl
+import unitorch.cli.models.diffusers.modeling_controlnet_3
+import unitorch.cli.models.diffusers.modeling_controlnet_flux
+import unitorch.cli.models.diffusers.modeling_adapter
+import unitorch.cli.models.diffusers.modeling_adapter_xl
+import unitorch.cli.models.diffusers.modeling_wan
+import unitorch.cli.models.diffusers.modeling_vae
+import unitorch.cli.models.diffusers.processing_stable
+import unitorch.cli.models.diffusers.processing_stable_xl
+import unitorch.cli.models.diffusers.processing_stable_3
+import unitorch.cli.models.diffusers.processing_stable_flux
+import unitorch.cli.models.diffusers.processing_qwen_image
 
-from unitorch.cli.models.diffusers.modeling_stable_3 import (
-    Stable3ForText2ImageGeneration,
-    Stable3ForImage2ImageGeneration,
-)
-from unitorch.cli.models.diffusers.modeling_stable_flux import (
-    StableFluxForText2ImageGeneration,
-)
-from unitorch.cli.models.diffusers.modeling_qwen_image import (
-    QWenImageText2ImageGeneration,
-    QWenImageEditingGeneration,
-)
-from unitorch.cli.models.diffusers.modeling_controlnet import (
-    ControlNetForText2ImageGeneration,
-    ControlNetForImage2ImageGeneration,
-    ControlNetForImageInpainting,
-)
-from unitorch.cli.models.diffusers.modeling_controlnet_xl import (
-    ControlNetXLForText2ImageGeneration,
-    ControlNetXLForImage2ImageGeneration,
-    ControlNetXLForImageInpainting,
-)
-
-from unitorch.cli.models.diffusers.modeling_controlnet_3 import (
-    ControlNet3ForText2ImageGeneration,
-)
-from unitorch.cli.models.diffusers.modeling_controlnet_flux import (
-    ControlNetFluxForText2ImageGeneration,
-)
-from unitorch.cli.models.diffusers.modeling_adapter import (
-    StableAdapterForText2ImageGeneration,
-)
-from unitorch.cli.models.diffusers.modeling_adapter_xl import (
-    StableXLAdapterForText2ImageGeneration,
-)
-from unitorch.cli.models.diffusers.modeling_wan import (
-    WanForText2VideoGeneration,
-    WanForImage2VideoGeneration,
-)
-from unitorch.cli.models.diffusers.modeling_vae import VAEForDiffusion
-from unitorch.cli.models.diffusers.processing_stable import StableProcessor
-from unitorch.cli.models.diffusers.processing_stable_xl import StableXLProcessor
-from unitorch.cli.models.diffusers.processing_stable_3 import Stable3Processor
-from unitorch.cli.models.diffusers.processing_stable_flux import StableFluxProcessor
-from unitorch.cli.models.diffusers.processing_qwen_image import QWenImageProcessor
-from unitorch.cli.models.diffusers.processing_wan import WanProcessor
-from unitorch.cli.models.diffusers.processing_controlnet import ControlNetProcessor
-from unitorch.cli.models.diffusers.processing_controlnet_xl import ControlNetXLProcessor
-from unitorch.cli.models.diffusers.processing_controlnet_3 import ControlNet3Processor
-from unitorch.cli.models.diffusers.processing_controlnet_flux import (
-    ControlNetFluxProcessor,
-)
-from unitorch.cli.models.diffusers.processing_adapter import AdapterProcessor
-from unitorch.cli.models.diffusers.processing_adapter_xl import AdapterXLProcessor
+import unitorch.cli.models.diffusers.processing_controlnet
+import unitorch.cli.models.diffusers.processing_controlnet_xl
+import unitorch.cli.models.diffusers.processing_controlnet_3
+import unitorch.cli.models.diffusers.processing_controlnet_flux
+import unitorch.cli.models.diffusers.processing_adapter
+import unitorch.cli.models.diffusers.processing_adapter_xl
 
 if is_opencv_available():
-    from unitorch.cli.models.diffusers.processing_wan import WanProcessor
+    import unitorch.cli.models.diffusers.processing_wan

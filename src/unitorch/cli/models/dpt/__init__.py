@@ -16,5 +16,3 @@ pretrained_dpt_infos = {
 
 import unitorch.cli.models.dpt.modeling
 import unitorch.cli.models.dpt.processing
-from unitorch.cli.models.dpt.modeling import DPTForDepthEstimation
-from unitorch.cli.models.dpt.processing import DPTProcessor

@@ -29,8 +29,3 @@ pretrained_visualbert_infos = {
 
 import unitorch.cli.models.visualbert.modeling
 import unitorch.cli.models.visualbert.processing
-from unitorch.cli.models.visualbert.modeling import (
-    VisualBertForClassification,
-    VisualBertForPretrain,
-)
-from unitorch.cli.models.visualbert.processing import VisualBertProcessor

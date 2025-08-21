@@ -63,8 +63,3 @@ pretrained_llava_extensions_infos = {}
 
 import unitorch.cli.models.llava.modeling
 import unitorch.cli.models.llava.processing
-from unitorch.cli.models.llava.modeling import (
-    LlavaMistralClipForClassification,
-    LlavaMistralClipForGeneration,
-)
-from unitorch.cli.models.llava.processing import LlavaMistralClipProcessor

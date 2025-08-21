@@ -6,6 +6,7 @@ import torch
 import torch.nn.functional as F
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 import diffusers.schedulers as schedulers
+from peft import LoraConfig
 from transformers import (
     Qwen2_5_VLConfig,
     Qwen2_5_VLForConditionalGeneration,
@@ -29,37 +30,15 @@ from unitorch.models import (
     QuantizationConfig,
     QuantizationMixin,
 )
-from unitorch.models.peft import PeftWeightLoaderMixin
+from unitorch.models.peft import GenericPeftModel
 from unitorch.models.diffusers import compute_snr
+from unitorch.models.diffusers.modeling_qwen_image import (
+    _pack_latents,
+    _unpack_latents,
+)
 
 
-def _pack_latents(latents, batch_size, num_channels_latents, height, width):
-    latents = latents.view(
-        batch_size, num_channels_latents, height // 2, 2, width // 2, 2
-    )
-    latents = latents.permute(0, 2, 4, 1, 3, 5)
-    latents = latents.reshape(
-        batch_size, (height // 2) * (width // 2), num_channels_latents * 4
-    )
-
-    return latents
-
-
-def _unpack_latents(latents, height, width, vae_scale_factor):
-    batch_size, num_patches, channels = latents.shape
-
-    height = height // vae_scale_factor
-    width = width // vae_scale_factor
-
-    latents = latents.view(batch_size, height // 2, width // 2, channels // 4, 2, 2)
-    latents = latents.permute(0, 3, 1, 4, 2, 5)
-
-    latents = latents.reshape(batch_size, channels // (2 * 2), 1, height, width)
-
-    return latents
-
-
-class GenericQWenImageModel(GenericModel, QuantizationMixin, PeftWeightLoaderMixin):
+class GenericQWenImageLoraModel(GenericPeftModel, QuantizationMixin):
     prefix_keys_in_state_dict = {
         # vae weights
         "^encoder.*": "vae.",
@@ -81,16 +60,31 @@ class GenericQWenImageModel(GenericModel, QuantizationMixin, PeftWeightLoaderMix
         text_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
+        image_config_path: Optional[str] = None,
         quant_config_path: Optional[str] = None,
         image_size: Optional[int] = None,
         in_channels: Optional[int] = None,
         out_channels: Optional[int] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
-        freeze_vae_encoder: Optional[bool] = True,
-        freeze_text_encoder: Optional[bool] = True,
-        freeze_transformer_encoder: Optional[bool] = False,
         snr_gamma: Optional[float] = 5.0,
+        lora_r: Optional[int] = 16,
+        lora_alpha: Optional[int] = 32,
+        lora_dropout: Optional[float] = 0.05,
+        fan_in_fan_out: Optional[bool] = True,
+        target_modules: Optional[Union[List[str], str]] = [
+            "to_q",
+            "to_k",
+            "to_v",
+            "q_proj",
+            "k_proj",
+            "v_proj",
+            "add_q_proj",
+            "add_k_proj",
+            "add_v_proj",
+        ],
+        enable_text_adapter: Optional[bool] = True,
+        enable_transformer_adapter: Optional[bool] = True,
         seed: Optional[int] = 1123,
     ):
         super().__init__()
@@ -128,23 +122,33 @@ class GenericQWenImageModel(GenericModel, QuantizationMixin, PeftWeightLoaderMix
         scheduler_config_dict["num_train_timesteps"] = num_train_timesteps
         self.scheduler = scheduler_class.from_config(scheduler_config_dict)
 
-        if freeze_vae_encoder:
-            for param in self.vae.parameters():
-                param.requires_grad = False
+        for param in self.vae.parameters():
+            param.requires_grad = False
 
-        if freeze_text_encoder:
-            for param in self.text.parameters():
-                param.requires_grad = False
+        for param in self.text.parameters():
+            param.requires_grad = False
 
-        if freeze_transformer_encoder:
-            for param in self.transformer.parameters():
-                param.requires_grad = False
+        for param in self.transformer.parameters():
+            param.requires_grad = False
 
         if quant_config_path is not None:
             self.quant_config = QuantizationConfig.from_json_file(quant_config_path)
             self.quantize(
                 self.quant_config, ignore_modules=["lm_head", "transformer", "vae"]
             )
+
+        lora_config = LoraConfig(
+            r=lora_r,
+            lora_alpha=lora_alpha,
+            init_lora_weights="gaussian",
+            lora_dropout=lora_dropout,
+            fan_in_fan_out=fan_in_fan_out,
+            target_modules=target_modules,
+        )
+        if enable_text_adapter:
+            self.text.add_adapter(lora_config)
+        if enable_transformer_adapter:
+            self.transformer.add_adapter(lora_config)
 
     def get_sigmas(self, timesteps, n_dim=4, dtype=torch.float32):
         sigmas = self.scheduler.sigmas.to(device=self.device, dtype=dtype)
@@ -156,14 +160,6 @@ class GenericQWenImageModel(GenericModel, QuantizationMixin, PeftWeightLoaderMix
         while len(sigma.shape) < n_dim:
             sigma = sigma.unsqueeze(-1)
         return sigma
-
-    def _extract_masked_hidden(self, hidden_states: torch.Tensor, mask: torch.Tensor):
-        bool_mask = mask.bool()
-        valid_lengths = bool_mask.sum(dim=1)
-        selected = hidden_states[bool_mask]
-        split_result = torch.split(selected, valid_lengths.tolist(), dim=0)
-
-        return split_result
 
     def get_prompt_outputs(
         self,
@@ -276,7 +272,9 @@ class GenericQWenImageModel(GenericModel, QuantizationMixin, PeftWeightLoaderMix
         )
 
 
-class QWenImageText2ImageGeneration(GenericQWenImageModel):
+class QWenImageLoraForText2ImageGeneration(GenericQWenImageLoraModel):
+    modules_to_save_checkpoints = ["lora"]
+
     def __init__(
         self,
         config_path: str,
@@ -289,9 +287,24 @@ class QWenImageText2ImageGeneration(GenericQWenImageModel):
         out_channels: Optional[int] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
-        freeze_vae_encoder: Optional[bool] = True,
-        freeze_text_encoder: Optional[bool] = True,
         snr_gamma: Optional[float] = 5.0,
+        lora_r: Optional[int] = 16,
+        lora_alpha: Optional[int] = 32,
+        lora_dropout: Optional[float] = 0.05,
+        fan_in_fan_out: Optional[bool] = True,
+        target_modules: Optional[Union[List[str], str]] = [
+            "to_q",
+            "to_k",
+            "to_v",
+            "q_proj",
+            "k_proj",
+            "v_proj",
+            "add_q_proj",
+            "add_k_proj",
+            "add_v_proj",
+        ],
+        enable_text_adapter: Optional[bool] = True,
+        enable_transformer_adapter: Optional[bool] = True,
         seed: Optional[int] = 1123,
         gradient_checkpointing: Optional[bool] = True,
         guidance_scale: Optional[float] = 1.0,
@@ -308,11 +321,17 @@ class QWenImageText2ImageGeneration(GenericQWenImageModel):
             out_channels=out_channels,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
-            freeze_vae_encoder=freeze_vae_encoder,
-            freeze_text_encoder=freeze_text_encoder,
             snr_gamma=snr_gamma,
+            lora_r=lora_r,
+            lora_alpha=lora_alpha,
+            lora_dropout=lora_dropout,
+            fan_in_fan_out=fan_in_fan_out,
+            target_modules=target_modules,
+            enable_text_adapter=enable_text_adapter,
+            enable_transformer_adapter=enable_transformer_adapter,
             seed=seed,
         )
+
         if gradient_checkpointing:
             self.transformer.enable_gradient_checkpointing()
 
@@ -489,7 +508,9 @@ class QWenImageText2ImageGeneration(GenericQWenImageModel):
         return GenericOutputs(images=torch.from_numpy(images))
 
 
-class QWenImageEditingGeneration(GenericQWenImageModel):
+class QWenImageLoraForImageEditing(GenericQWenImageLoraModel):
+    modules_to_save_checkpoints = ["lora"]
+
     def __init__(
         self,
         config_path: str,
@@ -502,9 +523,24 @@ class QWenImageEditingGeneration(GenericQWenImageModel):
         out_channels: Optional[int] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
-        freeze_vae_encoder: Optional[bool] = True,
-        freeze_text_encoder: Optional[bool] = True,
         snr_gamma: Optional[float] = 5.0,
+        lora_r: Optional[int] = 16,
+        lora_alpha: Optional[int] = 32,
+        lora_dropout: Optional[float] = 0.05,
+        fan_in_fan_out: Optional[bool] = True,
+        target_modules: Optional[Union[List[str], str]] = [
+            "to_q",
+            "to_k",
+            "to_v",
+            "q_proj",
+            "k_proj",
+            "v_proj",
+            "add_q_proj",
+            "add_k_proj",
+            "add_v_proj",
+        ],
+        enable_text_adapter: Optional[bool] = True,
+        enable_transformer_adapter: Optional[bool] = True,
         seed: Optional[int] = 1123,
         gradient_checkpointing: Optional[bool] = True,
         guidance_scale: Optional[float] = 1.0,
@@ -521,9 +557,14 @@ class QWenImageEditingGeneration(GenericQWenImageModel):
             out_channels=out_channels,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
-            freeze_vae_encoder=freeze_vae_encoder,
-            freeze_text_encoder=freeze_text_encoder,
             snr_gamma=snr_gamma,
+            lora_r=lora_r,
+            lora_alpha=lora_alpha,
+            lora_dropout=lora_dropout,
+            fan_in_fan_out=fan_in_fan_out,
+            target_modules=target_modules,
+            enable_text_adapter=enable_text_adapter,
+            enable_transformer_adapter=enable_transformer_adapter,
             seed=seed,
         )
         if gradient_checkpointing:
@@ -710,7 +751,7 @@ class QWenImageEditingGeneration(GenericQWenImageModel):
         )
 
         images = self.pipeline(
-            image=refer_vae_pixel_values,
+            images=refer_vae_pixel_values,
             prompt_embeds=outputs.prompt_embeds,
             negative_prompt_embeds=outputs.negative_prompt_embeds,
             prompt_embeds_mask=outputs.prompt_embeds_mask,

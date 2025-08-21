@@ -105,8 +105,3 @@ pretrained_bloom_extensions_infos = {}
 
 import unitorch.cli.models.bloom.modeling
 import unitorch.cli.models.bloom.processing
-from unitorch.cli.models.bloom.modeling import (
-    BloomForClassification,
-    BloomForGeneration,
-)
-from unitorch.cli.models.bloom.processing import BloomProcessor

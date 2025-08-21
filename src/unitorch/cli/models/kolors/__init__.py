@@ -28,7 +28,3 @@ pretrained_kolors_extensions_infos = {}
 
 import unitorch.cli.models.kolors.modeling
 import unitorch.cli.models.kolors.processing
-from unitorch.cli.models.kolors.modeling import (
-    KolorsMPSModel,
-)
-from unitorch.cli.models.kolors.processing import KolorsMPSProcessor

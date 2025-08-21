@@ -37,7 +37,3 @@ pretrained_grounding_dino_infos = {
 
 import unitorch.cli.models.grounding_dino.modeling
 import unitorch.cli.models.grounding_dino.processing
-from unitorch.cli.models.grounding_dino.modeling import (
-    GroundingDinoForDetection,
-)
-from unitorch.cli.models.grounding_dino.processing import GroundingDinoProcessor

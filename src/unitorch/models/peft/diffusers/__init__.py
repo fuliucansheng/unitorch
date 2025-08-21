@@ -18,6 +18,10 @@ from unitorch.models.peft.diffusers.modeling_stable_flux import (
     StableFluxLoraForImageInpainting,
     StableFluxLoraForKontext2ImageGeneration,
 )
+from unitorch.models.peft.diffusers.modeling_qwen_image import (
+    QWenImageLoraForText2ImageGeneration,
+    QWenImageLoraForImageEditing,
+)
 from unitorch.models.peft.diffusers.modeling_controlnet import (
     ControlNetLoraForText2ImageGeneration,
 )

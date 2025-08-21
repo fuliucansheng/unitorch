@@ -12,12 +12,9 @@ from unitorch import (
 
 
 import unitorch.cli.tasks.supervised
-from unitorch.cli.tasks.supervised import SupervisedTask
 
 if is_deepspeed_available():
     import unitorch.cli.tasks.deepspeed
-    from unitorch.cli.tasks.deepspeed import DeepspeedTask
 
 if is_megatron_available():
     import unitorch.cli.tasks.megatron
-    from unitorch.cli.tasks.megatron import MegatronTask

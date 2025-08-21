@@ -51,14 +51,14 @@ class QWenImageProcessor(_QWenImageProcessor):
         pretrained_name = config.getoption("pretrained_name", "qwen-image")
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
 
-        vocab_path = vocab_path or config.getoption("vocab_path", None)
+        vocab_path = config.getoption("vocab_path", None)
         vocab_path = pop_value(
             vocab_path,
             nested_dict_value(pretrained_infos, "text", "vocab"),
         )
         vocab_path = cached_path(vocab_path)
 
-        merge_path = merge_path or config.getoption("merge_path", None)
+        merge_path = config.getoption("merge_path", None)
         merge_path = pop_value(
             merge_path,
             nested_dict_value(pretrained_infos, "text", "merge"),
@@ -85,9 +85,7 @@ class QWenImageProcessor(_QWenImageProcessor):
             cached_path(special_tokens_map) if special_tokens_map is not None else None
         )
 
-        vision_config_path = vision_config_path or config.getoption(
-            "vision_config_path", None
-        )
+        vision_config_path = config.getoption("vision_config_path", None)
         vision_config_path = pop_value(
             vision_config_path,
             nested_dict_value(pretrained_infos, "vision_config"),
@@ -96,7 +94,7 @@ class QWenImageProcessor(_QWenImageProcessor):
         if vision_config_path is not None:
             vision_config_path = cached_path(vision_config_path)
 
-        vae_config_path = vae_config_path or config.getoption("vae_config_path", None)
+        vae_config_path = config.getoption("vae_config_path", None)
         vae_config_path = pop_value(
             vae_config_path,
             nested_dict_value(pretrained_infos, "vae", "config"),
@@ -133,7 +131,7 @@ class QWenImageProcessor(_QWenImageProcessor):
     def _text2image_inputs(
         self,
         prompt: str,
-        negative_prompt: Optional[str] = None,
+        negative_prompt: Optional[str] = "",
         max_seq_length: Optional[int] = None,
     ):
         outputs = super().text2image_inputs(
@@ -153,7 +151,7 @@ class QWenImageProcessor(_QWenImageProcessor):
         self,
         prompt: str,
         refer_image: Union[Image.Image, str],
-        negative_prompt: Optional[str] = None,
+        negative_prompt: Optional[str] = "",
         max_seq_length: Optional[int] = None,
     ):
         outputs = super().editing_inputs(
@@ -167,6 +165,8 @@ class QWenImageProcessor(_QWenImageProcessor):
             input_ids=outputs.input_ids,
             attention_mask=outputs.attention_mask,
             refer_pixel_values=outputs.refer_pixel_values,
+            refer_image_grid_thw=outputs.refer_image_grid_thw,
+            refer_vae_pixel_values=outputs.refer_vae_pixel_values,
             negative_input_ids=outputs.negative_input_ids,
             negative_attention_mask=outputs.negative_attention_mask,
         )

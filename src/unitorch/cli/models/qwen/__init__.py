@@ -76,9 +76,3 @@ import unitorch.cli.models.qwen.modeling
 import unitorch.cli.models.qwen.modeling_vl
 import unitorch.cli.models.qwen.processing
 import unitorch.cli.models.qwen.processing_vl
-from unitorch.cli.models.qwen.modeling import (
-    QWen3ForGeneration,
-)
-from unitorch.cli.models.qwen.modeling_vl import QWen2_5VLForGeneration
-from unitorch.cli.models.qwen.processing import QWenProcessor
-from unitorch.cli.models.qwen.processing_vl import QWenVLProcessor

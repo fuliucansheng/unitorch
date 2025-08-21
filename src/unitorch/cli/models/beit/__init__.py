@@ -31,5 +31,3 @@ pretrained_beit_infos = {
 
 import unitorch.cli.models.beit.modeling
 import unitorch.cli.models.beit.processing
-from unitorch.cli.models.beit.modeling import BeitForImageClassification
-from unitorch.cli.models.beit.processing import BeitProcessor

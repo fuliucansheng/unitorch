@@ -27,7 +27,3 @@ pretrained_detr_infos = {
 
 import unitorch.cli.models.detr.modeling
 import unitorch.cli.models.detr.processing
-from unitorch.cli.models.detr.modeling import (
-    DetrForDetection,
-)
-from unitorch.cli.models.detr.processing import DetrProcessor

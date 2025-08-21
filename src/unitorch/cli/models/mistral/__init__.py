@@ -52,8 +52,3 @@ pretrained_mistral_extensions_infos = {}
 
 import unitorch.cli.models.mistral.modeling
 import unitorch.cli.models.mistral.processing
-from unitorch.cli.models.mistral.modeling import (
-    MistralForClassification,
-    MistralForGeneration,
-)
-from unitorch.cli.models.mistral.processing import MistralProcessor

@@ -75,5 +75,3 @@ pretrained_swin_infos = {
 
 import unitorch.cli.models.swin.modeling
 import unitorch.cli.models.swin.processing
-from unitorch.cli.models.swin.modeling import SwinForImageClassification
-from unitorch.cli.models.swin.processing import SwinProcessor

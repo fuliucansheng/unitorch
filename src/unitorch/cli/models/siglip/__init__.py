@@ -81,10 +81,3 @@ pretrained_siglip_extensions_infos = {}
 
 import unitorch.cli.models.siglip.modeling
 import unitorch.cli.models.siglip.processing
-from unitorch.cli.models.siglip.modeling import (
-    SiglipForPretrain,
-    SiglipForClassification,
-    SiglipForTextClassification,
-    SiglipForImageClassification,
-)
-from unitorch.cli.models.siglip.processing import SiglipProcessor

@@ -130,5 +130,3 @@ pretrained_vit_infos = {
 
 import unitorch.cli.models.vit.modeling
 import unitorch.cli.models.vit.processing
-from unitorch.cli.models.vit.modeling import ViTForImageClassification
-from unitorch.cli.models.vit.processing import ViTProcessor

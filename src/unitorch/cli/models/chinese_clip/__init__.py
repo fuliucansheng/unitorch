@@ -65,10 +65,3 @@ pretrained_chinese_clip_infos = {
 
 import unitorch.cli.models.chinese_clip.modeling
 import unitorch.cli.models.chinese_clip.processing
-from unitorch.cli.models.chinese_clip.modeling import (
-    ChineseClipForPretrain,
-    ChineseClipForClassification,
-    ChineseClipForTextClassification,
-    ChineseClipForImageClassification,
-)
-from unitorch.cli.models.chinese_clip.processing import ChineseClipProcessor

@@ -47,11 +47,3 @@ pretrained_blip_infos = {
 
 import unitorch.cli.models.blip.modeling
 import unitorch.cli.models.blip.processing
-from unitorch.cli.models.blip.modeling import (
-    BlipForPretrain,
-    BlipForClassification,
-    BlipForTextClassification,
-    BlipForImageClassification,
-    BlipForImageCaption,
-)
-from unitorch.cli.models.blip.processing import BlipProcessor
