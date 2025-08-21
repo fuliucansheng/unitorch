@@ -52,6 +52,7 @@ import unitorch.cli.pipelines.llama
 import unitorch.cli.pipelines.llava
 import unitorch.cli.pipelines.qwen
 import unitorch.cli.pipelines.qwen_vl
+import unitorch.cli.pipelines.qwen_image
 import unitorch.cli.pipelines.mask2former
 import unitorch.cli.pipelines.mistral
 import unitorch.cli.pipelines.sam

@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=62.1.0", "torch>=2.4", "torchvision>=0.19", "torchaudio>=2.4"]
+requires = ["setuptools>=62.1.0", "torch>=2.5", "torchvision>=0.20", "torchaudio>=2.5"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -28,7 +28,7 @@ dynamic = ["version", "dependencies"]
 
 [project.optional-dependencies]
 deepspeed = ["deepspeed>=0.11.0"]
-diffusers = ["diffusers>=0.34.0", "torchsde>=0.2.6"]
+diffusers = ["diffusers>=0.35.0", "torchsde>=0.2.6"]
 detection = ["timm>=1.0.0"]
 quantization = ["bitsandbytes>=0.41.1"]
 megatron = ["megatron-core>=0.12.0"]

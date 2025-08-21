@@ -18,7 +18,6 @@ from torchvision.transforms import (
     Compose,
     RandomHorizontalFlip,
 )
-from torchvision.transforms.functional import crop
 from diffusers.image_processor import VaeImageProcessor
 from unitorch.models import HfTextClassificationProcessor, GenericOutputs
 

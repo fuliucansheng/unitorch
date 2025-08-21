@@ -63,6 +63,11 @@ from unitorch.models.diffusers.modeling_wan import (
     WanForText2VideoGeneration,
     WanForImage2VideoGeneration,
 )
+from unitorch.models.diffusers.modeling_qwen_image import (
+    GenericQWenImageModel,
+    QWenImageText2ImageGeneration,
+    QWenImageEditingGeneration,
+)
 from unitorch.models.diffusers.modeling_vae import VAEForDiffusion
 from unitorch.models.diffusers.processing_stable import (
     StableProcessor,
@@ -71,6 +76,7 @@ from unitorch.models.diffusers.processing_stable import (
 from unitorch.models.diffusers.processing_stable_xl import StableXLProcessor
 from unitorch.models.diffusers.processing_stable_3 import Stable3Processor
 from unitorch.models.diffusers.processing_stable_flux import StableFluxProcessor
+from unitorch.models.diffusers.processing_qwen_image import QWenImageProcessor
 
 if is_opencv_available():
     from unitorch.models.diffusers.processing_wan import WanProcessor

@@ -249,6 +249,38 @@ __hf_hub_wan_v2_1_safetensors_dict__ = lambda name, n1=2, n2=5, im=False: {
     ),
 }
 
+__hf_hub_qwen_image_safetensors_dict__ = lambda name, n1=9, n2=4: {
+    "transformer": {
+        "config": hf_endpoint_url(f"/{name}/resolve/main/transformer/config.json"),
+        "weight": [
+            hf_endpoint_url(
+                f"/{name}/resolve/main/transformer/diffusion_pytorch_model-{str(i).rjust(5, '0')}-of-{str(n1).rjust(5, '0')}.safetensors"
+            )
+            for i in range(1, n1 + 1)
+        ],
+    },
+    "text": {
+        "config": hf_endpoint_url(f"/{name}/resolve/main/text_encoder/config.json"),
+        "vocab": hf_endpoint_url(f"/{name}/resolve/main/tokenizer/vocab.json"),
+        "merge": hf_endpoint_url(f"/{name}/resolve/main/tokenizer/merges.txt"),
+        "tokenizer_config": hf_endpoint_url(
+            f"/{name}/resolve/main/tokenizer/tokenizer_config.json"
+        ),
+        "special_tokens_map": hf_endpoint_url(
+            f"/{name}/resolve/main/tokenizer/special_tokens_map.json"
+        ),
+        "weight": [
+            hf_endpoint_url(
+                f"/{name}/resolve/main/text_encoder/model-{str(i).rjust(5, '0')}-of-{str(n2).rjust(5, '0')}.safetensors"
+            )
+            for i in range(1, n2 + 1)
+        ],
+    },
+    "scheduler": hf_endpoint_url(
+        f"/{name}/resolve/main/scheduler/scheduler_config.json"
+    ),
+}
+
 __hf_hub_vae_dict = lambda name: {
     "vae": {
         "config": hf_endpoint_url(f"/{name}/resolve/main/vae/config.json"),
@@ -576,6 +608,19 @@ pretrained_stable_infos = {
         ),
         **__hf_hub_vae_safetensors_dict__("Wan-AI/Wan2.1-I2V-14B-720P-Diffusers"),
     },
+    "qwen-image": {
+        **__hf_hub_qwen_image_safetensors_dict__("Qwen/Qwen-Image"),
+        **__hf_hub_vae_safetensors_dict__("Qwen/Qwen-Image"),
+    },
+    "qwen-image-editing": {
+        **__hf_hub_qwen_image_safetensors_dict__("Qwen/Qwen-Image-Edit"),
+        **__hf_hub_vae_safetensors_dict__("Qwen/Qwen-Image-Edit"),
+        **{
+            "vision_config": hf_endpoint_url(
+                f"/Qwen/Qwen-Image-Edit/resolve/main/processor/preprocessor_config.json"
+            ),
+        },
+    },
 }
 
 pretrained_stable_extensions_infos = {
@@ -747,6 +792,10 @@ from unitorch.cli.models.diffusers.modeling_stable_3 import (
 from unitorch.cli.models.diffusers.modeling_stable_flux import (
     StableFluxForText2ImageGeneration,
 )
+from unitorch.cli.models.diffusers.modeling_qwen_image import (
+    QWenImageText2ImageGeneration,
+    QWenImageEditingGeneration,
+)
 from unitorch.cli.models.diffusers.modeling_controlnet import (
     ControlNetForText2ImageGeneration,
     ControlNetForImage2ImageGeneration,
@@ -779,6 +828,8 @@ from unitorch.cli.models.diffusers.processing_stable import StableProcessor
 from unitorch.cli.models.diffusers.processing_stable_xl import StableXLProcessor
 from unitorch.cli.models.diffusers.processing_stable_3 import Stable3Processor
 from unitorch.cli.models.diffusers.processing_stable_flux import StableFluxProcessor
+from unitorch.cli.models.diffusers.processing_qwen_image import QWenImageProcessor
+from unitorch.cli.models.diffusers.processing_wan import WanProcessor
 from unitorch.cli.models.diffusers.processing_controlnet import ControlNetProcessor
 from unitorch.cli.models.diffusers.processing_controlnet_xl import ControlNetXLProcessor
 from unitorch.cli.models.diffusers.processing_controlnet_3 import ControlNet3Processor

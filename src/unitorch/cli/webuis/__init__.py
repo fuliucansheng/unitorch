@@ -90,7 +90,7 @@ import unitorch.cli.webuis.labeling
 if is_diffusers_available():
     import unitorch.cli.webuis.stable
     import unitorch.cli.webuis.stable_xl
-
+    import unitorch.cli.webuis.qwen_image
     import unitorch.cli.webuis.stable_3
     import unitorch.cli.webuis.stable_flux
 

@@ -74,6 +74,8 @@ class QWenVLProcessor(
 
         special_tokens = {}
         for name, spec in special_tokens_map.items():
+            if not isinstance(spec, dict or str):
+                continue
             special_tokens[name] = get_added_token(spec)
         tokenizer.add_special_tokens(special_tokens)
         if chat_template:
