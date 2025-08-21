@@ -333,7 +333,6 @@ class QWenImageLoraForImageEditing(_QWenImageLoraForImageEditing):
         ],
         enable_text_adapter: Optional[bool] = True,
         enable_transformer_adapter: Optional[bool] = True,
-        enable_redux_image_adapter: Optional[bool] = True,
         seed: Optional[int] = 1123,
         gradient_checkpointing: Optional[bool] = True,
         guidance_scale: Optional[float] = 3.5,
@@ -358,7 +357,6 @@ class QWenImageLoraForImageEditing(_QWenImageLoraForImageEditing):
             target_modules=target_modules,
             enable_text_adapter=enable_text_adapter,
             enable_transformer_adapter=enable_transformer_adapter,
-            enable_redux_image_adapter=enable_redux_image_adapter,
             seed=seed,
             gradient_checkpointing=gradient_checkpointing,
             guidance_scale=guidance_scale,
@@ -446,9 +444,6 @@ class QWenImageLoraForImageEditing(_QWenImageLoraForImageEditing):
         enable_transformer_adapter = config.getoption(
             "enable_transformer_adapter", True
         )
-        enable_redux_image_adapter = config.getoption(
-            "enable_redux_image_adapter", True
-        )
         seed = config.getoption("seed", 1123)
         gradient_checkpointing = config.getoption("gradient_checkpointing", True)
         guidance_scale = config.getoption("guidance_scale", 3.5)
@@ -473,7 +468,6 @@ class QWenImageLoraForImageEditing(_QWenImageLoraForImageEditing):
             target_modules=target_modules,
             enable_text_adapter=enable_text_adapter,
             enable_transformer_adapter=enable_transformer_adapter,
-            enable_redux_image_adapter=enable_redux_image_adapter,
             seed=seed,
             gradient_checkpointing=gradient_checkpointing,
             guidance_scale=guidance_scale,
