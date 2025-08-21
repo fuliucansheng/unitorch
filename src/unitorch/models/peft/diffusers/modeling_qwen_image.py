@@ -161,6 +161,14 @@ class GenericQWenImageLoraModel(GenericPeftModel, QuantizationMixin):
             sigma = sigma.unsqueeze(-1)
         return sigma
 
+    def _extract_masked_hidden(self, hidden_states: torch.Tensor, mask: torch.Tensor):
+        bool_mask = mask.bool()
+        valid_lengths = bool_mask.sum(dim=1)
+        selected = hidden_states[bool_mask]
+        split_result = torch.split(selected, valid_lengths.tolist(), dim=0)
+
+        return split_result
+
     def get_prompt_outputs(
         self,
         input_ids: torch.Tensor,
