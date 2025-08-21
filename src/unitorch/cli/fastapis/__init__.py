@@ -17,4 +17,5 @@ if is_diffusers_available():
     import unitorch.cli.fastapis.controlnet_3
     import unitorch.cli.fastapis.stable_flux
     import unitorch.cli.fastapis.controlnet_flux
+    import unitorch.cli.fastapis.qwen_image
     import unitorch.cli.fastapis.wan

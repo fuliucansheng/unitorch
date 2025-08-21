@@ -388,6 +388,8 @@ class QWenImageLoraForText2ImageGeneration(GenericQWenImageLoraModel):
                 for u in attn_mask_list
             ]
         )
+        if pixel_values.ndim == 4:
+            pixel_values = pixel_values.unsqueeze(2)
 
         latents = self.vae.encode(pixel_values).latent_dist.sample()
         latents_mean = (
@@ -404,7 +406,7 @@ class QWenImageLoraForText2ImageGeneration(GenericQWenImageLoraModel):
 
         u = compute_density_for_timestep_sampling(
             weighting_scheme="none",
-            batch_size=batch_size,
+            batch_size=latents.shape[0],
             logit_mean=0.0,
             logit_std=1.0,
             mode_scale=1.29,
@@ -419,10 +421,11 @@ class QWenImageLoraForText2ImageGeneration(GenericQWenImageLoraModel):
             noise_latents,
             batch_size=latents.shape[0],
             num_channels_latents=latents.shape[1],
-            height=latents.shape[2],
-            width=latents.shape[3],
+            height=latents.shape[-2],
+            width=latents.shape[-1],
         )
 
+        vae_scale_factor = 2 ** len(self.vae.temperal_downsample)
         batch_size, width, height = (
             pixel_values.size(0),
             pixel_values.size(-1),
@@ -432,8 +435,8 @@ class QWenImageLoraForText2ImageGeneration(GenericQWenImageLoraModel):
             [
                 (
                     1,
-                    height // self.vae_scale_factor // 2,
-                    width // self.vae_scale_factor // 2,
+                    height // vae_scale_factor // 2,
+                    width // vae_scale_factor // 2,
                 )
             ]
         ] * batch_size
@@ -457,11 +460,10 @@ class QWenImageLoraForText2ImageGeneration(GenericQWenImageLoraModel):
             return_dict=False,
         )[0]
 
-        vae_scale_factor = 2 ** (len(self.vae.config.block_out_channels) - 1)
         outputs = _unpack_latents(
             outputs,
-            height=latents.shape[2] * vae_scale_factor,
-            width=latents.shape[3] * vae_scale_factor,
+            height=latents.shape[-2] * vae_scale_factor,
+            width=latents.shape[-1] * vae_scale_factor,
             vae_scale_factor=vae_scale_factor,
         )
 
@@ -634,6 +636,11 @@ class QWenImageLoraForImageEditing(GenericQWenImageLoraModel):
             ]
         )
 
+        if pixel_values.ndim == 4:
+            pixel_values = pixel_values.unsqueeze(2)
+        if refer_vae_pixel_values.ndim == 4:
+            refer_vae_pixel_values = refer_vae_pixel_values.unsqueeze(2)
+
         latents = self.vae.encode(pixel_values).latent_dist.sample()
         refer_latents = self.vae.encode(refer_vae_pixel_values).latent_dist.mode()
         latents_mean = (
@@ -651,7 +658,7 @@ class QWenImageLoraForImageEditing(GenericQWenImageLoraModel):
 
         u = compute_density_for_timestep_sampling(
             weighting_scheme="none",
-            batch_size=batch_size,
+            batch_size=latents.shape[0],
             logit_mean=0.0,
             logit_std=1.0,
             mode_scale=1.29,
@@ -666,30 +673,40 @@ class QWenImageLoraForImageEditing(GenericQWenImageLoraModel):
             noise_latents,
             batch_size=latents.shape[0],
             num_channels_latents=latents.shape[1],
-            height=latents.shape[2],
-            width=latents.shape[3],
+            height=latents.shape[-2],
+            width=latents.shape[-1],
         )
         refer_latents = _pack_latents(
             refer_latents,
             batch_size=refer_latents.shape[0],
             num_channels_latents=refer_latents.shape[1],
-            height=refer_latents.shape[2],
-            width=refer_latents.shape[3],
+            height=refer_latents.shape[-2],
+            width=refer_latents.shape[-1],
         )
         latent_model_input = torch.cat([noise_latents, refer_latents], dim=1)
 
+        vae_scale_factor = 2 ** len(self.vae.temperal_downsample)
         batch_size, width, height = (
             pixel_values.size(0),
             pixel_values.size(-1),
             pixel_values.size(-2),
         )
+        refer_width, refer_height = (
+            refer_vae_pixel_values.size(-1),
+            refer_vae_pixel_values.size(-2),
+        )
         img_shapes = [
             [
                 (
                     1,
-                    height // self.vae_scale_factor // 2,
-                    width // self.vae_scale_factor // 2,
-                )
+                    height // vae_scale_factor // 2,
+                    width // vae_scale_factor // 2,
+                ),
+                (
+                    1,
+                    refer_height // vae_scale_factor // 2,
+                    refer_width // vae_scale_factor // 2,
+                ),
             ]
         ] * batch_size
 
@@ -711,13 +728,12 @@ class QWenImageLoraForImageEditing(GenericQWenImageLoraModel):
             txt_seq_lens=prompt_embeds_mask.sum(dim=1).tolist(),
             return_dict=False,
         )[0]
-        outputs = outputs[:, : latents.shape[1]]
+        outputs = outputs[:, : noise_latents.shape[1]]
 
-        vae_scale_factor = 2 ** (len(self.vae.config.block_out_channels) - 1)
         outputs = _unpack_latents(
             outputs,
-            height=latents.shape[2] * vae_scale_factor,
-            width=latents.shape[3] * vae_scale_factor,
+            height=latents.shape[-2] * vae_scale_factor,
+            width=latents.shape[-1] * vae_scale_factor,
             vae_scale_factor=vae_scale_factor,
         )
 
