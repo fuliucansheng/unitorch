@@ -374,6 +374,9 @@ def load_weight(
     replace_keys: Optional[Dict] = dict(),
     prefix_keys: Optional[Dict] = dict(),
 ):
+    if path is None:
+        return {}
+
     if isinstance(path, str):
         path = [path]
 
