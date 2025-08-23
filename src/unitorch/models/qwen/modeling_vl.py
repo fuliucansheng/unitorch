@@ -25,7 +25,6 @@ from unitorch.models.peft import PeftWeightLoaderMixin
 
 
 class QWen2_5VLForGeneration(GenericModel, PeftWeightLoaderMixin):
-    replace_keys_in_peft_state_dict = {"peft_model.base_model.model.": "model."}
     prefix_keys_in_state_dict = {
         "^visual.": "model.model.",
         "^model(?!\.model).": "model.model.language_",

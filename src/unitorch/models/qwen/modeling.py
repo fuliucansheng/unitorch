@@ -20,7 +20,6 @@ from unitorch.models.peft import PeftWeightLoaderMixin
 
 
 class QWen3ForGeneration(GenericModel, PeftWeightLoaderMixin):
-    replace_keys_in_peft_state_dict = {"peft_model.base_model.": ""}
     prefix_keys_in_state_dict = {"^(?!model\.model\.).*": "model."}
 
     def __init__(

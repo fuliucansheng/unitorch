@@ -14,7 +14,9 @@ from unitorch.cli.models.diffusers import (
     pretrained_stable_infos,
     pretrained_stable_extensions_infos,
 )
-from unitorch.cli.pipelines.stable_xl import StableXLForText2ImageGenerationPipeline
+from unitorch.cli.pipelines.stable_xl.text2image import (
+    StableXLForText2ImageGenerationPipeline,
+)
 from unitorch.cli.pipelines.tools import controlnet_processes, adapter_processes
 from unitorch.cli.webuis import (
     supported_scheduler_names,

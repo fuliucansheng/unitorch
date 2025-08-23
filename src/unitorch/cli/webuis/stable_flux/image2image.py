@@ -14,7 +14,7 @@ from unitorch.cli.models.diffusers import (
     pretrained_stable_infos,
     pretrained_stable_extensions_infos,
 )
-from unitorch.cli.pipelines.stable_flux import (
+from unitorch.cli.pipelines.stable_flux.image2image import (
     StableFluxForImage2ImageGenerationPipeline,
 )
 from unitorch.cli.pipelines.tools import controlnet_processes

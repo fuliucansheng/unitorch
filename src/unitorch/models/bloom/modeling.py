@@ -21,7 +21,6 @@ class BloomForClassification(GenericModel, PeftWeightLoaderMixin):
     """
 
     prefix_keys_in_state_dict = {"^(?!transformer\.).*": "transformer."}
-    replace_keys_in_peft_state_dict = {"peft_model.base_model.model.": "transformer."}
 
     def __init__(
         self,
@@ -78,7 +77,6 @@ class BloomForGeneration(GenericModel, PeftWeightLoaderMixin):
     """
 
     prefix_keys_in_state_dict = {"^(?!model\.).*": "model.transformer."}
-    replace_keys_in_peft_state_dict = {"peft_model.base_model.": ""}
 
     def __init__(
         self,

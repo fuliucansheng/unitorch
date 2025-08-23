@@ -14,7 +14,7 @@ from unitorch.cli.models.diffusers import (
     pretrained_stable_infos,
     pretrained_stable_extensions_infos,
 )
-from unitorch.cli.pipelines.wan import WanForText2VideoGenerationPipeline
+from unitorch.cli.pipelines.wan.text2video import WanForText2VideoGenerationPipeline
 from unitorch.cli.webuis import (
     supported_scheduler_names,
     matched_pretrained_names,

@@ -22,7 +22,6 @@ from unitorch.models.peft import PeftWeightLoaderMixin
 
 
 class LlamaForClassification(GenericModel, QuantizationMixin, PeftWeightLoaderMixin):
-    replace_keys_in_peft_state_dict = {"peft_model.base_model.": ""}
 
     def __init__(
         self,
@@ -86,7 +85,6 @@ class LlamaForGeneration(GenericModel, QuantizationMixin, PeftWeightLoaderMixin)
         "^model.": "base_model.",
         "^lm_head.": "base_model.",
     }
-    replace_keys_in_peft_state_dict = {"peft_model.base_model.model.": "base_model."}
 
     def __init__(
         self,

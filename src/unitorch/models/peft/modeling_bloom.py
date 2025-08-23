@@ -12,9 +12,7 @@ from unitorch.models.peft import PeftModelForSequenceClassification, GenericPeft
 
 
 class BloomLoraForClassification(GenericPeftModel):
-    prefix_keys_in_state_dict = {
-        "^(?!peft_model\.base_model\.model\.).*": "peft_model.base_model.model."
-    }
+    prefix_keys_in_state_dict = {"^(?!transformer\.).*": "transformer."}
     replace_keys_in_state_dict = {
         "query_key_value.weight": "query_key_value.base_layer.weight",
         "query_key_value.bias": "query_key_value.base_layer.bias",
@@ -44,9 +42,8 @@ class BloomLoraForClassification(GenericPeftModel):
             fan_in_fan_out=fan_in_fan_out,
             target_modules=target_modules,
         )
-        self.peft_model = PeftModelForSequenceClassification(
-            BloomModel(self.config), self.peft_config
-        )
+        self.transformer = BloomModel(self.config)
+        self.transformer.add_adapter(self.peft_config)
         self.dropout = nn.Dropout(hidden_dropout_prob)
         self.classifier = nn.Linear(self.config.hidden_size, num_classes)
         if freeze_classifer:
@@ -71,7 +68,7 @@ class BloomLoraForClassification(GenericPeftModel):
         Returns:
             torch Output logits.Tensor: tensor of shape (batch_size, num_classes).
         """
-        outputs = self.peft_model(
+        outputs = self.transformer(
             input_ids,
             attention_mask=attention_mask,
             position_ids=position_ids,
@@ -83,9 +80,7 @@ class BloomLoraForClassification(GenericPeftModel):
 
 
 class BloomLoraForGeneration(GenericPeftModel):
-    prefix_keys_in_state_dict = {
-        "^(?!peft_model\.base_model\.model\.).*": "peft_model.base_model.model.transformer."
-    }
+    prefix_keys_in_state_dict = {"^(?!model\.).*": "model.transformer."}
     replace_keys_in_state_dict = {
         "query_key_value.weight": "query_key_value.base_layer.weight",
         "query_key_value.bias": "query_key_value.base_layer.bias",
@@ -102,7 +97,7 @@ class BloomLoraForGeneration(GenericPeftModel):
         gradient_checkpointing: Optional[bool] = False,
     ):
         """
-        Bloom Loar model for text generation tasks.
+        Bloom Lora model for text generation tasks.
 
         Args:
             config_path (str): Path to the model configuration file.
@@ -118,9 +113,8 @@ class BloomLoraForGeneration(GenericPeftModel):
             fan_in_fan_out=fan_in_fan_out,
             target_modules=target_modules,
         )
-        self.peft_model = PeftModelForCausalLM(
-            BloomForCausalLM(self.config), self.peft_config
-        )
+        self.model = BloomForCausalLM(self.config)
+        self.model.add_adapter(self.peft_config)
         self.init_weights()
 
     def forward(
@@ -140,7 +134,7 @@ class BloomLoraForGeneration(GenericPeftModel):
         Returns:
             torch Output logits.Tensor: tensor of shape (batch_size, sequence_length, vocab_size).
         """
-        outputs = self.peft_model(
+        outputs = self.model(
             input_ids=input_ids,
             attention_mask=attention_mask,
             position_ids=position_ids,
@@ -196,7 +190,7 @@ class BloomLoraForGeneration(GenericPeftModel):
             GenericOutputs: Generated sequences and their scores.
         """
         input_seq_length = input_ids.size(1)
-        outputs = self.peft_model.generate(
+        outputs = self.model.generate(
             input_ids=input_ids,
             max_length=max_gen_seq_length + input_seq_length,
             min_length=min_gen_seq_length + input_seq_length,

@@ -17,8 +17,8 @@ from unitorch.models.peft import PeftModelForSequenceClassification, GenericPeft
 
 class QWen2_5VLLoraForGeneration(GenericPeftModel):
     prefix_keys_in_state_dict = {
-        "^visual.": "peft_model.base_model.model.model.",
-        "^model(?!\.model).": "peft_model.base_model.model.model.language_",
+        "^visual.": "model.model.",
+        "^model(?!\.model).": "model.model.language_",
     }
     replace_keys_in_state_dict = {
         "q_proj.weight": "q_proj.base_layer.weight",
@@ -38,7 +38,7 @@ class QWen2_5VLLoraForGeneration(GenericPeftModel):
         gradient_checkpointing: Optional[bool] = False,
     ):
         """
-        Bloom Loar model for text generation tasks.
+        Bloom Lora model for text generation tasks.
 
         Args:
             config_path (str): Path to the model configuration file.
@@ -54,9 +54,8 @@ class QWen2_5VLLoraForGeneration(GenericPeftModel):
             fan_in_fan_out=fan_in_fan_out,
             target_modules=target_modules,
         )
-        self.peft_model = PeftModelForCausalLM(
-            Qwen2_5_VLForConditionalGeneration(self.config), self.peft_config
-        )
+        self.model = Qwen2_5_VLForConditionalGeneration(self.config)
+        self.model.add_adapter(self.peft_config)
         self.init_weights()
 
     def forward(
@@ -79,7 +78,7 @@ class QWen2_5VLLoraForGeneration(GenericPeftModel):
         """
         image_grid_thw = image_grid_thw.view(-1, image_grid_thw.size(-1))
         pixel_values = pixel_values.view(-1, pixel_values.size(-1))
-        outputs = self.peft_model(
+        outputs = self.model(
             input_ids=input_ids,
             pixel_values=pixel_values,
             image_grid_thw=image_grid_thw,
@@ -141,7 +140,7 @@ class QWen2_5VLLoraForGeneration(GenericPeftModel):
         input_seq_length = input_ids.size(1)
         image_grid_thw = image_grid_thw.view(-1, image_grid_thw.size(-1))
         pixel_values = pixel_values.view(-1, pixel_values.size(-1))
-        outputs = self.peft_model.generate(
+        outputs = self.model.generate(
             input_ids=input_ids,
             pixel_values=pixel_values,
             image_grid_thw=image_grid_thw,

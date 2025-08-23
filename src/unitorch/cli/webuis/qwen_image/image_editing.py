@@ -14,7 +14,7 @@ from unitorch.cli.models.diffusers import (
     pretrained_stable_infos,
     pretrained_stable_extensions_infos,
 )
-from unitorch.cli.pipelines.qwen_image import (
+from unitorch.cli.pipelines.qwen_image.image_editing import (
     QWenImageForImageEditingGenerationPipeline,
 )
 from unitorch.cli.webuis import (

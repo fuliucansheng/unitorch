@@ -14,7 +14,9 @@ from unitorch.cli.models.diffusers import (
     pretrained_stable_infos,
     pretrained_stable_extensions_infos,
 )
-from unitorch.cli.pipelines.qwen_image import QWenImageForText2ImageGenerationPipeline
+from unitorch.cli.pipelines.qwen_image.text2image import (
+    QWenImageForText2ImageGenerationPipeline,
+)
 from unitorch.cli.webuis import (
     supported_scheduler_names,
     matched_pretrained_names,

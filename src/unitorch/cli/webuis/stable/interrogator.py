@@ -9,7 +9,7 @@ from PIL import Image
 from unitorch.utils import nested_dict_value
 from unitorch.cli import CoreConfigureParser, GenericWebUI
 from unitorch.cli import register_webui
-from unitorch.cli.pipelines.stable import ClipInterrogatorPipeline
+from unitorch.cli.pipelines.stable.interrogator import ClipInterrogatorPipeline
 from unitorch.cli.models.blip import pretrained_blip_infos
 from unitorch.cli.webuis import (
     matched_pretrained_names,

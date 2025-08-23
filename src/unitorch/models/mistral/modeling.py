@@ -20,7 +20,6 @@ from unitorch.models.peft import PeftWeightLoaderMixin
 
 
 class MistralForClassification(GenericModel, QuantizationMixin, PeftWeightLoaderMixin):
-    replace_keys_in_peft_state_dict = {"peft_model.base_model.": ""}
 
     def __init__(
         self,
@@ -84,7 +83,6 @@ class MistralForGeneration(GenericModel, QuantizationMixin, PeftWeightLoaderMixi
         "^model.": "base_model.",
         "^lm_head.": "base_model.",
     }
-    replace_keys_in_peft_state_dict = {"peft_model.base_model.model.": "base_model."}
 
     def __init__(
         self,

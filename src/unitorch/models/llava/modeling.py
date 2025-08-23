@@ -38,9 +38,6 @@ from unitorch.models.peft import PeftWeightLoaderMixin
 
 class LlavaMistralClipForClassification(GenericModel, PeftWeightLoaderMixin):
     replace_keys_in_state_dict = {"language_model.model.": "language_model."}
-    replace_keys_in_peft_state_dict = {
-        "peft_model.base_model.model.": "language_model."
-    }
 
     def __init__(
         self,
@@ -179,9 +176,6 @@ class LlavaMistralClipForClassification(GenericModel, PeftWeightLoaderMixin):
 
 
 class LlavaMistralClipForGeneration(GenericModel, PeftWeightLoaderMixin):
-    replace_keys_in_peft_state_dict = {
-        "peft_model.base_model.model.": "language_model."
-    }
 
     def __init__(
         self,
@@ -465,9 +459,6 @@ class LlavaMistralClipForGeneration(GenericModel, PeftWeightLoaderMixin):
 
 
 class LlavaLlamaSiglipForGeneration(GenericModel, PeftWeightLoaderMixin):
-    replace_keys_in_peft_state_dict = {
-        "peft_model.base_model.model.": "language_model."
-    }
 
     def __init__(
         self,
