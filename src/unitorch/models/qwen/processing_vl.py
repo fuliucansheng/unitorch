@@ -217,11 +217,13 @@ class QWenVLProcessor(
         tokens = self.tokenizer.tokenize(text)
         tokens = tokens[-max_seq_length:]
         padding = [self.pad_token] * (max_seq_length - len(tokens))
+        attention_mask = [0] * len(padding) + [1] * len(tokens)
         tokens = padding + tokens
         input_ids = self.tokenizer.convert_tokens_to_ids(tokens)
         assert len(input_ids) == max_seq_length
         return GenericOutputs(
             input_ids=torch.tensor(input_ids, dtype=torch.long),
+            attention_mask=torch.tensor(attention_mask, dtype=torch.long),
             image_grid_thw=torch.tensor(image_grid_thw, dtype=torch.long),
             pixel_values=torch.tensor(image_inputs["pixel_values"]),
         )

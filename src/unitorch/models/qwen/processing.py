@@ -158,11 +158,46 @@ class QWenProcessor(HfTextGenerationProcessor, HfTextClassificationProcessor):
         )
         tokens = self.tokenizer.tokenize(str(text))[-max_seq_length:]
         padding = [self.pad_token] * (max_seq_length - len(tokens))
+        attention_mask = [0] * len(padding) + [1] * len(tokens)
         tokens = padding + tokens
         input_ids = self.tokenizer.convert_tokens_to_ids(tokens)
         assert len(input_ids) == max_seq_length
         return GenericOutputs(
             input_ids=torch.tensor(input_ids, dtype=torch.long),
+            attention_mask=torch.tensor(attention_mask, dtype=torch.long),
+        )
+
+    def generation_labels(self, text, max_gen_seq_length=None):
+        """
+        Process text for generation labels.
+
+        Args:
+            text (str): Input text.
+            max_gen_seq_length (int, optional): Maximum generation sequence length. Defaults to None.
+
+        Returns:
+            GenericOutputs: Processed input_ids and attention_mask tensors.
+        """
+        max_gen_seq_length = pop_value(
+            max_gen_seq_length,
+            self.max_gen_seq_length,
+        )
+        tokens = self.tokenizer.tokenize(str(text))[: max_gen_seq_length - 1] + [
+            self.eos_token
+        ]
+        padding = [self.pad_token] * (max_gen_seq_length - len(tokens))
+        input_ids = self.tokenizer.convert_tokens_to_ids(tokens)
+        attention_mask = [1] * len(input_ids)
+
+        padding = [0] * (max_gen_seq_length - len(input_ids))
+        input_ids += [self.pad_token_id] * len(padding)
+        attention_mask += padding
+
+        assert len(input_ids) == max_gen_seq_length
+        assert len(attention_mask) == max_gen_seq_length
+        return GenericOutputs(
+            input_ids=torch.tensor(input_ids, dtype=torch.long),
+            attention_mask=torch.tensor(attention_mask, dtype=torch.long),
         )
 
     def generation(

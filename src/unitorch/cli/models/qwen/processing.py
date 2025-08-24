@@ -170,7 +170,7 @@ class QWenProcessor(_QWenProcessor):
     def _generation(
         self,
         text: str,
-        text_pair: Optional[str] = None,
+        text_pair: str,
         max_seq_length: Optional[int] = None,
         max_gen_seq_length: Optional[int] = None,
     ):
@@ -200,6 +200,48 @@ class QWenProcessor(_QWenProcessor):
             masks=outputs.attention_mask_label,
         )
 
+    @register_process("core/process/qwen/dpo/generation")
+    def _dpo_generation(
+        self,
+        text: str,
+        win_text_pair: str,
+        lose_text_pair: str,
+        max_seq_length: Optional[int] = None,
+        max_gen_seq_length: Optional[int] = None,
+    ):
+        """
+        Preprocess the input and target texts for generation tasks.
+
+        Args:
+            text (str): The input text.
+            text_pair (str, optional): The paired input text. Defaults to None.
+            max_seq_length (int, optional): The maximum sequence length. Defaults to None.
+            max_gen_seq_length (int, optional): The maximum generation sequence length. Defaults to None.
+
+        Returns:
+            Tuple[TensorsInputs, GenerationTargets]: The processed input tensors and generation targets.
+        """
+        inputs = super().generation_inputs(
+            text=text,
+            max_seq_length=max_seq_length,
+        )
+        win_labels = super().generation_labels(
+            text=win_text_pair,
+            max_gen_seq_length=max_gen_seq_length,
+        )
+        lose_labels = super().generation_labels(
+            text=lose_text_pair,
+            max_gen_seq_length=max_gen_seq_length,
+        )
+        return TensorsInputs(
+            input_ids=inputs.input_ids,
+            attention_mask=inputs.attention_mask,
+            win_input_ids=win_labels.input_ids,
+            win_attention_mask=win_labels.attention_mask,
+            lose_input_ids=lose_labels.input_ids,
+            lose_attention_mask=lose_labels.attention_mask,
+        )
+
     @register_process("core/process/qwen/messages/generation")
     def _messages_generation(
         self,
@@ -216,6 +258,42 @@ class QWenProcessor(_QWenProcessor):
         ), GenerationTargets(
             refs=outputs.input_ids_label,
             masks=outputs.attention_mask_label,
+        )
+
+    @register_process("core/process/qwen/messages/dpo/generation")
+    def _messages_dpo_generation(
+        self,
+        messages: List[Dict[str, Any]],
+        win_messages: List[Dict[str, Any]],
+        lose_messages: List[Dict[str, Any]],
+        max_seq_length: Optional[int] = None,
+        max_gen_seq_length: Optional[int] = None,
+    ):
+        if isinstance(messages, dict):
+            messages = [messages]
+        if isinstance(win_messages, dict):
+            win_messages = [win_messages]
+        if isinstance(lose_messages, dict):
+            lose_messages = [lose_messages]
+        inputs = super().generation_inputs(
+            text=super().chat_template(messages=messages),
+            max_seq_length=max_seq_length,
+        )
+        win_labels = super().generation_labels(
+            text=super().chat_template(messages=win_messages),
+            max_gen_seq_length=max_gen_seq_length,
+        )
+        lose_labels = super().generation_labels(
+            text=super().chat_template(messages=lose_messages),
+            max_gen_seq_length=max_gen_seq_length,
+        )
+        return TensorsInputs(
+            input_ids=inputs.input_ids,
+            attention_mask=inputs.attention_mask,
+            win_input_ids=win_labels.input_ids,
+            win_attention_mask=win_labels.attention_mask,
+            lose_input_ids=lose_labels.input_ids,
+            lose_attention_mask=lose_labels.attention_mask,
         )
 
     @register_process("core/postprocess/qwen/detokenize")

@@ -214,11 +214,11 @@ class QWen3DPOLoraForGeneration(GenericPeftModel):
     def forward(
         self,
         input_ids: torch.Tensor,
-        chosen_input_ids: torch.Tensor,
-        rejected_input_ids: torch.Tensor,
+        win_input_ids: torch.Tensor,
+        lose_input_ids: torch.Tensor,
         attention_mask: Optional[torch.Tensor] = None,
-        chosen_attention_mask: Optional[torch.Tensor] = None,
-        rejected_attention_mask: Optional[torch.Tensor] = None,
+        win_attention_mask: Optional[torch.Tensor] = None,
+        lose_attention_mask: Optional[torch.Tensor] = None,
     ):
         """
         Forward pass of the generation model.
@@ -231,80 +231,74 @@ class QWen3DPOLoraForGeneration(GenericPeftModel):
         Returns:
             torch Output logits.Tensor: tensor of shape (batch_size, sequence_length, vocab_size).
         """
-        chosen_input_ids = torch.cat([input_ids, chosen_input_ids], dim=1)
-        rejected_input_ids = torch.cat([input_ids, rejected_input_ids], dim=1)
-        if attention_mask is not None and chosen_attention_mask is not None:
-            chosen_attention_mask = torch.cat(
-                [attention_mask, chosen_attention_mask], dim=1
+        win_input_ids = torch.cat([input_ids, win_input_ids], dim=1)
+        lose_input_ids = torch.cat([input_ids, lose_input_ids], dim=1)
+        if attention_mask is not None and win_attention_mask is not None:
+            win_attention_mask = torch.cat([attention_mask, win_attention_mask], dim=1)
+        if attention_mask is not None and lose_attention_mask is not None:
+            lose_attention_mask = torch.cat(
+                [attention_mask, lose_attention_mask], dim=1
             )
-        if attention_mask is not None and rejected_attention_mask is not None:
-            rejected_attention_mask = torch.cat(
-                [attention_mask, rejected_attention_mask], dim=1
-            )
-        chosen_outputs = self.model(
-            input_ids=chosen_input_ids,
-            attention_mask=chosen_attention_mask,
+        win_outputs = self.model(
+            input_ids=win_input_ids,
+            attention_mask=win_attention_mask,
             return_dict=True,
         )
-        rejected_outputs = self.model(
-            input_ids=rejected_input_ids,
-            attention_mask=rejected_attention_mask,
+        lose_outputs = self.model(
+            input_ids=lose_input_ids,
+            attention_mask=lose_attention_mask,
             return_dict=True,
         )
         input_seq_length = input_ids.size(1)
-        chosen_logits = chosen_outputs.logits[:, input_seq_length - 1 : -1, :]
-        rejected_logits = rejected_outputs.logits[:, input_seq_length - 1 : -1, :]
-        chosen_labels = chosen_input_ids[:, input_seq_length:]
-        rejected_labels = rejected_input_ids[:, input_seq_length:]
-        chosen_labels_mask = chosen_attention_mask[:, input_seq_length:]
-        rejected_labels_mask = rejected_attention_mask[:, input_seq_length:]
-        chosen_nll_loss = F.cross_entropy(
-            chosen_logits.reshape(-1, chosen_logits.size(-1)),
-            chosen_labels.reshape(-1),
+        win_logits = win_outputs.logits[:, input_seq_length - 1 : -1, :]
+        lose_logits = lose_outputs.logits[:, input_seq_length - 1 : -1, :]
+        win_labels = win_input_ids[:, input_seq_length:]
+        lose_labels = lose_input_ids[:, input_seq_length:]
+        win_labels_mask = win_attention_mask[:, input_seq_length:]
+        lose_labels_mask = lose_attention_mask[:, input_seq_length:]
+        win_nll_loss = F.cross_entropy(
+            win_logits.reshape(-1, win_logits.size(-1)),
+            win_labels.reshape(-1),
             reduction="none",
-        ).reshape(chosen_labels.size(0), -1)
-        chosen_logprobs = -chosen_nll_loss * chosen_labels_mask
-        rejected_nll_loss = F.cross_entropy(
-            rejected_logits.reshape(-1, rejected_logits.size(-1)),
-            rejected_labels.reshape(-1),
+        ).reshape(win_labels.size(0), -1)
+        win_logprobs = -win_nll_loss * win_labels_mask
+        lose_nll_loss = F.cross_entropy(
+            lose_logits.reshape(-1, lose_logits.size(-1)),
+            lose_labels.reshape(-1),
             reduction="none",
-        ).reshape(rejected_labels.size(0), -1)
-        rejected_logprobs = -rejected_nll_loss * rejected_labels_mask
+        ).reshape(lose_labels.size(0), -1)
+        lose_logprobs = -lose_nll_loss * lose_labels_mask
 
         with torch.no_grad():
             self.model.disable_adapters()
-            ref_chosen_outputs = self.model(
-                input_ids=chosen_input_ids,
-                attention_mask=chosen_attention_mask,
+            ref_win_outputs = self.model(
+                input_ids=win_input_ids,
+                attention_mask=win_attention_mask,
                 return_dict=True,
             )
-            ref_rejected_outputs = self.model(
-                input_ids=rejected_input_ids,
-                attention_mask=rejected_attention_mask,
+            ref_lose_outputs = self.model(
+                input_ids=lose_input_ids,
+                attention_mask=lose_attention_mask,
                 return_dict=True,
             )
-            ref_chosen_logits = ref_chosen_outputs.logits[
-                :, input_seq_length - 1 : -1, :
-            ]
-            ref_rejected_logits = ref_rejected_outputs.logits[
-                :, input_seq_length - 1 : -1, :
-            ]
-            ref_chosen_nll_loss = F.cross_entropy(
-                ref_chosen_logits.reshape(-1, ref_chosen_logits.size(-1)),
-                chosen_labels.reshape(-1),
+            ref_win_logits = ref_win_outputs.logits[:, input_seq_length - 1 : -1, :]
+            ref_lose_logits = ref_lose_outputs.logits[:, input_seq_length - 1 : -1, :]
+            ref_win_nll_loss = F.cross_entropy(
+                ref_win_logits.reshape(-1, ref_win_logits.size(-1)),
+                win_labels.reshape(-1),
                 reduction="none",
-            ).reshape(chosen_labels.size(0), -1)
-            ref_chosen_logprobs = -ref_chosen_nll_loss * chosen_labels_mask
-            ref_rejected_nll_loss = F.cross_entropy(
-                ref_rejected_logits.reshape(-1, ref_rejected_logits.size(-1)),
-                rejected_labels.reshape(-1),
+            ).reshape(win_labels.size(0), -1)
+            ref_win_logprobs = -ref_win_nll_loss * win_labels_mask
+            ref_lose_nll_loss = F.cross_entropy(
+                ref_lose_logits.reshape(-1, ref_lose_logits.size(-1)),
+                lose_labels.reshape(-1),
                 reduction="none",
-            ).reshape(rejected_labels.size(0), -1)
-            ref_rejected_logprobs = -ref_rejected_nll_loss * rejected_labels_mask
+            ).reshape(lose_labels.size(0), -1)
+            ref_lose_logprobs = -ref_lose_nll_loss * lose_labels_mask
             self.model.enable_adapters()
 
-        logratios = chosen_logprobs - rejected_logprobs
-        ref_logratios = ref_chosen_logprobs - ref_rejected_logprobs
+        logratios = win_logprobs - lose_logprobs
+        ref_logratios = ref_win_logprobs - ref_lose_logprobs
         logits = logratios - ref_logratios
         loss = -F.logsigmoid(self.dpo_beta * logits).mean()
         return loss
