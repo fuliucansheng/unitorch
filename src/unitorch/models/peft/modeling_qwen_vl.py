@@ -209,6 +209,7 @@ class QWen2_5VLDPOLoraForGeneration(GenericPeftModel):
         fan_in_fan_out: Optional[bool] = True,
         target_modules: Optional[Union[List[str], str]] = ["q_proj", "v_proj"],
         gradient_checkpointing: Optional[bool] = False,
+        dpo_beta: Optional[float] = 0.1,
     ):
         """
         Bloom Lora model for text generation tasks.
@@ -230,6 +231,7 @@ class QWen2_5VLDPOLoraForGeneration(GenericPeftModel):
         self.model = Qwen2_5_VLForConditionalGeneration(self.config)
         self.model.add_adapter(self.peft_config)
         self.init_weights()
+        self.dpo_beta = dpo_beta
 
     def forward(
         self,

@@ -255,6 +255,7 @@ class QWen2_5VLDPOLoraForGeneration(_QWen2_5VLDPOLoraForGeneration):
         fan_in_fan_out: Optional[bool] = True,
         target_modules: Optional[Union[List[str], str]] = ["q_proj", "v_proj"],
         gradient_checkpointing: Optional[bool] = False,
+        dpo_beta: Optional[float] = 0.1,
     ):
         """
         Initialize the QWen3LoraForGeneration model.
@@ -276,6 +277,7 @@ class QWen2_5VLDPOLoraForGeneration(_QWen2_5VLDPOLoraForGeneration):
             fan_in_fan_out=fan_in_fan_out,
             target_modules=target_modules,
             gradient_checkpointing=gradient_checkpointing,
+            dpo_beta=dpo_beta,
         )
 
     @classmethod
@@ -307,6 +309,7 @@ class QWen2_5VLDPOLoraForGeneration(_QWen2_5VLDPOLoraForGeneration):
         target_modules = config.getoption("target_modules", ["q_proj", "v_proj"])
 
         gradient_checkpointing = config.getoption("gradient_checkpointing", False)
+        dpo_beta = config.getoption("dpo_beta", 0.1)
 
         inst = cls(
             config_path,
@@ -316,6 +319,7 @@ class QWen2_5VLDPOLoraForGeneration(_QWen2_5VLDPOLoraForGeneration):
             fan_in_fan_out=fan_in_fan_out,
             target_modules=target_modules,
             gradient_checkpointing=gradient_checkpointing,
+            dpo_beta=dpo_beta,
         )
 
         weight_path = []
