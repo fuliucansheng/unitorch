@@ -85,11 +85,12 @@ import unitorch.cli.webuis.mask2former
 import unitorch.cli.webuis.mistral
 import unitorch.cli.webuis.sam
 import unitorch.cli.webuis.segformer
+import unitorch.cli.webuis.labeling
 
 if is_diffusers_available():
     import unitorch.cli.webuis.stable
     import unitorch.cli.webuis.stable_xl
-
+    import unitorch.cli.webuis.qwen_image
     import unitorch.cli.webuis.stable_3
     import unitorch.cli.webuis.stable_flux
 

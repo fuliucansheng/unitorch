@@ -22,7 +22,6 @@ from unitorch.models.peft import PeftWeightLoaderMixin
 
 
 class LlamaForClassification(GenericModel, QuantizationMixin, PeftWeightLoaderMixin):
-    replace_keys_in_peft_state_dict = {"peft_model.base_model.": ""}
 
     def __init__(
         self,
@@ -86,7 +85,6 @@ class LlamaForGeneration(GenericModel, QuantizationMixin, PeftWeightLoaderMixin)
         "^model.": "base_model.",
         "^lm_head.": "base_model.",
     }
-    replace_keys_in_peft_state_dict = {"peft_model.base_model.model.": "base_model."}
 
     def __init__(
         self,
@@ -144,6 +142,7 @@ class LlamaForGeneration(GenericModel, QuantizationMixin, PeftWeightLoaderMixin)
         num_beams: Optional[int] = 5,
         decoder_start_token_id: Optional[int] = 1,
         decoder_end_token_id: Optional[Union[int, List[int]]] = 2,
+        decoder_pad_token_id: Optional[int] = 1,
         num_return_sequences: Optional[int] = 1,
         min_gen_seq_length: Optional[int] = 0,
         max_gen_seq_length: Optional[int] = 48,
@@ -190,7 +189,6 @@ class LlamaForGeneration(GenericModel, QuantizationMixin, PeftWeightLoaderMixin)
             min_length=min_gen_seq_length + input_seq_length,
             num_beams=num_beams,
             do_sample=do_sample,
-            decoder_start_token_id=decoder_start_token_id,
             no_repeat_ngram_size=no_repeat_ngram_size,
             early_stopping=early_stopping,
             length_penalty=length_penalty,
@@ -198,6 +196,7 @@ class LlamaForGeneration(GenericModel, QuantizationMixin, PeftWeightLoaderMixin)
             num_return_sequences=num_return_sequences,
             bos_token_id=decoder_start_token_id,
             eos_token_id=decoder_end_token_id,
+            pad_token_id=decoder_pad_token_id,
             num_beam_groups=num_beam_groups,
             diversity_penalty=diversity_penalty,
             temperature=temperature,

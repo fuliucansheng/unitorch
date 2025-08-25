@@ -124,6 +124,35 @@ class StableFluxProcessor(_StableFluxProcessor):
             attention2_mask=outputs.attention2_mask,
         )
 
+    @register_process("core/process/diffusion/stable_flux/dpo/text2image")
+    def _dpo_text2image(
+        self,
+        prompt: str,
+        win_image: Union[Image.Image, str],
+        lose_image: Union[Image.Image, str],
+        prompt2: Optional[str] = None,
+        max_seq_length: Optional[int] = None,
+        max_seq_length2: Optional[int] = None,
+    ):
+        outputs = super().text2image(
+            prompt=prompt,
+            image=win_image,
+            prompt2=prompt2,
+            max_seq_length=max_seq_length,
+            max_seq_length2=max_seq_length2,
+        )
+        if isinstance(lose_image, str):
+            lose_image = Image.open(lose_image).convert("RGB")
+        lose_pixel_values = self.vision_processor(lose_image)
+        return TensorsInputs(
+            input_ids=outputs.input_ids,
+            attention_mask=outputs.attention_mask,
+            win_pixel_values=outputs.pixel_values,
+            lose_pixel_values=lose_pixel_values,
+            input2_ids=outputs.input2_ids,
+            attention2_mask=outputs.attention2_mask,
+        )
+
     @register_process("core/process/diffusion/stable_flux/text2image/inputs")
     def _text2image_inputs(
         self,
@@ -218,6 +247,41 @@ class StableFluxProcessor(_StableFluxProcessor):
             attention2_mask=text_outputs.attention2_mask,
         )
 
+    @register_process("core/process/diffusion/stable_flux/dpo/inpainting")
+    def _dpo_inpainting(
+        self,
+        prompt: str,
+        win_image: Union[Image.Image, str],
+        lose_image: Union[Image.Image, str],
+        mask_image: Union[Image.Image, str],
+        prompt2: Optional[str] = None,
+        max_seq_length: Optional[int] = None,
+        max_seq_length2: Optional[int] = None,
+    ):
+        text_outputs = super().text2image_inputs(
+            prompt=prompt,
+            prompt2=prompt2,
+            max_seq_length=max_seq_length,
+            max_seq_length2=max_seq_length2,
+        )
+        win_image_outputs = super().inpainting_inputs(
+            image=win_image,
+            mask_image=mask_image,
+        )
+        lose_image_outputs = super().inpainting_inputs(
+            image=lose_image,
+            mask_image=mask_image,
+        )
+        return TensorsInputs(
+            win_pixel_values=win_image_outputs.pixel_values,
+            lose_pixel_values=lose_image_outputs.pixel_values,
+            pixel_masks=win_image_outputs.pixel_masks,
+            input_ids=text_outputs.input_ids,
+            input2_ids=text_outputs.input2_ids,
+            attention_mask=text_outputs.attention_mask,
+            attention2_mask=text_outputs.attention2_mask,
+        )
+
     @register_process("core/process/diffusion/stable_flux/inpainting/inputs")
     def _inpainting_inputs(
         self,
@@ -245,4 +309,18 @@ class StableFluxProcessor(_StableFluxProcessor):
             input2_ids=text_outputs.input2_ids,
             attention_mask=text_outputs.attention_mask,
             attention2_mask=text_outputs.attention2_mask,
+        )
+
+    @register_process("core/process/diffusion/stable_flux/kontext/inputs")
+    def _kontext_inputs(
+        self,
+        image: Union[Image.Image, str],
+        size: Optional[Tuple[int, int]] = None,
+    ):
+        image_outputs = super().kontext_inputs(
+            image=image,
+            size=size,
+        )
+        return TensorsInputs(
+            kontext_pixel_values=image_outputs.pixel_values,
         )

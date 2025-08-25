@@ -24,5 +24,3 @@ pretrained_t5_infos = {
 
 import unitorch.cli.models.t5.modeling
 import unitorch.cli.models.t5.processing
-from unitorch.cli.models.t5.modeling import T5ForGeneration
-from unitorch.cli.models.t5.processing import T5Processor

@@ -36,8 +36,20 @@ def mktempfile(prefix: str = "", suffix: str = ""):
     return tempfile.mktemp(prefix=prefix, suffix=suffix, dir=UNITORCH_TEMP)
 
 
+UNITORCH_HOME = os.environ.get(
+    "UNITORCH_HOME", os.path.join(os.getenv("HOME", "."), ".unitorch")
+)
+if not os.path.exists(UNITORCH_HOME):
+    os.makedirs(UNITORCH_HOME)
+
+
+def get_unitorch_home():
+    """Get the path to the Unitorch home directory."""
+    return UNITORCH_HOME
+
+
 ### version
-VERSION = "0.0.1.3"
+VERSION = "0.0.1.4"
 
 ### is offline mode
 UNITORCH_OFFLINE = os.environ.get("UNITORCH_OFFLINE", "0").upper()

@@ -14,7 +14,9 @@ from unitorch.cli.models.diffusers import (
     pretrained_stable_infos,
     pretrained_stable_extensions_infos,
 )
-from unitorch.cli.pipelines.stable import StableForImage2ImageGenerationPipeline
+from unitorch.cli.pipelines.stable.image2image import (
+    StableForImage2ImageGenerationPipeline,
+)
 from unitorch.cli.pipelines.tools import controlnet_processes
 from unitorch.cli.webuis import (
     supported_scheduler_names,
@@ -198,7 +200,7 @@ class StableImage2ImageWebUI(SimpleWebUI):
             )
 
         generate.click(
-            fn=self.serve,
+            fn=self.generate,
             inputs=[
                 prompt,
                 image,
@@ -251,7 +253,7 @@ class StableImage2ImageWebUI(SimpleWebUI):
             return pfunc(image)
         return image
 
-    def serve(
+    def generate(
         self,
         text: str,
         image: Image.Image,

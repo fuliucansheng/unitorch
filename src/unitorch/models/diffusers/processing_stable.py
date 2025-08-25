@@ -68,9 +68,11 @@ class StableProcessor(HfTextClassificationProcessor):
             self.vision_processor = Compose(
                 [
                     Resize((self.image_size[1], self.image_size[0])),
-                    CenterCrop((self.image_size[1], self.image_size[0]))
-                    if center_crop
-                    else RandomCrop((self.image_size[1], self.image_size[0])),
+                    (
+                        CenterCrop((self.image_size[1], self.image_size[0]))
+                        if center_crop
+                        else RandomCrop((self.image_size[1], self.image_size[0]))
+                    ),
                     RandomHorizontalFlip() if random_flip else Lambda(lambda x: x),
                     ToTensor(),
                     Normalize([0.5], [0.5]),

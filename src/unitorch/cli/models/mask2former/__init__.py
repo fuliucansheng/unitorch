@@ -42,5 +42,3 @@ pretrained_mask2former_infos = {
 
 import unitorch.cli.models.mask2former.modeling
 import unitorch.cli.models.mask2former.processing
-from unitorch.cli.models.mask2former.modeling import Mask2FormerForSegmentation
-from unitorch.cli.models.mask2former.processing import Mask2FormerProcessor

@@ -23,5 +23,3 @@ pretrained_bart_infos = {
 
 import unitorch.cli.models.bart.modeling
 import unitorch.cli.models.bart.processing
-from unitorch.cli.models.bart.modeling import BartForGeneration
-from unitorch.cli.models.bart.processing import BartProcessor

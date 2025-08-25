@@ -25,7 +25,9 @@ class MistralProcessor(_MistralProcessor):
 
     def __init__(
         self,
-        vocab_path,
+        tokenizer_file: str,
+        tokenizer_config: Optional[str] = None,
+        special_tokens_map: Optional[str] = None,
         max_seq_length: Optional[int] = 128,
         max_gen_seq_length: Optional[int] = 128,
     ):
@@ -38,7 +40,9 @@ class MistralProcessor(_MistralProcessor):
             max_gen_seq_length (int, optional): The maximum generated sequence length. Defaults to 128.
         """
         super().__init__(
-            vocab_path=vocab_path,
+            tokenizer_file=tokenizer_file,
+            tokenizer_config=tokenizer_config,
+            special_tokens_map=special_tokens_map,
             max_seq_length=max_seq_length,
             max_gen_seq_length=max_gen_seq_length,
         )
@@ -60,16 +64,49 @@ class MistralProcessor(_MistralProcessor):
         pretrained_name = config.getoption(
             "pretrained_name", "mistral-7b-instruct-v0.1"
         )
-        vocab_path = config.getoption("vocab_path", None)
-        vocab_path = pop_value(
-            vocab_path,
-            nested_dict_value(pretrained_mistral_infos, pretrained_name, "vocab"),
+        tokenizer_file = config.getoption("tokenizer_file", None)
+        tokenizer_file = pop_value(
+            tokenizer_file,
+            nested_dict_value(pretrained_mistral_infos, pretrained_name, "tokenizer"),
         )
-        vocab_path = cached_path(vocab_path)
+        tokenizer_file = cached_path(tokenizer_file)
+
+        tokenizer_config = config.getoption("tokenizer_config", None)
+        tokenizer_config = pop_value(
+            tokenizer_config,
+            nested_dict_value(
+                pretrained_mistral_infos, pretrained_name, "tokenizer_config"
+            ),
+            check_none=False,
+        )
+        tokenizer_config = (
+            cached_path(tokenizer_config) if tokenizer_config is not None else None
+        )
+
+        special_tokens_map = config.getoption("special_tokens_map", None)
+        special_tokens_map = pop_value(
+            special_tokens_map,
+            nested_dict_value(
+                pretrained_mistral_infos, pretrained_name, "special_tokens_map"
+            ),
+            check_none=False,
+        )
+        special_tokens_map = (
+            cached_path(special_tokens_map) if special_tokens_map is not None else None
+        )
 
         return {
-            "vocab_path": vocab_path,
+            "tokenizer_file": tokenizer_file,
+            "tokenizer_config": tokenizer_config,
+            "special_tokens_map": special_tokens_map,
         }
+
+    @register_process("core/process/mistral/chat_template")
+    def _chat_template(
+        self,
+        messages: List[Dict[str, Any]],
+    ):
+        return super().chat_template(messages=messages)
 
     @register_process("core/process/mistral/classification")
     def _classification(
@@ -180,57 +217,15 @@ class MistralProcessor(_MistralProcessor):
             masks=outputs.attention_mask_label,
         )
 
-    @register_process("core/process/mistral/instruction/generation/inputs")
-    def _instruction_generation_inputs(
+    @register_process("core/process/mistral/messages/generation")
+    def _messages_generation(
         self,
-        instruction: str,
-        input: str,
+        messages: List[Dict[str, Any]],
         max_seq_length: Optional[int] = None,
     ):
-        """
-        Preprocess the input text for generation tasks.
-
-        Args:
-            text (str): The input text.
-            max_seq_length (int, optional): The maximum sequence length. Defaults to None.
-
-        Returns:
-            TensorsInputs: The processed input tensors.
-        """
-        outputs = super().instruction_generation_inputs(
-            instruction=instruction,
-            input=input,
+        outputs = super().messages_generation(
+            messages=messages,
             max_seq_length=max_seq_length,
-        )
-        return TensorsInputs(input_ids=outputs.input_ids)
-
-    @register_process("core/process/mistral/instruction/generation")
-    def _instruction_generation(
-        self,
-        instruction: str,
-        input: str,
-        output: Optional[str] = None,
-        max_seq_length: Optional[int] = None,
-        max_gen_seq_length: Optional[int] = None,
-    ):
-        """
-        Preprocess the input and target texts for generation tasks.
-
-        Args:
-            input (str): The input text.
-            output (str, optional): The paired input text. Defaults to None.
-            max_seq_length (int, optional): The maximum sequence length. Defaults to None.
-            max_gen_seq_length (int, optional): The maximum generation sequence length. Defaults to None.
-
-        Returns:
-            Tuple[TensorsInputs, GenerationTargets]: The processed input tensors and generation targets.
-        """
-        outputs = super().instruction_generation(
-            instruction=instruction,
-            input=input,
-            output=output,
-            max_seq_length=max_seq_length,
-            max_gen_seq_length=max_gen_seq_length,
         )
         return TensorsInputs(
             input_ids=outputs.input_ids,

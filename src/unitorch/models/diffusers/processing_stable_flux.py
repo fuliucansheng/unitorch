@@ -18,9 +18,28 @@ from torchvision.transforms import (
     Compose,
     RandomHorizontalFlip,
 )
-from torchvision.transforms.functional import crop
 from diffusers.image_processor import VaeImageProcessor
 from unitorch.models import HfTextClassificationProcessor, GenericOutputs
+
+PREFERRED_KONTEXT_RESOLUTIONS = [
+    (672, 1568),  # 0.429
+    (688, 1504),  # 0.458
+    (720, 1456),  # 0.495
+    (752, 1392),  # 0.541
+    (800, 1328),  # 0.602
+    (832, 1248),  # 0.667
+    (880, 1184),  # 0.743
+    (944, 1104),  # 0.854
+    (1024, 1024),  # 1.0
+    (1104, 944),  # 1.167
+    (1184, 880),  # 1.343
+    (1248, 832),  # 1.5
+    (1328, 800),  # 1.66
+    (1392, 752),  # 1.85
+    (1456, 720),  # 2.03
+    (1504, 688),  # 2.18
+    (1568, 672),  # 2.33
+]
 
 
 class StableFluxProcessor:
@@ -81,9 +100,11 @@ class StableFluxProcessor:
             self.vision_processor = Compose(
                 [
                     Resize((self.image_size[1], self.image_size[0])),
-                    CenterCrop((self.image_size[1], self.image_size[0]))
-                    if center_crop
-                    else RandomCrop((self.image_size[1], self.image_size[0])),
+                    (
+                        CenterCrop((self.image_size[1], self.image_size[0]))
+                        if center_crop
+                        else RandomCrop((self.image_size[1], self.image_size[0]))
+                    ),
                     RandomHorizontalFlip() if random_flip else Lambda(lambda x: x),
                     ToTensor(),
                     Normalize([0.5], [0.5]),
@@ -120,8 +141,10 @@ class StableFluxProcessor:
             self.vae_image_processor = VaeImageProcessor(
                 vae_scale_factor=vae_scale_factor * 2
             )
+            self.multiple_of = vae_scale_factor * 2
         else:
             self.vae_image_processor = None
+            self.multiple_of = None
 
         if redux_config_path is not None:
             self.redux_image_processor = SiglipImageProcessor.from_json_file(
@@ -359,3 +382,27 @@ class StableFluxProcessor:
             pixel_values.append(self.vae_image_processor.preprocess(image)[0])
 
         return GenericOutputs(pixel_values=torch.stack(pixel_values, dim=0))
+
+    def kontext_inputs(
+        self,
+        image: Union[Image.Image, str],
+        size: Optional[Tuple[int, int]] = None,
+    ):
+        if isinstance(image, str):
+            image = Image.open(image)
+        if size is None:
+            width, height = image.size
+        else:
+            width, height = size
+        ratio = width / height
+        _, _width, _height = min(
+            (abs(ratio - w / h), w, h) for w, h in PREFERRED_KONTEXT_RESOLUTIONS
+        )
+        width, height = (
+            _width // self.multiple_of * self.multiple_of,
+            _height // self.multiple_of * self.multiple_of,
+        )
+        pixel_values = self.vae_image_processor.preprocess(
+            image, height=height, width=width
+        )[0]
+        return GenericOutputs(pixel_values=pixel_values)

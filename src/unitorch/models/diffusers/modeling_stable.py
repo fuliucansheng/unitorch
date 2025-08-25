@@ -249,12 +249,14 @@ class GenericStableModel(GenericModel, QuantizationMixin, PeftWeightLoaderMixin)
         if enable_cpu_offload:
             self.text.to("cpu")
         return GenericOutputs(
-            prompt_embeds=prompt_embeds.to("cpu")
-            if enable_cpu_offload
-            else prompt_embeds,
-            negative_prompt_embeds=negative_prompt_embeds.to("cpu")
-            if enable_cpu_offload
-            else negative_prompt_embeds,
+            prompt_embeds=(
+                prompt_embeds.to("cpu") if enable_cpu_offload else prompt_embeds
+            ),
+            negative_prompt_embeds=(
+                negative_prompt_embeds.to("cpu")
+                if enable_cpu_offload
+                else negative_prompt_embeds
+            ),
         )
 
 

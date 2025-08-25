@@ -30,6 +30,9 @@ class BloomForGenerationPipeline(_BloomForGeneration):
         self,
         config_path: str,
         tokenizer_file: str,
+        tokenizer_config: Optional[str] = None,
+        special_tokens_map: Optional[str] = None,
+        chat_template: Optional[str] = None,
         max_seq_length: Optional[int] = 512,
         max_gen_seq_length: Optional[int] = 512,
         weight_path: Optional[Union[str, List[str]]] = None,
@@ -42,6 +45,9 @@ class BloomForGenerationPipeline(_BloomForGeneration):
         )
         self.processor = BloomProcessor(
             tokenizer_file=tokenizer_file,
+            tokenizer_config=tokenizer_config,
+            special_tokens_map=special_tokens_map,
+            chat_template=chat_template,
             max_seq_length=max_seq_length,
             max_gen_seq_length=max_gen_seq_length,
         )
@@ -84,6 +90,40 @@ class BloomForGenerationPipeline(_BloomForGeneration):
         )
         tokenizer_file = cached_path(tokenizer_file)
 
+        tokenizer_config = config.getoption("tokenizer_config", None)
+        tokenizer_config = pop_value(
+            tokenizer_config,
+            nested_dict_value(
+                pretrained_bloom_infos, pretrained_name, "tokenizer_config"
+            ),
+            check_none=False,
+        )
+        tokenizer_config = (
+            cached_path(tokenizer_config) if tokenizer_config is not None else None
+        )
+
+        special_tokens_map = config.getoption("special_tokens_map", None)
+        special_tokens_map = pop_value(
+            special_tokens_map,
+            nested_dict_value(
+                pretrained_bloom_infos, pretrained_name, "special_tokens_map"
+            ),
+            check_none=False,
+        )
+        special_tokens_map = (
+            cached_path(special_tokens_map) if special_tokens_map is not None else None
+        )
+
+        chat_template = config.getoption("chat_template", None)
+        chat_template = pop_value(
+            chat_template,
+            nested_dict_value(pretrained_bloom_infos, pretrained_name, "chat_template"),
+            check_none=False,
+        )
+        chat_template = (
+            cached_path(chat_template) if chat_template is not None else None
+        )
+
         max_seq_length = config.getoption("max_seq_length", 512)
         max_gen_seq_length = config.getoption("max_gen_seq_length", 512)
         enable_cpu_offload = config.getoption("enable_cpu_offload", True)
@@ -100,6 +140,9 @@ class BloomForGenerationPipeline(_BloomForGeneration):
         inst = cls(
             config_path,
             tokenizer_file=tokenizer_file,
+            tokenizer_config=tokenizer_config,
+            special_tokens_map=special_tokens_map,
+            chat_template=chat_template,
             max_seq_length=max_seq_length,
             max_gen_seq_length=max_gen_seq_length,
             weight_path=weight_path,
@@ -117,7 +160,7 @@ class BloomForGenerationPipeline(_BloomForGeneration):
         max_seq_length: Optional[int] = 512,
         num_beams: Optional[int] = 2,
         decoder_start_token_id: Optional[int] = 1,
-        decoder_end_token_id: Optional[Union[int, List[int]]] = [2],
+        decoder_end_token_id: Optional[Union[int, List[int]]] = 2,
         num_return_sequences: Optional[int] = 1,
         min_gen_seq_length: Optional[int] = 0,
         max_gen_seq_length: Optional[int] = 512,

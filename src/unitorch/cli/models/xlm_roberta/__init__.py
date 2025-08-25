@@ -50,8 +50,3 @@ pretrained_xlm_roberta_infos = {
 
 import unitorch.cli.models.xlm_roberta.modeling
 import unitorch.cli.models.xlm_roberta.processing
-from unitorch.cli.models.xlm_roberta.modeling import (
-    XLMRobertaForClassification,
-    XLMRobertaXLForClassification,
-)
-from unitorch.cli.models.xlm_roberta.processing import XLMRobertaProcessor

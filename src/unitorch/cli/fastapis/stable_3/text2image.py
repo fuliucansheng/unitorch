@@ -439,7 +439,7 @@ class Stable3Text2ImageFastAPI(GenericFastAPI):
         router = config.getoption("router", "/core/fastapi/stable_3/text2image")
         self._pipe = None
         self._router = APIRouter(prefix=router)
-        self._router.add_api_route("/generate", self.serve, methods=["GET"])
+        self._router.add_api_route("/generate", self.generate, methods=["GET"])
         self._router.add_api_route("/status", self.status, methods=["GET"])
         self._router.add_api_route("/start", self.start, methods=["POST"])
         self._router.add_api_route("/stop", self.stop, methods=["GET"])
@@ -476,7 +476,7 @@ class Stable3Text2ImageFastAPI(GenericFastAPI):
     def status(self):
         return "running" if self._pipe is not None else "stopped"
 
-    async def serve(
+    async def generate(
         self,
         text: str,
         height: Optional[int] = 512,

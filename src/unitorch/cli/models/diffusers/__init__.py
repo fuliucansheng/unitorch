@@ -229,17 +229,53 @@ __hf_hub_wan_v2_1_safetensors_dict__ = lambda name, n1=2, n2=5, im=False: {
             for i in range(1, n2 + 1)
         ],
     },
-    "image": {
-        "config": hf_endpoint_url(f"/{name}/resolve/main/image_encoder/config.json"),
-        "vision_config": hf_endpoint_url(
-            f"/{name}/resolve/main/image_processor/preprocessor_config.json"
+    "image": (
+        {
+            "config": hf_endpoint_url(
+                f"/{name}/resolve/main/image_encoder/config.json"
+            ),
+            "vision_config": hf_endpoint_url(
+                f"/{name}/resolve/main/image_processor/preprocessor_config.json"
+            ),
+            "weight": hf_endpoint_url(
+                f"/{name}/resolve/main/image_encoder/model.safetensors"
+            ),
+        }
+        if im
+        else {}
+    ),
+    "scheduler": hf_endpoint_url(
+        f"/{name}/resolve/main/scheduler/scheduler_config.json"
+    ),
+}
+
+__hf_hub_qwen_image_safetensors_dict__ = lambda name, n1=9, n2=4: {
+    "transformer": {
+        "config": hf_endpoint_url(f"/{name}/resolve/main/transformer/config.json"),
+        "weight": [
+            hf_endpoint_url(
+                f"/{name}/resolve/main/transformer/diffusion_pytorch_model-{str(i).rjust(5, '0')}-of-{str(n1).rjust(5, '0')}.safetensors"
+            )
+            for i in range(1, n1 + 1)
+        ],
+    },
+    "text": {
+        "config": hf_endpoint_url(f"/{name}/resolve/main/text_encoder/config.json"),
+        "vocab": hf_endpoint_url(f"/{name}/resolve/main/tokenizer/vocab.json"),
+        "merge": hf_endpoint_url(f"/{name}/resolve/main/tokenizer/merges.txt"),
+        "tokenizer_config": hf_endpoint_url(
+            f"/{name}/resolve/main/tokenizer/tokenizer_config.json"
         ),
-        "weight": hf_endpoint_url(
-            f"/{name}/resolve/main/image_encoder/model.safetensors"
+        "special_tokens_map": hf_endpoint_url(
+            f"/{name}/resolve/main/tokenizer/special_tokens_map.json"
         ),
-    }
-    if im
-    else {},
+        "weight": [
+            hf_endpoint_url(
+                f"/{name}/resolve/main/text_encoder/model-{str(i).rjust(5, '0')}-of-{str(n2).rjust(5, '0')}.safetensors"
+            )
+            for i in range(1, n2 + 1)
+        ],
+    },
     "scheduler": hf_endpoint_url(
         f"/{name}/resolve/main/scheduler/scheduler_config.json"
     ),
@@ -482,6 +518,10 @@ pretrained_stable_infos = {
         **__hf_hub_stable_flux_safetensors_dict__("camenduru/FLUX.1-dev-diffusers"),
         **__hf_hub_vae_safetensors_dict__("camenduru/FLUX.1-dev-diffusers"),
     },
+    "stable-flux-dev-krea": {
+        **__hf_hub_stable_flux_safetensors_dict__("NikolaSigmoid/FLUX.1-Krea-dev"),
+        **__hf_hub_vae_safetensors_dict__("NikolaSigmoid/FLUX.1-Krea-dev"),
+    },
     "stable-flux-dev-fill": {
         **__hf_hub_stable_flux_safetensors_dict__(
             "fuliucansheng/FLUX.1-Fill-dev-diffusers"
@@ -499,6 +539,12 @@ pretrained_stable_infos = {
             "fuliucansheng/FLUX.1-Depth-dev-diffusers"
         ),
         **__hf_hub_vae_safetensors_dict__("fuliucansheng/FLUX.1-Depth-dev-diffusers"),
+    },
+    "stable-flux-dev-kontext": {
+        **__hf_hub_stable_flux_safetensors_dict__(
+            "fuliucansheng/FLUX.1-Kontext-dev-diffusers"
+        ),
+        **__hf_hub_vae_safetensors_dict__("fuliucansheng/FLUX.1-Kontext-dev-diffusers"),
     },
     "stable-flux-dev-redux": {
         **__hf_hub_stable_flux_safetensors_dict__("camenduru/FLUX.1-dev-diffusers"),
@@ -561,6 +607,19 @@ pretrained_stable_infos = {
             "Wan-AI/Wan2.1-I2V-14B-720P-Diffusers", n1=14, im=True
         ),
         **__hf_hub_vae_safetensors_dict__("Wan-AI/Wan2.1-I2V-14B-720P-Diffusers"),
+    },
+    "qwen-image": {
+        **__hf_hub_qwen_image_safetensors_dict__("Qwen/Qwen-Image"),
+        **__hf_hub_vae_safetensors_dict__("Qwen/Qwen-Image"),
+    },
+    "qwen-image-editing": {
+        **__hf_hub_qwen_image_safetensors_dict__("Qwen/Qwen-Image-Edit"),
+        **__hf_hub_vae_safetensors_dict__("Qwen/Qwen-Image-Edit"),
+        **{
+            "vision_config": hf_endpoint_url(
+                f"/Qwen/Qwen-Image-Edit/resolve/main/processor/preprocessor_config.json"
+            ),
+        },
     },
 }
 
@@ -714,65 +773,31 @@ pretrained_stable_extensions_infos = {
 
 from unitorch.cli.models.diffusion_utils import load_weight
 
-from unitorch.cli.models.diffusers.modeling_stable import (
-    StableForText2ImageGeneration,
-    StableForImage2ImageGeneration,
-    StableForImageInpainting,
-    StableForImageResolution,
-)
-from unitorch.cli.models.diffusers.modeling_stable_xl import (
-    StableXLForText2ImageGeneration,
-    StableXLForImage2ImageGeneration,
-    StableXLForImageInpainting,
-)
+import unitorch.cli.models.diffusers.modeling_stable
+import unitorch.cli.models.diffusers.modeling_stable_xl
+import unitorch.cli.models.diffusers.modeling_stable_3
+import unitorch.cli.models.diffusers.modeling_stable_flux
+import unitorch.cli.models.diffusers.modeling_qwen_image
+import unitorch.cli.models.diffusers.modeling_controlnet
+import unitorch.cli.models.diffusers.modeling_controlnet_xl
+import unitorch.cli.models.diffusers.modeling_controlnet_3
+import unitorch.cli.models.diffusers.modeling_controlnet_flux
+import unitorch.cli.models.diffusers.modeling_adapter
+import unitorch.cli.models.diffusers.modeling_adapter_xl
+import unitorch.cli.models.diffusers.modeling_wan
+import unitorch.cli.models.diffusers.modeling_vae
+import unitorch.cli.models.diffusers.processing_stable
+import unitorch.cli.models.diffusers.processing_stable_xl
+import unitorch.cli.models.diffusers.processing_stable_3
+import unitorch.cli.models.diffusers.processing_stable_flux
+import unitorch.cli.models.diffusers.processing_qwen_image
 
-from unitorch.cli.models.diffusers.modeling_stable_3 import (
-    Stable3ForText2ImageGeneration,
-    Stable3ForImage2ImageGeneration,
-)
-from unitorch.cli.models.diffusers.modeling_stable_flux import (
-    StableFluxForText2ImageGeneration,
-)
-from unitorch.cli.models.diffusers.modeling_controlnet import (
-    ControlNetForText2ImageGeneration,
-    ControlNetForImage2ImageGeneration,
-    ControlNetForImageInpainting,
-)
-from unitorch.cli.models.diffusers.modeling_controlnet_xl import (
-    ControlNetXLForText2ImageGeneration,
-    ControlNetXLForImage2ImageGeneration,
-    ControlNetXLForImageInpainting,
-)
-
-from unitorch.cli.models.diffusers.modeling_controlnet_3 import (
-    ControlNet3ForText2ImageGeneration,
-)
-from unitorch.cli.models.diffusers.modeling_controlnet_flux import (
-    ControlNetFluxForText2ImageGeneration,
-)
-from unitorch.cli.models.diffusers.modeling_adapter import (
-    StableAdapterForText2ImageGeneration,
-)
-from unitorch.cli.models.diffusers.modeling_adapter_xl import (
-    StableXLAdapterForText2ImageGeneration,
-)
-from unitorch.cli.models.diffusers.modeling_wan import (
-    WanForText2VideoGeneration,
-    WanForImage2VideoGeneration,
-)
-from unitorch.cli.models.diffusers.modeling_vae import VAEForDiffusion
-from unitorch.cli.models.diffusers.processing_stable import StableProcessor
-from unitorch.cli.models.diffusers.processing_stable_xl import StableXLProcessor
-from unitorch.cli.models.diffusers.processing_stable_3 import Stable3Processor
-from unitorch.cli.models.diffusers.processing_stable_flux import StableFluxProcessor
-from unitorch.cli.models.diffusers.processing_controlnet import ControlNetProcessor
-from unitorch.cli.models.diffusers.processing_controlnet_xl import ControlNetXLProcessor
-from unitorch.cli.models.diffusers.processing_controlnet_3 import ControlNet3Processor
-from unitorch.cli.models.diffusers.processing_controlnet_flux import (
-    ControlNetFluxProcessor,
-)
-from unitorch.cli.models.diffusers.processing_adapter import AdapterProcessor
-from unitorch.cli.models.diffusers.processing_adapter_xl import AdapterXLProcessor
+import unitorch.cli.models.diffusers.processing_controlnet
+import unitorch.cli.models.diffusers.processing_controlnet_xl
+import unitorch.cli.models.diffusers.processing_controlnet_3
+import unitorch.cli.models.diffusers.processing_controlnet_flux
+import unitorch.cli.models.diffusers.processing_adapter
+import unitorch.cli.models.diffusers.processing_adapter_xl
 
 if is_opencv_available():
-    from unitorch.cli.models.diffusers.processing_wan import WanProcessor
+    import unitorch.cli.models.diffusers.processing_wan

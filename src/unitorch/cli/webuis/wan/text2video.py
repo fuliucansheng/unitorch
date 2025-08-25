@@ -14,7 +14,7 @@ from unitorch.cli.models.diffusers import (
     pretrained_stable_infos,
     pretrained_stable_extensions_infos,
 )
-from unitorch.cli.pipelines.wan import WanForText2VideoGenerationPipeline
+from unitorch.cli.pipelines.wan.text2video import WanForText2VideoGenerationPipeline
 from unitorch.cli.webuis import (
     supported_scheduler_names,
     matched_pretrained_names,
@@ -165,7 +165,7 @@ class WanText2VideoWebUI(SimpleWebUI):
             )
 
         generate.click(
-            fn=self.serve,
+            fn=self.generate,
             inputs=[
                 prompt,
                 negative_prompt,
@@ -213,7 +213,7 @@ class WanText2VideoWebUI(SimpleWebUI):
         self._status = "Stopped" if self._pipe is None else "Running"
         return self._status
 
-    def serve(
+    def generate(
         self,
         prompt: str,
         negative_prompt: str,

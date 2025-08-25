@@ -684,9 +684,9 @@ class ControlNetForImageInpainting(_ControlNetForImageInpainting):
             text_config_path=text_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
-            controlnet_configs_path=controlnet_configs_path
-            if len(controlnet_configs_path) > 0
-            else None,
+            controlnet_configs_path=(
+                controlnet_configs_path if len(controlnet_configs_path) > 0 else None
+            ),
             inpainting_controlnet_config_path=inpainting_controlnet_config_path,
             quant_config_path=quant_config_path,
             image_size=image_size,

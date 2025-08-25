@@ -34,9 +34,6 @@ from unitorch.models.peft import PeftModelForSequenceClassification, GenericPeft
 
 
 class LlavaMistralClipLoraForClassification(GenericPeftModel):
-    prefix_keys_in_state_dict = {
-        "^language_model.": "peft_model.base_model.",
-    }
     replace_keys_in_state_dict = {
         r"(language_model.*?)q_proj\.weight": r"\1q_proj.base_layer.weight",
         r"(language_model.*?)v_proj\.weight": r"\1v_proj.base_layer.weight",
@@ -77,17 +74,15 @@ class LlavaMistralClipLoraForClassification(GenericPeftModel):
             torch.randn(self.config.text_config.hidden_size, dtype=self.dtype)
             * embed_std
         )
-        language_model = MistralModel(self.config.text_config)
+        self.language_model = MistralModel(self.config.text_config)
 
         if quant_config_path is not None:
             quant_config = QuantizationConfig.from_json_file(quant_config_path)
             ignore_modules = target_modules + ["lm_head"]
-            language_model = quantize_model(
-                language_model, quant_config, ignore_modules=ignore_modules
+            self.language_model = quantize_model(
+                self.language_model, quant_config, ignore_modules=ignore_modules
             )
-        self.peft_model = PeftModelForSequenceClassification(
-            language_model, self.peft_config
-        )
+        self.language_model.add_adapter(self.peft_config)
         self.dropout = nn.Dropout(hidden_dropout_prob)
         self.classifier = nn.Linear(self.config.text_config.hidden_size, num_classes)
         self.init_weights()
@@ -144,7 +139,7 @@ class LlavaMistralClipLoraForClassification(GenericPeftModel):
         new_text_indices = new_positions[batch_indices, text_indices]
 
         input_ids[input_ids == self.image_token_index] = 0
-        text_embeds = self.peft_model.base_model.get_input_embeddings()(input_ids)
+        text_embeds = self.language_model.get_input_embeddings()(input_ids)
 
         batch_size, text_seq_length, text_dim = text_embeds.size()
 
@@ -175,7 +170,7 @@ class LlavaMistralClipLoraForClassification(GenericPeftModel):
         final_masks[overwrite_masks == 1] = 1
         position_ids = (final_masks.cumsum(dim=1) - 1).masked_fill(final_masks == 0, -1)
 
-        outputs = self.peft_model(
+        outputs = self.language_model(
             inputs_embeds=final_embeds,
             attention_mask=final_masks,
             position_ids=position_ids,
@@ -187,9 +182,6 @@ class LlavaMistralClipLoraForClassification(GenericPeftModel):
 
 
 class LlavaMistralClipLoraForGeneration(GenericPeftModel):
-    prefix_keys_in_state_dict = {
-        "^language_model.": "peft_model.base_model.",
-    }
     replace_keys_in_state_dict = {
         r"(language_model.*?)q_proj\.weight": r"\1q_proj.base_layer.weight",
         r"(language_model.*?)v_proj\.weight": r"\1v_proj.base_layer.weight",
@@ -228,16 +220,16 @@ class LlavaMistralClipLoraForGeneration(GenericPeftModel):
             torch.randn(self.config.text_config.hidden_size, dtype=self.dtype)
             * embed_std
         )
-        language_model = MistralForCausalLM(self.config.text_config)
+        self.language_model = MistralForCausalLM(self.config.text_config)
 
         if quant_config_path is not None:
             quant_config = QuantizationConfig.from_json_file(quant_config_path)
             ignore_modules = target_modules + ["lm_head"]
-            language_model = quantize_model(
-                language_model, quant_config, ignore_modules=ignore_modules
+            self.language_model = quantize_model(
+                self.language_model, quant_config, ignore_modules=ignore_modules
             )
 
-        self.peft_model = PeftModelForCausalLM(language_model, self.peft_config)
+        self.language_model.add_adapter(self.peft_config)
         self.init_weights()
 
         for param in self.vision_tower.parameters():
@@ -289,7 +281,7 @@ class LlavaMistralClipLoraForGeneration(GenericPeftModel):
         new_text_indices = new_positions[batch_indices, text_indices]
 
         input_ids[input_ids == self.image_token_index] = 0
-        text_embeds = self.peft_model.base_model.get_input_embeddings()(input_ids)
+        text_embeds = self.language_model.get_input_embeddings()(input_ids)
 
         batch_size, text_seq_length, text_dim = text_embeds.size()
 
@@ -320,7 +312,7 @@ class LlavaMistralClipLoraForGeneration(GenericPeftModel):
         final_masks[overwrite_masks == 1] = 1
         position_ids = (final_masks.cumsum(dim=1) - 1).masked_fill(final_masks == 0, -1)
 
-        outputs = self.peft_model(
+        outputs = self.language_model(
             inputs_embeds=final_embeds,
             attention_mask=final_masks,
             position_ids=position_ids,
@@ -403,7 +395,7 @@ class LlavaMistralClipLoraForGeneration(GenericPeftModel):
         new_text_indices = new_positions[batch_indices, text_indices]
 
         input_ids[input_ids == self.image_token_index] = 0
-        text_embeds = self.peft_model.base_model.get_input_embeddings()(input_ids)
+        text_embeds = self.language_model.get_input_embeddings()(input_ids)
 
         batch_size = text_embeds.size(0)
         text_seq_length, image_seq_length = text_embeds.size(1), image_embeds.size(1)
@@ -435,14 +427,13 @@ class LlavaMistralClipLoraForGeneration(GenericPeftModel):
         ].to(final_masks)
         final_masks[overwrite_masks == 1] = 1
         input_seq_length = final_embeds.size(1)
-        outputs = self.peft_model.generate(
+        outputs = self.language_model.generate(
             inputs_embeds=final_embeds,
             attention_mask=final_masks,
             max_length=max_gen_seq_length + input_seq_length,
             min_length=min_gen_seq_length + input_seq_length,
             num_beams=num_beams,
             do_sample=do_sample,
-            decoder_start_token_id=decoder_start_token_id,
             no_repeat_ngram_size=no_repeat_ngram_size,
             early_stopping=early_stopping,
             length_penalty=length_penalty,
@@ -482,9 +473,6 @@ class LlavaMistralClipLoraForGeneration(GenericPeftModel):
 
 
 class LlavaLlamaSiglipLoraForGeneration(GenericPeftModel):
-    prefix_keys_in_state_dict = {
-        "^language_model.": "peft_model.base_model.",
-    }
     replace_keys_in_state_dict = {
         r"(language_model.*?)q_proj\.weight": r"\1q_proj.base_layer.weight",
         r"(language_model.*?)v_proj\.weight": r"\1v_proj.base_layer.weight",
@@ -518,16 +506,16 @@ class LlavaLlamaSiglipLoraForGeneration(GenericPeftModel):
         )
         self.vision_tower = SiglipVisionModel(self.config.vision_config)
         self.multi_modal_projector = LlavaMultiModalProjector(self.config)
-        language_model = LlamaForCausalLM(self.config.text_config)
+        self.language_model = LlamaForCausalLM(self.config.text_config)
 
         if quant_config_path is not None:
             quant_config = QuantizationConfig.from_json_file(quant_config_path)
             ignore_modules = target_modules + ["lm_head"]
-            language_model = quantize_model(
-                language_model, quant_config, ignore_modules=ignore_modules
+            self.language_model = quantize_model(
+                self.language_model, quant_config, ignore_modules=ignore_modules
             )
 
-        self.peft_model = PeftModelForCausalLM(language_model, self.peft_config)
+        self.language_model.add_adapter(self.peft_config)
         self.init_weights()
 
         for param in self.vision_tower.parameters():
@@ -569,7 +557,7 @@ class LlavaLlamaSiglipLoraForGeneration(GenericPeftModel):
         new_text_indices = new_positions[batch_indices, text_indices]
 
         input_ids[input_ids == self.image_token_index] = 0
-        text_embeds = self.peft_model.base_model.get_input_embeddings()(input_ids)
+        text_embeds = self.language_model.get_input_embeddings()(input_ids)
 
         batch_size, text_seq_length, text_dim = text_embeds.size()
 
@@ -600,7 +588,7 @@ class LlavaLlamaSiglipLoraForGeneration(GenericPeftModel):
         final_masks[overwrite_masks == 1] = 1
         position_ids = (final_masks.cumsum(dim=1) - 1).masked_fill(final_masks == 0, -1)
 
-        outputs = self.peft_model(
+        outputs = self.language_model(
             inputs_embeds=final_embeds,
             attention_mask=final_masks,
             position_ids=position_ids,
@@ -677,7 +665,7 @@ class LlavaLlamaSiglipLoraForGeneration(GenericPeftModel):
         new_text_indices = new_positions[batch_indices, text_indices]
 
         input_ids[input_ids == self.image_token_index] = 0
-        text_embeds = self.peft_model.base_model.get_input_embeddings()(input_ids)
+        text_embeds = self.language_model.get_input_embeddings()(input_ids)
 
         batch_size = text_embeds.size(0)
         text_seq_length, image_seq_length = text_embeds.size(1), image_embeds.size(1)
@@ -709,14 +697,13 @@ class LlavaLlamaSiglipLoraForGeneration(GenericPeftModel):
         ].to(final_masks)
         final_masks[overwrite_masks == 1] = 1
         input_seq_length = final_embeds.size(1)
-        outputs = self.peft_model.generate(
+        outputs = self.language_model.generate(
             inputs_embeds=final_embeds,
             attention_mask=final_masks,
             max_length=max_gen_seq_length + input_seq_length,
             min_length=min_gen_seq_length + input_seq_length,
             num_beams=num_beams,
             do_sample=do_sample,
-            decoder_start_token_id=decoder_start_token_id,
             no_repeat_ngram_size=no_repeat_ngram_size,
             early_stopping=early_stopping,
             length_penalty=length_penalty,

@@ -11,6 +11,12 @@ pretrained_bloom_infos = {
         "tokenizer": hf_endpoint_url(
             "/bigscience/bloom-560m/resolve/main/tokenizer.json"
         ),
+        "tokenizer_config": hf_endpoint_url(
+            "/bigscience/bloom-560m/resolve/main/tokenizer_config.json"
+        ),
+        "special_tokens_map": hf_endpoint_url(
+            "/bigscience/bloom-560m/resolve/main/special_tokens_map.json"
+        ),
         "weight": hf_endpoint_url(
             "/bigscience/bloom-560m/resolve/main/pytorch_model.bin"
         ),
@@ -20,6 +26,12 @@ pretrained_bloom_infos = {
         "tokenizer": hf_endpoint_url(
             "/bigscience/bloom-3b/resolve/main/tokenizer.json"
         ),
+        "tokenizer_config": hf_endpoint_url(
+            "/bigscience/bloom-3b/resolve/main/tokenizer_config.json"
+        ),
+        "special_tokens_map": hf_endpoint_url(
+            "/bigscience/bloom-3b/resolve/main/special_tokens_map.json"
+        ),
         "weight": hf_endpoint_url(
             "/bigscience/bloom-3b/resolve/main/pytorch_model.bin"
         ),
@@ -28,6 +40,12 @@ pretrained_bloom_infos = {
         "config": hf_endpoint_url("/bigscience/bloom-7b1/resolve/main/config.json"),
         "tokenizer": hf_endpoint_url(
             "/bigscience/bloom-7b1/resolve/main/tokenizer.json"
+        ),
+        "tokenizer_config": hf_endpoint_url(
+            "/bigscience/bloom-7b1/resolve/main/tokenizer_config.json"
+        ),
+        "special_tokens_map": hf_endpoint_url(
+            "/bigscience/bloom-7b1/resolve/main/special_tokens_map.json"
         ),
         "weight": [
             hf_endpoint_url(
@@ -41,6 +59,12 @@ pretrained_bloom_infos = {
         "tokenizer": hf_endpoint_url(
             "/bigscience/bloomz-560m/resolve/main/tokenizer.json"
         ),
+        "tokenizer_config": hf_endpoint_url(
+            "/bigscience/bloomz-560m/resolve/main/tokenizer_config.json"
+        ),
+        "special_tokens_map": hf_endpoint_url(
+            "/bigscience/bloomz-560m/resolve/main/special_tokens_map.json"
+        ),
         "weight": hf_endpoint_url(
             "/bigscience/bloomz-560m/resolve/main/pytorch_model.bin"
         ),
@@ -50,6 +74,12 @@ pretrained_bloom_infos = {
         "tokenizer": hf_endpoint_url(
             "/bigscience/bloomz-3b/resolve/main/tokenizer.json"
         ),
+        "tokenizer_config": hf_endpoint_url(
+            "/bigscience/bloomz-3b/resolve/main/tokenizer_config.json"
+        ),
+        "special_tokens_map": hf_endpoint_url(
+            "/bigscience/bloomz-3b/resolve/main/special_tokens_map.json"
+        ),
         "weight": hf_endpoint_url(
             "/bigscience/bloomz-3b/resolve/main/pytorch_model.bin"
         ),
@@ -58,6 +88,12 @@ pretrained_bloom_infos = {
         "config": hf_endpoint_url("/bigscience/bloomz-7b1/resolve/main/config.json"),
         "tokenizer": hf_endpoint_url(
             "/bigscience/bloomz-7b1/resolve/main/tokenizer.json"
+        ),
+        "tokenizer_config": hf_endpoint_url(
+            "/bigscience/bloomz-7b1/resolve/main/tokenizer_config.json"
+        ),
+        "special_tokens_map": hf_endpoint_url(
+            "/bigscience/bloomz-7b1/resolve/main/special_tokens_map.json"
         ),
         "weight": hf_endpoint_url(
             "/bigscience/bloomz-7b1/resolve/main/pytorch_model.bin"
@@ -69,8 +105,3 @@ pretrained_bloom_extensions_infos = {}
 
 import unitorch.cli.models.bloom.modeling
 import unitorch.cli.models.bloom.processing
-from unitorch.cli.models.bloom.modeling import (
-    BloomForClassification,
-    BloomForGeneration,
-)
-from unitorch.cli.models.bloom.processing import BloomProcessor

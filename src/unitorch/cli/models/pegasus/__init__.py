@@ -27,5 +27,3 @@ pretrained_pegasus_infos = {
 
 import unitorch.cli.models.pegasus.modeling
 import unitorch.cli.models.pegasus.processing
-from unitorch.cli.models.pegasus.modeling import PegasusForGeneration
-from unitorch.cli.models.pegasus.processing import PegasusProcessor

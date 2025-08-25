@@ -72,7 +72,7 @@ class DetrWebUI(SimpleWebUI):
         start.click(self.start, inputs=[name], outputs=[status], trigger_mode="once")
         stop.click(self.stop, outputs=[status], trigger_mode="once")
         detect.click(
-            self.serve,
+            self.generate,
             inputs=[input_image, mask_threshold],
             outputs=[output_image],
             trigger_mode="once",
@@ -109,7 +109,7 @@ class DetrWebUI(SimpleWebUI):
         self._status = "Stopped" if self._pipe is None else "Running"
         return self._status
 
-    def serve(
+    def generate(
         self,
         image: Image.Image,
         mask_threshold: float = 0.5,

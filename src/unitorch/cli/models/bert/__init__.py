@@ -43,5 +43,3 @@ pretrained_bert_infos = {
 
 import unitorch.cli.models.bert.modeling
 import unitorch.cli.models.bert.processing
-from unitorch.cli.models.bert.modeling import BertForClassification
-from unitorch.cli.models.bert.processing import BertProcessor

@@ -29,6 +29,7 @@ from diffusers.pipelines import (
     FluxInpaintPipeline,
     FluxFillPipeline,
 )
+from diffusers.pipelines.flux.pipeline_flux_kontext import FluxKontextPipeline
 from unitorch.models import (
     GenericModel,
     GenericOutputs,
@@ -203,7 +204,7 @@ class GenericStableFluxLoraModel(GenericPeftModel, QuantizationMixin):
         )
         if enable_text_adapter:
             self.text.add_adapter(lora_config)
-            self.text2.add_adapter(lora_config)
+            # self.text2.add_adapter(lora_config)
         if enable_transformer_adapter:
             self.transformer.add_adapter(lora_config)
         if enable_redux_image_adapter and self.image is not None:
@@ -780,6 +781,1205 @@ class StableFluxLoraForImageInpainting(GenericStableFluxLoraModel):
             num_inference_steps=self.num_infer_timesteps,
             width=pixel_values.size(-1),
             height=pixel_values.size(-2),
+            guidance_scale=guidance_scale,
+            output_type="np.array",
+        ).images
+
+        return GenericOutputs(images=torch.from_numpy(images))
+
+
+class StableFluxLoraForKontext2ImageGeneration(GenericStableFluxLoraModel):
+    modules_to_save_checkpoints = ["lora", "redux_image"]
+
+    def __init__(
+        self,
+        config_path: str,
+        text_config_path: str,
+        text2_config_path: str,
+        vae_config_path: str,
+        scheduler_config_path: str,
+        image_config_path: Optional[str] = None,
+        redux_image_config_path: Optional[str] = None,
+        controlnet_configs_path: Union[str, List[str]] = None,
+        quant_config_path: Optional[str] = None,
+        image_size: Optional[int] = None,
+        in_channels: Optional[int] = None,
+        out_channels: Optional[int] = None,
+        num_train_timesteps: Optional[int] = 1000,
+        num_infer_timesteps: Optional[int] = 50,
+        snr_gamma: Optional[float] = 5.0,
+        lora_r: Optional[int] = 16,
+        lora_alpha: Optional[int] = 32,
+        lora_dropout: Optional[float] = 0.05,
+        fan_in_fan_out: Optional[bool] = True,
+        target_modules: Optional[Union[List[str], str]] = [
+            "to_q",
+            "to_k",
+            "to_v",
+            "q_proj",
+            "k_proj",
+            "v_proj",
+            "add_q_proj",
+            "add_k_proj",
+            "add_v_proj",
+        ],
+        enable_text_adapter: Optional[bool] = True,
+        enable_transformer_adapter: Optional[bool] = True,
+        enable_redux_image_adapter: Optional[bool] = True,
+        seed: Optional[int] = 1123,
+        gradient_checkpointing: Optional[bool] = True,
+        guidance_scale: Optional[float] = 3.5,
+    ):
+        super().__init__(
+            config_path=config_path,
+            text_config_path=text_config_path,
+            text2_config_path=text2_config_path,
+            vae_config_path=vae_config_path,
+            scheduler_config_path=scheduler_config_path,
+            image_config_path=image_config_path,
+            redux_image_config_path=redux_image_config_path,
+            controlnet_configs_path=controlnet_configs_path,
+            quant_config_path=quant_config_path,
+            image_size=image_size,
+            in_channels=in_channels,
+            out_channels=out_channels,
+            num_train_timesteps=num_train_timesteps,
+            num_infer_timesteps=num_infer_timesteps,
+            snr_gamma=snr_gamma,
+            lora_r=lora_r,
+            lora_alpha=lora_alpha,
+            lora_dropout=lora_dropout,
+            fan_in_fan_out=fan_in_fan_out,
+            target_modules=target_modules,
+            enable_text_adapter=enable_text_adapter,
+            enable_transformer_adapter=enable_transformer_adapter,
+            enable_redux_image_adapter=enable_redux_image_adapter,
+            seed=seed,
+        )
+
+        if gradient_checkpointing:
+            self.transformer.enable_gradient_checkpointing()
+
+        if enable_redux_image_adapter and self.redux_image is not None:
+            for param in self.redux_image.parameters():
+                param.requires_grad = True
+
+        self.pipeline = FluxKontextPipeline(
+            vae=self.vae,
+            text_encoder=self.text,
+            text_encoder_2=self.text2,
+            transformer=self.transformer,
+            scheduler=self.scheduler,
+            tokenizer=None,
+            tokenizer_2=None,
+        )
+        self.pipeline.set_progress_bar_config(disable=True)
+        self.guidance_scale = guidance_scale
+        self.prompt_embeds_scale = 1.0
+        self.pooled_prompt_embeds_scale = 1.0
+
+    def forward(
+        self,
+        input_ids: torch.Tensor,
+        input2_ids: torch.Tensor,
+        pixel_values: torch.Tensor,
+        kontext_pixel_values: torch.Tensor,
+        redux_pixel_values: Optional[torch.Tensor] = None,
+        attention_mask: Optional[torch.Tensor] = None,
+        attention2_mask: Optional[torch.Tensor] = None,
+    ):
+        outputs = self.get_prompt_outputs(
+            input_ids=input_ids,
+            input2_ids=input2_ids,
+            attention_mask=attention_mask,
+            attention2_mask=attention2_mask,
+        )
+        prompt_embeds = outputs.prompt_embeds.to(torch.bfloat16)
+        pooled_prompt_embeds = outputs.pooled_prompt_embeds.to(torch.bfloat16)
+
+        if (
+            redux_pixel_values is not None
+            and self.image is not None
+            and self.redux_image is not None
+        ):
+            redux_image_embeds = self.image(redux_pixel_values).last_hidden_state
+            redux_image_embeds = self.redux_image(redux_image_embeds).image_embeds
+            prompt_embeds = (
+                torch.cat([prompt_embeds, redux_image_embeds], dim=1)
+                * self.prompt_embeds_scale
+            )
+            pooled_prompt_embeds = (
+                pooled_prompt_embeds * self.pooled_prompt_embeds_scale
+            )
+
+        latents = self.vae.encode(pixel_values).latent_dist.sample()
+        kontext_latents = self.vae.encode(kontext_pixel_values).latent_dist.mode()
+        latents = (
+            latents - self.vae.config.shift_factor
+        ) * self.vae.config.scaling_factor
+        kontext_latents = (
+            kontext_latents - self.vae.config.shift_factor
+        ) * self.vae.config.scaling_factor
+        latent_image_ids = _prepare_latent_image_ids(
+            latents.shape[0],
+            latents.shape[2] // 2,
+            latents.shape[3] // 2,
+            self.device,
+            self.dtype,
+        )
+        kontext_image_ids = _prepare_latent_image_ids(
+            kontext_latents.shape[0],
+            kontext_latents.shape[2] // 2,
+            kontext_latents.shape[3] // 2,
+            self.device,
+            self.dtype,
+        )
+        kontext_image_ids[..., 0] = 1
+
+        noise = torch.randn(latents.shape).to(latents.device)
+        batch = latents.shape[0]
+
+        u = compute_density_for_timestep_sampling(
+            weighting_scheme="none",
+            batch_size=batch,
+            logit_mean=0.0,
+            logit_std=1.0,
+            mode_scale=1.29,
+        )
+        indices = (u * self.scheduler.config.num_train_timesteps).long()
+        timesteps = self.scheduler.timesteps[indices].to(device=self.device)
+
+        sigmas = self.get_sigmas(timesteps, n_dim=latents.ndim, dtype=latents.dtype)
+        noise_latents = (1.0 - sigmas) * latents + sigmas * noise
+
+        noise_latents = _pack_latents(
+            noise_latents,
+            batch_size=latents.shape[0],
+            num_channels_latents=latents.shape[1],
+            height=latents.shape[2],
+            width=latents.shape[3],
+        )
+        kontext_latents = _pack_latents(
+            kontext_latents,
+            batch_size=kontext_latents.shape[0],
+            num_channels_latents=kontext_latents.shape[1],
+            height=kontext_latents.shape[2],
+            width=kontext_latents.shape[3],
+        )
+        latent_ids = torch.cat([latent_image_ids, kontext_image_ids], dim=0)
+        latent_model_input = torch.cat([noise_latents, kontext_latents], dim=1)
+
+        text_ids = torch.zeros(prompt_embeds.shape[1], 3).to(
+            device=self.device, dtype=self.dtype
+        )
+
+        if self.transformer.config.guidance_embeds:
+            guidance = torch.full(
+                [1], self.guidance_scale, device=self.device, dtype=torch.float32
+            )
+            guidance = guidance.expand(latents.shape[0])
+        else:
+            guidance = None
+
+        outputs = self.transformer(
+            hidden_states=latent_model_input,
+            timestep=timesteps / 1000,
+            guidance=guidance,
+            encoder_hidden_states=prompt_embeds,
+            pooled_projections=pooled_prompt_embeds,
+            txt_ids=text_ids,
+            img_ids=latent_ids,
+            return_dict=False,
+        )[0]
+        outputs = outputs[:, : noise_latents.shape[1]]
+
+        vae_scale_factor = 2 ** (len(self.vae.config.block_out_channels) - 1)
+        outputs = _unpack_latents(
+            outputs,
+            height=latents.shape[2] * vae_scale_factor,
+            width=latents.shape[3] * vae_scale_factor,
+            vae_scale_factor=vae_scale_factor,
+        )
+
+        weighting = compute_loss_weighting_for_sd3(
+            weighting_scheme="none", sigmas=sigmas
+        )
+        target = noise - latents
+        loss = torch.mean(
+            (weighting.float() * (outputs.float() - target.float()) ** 2).reshape(
+                target.shape[0], -1
+            ),
+            1,
+        )
+        loss = loss.mean()
+        return loss
+
+    def generate(
+        self,
+        input_ids: torch.Tensor,
+        input2_ids: torch.Tensor,
+        kontext_pixel_values: torch.Tensor,
+        redux_pixel_values: Optional[torch.Tensor] = None,
+        attention_mask: Optional[torch.Tensor] = None,
+        attention2_mask: Optional[torch.Tensor] = None,
+        height: Optional[int] = 1024,
+        width: Optional[int] = 1024,
+        guidance_scale: Optional[float] = 3.5,
+    ):
+        outputs = self.get_prompt_outputs(
+            input_ids=input_ids,
+            input2_ids=input2_ids,
+            attention_mask=attention_mask,
+            attention2_mask=attention2_mask,
+        )
+
+        prompt_embeds = outputs.prompt_embeds.to(torch.bfloat16)
+        pooled_prompt_embeds = outputs.pooled_prompt_embeds.to(torch.bfloat16)
+        if (
+            redux_pixel_values is not None
+            and self.image is not None
+            and self.redux_image is not None
+        ):
+            redux_image_embeds = self.image(redux_pixel_values).last_hidden_state
+            redux_image_embeds = self.redux_image(redux_image_embeds).image_embeds
+            prompt_embeds = (
+                torch.cat([prompt_embeds, redux_image_embeds], dim=1)
+                * self.prompt_embeds_scale
+            )
+            pooled_prompt_embeds = (
+                pooled_prompt_embeds * self.pooled_prompt_embeds_scale
+            )
+
+        images = self.pipeline(
+            image=kontext_pixel_values.to(torch.bfloat16),
+            prompt_embeds=prompt_embeds.to(torch.bfloat16),
+            pooled_prompt_embeds=pooled_prompt_embeds.to(torch.bfloat16),
+            generator=torch.Generator(device=self.pipeline.device).manual_seed(
+                self.seed
+            ),
+            num_inference_steps=self.num_infer_timesteps,
+            height=height,
+            width=width,
+            guidance_scale=guidance_scale,
+            output_type="np.array",
+        ).images
+
+        return GenericOutputs(images=torch.from_numpy(images))
+
+
+class StableFluxDPOLoraForText2ImageGeneration(GenericStableFluxLoraModel):
+    modules_to_save_checkpoints = ["lora"]
+
+    def __init__(
+        self,
+        config_path: str,
+        text_config_path: str,
+        text2_config_path: str,
+        vae_config_path: str,
+        scheduler_config_path: str,
+        image_config_path: Optional[str] = None,
+        redux_image_config_path: Optional[str] = None,
+        controlnet_configs_path: Union[str, List[str]] = None,
+        quant_config_path: Optional[str] = None,
+        image_size: Optional[int] = None,
+        in_channels: Optional[int] = None,
+        out_channels: Optional[int] = None,
+        num_train_timesteps: Optional[int] = 1000,
+        num_infer_timesteps: Optional[int] = 50,
+        snr_gamma: Optional[float] = 5.0,
+        lora_r: Optional[int] = 16,
+        lora_alpha: Optional[int] = 32,
+        lora_dropout: Optional[float] = 0.05,
+        fan_in_fan_out: Optional[bool] = True,
+        target_modules: Optional[Union[List[str], str]] = [
+            "to_q",
+            "to_k",
+            "to_v",
+            "q_proj",
+            "k_proj",
+            "v_proj",
+            "add_q_proj",
+            "add_k_proj",
+            "add_v_proj",
+        ],
+        enable_transformer_adapter: Optional[bool] = True,
+        seed: Optional[int] = 1123,
+        gradient_checkpointing: Optional[bool] = True,
+        guidance_scale: Optional[float] = 3.5,
+        dpo_beta: Optional[float] = 2500,
+    ):
+        super().__init__(
+            config_path=config_path,
+            text_config_path=text_config_path,
+            text2_config_path=text2_config_path,
+            vae_config_path=vae_config_path,
+            scheduler_config_path=scheduler_config_path,
+            image_config_path=image_config_path,
+            redux_image_config_path=redux_image_config_path,
+            controlnet_configs_path=controlnet_configs_path,
+            quant_config_path=quant_config_path,
+            image_size=image_size,
+            in_channels=in_channels,
+            out_channels=out_channels,
+            num_train_timesteps=num_train_timesteps,
+            num_infer_timesteps=num_infer_timesteps,
+            snr_gamma=snr_gamma,
+            lora_r=lora_r,
+            lora_alpha=lora_alpha,
+            lora_dropout=lora_dropout,
+            fan_in_fan_out=fan_in_fan_out,
+            target_modules=target_modules,
+            enable_text_adapter=False,
+            enable_transformer_adapter=enable_transformer_adapter,
+            enable_redux_image_adapter=False,
+            seed=seed,
+        )
+
+        if gradient_checkpointing:
+            self.transformer.enable_gradient_checkpointing()
+
+        self.pipeline = FluxPipeline(
+            vae=self.vae,
+            text_encoder=self.text,
+            text_encoder_2=self.text2,
+            transformer=self.transformer,
+            scheduler=self.scheduler,
+            tokenizer=None,
+            tokenizer_2=None,
+        )
+        self.pipeline.set_progress_bar_config(disable=True)
+        self.guidance_scale = guidance_scale
+        self.prompt_embeds_scale = 1.0
+        self.pooled_prompt_embeds_scale = 1.0
+        self.dpo_beta = dpo_beta
+
+    def forward(
+        self,
+        input_ids: torch.Tensor,
+        input2_ids: torch.Tensor,
+        win_pixel_values: torch.Tensor,
+        lose_pixel_values: torch.Tensor,
+        redux_pixel_values: Optional[torch.Tensor] = None,
+        attention_mask: Optional[torch.Tensor] = None,
+        attention2_mask: Optional[torch.Tensor] = None,
+    ):
+        outputs = self.get_prompt_outputs(
+            input_ids=input_ids,
+            input2_ids=input2_ids,
+            attention_mask=attention_mask,
+            attention2_mask=attention2_mask,
+        )
+        prompt_embeds = outputs.prompt_embeds.to(torch.bfloat16)
+        pooled_prompt_embeds = outputs.pooled_prompt_embeds.to(torch.bfloat16)
+
+        if (
+            redux_pixel_values is not None
+            and self.image is not None
+            and self.redux_image is not None
+        ):
+            redux_image_embeds = self.image(redux_pixel_values).last_hidden_state
+            redux_image_embeds = self.redux_image(redux_image_embeds).image_embeds
+            prompt_embeds = (
+                torch.cat([prompt_embeds, redux_image_embeds], dim=1)
+                * self.prompt_embeds_scale
+            )
+            pooled_prompt_embeds = (
+                pooled_prompt_embeds * self.pooled_prompt_embeds_scale
+            )
+
+        pixel_values = torch.cat([win_pixel_values, lose_pixel_values], dim=0)
+        prompt_embeds = torch.cat([prompt_embeds, prompt_embeds], dim=0)
+        pooled_prompt_embeds = torch.cat(
+            [pooled_prompt_embeds, pooled_prompt_embeds], dim=0
+        )
+
+        latents = self.vae.encode(pixel_values).latent_dist.sample()
+        latents = (
+            latents - self.vae.config.shift_factor
+        ) * self.vae.config.scaling_factor
+        latent_image_ids = _prepare_latent_image_ids(
+            latents.shape[0],
+            latents.shape[2] // 2,
+            latents.shape[3] // 2,
+            self.device,
+            self.dtype,
+        )
+
+        noise = torch.randn(latents.shape).to(latents.device)
+        batch = latents.shape[0]
+
+        u = compute_density_for_timestep_sampling(
+            weighting_scheme="none",
+            batch_size=batch,
+            logit_mean=0.0,
+            logit_std=1.0,
+            mode_scale=1.29,
+        )
+        indices = (u * self.scheduler.config.num_train_timesteps).long()
+        timesteps = self.scheduler.timesteps[indices].to(device=self.device)
+
+        sigmas = self.get_sigmas(timesteps, n_dim=latents.ndim, dtype=latents.dtype)
+        noise_latents = (1.0 - sigmas) * latents + sigmas * noise
+
+        noise_latents = _pack_latents(
+            noise_latents,
+            batch_size=latents.shape[0],
+            num_channels_latents=latents.shape[1],
+            height=latents.shape[2],
+            width=latents.shape[3],
+        )
+
+        text_ids = torch.zeros(prompt_embeds.shape[1], 3).to(
+            device=self.device, dtype=self.dtype
+        )
+
+        if self.transformer.config.guidance_embeds:
+            guidance = torch.full(
+                [1], self.guidance_scale, device=self.device, dtype=torch.float32
+            )
+            guidance = guidance.expand(latents.shape[0])
+        else:
+            guidance = None
+
+        outputs = self.transformer(
+            hidden_states=noise_latents,
+            timestep=timesteps / 1000,
+            guidance=guidance,
+            encoder_hidden_states=prompt_embeds,
+            pooled_projections=pooled_prompt_embeds,
+            txt_ids=text_ids,
+            img_ids=latent_image_ids,
+            return_dict=False,
+        )[0]
+
+        vae_scale_factor = 2 ** (len(self.vae.config.block_out_channels) - 1)
+        outputs = _unpack_latents(
+            outputs,
+            height=latents.shape[2] * vae_scale_factor,
+            width=latents.shape[3] * vae_scale_factor,
+            vae_scale_factor=vae_scale_factor,
+        )
+
+        with torch.no_grad():
+            self.transformer.disable_adapters()
+            ref_outputs = self.transformer(
+                hidden_states=noise_latents,
+                timestep=timesteps / 1000,
+                guidance=guidance,
+                encoder_hidden_states=prompt_embeds,
+                pooled_projections=pooled_prompt_embeds,
+                txt_ids=text_ids,
+                img_ids=latent_image_ids,
+                return_dict=False,
+            )[0]
+            ref_outputs = _unpack_latents(
+                ref_outputs,
+                height=latents.shape[2] * vae_scale_factor,
+                width=latents.shape[3] * vae_scale_factor,
+                vae_scale_factor=vae_scale_factor,
+            )
+            self.transformer.enable_adapters()
+
+        weighting = compute_loss_weighting_for_sd3(
+            weighting_scheme="none", sigmas=sigmas
+        )
+        target = noise - latents
+        loss = torch.mean(
+            (weighting.float() * (outputs.float() - target.float()) ** 2).reshape(
+                target.shape[0], -1
+            ),
+            1,
+        )
+        ref_loss = torch.mean(
+            (weighting.float() * (ref_outputs.float() - target.float()) ** 2).reshape(
+                target.shape[0], -1
+            ),
+            1,
+        )
+        win_loss, lose_loss = loss.chunk(2, dim=0)
+        ref_win_loss, ref_lose_loss = ref_loss.chunk(2, dim=0)
+        diff, ref_diff = win_loss - lose_loss, ref_win_loss - ref_lose_loss
+        loss = -1 * F.logsigmoid(self.dpo_beta * (ref_diff - diff)).mean()
+        return loss
+
+    def generate(
+        self,
+        input_ids: torch.Tensor,
+        input2_ids: torch.Tensor,
+        redux_pixel_values: Optional[torch.Tensor] = None,
+        attention_mask: Optional[torch.Tensor] = None,
+        attention2_mask: Optional[torch.Tensor] = None,
+        height: Optional[int] = 1024,
+        width: Optional[int] = 1024,
+        guidance_scale: Optional[float] = 3.5,
+    ):
+        outputs = self.get_prompt_outputs(
+            input_ids=input_ids,
+            input2_ids=input2_ids,
+            attention_mask=attention_mask,
+            attention2_mask=attention2_mask,
+        )
+
+        prompt_embeds = outputs.prompt_embeds.to(torch.bfloat16)
+        pooled_prompt_embeds = outputs.pooled_prompt_embeds.to(torch.bfloat16)
+        if (
+            redux_pixel_values is not None
+            and self.image is not None
+            and self.redux_image is not None
+        ):
+            redux_image_embeds = self.image(redux_pixel_values).last_hidden_state
+            redux_image_embeds = self.redux_image(redux_image_embeds).image_embeds
+            prompt_embeds = (
+                torch.cat([prompt_embeds, redux_image_embeds], dim=1)
+                * self.prompt_embeds_scale
+            )
+            pooled_prompt_embeds = (
+                pooled_prompt_embeds * self.pooled_prompt_embeds_scale
+            )
+
+        images = self.pipeline(
+            prompt_embeds=prompt_embeds.to(torch.bfloat16),
+            pooled_prompt_embeds=pooled_prompt_embeds.to(torch.bfloat16),
+            generator=torch.Generator(device=self.pipeline.device).manual_seed(
+                self.seed
+            ),
+            num_inference_steps=self.num_infer_timesteps,
+            height=height,
+            width=width,
+            guidance_scale=guidance_scale,
+            output_type="np.array",
+        ).images
+
+        return GenericOutputs(images=torch.from_numpy(images))
+
+
+class StableFluxDPOLoraForImageInpainting(GenericStableFluxLoraModel):
+    modules_to_save_checkpoints = ["lora"]
+
+    def __init__(
+        self,
+        config_path: str,
+        text_config_path: str,
+        text2_config_path: str,
+        vae_config_path: str,
+        scheduler_config_path: str,
+        image_config_path: Optional[str] = None,
+        redux_image_config_path: Optional[str] = None,
+        controlnet_configs_path: Union[str, List[str]] = None,
+        quant_config_path: Optional[str] = None,
+        image_size: Optional[int] = None,
+        in_channels: Optional[int] = None,
+        out_channels: Optional[int] = None,
+        num_train_timesteps: Optional[int] = 1000,
+        num_infer_timesteps: Optional[int] = 50,
+        snr_gamma: Optional[float] = 5.0,
+        lora_r: Optional[int] = 16,
+        lora_alpha: Optional[int] = 32,
+        lora_dropout: Optional[float] = 0.05,
+        fan_in_fan_out: Optional[bool] = True,
+        target_modules: Optional[Union[List[str], str]] = [
+            "to_q",
+            "to_k",
+            "to_v",
+            "q_proj",
+            "k_proj",
+            "v_proj",
+            "add_q_proj",
+            "add_k_proj",
+            "add_v_proj",
+        ],
+        enable_transformer_adapter: Optional[bool] = True,
+        seed: Optional[int] = 1123,
+        gradient_checkpointing: Optional[bool] = True,
+        guidance_scale: Optional[float] = 3.5,
+        dpo_beta: Optional[float] = 2500,
+    ):
+        super().__init__(
+            config_path=config_path,
+            text_config_path=text_config_path,
+            text2_config_path=text2_config_path,
+            vae_config_path=vae_config_path,
+            image_config_path=image_config_path,
+            redux_image_config_path=redux_image_config_path,
+            scheduler_config_path=scheduler_config_path,
+            controlnet_configs_path=controlnet_configs_path,
+            quant_config_path=quant_config_path,
+            image_size=image_size,
+            in_channels=in_channels,
+            out_channels=out_channels,
+            num_train_timesteps=num_train_timesteps,
+            num_infer_timesteps=num_infer_timesteps,
+            snr_gamma=snr_gamma,
+            lora_r=lora_r,
+            lora_alpha=lora_alpha,
+            lora_dropout=lora_dropout,
+            fan_in_fan_out=fan_in_fan_out,
+            target_modules=target_modules,
+            enable_text_adapter=False,
+            enable_transformer_adapter=enable_transformer_adapter,
+            enable_redux_image_adapter=False,
+            seed=seed,
+        )
+        if gradient_checkpointing:
+            self.transformer.enable_gradient_checkpointing()
+
+        self.pipeline = FluxFillPipeline(
+            vae=self.vae,
+            text_encoder=self.text,
+            text_encoder_2=self.text2,
+            transformer=self.transformer,
+            scheduler=self.scheduler,
+            tokenizer=None,
+            tokenizer_2=None,
+        )
+        self.pipeline.set_progress_bar_config(disable=True)
+        self.guidance_scale = guidance_scale
+        self.prompt_embeds_scale = 1.0
+        self.pooled_prompt_embeds_scale = 1.0
+        self.num_channels_transformer = self.transformer.config.in_channels
+        self.dpo_beta = dpo_beta
+
+    def forward(
+        self,
+        input_ids: torch.Tensor,
+        input2_ids: torch.Tensor,
+        win_pixel_values: torch.Tensor,
+        lose_pixel_values: torch.Tensor,
+        pixel_masks: torch.Tensor,
+        redux_pixel_values: Optional[torch.Tensor] = None,
+        attention_mask: Optional[torch.Tensor] = None,
+        attention2_mask: Optional[torch.Tensor] = None,
+    ):
+        outputs = self.get_prompt_outputs(
+            input_ids=input_ids,
+            input2_ids=input2_ids,
+            attention_mask=attention_mask,
+            attention2_mask=attention2_mask,
+        )
+        prompt_embeds = outputs.prompt_embeds.to(torch.bfloat16)
+        pooled_prompt_embeds = outputs.pooled_prompt_embeds.to(torch.bfloat16)
+        if (
+            redux_pixel_values is not None
+            and self.image is not None
+            and self.redux_image is not None
+        ):
+            redux_image_embeds = self.image(redux_pixel_values).last_hidden_state
+            redux_image_embeds = self.redux_image(redux_image_embeds).image_embeds
+            prompt_embeds = (
+                torch.cat([prompt_embeds, redux_image_embeds], dim=1)
+                * self.prompt_embeds_scale
+            )
+            pooled_prompt_embeds = (
+                pooled_prompt_embeds * self.pooled_prompt_embeds_scale
+            )
+
+        pixel_values = torch.cat([win_pixel_values, lose_pixel_values], dim=0)
+        pixel_masks = torch.cat([pixel_masks, pixel_masks], dim=0)
+        prompt_embeds = torch.cat([prompt_embeds, prompt_embeds], dim=0)
+        pooled_prompt_embeds = torch.cat(
+            [pooled_prompt_embeds, pooled_prompt_embeds], dim=0
+        )
+
+        latents = self.vae.encode(pixel_values).latent_dist.sample()
+        latents = (
+            latents - self.vae.config.shift_factor
+        ) * self.vae.config.scaling_factor
+        latent_image_ids = _prepare_latent_image_ids(
+            latents.shape[0],
+            latents.shape[2] // 2,
+            latents.shape[3] // 2,
+            self.device,
+            self.dtype,
+        )
+
+        noise = torch.randn(latents.shape).to(latents.device)
+        batch = latents.shape[0]
+
+        u = compute_density_for_timestep_sampling(
+            weighting_scheme="none",
+            batch_size=batch,
+            logit_mean=0.0,
+            logit_std=1.0,
+            mode_scale=1.29,
+        )
+        indices = (u * self.scheduler.config.num_train_timesteps).long()
+        timesteps = self.scheduler.timesteps[indices].to(device=self.device)
+
+        sigmas = self.get_sigmas(timesteps, n_dim=latents.ndim, dtype=latents.dtype)
+        noise_latents = (1.0 - sigmas) * latents + sigmas * noise
+        vae_scale_factor = 2 ** (len(self.vae.config.block_out_channels) - 1)
+
+        if self.num_channels_transformer == 384:
+            masked_pixel_values = pixel_values.clone()
+            masked_pixel_masks = pixel_masks.clone()
+            masked_pixel_masks = masked_pixel_masks.expand_as(masked_pixel_values)
+            masked_pixel_values[masked_pixel_masks > 0.5] = 0.0
+            masked_latents = self.vae.encode(masked_pixel_values).latent_dist.sample()
+            masked_latents = (
+                masked_latents - self.vae.config.shift_factor
+            ) * self.vae.config.scaling_factor
+
+            batch_size, _, height, width = pixel_masks.shape
+            height = 2 * (int(height) // (vae_scale_factor * 2))
+            width = 2 * (int(width) // (vae_scale_factor * 2))
+            pixel_masks = pixel_masks[:, 0, :, :].view(
+                batch_size, height, vae_scale_factor, width, vae_scale_factor
+            )
+            pixel_masks = pixel_masks.permute(
+                0, 2, 4, 1, 3
+            )  # batch_size, 8, 8, height, width
+            pixel_masks = pixel_masks.reshape(
+                batch_size, vae_scale_factor * vae_scale_factor, height, width
+            )
+
+            latent_model_input = torch.cat(
+                [noise_latents, masked_latents, pixel_masks], dim=1
+            )
+        else:
+            latent_model_input = noise_latents
+
+        latent_model_input = _pack_latents(
+            latent_model_input,
+            batch_size=latents.shape[0],
+            num_channels_latents=latent_model_input.shape[1],
+            height=latents.shape[2],
+            width=latents.shape[3],
+        )
+
+        text_ids = torch.zeros(prompt_embeds.shape[1], 3).to(
+            device=self.device, dtype=self.dtype
+        )
+
+        if self.transformer.config.guidance_embeds:
+            guidance = torch.full(
+                [1], self.guidance_scale, device=self.device, dtype=torch.float32
+            )
+            guidance = guidance.expand(latents.shape[0])
+        else:
+            guidance = None
+
+        outputs = self.transformer(
+            hidden_states=latent_model_input,
+            timestep=timesteps / 1000,
+            guidance=guidance,
+            encoder_hidden_states=prompt_embeds,
+            pooled_projections=pooled_prompt_embeds,
+            txt_ids=text_ids,
+            img_ids=latent_image_ids,
+            return_dict=False,
+        )[0]
+
+        outputs = _unpack_latents(
+            outputs,
+            height=latents.shape[2] * vae_scale_factor,
+            width=latents.shape[3] * vae_scale_factor,
+            vae_scale_factor=vae_scale_factor,
+        )
+
+        with torch.no_grad():
+            self.transformer.disable_adapters()
+            ref_outputs = self.transformer(
+                hidden_states=latent_model_input,
+                timestep=timesteps / 1000,
+                guidance=guidance,
+                encoder_hidden_states=prompt_embeds,
+                pooled_projections=pooled_prompt_embeds,
+                txt_ids=text_ids,
+                img_ids=latent_image_ids,
+                return_dict=False,
+            )[0]
+            ref_outputs = _unpack_latents(
+                ref_outputs,
+                height=latents.shape[2] * vae_scale_factor,
+                width=latents.shape[3] * vae_scale_factor,
+                vae_scale_factor=vae_scale_factor,
+            )
+            self.transformer.enable_adapters()
+
+        weighting = compute_loss_weighting_for_sd3(
+            weighting_scheme="none", sigmas=sigmas
+        )
+        target = noise - latents
+        loss = torch.mean(
+            (weighting.float() * (outputs.float() - target.float()) ** 2).reshape(
+                target.shape[0], -1
+            ),
+            1,
+        )
+        ref_loss = torch.mean(
+            (weighting.float() * (ref_outputs.float() - target.float()) ** 2).reshape(
+                target.shape[0], -1
+            ),
+            1,
+        )
+        win_loss, lose_loss = loss.chunk(2, dim=0)
+        ref_win_loss, ref_lose_loss = ref_loss.chunk(2, dim=0)
+        diff, ref_diff = win_loss - lose_loss, ref_win_loss - ref_lose_loss
+        loss = -1 * F.logsigmoid(self.dpo_beta * (ref_diff - diff)).mean()
+        return loss
+
+    def generate(
+        self,
+        pixel_values: torch.Tensor,
+        pixel_masks: torch.Tensor,
+        input_ids: torch.Tensor,
+        input2_ids: torch.Tensor,
+        redux_pixel_values: Optional[torch.Tensor] = None,
+        attention_mask: Optional[torch.Tensor] = None,
+        attention2_mask: Optional[torch.Tensor] = None,
+        strength: Optional[float] = 1.0,
+        guidance_scale: Optional[float] = 3.5,
+    ):
+        outputs = self.get_prompt_outputs(
+            input_ids=input_ids,
+            input2_ids=input2_ids,
+            attention_mask=attention_mask,
+            attention2_mask=attention2_mask,
+        )
+
+        prompt_embeds = outputs.prompt_embeds.to(torch.bfloat16)
+        pooled_prompt_embeds = outputs.pooled_prompt_embeds.to(torch.bfloat16)
+
+        if (
+            redux_pixel_values is not None
+            and self.image is not None
+            and self.redux_image is not None
+        ):
+            redux_image_embeds = self.image(redux_pixel_values).last_hidden_state
+            redux_image_embeds = self.redux_image(redux_image_embeds).image_embeds
+            prompt_embeds = (
+                torch.cat([prompt_embeds, redux_image_embeds], dim=1)
+                * self.prompt_embeds_scale
+            )
+            pooled_prompt_embeds = (
+                pooled_prompt_embeds * self.pooled_prompt_embeds_scale
+            )
+
+        images = self.pipeline(
+            image=pixel_values,
+            mask_image=pixel_masks,
+            prompt_embeds=prompt_embeds.to(torch.bfloat16),
+            pooled_prompt_embeds=pooled_prompt_embeds.to(torch.bfloat16),
+            generator=torch.Generator(device=self.pipeline.device).manual_seed(
+                self.seed
+            ),
+            num_inference_steps=self.num_infer_timesteps,
+            width=pixel_values.size(-1),
+            height=pixel_values.size(-2),
+            guidance_scale=guidance_scale,
+            output_type="np.array",
+        ).images
+
+        return GenericOutputs(images=torch.from_numpy(images))
+
+
+class StableFluxDPOLoraForKontext2ImageGeneration(GenericStableFluxLoraModel):
+    modules_to_save_checkpoints = ["lora"]
+
+    def __init__(
+        self,
+        config_path: str,
+        text_config_path: str,
+        text2_config_path: str,
+        vae_config_path: str,
+        scheduler_config_path: str,
+        image_config_path: Optional[str] = None,
+        redux_image_config_path: Optional[str] = None,
+        controlnet_configs_path: Union[str, List[str]] = None,
+        quant_config_path: Optional[str] = None,
+        image_size: Optional[int] = None,
+        in_channels: Optional[int] = None,
+        out_channels: Optional[int] = None,
+        num_train_timesteps: Optional[int] = 1000,
+        num_infer_timesteps: Optional[int] = 50,
+        snr_gamma: Optional[float] = 5.0,
+        lora_r: Optional[int] = 16,
+        lora_alpha: Optional[int] = 32,
+        lora_dropout: Optional[float] = 0.05,
+        fan_in_fan_out: Optional[bool] = True,
+        target_modules: Optional[Union[List[str], str]] = [
+            "to_q",
+            "to_k",
+            "to_v",
+            "q_proj",
+            "k_proj",
+            "v_proj",
+            "add_q_proj",
+            "add_k_proj",
+            "add_v_proj",
+        ],
+        enable_transformer_adapter: Optional[bool] = True,
+        seed: Optional[int] = 1123,
+        gradient_checkpointing: Optional[bool] = True,
+        guidance_scale: Optional[float] = 3.5,
+        dpo_beta: Optional[float] = 2500,
+    ):
+        super().__init__(
+            config_path=config_path,
+            text_config_path=text_config_path,
+            text2_config_path=text2_config_path,
+            vae_config_path=vae_config_path,
+            scheduler_config_path=scheduler_config_path,
+            image_config_path=image_config_path,
+            redux_image_config_path=redux_image_config_path,
+            controlnet_configs_path=controlnet_configs_path,
+            quant_config_path=quant_config_path,
+            image_size=image_size,
+            in_channels=in_channels,
+            out_channels=out_channels,
+            num_train_timesteps=num_train_timesteps,
+            num_infer_timesteps=num_infer_timesteps,
+            snr_gamma=snr_gamma,
+            lora_r=lora_r,
+            lora_alpha=lora_alpha,
+            lora_dropout=lora_dropout,
+            fan_in_fan_out=fan_in_fan_out,
+            target_modules=target_modules,
+            enable_text_adapter=False,
+            enable_transformer_adapter=enable_transformer_adapter,
+            enable_redux_image_adapter=False,
+            seed=seed,
+        )
+
+        if gradient_checkpointing:
+            self.transformer.enable_gradient_checkpointing()
+
+        self.pipeline = FluxKontextPipeline(
+            vae=self.vae,
+            text_encoder=self.text,
+            text_encoder_2=self.text2,
+            transformer=self.transformer,
+            scheduler=self.scheduler,
+            tokenizer=None,
+            tokenizer_2=None,
+        )
+        self.pipeline.set_progress_bar_config(disable=True)
+        self.guidance_scale = guidance_scale
+        self.prompt_embeds_scale = 1.0
+        self.pooled_prompt_embeds_scale = 1.0
+        self.dpo_beta = dpo_beta
+
+    def forward(
+        self,
+        input_ids: torch.Tensor,
+        input2_ids: torch.Tensor,
+        win_pixel_values: torch.Tensor,
+        lose_pixel_values: torch.Tensor,
+        kontext_pixel_values: torch.Tensor,
+        redux_pixel_values: Optional[torch.Tensor] = None,
+        attention_mask: Optional[torch.Tensor] = None,
+        attention2_mask: Optional[torch.Tensor] = None,
+    ):
+        outputs = self.get_prompt_outputs(
+            input_ids=input_ids,
+            input2_ids=input2_ids,
+            attention_mask=attention_mask,
+            attention2_mask=attention2_mask,
+        )
+        prompt_embeds = outputs.prompt_embeds.to(torch.bfloat16)
+        pooled_prompt_embeds = outputs.pooled_prompt_embeds.to(torch.bfloat16)
+
+        if (
+            redux_pixel_values is not None
+            and self.image is not None
+            and self.redux_image is not None
+        ):
+            redux_image_embeds = self.image(redux_pixel_values).last_hidden_state
+            redux_image_embeds = self.redux_image(redux_image_embeds).image_embeds
+            prompt_embeds = (
+                torch.cat([prompt_embeds, redux_image_embeds], dim=1)
+                * self.prompt_embeds_scale
+            )
+            pooled_prompt_embeds = (
+                pooled_prompt_embeds * self.pooled_prompt_embeds_scale
+            )
+
+        pixel_values = torch.cat([win_pixel_values, lose_pixel_values], dim=0)
+        kontext_pixel_values = torch.cat(
+            [kontext_pixel_values, kontext_pixel_values], dim=0
+        )
+        prompt_embeds = torch.cat([prompt_embeds, prompt_embeds], dim=0)
+        pooled_prompt_embeds = torch.cat(
+            [pooled_prompt_embeds, pooled_prompt_embeds], dim=0
+        )
+
+        latents = self.vae.encode(pixel_values).latent_dist.sample()
+        kontext_latents = self.vae.encode(kontext_pixel_values).latent_dist.mode()
+        latents = (
+            latents - self.vae.config.shift_factor
+        ) * self.vae.config.scaling_factor
+        kontext_latents = (
+            kontext_latents - self.vae.config.shift_factor
+        ) * self.vae.config.scaling_factor
+        latent_image_ids = _prepare_latent_image_ids(
+            latents.shape[0],
+            latents.shape[2] // 2,
+            latents.shape[3] // 2,
+            self.device,
+            self.dtype,
+        )
+        kontext_image_ids = _prepare_latent_image_ids(
+            kontext_latents.shape[0],
+            kontext_latents.shape[2] // 2,
+            kontext_latents.shape[3] // 2,
+            self.device,
+            self.dtype,
+        )
+        kontext_image_ids[..., 0] = 1
+
+        noise = torch.randn(latents.shape).to(latents.device)
+        batch = latents.shape[0]
+
+        u = compute_density_for_timestep_sampling(
+            weighting_scheme="none",
+            batch_size=batch,
+            logit_mean=0.0,
+            logit_std=1.0,
+            mode_scale=1.29,
+        )
+        indices = (u * self.scheduler.config.num_train_timesteps).long()
+        timesteps = self.scheduler.timesteps[indices].to(device=self.device)
+
+        sigmas = self.get_sigmas(timesteps, n_dim=latents.ndim, dtype=latents.dtype)
+        noise_latents = (1.0 - sigmas) * latents + sigmas * noise
+
+        noise_latents = _pack_latents(
+            noise_latents,
+            batch_size=latents.shape[0],
+            num_channels_latents=latents.shape[1],
+            height=latents.shape[2],
+            width=latents.shape[3],
+        )
+        kontext_latents = _pack_latents(
+            kontext_latents,
+            batch_size=kontext_latents.shape[0],
+            num_channels_latents=kontext_latents.shape[1],
+            height=kontext_latents.shape[2],
+            width=kontext_latents.shape[3],
+        )
+        latent_ids = torch.cat([latent_image_ids, kontext_image_ids], dim=1)
+        latent_model_input = torch.cat([noise_latents, kontext_latents], dim=1)
+
+        text_ids = torch.zeros(prompt_embeds.shape[1], 3).to(
+            device=self.device, dtype=self.dtype
+        )
+
+        if self.transformer.config.guidance_embeds:
+            guidance = torch.full(
+                [1], self.guidance_scale, device=self.device, dtype=torch.float32
+            )
+            guidance = guidance.expand(latents.shape[0])
+        else:
+            guidance = None
+
+        outputs = self.transformer(
+            hidden_states=latent_model_input,
+            timestep=timesteps / 1000,
+            guidance=guidance,
+            encoder_hidden_states=prompt_embeds,
+            pooled_projections=pooled_prompt_embeds,
+            txt_ids=text_ids,
+            img_ids=latent_ids,
+            return_dict=False,
+        )[0]
+        outputs = outputs[:, : latents.shape[1]]
+
+        vae_scale_factor = 2 ** (len(self.vae.config.block_out_channels) - 1)
+        outputs = _unpack_latents(
+            outputs,
+            height=latents.shape[2] * vae_scale_factor,
+            width=latents.shape[3] * vae_scale_factor,
+            vae_scale_factor=vae_scale_factor,
+        )
+
+        with torch.no_grad():
+            self.transformer.disable_adapters()
+            ref_outputs = self.transformer(
+                hidden_states=latent_model_input,
+                timestep=timesteps / 1000,
+                guidance=guidance,
+                encoder_hidden_states=prompt_embeds,
+                pooled_projections=pooled_prompt_embeds,
+                txt_ids=text_ids,
+                img_ids=latent_image_ids,
+                return_dict=False,
+            )[0]
+            ref_outputs = _unpack_latents(
+                ref_outputs,
+                height=latents.shape[2] * vae_scale_factor,
+                width=latents.shape[3] * vae_scale_factor,
+                vae_scale_factor=vae_scale_factor,
+            )
+            self.transformer.enable_adapters()
+
+        weighting = compute_loss_weighting_for_sd3(
+            weighting_scheme="none", sigmas=sigmas
+        )
+        target = noise - latents
+        loss = torch.mean(
+            (weighting.float() * (outputs.float() - target.float()) ** 2).reshape(
+                target.shape[0], -1
+            ),
+            1,
+        )
+        ref_loss = torch.mean(
+            (weighting.float() * (ref_outputs.float() - target.float()) ** 2).reshape(
+                target.shape[0], -1
+            ),
+            1,
+        )
+        win_loss, lose_loss = loss.chunk(2, dim=0)
+        ref_win_loss, ref_lose_loss = ref_loss.chunk(2, dim=0)
+        diff, ref_diff = win_loss - lose_loss, ref_win_loss - ref_lose_loss
+        loss = -1 * F.logsigmoid(self.dpo_beta * (ref_diff - diff)).mean()
+        return loss
+
+    def generate(
+        self,
+        input_ids: torch.Tensor,
+        input2_ids: torch.Tensor,
+        kontext_pixel_values: torch.Tensor,
+        redux_pixel_values: Optional[torch.Tensor] = None,
+        attention_mask: Optional[torch.Tensor] = None,
+        attention2_mask: Optional[torch.Tensor] = None,
+        height: Optional[int] = 1024,
+        width: Optional[int] = 1024,
+        guidance_scale: Optional[float] = 3.5,
+    ):
+        outputs = self.get_prompt_outputs(
+            input_ids=input_ids,
+            input2_ids=input2_ids,
+            attention_mask=attention_mask,
+            attention2_mask=attention2_mask,
+        )
+
+        prompt_embeds = outputs.prompt_embeds.to(torch.bfloat16)
+        pooled_prompt_embeds = outputs.pooled_prompt_embeds.to(torch.bfloat16)
+        if (
+            redux_pixel_values is not None
+            and self.image is not None
+            and self.redux_image is not None
+        ):
+            redux_image_embeds = self.image(redux_pixel_values).last_hidden_state
+            redux_image_embeds = self.redux_image(redux_image_embeds).image_embeds
+            prompt_embeds = (
+                torch.cat([prompt_embeds, redux_image_embeds], dim=1)
+                * self.prompt_embeds_scale
+            )
+            pooled_prompt_embeds = (
+                pooled_prompt_embeds * self.pooled_prompt_embeds_scale
+            )
+
+        images = self.pipeline(
+            image=kontext_pixel_values.to(torch.bfloat16),
+            prompt_embeds=prompt_embeds.to(torch.bfloat16),
+            pooled_prompt_embeds=pooled_prompt_embeds.to(torch.bfloat16),
+            generator=torch.Generator(device=self.pipeline.device).manual_seed(
+                self.seed
+            ),
+            num_inference_steps=self.num_infer_timesteps,
+            height=height,
+            width=width,
             guidance_scale=guidance_scale,
             output_type="np.array",
         ).images

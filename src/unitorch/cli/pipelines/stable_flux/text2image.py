@@ -84,7 +84,6 @@ class StableFluxForText2ImageGenerationPipeline(GenericStableFluxModel):
 
         self._enable_cpu_offload = enable_cpu_offload
         self._enable_xformers = enable_xformers
-        self.to(device=self._device)
 
     @classmethod
     @add_default_section_for_init("core/pipeline/stable_flux/text2image")

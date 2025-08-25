@@ -34,6 +34,7 @@ from diffusers.pipelines import (
     FluxControlPipeline,
     FluxFillPipeline,
 )
+from diffusers.pipelines.flux.pipeline_flux_kontext import FluxKontextPipeline
 from diffusers.pipelines.flux.modeling_flux import ReduxImageEncoder
 from unitorch.models import (
     GenericModel,
@@ -259,12 +260,14 @@ class GenericStableFluxModel(GenericModel, QuantizationMixin, PeftWeightLoaderMi
             self.text2 = self.text2.to("cpu")
 
         return GenericOutputs(
-            prompt_embeds=prompt_embeds.to("cpu")
-            if enable_cpu_offload
-            else prompt_embeds,
-            pooled_prompt_embeds=pooled_prompt_embeds.to("cpu")
-            if enable_cpu_offload
-            else pooled_prompt_embeds,
+            prompt_embeds=(
+                prompt_embeds.to("cpu") if enable_cpu_offload else prompt_embeds
+            ),
+            pooled_prompt_embeds=(
+                pooled_prompt_embeds.to("cpu")
+                if enable_cpu_offload
+                else pooled_prompt_embeds
+            ),
         )
 
 
@@ -1161,6 +1164,212 @@ class StableFluxForImageInpainting(GenericStableFluxModel):
             height=pixel_values.size(-2),
             guidance_scale=guidance_scale,
             strength=strength,
+            output_type="np.array",
+        ).images
+
+        return GenericOutputs(images=torch.from_numpy(images))
+
+
+class StableFluxForKontext2ImageGeneration(GenericStableFluxModel):
+    def __init__(
+        self,
+        config_path: str,
+        text_config_path: str,
+        text2_config_path: str,
+        vae_config_path: str,
+        scheduler_config_path: str,
+        quant_config_path: Optional[str] = None,
+        image_size: Optional[int] = None,
+        in_channels: Optional[int] = None,
+        out_channels: Optional[int] = None,
+        num_train_timesteps: Optional[int] = 1000,
+        num_infer_timesteps: Optional[int] = 50,
+        freeze_vae_encoder: Optional[bool] = True,
+        freeze_text_encoder: Optional[bool] = True,
+        snr_gamma: Optional[float] = 5.0,
+        seed: Optional[int] = 1123,
+        gradient_checkpointing: Optional[bool] = True,
+        guidance_scale: Optional[float] = 3.5,
+    ):
+        super().__init__(
+            config_path=config_path,
+            text_config_path=text_config_path,
+            text2_config_path=text2_config_path,
+            vae_config_path=vae_config_path,
+            scheduler_config_path=scheduler_config_path,
+            quant_config_path=quant_config_path,
+            image_size=image_size,
+            in_channels=in_channels,
+            out_channels=out_channels,
+            num_train_timesteps=num_train_timesteps,
+            num_infer_timesteps=num_infer_timesteps,
+            freeze_vae_encoder=freeze_vae_encoder,
+            freeze_text_encoder=freeze_text_encoder,
+            snr_gamma=snr_gamma,
+            seed=seed,
+        )
+        if gradient_checkpointing:
+            self.transformer.enable_gradient_checkpointing()
+
+        self.pipeline = FluxKontextPipeline(
+            vae=self.vae,
+            text_encoder=self.text,
+            text_encoder_2=self.text2,
+            transformer=self.transformer,
+            scheduler=self.scheduler,
+            tokenizer=None,
+            tokenizer_2=None,
+        )
+        self.pipeline.set_progress_bar_config(disable=True)
+        self.guidance_scale = guidance_scale
+
+    def forward(
+        self,
+        input_ids: torch.Tensor,
+        input2_ids: torch.Tensor,
+        pixel_values: torch.Tensor,
+        kontext_pixel_values: torch.Tensor,
+        attention_mask: Optional[torch.Tensor] = None,
+        attention2_mask: Optional[torch.Tensor] = None,
+    ):
+        outputs = self.get_prompt_outputs(
+            input_ids=input_ids,
+            input2_ids=input2_ids,
+            attention_mask=attention_mask,
+            attention2_mask=attention2_mask,
+        )
+        latents = self.vae.encode(pixel_values).latent_dist.sample()
+        kontext_latents = self.vae.encode(kontext_pixel_values).latent_dist.mode()
+        latents = (
+            latents - self.vae.config.shift_factor
+        ) * self.vae.config.scaling_factor
+        kontext_latents = (
+            kontext_latents - self.vae.config.shift_factor
+        ) * self.vae.config.scaling_factor
+
+        latent_image_ids = _prepare_latent_image_ids(
+            latents.shape[0],
+            latents.shape[2] // 2,
+            latents.shape[3] // 2,
+            self.device,
+            self.dtype,
+        )
+        kontext_image_ids = _prepare_latent_image_ids(
+            kontext_latents.shape[0],
+            kontext_latents.shape[2] // 2,
+            kontext_latents.shape[3] // 2,
+            self.device,
+            self.dtype,
+        )
+        kontext_image_ids[..., 0] = 1
+
+        noise = torch.randn(latents.shape).to(latents.device)
+        batch = latents.shape[0]
+
+        u = compute_density_for_timestep_sampling(
+            weighting_scheme="none",
+            batch_size=batch,
+            logit_mean=0.0,
+            logit_std=1.0,
+            mode_scale=1.29,
+        )
+        indices = (u * self.scheduler.config.num_train_timesteps).long()
+        timesteps = self.scheduler.timesteps[indices].to(device=self.device)
+
+        sigmas = self.get_sigmas(timesteps, n_dim=latents.ndim, dtype=latents.dtype)
+        noise_latents = (1.0 - sigmas) * latents + sigmas * noise
+
+        noise_latents = _pack_latents(
+            noise_latents,
+            batch_size=latents.shape[0],
+            num_channels_latents=latents.shape[1],
+            height=latents.shape[2],
+            width=latents.shape[3],
+        )
+        kontext_latents = _pack_latents(
+            kontext_latents,
+            batch_size=kontext_latents.shape[0],
+            num_channels_latents=kontext_latents.shape[1],
+            height=kontext_latents.shape[2],
+            width=kontext_latents.shape[3],
+        )
+        latent_ids = torch.cat([latent_image_ids, kontext_image_ids], dim=0)
+        latent_model_input = torch.cat([noise_latents, kontext_latents], dim=1)
+
+        text_ids = torch.zeros(outputs.prompt_embeds.shape[1], 3).to(
+            device=self.device, dtype=self.dtype
+        )
+
+        if self.transformer.config.guidance_embeds and self.guidance_scale is not None:
+            guidance = torch.full(
+                [1], self.guidance_scale, device=self.device, dtype=torch.float32
+            )
+            guidance = guidance.expand(latents.shape[0])
+        else:
+            guidance = None
+
+        outputs = self.transformer(
+            hidden_states=latent_model_input,
+            timestep=timesteps / 1000,
+            guidance=guidance,
+            encoder_hidden_states=outputs.prompt_embeds,
+            pooled_projections=outputs.pooled_prompt_embeds,
+            txt_ids=text_ids,
+            img_ids=latent_ids,
+            return_dict=False,
+        )[0]
+        outputs = outputs[:, : noise_latents.shape[1]]
+
+        vae_scale_factor = 2 ** (len(self.vae.config.block_out_channels) - 1)
+        outputs = _unpack_latents(
+            outputs,
+            height=latents.shape[2] * vae_scale_factor,
+            width=latents.shape[3] * vae_scale_factor,
+            vae_scale_factor=vae_scale_factor,
+        )
+
+        weighting = compute_loss_weighting_for_sd3(
+            weighting_scheme="none", sigmas=sigmas
+        )
+        target = noise - latents
+        loss = torch.mean(
+            (weighting.float() * (outputs.float() - target.float()) ** 2).reshape(
+                target.shape[0], -1
+            ),
+            1,
+        )
+        loss = loss.mean()
+        return loss
+
+    def generate(
+        self,
+        input_ids: torch.Tensor,
+        input2_ids: torch.Tensor,
+        kontext_pixel_values: torch.Tensor,
+        attention_mask: Optional[torch.Tensor] = None,
+        attention2_mask: Optional[torch.Tensor] = None,
+        height: Optional[int] = 1024,
+        width: Optional[int] = 1024,
+        guidance_scale: Optional[float] = 3.5,
+    ):
+        outputs = self.get_prompt_outputs(
+            input_ids=input_ids,
+            input2_ids=input2_ids,
+            attention_mask=attention_mask,
+            attention2_mask=attention2_mask,
+        )
+
+        images = self.pipeline(
+            image=kontext_pixel_values.to(torch.bfloat16),
+            prompt_embeds=outputs.prompt_embeds.to(torch.bfloat16),
+            pooled_prompt_embeds=outputs.pooled_prompt_embeds.to(torch.bfloat16),
+            generator=torch.Generator(device=self.pipeline.device).manual_seed(
+                self.seed
+            ),
+            num_inference_steps=self.num_infer_timesteps,
+            height=height,
+            width=width,
+            guidance_scale=guidance_scale,
             output_type="np.array",
         ).images
 

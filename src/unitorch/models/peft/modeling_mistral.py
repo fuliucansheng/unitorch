@@ -18,9 +18,6 @@ from unitorch.models.peft import PeftModelForSequenceClassification, GenericPeft
 
 
 class MistralLoraForClassification(GenericPeftModel):
-    prefix_keys_in_state_dict = {
-        "^(?!peft_model\.base_model\.model\.).*": "peft_model.base_model."
-    }
     replace_keys_in_state_dict = {
         "q_proj.weight": "q_proj.base_layer.weight",
         "v_proj.weight": "v_proj.base_layer.weight",
@@ -51,12 +48,14 @@ class MistralLoraForClassification(GenericPeftModel):
             fan_in_fan_out=fan_in_fan_out,
             target_modules=target_modules,
         )
-        model = MistralModel(self.config)
+        self.model = MistralModel(self.config)
         if quant_config_path is not None:
             quant_config = QuantizationConfig.from_json_file(quant_config_path)
             ignore_modules = target_modules + ["lm_head"]
-            model = quantize_model(model, quant_config, ignore_modules=ignore_modules)
-        self.peft_model = PeftModelForSequenceClassification(model, self.peft_config)
+            self.model = quantize_model(
+                self.model, quant_config, ignore_modules=ignore_modules
+            )
+        self.model.add_adapter(self.peft_config)
         self.dropout = nn.Dropout(hidden_dropout_prob)
         self.classifier = nn.Linear(self.config.hidden_size, num_classes)
         if freeze_classifer:
@@ -81,7 +80,7 @@ class MistralLoraForClassification(GenericPeftModel):
         Returns:
             torch Output logits.Tensor: tensor of shape (batch_size, num_classes).
         """
-        outputs = self.peft_model(
+        outputs = self.model(
             input_ids,
             attention_mask=attention_mask,
             position_ids=position_ids,
@@ -94,8 +93,8 @@ class MistralLoraForClassification(GenericPeftModel):
 
 class MistralLoraForGeneration(GenericPeftModel):
     prefix_keys_in_state_dict = {
-        "^(?!peft_model\.base_model\.model\.model\.)model\.": "peft_model.base_model.model.",
-        "^lm_head.": "peft_model.base_model.model.",
+        "^model.": "base_model.",
+        "^lm_head.": "base_model.",
     }
     replace_keys_in_state_dict = {
         "q_proj.weight": "q_proj.base_layer.weight",
@@ -125,12 +124,14 @@ class MistralLoraForGeneration(GenericPeftModel):
             fan_in_fan_out=fan_in_fan_out,
             target_modules=target_modules,
         )
-        model = MistralForCausalLM(self.config)
+        self.base_model = MistralForCausalLM(self.config)
         if quant_config_path is not None:
             quant_config = QuantizationConfig.from_json_file(quant_config_path)
             ignore_modules = target_modules + ["lm_head"]
-            model = quantize_model(model, quant_config, ignore_modules=ignore_modules)
-        self.peft_model = PeftModelForCausalLM(model, self.peft_config)
+            self.base_model = quantize_model(
+                self.base_model, quant_config, ignore_modules=ignore_modules
+            )
+        self.base_model.add_adapter(self.peft_config)
         self.init_weights()
 
     def forward(
@@ -150,7 +151,7 @@ class MistralLoraForGeneration(GenericPeftModel):
         Returns:
             torch Output logits.Tensor: tensor of shape (batch_size, sequence_length, vocab_size).
         """
-        outputs = self.peft_model(
+        outputs = self.base_model(
             input_ids=input_ids,
             attention_mask=attention_mask,
             position_ids=position_ids,
@@ -206,13 +207,12 @@ class MistralLoraForGeneration(GenericPeftModel):
             GenericOutputs: Generated sequences and their scores.
         """
         input_seq_length = input_ids.size(1)
-        outputs = self.peft_model.generate(
+        outputs = self.base_model.generate(
             input_ids=input_ids,
             max_length=max_gen_seq_length + input_seq_length,
             min_length=min_gen_seq_length + input_seq_length,
             num_beams=num_beams,
             do_sample=do_sample,
-            decoder_start_token_id=decoder_start_token_id,
             no_repeat_ngram_size=no_repeat_ngram_size,
             early_stopping=early_stopping,
             length_penalty=length_penalty,

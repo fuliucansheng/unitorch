@@ -478,9 +478,11 @@ class SupervisedTask:
 
         iter_train = DataLoader(
             dataset_train,
-            sampler=train_sampler(dataset_train)
-            if not isinstance(dataset_train, Iterable)
-            else None,
+            sampler=(
+                train_sampler(dataset_train)
+                if not isinstance(dataset_train, Iterable)
+                else None
+            ),
             batch_size=train_batch_size,
             shuffle=False,
             pin_memory=pin_memory,
@@ -490,9 +492,11 @@ class SupervisedTask:
 
         iter_dev = DataLoader(
             dataset_dev,
-            sampler=dev_sampler(dataset_dev)
-            if not isinstance(dataset_dev, Iterable)
-            else None,
+            sampler=(
+                dev_sampler(dataset_dev)
+                if not isinstance(dataset_dev, Iterable)
+                else None
+            ),
             batch_size=dev_batch_size,
             shuffle=False,
             pin_memory=pin_memory,
@@ -718,9 +722,11 @@ class SupervisedTask:
         dataset_dev = self.datasets.get("dev")
         iter_dev = DataLoader(
             dataset_dev,
-            sampler=dev_sampler(dataset_dev)
-            if not isinstance(dataset_dev, Iterable)
-            else None,
+            sampler=(
+                dev_sampler(dataset_dev)
+                if not isinstance(dataset_dev, Iterable)
+                else None
+            ),
             batch_size=dev_batch_size,
             shuffle=False,
             pin_memory=pin_memory,
@@ -798,9 +804,11 @@ class SupervisedTask:
 
         iter_test = DataLoader(
             dataset_test,
-            sampler=sampler(dataset_test)
-            if not isinstance(dataset_test, Iterable)
-            else None,
+            sampler=(
+                sampler(dataset_test)
+                if not isinstance(dataset_test, Iterable)
+                else None
+            ),
             batch_size=test_batch_size,
             shuffle=False,
             pin_memory=pin_memory,
@@ -819,9 +827,11 @@ class SupervisedTask:
             data_info = DatasetFeature(data_info)
             iter_data = DataLoader(
                 deepcopy(data_info),
-                sampler=sampler(data_info)
-                if not isinstance(dataset_test, Iterable)
-                else None,
+                sampler=(
+                    sampler(data_info)
+                    if not isinstance(dataset_test, Iterable)
+                    else None
+                ),
                 batch_size=test_batch_size,
                 shuffle=False,
                 pin_memory=pin_memory,

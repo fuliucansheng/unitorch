@@ -275,9 +275,11 @@ class ControlNet3ForText2ImageGeneration(GenericStable3Model):
             ] * self.num_controlnets
 
         images = self.pipeline(
-            control_image=condition_pixel_values
-            if self.num_controlnets == 1
-            else list(condition_pixel_values.transpose(0, 1)),
+            control_image=(
+                condition_pixel_values
+                if self.num_controlnets == 1
+                else list(condition_pixel_values.transpose(0, 1))
+            ),
             prompt_embeds=outputs.prompt_embeds,
             negative_prompt_embeds=outputs.negative_prompt_embeds,
             pooled_prompt_embeds=outputs.pooled_prompt_embeds,
@@ -476,9 +478,11 @@ class ControlNet3ForImageInpainting(GenericStable3Model):
         images = self.pipeline(
             image=pixel_values,
             mask_image=pixel_masks,
-            control_image=condition_pixel_values
-            if self.num_controlnets == 1
-            else list(condition_pixel_values.transpose(0, 1)),
+            control_image=(
+                condition_pixel_values
+                if self.num_controlnets == 1
+                else list(condition_pixel_values.transpose(0, 1))
+            ),
             prompt_embeds=outputs.prompt_embeds,
             negative_prompt_embeds=outputs.negative_prompt_embeds,
             pooled_prompt_embeds=outputs.pooled_prompt_embeds,

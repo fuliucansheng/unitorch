@@ -516,9 +516,11 @@ class StableXLForText2ImageGenerationPipeline(GenericStableXLModel):
                 generator=torch.Generator(device=self.pipeline.device).manual_seed(
                     self.seed
                 ),
-                image=list(inputs["adapter_pixel_values"].transpose(0, 1))
-                if num_adapters > 1
-                else inputs["adapter_pixel_values"],
+                image=(
+                    list(inputs["adapter_pixel_values"].transpose(0, 1))
+                    if num_adapters > 1
+                    else inputs["adapter_pixel_values"]
+                ),
                 num_inference_steps=num_timesteps,
                 guidance_scale=guidance_scale,
                 adapter_conditioning_scale=conditioning_scales,

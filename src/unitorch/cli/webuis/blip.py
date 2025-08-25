@@ -65,7 +65,7 @@ class BlipCaptionWebUI(SimpleWebUI):
         start.click(self.start, inputs=[name], outputs=[status], trigger_mode="once")
         stop.click(self.stop, outputs=[status], trigger_mode="once")
         generate.click(
-            self.serve, inputs=[image], outputs=[result], trigger_mode="once"
+            self.generate, inputs=[image], outputs=[result], trigger_mode="once"
         )
 
         iface.load(
@@ -99,7 +99,7 @@ class BlipCaptionWebUI(SimpleWebUI):
         self._status = "Stopped" if self._pipe is None else "Running"
         return self._status
 
-    def serve(
+    def generate(
         self,
         image: Image.Image,
     ):

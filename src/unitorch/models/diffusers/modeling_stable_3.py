@@ -272,18 +272,24 @@ class GenericStable3Model(GenericModel, QuantizationMixin, PeftWeightLoaderMixin
             self.text3 = self.text3.to("cpu")
 
         return GenericOutputs(
-            prompt_embeds=prompt_embeds.to("cpu")
-            if enable_cpu_offload
-            else prompt_embeds,
-            negative_prompt_embeds=negative_prompt_embeds.to("cpu")
-            if enable_cpu_offload
-            else negative_prompt_embeds,
-            pooled_prompt_embeds=pooled_prompt_embeds.to("cpu")
-            if enable_cpu_offload
-            else pooled_prompt_embeds,
-            negative_pooled_prompt_embeds=negative_pooled_prompt_embeds.to("cpu")
-            if enable_cpu_offload
-            else negative_pooled_prompt_embeds,
+            prompt_embeds=(
+                prompt_embeds.to("cpu") if enable_cpu_offload else prompt_embeds
+            ),
+            negative_prompt_embeds=(
+                negative_prompt_embeds.to("cpu")
+                if enable_cpu_offload
+                else negative_prompt_embeds
+            ),
+            pooled_prompt_embeds=(
+                pooled_prompt_embeds.to("cpu")
+                if enable_cpu_offload
+                else pooled_prompt_embeds
+            ),
+            negative_pooled_prompt_embeds=(
+                negative_pooled_prompt_embeds.to("cpu")
+                if enable_cpu_offload
+                else negative_pooled_prompt_embeds
+            ),
         )
 
 

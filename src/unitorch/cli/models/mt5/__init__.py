@@ -24,5 +24,3 @@ pretrained_mt5_infos = {
 
 import unitorch.cli.models.mt5.modeling
 import unitorch.cli.models.mt5.processing
-from unitorch.cli.models.mt5.modeling import MT5ForGeneration
-from unitorch.cli.models.mt5.processing import MT5Processor

@@ -55,8 +55,14 @@ class HfTextGenerationProcessor:
         """
         max_seq_length = pop_value(max_seq_length, self.max_seq_length)
         tokens = self.tokenizer.tokenize(str(text))
-        tokens = tokens[: max_seq_length - 2]
-        tokens = [self.bos_token] + tokens + [self.eos_token]
+        tokens = tokens[:max_seq_length]
+        if self.bos_token is not None:
+            tokens = tokens[: max_seq_length - 1]
+            tokens = [self.bos_token] + tokens
+
+        if self.eos_token is not None:
+            tokens = tokens[: max_seq_length - 1]
+            tokens = tokens + [self.eos_token]
         input_ids = self.tokenizer.convert_tokens_to_ids(tokens)
         input_ids = input_ids[:max_seq_length]
         attention_mask = [1] * len(input_ids)
@@ -90,8 +96,13 @@ class HfTextGenerationProcessor:
         """
         max_gen_seq_length = pop_value(max_gen_seq_length, self.max_gen_seq_length)
         tokens = self.tokenizer.tokenize(str(text))
-        tokens = tokens[: max_gen_seq_length - 2]
-        tokens = [self.bos_token] + tokens + [self.eos_token]
+        tokens = tokens[:max_gen_seq_length]
+        if self.bos_token is not None:
+            tokens = tokens[: max_gen_seq_length - 1]
+            tokens = [self.bos_token] + tokens
+        if self.eos_token is not None:
+            tokens = tokens[: max_gen_seq_length - 1]
+            tokens = tokens + [self.eos_token]
         input_ids = self.tokenizer.convert_tokens_to_ids(tokens)
         input_ids = input_ids[1:max_gen_seq_length]
         attention_mask = [1] * len(input_ids)

@@ -21,5 +21,3 @@ pretrained_roberta_infos = {
 
 import unitorch.cli.models.roberta.modeling
 import unitorch.cli.models.roberta.processing
-from unitorch.cli.models.roberta.modeling import RobertaForClassification
-from unitorch.cli.models.roberta.processing import RobertaProcessor

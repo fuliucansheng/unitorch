@@ -9,8 +9,17 @@ pretrained_llava_infos = {
         "config": hf_endpoint_url(
             "/llava-hf/llava-v1.6-mistral-7b-hf/resolve/main/config.json"
         ),
-        "vocab": hf_endpoint_url(
-            "/llava-hf/llava-v1.6-mistral-7b-hf/resolve/main/tokenizer.model"
+        "tokenizer": hf_endpoint_url(
+            "/llava-hf/llava-v1.6-mistral-7b-hf/resolve/main/tokenizer.json"
+        ),
+        "tokenizer_config": hf_endpoint_url(
+            "/llava-hf/llava-v1.6-mistral-7b-hf/resolve/main/tokenizer_config.json"
+        ),
+        "special_tokens_map": hf_endpoint_url(
+            "/llava-hf/llava-v1.6-mistral-7b-hf/resolve/main/special_tokens_map.json"
+        ),
+        "chat_template": hf_endpoint_url(
+            "/llava-hf/llava-v1.6-mistral-7b-hf/resolve/main/chat_template.json"
         ),
         "vision_config": hf_endpoint_url(
             "/llava-hf/llava-v1.6-mistral-7b-hf/resolve/main/preprocessor_config.json"
@@ -29,6 +38,15 @@ pretrained_llava_infos = {
         "tokenizer": hf_endpoint_url(
             "/fancyfeast/llama-joycaption-alpha-two-hf-llava/resolve/main/tokenizer.json"
         ),
+        "tokenizer_config": hf_endpoint_url(
+            "/fancyfeast/llama-joycaption-alpha-two-hf-llava/resolve/main/tokenizer_config.json"
+        ),
+        "special_tokens_map": hf_endpoint_url(
+            "/fancyfeast/llama-joycaption-alpha-two-hf-llava/resolve/main/special_tokens_map.json"
+        ),
+        "chat_template": hf_endpoint_url(
+            "/fancyfeast/llama-joycaption-alpha-two-hf-llava/resolve/main/chat_template.json"
+        ),
         "vision_config": hf_endpoint_url(
             "/fancyfeast/llama-joycaption-alpha-two-hf-llava/resolve/main/preprocessor_config.json"
         ),
@@ -45,8 +63,3 @@ pretrained_llava_extensions_infos = {}
 
 import unitorch.cli.models.llava.modeling
 import unitorch.cli.models.llava.processing
-from unitorch.cli.models.llava.modeling import (
-    LlavaMistralClipForClassification,
-    LlavaMistralClipForGeneration,
-)
-from unitorch.cli.models.llava.processing import LlavaMistralClipProcessor

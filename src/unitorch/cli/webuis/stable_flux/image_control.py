@@ -14,7 +14,7 @@ from unitorch.cli.models.diffusers import (
     pretrained_stable_infos,
     pretrained_stable_extensions_infos,
 )
-from unitorch.cli.pipelines.stable_flux import (
+from unitorch.cli.pipelines.stable_flux.image_control import (
     StableFluxForImageControlGenerationPipeline,
 )
 from unitorch.cli.pipelines.tools import controlnet_processes
@@ -169,7 +169,7 @@ class StableFluxImageControlWebUI(SimpleWebUI):
             )
 
         generate.click(
-            fn=self.serve,
+            fn=self.generate,
             inputs=[
                 prompt,
                 control_image,
@@ -219,7 +219,7 @@ class StableFluxImageControlWebUI(SimpleWebUI):
             return pfunc(image)
         return image
 
-    def serve(
+    def generate(
         self,
         text: str,
         image: Image.Image,

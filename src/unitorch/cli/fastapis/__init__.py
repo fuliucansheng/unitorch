@@ -4,6 +4,8 @@
 from unitorch.utils import is_diffusers_available
 import unitorch.cli.fastapis.info
 import unitorch.cli.fastapis.bria
+import unitorch.cli.fastapis.qwen
+import unitorch.cli.fastapis.qwen_vl
 import unitorch.cli.fastapis.llava
 
 if is_diffusers_available():
@@ -15,4 +17,5 @@ if is_diffusers_available():
     import unitorch.cli.fastapis.controlnet_3
     import unitorch.cli.fastapis.stable_flux
     import unitorch.cli.fastapis.controlnet_flux
+    import unitorch.cli.fastapis.qwen_image
     import unitorch.cli.fastapis.wan

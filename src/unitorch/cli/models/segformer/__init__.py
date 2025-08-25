@@ -42,5 +42,3 @@ pretrained_segformer_infos = {
 
 import unitorch.cli.models.segformer.modeling
 import unitorch.cli.models.segformer.processing
-from unitorch.cli.models.segformer.modeling import SegformerForSegmentation
-from unitorch.cli.models.segformer.processing import SegformerProcessor

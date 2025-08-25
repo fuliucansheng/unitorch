@@ -112,7 +112,7 @@ class ClipClassificationWebUI(SimpleWebUI):
             )
 
         generate.click(
-            self.serve,
+            self.generate,
             inputs=[
                 text,
                 image,
@@ -153,7 +153,7 @@ class ClipClassificationWebUI(SimpleWebUI):
         self._status = "Stopped" if self._pipe is None else "Running"
         return self._status
 
-    def serve(
+    def generate(
         self,
         text: str,
         image: Image.Image,
@@ -253,7 +253,7 @@ class ClipTextClassificationWebUI(SimpleWebUI):
             )
 
         generate.click(
-            self.serve,
+            self.generate,
             inputs=[
                 text,
                 *lora_params,
@@ -293,7 +293,7 @@ class ClipTextClassificationWebUI(SimpleWebUI):
         self._status = "Stopped" if self._pipe is None else "Running"
         return self._status
 
-    def serve(
+    def generate(
         self,
         text: str,
         *params,
@@ -391,7 +391,7 @@ class ClipImageClassificationWebUI(SimpleWebUI):
             )
 
         generate.click(
-            self.serve,
+            self.generate,
             inputs=[
                 image,
                 *lora_params,
@@ -431,7 +431,7 @@ class ClipImageClassificationWebUI(SimpleWebUI):
         self._status = "Stopped" if self._pipe is None else "Running"
         return self._status
 
-    def serve(
+    def generate(
         self,
         image: Image.Image,
         *params,
@@ -529,7 +529,7 @@ class ClipMatchingWebUI(SimpleWebUI):
             )
 
         generate.click(
-            self.serve,
+            self.generate,
             inputs=[
                 text,
                 image,
@@ -570,7 +570,7 @@ class ClipMatchingWebUI(SimpleWebUI):
         self._status = "Stopped" if self._pipe is None else "Running"
         return self._status
 
-    def serve(
+    def generate(
         self,
         text: str,
         image: Image.Image,

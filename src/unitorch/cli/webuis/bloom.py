@@ -102,7 +102,7 @@ class BloomWebUI(SimpleWebUI):
             )
 
         generate.click(
-            self.serve,
+            self.generate,
             inputs=[
                 prompt,
                 *lora_params,
@@ -142,7 +142,7 @@ class BloomWebUI(SimpleWebUI):
         self._status = "Stopped" if self._pipe is None else "Running"
         return self._status
 
-    def serve(
+    def generate(
         self,
         text: str,
         *params,

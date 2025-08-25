@@ -9,7 +9,7 @@ from PIL import Image
 from unitorch.utils import nested_dict_value
 from unitorch.cli import CoreConfigureParser, GenericWebUI
 from unitorch.cli import register_webui
-from unitorch.cli.pipelines.stable import ClipInterrogatorPipeline
+from unitorch.cli.pipelines.stable.interrogator import ClipInterrogatorPipeline
 from unitorch.cli.models.blip import pretrained_blip_infos
 from unitorch.cli.webuis import (
     matched_pretrained_names,
@@ -68,7 +68,7 @@ class InterrogatorWebUI(SimpleWebUI):
         start.click(self.start, inputs=[name], outputs=[status], trigger_mode="once")
         stop.click(self.stop, outputs=[status], trigger_mode="once")
         generate.click(
-            self.serve,
+            self.generate,
             inputs=[image],
             outputs=[fast_prompt, classic_prompt, best_prompt, negative_prompt],
             trigger_mode="once",
@@ -105,7 +105,7 @@ class InterrogatorWebUI(SimpleWebUI):
         self._status = "Stopped" if self._pipe is None else "Running"
         return self._status
 
-    def serve(
+    def generate(
         self,
         image: Image.Image,
     ):

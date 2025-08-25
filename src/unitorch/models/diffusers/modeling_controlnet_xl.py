@@ -250,9 +250,11 @@ class ControlNetXLForText2ImageGeneration(GenericStableXLModel):
             ] * self.num_controlnets
 
         images = self.pipeline(
-            image=condition_pixel_values
-            if self.num_controlnets == 1
-            else list(condition_pixel_values.transpose(0, 1)),
+            image=(
+                condition_pixel_values
+                if self.num_controlnets == 1
+                else list(condition_pixel_values.transpose(0, 1))
+            ),
             prompt_embeds=outputs.prompt_embeds,
             negative_prompt_embeds=outputs.negative_prompt_embeds,
             pooled_prompt_embeds=outputs.pooled_prompt_embeds,
@@ -368,9 +370,11 @@ class ControlNetXLForImage2ImageGeneration(GenericStableXLModel):
             ] * self.num_controlnets
         images = self.pipeline(
             image=pixel_values,
-            control_image=condition_pixel_values
-            if self.num_controlnets == 1
-            else list(condition_pixel_values.transpose(0, 1)),
+            control_image=(
+                condition_pixel_values
+                if self.num_controlnets == 1
+                else list(condition_pixel_values.transpose(0, 1))
+            ),
             prompt_embeds=outputs.prompt_embeds,
             negative_prompt_embeds=outputs.negative_prompt_embeds,
             pooled_prompt_embeds=outputs.pooled_prompt_embeds,
@@ -515,9 +519,11 @@ class ControlNetXLForImageInpainting(GenericStableXLModel):
         images = self.pipeline(
             image=pixel_values,
             mask_image=pixel_masks,
-            control_image=condition_pixel_values
-            if self.num_controlnets == 1
-            else list(condition_pixel_values.transpose(0, 1)),
+            control_image=(
+                condition_pixel_values
+                if self.num_controlnets == 1
+                else list(condition_pixel_values.transpose(0, 1))
+            ),
             prompt_embeds=outputs.prompt_embeds,
             negative_prompt_embeds=outputs.negative_prompt_embeds,
             pooled_prompt_embeds=outputs.pooled_prompt_embeds,

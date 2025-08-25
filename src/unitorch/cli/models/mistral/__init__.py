@@ -10,8 +10,14 @@ pretrained_mistral_infos = {
         "config": hf_endpoint_url(
             "/filipealmeida/Mistral-7B-Instruct-v0.1-sharded/resolve/main/config.json"
         ),
-        "vocab": hf_endpoint_url(
-            "/filipealmeida/Mistral-7B-Instruct-v0.1-sharded/resolve/main/tokenizer.model"
+        "tokenizer": hf_endpoint_url(
+            "/filipealmeida/Mistral-7B-Instruct-v0.1-sharded/resolve/main/tokenizer.json"
+        ),
+        "tokenizer_config": hf_endpoint_url(
+            "/filipealmeida/Mistral-7B-Instruct-v0.1-sharded/resolve/main/tokenizer_config.json"
+        ),
+        "special_tokens_map": hf_endpoint_url(
+            "/filipealmeida/Mistral-7B-Instruct-v0.1-sharded/resolve/main/special_tokens_map.json"
         ),
         "weight": [
             hf_endpoint_url(
@@ -24,8 +30,14 @@ pretrained_mistral_infos = {
         "config": hf_endpoint_url(
             "/MaziyarPanahi/Mistral-7B-Instruct-v0.3/resolve/main/config.json"
         ),
-        "vocab": hf_endpoint_url(
-            "/MaziyarPanahi/Mistral-7B-Instruct-v0.3/resolve/main/tokenizer.model"
+        "tokenizer": hf_endpoint_url(
+            "/MaziyarPanahi/Mistral-7B-Instruct-v0.3/resolve/main/tokenizer.json"
+        ),
+        "tokenizer_config": hf_endpoint_url(
+            "/MaziyarPanahi/Mistral-7B-Instruct-v0.3/resolve/main/tokenizer_config.json"
+        ),
+        "special_tokens_map": hf_endpoint_url(
+            "/MaziyarPanahi/Mistral-7B-Instruct-v0.3/resolve/main/special_tokens_map.json"
         ),
         "weight": [
             hf_endpoint_url(
@@ -40,8 +52,3 @@ pretrained_mistral_extensions_infos = {}
 
 import unitorch.cli.models.mistral.modeling
 import unitorch.cli.models.mistral.processing
-from unitorch.cli.models.mistral.modeling import (
-    MistralForClassification,
-    MistralForGeneration,
-)
-from unitorch.cli.models.mistral.processing import MistralProcessor

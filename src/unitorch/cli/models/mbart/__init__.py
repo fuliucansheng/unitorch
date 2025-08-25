@@ -20,5 +20,3 @@ pretrained_mbart_infos = {
 
 import unitorch.cli.models.mbart.modeling
 import unitorch.cli.models.mbart.processing
-from unitorch.cli.models.mbart.modeling import MBartForGeneration
-from unitorch.cli.models.mbart.processing import MBartProcessor

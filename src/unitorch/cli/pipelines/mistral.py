@@ -29,7 +29,10 @@ class MistralForGenerationPipeline(_MistralForGeneration):
     def __init__(
         self,
         config_path: str,
-        vocab_path: str,
+        tokenizer_file: str,
+        tokenizer_config: Optional[str] = None,
+        special_tokens_map: Optional[str] = None,
+        chat_template: Optional[str] = None,
         quant_config_path: Optional[str] = None,
         max_seq_length: Optional[int] = 512,
         max_gen_seq_length: Optional[int] = 512,
@@ -45,7 +48,10 @@ class MistralForGenerationPipeline(_MistralForGeneration):
             quant_config_path=quant_config_path,
         )
         self.processor = MistralProcessor(
-            vocab_path=vocab_path,
+            tokenizer_file=tokenizer_file,
+            tokenizer_config=tokenizer_config,
+            special_tokens_map=special_tokens_map,
+            chat_template=chat_template,
             max_seq_length=max_seq_length,
             max_gen_seq_length=max_gen_seq_length,
         )
@@ -64,7 +70,7 @@ class MistralForGenerationPipeline(_MistralForGeneration):
         config,
         pretrained_name: Optional[str] = None,
         config_path: Optional[str] = None,
-        vocab_path: Optional[str] = None,
+        tokenizer_file: Optional[str] = None,
         quant_config_path: Optional[str] = None,
         pretrained_weight_path: Optional[str] = None,
         device: Optional[str] = None,
@@ -82,12 +88,48 @@ class MistralForGenerationPipeline(_MistralForGeneration):
         )
         config_path = cached_path(config_path)
 
-        vocab_path = vocab_path or config.getoption("vocab_path", None)
-        vocab_path = pop_value(
-            vocab_path,
-            nested_dict_value(pretrained_mistral_infos, pretrained_name, "vocab"),
+        tokenizer_file = tokenizer_file or config.getoption("tokenizer_file", None)
+        tokenizer_file = pop_value(
+            tokenizer_file,
+            nested_dict_value(pretrained_mistral_infos, pretrained_name, "tokenizer"),
         )
-        vocab_path = cached_path(vocab_path)
+        tokenizer_file = cached_path(tokenizer_file)
+
+        tokenizer_config = config.getoption("tokenizer_config", None)
+        tokenizer_config = pop_value(
+            tokenizer_config,
+            nested_dict_value(
+                pretrained_mistral_infos, pretrained_name, "tokenizer_config"
+            ),
+            check_none=False,
+        )
+        tokenizer_config = (
+            cached_path(tokenizer_config) if tokenizer_config is not None else None
+        )
+
+        special_tokens_map = config.getoption("special_tokens_map", None)
+        special_tokens_map = pop_value(
+            special_tokens_map,
+            nested_dict_value(
+                pretrained_mistral_infos, pretrained_name, "special_tokens_map"
+            ),
+            check_none=False,
+        )
+        special_tokens_map = (
+            cached_path(special_tokens_map) if special_tokens_map is not None else None
+        )
+
+        chat_template = config.getoption("chat_template", None)
+        chat_template = pop_value(
+            chat_template,
+            nested_dict_value(
+                pretrained_mistral_infos, pretrained_name, "chat_template"
+            ),
+            check_none=False,
+        )
+        chat_template = (
+            cached_path(chat_template) if chat_template is not None else None
+        )
 
         quant_config_path = quant_config_path or config.getoption(
             "quant_config_path", None
@@ -110,7 +152,10 @@ class MistralForGenerationPipeline(_MistralForGeneration):
 
         inst = cls(
             config_path,
-            vocab_path=vocab_path,
+            tokenizer_file=tokenizer_file,
+            tokenizer_config=tokenizer_config,
+            special_tokens_map=special_tokens_map,
+            chat_template=chat_template,
             quant_config_path=quant_config_path,
             max_seq_length=max_seq_length,
             max_gen_seq_length=max_gen_seq_length,
@@ -129,7 +174,7 @@ class MistralForGenerationPipeline(_MistralForGeneration):
         max_seq_length: Optional[int] = 512,
         num_beams: Optional[int] = 2,
         decoder_start_token_id: Optional[int] = 1,
-        decoder_end_token_id: Optional[Union[int, List[int]]] = [2],
+        decoder_end_token_id: Optional[Union[int, List[int]]] = 2,
         num_return_sequences: Optional[int] = 1,
         min_gen_seq_length: Optional[int] = 0,
         max_gen_seq_length: Optional[int] = 512,

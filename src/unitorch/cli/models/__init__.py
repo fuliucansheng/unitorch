@@ -99,6 +99,7 @@ import unitorch.cli.models.mistral
 import unitorch.cli.models.mt5
 import unitorch.cli.models.pegasus
 import unitorch.cli.models.peft
+import unitorch.cli.models.qwen
 import unitorch.cli.models.roberta
 import unitorch.cli.models.swin
 import unitorch.cli.models.sam

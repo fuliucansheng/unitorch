@@ -14,7 +14,7 @@ from unitorch.cli.models.diffusers import (
     pretrained_stable_infos,
     pretrained_stable_extensions_infos,
 )
-from unitorch.cli.pipelines.stable import StableForImageInpaintingPipeline
+from unitorch.cli.pipelines.stable.inpainting import StableForImageInpaintingPipeline
 from unitorch.cli.pipelines.tools import controlnet_processes
 from unitorch.cli.webuis import (
     supported_scheduler_names,
@@ -207,7 +207,7 @@ class StableImageInpaintingWebUI(SimpleWebUI):
             )
 
         generate.click(
-            fn=self.serve,
+            fn=self.generate,
             inputs=[
                 prompt,
                 image,
@@ -227,7 +227,11 @@ class StableImageInpaintingWebUI(SimpleWebUI):
             trigger_mode="once",
         )
         image.change(
-            lambda x: x["background"].size if x is not None else (1024, 1024),
+            lambda x: (
+                x["background"].size
+                if nested_dict_value(x, "background") is not None
+                else (1024, 1024)
+            ),
             inputs=[image],
             outputs=[width, height],
         )
@@ -282,7 +286,7 @@ class StableImageInpaintingWebUI(SimpleWebUI):
             return pfunc(image)
         return image
 
-    def serve(
+    def generate(
         self,
         text: str,
         image: Image.Image,

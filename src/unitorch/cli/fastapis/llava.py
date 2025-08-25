@@ -38,7 +38,7 @@ class LlavaMistralClipFastAPI(GenericFastAPI):
         router = config.getoption("router", "/core/fastapi/llava/mistral_clip")
         self._pipe = None
         self._router = APIRouter(prefix=router)
-        self._router.add_api_route("/generate", self.serve, methods=["POST"])
+        self._router.add_api_route("/generate", self.generate, methods=["POST"])
         self._router.add_api_route("/status", self.status, methods=["GET"])
         self._router.add_api_route("/start", self.start, methods=["GET"])
         self._router.add_api_route("/stop", self.stop, methods=["GET"])
@@ -66,7 +66,7 @@ class LlavaMistralClipFastAPI(GenericFastAPI):
     def status(self):
         return "running" if self._pipe is not None else "stopped"
 
-    async def serve(
+    async def generate(
         self,
         text: str,
         image: UploadFile,
@@ -97,7 +97,7 @@ class LlavaLlamaSiglipFastAPI(GenericFastAPI):
         router = config.getoption("router", "/core/fastapi/llava/joycaption2")
         self._pipe = None
         self._router = APIRouter(prefix=router)
-        self._router.add_api_route("/generate", self.serve, methods=["POST"])
+        self._router.add_api_route("/generate", self.generate, methods=["POST"])
         self._router.add_api_route("/status", self.status, methods=["GET"])
         self._router.add_api_route("/start", self.start, methods=["GET"])
         self._router.add_api_route("/stop", self.stop, methods=["GET"])
@@ -125,7 +125,7 @@ class LlavaLlamaSiglipFastAPI(GenericFastAPI):
     def status(self):
         return "running" if self._pipe is not None else "stopped"
 
-    async def serve(
+    async def generate(
         self,
         text: str,
         image: UploadFile,

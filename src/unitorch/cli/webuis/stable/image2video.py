@@ -14,7 +14,9 @@ from unitorch.cli.models.diffusers import (
     pretrained_stable_infos,
     pretrained_stable_extensions_infos,
 )
-from unitorch.cli.pipelines.stable import StableForImage2VideoGenerationPipeline
+from unitorch.cli.pipelines.stable.image2video import (
+    StableForImage2VideoGenerationPipeline,
+)
 from unitorch.cli.pipelines.tools import controlnet_processes
 from unitorch.cli.webuis import (
     supported_scheduler_names,
@@ -175,7 +177,7 @@ class StableImage2VideoWebUI(SimpleWebUI):
             )
 
         generate.click(
-            fn=self.serve,
+            fn=self.generate,
             inputs=[
                 image,
                 height,
@@ -225,7 +227,7 @@ class StableImage2VideoWebUI(SimpleWebUI):
         self._status = "Stopped" if self._pipe is None else "Running"
         return self._status
 
-    def serve(
+    def generate(
         self,
         image: Image.Image,
         height: int,

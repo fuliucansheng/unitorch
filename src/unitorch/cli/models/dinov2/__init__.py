@@ -45,5 +45,3 @@ pretrained_dinov2_infos = {
 
 import unitorch.cli.models.dinov2.modeling
 import unitorch.cli.models.dinov2.processing
-from unitorch.cli.models.dinov2.modeling import DinoV2ForImageClassification
-from unitorch.cli.models.dinov2.processing import DinoV2Processor

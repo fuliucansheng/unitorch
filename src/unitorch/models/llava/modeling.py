@@ -38,9 +38,6 @@ from unitorch.models.peft import PeftWeightLoaderMixin
 
 class LlavaMistralClipForClassification(GenericModel, PeftWeightLoaderMixin):
     replace_keys_in_state_dict = {"language_model.model.": "language_model."}
-    replace_keys_in_peft_state_dict = {
-        "peft_model.base_model.model.": "language_model."
-    }
 
     def __init__(
         self,
@@ -179,9 +176,6 @@ class LlavaMistralClipForClassification(GenericModel, PeftWeightLoaderMixin):
 
 
 class LlavaMistralClipForGeneration(GenericModel, PeftWeightLoaderMixin):
-    replace_keys_in_peft_state_dict = {
-        "peft_model.base_model.model.": "language_model."
-    }
 
     def __init__(
         self,
@@ -327,6 +321,7 @@ class LlavaMistralClipForGeneration(GenericModel, PeftWeightLoaderMixin):
         num_beams: Optional[int] = 5,
         decoder_start_token_id: Optional[int] = 1,
         decoder_end_token_id: Optional[Union[int, List[int]]] = 2,
+        decoder_pad_token_id: Optional[int] = 32001,
         num_return_sequences: Optional[int] = 1,
         min_gen_seq_length: Optional[int] = 0,
         max_gen_seq_length: Optional[int] = 48,
@@ -424,7 +419,6 @@ class LlavaMistralClipForGeneration(GenericModel, PeftWeightLoaderMixin):
             min_length=min_gen_seq_length + input_seq_length,
             num_beams=num_beams,
             do_sample=do_sample,
-            decoder_start_token_id=decoder_start_token_id,
             no_repeat_ngram_size=no_repeat_ngram_size,
             early_stopping=early_stopping,
             length_penalty=length_penalty,
@@ -432,6 +426,7 @@ class LlavaMistralClipForGeneration(GenericModel, PeftWeightLoaderMixin):
             num_return_sequences=num_return_sequences,
             bos_token_id=decoder_start_token_id,
             eos_token_id=decoder_end_token_id,
+            pad_token_id=decoder_pad_token_id,
             num_beam_groups=num_beam_groups,
             diversity_penalty=diversity_penalty,
             temperature=temperature,
@@ -464,9 +459,6 @@ class LlavaMistralClipForGeneration(GenericModel, PeftWeightLoaderMixin):
 
 
 class LlavaLlamaSiglipForGeneration(GenericModel, PeftWeightLoaderMixin):
-    replace_keys_in_peft_state_dict = {
-        "peft_model.base_model.model.": "language_model."
-    }
 
     def __init__(
         self,
@@ -601,6 +593,7 @@ class LlavaLlamaSiglipForGeneration(GenericModel, PeftWeightLoaderMixin):
             128008,
             128009,
         ],
+        decoder_pad_token_id: Optional[int] = 128004,
         num_return_sequences: Optional[int] = 1,
         min_gen_seq_length: Optional[int] = 0,
         max_gen_seq_length: Optional[int] = 48,
@@ -688,7 +681,6 @@ class LlavaLlamaSiglipForGeneration(GenericModel, PeftWeightLoaderMixin):
             min_length=min_gen_seq_length + input_seq_length,
             num_beams=num_beams,
             do_sample=do_sample,
-            decoder_start_token_id=decoder_start_token_id,
             no_repeat_ngram_size=no_repeat_ngram_size,
             early_stopping=early_stopping,
             length_penalty=length_penalty,
@@ -696,6 +688,7 @@ class LlavaLlamaSiglipForGeneration(GenericModel, PeftWeightLoaderMixin):
             num_return_sequences=num_return_sequences,
             bos_token_id=decoder_start_token_id,
             eos_token_id=decoder_end_token_id,
+            pad_token_id=decoder_pad_token_id,
             num_beam_groups=num_beam_groups,
             diversity_penalty=diversity_penalty,
             temperature=temperature,

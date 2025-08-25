@@ -1,7 +1,7 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
-""" Wrapper for ngram_repeat_block cuda extension """
+"""Wrapper for ngram_repeat_block cuda extension"""
 import torch.nn as nn
 from torch.autograd import Function
 
