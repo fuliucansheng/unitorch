@@ -1293,7 +1293,7 @@ class StableFluxForKontext2ImageGeneration(GenericStableFluxModel):
             height=kontext_latents.shape[2],
             width=kontext_latents.shape[3],
         )
-        latent_ids = torch.cat([latent_image_ids, kontext_image_ids], dim=1)
+        latent_ids = torch.cat([latent_image_ids, kontext_image_ids], dim=0)
         latent_model_input = torch.cat([noise_latents, kontext_latents], dim=1)
 
         text_ids = torch.zeros(outputs.prompt_embeds.shape[1], 3).to(
@@ -1318,7 +1318,7 @@ class StableFluxForKontext2ImageGeneration(GenericStableFluxModel):
             img_ids=latent_ids,
             return_dict=False,
         )[0]
-        outputs = outputs[:, : latents.shape[1]]
+        outputs = outputs[:, : noise_latents.shape[1]]
 
         vae_scale_factor = 2 ** (len(self.vae.config.block_out_channels) - 1)
         outputs = _unpack_latents(
