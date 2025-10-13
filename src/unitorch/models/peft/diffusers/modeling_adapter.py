@@ -60,9 +60,6 @@ class GenericStableAdapterLoraModel(GenericPeftModel, QuantizationMixin):
         adapter_configs_path: Union[str, List[str]],
         scheduler_config_path: str,
         quant_config_path: Optional[str] = None,
-        image_size: Optional[int] = None,
-        in_channels: Optional[int] = None,
-        out_channels: Optional[int] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         snr_gamma: Optional[float] = 5.0,
@@ -90,12 +87,6 @@ class GenericStableAdapterLoraModel(GenericPeftModel, QuantizationMixin):
         self.num_infer_timesteps = num_infer_timesteps
 
         config_dict = json.load(open(config_path))
-        if image_size is not None:
-            config_dict.update({"sample_size": image_size})
-        if in_channels is not None:
-            config_dict.update({"in_channels": in_channels})
-        if out_channels is not None:
-            config_dict.update({"out_channels": out_channels})
         self.unet = UNet2DConditionModel.from_config(config_dict)
         text_config = CLIPTextConfig.from_json_file(text_config_path)
         self.text = CLIPTextModel(text_config)
@@ -179,9 +170,6 @@ class StableAdapterLoraForText2ImageGeneration(GenericStableAdapterLoraModel):
         adapter_configs_path: Union[str, List[str]],
         scheduler_config_path: str,
         quant_config_path: Optional[str] = None,
-        image_size: Optional[int] = None,
-        in_channels: Optional[int] = None,
-        out_channels: Optional[int] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         snr_gamma: Optional[float] = 5.0,
@@ -209,9 +197,6 @@ class StableAdapterLoraForText2ImageGeneration(GenericStableAdapterLoraModel):
             adapter_configs_path=adapter_configs_path,
             scheduler_config_path=scheduler_config_path,
             quant_config_path=quant_config_path,
-            image_size=image_size,
-            in_channels=in_channels,
-            out_channels=out_channels,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             snr_gamma=snr_gamma,

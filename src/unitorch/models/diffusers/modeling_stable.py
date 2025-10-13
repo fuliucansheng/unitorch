@@ -115,9 +115,6 @@ class GenericStableModel(GenericModel, QuantizationMixin, PeftWeightLoaderMixin)
         inpainting_controlnet_config_path: Union[str] = None,
         adapter_configs_path: Union[str, List[str]] = None,
         quant_config_path: Optional[str] = None,
-        image_size: Optional[int] = None,
-        in_channels: Optional[int] = None,
-        out_channels: Optional[int] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         freeze_vae_encoder: Optional[bool] = True,
@@ -130,16 +127,10 @@ class GenericStableModel(GenericModel, QuantizationMixin, PeftWeightLoaderMixin)
         self.seed = seed
         self.num_train_timesteps = num_train_timesteps
         self.num_infer_timesteps = num_infer_timesteps
-        self.image_size = image_size
+
         self.snr_gamma = snr_gamma
 
         config_dict = json.load(open(config_path))
-        if image_size is not None:
-            config_dict.update({"sample_size": image_size})
-        if in_channels is not None:
-            config_dict.update({"in_channels": in_channels})
-        if out_channels is not None:
-            config_dict.update({"out_channels": out_channels})
         self.unet = UNet2DConditionModel.from_config(config_dict)
 
         text_config = CLIPTextConfig.from_json_file(text_config_path)
@@ -268,9 +259,6 @@ class StableForText2ImageGeneration(GenericStableModel):
         vae_config_path: str,
         scheduler_config_path: str,
         quant_config_path: Optional[str] = None,
-        image_size: Optional[int] = None,
-        in_channels: Optional[int] = None,
-        out_channels: Optional[int] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         freeze_vae_encoder: Optional[bool] = True,
@@ -284,9 +272,6 @@ class StableForText2ImageGeneration(GenericStableModel):
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
             quant_config_path=quant_config_path,
-            image_size=image_size,
-            in_channels=in_channels,
-            out_channels=out_channels,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             freeze_vae_encoder=freeze_vae_encoder,
@@ -400,9 +385,6 @@ class StableForImage2ImageGeneration(GenericStableModel):
         vae_config_path: str,
         scheduler_config_path: str,
         quant_config_path: Optional[str] = None,
-        image_size: Optional[int] = None,
-        in_channels: Optional[int] = None,
-        out_channels: Optional[int] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         freeze_vae_encoder: Optional[bool] = True,
@@ -416,9 +398,6 @@ class StableForImage2ImageGeneration(GenericStableModel):
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
             quant_config_path=quant_config_path,
-            image_size=image_size,
-            in_channels=in_channels,
-            out_channels=out_channels,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             freeze_vae_encoder=freeze_vae_encoder,
@@ -484,9 +463,6 @@ class StableForImageInpainting(GenericStableModel):
         vae_config_path: str,
         scheduler_config_path: str,
         quant_config_path: Optional[str] = None,
-        image_size: Optional[int] = None,
-        in_channels: Optional[int] = None,
-        out_channels: Optional[int] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         freeze_vae_encoder: Optional[bool] = True,
@@ -500,9 +476,6 @@ class StableForImageInpainting(GenericStableModel):
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
             quant_config_path=quant_config_path,
-            image_size=image_size,
-            in_channels=in_channels,
-            out_channels=out_channels,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             freeze_vae_encoder=freeze_vae_encoder,
@@ -640,9 +613,6 @@ class StableForImageResolution(GenericStableModel):
         vae_config_path: str,
         scheduler_config_path: str,
         quant_config_path: Optional[str] = None,
-        image_size: Optional[int] = None,
-        in_channels: Optional[int] = None,
-        out_channels: Optional[int] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         freeze_vae_encoder: Optional[bool] = True,
@@ -657,9 +627,6 @@ class StableForImageResolution(GenericStableModel):
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
             quant_config_path=quant_config_path,
-            image_size=image_size,
-            in_channels=in_channels,
-            out_channels=out_channels,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             freeze_vae_encoder=freeze_vae_encoder,
@@ -1054,9 +1021,6 @@ class StableForImage2VideoGeneration(GenericModel):
         vae_config_path: str,
         scheduler_config_path: str,
         quant_config_path: Optional[str] = None,
-        image_size: Optional[int] = None,
-        in_channels: Optional[int] = None,
-        out_channels: Optional[int] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 25,
         freeze_vae_encoder: Optional[bool] = True,
@@ -1069,12 +1033,6 @@ class StableForImage2VideoGeneration(GenericModel):
         self.num_infer_timesteps = num_infer_timesteps
 
         config_dict = json.load(open(config_path))
-        if image_size is not None:
-            config_dict.update({"sample_size": image_size})
-        if in_channels is not None:
-            config_dict.update({"in_channels": in_channels})
-        if out_channels is not None:
-            config_dict.update({"out_channels": out_channels})
         self.unet = UNetSpatioTemporalConditionModel.from_config(config_dict)
 
         image_config = CLIPVisionConfig.from_json_file(image_config_path)

@@ -2,7 +2,9 @@
 # Licensed under the MIT License.
 
 import json
+import random
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 import diffusers.schedulers as schedulers
@@ -61,16 +63,16 @@ class GenericWanModel(GenericModel, QuantizationMixin, PeftWeightLoaderMixin):
         text_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
+        config2_path: Optional[str] = None,
         image_config_path: Optional[str] = None,
         quant_config_path: Optional[str] = None,
-        in_channels: Optional[int] = None,
-        out_channels: Optional[int] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         freeze_vae_encoder: Optional[bool] = True,
         freeze_text_encoder: Optional[bool] = True,
         freeze_transformer_encoder: Optional[bool] = False,
         snr_gamma: Optional[float] = 5.0,
+        boundary_ratio: Optional[float] = 0.9,
         seed: Optional[int] = 1123,
     ):
         super().__init__()
@@ -80,13 +82,15 @@ class GenericWanModel(GenericModel, QuantizationMixin, PeftWeightLoaderMixin):
         self.snr_gamma = snr_gamma
 
         config_dict = json.load(open(config_path))
-        if in_channels is not None:
-            config_dict.update({"in_channels": in_channels})
-        if out_channels is not None:
-            config_dict.update({"out_channels": out_channels})
         self.transformer = WanTransformer3DModel.from_config(config_dict).to(
             torch.bfloat16
         )
+
+        if config2_path is not None:
+            config2_dict = json.load(open(config2_path))
+            self.transformer2 = WanTransformer3DModel.from_config(config2_dict).to(
+                torch.bfloat16
+            )
 
         text_config = UMT5Config.from_json_file(text_config_path)
         self.text = UMT5EncoderModel(text_config).to(torch.bfloat16)
@@ -107,6 +111,7 @@ class GenericWanModel(GenericModel, QuantizationMixin, PeftWeightLoaderMixin):
         assert issubclass(scheduler_class, SchedulerMixin)
         scheduler_config_dict["num_train_timesteps"] = num_train_timesteps
         self.scheduler = scheduler_class.from_config(scheduler_config_dict)
+        self.boundary_ratio = boundary_ratio if hasattr(self, "transformer2") else 1.0
 
         if freeze_vae_encoder:
             for param in self.vae.parameters():
@@ -185,14 +190,14 @@ class WanForText2VideoGeneration(GenericWanModel):
         text_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
+        config2_path: Optional[str] = None,
         quant_config_path: Optional[str] = None,
-        in_channels: Optional[int] = None,
-        out_channels: Optional[int] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         freeze_vae_encoder: Optional[bool] = True,
         freeze_text_encoder: Optional[bool] = True,
         snr_gamma: Optional[float] = 5.0,
+        boundary_ratio: Optional[float] = 0.9,
         seed: Optional[int] = 1123,
         gradient_checkpointing: Optional[bool] = True,
     ):
@@ -201,23 +206,26 @@ class WanForText2VideoGeneration(GenericWanModel):
             text_config_path=text_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
+            config2_path=config2_path,
             quant_config_path=quant_config_path,
-            in_channels=in_channels,
-            out_channels=out_channels,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             freeze_vae_encoder=freeze_vae_encoder,
             freeze_text_encoder=freeze_text_encoder,
             snr_gamma=snr_gamma,
+            boundary_ratio=boundary_ratio,
             seed=seed,
         )
         if gradient_checkpointing:
             self.transformer.enable_gradient_checkpointing()
+            if hasattr(self, "transformer2"):
+                self.transformer2.enable_gradient_checkpointing()
 
         self.pipeline = WanPipeline(
             vae=self.vae,
             text_encoder=self.text,
             transformer=self.transformer,
+            transformer_2=getattr(self, "transformer2", None),
             scheduler=self.scheduler,
             tokenizer=None,
         )
@@ -249,18 +257,35 @@ class WanForText2VideoGeneration(GenericWanModel):
             logit_std=1.0,
             mode_scale=1.29,
         )
-        indices = (u * self.scheduler.config.num_train_timesteps).long()
+        use_transformer = random.random() < self.boundary_ratio
+        max_timesteps = int(
+            self.scheduler.config.num_train_timesteps * self.boundary_ratio
+        )
+
+        if use_transformer:
+            indices = (u * max_timesteps).long()
+        else:
+            indices = (
+                u * (self.scheduler.config.num_train_timesteps - max_timesteps)
+            ).long() + int(max_timesteps)
         timesteps = self.scheduler.timesteps[indices].to(device=self.device)
 
         sigmas = self.get_sigmas(timesteps, n_dim=latents.ndim, dtype=latents.dtype)
         noise_latents = (1.0 - sigmas) * latents + sigmas * noise
 
         encoder_hidden_states = self.text(input_ids, attention_mask)[0]
-        outputs = self.transformer(
-            noise_latents,
-            timesteps,
-            encoder_hidden_states,
-        ).sample
+        if use_transformer:
+            outputs = self.transformer(
+                noise_latents,
+                timesteps,
+                encoder_hidden_states=encoder_hidden_states,
+            ).sample
+        else:
+            outputs = self.transformer2(
+                noise_latents,
+                timesteps,
+                encoder_hidden_states=encoder_hidden_states,
+            ).sample
         weighting = compute_loss_weighting_for_sd3(
             weighting_scheme="none", sigmas=sigmas
         )
@@ -317,9 +342,8 @@ class WanForImage2VideoGeneration(GenericWanModel):
         image_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
+        config2_path: Optional[str] = None,
         quant_config_path: Optional[str] = None,
-        in_channels: Optional[int] = None,
-        out_channels: Optional[int] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         freeze_vae_encoder: Optional[bool] = True,
@@ -334,9 +358,8 @@ class WanForImage2VideoGeneration(GenericWanModel):
             image_config_path=image_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
+            config2_path=config2_path,
             quant_config_path=quant_config_path,
-            in_channels=in_channels,
-            out_channels=out_channels,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             freeze_vae_encoder=freeze_vae_encoder,
@@ -346,12 +369,15 @@ class WanForImage2VideoGeneration(GenericWanModel):
         )
         if gradient_checkpointing:
             self.transformer.enable_gradient_checkpointing()
+            if hasattr(self, "transformer2"):
+                self.transformer2.enable_gradient_checkpointing()
 
         self.pipeline = WanImageToVideoPipeline(
             vae=self.vae,
             text_encoder=self.text,
             image_encoder=self.image,
             transformer=self.transformer,
+            transformer_2=getattr(self, "transformer2", None),
             scheduler=self.scheduler,
             tokenizer=None,
             image_processor=None,
@@ -386,7 +412,17 @@ class WanForImage2VideoGeneration(GenericWanModel):
             logit_std=1.0,
             mode_scale=1.29,
         )
-        indices = (u * self.scheduler.config.num_train_timesteps).long()
+        use_transformer = random.random() < self.boundary_ratio
+        max_timesteps = int(
+            self.scheduler.config.num_train_timesteps * self.boundary_ratio
+        )
+
+        if use_transformer:
+            indices = (u * max_timesteps).long()
+        else:
+            indices = (
+                u * (self.scheduler.config.num_train_timesteps - max_timesteps)
+            ).long() + int(max_timesteps)
         timesteps = self.scheduler.timesteps[indices].to(device=self.device)
 
         sigmas = self.get_sigmas(timesteps, n_dim=latents.ndim, dtype=latents.dtype)
@@ -440,12 +476,20 @@ class WanForImage2VideoGeneration(GenericWanModel):
             condition_pixel_values,
             output_hidden_states=True,
         ).hidden_states[-2]
-        outputs = self.transformer(
-            latent_model_input,
-            timesteps,
-            encoder_hidden_states=encoder_hidden_states,
-            encoder_hidden_states_image=condition_hidden_states,
-        ).sample
+        if use_transformer:
+            outputs = self.transformer(
+                latent_model_input,
+                timesteps,
+                encoder_hidden_states=encoder_hidden_states,
+                encoder_hidden_states_image=condition_hidden_states,
+            ).sample
+        else:
+            outputs = self.transformer2(
+                latent_model_input,
+                timesteps,
+                encoder_hidden_states=encoder_hidden_states,
+                encoder_hidden_states_image=condition_hidden_states,
+            ).sample
         weighting = compute_loss_weighting_for_sd3(
             weighting_scheme="none", sigmas=sigmas
         )

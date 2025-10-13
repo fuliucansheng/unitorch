@@ -48,8 +48,6 @@ class WanForText2VideoGenerationPipeline(WanForText2VideoGeneration):
         scheduler_config_path: str,
         vocab_path: str,
         quant_config_path: Optional[str] = None,
-        in_channels: Optional[int] = None,
-        out_channels: Optional[int] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         weight_path: Optional[Union[str, List[str]]] = None,
@@ -64,8 +62,6 @@ class WanForText2VideoGenerationPipeline(WanForText2VideoGeneration):
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
             quant_config_path=quant_config_path,
-            in_channels=in_channels,
-            out_channels=out_channels,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
         )

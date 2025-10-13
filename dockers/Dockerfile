@@ -1,9 +1,10 @@
-FROM nvidia/cuda:11.8.0-cudnn8-devel-ubuntu22.04
-LABEL maintainer="Fuliucansheng"
+FROM nvidia/cuda:12.1.0-cudnn8-devel-ubuntu20.04
+LABEL maintainer="fuliucansheng@gmail.com"
 LABEL repository="unitorch"
 
-RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys A4B469963BF863CC
-RUN apt-key adv --fetch-keys http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1
+ENV TZ=Asia/Kolkata \
+    DEBIAN_FRONTEND=noninteractive
+
 RUN apt update && \
     apt install -y bash \
                    build-essential \
@@ -14,16 +15,24 @@ RUN apt update && \
                    zip \
                    unzip \
                    ninja-build \
-                   cmake \
+                   cmake libglib2.0-0 \
                    libopenmpi-dev \
                    libgl1-mesa-glx \
+                   libsm6 libxext6 libxrender-dev ffmpeg \
                    gfortran libopenblas-dev liblapack-dev \
-                   python3-dev python3-pip && \
+                   software-properties-common \
+                   && add-apt-repository ppa:deadsnakes/ppa \
+                   && apt-get update && apt-get install -y \
+                   python3.10 python3.10-dev python3.10-distutils curl \
+                   && curl -sS https://bootstrap.pypa.io/get-pip.py | python3.10 \
+                   && ln -sf python3.10 /usr/bin/python \
+                   && ln -sf pip3 /usr/bin/pip \
     rm -rf /var/lib/apt/lists
 
-RUN python3 -m pip install --no-cache-dir --upgrade pip setuptools && \
-    python3 -m pip install --no-cache-dir mkl \
-    torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 ninja
+RUN python -m pip install --no-cache-dir --upgrade pip setuptools && \
+    python -m pip install --no-cache-dir mkl ninja
+
+RUN python -m pip install --no-cache-dir torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1
 
 RUN sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen && \
     locale-gen

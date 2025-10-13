@@ -82,9 +82,6 @@ class GenericQWenImageModel(GenericModel, QuantizationMixin, PeftWeightLoaderMix
         vae_config_path: str,
         scheduler_config_path: str,
         quant_config_path: Optional[str] = None,
-        image_size: Optional[int] = None,
-        in_channels: Optional[int] = None,
-        out_channels: Optional[int] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         freeze_vae_encoder: Optional[bool] = True,
@@ -100,12 +97,6 @@ class GenericQWenImageModel(GenericModel, QuantizationMixin, PeftWeightLoaderMix
         self.snr_gamma = snr_gamma
 
         config_dict = json.load(open(config_path))
-        if image_size is not None:
-            config_dict.update({"sample_size": image_size})
-        if in_channels is not None:
-            config_dict.update({"in_channels": in_channels})
-        if out_channels is not None:
-            config_dict.update({"out_channels": out_channels})
         self.transformer = QwenImageTransformer2DModel.from_config(config_dict).to(
             torch.bfloat16
         )
@@ -284,9 +275,6 @@ class QWenImageText2ImageGeneration(GenericQWenImageModel):
         vae_config_path: str,
         scheduler_config_path: str,
         quant_config_path: Optional[str] = None,
-        image_size: Optional[int] = None,
-        in_channels: Optional[int] = None,
-        out_channels: Optional[int] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         freeze_vae_encoder: Optional[bool] = True,
@@ -303,9 +291,6 @@ class QWenImageText2ImageGeneration(GenericQWenImageModel):
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
             quant_config_path=quant_config_path,
-            image_size=image_size,
-            in_channels=in_channels,
-            out_channels=out_channels,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             freeze_vae_encoder=freeze_vae_encoder,
@@ -500,9 +485,6 @@ class QWenImageEditingGeneration(GenericQWenImageModel):
         vae_config_path: str,
         scheduler_config_path: str,
         quant_config_path: Optional[str] = None,
-        image_size: Optional[int] = None,
-        in_channels: Optional[int] = None,
-        out_channels: Optional[int] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         freeze_vae_encoder: Optional[bool] = True,
@@ -519,9 +501,6 @@ class QWenImageEditingGeneration(GenericQWenImageModel):
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
             quant_config_path=quant_config_path,
-            image_size=image_size,
-            in_channels=in_channels,
-            out_channels=out_channels,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             freeze_vae_encoder=freeze_vae_encoder,

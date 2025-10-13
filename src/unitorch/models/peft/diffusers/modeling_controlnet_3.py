@@ -61,9 +61,6 @@ class GenericControlNet3LoraModel(GenericPeftModel, QuantizationMixin):
         scheduler_config_path: str,
         controlnet_configs_path: Union[str, List[str]] = None,
         quant_config_path: Optional[str] = None,
-        image_size: Optional[int] = None,
-        in_channels: Optional[int] = None,
-        out_channels: Optional[int] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         snr_gamma: Optional[float] = 5.0,
@@ -91,12 +88,6 @@ class GenericControlNet3LoraModel(GenericPeftModel, QuantizationMixin):
         self.snr_gamma = snr_gamma
 
         config_dict = json.load(open(config_path))
-        if image_size is not None:
-            config_dict.update({"sample_size": image_size})
-        if in_channels is not None:
-            config_dict.update({"in_channels": in_channels})
-        if out_channels is not None:
-            config_dict.update({"out_channels": out_channels})
         self.transformer = SD3Transformer2DModel.from_config(config_dict)
 
         text_config = CLIPTextConfig.from_json_file(text_config_path)
@@ -291,9 +282,6 @@ class ControlNet3LoraForText2ImageGeneration(GenericControlNet3LoraModel):
         scheduler_config_path: str,
         controlnet_configs_path: Union[str, List[str]] = None,
         quant_config_path: Optional[str] = None,
-        image_size: Optional[int] = None,
-        in_channels: Optional[int] = None,
-        out_channels: Optional[int] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         snr_gamma: Optional[float] = 5.0,
@@ -323,9 +311,6 @@ class ControlNet3LoraForText2ImageGeneration(GenericControlNet3LoraModel):
             scheduler_config_path=scheduler_config_path,
             controlnet_configs_path=controlnet_configs_path,
             quant_config_path=quant_config_path,
-            image_size=image_size,
-            in_channels=in_channels,
-            out_channels=out_channels,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             snr_gamma=snr_gamma,

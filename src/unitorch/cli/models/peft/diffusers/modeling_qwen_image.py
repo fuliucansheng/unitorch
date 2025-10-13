@@ -41,9 +41,6 @@ class QWenImageLoraForText2ImageGeneration(_QWenImageLoraForText2ImageGeneration
         vae_config_path: str,
         scheduler_config_path: str,
         quant_config_path: Optional[str] = None,
-        image_size: Optional[int] = None,
-        in_channels: Optional[int] = None,
-        out_channels: Optional[int] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         snr_gamma: Optional[float] = 5.0,
@@ -75,9 +72,6 @@ class QWenImageLoraForText2ImageGeneration(_QWenImageLoraForText2ImageGeneration
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
             quant_config_path=quant_config_path,
-            image_size=image_size,
-            in_channels=in_channels,
-            out_channels=out_channels,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             snr_gamma=snr_gamma,
@@ -137,9 +131,6 @@ class QWenImageLoraForText2ImageGeneration(_QWenImageLoraForText2ImageGeneration
         if quant_config_path is not None:
             quant_config_path = cached_path(quant_config_path)
 
-        image_size = config.getoption("image_size", None)
-        in_channels = config.getoption("in_channels", None)
-        out_channels = config.getoption("out_channels", None)
         num_train_timesteps = config.getoption("num_train_timesteps", 1000)
         num_infer_timesteps = config.getoption("num_infer_timesteps", 50)
         snr_gamma = config.getoption("snr_gamma", 5.0)
@@ -190,9 +181,6 @@ class QWenImageLoraForText2ImageGeneration(_QWenImageLoraForText2ImageGeneration
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
             quant_config_path=quant_config_path,
-            image_size=image_size,
-            in_channels=in_channels,
-            out_channels=out_channels,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             snr_gamma=snr_gamma,
@@ -310,9 +298,6 @@ class QWenImageLoraForImageEditing(_QWenImageLoraForImageEditing):
         vae_config_path: str,
         scheduler_config_path: str,
         quant_config_path: Optional[str] = None,
-        image_size: Optional[int] = None,
-        in_channels: Optional[int] = None,
-        out_channels: Optional[int] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         snr_gamma: Optional[float] = 5.0,
@@ -344,9 +329,6 @@ class QWenImageLoraForImageEditing(_QWenImageLoraForImageEditing):
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
             quant_config_path=quant_config_path,
-            image_size=image_size,
-            in_channels=in_channels,
-            out_channels=out_channels,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             snr_gamma=snr_gamma,
@@ -402,9 +384,6 @@ class QWenImageLoraForImageEditing(_QWenImageLoraForImageEditing):
         if quant_config_path is not None:
             quant_config_path = cached_path(quant_config_path)
 
-        image_size = config.getoption("image_size", None)
-        in_channels = config.getoption("in_channels", None)
-        out_channels = config.getoption("out_channels", None)
         num_train_timesteps = config.getoption("num_train_timesteps", 1000)
         num_infer_timesteps = config.getoption("num_infer_timesteps", 50)
         snr_gamma = config.getoption("snr_gamma", 5.0)
@@ -455,9 +434,6 @@ class QWenImageLoraForImageEditing(_QWenImageLoraForImageEditing):
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
             quant_config_path=quant_config_path,
-            image_size=image_size,
-            in_channels=in_channels,
-            out_channels=out_channels,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             snr_gamma=snr_gamma,

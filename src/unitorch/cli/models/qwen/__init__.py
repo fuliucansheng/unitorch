@@ -23,12 +23,8 @@ pretrained_qwen_infos = {
         ],
     },
     "qwen3-14b": {
-        "config": hf_endpoint_url(
-            "/Qwen/Qwen3-14B/resolve/main/config.json"
-        ),
-        "tokenizer": hf_endpoint_url(
-            "/Qwen/Qwen3-14B/resolve/main/tokenizer.json"
-        ),
+        "config": hf_endpoint_url("/Qwen/Qwen3-14B/resolve/main/config.json"),
+        "tokenizer": hf_endpoint_url("/Qwen/Qwen3-14B/resolve/main/tokenizer.json"),
         "tokenizer_config": hf_endpoint_url(
             "/Qwen/Qwen3-14B/resolve/main/tokenizer_config.json"
         ),
@@ -40,12 +36,8 @@ pretrained_qwen_infos = {
         ],
     },
     "qwen3-32b": {
-        "config": hf_endpoint_url(
-            "/Qwen/Qwen3-32B/resolve/main/config.json"
-        ),
-        "tokenizer": hf_endpoint_url(
-            "/Qwen/Qwen3-32B/resolve/main/tokenizer.json"
-        ),
+        "config": hf_endpoint_url("/Qwen/Qwen3-32B/resolve/main/config.json"),
+        "tokenizer": hf_endpoint_url("/Qwen/Qwen3-32B/resolve/main/tokenizer.json"),
         "tokenizer_config": hf_endpoint_url(
             "/Qwen/Qwen3-32B/resolve/main/tokenizer_config.json"
         ),
