@@ -15,6 +15,9 @@ pretrained_qwen_infos = {
         "tokenizer_config": hf_endpoint_url(
             "/Qwen/Qwen3-4B-Thinking-2507/resolve/main/tokenizer_config.json"
         ),
+        "chat_template": hf_endpoint_url(
+            "/Qwen/Qwen2.5-VL-3B-Instruct/resolve/main/chat_template.json"
+        ),
         "weight": [
             hf_endpoint_url(
                 f"/Qwen/Qwen3-4B-Thinking-2507/resolve/main/model-{str(i).rjust(5, '0')}-of-00003.safetensors"

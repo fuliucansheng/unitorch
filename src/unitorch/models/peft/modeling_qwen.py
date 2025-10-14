@@ -415,10 +415,6 @@ class QWen3GRPOLoraForGeneration(GenericPeftModel):
         fan_in_fan_out: Optional[bool] = True,
         target_modules: Optional[Union[List[str], str]] = ["q_proj", "v_proj"],
         gradient_checkpointing: Optional[bool] = False,
-        num_generations: Optional[int] = 8,
-        min_gen_seq_length: Optional[int] = 0,
-        max_gen_seq_length: Optional[int] = 512,
-        pad_token_id: Optional[int] = 151643,
     ):
         """
         Bloom Lora model for text generation tasks.
@@ -440,24 +436,14 @@ class QWen3GRPOLoraForGeneration(GenericPeftModel):
         self.model = Qwen3ForCausalLM(self.config)
         self.model.add_adapter(self.peft_config)
         self.init_weights()
-        self.num_generations = num_generations
-        self.min_gen_seq_length = min_gen_seq_length
-        self.max_gen_seq_length = max_gen_seq_length
-        self.pad_token_id = pad_token_id
-
-    def reward(
-        self,
-        input_ids,
-        sampled_ids,
-        label_ids,
-    ):
-        return torch.tensor(1.0).to(input_ids.device)
 
     def forward(
         self,
         input_ids: torch.Tensor,
-        label_ids: torch.Tensor,
+        sampled_ids: torch.Tensor,
+        sampled_rewards: torch.Tensor,
         attention_mask: Optional[torch.Tensor] = None,
+        sampled_attention_mask: Optional[torch.Tensor] = None,
     ):
         """
         Forward pass of the generation model.
@@ -470,55 +456,45 @@ class QWen3GRPOLoraForGeneration(GenericPeftModel):
         Returns:
             torch Output logits.Tensor: tensor of shape (batch_size, sequence_length, vocab_size).
         """
-        with torch.no_grad():
-            sampled_outputs = self.model.generate(
-                input_ids=input_ids,
-                num_beams=self.num_generations,
-                min_gen_seq_length=self.min_gen_seq_length,
-                max_gen_seq_length=self.max_gen_seq_length,
-                do_sample=True,
-                temperature=0.8,
-                top_k=50,
-                top_p=0.95,
-            )
-
-        sampled_rewards = self.reward(
-            input_ids=input_ids,
-            sampled_ids=sampled_outputs,
-            label_ids=label_ids,
-        )
         mean_rewards = sampled_rewards.mean(dim=-1)
         std_rewards = sampled_rewards.std(dim=-1)
         adv_rewards = sampled_rewards - mean_rewards.unsqueeze(-1)
         adv_rewards = adv_rewards / (std_rewards.unsqueeze(-1) + 1e-5)
-        adv_rewards = adv_rewards.detach()
-
-        B, L_in = input_ids.shape
-        G = self.num_generations
+        adv_rewards = adv_rewards.detach().reshape(-1)
 
         # 重复 input_ids 和 attention_mask
+        G = sampled_ids.size(1)
         repeated_input_ids = input_ids.repeat_interleave(G, dim=0)  # [B*G, L_in]
         repeated_attention = (
             attention_mask.repeat_interleave(G, dim=0)
             if attention_mask is not None
             else None
         )
+        sampled_seq_length = sampled_ids.size(-1)
         all_input_ids = torch.cat(
-            [repeated_input_ids, sampled_outputs], dim=1
+            [repeated_input_ids, sampled_ids.view(-1, sampled_seq_length)], dim=1
         )  # [B*G, L_in + L_out]
 
         if repeated_attention is not None:
-            gen_attention = sampled_outputs.ne(self.pad_token_id)  # 生成部分 mask
-            all_attention_mask = torch.cat([repeated_attention, gen_attention], dim=1)
+            all_attention_mask = torch.cat(
+                [
+                    repeated_attention,
+                    sampled_attention_mask.view(-1, sampled_seq_length),
+                ],
+                dim=1,
+            )
         else:
             all_attention_mask = None
+
         all_outputs = self.model(
             input_ids=all_input_ids,
             attention_mask=all_attention_mask,
             return_dict=True,
         )
+
         input_seq_length = input_ids.size(1)
         logits = all_outputs.logits[:, input_seq_length - 1 : -1, :]
+
         labels = all_input_ids[:, input_seq_length:]
         labels_mask = all_attention_mask[:, input_seq_length:]
         nll_loss = F.cross_entropy(
@@ -547,9 +523,10 @@ class QWen3GRPOLoraForGeneration(GenericPeftModel):
         logprob_mean = logprobs.sum(-1) / (labels_mask.sum(-1) + 1e-5)
         ref_logprob_mean = ref_logprobs.sum(-1) / (labels_mask.sum(-1) + 1e-5)
 
-        log_ratio = logprob_mean - ref_logprob_mean
+        log_ratio = logprob_mean - ref_logprob_mean.detach()
         kl_div = 0.02 * (log_ratio**2)
         loss = (-adv_rewards.reshape(-1) * log_ratio + kl_div).mean()
+
         return loss
 
     @torch.no_grad()
@@ -622,7 +599,6 @@ class QWen3GRPOLoraForGeneration(GenericPeftModel):
             return_dict_in_generate=True,
             output_scores=True,
         )
-        print(outputs.sequences.shape, outputs.sequences_scores.shape)
 
         sequences = outputs.sequences.reshape(
             -1, num_return_sequences, outputs.sequences.size(-1)
