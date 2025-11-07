@@ -114,6 +114,7 @@ class WanForText2VideoFastAPIPipeline(WanForText2VideoGeneration):
         text_config_path: Optional[str] = None,
         vae_config_path: Optional[str] = None,
         scheduler_config_path: Optional[str] = None,
+        config2_path: Optional[str] = None,
         vocab_path: Optional[str] = None,
         quant_config_path: Optional[str] = None,
         pretrained_weight_path: Optional[str] = None,
@@ -126,7 +127,7 @@ class WanForText2VideoFastAPIPipeline(WanForText2VideoGeneration):
     ):
         config.set_default_section("core/fastapi/pipeline/wan/text2video")
         pretrained_name = pretrained_name or config.getoption(
-            "pretrained_name", "wan-v2.1-t2v-1.3b"
+            "pretrained_name", "wan-v2.2-t2v-14b"
         )
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
 
@@ -136,6 +137,15 @@ class WanForText2VideoFastAPIPipeline(WanForText2VideoGeneration):
             nested_dict_value(pretrained_infos, "transformer", "config"),
         )
         config_path = cached_path(config_path)
+
+        config2_path = config_path or config.getoption("config2_path", None)
+        config2_path = pop_value(
+            config2_path,
+            nested_dict_value(pretrained_infos, "transformer2", "config"),
+        )
+
+        if config2_path is not None:
+            config2_path = cached_path(config2_path)
 
         text_config_path = text_config_path or config.getoption(
             "text_config_path", None
@@ -190,6 +200,10 @@ class WanForText2VideoFastAPIPipeline(WanForText2VideoGeneration):
                     prefix_keys={"": "transformer."},
                 ),
                 load_weight(
+                    nested_dict_value(pretrained_infos, "transformer2", "weight"),
+                    prefix_keys={"": "transformer2."},
+                ),
+                load_weight(
                     nested_dict_value(pretrained_infos, "text", "weight"),
                     prefix_keys={"": "text."},
                 ),
@@ -241,6 +255,7 @@ class WanForText2VideoFastAPIPipeline(WanForText2VideoGeneration):
             text_config_path=text_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
+            config2_path=config2_path,
             vocab_path=vocab_path,
             quant_config_path=quant_config_path,
             weight_path=weight_path,
@@ -331,7 +346,7 @@ class WanForText2VideoFastAPI(GenericFastAPI):
 
     def start(
         self,
-        pretrained_name: Optional[str] = "wan-v2.1-t2v-1.3b",
+        pretrained_name: Optional[str] = "wan-v2.2-t2v-14b",
         pretrained_lora_names: Optional[Union[str, List[str]]] = None,
         pretrained_lora_weights: Optional[Union[float, List[float]]] = 1.0,
         pretrained_lora_alphas: Optional[Union[float, List[float]]] = 32.0,

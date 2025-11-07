@@ -59,9 +59,29 @@ class InfoFastAPI(GenericFastAPI):
             }
         }
         if self._device != "cpu":
-            free, total = torch.cuda.mem_get_info(self._device)
-            total = total / 1024**3
-            free = free / 1024**3
-            used = total - free
-            stats = {**stats, **{"cuda": {"total": total, "free": free, "used": used}}}
+            if isinstance(self._device, list):
+                for device in self._device:
+                    free, total = torch.cuda.mem_get_info(device)
+                    total = total / 1024**3
+                    free = free / 1024**3
+                    used = total - free
+                    stats = {
+                        **stats,
+                        **{
+                            f"cuda:{device}": {
+                                "total": total,
+                                "free": free,
+                                "used": used,
+                            }
+                        },
+                    }
+            else:
+                free, total = torch.cuda.mem_get_info(self._device)
+                total = total / 1024**3
+                free = free / 1024**3
+                used = total - free
+                stats = {
+                    **stats,
+                    **{"cuda": {"total": total, "free": free, "used": used}},
+                }
         return stats

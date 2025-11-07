@@ -209,47 +209,7 @@ __hf_hub_stable_flux_ctrl_safetensors_dict__ = lambda name, n1=3, n2=4: {
     ),
 }
 
-__hf_hub_wan_v2_1_safetensors_dict__ = lambda name, n1=2, n2=5, im=False: {
-    "transformer": {
-        "config": hf_endpoint_url(f"/{name}/resolve/main/transformer/config.json"),
-        "weight": [
-            hf_endpoint_url(
-                f"/{name}/resolve/main/transformer/diffusion_pytorch_model-{str(i).rjust(5, '0')}-of-{str(n1).rjust(5, '0')}.safetensors"
-            )
-            for i in range(1, n1 + 1)
-        ],
-    },
-    "text": {
-        "config": hf_endpoint_url(f"/{name}/resolve/main/text_encoder/config.json"),
-        "vocab": hf_endpoint_url(f"/{name}/resolve/main/tokenizer/spiece.model"),
-        "weight": [
-            hf_endpoint_url(
-                f"/{name}/resolve/main/text_encoder/model-{str(i).rjust(5, '0')}-of-{str(n2).rjust(5, '0')}.safetensors"
-            )
-            for i in range(1, n2 + 1)
-        ],
-    },
-    "image": (
-        {
-            "config": hf_endpoint_url(
-                f"/{name}/resolve/main/image_encoder/config.json"
-            ),
-            "vision_config": hf_endpoint_url(
-                f"/{name}/resolve/main/image_processor/preprocessor_config.json"
-            ),
-            "weight": hf_endpoint_url(
-                f"/{name}/resolve/main/image_encoder/model.safetensors"
-            ),
-        }
-        if im
-        else {}
-    ),
-    "scheduler": hf_endpoint_url(
-        f"/{name}/resolve/main/scheduler/scheduler_config.json"
-    ),
-}
-
-__hf_hub_wan_v2_2_safetensors_dict__ = lambda name, n1=2, n2=5, im=False: {
+__hf_hub_wan_v2_2_safetensors_dict__ = lambda name, n1=12, n2=12, n3=3: {
     "transformer": {
         "config": hf_endpoint_url(f"/{name}/resolve/main/transformer/config.json"),
         "weight": [
@@ -263,9 +223,9 @@ __hf_hub_wan_v2_2_safetensors_dict__ = lambda name, n1=2, n2=5, im=False: {
         "config": hf_endpoint_url(f"/{name}/resolve/main/transformer/config.json"),
         "weight": [
             hf_endpoint_url(
-                f"/{name}/resolve/main/transformer_2/diffusion_pytorch_model-{str(i).rjust(5, '0')}-of-{str(n1).rjust(5, '0')}.safetensors"
+                f"/{name}/resolve/main/transformer_2/diffusion_pytorch_model-{str(i).rjust(5, '0')}-of-{str(n2).rjust(5, '0')}.safetensors"
             )
-            for i in range(1, n1 + 1)
+            for i in range(1, n2 + 1)
         ],
     },
     "text": {
@@ -273,26 +233,11 @@ __hf_hub_wan_v2_2_safetensors_dict__ = lambda name, n1=2, n2=5, im=False: {
         "vocab": hf_endpoint_url(f"/{name}/resolve/main/tokenizer/spiece.model"),
         "weight": [
             hf_endpoint_url(
-                f"/{name}/resolve/main/text_encoder/model-{str(i).rjust(5, '0')}-of-{str(n2).rjust(5, '0')}.safetensors"
+                f"/{name}/resolve/main/text_encoder/model-{str(i).rjust(5, '0')}-of-{str(n3).rjust(5, '0')}.safetensors"
             )
-            for i in range(1, n2 + 1)
+            for i in range(1, n3 + 1)
         ],
     },
-    "image": (
-        {
-            "config": hf_endpoint_url(
-                f"/{name}/resolve/main/image_encoder/config.json"
-            ),
-            "vision_config": hf_endpoint_url(
-                f"/{name}/resolve/main/image_processor/preprocessor_config.json"
-            ),
-            "weight": hf_endpoint_url(
-                f"/{name}/resolve/main/image_encoder/model.safetensors"
-            ),
-        }
-        if im
-        else {}
-    ),
     "scheduler": hf_endpoint_url(
         f"/{name}/resolve/main/scheduler/scheduler_config.json"
     ),
@@ -635,27 +580,17 @@ pretrained_stable_infos = {
         ),
         **__hf_hub_vae_safetensors_dict__("vdo/stable-video-diffusion-img2vid-xt-1-1"),
     },
-    "wan-v2.1-t2v-1.3b": {
-        **__hf_hub_wan_v2_1_safetensors_dict__("Wan-AI/Wan2.1-T2V-1.3B-Diffusers"),
-        **__hf_hub_vae_safetensors_dict__("Wan-AI/Wan2.1-T2V-1.3B-Diffusers"),
-    },
-    "wan-v2.1-t2v-14b": {
-        **__hf_hub_wan_v2_1_safetensors_dict__(
-            "Wan-AI/Wan2.1-T2V-14B-Diffusers", n1=12
+    "wan-v2.2-t2v-14b": {
+        **__hf_hub_wan_v2_2_safetensors_dict__(
+            "Wan-AI/Wan2.2-T2V-A14B-Diffusers", n1=12, n2=12, n3=3
         ),
-        **__hf_hub_vae_safetensors_dict__("Wan-AI/Wan2.1-T2V-14B-Diffusers"),
+        **__hf_hub_vae_safetensors_dict__("Wan-AI/Wan2.2-T2V-A14B-Diffusers"),
     },
-    "wan-v2.1-i2v-14b-480p": {
-        **__hf_hub_wan_v2_1_safetensors_dict__(
-            "Wan-AI/Wan2.1-I2V-14B-480P-Diffusers", n1=14, im=True
+    "wan-v2.2-i2v-14b": {
+        **__hf_hub_wan_v2_2_safetensors_dict__(
+            "Wan-AI/Wan2.2-I2V-A14B-Diffusers", n1=12, n2=12, n3=3
         ),
-        **__hf_hub_vae_safetensors_dict__("Wan-AI/Wan2.1-I2V-14B-480P-Diffusers"),
-    },
-    "wan-v2.1-i2v-14b-720p": {
-        **__hf_hub_wan_v2_1_safetensors_dict__(
-            "Wan-AI/Wan2.1-I2V-14B-720P-Diffusers", n1=14, im=True
-        ),
-        **__hf_hub_vae_safetensors_dict__("Wan-AI/Wan2.1-I2V-14B-720P-Diffusers"),
+        **__hf_hub_vae_safetensors_dict__("Wan-AI/Wan2.2-I2V-A14B-Diffusers"),
     },
     "qwen-image": {
         **__hf_hub_qwen_image_safetensors_dict__("Qwen/Qwen-Image"),

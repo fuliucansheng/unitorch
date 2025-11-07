@@ -128,6 +128,7 @@ def create_element(
             elem_id=elem_id,
             elem_classes=elem_classes,
             datatype="markdown",
+            show_search="search",
             wrap=True,
         )
 

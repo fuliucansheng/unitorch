@@ -207,8 +207,8 @@ class StableForText2ImageGenerationPipeline(GenericStableModel):
         controlnet_images: Optional[List[Image.Image]] = [],
         controlnet_guidance_scales: Optional[List[float]] = [],
         lora_checkpoints: Optional[Union[str, List[str]]] = [],
-        lora_weights: Optional[Union[float, List[float]]] = 1.0,
-        lora_alphas: Optional[Union[float, List[float]]] = 32,
+        lora_weights: Optional[Union[float, List[float]]] = [],
+        lora_alphas: Optional[Union[float, List[float]]] = [],
         lora_urls: Optional[Union[str, List[str]]] = [],
         lora_files: Optional[Union[str, List[str]]] = [],
     ):

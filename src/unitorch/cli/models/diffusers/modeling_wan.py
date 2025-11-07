@@ -38,6 +38,7 @@ class WanForText2VideoGeneration(_WanForText2VideoGeneration):
         text_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
+        config2_path: Optional[str] = None,
         quant_config_path: Optional[str] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
@@ -52,6 +53,7 @@ class WanForText2VideoGeneration(_WanForText2VideoGeneration):
             text_config_path=text_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
+            config2_path=config2_path,
             quant_config_path=quant_config_path,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
@@ -66,7 +68,7 @@ class WanForText2VideoGeneration(_WanForText2VideoGeneration):
     @add_default_section_for_init("core/model/diffusers/text2video/wan")
     def from_core_configure(cls, config, **kwargs):
         config.set_default_section("core/model/diffusers/text2video/wan")
-        pretrained_name = config.getoption("pretrained_name", "wan-v2.1-t2v-1.3b")
+        pretrained_name = config.getoption("pretrained_name", "wan-v2.2-t2v-14b")
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
 
         config_path = config.getoption("config_path", None)
@@ -75,6 +77,15 @@ class WanForText2VideoGeneration(_WanForText2VideoGeneration):
             nested_dict_value(pretrained_infos, "transformer", "config"),
         )
         config_path = cached_path(config_path)
+
+        config2_path = config.getoption("config2_path", None)
+        config2_path = pop_value(
+            config2_path,
+            nested_dict_value(pretrained_infos, "transformer2", "config"),
+        )
+
+        if config2_path is not None:
+            config2_path = cached_path(config2_path)
 
         text_config_path = config.getoption("text_config_path", None)
         text_config_path = pop_value(
@@ -101,8 +112,6 @@ class WanForText2VideoGeneration(_WanForText2VideoGeneration):
         if quant_config_path is not None:
             quant_config_path = cached_path(quant_config_path)
 
-        in_channels = config.getoption("in_channels", None)
-        out_channels = config.getoption("out_channels", None)
         num_train_timesteps = config.getoption("num_train_timesteps", 1000)
         num_infer_timesteps = config.getoption("num_infer_timesteps", 50)
         freeze_vae_encoder = config.getoption("freeze_vae_encoder", True)
@@ -116,6 +125,7 @@ class WanForText2VideoGeneration(_WanForText2VideoGeneration):
             text_config_path=text_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
+            config2_path=config2_path,
             quant_config_path=quant_config_path,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
@@ -134,6 +144,10 @@ class WanForText2VideoGeneration(_WanForText2VideoGeneration):
                 load_weight(
                     nested_dict_value(pretrained_infos, "transformer", "weight"),
                     prefix_keys={"": "transformer."},
+                ),
+                load_weight(
+                    nested_dict_value(pretrained_infos, "transformer2", "weight"),
+                    prefix_keys={"": "transformer2."},
                 ),
                 load_weight(
                     nested_dict_value(pretrained_infos, "text", "weight"),
@@ -234,9 +248,9 @@ class WanForImage2VideoGeneration(_WanForImage2VideoGeneration):
         self,
         config_path: str,
         text_config_path: str,
-        image_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
+        config2_path: Optional[str] = None,
         quant_config_path: Optional[str] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
@@ -249,9 +263,9 @@ class WanForImage2VideoGeneration(_WanForImage2VideoGeneration):
         super().__init__(
             config_path=config_path,
             text_config_path=text_config_path,
-            image_config_path=image_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
+            config2_path=config2_path,
             quant_config_path=quant_config_path,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
@@ -266,7 +280,7 @@ class WanForImage2VideoGeneration(_WanForImage2VideoGeneration):
     @add_default_section_for_init("core/model/diffusers/image2video/wan")
     def from_core_configure(cls, config, **kwargs):
         config.set_default_section("core/model/diffusers/image2video/wan")
-        pretrained_name = config.getoption("pretrained_name", "wan-v2.1-i2v-14b-480p")
+        pretrained_name = config.getoption("pretrained_name", "wan-v2.2-i2v-14b")
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
 
         config_path = config.getoption("config_path", None)
@@ -276,19 +290,21 @@ class WanForImage2VideoGeneration(_WanForImage2VideoGeneration):
         )
         config_path = cached_path(config_path)
 
+        config2_path = config.getoption("config2_path", None)
+        config2_path = pop_value(
+            config2_path,
+            nested_dict_value(pretrained_infos, "transformer2", "config"),
+        )
+
+        if config2_path is not None:
+            config2_path = cached_path(config2_path)
+
         text_config_path = config.getoption("text_config_path", None)
         text_config_path = pop_value(
             text_config_path,
             nested_dict_value(pretrained_infos, "text", "config"),
         )
         text_config_path = cached_path(text_config_path)
-
-        image_config_path = config.getoption("image_config_path", None)
-        image_config_path = pop_value(
-            image_config_path,
-            nested_dict_value(pretrained_infos, "image", "config"),
-        )
-        image_config_path = cached_path(image_config_path)
 
         vae_config_path = config.getoption("vae_config_path", None)
         vae_config_path = pop_value(
@@ -308,8 +324,6 @@ class WanForImage2VideoGeneration(_WanForImage2VideoGeneration):
         if quant_config_path is not None:
             quant_config_path = cached_path(quant_config_path)
 
-        in_channels = config.getoption("in_channels", None)
-        out_channels = config.getoption("out_channels", None)
         num_train_timesteps = config.getoption("num_train_timesteps", 1000)
         num_infer_timesteps = config.getoption("num_infer_timesteps", 50)
         freeze_vae_encoder = config.getoption("freeze_vae_encoder", True)
@@ -321,9 +335,9 @@ class WanForImage2VideoGeneration(_WanForImage2VideoGeneration):
         inst = cls(
             config_path=config_path,
             text_config_path=text_config_path,
-            image_config_path=image_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
+            config2_path=config2_path,
             quant_config_path=quant_config_path,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
@@ -344,12 +358,12 @@ class WanForImage2VideoGeneration(_WanForImage2VideoGeneration):
                     prefix_keys={"": "transformer."},
                 ),
                 load_weight(
-                    nested_dict_value(pretrained_infos, "text", "weight"),
-                    prefix_keys={"": "text."},
+                    nested_dict_value(pretrained_infos, "transformer2", "weight"),
+                    prefix_keys={"": "transformer2."},
                 ),
                 load_weight(
-                    nested_dict_value(pretrained_infos, "image", "weight"),
-                    prefix_keys={"": "image."},
+                    nested_dict_value(pretrained_infos, "text", "weight"),
+                    prefix_keys={"": "text."},
                 ),
                 load_weight(
                     nested_dict_value(pretrained_infos, "vae", "weight"),
@@ -404,14 +418,12 @@ class WanForImage2VideoGeneration(_WanForImage2VideoGeneration):
     def forward(
         self,
         pixel_values: torch.Tensor,
-        condition_pixel_values: torch.Tensor,
         vae_pixel_values: torch.Tensor,
         input_ids: torch.Tensor,
         attention_mask: Optional[torch.Tensor] = None,
     ):
         loss = super().forward(
             pixel_values=pixel_values,
-            condition_pixel_values=condition_pixel_values,
             vae_pixel_values=vae_pixel_values,
             input_ids=input_ids,
             attention_mask=attention_mask,
@@ -427,7 +439,6 @@ class WanForImage2VideoGeneration(_WanForImage2VideoGeneration):
         self,
         input_ids: torch.Tensor,
         negative_input_ids: torch.Tensor,
-        condition_pixel_values: torch.Tensor,
         vae_pixel_values: torch.Tensor,
         attention_mask: Optional[torch.Tensor] = None,
         negative_attention_mask: Optional[torch.Tensor] = None,
@@ -437,7 +448,6 @@ class WanForImage2VideoGeneration(_WanForImage2VideoGeneration):
         outputs = super().generate(
             input_ids=input_ids,
             negative_input_ids=negative_input_ids,
-            condition_pixel_values=condition_pixel_values,
             vae_pixel_values=vae_pixel_values,
             attention_mask=attention_mask,
             negative_attention_mask=negative_attention_mask,

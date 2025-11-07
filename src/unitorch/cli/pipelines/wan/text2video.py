@@ -47,6 +47,7 @@ class WanForText2VideoGenerationPipeline(WanForText2VideoGeneration):
         vae_config_path: str,
         scheduler_config_path: str,
         vocab_path: str,
+        config2_path: Optional[str] = None,
         quant_config_path: Optional[str] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
@@ -55,15 +56,18 @@ class WanForText2VideoGenerationPipeline(WanForText2VideoGeneration):
         device: Optional[Union[str, int]] = "cpu",
         enable_cpu_offload: Optional[bool] = False,
         enable_xformers: Optional[bool] = False,
+        boundary_ratio: Optional[float] = 0.9,
     ):
         super().__init__(
             config_path=config_path,
             text_config_path=text_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
+            config2_path=config2_path,
             quant_config_path=quant_config_path,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
+            boundary_ratio=boundary_ratio,
         )
         self.processor = WanProcessor(
             vocab_path=vocab_path,
@@ -87,6 +91,7 @@ class WanForText2VideoGenerationPipeline(WanForText2VideoGeneration):
         text_config_path: Optional[str] = None,
         vae_config_path: Optional[str] = None,
         scheduler_config_path: Optional[str] = None,
+        config2_path: Optional[str] = None,
         vocab_path: Optional[str] = None,
         quant_config_path: Optional[str] = None,
         pretrained_weight_path: Optional[str] = None,
@@ -95,7 +100,7 @@ class WanForText2VideoGenerationPipeline(WanForText2VideoGeneration):
     ):
         config.set_default_section("core/pipeline/wan/text2video")
         pretrained_name = pretrained_name or config.getoption(
-            "pretrained_name", "wan-v2.1-t2v-1.3b"
+            "pretrained_name", "wan-v2.2-t2v-14b"
         )
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
 
@@ -105,6 +110,15 @@ class WanForText2VideoGenerationPipeline(WanForText2VideoGeneration):
             nested_dict_value(pretrained_infos, "transformer", "config"),
         )
         config_path = cached_path(config_path)
+
+        config2_path = config2_path or config.getoption("config2_path", None)
+        config2_path = pop_value(
+            config2_path,
+            nested_dict_value(pretrained_infos, "transformer2", "config"),
+        )
+
+        if config2_path is not None:
+            config2_path = cached_path(config2_path)
 
         text_config_path = text_config_path or config.getoption(
             "text_config_path", None
@@ -159,6 +173,10 @@ class WanForText2VideoGenerationPipeline(WanForText2VideoGeneration):
                     prefix_keys={"": "transformer."},
                 ),
                 load_weight(
+                    nested_dict_value(pretrained_infos, "transformer2", "weight"),
+                    prefix_keys={"": "transformer2."},
+                ),
+                load_weight(
                     nested_dict_value(pretrained_infos, "text", "weight"),
                     prefix_keys={"": "text."},
                 ),
@@ -172,6 +190,7 @@ class WanForText2VideoGenerationPipeline(WanForText2VideoGeneration):
             text_config_path=text_config_path,
             scheduler_config_path=scheduler_config_path,
             vae_config_path=vae_config_path,
+            config2_path=config2_path,
             vocab_path=vocab_path,
             quant_config_path=quant_config_path,
             weight_path=weight_path,
@@ -201,8 +220,8 @@ class WanForText2VideoGenerationPipeline(WanForText2VideoGeneration):
         scheduler: Optional[str] = None,
         guidance_scale: Optional[float] = 5.0,
         lora_checkpoints: Optional[Union[str, List[str]]] = [],
-        lora_weights: Optional[Union[float, List[float]]] = 1.0,
-        lora_alphas: Optional[Union[float, List[float]]] = 32,
+        lora_weights: Optional[Union[float, List[float]]] = [],
+        lora_alphas: Optional[Union[float, List[float]]] = [],
         lora_urls: Optional[Union[str, List[str]]] = [],
         lora_files: Optional[Union[str, List[str]]] = [],
     ):
@@ -222,8 +241,10 @@ class WanForText2VideoGenerationPipeline(WanForText2VideoGeneration):
             vae=self.vae,
             text_encoder=self.text,
             transformer=self.transformer,
+            transformer_2=getattr(self, "transformer2", None),
             scheduler=self.scheduler,
             tokenizer=None,
+            boundary_ratio=self.boundary_ratio,
         )
         self.pipeline.set_progress_bar_config(disable=True)
         self.seed = seed

@@ -64,7 +64,6 @@ class GenericWanLoraModel(GenericPeftModel, QuantizationMixin):
         vae_config_path: str,
         scheduler_config_path: str,
         config2_path: Optional[str] = None,
-        image_config_path: Optional[str] = None,
         quant_config_path: Optional[str] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
@@ -103,10 +102,6 @@ class GenericWanLoraModel(GenericPeftModel, QuantizationMixin):
         text_config = UMT5Config.from_json_file(text_config_path)
         self.text = UMT5EncoderModel(text_config).to(torch.bfloat16)
 
-        if image_config_path is not None:
-            image_config = CLIPVisionConfig.from_json_file(image_config_path)
-            self.image = CLIPVisionModel(image_config).to(torch.bfloat16)
-
         vae_config_dict = json.load(open(vae_config_path))
         self.vae = AutoencoderKLWan.from_config(vae_config_dict).to(torch.bfloat16)
 
@@ -126,10 +121,6 @@ class GenericWanLoraModel(GenericPeftModel, QuantizationMixin):
 
         for param in self.text.parameters():
             param.requires_grad = False
-
-        if image_config_path is not None:
-            for param in self.image.parameters():
-                param.requires_grad = False
 
         for param in self.transformer.parameters():
             param.requires_grad = False
@@ -249,6 +240,7 @@ class WanLoraForText2VideoGeneration(GenericWanLoraModel):
             transformer_2=getattr(self, "transformer2", None),
             scheduler=self.scheduler,
             tokenizer=None,
+            boundary_ratio=self.boundary_ratio,
         )
         self.pipeline.set_progress_bar_config(disable=True)
 
@@ -360,7 +352,6 @@ class WanLoraForImage2VideoGeneration(GenericWanLoraModel):
         self,
         config_path: str,
         text_config_path: str,
-        image_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
         config2_path: Optional[str] = None,
@@ -386,7 +377,6 @@ class WanLoraForImage2VideoGeneration(GenericWanLoraModel):
         super().__init__(
             config_path=config_path,
             text_config_path=text_config_path,
-            image_config_path=image_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
             config2_path=config2_path,
@@ -418,6 +408,7 @@ class WanLoraForImage2VideoGeneration(GenericWanLoraModel):
             scheduler=self.scheduler,
             tokenizer=None,
             image_processor=None,
+            boundary_ratio=self.boundary_ratio,
         )
         self.pipeline.set_progress_bar_config(disable=True)
 
@@ -425,7 +416,6 @@ class WanLoraForImage2VideoGeneration(GenericWanLoraModel):
         self,
         pixel_values: torch.Tensor,
         vae_pixel_values: torch.Tensor,
-        condition_pixel_values: torch.Tensor,
         input_ids: torch.Tensor,
         attention_mask: Optional[torch.Tensor] = None,
     ):
@@ -509,23 +499,17 @@ class WanLoraForImage2VideoGeneration(GenericWanLoraModel):
         latent_model_input = torch.cat([noise_latents, condition_latents], dim=1)
 
         encoder_hidden_states = self.text(input_ids, attention_mask)[0]
-        condition_hidden_states = self.image(
-            condition_pixel_values,
-            output_hidden_states=True,
-        ).hidden_states[-2]
         if use_transformer:
             outputs = self.transformer(
                 latent_model_input,
                 timesteps,
                 encoder_hidden_states=encoder_hidden_states,
-                encoder_hidden_states_image=condition_hidden_states,
             ).sample
         else:
             outputs = self.transformer_2(
                 latent_model_input,
                 timesteps,
                 encoder_hidden_states=encoder_hidden_states,
-                encoder_hidden_states_image=condition_hidden_states,
             ).sample
         weighting = compute_loss_weighting_for_sd3(
             weighting_scheme="none", sigmas=sigmas
@@ -544,7 +528,6 @@ class WanLoraForImage2VideoGeneration(GenericWanLoraModel):
         self,
         input_ids: torch.Tensor,
         negative_input_ids: torch.Tensor,
-        condition_pixel_values: torch.Tensor,
         vae_pixel_values: torch.Tensor,
         attention_mask: Optional[torch.Tensor] = None,
         negative_attention_mask: Optional[torch.Tensor] = None,
@@ -558,16 +541,10 @@ class WanLoraForImage2VideoGeneration(GenericWanLoraModel):
             negative_attention_mask=negative_attention_mask,
         )
 
-        condition_hidden_states = self.image(
-            condition_pixel_values,
-            output_hidden_states=True,
-        ).hidden_states[-2]
-
         frames = self.pipeline(
             image=vae_pixel_values,
             prompt_embeds=outputs.prompt_embeds,
             negative_prompt_embeds=outputs.negative_prompt_embeds,
-            image_embeds=condition_hidden_states,
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),
