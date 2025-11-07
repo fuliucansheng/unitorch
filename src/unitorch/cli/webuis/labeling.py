@@ -33,7 +33,34 @@ from unitorch.cli.webuis import (
 from unitorch.cli.webuis import SimpleWebUI
 
 _js = """
-() => {}
+() => {
+    const shortcuts = (e) => {
+        const event = document.all ? window.event : e;
+        if(e.target.tagName.toLowerCase() == "body") {
+            const code = e.key;
+            if (code.toLowerCase() === "enter") {
+                document.getElementById("ut-labeling-submit").click();
+                document.activeElement.blur();
+                window.focus();
+            } else {
+                const choices = document.getElementById("ut-labeling-choices").getElementsByTagName("label");
+                if (/^[1-9]$/.test(code)) {
+                    const index = parseInt(code, 10) - 1; // 数字键1对应choices[0]
+                    if (index >= 0 && index < choices.length) {
+                        choices[index].click();
+                        document.activeElement.blur();
+                        window.focus();
+                    } else {
+                        console.warn("Key index out of range:", index);
+                    }
+                }
+
+            }
+        }
+    };
+    document.addEventListener("keyup", shortcuts);
+    console.log("Shortcut keys for labeling loaded.");
+}
 """
 
 _css = """
@@ -307,6 +334,7 @@ class LabelingWebUI(SimpleWebUI):
             label="Label",
             values=self.choices,
             scale=3,
+            elem_id="ut-labeling-choices",
         )
 
         comment = create_element(
@@ -330,6 +358,7 @@ class LabelingWebUI(SimpleWebUI):
         submit = create_element(
             "button",
             label="Submit",
+            elem_id="ut-labeling-submit",
         )
         reset = create_element(
             "button",
