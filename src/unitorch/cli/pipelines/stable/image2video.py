@@ -251,7 +251,7 @@ class StableForImage2VideoGenerationPipeline(StableForImage2VideoGeneration):
             if ckpt is not None:
                 processed_lora_files.append(
                     nested_dict_value(
-                        pretrained_stable_extensions_infos, ckpt, "weight"
+                        pretrained_stable_extensions_infos, ckpt, "lora", "weight"
                     )
                 )
                 processed_lora_weights.append(weight)
