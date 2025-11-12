@@ -38,7 +38,7 @@ _js = """
         const event = document.all ? window.event : e;
         if(e.target.tagName.toLowerCase() == "body") {
             const code = e.key;
-            if (code.toLowerCase() === "enter") {
+            if (code.toLowerCase() === "arrowright") {
                 document.getElementById("ut-labeling-submit").click();
                 document.activeElement.blur();
                 window.focus();
@@ -123,6 +123,7 @@ class LabelingWebUI(SimpleWebUI):
         self.zip_cols = config.getoption("zip_cols", None)
         self.zip_http_url = config.getoption("zip_http_url", None)
         self.group_col = config.getoption("group_col", None)
+        self.pre_label_col = config.getoption("pre_label_col", None)
         self.num_group_texts_per_row = config.getoption("num_group_texts_per_row", 4)
         self.num_images_per_row = config.getoption("num_images_per_row", 4)
         self.num_videos_per_row = config.getoption("num_videos_per_row", 4)
@@ -236,15 +237,23 @@ class LabelingWebUI(SimpleWebUI):
         self.guideline = config.getoption("guideline", None)
         self.choices = config.getoption("choices", None)
         self.checkbox = config.getoption("checkbox", False)
+        self.use_shortcuts = config.getoption("use_shortcuts", False)
         self.html_styles = config.getoption("html_styles", {})
         self.dataset["User"] = ""
         self.dataset["Comment"] = ""
         self.dataset["Label"] = ""
 
+        if self.pre_label_col is not None:
+            assert (
+                self.pre_label_col in self.dataset.columns
+            ), f"pre_label_col {self.pre_label_col} not found in dataset"
+            self.dataset["Label"] = self.dataset[self.pre_label_col].map(lambda x: str(x).strip())
+            self.dataset["Label"].fillna("", inplace=True)
+
         if isinstance(self.choices, str):
             self.choices = re.split(r"[,;]", self.choices)
             self.choices = [c.strip() for c in self.choices]
-        self.choices = [str(c).replace(",", " ").strip() for c in self.choices]
+        self.choices = [str(c).strip() for c in self.choices]
 
         if os.path.exists(result_file) and not force_to_relabel:
             self.dataset = pd.read_csv(result_file, sep="\t")
@@ -506,7 +515,10 @@ class LabelingWebUI(SimpleWebUI):
             name="Advanced",
         )
         tabs = create_tabs(tab1, tab2, tab3)
-        iface = create_blocks(guideline_header, guideline, tabs, js=_js, css=_css)
+        if self.use_shortcuts:
+            iface = create_blocks(guideline_header, guideline, tabs, js=_js, css=_css)
+        else:
+            iface = create_blocks(guideline_header, guideline, tabs, css=_css)
 
         # create events
         iface.__enter__()
@@ -728,7 +740,7 @@ class LabelingWebUI(SimpleWebUI):
         new_htmls = new_one[self.html_cols].tolist()
         new_group = new_one[self.group_col] if self.group_col is not None else None
         new_comment = new_one["Comment"]
-        new_choices = new_one["Label"].split(",") if new_one["Label"] != "" else None
+        new_choices = new_one["Label"].split("<label-gap>") if new_one["Label"] != "" else None
         new_choices = (
             new_choices[0]
             if not self.checkbox and new_choices is not None
@@ -754,7 +766,7 @@ class LabelingWebUI(SimpleWebUI):
         choices = self.choices
 
         labeled["Label"] = labeled["Label"].map(
-            lambda x: x.split(",") if x != "" else []
+            lambda x: x.split("<label-gap>") if x != "" else []
         )
         labeled_exploded = labeled.explode("Label")
 
@@ -825,7 +837,7 @@ class LabelingWebUI(SimpleWebUI):
             gr.Warning("Please ensure the label field is not left empty.")
             return os.path.abspath(self.result_file), self.stats(), logs, index
         if isinstance(choice, list) or isinstance(choice, tuple):
-            choice = ",".join(choice)
+            choice = "<label-gap>".join(choice)
         self.dataset.loc[self.dataset.Index == index, "User"] = user
         self.dataset.loc[self.dataset.Index == index, "Label"] = choice
         self.dataset.loc[self.dataset.Index == index, "Comment"] = comment
