@@ -104,7 +104,6 @@ class QWenVLProcessor(HfLlmProcessor):
         self.vision_processor = Qwen2VLImageProcessor.from_json_file(vision_config_path)
 
         super().__init__(
-            self,
             tokenizer=tokenizer,
             max_seq_length=max_seq_length,
             max_gen_seq_length=max_gen_seq_length,

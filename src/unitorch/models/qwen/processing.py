@@ -72,7 +72,6 @@ class QWenProcessor(HfLlmProcessor):
         tokenizer.cls_token = tokenizer.bos_token
         tokenizer.sep_token = tokenizer.eos_token
         super().__init__(
-            self,
             tokenizer=tokenizer,
             max_seq_length=max_seq_length,
             max_gen_seq_length=max_gen_seq_length,
