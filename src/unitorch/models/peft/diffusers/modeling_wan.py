@@ -2,6 +2,7 @@
 # Licensed under the MIT License.
 
 import json
+import random
 import torch
 import torch.nn.functional as F
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
@@ -62,13 +63,12 @@ class GenericWanLoraModel(GenericPeftModel, QuantizationMixin):
         text_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
-        image_config_path: Optional[str] = None,
+        config2_path: Optional[str] = None,
         quant_config_path: Optional[str] = None,
-        in_channels: Optional[int] = None,
-        out_channels: Optional[int] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         snr_gamma: Optional[float] = 5.0,
+        boundary_ratio: Optional[float] = 0.9,
         lora_r: Optional[int] = 16,
         lora_alpha: Optional[int] = 32,
         lora_dropout: Optional[float] = 0.05,
@@ -89,20 +89,18 @@ class GenericWanLoraModel(GenericPeftModel, QuantizationMixin):
         self.snr_gamma = snr_gamma
 
         config_dict = json.load(open(config_path))
-        if in_channels is not None:
-            config_dict.update({"in_channels": in_channels})
-        if out_channels is not None:
-            config_dict.update({"out_channels": out_channels})
         self.transformer = WanTransformer3DModel.from_config(config_dict).to(
             torch.bfloat16
         )
 
+        if config2_path is not None:
+            config2_dict = json.load(open(config2_path))
+            self.transformer2 = WanTransformer3DModel.from_config(config2_dict).to(
+                torch.bfloat16
+            )
+
         text_config = UMT5Config.from_json_file(text_config_path)
         self.text = UMT5EncoderModel(text_config).to(torch.bfloat16)
-
-        if image_config_path is not None:
-            image_config = CLIPVisionConfig.from_json_file(image_config_path)
-            self.image = CLIPVisionModel(image_config).to(torch.bfloat16)
 
         vae_config_dict = json.load(open(vae_config_path))
         self.vae = AutoencoderKLWan.from_config(vae_config_dict).to(torch.bfloat16)
@@ -116,16 +114,13 @@ class GenericWanLoraModel(GenericPeftModel, QuantizationMixin):
         assert issubclass(scheduler_class, SchedulerMixin)
         scheduler_config_dict["num_train_timesteps"] = num_train_timesteps
         self.scheduler = scheduler_class.from_config(scheduler_config_dict)
+        self.boundary_ratio = boundary_ratio if hasattr(self, "transformer2") else 1.0
 
         for param in self.vae.parameters():
             param.requires_grad = False
 
         for param in self.text.parameters():
             param.requires_grad = False
-
-        if image_config_path is not None:
-            for param in self.image.parameters():
-                param.requires_grad = False
 
         for param in self.transformer.parameters():
             param.requires_grad = False
@@ -192,12 +187,12 @@ class WanLoraForText2VideoGeneration(GenericWanLoraModel):
         text_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
+        config2_path: Optional[str] = None,
         quant_config_path: Optional[str] = None,
-        in_channels: Optional[int] = None,
-        out_channels: Optional[int] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         snr_gamma: Optional[float] = 5.0,
+        boundary_ratio: Optional[float] = 0.9,
         lora_r: Optional[int] = 16,
         lora_alpha: Optional[int] = 32,
         lora_dropout: Optional[float] = 0.05,
@@ -217,12 +212,12 @@ class WanLoraForText2VideoGeneration(GenericWanLoraModel):
             text_config_path=text_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
+            config2_path=config2_path,
             quant_config_path=quant_config_path,
-            in_channels=in_channels,
-            out_channels=out_channels,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             snr_gamma=snr_gamma,
+            boundary_ratio=boundary_ratio,
             lora_r=lora_r,
             lora_alpha=lora_alpha,
             lora_dropout=lora_dropout,
@@ -235,13 +230,17 @@ class WanLoraForText2VideoGeneration(GenericWanLoraModel):
 
         if gradient_checkpointing:
             self.transformer.enable_gradient_checkpointing()
+            if hasattr(self, "transformer2"):
+                self.transformer2.enable_gradient_checkpointing()
 
         self.pipeline = WanPipeline(
             vae=self.vae,
             text_encoder=self.text,
             transformer=self.transformer,
+            transformer_2=getattr(self, "transformer2", None),
             scheduler=self.scheduler,
             tokenizer=None,
+            boundary_ratio=self.boundary_ratio,
         )
         self.pipeline.set_progress_bar_config(disable=True)
 
@@ -271,18 +270,35 @@ class WanLoraForText2VideoGeneration(GenericWanLoraModel):
             logit_std=1.0,
             mode_scale=1.29,
         )
-        indices = (u * self.scheduler.config.num_train_timesteps).long()
+        use_transformer = random.random() < self.boundary_ratio
+        max_timesteps = int(
+            self.scheduler.config.num_train_timesteps * self.boundary_ratio
+        )
+
+        if use_transformer:
+            indices = (u * max_timesteps).long()
+        else:
+            indices = (
+                u * (self.scheduler.config.num_train_timesteps - max_timesteps)
+            ).long() + int(max_timesteps)
         timesteps = self.scheduler.timesteps[indices].to(device=self.device)
 
         sigmas = self.get_sigmas(timesteps, n_dim=latents.ndim, dtype=latents.dtype)
         noise_latents = (1.0 - sigmas) * latents + sigmas * noise
 
         encoder_hidden_states = self.text(input_ids, attention_mask)[0]
-        outputs = self.transformer(
-            noise_latents,
-            timesteps,
-            encoder_hidden_states,
-        ).sample
+        if use_transformer:
+            outputs = self.transformer(
+                noise_latents,
+                timesteps,
+                encoder_hidden_states,
+            ).sample
+        else:
+            outputs = self.transformer2(
+                noise_latents,
+                timesteps,
+                encoder_hidden_states,
+            ).sample
         weighting = compute_loss_weighting_for_sd3(
             weighting_scheme="none", sigmas=sigmas
         )
@@ -336,15 +352,14 @@ class WanLoraForImage2VideoGeneration(GenericWanLoraModel):
         self,
         config_path: str,
         text_config_path: str,
-        image_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
+        config2_path: Optional[str] = None,
         quant_config_path: Optional[str] = None,
-        in_channels: Optional[int] = None,
-        out_channels: Optional[int] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         snr_gamma: Optional[float] = 5.0,
+        boundary_ratio: Optional[float] = 0.9,
         lora_r: Optional[int] = 16,
         lora_alpha: Optional[int] = 32,
         lora_dropout: Optional[float] = 0.05,
@@ -362,15 +377,14 @@ class WanLoraForImage2VideoGeneration(GenericWanLoraModel):
         super().__init__(
             config_path=config_path,
             text_config_path=text_config_path,
-            image_config_path=image_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
+            config2_path=config2_path,
             quant_config_path=quant_config_path,
-            in_channels=in_channels,
-            out_channels=out_channels,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             snr_gamma=snr_gamma,
+            boundary_ratio=boundary_ratio,
             lora_r=lora_r,
             lora_alpha=lora_alpha,
             lora_dropout=lora_dropout,
@@ -382,15 +396,19 @@ class WanLoraForImage2VideoGeneration(GenericWanLoraModel):
         )
         if gradient_checkpointing:
             self.transformer.enable_gradient_checkpointing()
+            if hasattr(self, "transformer2"):
+                self.transformer2.enable_gradient_checkpointing()
 
         self.pipeline = WanImageToVideoPipeline(
             vae=self.vae,
             text_encoder=self.text,
             image_encoder=self.image,
             transformer=self.transformer,
+            transformer_2=getattr(self, "transformer2", None),
             scheduler=self.scheduler,
             tokenizer=None,
             image_processor=None,
+            boundary_ratio=self.boundary_ratio,
         )
         self.pipeline.set_progress_bar_config(disable=True)
 
@@ -398,7 +416,6 @@ class WanLoraForImage2VideoGeneration(GenericWanLoraModel):
         self,
         pixel_values: torch.Tensor,
         vae_pixel_values: torch.Tensor,
-        condition_pixel_values: torch.Tensor,
         input_ids: torch.Tensor,
         attention_mask: Optional[torch.Tensor] = None,
     ):
@@ -422,7 +439,17 @@ class WanLoraForImage2VideoGeneration(GenericWanLoraModel):
             logit_std=1.0,
             mode_scale=1.29,
         )
-        indices = (u * self.scheduler.config.num_train_timesteps).long()
+        use_transformer = random.random() < self.boundary_ratio
+        max_timesteps = int(
+            self.scheduler.config.num_train_timesteps * self.boundary_ratio
+        )
+
+        if use_transformer:
+            indices = (u * max_timesteps).long()
+        else:
+            indices = (
+                u * (self.scheduler.config.num_train_timesteps - max_timesteps)
+            ).long() + int(max_timesteps)
         timesteps = self.scheduler.timesteps[indices].to(device=self.device)
 
         sigmas = self.get_sigmas(timesteps, n_dim=latents.ndim, dtype=latents.dtype)
@@ -472,16 +499,18 @@ class WanLoraForImage2VideoGeneration(GenericWanLoraModel):
         latent_model_input = torch.cat([noise_latents, condition_latents], dim=1)
 
         encoder_hidden_states = self.text(input_ids, attention_mask)[0]
-        condition_hidden_states = self.image(
-            condition_pixel_values,
-            output_hidden_states=True,
-        ).hidden_states[-2]
-        outputs = self.transformer(
-            latent_model_input,
-            timesteps,
-            encoder_hidden_states=encoder_hidden_states,
-            encoder_hidden_states_image=condition_hidden_states,
-        ).sample
+        if use_transformer:
+            outputs = self.transformer(
+                latent_model_input,
+                timesteps,
+                encoder_hidden_states=encoder_hidden_states,
+            ).sample
+        else:
+            outputs = self.transformer_2(
+                latent_model_input,
+                timesteps,
+                encoder_hidden_states=encoder_hidden_states,
+            ).sample
         weighting = compute_loss_weighting_for_sd3(
             weighting_scheme="none", sigmas=sigmas
         )
@@ -499,7 +528,6 @@ class WanLoraForImage2VideoGeneration(GenericWanLoraModel):
         self,
         input_ids: torch.Tensor,
         negative_input_ids: torch.Tensor,
-        condition_pixel_values: torch.Tensor,
         vae_pixel_values: torch.Tensor,
         attention_mask: Optional[torch.Tensor] = None,
         negative_attention_mask: Optional[torch.Tensor] = None,
@@ -513,16 +541,10 @@ class WanLoraForImage2VideoGeneration(GenericWanLoraModel):
             negative_attention_mask=negative_attention_mask,
         )
 
-        condition_hidden_states = self.image(
-            condition_pixel_values,
-            output_hidden_states=True,
-        ).hidden_states[-2]
-
         frames = self.pipeline(
             image=vae_pixel_values,
             prompt_embeds=outputs.prompt_embeds,
             negative_prompt_embeds=outputs.negative_prompt_embeds,
-            image_embeds=condition_hidden_states,
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),

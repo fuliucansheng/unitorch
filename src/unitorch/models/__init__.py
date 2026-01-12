@@ -212,6 +212,7 @@ class GenericModel(nn.Module, CheckpointMixin):
 from unitorch.models.processing_utils import (
     HfTextGenerationProcessor,
     HfTextClassificationProcessor,
+    HfLlmProcessor,
     HfImageClassificationProcessor,
 )
 from unitorch.models.modeling_ema import ExponentialMovingAverage

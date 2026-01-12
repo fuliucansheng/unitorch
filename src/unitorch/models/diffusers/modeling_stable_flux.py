@@ -22,8 +22,6 @@ from diffusers.training_utils import (
     compute_density_for_timestep_sampling,
 )
 from diffusers.models import (
-    FluxControlNetModel,
-    FluxMultiControlNetModel,
     FluxTransformer2DModel,
     AutoencoderKL,
 )
@@ -31,7 +29,6 @@ from diffusers.pipelines import (
     FluxPipeline,
     FluxImg2ImgPipeline,
     FluxInpaintPipeline,
-    FluxControlPipeline,
     FluxFillPipeline,
 )
 from diffusers.pipelines.flux.pipeline_flux_kontext import FluxKontextPipeline
@@ -113,12 +110,7 @@ class GenericStableFluxModel(GenericModel, QuantizationMixin, PeftWeightLoaderMi
         text2_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
-        controlnet_configs_path: Union[str, List[str]] = None,
-        inpainting_controlnet_config_path: Union[str] = None,
         quant_config_path: Optional[str] = None,
-        image_size: Optional[int] = None,
-        in_channels: Optional[int] = None,
-        out_channels: Optional[int] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         freeze_vae_encoder: Optional[bool] = True,
@@ -134,12 +126,6 @@ class GenericStableFluxModel(GenericModel, QuantizationMixin, PeftWeightLoaderMi
         self.snr_gamma = snr_gamma
 
         config_dict = json.load(open(config_path))
-        if image_size is not None:
-            config_dict.update({"sample_size": image_size})
-        if in_channels is not None:
-            config_dict.update({"in_channels": in_channels})
-        if out_channels is not None:
-            config_dict.update({"out_channels": out_channels})
         self.transformer = FluxTransformer2DModel.from_config(config_dict).to(
             torch.bfloat16
         )
@@ -152,40 +138,6 @@ class GenericStableFluxModel(GenericModel, QuantizationMixin, PeftWeightLoaderMi
 
         vae_config_dict = json.load(open(vae_config_path))
         self.vae = AutoencoderKL.from_config(vae_config_dict).to(torch.bfloat16)
-
-        if isinstance(controlnet_configs_path, str):
-            controlnet_configs_path = [controlnet_configs_path]
-        if isinstance(inpainting_controlnet_config_path, str):
-            controlnet_configs_path += [inpainting_controlnet_config_path]
-
-        if isinstance(controlnet_configs_path, list):
-            if len(controlnet_configs_path) == 0:
-                controlnet_configs_path = None
-            elif len(controlnet_configs_path) == 1:
-                controlnet_configs_path = controlnet_configs_path[0]
-
-        if isinstance(controlnet_configs_path, list):
-            controlnets = []
-            for controlnet_config_path in controlnet_configs_path:
-                controlnet_config_dict = json.load(open(controlnet_config_path))
-                controlnets.append(
-                    FluxControlNetModel.from_config(controlnet_config_dict).to(
-                        torch.bfloat16
-                    )
-                )
-            self.num_controlnets = len(controlnets)
-            self.controlnet = FluxMultiControlNetModel(
-                controlnets=controlnets,
-            )
-        elif isinstance(controlnet_configs_path, str):
-            controlnet_config_dict = json.load(open(controlnet_configs_path))
-            self.controlnet = FluxControlNetModel.from_config(
-                controlnet_config_dict
-            ).to(torch.bfloat16)
-            self.num_controlnets = 1
-        else:
-            self.controlnet = None
-            self.num_controlnets = 0
 
         scheduler_config_dict = json.load(open(scheduler_config_path))
         scheduler_class_name = scheduler_config_dict.get(
@@ -280,9 +232,6 @@ class StableFluxForText2ImageGeneration(GenericStableFluxModel):
         vae_config_path: str,
         scheduler_config_path: str,
         quant_config_path: Optional[str] = None,
-        image_size: Optional[int] = None,
-        in_channels: Optional[int] = None,
-        out_channels: Optional[int] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         freeze_vae_encoder: Optional[bool] = True,
@@ -299,9 +248,6 @@ class StableFluxForText2ImageGeneration(GenericStableFluxModel):
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
             quant_config_path=quant_config_path,
-            image_size=image_size,
-            in_channels=in_channels,
-            out_channels=out_channels,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             freeze_vae_encoder=freeze_vae_encoder,
@@ -460,9 +406,6 @@ class StableFluxForImage2ImageGeneration(GenericStableFluxModel):
         vae_config_path: str,
         scheduler_config_path: str,
         quant_config_path: Optional[str] = None,
-        image_size: Optional[int] = None,
-        in_channels: Optional[int] = None,
-        out_channels: Optional[int] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         freeze_vae_encoder: Optional[bool] = True,
@@ -479,9 +422,6 @@ class StableFluxForImage2ImageGeneration(GenericStableFluxModel):
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
             quant_config_path=quant_config_path,
-            image_size=image_size,
-            in_channels=in_channels,
-            out_channels=out_channels,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             freeze_vae_encoder=freeze_vae_encoder,
@@ -542,200 +482,6 @@ class StableFluxForImage2ImageGeneration(GenericStableFluxModel):
         return GenericOutputs(images=torch.from_numpy(images))
 
 
-class StableFluxForImageControlGeneration(GenericStableFluxModel):
-    def __init__(
-        self,
-        config_path: str,
-        text_config_path: str,
-        text2_config_path: str,
-        vae_config_path: str,
-        scheduler_config_path: str,
-        quant_config_path: Optional[str] = None,
-        image_size: Optional[int] = None,
-        in_channels: Optional[int] = None,
-        out_channels: Optional[int] = None,
-        num_train_timesteps: Optional[int] = 1000,
-        num_infer_timesteps: Optional[int] = 50,
-        freeze_vae_encoder: Optional[bool] = True,
-        freeze_text_encoder: Optional[bool] = True,
-        snr_gamma: Optional[float] = 5.0,
-        seed: Optional[int] = 1123,
-        gradient_checkpointing: Optional[bool] = True,
-        guidance_scale: Optional[float] = 3.5,
-    ):
-        super().__init__(
-            config_path=config_path,
-            text_config_path=text_config_path,
-            text2_config_path=text2_config_path,
-            vae_config_path=vae_config_path,
-            scheduler_config_path=scheduler_config_path,
-            quant_config_path=quant_config_path,
-            image_size=image_size,
-            in_channels=in_channels,
-            out_channels=out_channels,
-            num_train_timesteps=num_train_timesteps,
-            num_infer_timesteps=num_infer_timesteps,
-            freeze_vae_encoder=freeze_vae_encoder,
-            freeze_text_encoder=freeze_text_encoder,
-            snr_gamma=snr_gamma,
-            seed=seed,
-        )
-
-        if gradient_checkpointing:
-            self.transformer.enable_gradient_checkpointing()
-
-        self.pipeline = FluxControlPipeline(
-            vae=self.vae,
-            text_encoder=self.text,
-            text_encoder_2=self.text2,
-            transformer=self.transformer,
-            scheduler=self.scheduler,
-            tokenizer=None,
-            tokenizer_2=None,
-        )
-        self.pipeline.set_progress_bar_config(disable=True)
-        self.guidance_scale = guidance_scale
-        self.num_channels_transformer = self.transformer.config.in_channels
-
-    def forward(
-        self,
-        input_ids: torch.Tensor,
-        input2_ids: torch.Tensor,
-        pixel_values: torch.Tensor,
-        control_pixel_values: torch.Tensor,
-        attention_mask: Optional[torch.Tensor] = None,
-        attention2_mask: Optional[torch.Tensor] = None,
-    ):
-        outputs = self.get_prompt_outputs(
-            input_ids=input_ids,
-            input2_ids=input2_ids,
-            attention_mask=attention_mask,
-            attention2_mask=attention2_mask,
-        )
-        latents = self.vae.encode(pixel_values).latent_dist.sample()
-        latents = (
-            latents - self.vae.config.shift_factor
-        ) * self.vae.config.scaling_factor
-        latent_image_ids = _prepare_latent_image_ids(
-            latents.shape[0],
-            latents.shape[2] // 2,
-            latents.shape[3] // 2,
-            self.device,
-            self.dtype,
-        )
-
-        noise = torch.randn(latents.shape).to(latents.device)
-        batch = latents.shape[0]
-
-        u = compute_density_for_timestep_sampling(
-            weighting_scheme="none",
-            batch_size=batch,
-            logit_mean=0.0,
-            logit_std=1.0,
-            mode_scale=1.29,
-        )
-        indices = (u * self.scheduler.config.num_train_timesteps).long()
-        timesteps = self.scheduler.timesteps[indices].to(device=self.device)
-
-        sigmas = self.get_sigmas(timesteps, n_dim=latents.ndim, dtype=latents.dtype)
-        noise_latents = (1.0 - sigmas) * latents + sigmas * noise
-        vae_scale_factor = 2 ** (len(self.vae.config.block_out_channels) - 1)
-
-        if self.num_channels_transformer == 128:
-            control_latents = self.vae.encode(control_pixel_values).latent_dist.sample()
-            control_latents = (
-                control_latents - self.vae.config.shift_factor
-            ) * self.vae.config.scaling_factor
-
-            latent_model_input = torch.cat([noise_latents, control_latents], dim=1)
-        else:
-            latent_model_input = noise_latents
-
-        latent_model_input = _pack_latents(
-            latent_model_input,
-            batch_size=latents.shape[0],
-            num_channels_latents=latent_model_input.shape[1],
-            height=latents.shape[2],
-            width=latents.shape[3],
-        )
-
-        text_ids = torch.zeros(outputs.prompt_embeds.shape[1], 3).to(
-            device=self.device, dtype=self.dtype
-        )
-
-        if self.transformer.config.guidance_embeds and self.guidance_scale is not None:
-            guidance = torch.full(
-                [1], self.guidance_scale, device=self.device, dtype=torch.float32
-            )
-            guidance = guidance.expand(latents.shape[0])
-        else:
-            guidance = None
-
-        outputs = self.transformer(
-            hidden_states=latent_model_input,
-            timestep=timesteps / 1000,
-            guidance=guidance,
-            encoder_hidden_states=outputs.prompt_embeds,
-            pooled_projections=outputs.pooled_prompt_embeds,
-            txt_ids=text_ids,
-            img_ids=latent_image_ids,
-            return_dict=False,
-        )[0]
-
-        outputs = _unpack_latents(
-            outputs,
-            height=latents.shape[2] * vae_scale_factor,
-            width=latents.shape[3] * vae_scale_factor,
-            vae_scale_factor=vae_scale_factor,
-        )
-
-        weighting = compute_loss_weighting_for_sd3(
-            weighting_scheme="none", sigmas=sigmas
-        )
-        target = noise - latents
-        loss = torch.mean(
-            (weighting.float() * (outputs.float() - target.float()) ** 2).reshape(
-                target.shape[0], -1
-            ),
-            1,
-        )
-        loss = loss.mean()
-        return loss
-
-    def generate(
-        self,
-        control_pixel_values: torch.Tensor,
-        input_ids: torch.Tensor,
-        input2_ids: torch.Tensor,
-        attention_mask: Optional[torch.Tensor] = None,
-        attention2_mask: Optional[torch.Tensor] = None,
-        strength: Optional[float] = 1.0,
-        guidance_scale: Optional[float] = 7.5,
-    ):
-        outputs = self.get_prompt_outputs(
-            input_ids=input_ids,
-            input2_ids=input2_ids,
-            attention_mask=attention_mask,
-            attention2_mask=attention2_mask,
-        )
-
-        images = self.pipeline(
-            control_image=control_pixel_values,
-            prompt_embeds=outputs.prompt_embeds,
-            pooled_prompt_embeds=outputs.pooled_prompt_embeds,
-            generator=torch.Generator(device=self.pipeline.device).manual_seed(
-                self.seed
-            ),
-            num_inference_steps=self.num_infer_timesteps,
-            width=control_pixel_values.size(-1),
-            height=control_pixel_values.size(-2),
-            guidance_scale=guidance_scale,
-            output_type="np.array",
-        ).images
-
-        return GenericOutputs(images=torch.from_numpy(images))
-
-
 class StableFluxForImageReduxGeneration(GenericStableFluxModel):
     def __init__(
         self,
@@ -747,9 +493,6 @@ class StableFluxForImageReduxGeneration(GenericStableFluxModel):
         image_config_path: str,
         redux_image_config_path: str,
         quant_config_path: Optional[str] = None,
-        image_size: Optional[int] = None,
-        in_channels: Optional[int] = None,
-        out_channels: Optional[int] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         freeze_vae_encoder: Optional[bool] = True,
@@ -767,9 +510,6 @@ class StableFluxForImageReduxGeneration(GenericStableFluxModel):
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
             quant_config_path=quant_config_path,
-            image_size=image_size,
-            in_channels=in_channels,
-            out_channels=out_channels,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             freeze_vae_encoder=freeze_vae_encoder,
@@ -963,9 +703,6 @@ class StableFluxForImageInpainting(GenericStableFluxModel):
         vae_config_path: str,
         scheduler_config_path: str,
         quant_config_path: Optional[str] = None,
-        image_size: Optional[int] = None,
-        in_channels: Optional[int] = None,
-        out_channels: Optional[int] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         freeze_vae_encoder: Optional[bool] = True,
@@ -982,9 +719,6 @@ class StableFluxForImageInpainting(GenericStableFluxModel):
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
             quant_config_path=quant_config_path,
-            image_size=image_size,
-            in_channels=in_channels,
-            out_channels=out_channels,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             freeze_vae_encoder=freeze_vae_encoder,
@@ -1179,9 +913,6 @@ class StableFluxForKontext2ImageGeneration(GenericStableFluxModel):
         vae_config_path: str,
         scheduler_config_path: str,
         quant_config_path: Optional[str] = None,
-        image_size: Optional[int] = None,
-        in_channels: Optional[int] = None,
-        out_channels: Optional[int] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         freeze_vae_encoder: Optional[bool] = True,
@@ -1198,9 +929,6 @@ class StableFluxForKontext2ImageGeneration(GenericStableFluxModel):
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
             quant_config_path=quant_config_path,
-            image_size=image_size,
-            in_channels=in_channels,
-            out_channels=out_channels,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             freeze_vae_encoder=freeze_vae_encoder,

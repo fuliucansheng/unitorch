@@ -55,7 +55,7 @@ class SimpleWebUI(GenericWebUI):
         pass
 
 
-from unitorch.cli.webuis.utils import (
+from unitorch.utils.webui_utils import (
     create_element,
     create_accordion,
     create_row,
@@ -66,8 +66,6 @@ from unitorch.cli.webuis.utils import (
     create_tabs,
     create_blocks,
     create_pretrain_layout,
-    create_controlnet_layout,
-    create_adapter_layout,
     create_lora_layout,
 )
 
@@ -85,6 +83,7 @@ import unitorch.cli.webuis.mask2former
 import unitorch.cli.webuis.mistral
 import unitorch.cli.webuis.sam
 import unitorch.cli.webuis.segformer
+import unitorch.cli.webuis.siglip
 import unitorch.cli.webuis.labeling
 
 if is_diffusers_available():

@@ -336,6 +336,7 @@ from unitorch.models.peft.modeling_mistral import (
 from unitorch.models.peft.modeling_qwen import (
     QWen3LoraForGeneration,
     QWen3DPOLoraForGeneration,
+    QWen3GRPOLoraForGeneration,
 )
 from unitorch.models.peft.modeling_qwen_vl import (
     QWen2_5VLLoraForGeneration,
@@ -346,6 +347,4 @@ if is_diffusers_available():
     from unitorch.models.peft.diffusers import (
         StableLoraForText2ImageGeneration,
         StableXLLoraForText2ImageGeneration,
-        ControlNetLoraForText2ImageGeneration,
-        ControlNetXLLoraForText2ImageGeneration,
     )

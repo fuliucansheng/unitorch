@@ -6,7 +6,6 @@ import requests
 import torch
 from PIL import Image
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
-import unitorch.utils.palette
 
 
 def make_grid(

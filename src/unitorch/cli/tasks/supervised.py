@@ -639,8 +639,11 @@ class SupervisedTask:
                     )
 
             if not is_update_step:
-                scaler.step(optim)
-                scaler.update()
+                if use_amp:
+                    scaler.step(optim)
+                    scaler.update()
+                else:
+                    optim.step()
                 if scheduler is not None:
                     scheduler.step()
                 optim.zero_grad()

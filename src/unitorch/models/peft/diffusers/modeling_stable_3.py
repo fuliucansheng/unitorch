@@ -16,8 +16,6 @@ from diffusers.training_utils import (
     compute_density_for_timestep_sampling,
 )
 from diffusers.models import (
-    SD3ControlNetModel,
-    SD3MultiControlNetModel,
     SD3Transformer2DModel,
     AutoencoderKL,
 )
@@ -61,11 +59,7 @@ class GenericStable3LoraModel(GenericPeftModel, QuantizationMixin):
         text3_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
-        controlnet_configs_path: Union[str, List[str]] = None,
         quant_config_path: Optional[str] = None,
-        image_size: Optional[int] = None,
-        in_channels: Optional[int] = None,
-        out_channels: Optional[int] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         snr_gamma: Optional[float] = 5.0,
@@ -93,12 +87,6 @@ class GenericStable3LoraModel(GenericPeftModel, QuantizationMixin):
         self.snr_gamma = snr_gamma
 
         config_dict = json.load(open(config_path))
-        if image_size is not None:
-            config_dict.update({"sample_size": image_size})
-        if in_channels is not None:
-            config_dict.update({"in_channels": in_channels})
-        if out_channels is not None:
-            config_dict.update({"out_channels": out_channels})
         self.transformer = SD3Transformer2DModel.from_config(config_dict)
 
         text_config = CLIPTextConfig.from_json_file(text_config_path)
@@ -112,31 +100,6 @@ class GenericStable3LoraModel(GenericPeftModel, QuantizationMixin):
 
         vae_config_dict = json.load(open(vae_config_path))
         self.vae = AutoencoderKL.from_config(vae_config_dict)
-
-        if isinstance(controlnet_configs_path, list):
-            if len(controlnet_configs_path) == 0:
-                controlnet_configs_path = None
-            elif len(controlnet_configs_path) == 1:
-                controlnet_configs_path = controlnet_configs_path[0]
-
-        if isinstance(controlnet_configs_path, list):
-            controlnets = []
-            for controlnet_config_path in controlnet_configs_path:
-                controlnet_config_dict = json.load(open(controlnet_config_path))
-                controlnets.append(
-                    SD3ControlNetModel.from_config(controlnet_config_dict)
-                )
-            self.num_controlnets = len(controlnets)
-            self.controlnet = SD3MultiControlNetModel(
-                controlnets=controlnets,
-            )
-        elif isinstance(controlnet_configs_path, str):
-            controlnet_config_dict = json.load(open(controlnet_configs_path))
-            self.controlnet = SD3ControlNetModel.from_config(controlnet_config_dict)
-            self.num_controlnets = 1
-        else:
-            self.controlnet = None
-            self.num_controlnets = 0
 
         scheduler_config_dict = json.load(open(scheduler_config_path))
         scheduler_class_name = scheduler_config_dict.get(
@@ -291,11 +254,7 @@ class Stable3LoraForText2ImageGeneration(GenericStable3LoraModel):
         text3_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
-        controlnet_configs_path: Union[str, List[str]] = None,
         quant_config_path: Optional[str] = None,
-        image_size: Optional[int] = None,
-        in_channels: Optional[int] = None,
-        out_channels: Optional[int] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         snr_gamma: Optional[float] = 5.0,
@@ -323,11 +282,7 @@ class Stable3LoraForText2ImageGeneration(GenericStable3LoraModel):
             text3_config_path=text3_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
-            controlnet_configs_path=controlnet_configs_path,
             quant_config_path=quant_config_path,
-            image_size=image_size,
-            in_channels=in_channels,
-            out_channels=out_channels,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             snr_gamma=snr_gamma,
@@ -496,11 +451,7 @@ class Stable3LoraForImageInpainting(GenericStable3LoraModel):
         text3_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
-        controlnet_configs_path: Union[str, List[str]] = None,
         quant_config_path: Optional[str] = None,
-        image_size: Optional[int] = None,
-        in_channels: Optional[int] = None,
-        out_channels: Optional[int] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         snr_gamma: Optional[float] = 5.0,
@@ -528,11 +479,7 @@ class Stable3LoraForImageInpainting(GenericStable3LoraModel):
             text3_config_path=text3_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
-            controlnet_configs_path=controlnet_configs_path,
             quant_config_path=quant_config_path,
-            image_size=image_size,
-            in_channels=in_channels,
-            out_channels=out_channels,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             snr_gamma=snr_gamma,

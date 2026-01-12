@@ -14,8 +14,6 @@ class MirrorFilesService(GenericService):
     def __init__(self, config: CoreConfigureParser):
         self.config = config
         config.set_default_section("core/service/mirror_files")
-        self.ip = config.getoption("ip", "0.0.0.0")
-        self.port = config.getoption("port", 11221)
         self.name = config.getoption("processname", "core_mirror_files_service")
         self.mirror_files = config.getoption("mirror_files", {})
         self.mirror_files = {k: v for k, v in self.mirror_files.items() if k != v}
@@ -84,8 +82,6 @@ class MirrorFoldersService(GenericService):
     def __init__(self, config: CoreConfigureParser):
         self.config = config
         config.set_default_section("core/service/mirror_folders")
-        self.ip = config.getoption("ip", "0.0.0.0")
-        self.port = config.getoption("port", 11222)
         self.name = config.getoption("processname", "core_mirror_folders_service")
         self.mirror_folders = config.getoption(
             "mirror_folders", {}

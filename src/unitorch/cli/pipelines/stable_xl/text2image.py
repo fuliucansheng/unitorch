@@ -10,17 +10,12 @@ import pandas as pd
 from PIL import Image
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from diffusers.utils import numpy_to_pil
-from diffusers.models import ControlNetModel, T2IAdapter, MultiAdapter
 from diffusers.pipelines import (
     StableDiffusionXLPipeline,
     StableDiffusionXLImg2ImgPipeline,
     StableDiffusionXLInpaintPipeline,
-    StableDiffusionXLControlNetPipeline,
-    StableDiffusionXLControlNetImg2ImgPipeline,
-    StableDiffusionXLControlNetInpaintPipeline,
-    StableDiffusionXLAdapterPipeline,
 )
-from unitorch import is_xformers_available
+
 from unitorch.utils import is_remote_url
 from unitorch.models.diffusers import GenericStableXLModel
 from unitorch.models.diffusers import StableXLProcessor
@@ -61,7 +56,6 @@ class StableXLForText2ImageGenerationPipeline(GenericStableXLModel):
         state_dict: Optional[Dict[str, Any]] = None,
         device: Optional[Union[str, int]] = "cpu",
         enable_cpu_offload: Optional[bool] = False,
-        enable_xformers: Optional[bool] = False,
     ):
         super().__init__(
             config_path=config_path,
@@ -87,7 +81,6 @@ class StableXLForText2ImageGenerationPipeline(GenericStableXLModel):
         self.eval()
 
         self._enable_cpu_offload = enable_cpu_offload
-        self._enable_xformers = enable_xformers
 
     @classmethod
     @add_default_section_for_init("core/pipeline/stable_xl/text2image")
@@ -198,7 +191,6 @@ class StableXLForText2ImageGenerationPipeline(GenericStableXLModel):
         )
         device = config.getoption("device", "cpu") if device is None else device
         enable_cpu_offload = config.getoption("enable_cpu_offload", True)
-        enable_xformers = config.getoption("enable_xformers", True)
 
         state_dict = None
         if weight_path is None and pretrained_infos is not None:
@@ -239,7 +231,6 @@ class StableXLForText2ImageGenerationPipeline(GenericStableXLModel):
             state_dict=state_dict,
             device=device,
             enable_cpu_offload=enable_cpu_offload,
-            enable_xformers=enable_xformers,
         )
         return inst
 
@@ -255,15 +246,9 @@ class StableXLForText2ImageGenerationPipeline(GenericStableXLModel):
         num_timesteps: Optional[int] = 50,
         seed: Optional[int] = 1123,
         scheduler: Optional[str] = None,
-        controlnet_checkpoints: Optional[List[str]] = [],
-        controlnet_images: Optional[List[Image.Image]] = [],
-        controlnet_guidance_scales: Optional[List[float]] = [],
-        adapter_checkpoints: Optional[List[str]] = [],
-        adapter_images: Optional[List[Image.Image]] = [],
-        adapter_guidance_scales: Optional[List[float]] = [],
         lora_checkpoints: Optional[Union[str, List[str]]] = [],
-        lora_weights: Optional[Union[float, List[float]]] = 1.0,
-        lora_alphas: Optional[Union[float, List[float]]] = 32,
+        lora_weights: Optional[Union[float, List[float]]] = [],
+        lora_alphas: Optional[Union[float, List[float]]] = [],
         lora_urls: Optional[Union[str, List[str]]] = [],
         lora_files: Optional[Union[str, List[str]]] = [],
     ):
@@ -277,142 +262,16 @@ class StableXLForText2ImageGenerationPipeline(GenericStableXLModel):
                 self.scheduler.config
             )
 
-        if any(ckpt is not None for ckpt in controlnet_checkpoints) and any(
-            img is not None for img in controlnet_images
-        ):
-            controlnets, conditioning_scales, conditioning_images = [], [], []
-            for checkpoint, conditioning_scale, conditioning_image in zip(
-                controlnet_checkpoints, controlnet_guidance_scales, controlnet_images
-            ):
-                if checkpoint is None or conditioning_image is None:
-                    continue
-                controlnet_config_path = cached_path(
-                    nested_dict_value(
-                        pretrained_stable_extensions_infos,
-                        checkpoint,
-                        "controlnet",
-                        "config",
-                    )
-                )
-                controlnet_config_dict = json.load(open(controlnet_config_path))
-                controlnet = ControlNetModel.from_config(controlnet_config_dict)
-                controlnet.load_state_dict(
-                    load_weight(
-                        nested_dict_value(
-                            pretrained_stable_extensions_infos,
-                            checkpoint,
-                            "controlnet",
-                            "weight",
-                        )
-                    )
-                )
-                controlnet.to(device=self._device)
-                logging.info(f"Loading controlnet from {checkpoint}")
-                controlnets.append(controlnet)
-                conditioning_scales.append(conditioning_scale)
-                conditioning_images.append(
-                    conditioning_image.resize((width, height), resample=Image.LANCZOS)
-                )
-            self.pipeline = StableDiffusionXLControlNetPipeline(
-                vae=self.vae,
-                text_encoder=self.text,
-                text_encoder_2=self.text2,
-                unet=self.unet,
-                controlnet=controlnets,
-                scheduler=self.scheduler,
-                tokenizer=None,
-                tokenizer_2=None,
-            )
-            controlnets_inputs = self.processor.controlnets_inputs(conditioning_images)
-            enable_controlnet = True
-            enable_adapter = False
-            inputs = {
-                **text_inputs,
-                **{"condition_pixel_values": controlnets_inputs.pixel_values},
-            }
-        elif any(ckpt is not None for ckpt in adapter_checkpoints) and any(
-            img is not None for img in adapter_images
-        ):
-            adapters, conditioning_scales, conditioning_images = [], [], []
-            for checkpoint, conditioning_scale, conditioning_image in zip(
-                adapter_checkpoints, adapter_guidance_scales, adapter_images
-            ):
-                if checkpoint is None or conditioning_image is None:
-                    continue
-                adapter_config_path = cached_path(
-                    nested_dict_value(
-                        pretrained_stable_extensions_infos,
-                        checkpoint,
-                        "adapter",
-                        "config",
-                    )
-                )
-                adapter_config_dict = json.load(open(adapter_config_path))
-                adapter = T2IAdapter.from_config(adapter_config_dict)
-                adapter.load_state_dict(
-                    load_weight(
-                        nested_dict_value(
-                            pretrained_stable_extensions_infos,
-                            checkpoint,
-                            "adapter",
-                            "weight",
-                        )
-                    ),
-                )
-                adapter.to(device=self._device)
-                logging.info(f"Loading adapter from {checkpoint}")
-                adapters.append(adapter)
-                conditioning_scales.append(conditioning_scale)
-                conditioning_images.append(
-                    conditioning_image.resize((width, height), resample=Image.LANCZOS)
-                )
-
-            num_adapters = len(adapters)
-            if len(adapters) == 1:
-                adapters = adapters[0]
-                conditioning_scales = conditioning_scales[0]
-                conditioning_images = conditioning_images[0]
-                adapter_pixel_values = self.processor.adapter_inputs(
-                    conditioning_images
-                ).pixel_values
-            else:
-                adapters = MultiAdapter(adapters=adapters)
-                conditioning_scales = conditioning_scales
-                conditioning_images = conditioning_images
-                adapter_pixel_values = self.processor.adapters_inputs(
-                    conditioning_images
-                ).pixel_values
-
-            self.pipeline = StableDiffusionXLAdapterPipeline(
-                vae=self.vae,
-                text_encoder=self.text,
-                text_encoder_2=self.text2,
-                unet=self.unet,
-                adapter=adapters,
-                scheduler=self.scheduler,
-                tokenizer=None,
-                tokenizer_2=None,
-            )
-            enable_controlnet = False
-            enable_adapter = True
-
-            inputs = {
-                **text_inputs,
-                **{"adapter_pixel_values": adapter_pixel_values},
-            }
-        else:
-            self.pipeline = StableDiffusionXLPipeline(
-                vae=self.vae,
-                text_encoder=self.text,
-                text_encoder_2=self.text2,
-                unet=self.unet,
-                scheduler=self.scheduler,
-                tokenizer=None,
-                tokenizer_2=None,
-            )
-            enable_controlnet = False
-            enable_adapter = False
-            inputs = text_inputs
+        self.pipeline = StableDiffusionXLPipeline(
+            vae=self.vae,
+            text_encoder=self.text,
+            text_encoder_2=self.text2,
+            unet=self.unet,
+            scheduler=self.scheduler,
+            tokenizer=None,
+            tokenizer_2=None,
+        )
+        inputs = text_inputs
         self.pipeline.set_progress_bar_config(disable=True)
         self.seed = seed
 
@@ -445,7 +304,7 @@ class StableXLForText2ImageGenerationPipeline(GenericStableXLModel):
             if ckpt is not None:
                 processed_lora_files.append(
                     nested_dict_value(
-                        pretrained_stable_extensions_infos, ckpt, "weight"
+                        pretrained_stable_extensions_infos, ckpt, "lora", "weight"
                     )
                 )
                 processed_lora_weights.append(weight)
@@ -484,63 +343,20 @@ class StableXLForText2ImageGenerationPipeline(GenericStableXLModel):
         else:
             self.to(device=self._device)
 
-        if self._enable_xformers and self._device != "cpu":
-            assert is_xformers_available(), "Please install xformers first."
-            self.pipeline.enable_xformers_memory_efficient_attention()
-
-        if enable_controlnet:
-            outputs = self.pipeline(
-                prompt_embeds=prompt_embeds,
-                negative_prompt_embeds=negative_prompt_embeds,
-                pooled_prompt_embeds=pooled_prompt_embeds,
-                negative_pooled_prompt_embeds=negative_pooled_prompt_embeds,
-                height=height,
-                width=width,
-                generator=torch.Generator(device=self.pipeline.device).manual_seed(
-                    self.seed
-                ),
-                image=list(inputs["condition_pixel_values"].transpose(0, 1)),
-                num_inference_steps=num_timesteps,
-                guidance_scale=guidance_scale,
-                controlnet_conditioning_scale=conditioning_scales,
-                output_type="np.array",
-            )
-        elif enable_adapter:
-            outputs = self.pipeline(
-                prompt_embeds=prompt_embeds,
-                negative_prompt_embeds=negative_prompt_embeds,
-                pooled_prompt_embeds=pooled_prompt_embeds,
-                negative_pooled_prompt_embeds=negative_pooled_prompt_embeds,
-                height=height,
-                width=width,
-                generator=torch.Generator(device=self.pipeline.device).manual_seed(
-                    self.seed
-                ),
-                image=(
-                    list(inputs["adapter_pixel_values"].transpose(0, 1))
-                    if num_adapters > 1
-                    else inputs["adapter_pixel_values"]
-                ),
-                num_inference_steps=num_timesteps,
-                guidance_scale=guidance_scale,
-                adapter_conditioning_scale=conditioning_scales,
-                output_type="np.array",
-            )
-        else:
-            outputs = self.pipeline(
-                prompt_embeds=prompt_embeds,
-                negative_prompt_embeds=negative_prompt_embeds,
-                pooled_prompt_embeds=pooled_prompt_embeds,
-                negative_pooled_prompt_embeds=negative_pooled_prompt_embeds,
-                height=height,
-                width=width,
-                generator=torch.Generator(device=self.pipeline.device).manual_seed(
-                    self.seed
-                ),
-                num_inference_steps=num_timesteps,
-                guidance_scale=guidance_scale,
-                output_type="np.array",
-            )
+        outputs = self.pipeline(
+            prompt_embeds=prompt_embeds,
+            negative_prompt_embeds=negative_prompt_embeds,
+            pooled_prompt_embeds=pooled_prompt_embeds,
+            negative_pooled_prompt_embeds=negative_pooled_prompt_embeds,
+            height=height,
+            width=width,
+            generator=torch.Generator(device=self.pipeline.device).manual_seed(
+                self.seed
+            ),
+            num_inference_steps=num_timesteps,
+            guidance_scale=guidance_scale,
+            output_type="np.array",
+        )
         self.unload_lora_weights()
 
         images = torch.from_numpy(outputs.images)

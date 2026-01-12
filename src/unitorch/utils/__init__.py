@@ -29,8 +29,8 @@ from transformers.utils.hub import is_remote_url, urlparse, http_get, http_user_
 from huggingface_hub import HfFolder
 from huggingface_hub.utils import hf_raise_for_status
 
-from unitorch import is_offline_mode, get_cache_home
-from unitorch.utils.decorators import replace
+from unitorch import get_cache_dir
+from unitorch.utils.decorators import replace, retry
 from unitorch.utils.functional import (
     pop_value,
     rpartial,
@@ -51,12 +51,11 @@ from unitorch.utils.import_utils import (
     is_megatron_available,
     is_fastapi_available,
     is_diffusers_available,
-    is_xformers_available,
     is_opencv_available,
     is_bitsandbytes_available,
-    is_auto_gptq_available,
     is_onnxruntime_available,
     is_wandb_available,
+    is_gradio_available,
     is_bfloat16_available,
     is_cuda_available,
 )
@@ -95,7 +94,7 @@ def get_from_cache(
     local_files_only=False,
 ) -> Optional[str]:
     if cache_dir is None:
-        cache_dir = get_cache_home()
+        cache_dir = get_cache_dir()
     if isinstance(cache_dir, Path):
         cache_dir = str(cache_dir)
 
@@ -281,17 +280,13 @@ def cached_path(
         ValueError: If the URL or local path is in an unknown format.
     """
     if cache_dir is None:
-        cache_dir = get_cache_home()
+        cache_dir = get_cache_dir()
 
     if isinstance(url_or_filename, Path):
         url_or_filename = str(url_or_filename)
 
     if isinstance(cache_dir, Path):
         cache_dir = str(cache_dir)
-
-    if is_offline_mode() and not local_files_only:
-        logging.debug("Offline mode: forcing local_files_only=True")
-        local_files_only = True
 
     if is_remote_url(url_or_filename):
         # URL, so get it from the cache (downloading if necessary)
@@ -338,7 +333,7 @@ def cached_path(
         lock_path = output_path + ".lock"
         with FileLock(lock_path):
             shutil.rmtree(output_path_extracted, ignore_errors=True)
-            os.makedirs(output_path_extracted)
+            os.makedirs(output_path_extracted, exist_ok=True)
             if is_zipfile(output_path):
                 with ZipFile(output_path, "r") as zip_file:
                     zip_file.extractall(output_path_extracted)

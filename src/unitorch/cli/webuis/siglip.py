@@ -5,21 +5,19 @@ import io
 import torch
 import gc
 import gradio as gr
-from PIL import Image
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import List, Tuple
+from PIL import Image, ImageDraw
 from unitorch.utils import nested_dict_value
 from unitorch.cli import CoreConfigureParser, GenericWebUI
 from unitorch.cli import register_webui
-from unitorch.cli.models.diffusers import (
-    pretrained_stable_infos,
-    pretrained_stable_extensions_infos,
+from unitorch.cli.models.siglip import (
+    pretrained_siglip_infos,
+    pretrained_siglip_extensions_infos,
 )
-from unitorch.cli.pipelines.stable_flux.image2image import (
-    StableFluxForImage2ImageGenerationPipeline,
+from unitorch.cli.pipelines.siglip import (
+    Siglip2ForMatchingPipeline,
 )
-
 from unitorch.cli.webuis import (
-    supported_scheduler_names,
     matched_pretrained_names,
     create_element,
     create_accordion,
@@ -35,18 +33,21 @@ from unitorch.cli.webuis import (
 from unitorch.cli.webuis import SimpleWebUI
 
 
-class StableFluxImage2ImageWebUI(SimpleWebUI):
-    pretrained_names = list(pretrained_stable_infos.keys())
+@register_webui("core/webui/matching/siglip2")
+class Siglip2MatchingWebUI(SimpleWebUI):
+    pretrained_names = list(pretrained_siglip_infos.keys())
     supported_pretrained_names = matched_pretrained_names(
-        pretrained_names, "^stable-flux-"
+        pretrained_names,
+        "^siglip2-",
     )
-    pretrained_extension_names = list(pretrained_stable_extensions_infos.keys())
+    pretrained_extension_names = list(pretrained_siglip_extensions_infos.keys())
     supported_lora_names = matched_pretrained_names(
-        pretrained_extension_names, "^stable-flux-lora-"
+        pretrained_extension_names,
+        ["^siglip2-lora-"],
     )
-    supported_schedulers = supported_scheduler_names
 
     def __init__(self, config: CoreConfigureParser):
+        self._config = config
         self._pipe = None
         self._status = "Stopped" if self._pipe is None else "Running"
         if len(self.supported_pretrained_names) == 0:
@@ -65,32 +66,6 @@ class StableFluxImage2ImageWebUI(SimpleWebUI):
             pretrain_layout_group.layout,
         )
 
-        prompt = create_element(
-            "text", "Input Prompt", lines=3, placeholder="Prompt", show_label=False
-        )
-        scheduler = create_element(
-            "dropdown",
-            "Sampling Method",
-            values=self.supported_schedulers,
-            default=self.supported_schedulers[0],
-        )
-        steps = create_element(
-            "slider", "Diffusion Steps", min_value=1, max_value=100, step=1, default=25
-        )
-        image = create_element("image", "Input Image")
-
-        guidance_scale = create_element(
-            "slider", "Guidance Scale", min_value=0, max_value=50, step=0.1, default=7.5
-        )
-        strength = create_element(
-            "slider", "Strength", min_value=0, max_value=1, step=0.01, default=0.8
-        )
-
-        seed = create_element(
-            "slider", "Seed", min_value=0, max_value=9999, step=1, default=42
-        )
-
-        ## extensions
         self.num_loras = 5
         lora_layout_group = create_lora_layout(
             self.supported_lora_names, num_loras=self.num_loras
@@ -107,65 +82,42 @@ class StableFluxImage2ImageWebUI(SimpleWebUI):
                 lora.file,
             ]
 
-        generate = create_element("button", "Generate", variant="primary", scale=2)
-        output_image = create_element("image", "Output Image")
+        text = create_element("text", "Input Text", lines=3)
+        image = create_element("image", "Input Image")
+        generate = create_element("button", "Generate")
+        score = create_element("text", "Output Score", lines=1)
 
-        # create layouts
-        top1 = create_column(pretrain_layout)
-        top2 = create_row(
-            create_column(prompt, scale=4),
-            create_column(generate),
-        )
-        left_generation = create_tab(
-            create_row(image),
-            create_row(scheduler, steps),
-            create_row(guidance_scale),
-            create_row(strength),
-            create_row(seed),
-            name="Generation",
-        )
-        left_extension = create_tab(
-            create_row(lora_layout),
-            name="Extensions",
-        )
-        left_settings = create_tab(
-            name="Settings",
-        )
-
-        left = create_tabs(left_generation, left_extension, left_settings)
-        right = create_column(output_image)
-        iface = create_blocks(top1, top2, create_row(left, right))
+        # create blocks
+        left = create_column(lora_layout, text, image, generate)
+        right = create_column(score)
+        iface = create_blocks(pretrain_layout, create_row(left, right))
 
         # create events
         iface.__enter__()
 
-        start.click(fn=self.start, inputs=[name], outputs=[status], trigger_mode="once")
-        stop.click(fn=self.stop, outputs=[status], trigger_mode="once")
+        start.click(self.start, inputs=[name], outputs=[status], trigger_mode="once")
+        stop.click(self.stop, outputs=[status], trigger_mode="once")
 
         for lora in loras:
             lora.checkpoint.change(
                 fn=lambda x: nested_dict_value(
-                    pretrained_stable_extensions_infos, x, "text"
+                    pretrained_siglip_extensions_infos, x, "lora", "weight"
                 ),
                 inputs=[lora.checkpoint],
                 outputs=[lora.text],
             )
 
         generate.click(
-            fn=self.generate,
+            self.generate,
             inputs=[
-                prompt,
+                text,
                 image,
-                guidance_scale,
-                strength,
-                steps,
-                seed,
-                scheduler,
                 *lora_params,
             ],
-            outputs=[output_image],
+            outputs=[score],
             trigger_mode="once",
         )
+
         iface.load(
             fn=lambda: [gr.update(value=self._name), gr.update(value=self._status)],
             outputs=[name, status],
@@ -173,7 +125,7 @@ class StableFluxImage2ImageWebUI(SimpleWebUI):
 
         iface.__exit__()
 
-        super().__init__(config, iname="Image2Image", iface=iface)
+        super().__init__(config, iname="Siglip2Matching", iface=iface)
 
     def start(self, pretrained_name, **kwargs):
         if self._name == pretrained_name and self._status == "Running":
@@ -181,7 +133,7 @@ class StableFluxImage2ImageWebUI(SimpleWebUI):
         if self._status == "Running":
             self.stop()
         self._name = pretrained_name
-        self._pipe = StableFluxForImage2ImageGenerationPipeline.from_core_configure(
+        self._pipe = Siglip2ForMatchingPipeline.from_core_configure(
             self._config,
             pretrained_name=pretrained_name,
         )
@@ -201,34 +153,35 @@ class StableFluxImage2ImageWebUI(SimpleWebUI):
         self,
         text: str,
         image: Image.Image,
-        guidance_scale: float,
-        strength: float,
-        num_timesteps: int,
-        seed: int,
-        scheduler: str,
         *params,
     ):
         assert self._pipe is not None
-
         lora_params = params
-
-        lora_checkpoints = lora_params[::5]
+        lora_checkpoints = lora_params[0::5]
         lora_weights = lora_params[1::5]
         lora_alphas = lora_params[2::5]
         lora_urls = lora_params[3::5]
         lora_files = lora_params[4::5]
-        image = self._pipe(
+        score = self._pipe(
             text,
             image,
-            guidance_scale=guidance_scale,
-            strength=strength,
-            num_timesteps=num_timesteps,
-            seed=seed,
-            scheduler=scheduler,
             lora_checkpoints=lora_checkpoints,
             lora_weights=lora_weights,
             lora_alphas=lora_alphas,
             lora_urls=lora_urls,
             lora_files=lora_files,
         )
-        return image
+        return score
+
+
+@register_webui("core/webui/siglip")
+class SiglipWebUI(SimpleWebUI):
+    def __init__(self, config: CoreConfigureParser):
+        webuis = [
+            Siglip2MatchingWebUI(config),
+        ]
+        iface = gr.TabbedInterface(
+            [webui.iface for webui in webuis],
+            tab_names=[webui.iname for webui in webuis],
+        )
+        super().__init__(config, iname="Siglip", iface=iface)

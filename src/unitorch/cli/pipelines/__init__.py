@@ -35,6 +35,7 @@ if is_diffusers_available():
 
     import unitorch.cli.pipelines.stable_3
     import unitorch.cli.pipelines.stable_flux
+    import unitorch.cli.pipelines.qwen_image
 
     if is_opencv_available():
         import unitorch.cli.pipelines.wan
@@ -52,7 +53,7 @@ import unitorch.cli.pipelines.llama
 import unitorch.cli.pipelines.llava
 import unitorch.cli.pipelines.qwen
 import unitorch.cli.pipelines.qwen_vl
-import unitorch.cli.pipelines.qwen_image
 import unitorch.cli.pipelines.mask2former
 import unitorch.cli.pipelines.mistral
 import unitorch.cli.pipelines.sam
+import unitorch.cli.pipelines.siglip

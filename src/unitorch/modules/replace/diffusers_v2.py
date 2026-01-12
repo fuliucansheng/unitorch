@@ -124,25 +124,6 @@ class StableDiffusion3InpaintPipelineV2(StableDiffusion3InpaintPipeline):
 
 @replace(diffusers.pipelines.wan.pipeline_wan_i2v.WanImageToVideoPipeline)
 class WanImageToVideoPipelineV2(WanImageToVideoPipeline):
-    def __init__(
-        self,
-        tokenizer: AutoTokenizer,
-        text_encoder: UMT5EncoderModel,
-        image_encoder: CLIPVisionModel,
-        image_processor: CLIPImageProcessor,
-        transformer: WanTransformer3DModel,
-        vae: AutoencoderKLWan,
-        scheduler: FlowMatchEulerDiscreteScheduler,
-    ):
-        super().__init__(
-            tokenizer=tokenizer,
-            text_encoder=text_encoder,
-            image_encoder=image_encoder,
-            image_processor=image_processor,
-            transformer=transformer,
-            vae=vae,
-            scheduler=scheduler,
-        )
 
     def check_inputs(
         self,
@@ -155,6 +136,7 @@ class WanImageToVideoPipelineV2(WanImageToVideoPipeline):
         negative_prompt_embeds=None,
         image_embeds=None,
         callback_on_step_end_tensor_inputs=None,
+        guidance_scale_2=None,
     ):
         pass
 

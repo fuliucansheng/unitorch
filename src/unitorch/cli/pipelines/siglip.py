@@ -1,33 +1,35 @@
 # Copyright (c) FULIUCANSHENG.
+# Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
 import re
 import torch
-import numpy as np
 from PIL import Image
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
-from unitorch.models.sam import (
-    SamForSegmentation as _SamForSegmentation,
-)
-from unitorch.models.sam import SamProcessor
-from unitorch.utils import pop_value, nested_dict_value
 from unitorch.utils import is_remote_url
+from unitorch.models.siglip import (
+    SiglipForMatching as _SiglipForMatching,
+)
+from unitorch.models.siglip import SiglipProcessor
+from unitorch.utils import pop_value, nested_dict_value
 from unitorch.cli import (
     cached_path,
     add_default_section_for_init,
     add_default_section_for_function,
 )
-from unitorch.cli.models.sam import (
-    pretrained_sam_infos,
-    pretrained_sam_extensions_infos,
+from unitorch.cli.models.siglip import (
+    pretrained_siglip_infos,
+    pretrained_siglip_extensions_infos,
 )
 
 
-class SamForSegmentationPipeline(_SamForSegmentation):
+class Siglip2ForMatchingPipeline(_SiglipForMatching):
     def __init__(
         self,
         config_path: str,
+        vocab_path: str,
         vision_config_path: str,
+        max_seq_length: Optional[int] = 48,
         weight_path: Optional[Union[str, List[str]]] = None,
         state_dict: Optional[Dict[str, Any]] = None,
         enable_cpu_offload: Optional[bool] = True,
@@ -36,8 +38,10 @@ class SamForSegmentationPipeline(_SamForSegmentation):
         super().__init__(
             config_path=config_path,
         )
-        self.processor = SamProcessor(
+        self.processor = SiglipProcessor(
+            vocab_path=vocab_path,
             vision_config_path=vision_config_path,
+            max_seq_length=max_seq_length,
         )
         self._device = "cpu" if device == "cpu" else int(device)
 
@@ -48,38 +52,46 @@ class SamForSegmentationPipeline(_SamForSegmentation):
         self.eval()
 
     @classmethod
-    @add_default_section_for_init("core/pipeline/sam")
+    @add_default_section_for_init("core/pipeline/matching/siglip")
     def from_core_configure(
         cls,
         config,
         pretrained_name: Optional[str] = None,
         config_path: Optional[str] = None,
+        vocab_path: Optional[str] = None,
         vision_config_path: Optional[str] = None,
         pretrained_weight_path: Optional[str] = None,
         device: Optional[str] = None,
         **kwargs,
     ):
-        config.set_default_section("core/pipeline/sam")
-        pretrained_name = pretrained_name or config.getoption(
-            "pretrained_name", "sam-vit-base"
-        )
-
-        config_path = config_path or config.getoption("config_path", None)
+        config.set_default_section("core/pipeline/matching/siglip")
+        pretrained_name = config.getoption("pretrained_name", "siglip-base-patch16-224")
+        config_path = config.getoption("config_path", None)
         config_path = pop_value(
             config_path,
-            nested_dict_value(pretrained_sam_infos, pretrained_name, "config"),
+            nested_dict_value(pretrained_siglip_infos, pretrained_name, "config"),
         )
+
         config_path = cached_path(config_path)
 
-        vision_config_path = vision_config_path or config.getoption(
-            "vision_config_path", None
+        vocab_path = config.getoption("vocab_path", None)
+        vocab_path = pop_value(
+            vocab_path,
+            nested_dict_value(pretrained_siglip_infos, pretrained_name, "vocab"),
         )
+        vocab_path = cached_path(vocab_path)
+
+        vision_config_path = config.getoption("vision_config_path", None)
         vision_config_path = pop_value(
             vision_config_path,
-            nested_dict_value(pretrained_sam_infos, pretrained_name, "vision_config"),
+            nested_dict_value(
+                pretrained_siglip_infos, pretrained_name, "vision_config"
+            ),
         )
+
         vision_config_path = cached_path(vision_config_path)
 
+        max_seq_length = config.getoption("max_seq_length", 48)
         enable_cpu_offload = config.getoption("enable_cpu_offload", True)
         device = config.getoption("device", "cpu") if device is None else device
         pretrained_weight_path = pretrained_weight_path or config.getoption(
@@ -87,13 +99,15 @@ class SamForSegmentationPipeline(_SamForSegmentation):
         )
         weight_path = pop_value(
             pretrained_weight_path,
-            nested_dict_value(pretrained_sam_infos, pretrained_name, "weight"),
+            nested_dict_value(pretrained_siglip_infos, pretrained_name, "weight"),
             check_none=False,
         )
 
         inst = cls(
             config_path,
-            vision_config_path,
+            vocab_path=vocab_path,
+            vision_config_path=vision_config_path,
+            max_seq_length=max_seq_length,
             weight_path=weight_path,
             enable_cpu_offload=enable_cpu_offload,
             device=device,
@@ -102,13 +116,12 @@ class SamForSegmentationPipeline(_SamForSegmentation):
         return inst
 
     @torch.no_grad()
-    @add_default_section_for_function("core/pipeline/sam")
+    @add_default_section_for_function("core/pipeline/matching/siglip")
     def __call__(
         self,
-        image: Union[Image.Image, str],
-        points: Optional[List[Tuple[int, int]]] = None,
-        boxes: Optional[List[Tuple[int, int, int, int]]] = None,
-        mask_threshold: Optional[float] = 0.1,
+        text: str,
+        image: Image.Image,
+        max_seq_length: Optional[int] = 48,
         lora_checkpoints: Optional[Union[str, List[str]]] = [],
         lora_weights: Optional[Union[float, List[float]]] = [],
         lora_alphas: Optional[Union[float, List[float]]] = [],
@@ -117,52 +130,16 @@ class SamForSegmentationPipeline(_SamForSegmentation):
     ):
         if self._enable_cpu_offload:
             self.to(self._device)
-        inputs = self.processor.vision_processor(image)
-        pixel_values, original_sizes, reshaped_input_sizes = (
-            inputs["pixel_values"],
-            inputs["original_sizes"],
-            inputs["reshaped_input_sizes"],
+        inputs = self.processor.classification(
+            text=text,
+            image=image,
+            max_seq_length=max_seq_length,
         )
-        pixel_values = [torch.from_numpy(pixel_value) for pixel_value in pixel_values]
-        pixel_values = torch.stack(pixel_values).to(self._device)
-        input_points = (
-            torch.Tensor([[points]]).to(self._device) if points is not None else None
-        )
-        input_boxes = (
-            torch.Tensor([boxes]).to(self._device) if boxes is not None else None
-        )
-        if input_points is not None:
-            input_points[:, :, :, 1] = (
-                input_points[:, :, :, 1]
-                / original_sizes[0][0]
-                * reshaped_input_sizes[0][0]
-            )
-            input_points[:, :, :, 0] = (
-                input_points[:, :, :, 0]
-                / original_sizes[0][1]
-                * reshaped_input_sizes[0][1]
-            )
-        if input_boxes is not None:
-            input_boxes[:, :, :, 0] = (
-                input_boxes[:, :, :, 0]
-                / original_sizes[0][1]
-                * reshaped_input_sizes[0][1]
-            )
-            input_boxes[:, :, :, 1] = (
-                input_boxes[:, :, :, 1]
-                / original_sizes[0][0]
-                * reshaped_input_sizes[0][0]
-            )
-            input_boxes[:, :, :, 2] = (
-                input_boxes[:, :, :, 2]
-                / original_sizes[0][1]
-                * reshaped_input_sizes[0][1]
-            )
-            input_boxes[:, :, :, 3] = (
-                input_boxes[:, :, :, 3]
-                / original_sizes[0][0]
-                * reshaped_input_sizes[0][0]
-            )
+        inputs = {k: v.unsqueeze(0) if v is not None else v for k, v in inputs.items()}
+        inputs = {
+            k: v.to(device=self._device) if v is not None else v
+            for k, v in inputs.items()
+        }
         if isinstance(lora_checkpoints, str):
             lora_checkpoints = [lora_checkpoints]
         if isinstance(lora_weights, float):
@@ -185,9 +162,10 @@ class SamForSegmentationPipeline(_SamForSegmentation):
             lora_checkpoints, lora_urls, lora_files, lora_weights, lora_alphas
         ):
             if ckpt is not None:
-                processed_lora_files.append(
-                    nested_dict_value(pretrained_sam_extensions_infos, ckpt, "weight")
+                lora_file = nested_dict_value(
+                    pretrained_siglip_extensions_infos, ckpt, "weight"
                 )
+                processed_lora_files.append(lora_file)
                 processed_lora_weights.append(weight)
                 processed_lora_alphas.append(alpha)
             elif url is not None and is_remote_url(url):
@@ -206,25 +184,15 @@ class SamForSegmentationPipeline(_SamForSegmentation):
                 lora_alphas=processed_lora_alphas,
             )
 
-        outputs = self.segment(
-            pixel_values,
-            input_points=input_points,
-            input_boxes=input_boxes,
+        outputs = super().forward(
+            input_ids=inputs["input_ids"],
+            attention_mask=inputs["attention_mask"],
+            position_ids=inputs["position_ids"],
+            pixel_values=inputs["pixel_values"],
         )
-        processed_masks = self.processor.vision_processor.post_process_masks(
-            outputs.masks,
-            original_sizes,
-            reshaped_input_sizes,
-            mask_threshold=mask_threshold,
-            binarize=True,
-        )[0]
+        scores = outputs.squeeze(0)
         self.unload_lora_weights()
-        if len(processed_masks) == 0:
-            return None
-        first_mask = processed_masks[0, 0].permute(0, 1)
-        first_mask = first_mask.cpu().to(torch.uint8) * 255
-        mask_image = Image.fromarray(np.array(first_mask))
         if self._enable_cpu_offload:
             self.to("cpu")
             torch.cuda.empty_cache()
-        return mask_image
+        return scores[0].item()

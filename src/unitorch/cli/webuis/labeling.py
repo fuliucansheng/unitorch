@@ -16,7 +16,7 @@ import gradio as gr
 from PIL import Image
 from collections import Counter, defaultdict
 from torch.hub import download_url_to_file
-from unitorch import get_temp_home
+from unitorch import get_temp_dir
 from unitorch.cli import CoreConfigureParser
 from unitorch.cli import register_webui
 from unitorch.cli.webuis import (
@@ -33,7 +33,34 @@ from unitorch.cli.webuis import (
 from unitorch.cli.webuis import SimpleWebUI
 
 _js = """
-() => {}
+() => {
+    const shortcuts = (e) => {
+        const event = document.all ? window.event : e;
+        if(e.target.tagName.toLowerCase() == "body") {
+            const code = e.key;
+            if (code.toLowerCase() === "arrowright") {
+                document.getElementById("ut-labeling-submit").click();
+                document.activeElement.blur();
+                window.focus();
+            } else {
+                const choices = document.getElementById("ut-labeling-choices").getElementsByTagName("label");
+                if (/^[1-9]$/.test(code)) {
+                    const index = parseInt(code, 10) - 1; // 数字键1对应choices[0]
+                    if (index >= 0 && index < choices.length) {
+                        choices[index].click();
+                        document.activeElement.blur();
+                        window.focus();
+                    } else {
+                        console.warn("Key index out of range:", index);
+                    }
+                }
+
+            }
+        }
+    };
+    document.addEventListener("keyup", shortcuts);
+    console.log("Shortcut keys for labeling loaded.");
+}
 """
 
 _css = """
@@ -69,7 +96,7 @@ class LabelingWebUI(SimpleWebUI):
             names = [n.strip() for n in names]
 
         sep = config.getoption("sep", "\t")
-        temp_folder = config.getoption("temp_folder", get_temp_home())
+        temp_folder = config.getoption("temp_folder", get_temp_dir())
         os.makedirs(temp_folder, exist_ok=True)
         self.temp_folder = temp_folder
         self.tags = config.getoption("tags", "#Labeling")
@@ -96,6 +123,7 @@ class LabelingWebUI(SimpleWebUI):
         self.zip_cols = config.getoption("zip_cols", None)
         self.zip_http_url = config.getoption("zip_http_url", None)
         self.group_col = config.getoption("group_col", None)
+        self.pre_label_col = config.getoption("pre_label_col", None)
         self.num_group_texts_per_row = config.getoption("num_group_texts_per_row", 4)
         self.num_images_per_row = config.getoption("num_images_per_row", 4)
         self.num_videos_per_row = config.getoption("num_videos_per_row", 4)
@@ -136,7 +164,7 @@ class LabelingWebUI(SimpleWebUI):
                 [col in self.dataset.columns for col in self.text_cols]
             ), f"text_cols {self.text_cols} not found in dataset"
         else:
-            self.text_cols = []
+            self.text_cols = self.group_text_cols
 
         if self.image_cols is not None:
             if isinstance(self.image_cols, str):
@@ -209,15 +237,25 @@ class LabelingWebUI(SimpleWebUI):
         self.guideline = config.getoption("guideline", None)
         self.choices = config.getoption("choices", None)
         self.checkbox = config.getoption("checkbox", False)
+        self.use_shortcuts = config.getoption("use_shortcuts", False)
         self.html_styles = config.getoption("html_styles", {})
         self.dataset["User"] = ""
         self.dataset["Comment"] = ""
         self.dataset["Label"] = ""
 
+        if self.pre_label_col is not None:
+            assert (
+                self.pre_label_col in self.dataset.columns
+            ), f"pre_label_col {self.pre_label_col} not found in dataset"
+            self.dataset["Label"] = self.dataset[self.pre_label_col].map(
+                lambda x: str(x).strip()
+            )
+            self.dataset["Label"].fillna("", inplace=True)
+
         if isinstance(self.choices, str):
             self.choices = re.split(r"[,;]", self.choices)
             self.choices = [c.strip() for c in self.choices]
-        self.choices = [str(c).replace(",", " ").strip() for c in self.choices]
+        self.choices = [str(c).strip() for c in self.choices]
 
         if os.path.exists(result_file) and not force_to_relabel:
             self.dataset = pd.read_csv(result_file, sep="\t")
@@ -307,6 +345,7 @@ class LabelingWebUI(SimpleWebUI):
             label="Label",
             values=self.choices,
             scale=3,
+            elem_id="ut-labeling-choices",
         )
 
         comment = create_element(
@@ -330,6 +369,7 @@ class LabelingWebUI(SimpleWebUI):
         submit = create_element(
             "button",
             label="Submit",
+            elem_id="ut-labeling-submit",
         )
         reset = create_element(
             "button",
@@ -477,7 +517,10 @@ class LabelingWebUI(SimpleWebUI):
             name="Advanced",
         )
         tabs = create_tabs(tab1, tab2, tab3)
-        iface = create_blocks(guideline_header, guideline, tabs, js=_js, css=_css)
+        if self.use_shortcuts:
+            iface = create_blocks(guideline_header, guideline, tabs, js=_js, css=_css)
+        else:
+            iface = create_blocks(guideline_header, guideline, tabs, css=_css)
 
         # create events
         iface.__enter__()
@@ -699,7 +742,9 @@ class LabelingWebUI(SimpleWebUI):
         new_htmls = new_one[self.html_cols].tolist()
         new_group = new_one[self.group_col] if self.group_col is not None else None
         new_comment = new_one["Comment"]
-        new_choices = new_one["Label"].split(",") if new_one["Label"] != "" else None
+        new_choices = (
+            new_one["Label"].split("<label-gap>") if new_one["Label"] != "" else None
+        )
         new_choices = (
             new_choices[0]
             if not self.checkbox and new_choices is not None
@@ -725,7 +770,7 @@ class LabelingWebUI(SimpleWebUI):
         choices = self.choices
 
         labeled["Label"] = labeled["Label"].map(
-            lambda x: x.split(",") if x != "" else []
+            lambda x: x.split("<label-gap>") if x != "" else []
         )
         labeled_exploded = labeled.explode("Label")
 
@@ -779,30 +824,6 @@ class LabelingWebUI(SimpleWebUI):
         stats = stats.to_markdown(index=False)
         return stats
 
-    def report(self, index):
-        sample = self.dataset[self.dataset.Index == index].iloc[0]
-        sample = self.process_sample(sample)
-        texts = sample[self.text_cols].to_dict()
-        images = sample[self.image_cols].to_dict()
-        videos = sample[self.video_cols].to_dict()
-        metas = {
-            "tags": self.tags,
-        }
-        labels = {
-            "User": sample["User"],
-            "Label": sample["Label"],
-            "Comment": sample["Comment"],
-        }
-        try:
-            reported_item(
-                record={**texts, **labels, **metas},
-                images=images if len(self.image_cols) > 0 else None,
-                videos=videos if len(self.video_cols) > 0 else None,
-            )
-            logging.info(f"Item {index} reported successfully.")
-        except Exception as e:
-            logging.error(f"Error reporting item {index}: {e}")
-
     def label(
         self,
         index,
@@ -820,13 +841,11 @@ class LabelingWebUI(SimpleWebUI):
             gr.Warning("Please ensure the label field is not left empty.")
             return os.path.abspath(self.result_file), self.stats(), logs, index
         if isinstance(choice, list) or isinstance(choice, tuple):
-            choice = ",".join(choice)
+            choice = "<label-gap>".join(choice)
         self.dataset.loc[self.dataset.Index == index, "User"] = user
         self.dataset.loc[self.dataset.Index == index, "Label"] = choice
         self.dataset.loc[self.dataset.Index == index, "Comment"] = comment
         self.dataset.to_csv(self.result_file, sep="\t", index=False)
-
-        self.report(index)
 
         if user is not None and user != "":
             new_logs = (

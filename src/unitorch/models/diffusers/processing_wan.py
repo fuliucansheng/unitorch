@@ -32,7 +32,6 @@ class WanProcessor(HfTextClassificationProcessor):
         self,
         vocab_path: str,
         vae_config_path: Optional[str] = None,
-        image_config_path: Optional[str] = None,
         max_seq_length: Optional[int] = 77,
         position_start_id: Optional[int] = 0,
         video_size: Optional[Tuple[int, int]] = None,
@@ -90,11 +89,6 @@ class WanProcessor(HfTextClassificationProcessor):
             )
         else:
             self.vae_image_processor = None
-
-        if image_config_path is not None:
-            self.vision_processor = CLIPImageProcessor.from_json_file(image_config_path)
-        else:
-            self.vision_processor = None
 
     def get_video_frames(self, video: Union[cv2.VideoCapture, str]):
         if isinstance(video, str):
@@ -191,17 +185,12 @@ class WanProcessor(HfTextClassificationProcessor):
             new_height = height // self.divisor * self.divisor
             image = image.resize((new_width, new_height), resample=Image.LANCZOS)
 
-        condition_pixel_values = self.vision_processor.preprocess(
-            image, return_tensors="pt"
-        ).pixel_values[0]
-
         vae_pixel_values = self.vae_image_processor.preprocess(image)[0]
 
         return GenericOutputs(
             pixel_values=outputs.pixel_values,
             input_ids=outputs.input_ids,
             attention_mask=outputs.attention_mask,
-            condition_pixel_values=condition_pixel_values,
             vae_pixel_values=vae_pixel_values,
         )
 
@@ -248,9 +237,6 @@ class WanProcessor(HfTextClassificationProcessor):
             image = image.resize((new_width, new_height), resample=Image.LANCZOS)
 
         vae_pixel_values = self.vae_image_processor.preprocess(image)[0]
-        pixel_values = self.vision_processor.preprocess(
-            image, return_tensors="pt"
-        ).pixel_values[0]
         text_outputs = self.text2video_inputs(
             prompt=prompt,
             negative_prompt=negative_prompt,
@@ -262,6 +248,5 @@ class WanProcessor(HfTextClassificationProcessor):
             attention_mask=text_outputs.attention_mask,
             negative_input_ids=text_outputs.negative_input_ids,
             negative_attention_mask=text_outputs.negative_attention_mask,
-            condition_pixel_values=pixel_values,
             vae_pixel_values=vae_pixel_values,
         )

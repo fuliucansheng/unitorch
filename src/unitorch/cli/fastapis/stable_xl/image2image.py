@@ -16,16 +16,13 @@ from fastapi import APIRouter, UploadFile, File
 from fastapi.responses import StreamingResponse
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from diffusers.utils import numpy_to_pil
-from diffusers.models import ControlNetModel
+
 from diffusers.pipelines import (
     StableDiffusionXLPipeline,
     StableDiffusionXLImg2ImgPipeline,
     StableDiffusionXLInpaintPipeline,
-    StableDiffusionXLControlNetPipeline,
-    StableDiffusionXLControlNetImg2ImgPipeline,
-    StableDiffusionXLControlNetInpaintPipeline,
 )
-from unitorch import is_xformers_available
+
 from unitorch.utils import is_remote_url
 from unitorch.models.diffusers import GenericStableXLModel
 from unitorch.models.diffusers import StableXLProcessor
@@ -74,7 +71,6 @@ class StableXLForImage2ImageFastAPIPipeline(GenericStableXLModel):
         lora_alphas: Optional[Union[float, List[float]]] = 32,
         device: Optional[Union[str, int]] = "cpu",
         enable_cpu_offload: Optional[bool] = False,
-        enable_xformers: Optional[bool] = False,
     ):
         super().__init__(
             config_path=config_path,
@@ -120,16 +116,11 @@ class StableXLForImage2ImageFastAPIPipeline(GenericStableXLModel):
             )
 
         self._enable_cpu_offload = enable_cpu_offload
-        self._enable_xformers = enable_xformers
 
         if self._enable_cpu_offload and self._device != "cpu":
             self.pipeline.enable_model_cpu_offload(self._device)
         else:
             self.to(device=self._device)
-
-        if self._enable_xformers and self._device != "cpu":
-            assert is_xformers_available(), "Please install xformers first."
-            self.pipeline.enable_xformers_memory_efficient_attention()
 
     @classmethod
     @add_default_section_for_init("core/fastapi/pipeline/stable_xl/image2image")
@@ -244,7 +235,6 @@ class StableXLForImage2ImageFastAPIPipeline(GenericStableXLModel):
         )
         device = config.getoption("device", "cpu") if device is None else device
         enable_cpu_offload = config.getoption("enable_cpu_offload", True)
-        enable_xformers = config.getoption("enable_xformers", True)
 
         state_dict = None
         if weight_path is None and pretrained_infos is not None:
@@ -325,7 +315,6 @@ class StableXLForImage2ImageFastAPIPipeline(GenericStableXLModel):
             lora_alphas=pretrained_lora_alphas,
             device=device,
             enable_cpu_offload=enable_cpu_offload,
-            enable_xformers=enable_xformers,
         )
         return inst
 

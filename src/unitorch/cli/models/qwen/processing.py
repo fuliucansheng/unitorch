@@ -2,6 +2,7 @@
 # Licensed under the MIT License.
 
 import re
+import torch
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.qwen import QWenProcessor as _QWenProcessor
@@ -294,6 +295,36 @@ class QWenProcessor(_QWenProcessor):
             win_attention_mask=win_labels.attention_mask,
             lose_input_ids=lose_labels.input_ids,
             lose_attention_mask=lose_labels.attention_mask,
+        )
+
+    @register_process("core/process/qwen/messages/grpo/generation")
+    def _messages_grpo_generation(
+        self,
+        messages: List[Dict[str, Any]],
+        messages_labels: List[Dict[str, Any]],
+        max_seq_length: Optional[int] = None,
+        max_gen_seq_length: Optional[int] = None,
+    ):
+        inputs = super().generation_inputs(
+            text=super().chat_template(messages=messages),
+            max_seq_length=max_seq_length,
+        )
+        labels = super().generation_labels(
+            text=super().chat_template(messages=messages_labels),
+            max_gen_seq_length=max_gen_seq_length,
+        )
+        # sample results from fastapi of the base model. debug with dummy data here
+        sample_ids = labels.input_ids
+        sample_attention_mask = labels.attention_mask
+        sampled_rewards = torch.tensor(1.0).float()
+        return TensorsInputs(
+            input_ids=inputs.input_ids,
+            attention_mask=inputs.attention_mask,
+            sampled_ids=torch.stack([sample_ids, sample_ids], dim=0),
+            sampled_attention_mask=torch.stack(
+                [sample_attention_mask, sample_attention_mask], dim=0
+            ),
+            sampled_rewards=torch.stack([sampled_rewards, sampled_rewards], dim=0),
         )
 
     @register_process("core/postprocess/qwen/detokenize")

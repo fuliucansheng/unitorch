@@ -15,7 +15,7 @@ from fastapi import APIRouter, UploadFile, File
 from fastapi.responses import StreamingResponse
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from diffusers.utils import numpy_to_pil
-from diffusers.models import ControlNetModel
+
 from diffusers.pipelines import (
     StableDiffusionPipeline,
     StableDiffusionImg2ImgPipeline,
@@ -23,11 +23,8 @@ from diffusers.pipelines import (
     StableDiffusionUpscalePipeline,
     StableDiffusionDepth2ImgPipeline,
     StableVideoDiffusionPipeline,
-    StableDiffusionControlNetPipeline,
-    StableDiffusionControlNetImg2ImgPipeline,
-    StableDiffusionControlNetInpaintPipeline,
 )
-from unitorch import is_xformers_available
+
 from unitorch.utils import is_remote_url
 from unitorch.models.diffusers import GenericStableModel
 from unitorch.models.diffusers import StableProcessor

@@ -2,8 +2,11 @@
 # Licensed under the MIT License.
 
 import sys
-import logging
 import inspect
+import logging
+import functools
+import random
+import time
 
 OPTIMIZED_CLASSES = dict()
 
@@ -66,5 +69,31 @@ def replace(target_obj):
                         )
                     )
         return new_obj
+
+    return decorator
+
+
+def retry(
+    times: int = 3,
+    base_delay: float = 0.5,
+    max_delay: float = 60.0,
+    exceptions=(Exception,),
+    jitter: bool = True,
+):
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            for attempt in range(times):
+                try:
+                    return func(*args, **kwargs)
+                except exceptions:
+                    if attempt == times - 1:
+                        raise
+                    delay = min(base_delay * (2**attempt), max_delay)
+                    if jitter:
+                        delay *= random.uniform(0.5, 1.5)
+                    time.sleep(delay)
+
+        return wrapper
 
     return decorator

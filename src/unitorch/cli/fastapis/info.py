@@ -16,7 +16,7 @@ from PIL import Image
 from fastapi import APIRouter, UploadFile, File
 from fastapi.responses import StreamingResponse
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
-from unitorch import is_xformers_available
+
 from unitorch.utils import is_remote_url
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.cli import (
@@ -59,9 +59,29 @@ class InfoFastAPI(GenericFastAPI):
             }
         }
         if self._device != "cpu":
-            free, total = torch.cuda.mem_get_info(self._device)
-            total = total / 1024**3
-            free = free / 1024**3
-            used = total - free
-            stats = {**stats, **{"cuda": {"total": total, "free": free, "used": used}}}
+            if isinstance(self._device, list):
+                for device in self._device:
+                    free, total = torch.cuda.mem_get_info(device)
+                    total = total / 1024**3
+                    free = free / 1024**3
+                    used = total - free
+                    stats = {
+                        **stats,
+                        **{
+                            f"cuda:{device}": {
+                                "total": total,
+                                "free": free,
+                                "used": used,
+                            }
+                        },
+                    }
+            else:
+                free, total = torch.cuda.mem_get_info(self._device)
+                total = total / 1024**3
+                free = free / 1024**3
+                used = total - free
+                stats = {
+                    **stats,
+                    **{"cuda": {"total": total, "free": free, "used": used}},
+                }
         return stats

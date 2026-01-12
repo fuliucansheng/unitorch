@@ -27,7 +27,6 @@ from unitorch.cli.webuis import (
     create_tabs,
     create_blocks,
     create_pretrain_layout,
-    create_controlnet_layout,
     create_lora_layout,
 )
 from unitorch.cli.webuis import SimpleWebUI
@@ -36,12 +35,12 @@ from unitorch.cli.webuis import SimpleWebUI
 class WanImage2VideoWebUI(SimpleWebUI):
     pretrained_names = list(pretrained_stable_infos.keys())
     supported_pretrained_names = matched_pretrained_names(
-        pretrained_names, "^wan-v2.1-"
+        pretrained_names, "^wan-v2.2-"
     )
     pretrained_extension_names = list(pretrained_stable_extensions_infos.keys())
     supported_lora_names = matched_pretrained_names(
         pretrained_extension_names,
-        "^wan-v2.1-lora-",
+        "^wan-v2.2-lora-",
     )
     supported_schedulers = supported_scheduler_names
 

@@ -16,11 +16,11 @@ from fastapi import APIRouter, UploadFile, File
 from fastapi.responses import StreamingResponse
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from diffusers.utils import numpy_to_pil
-from diffusers.models import ControlNetModel
+
 from diffusers.pipelines import (
     WanPipeline,
 )
-from unitorch import is_xformers_available
+
 from unitorch.utils import is_remote_url, tensor2vid
 from unitorch.models.diffusers import WanForText2VideoGeneration
 from unitorch.models.diffusers import WanProcessor
@@ -55,8 +55,6 @@ class WanForText2VideoFastAPIPipeline(WanForText2VideoGeneration):
         scheduler_config_path: str,
         vocab_path: str,
         quant_config_path: Optional[str] = None,
-        in_channels: Optional[int] = None,
-        out_channels: Optional[int] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         weight_path: Optional[Union[str, List[str]]] = None,
@@ -66,7 +64,6 @@ class WanForText2VideoFastAPIPipeline(WanForText2VideoGeneration):
         lora_alphas: Optional[Union[float, List[float]]] = 32,
         device: Optional[Union[str, int]] = "cpu",
         enable_cpu_offload: Optional[bool] = False,
-        enable_xformers: Optional[bool] = False,
     ):
         super().__init__(
             config_path=config_path,
@@ -74,8 +71,6 @@ class WanForText2VideoFastAPIPipeline(WanForText2VideoGeneration):
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
             quant_config_path=quant_config_path,
-            in_channels=in_channels,
-            out_channels=out_channels,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
         )
@@ -97,16 +92,11 @@ class WanForText2VideoFastAPIPipeline(WanForText2VideoGeneration):
             )
 
         self._enable_cpu_offload = enable_cpu_offload
-        self._enable_xformers = enable_xformers
 
         if self._enable_cpu_offload and self._device != "cpu":
             self.pipeline.enable_model_cpu_offload(self._device)
         else:
             self.to(device=self._device)
-
-        if self._enable_xformers and self._device != "cpu":
-            assert is_xformers_available(), "Please install xformers first."
-            self.pipeline.enable_xformers_memory_efficient_attention()
 
     @classmethod
     @add_default_section_for_init("core/fastapi/pipeline/wan/text2video")
@@ -118,6 +108,7 @@ class WanForText2VideoFastAPIPipeline(WanForText2VideoGeneration):
         text_config_path: Optional[str] = None,
         vae_config_path: Optional[str] = None,
         scheduler_config_path: Optional[str] = None,
+        config2_path: Optional[str] = None,
         vocab_path: Optional[str] = None,
         quant_config_path: Optional[str] = None,
         pretrained_weight_path: Optional[str] = None,
@@ -130,7 +121,7 @@ class WanForText2VideoFastAPIPipeline(WanForText2VideoGeneration):
     ):
         config.set_default_section("core/fastapi/pipeline/wan/text2video")
         pretrained_name = pretrained_name or config.getoption(
-            "pretrained_name", "wan-v2.1-t2v-1.3b"
+            "pretrained_name", "wan-v2.2-t2v-14b"
         )
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
 
@@ -140,6 +131,15 @@ class WanForText2VideoFastAPIPipeline(WanForText2VideoGeneration):
             nested_dict_value(pretrained_infos, "transformer", "config"),
         )
         config_path = cached_path(config_path)
+
+        config2_path = config_path or config.getoption("config2_path", None)
+        config2_path = pop_value(
+            config2_path,
+            nested_dict_value(pretrained_infos, "transformer2", "config"),
+        )
+
+        if config2_path is not None:
+            config2_path = cached_path(config2_path)
 
         text_config_path = text_config_path or config.getoption(
             "text_config_path", None
@@ -184,7 +184,6 @@ class WanForText2VideoFastAPIPipeline(WanForText2VideoGeneration):
         )
         device = config.getoption("device", "cpu") if device is None else device
         enable_cpu_offload = config.getoption("enable_cpu_offload", True)
-        enable_xformers = config.getoption("enable_xformers", False)
 
         state_dict = None
         if weight_path is None and pretrained_infos is not None:
@@ -192,6 +191,10 @@ class WanForText2VideoFastAPIPipeline(WanForText2VideoGeneration):
                 load_weight(
                     nested_dict_value(pretrained_infos, "transformer", "weight"),
                     prefix_keys={"": "transformer."},
+                ),
+                load_weight(
+                    nested_dict_value(pretrained_infos, "transformer2", "weight"),
+                    prefix_keys={"": "transformer2."},
                 ),
                 load_weight(
                     nested_dict_value(pretrained_infos, "text", "weight"),
@@ -245,6 +248,7 @@ class WanForText2VideoFastAPIPipeline(WanForText2VideoGeneration):
             text_config_path=text_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
+            config2_path=config2_path,
             vocab_path=vocab_path,
             quant_config_path=quant_config_path,
             weight_path=weight_path,
@@ -254,7 +258,6 @@ class WanForText2VideoFastAPIPipeline(WanForText2VideoGeneration):
             lora_alphas=pretrained_lora_alphas,
             device=device,
             enable_cpu_offload=enable_cpu_offload,
-            enable_xformers=enable_xformers,
         )
         return inst
 
@@ -335,7 +338,7 @@ class WanForText2VideoFastAPI(GenericFastAPI):
 
     def start(
         self,
-        pretrained_name: Optional[str] = "wan-v2.1-t2v-1.3b",
+        pretrained_name: Optional[str] = "wan-v2.2-t2v-14b",
         pretrained_lora_names: Optional[Union[str, List[str]]] = None,
         pretrained_lora_weights: Optional[Union[float, List[float]]] = 1.0,
         pretrained_lora_alphas: Optional[Union[float, List[float]]] = 32.0,

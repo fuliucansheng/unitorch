@@ -2,7 +2,7 @@
 # Licensed under the MIT License.
 
 import gradio as gr
-from unitorch.cli.webuis.utils.layouts import (
+from unitorch.utils.webui_utils import (
     create_element,
     create_accordion,
     create_row,

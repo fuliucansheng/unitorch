@@ -209,7 +209,7 @@ __hf_hub_stable_flux_ctrl_safetensors_dict__ = lambda name, n1=3, n2=4: {
     ),
 }
 
-__hf_hub_wan_v2_1_safetensors_dict__ = lambda name, n1=2, n2=5, im=False: {
+__hf_hub_wan_v2_2_safetensors_dict__ = lambda name, n1=12, n2=12, n3=3: {
     "transformer": {
         "config": hf_endpoint_url(f"/{name}/resolve/main/transformer/config.json"),
         "weight": [
@@ -219,31 +219,25 @@ __hf_hub_wan_v2_1_safetensors_dict__ = lambda name, n1=2, n2=5, im=False: {
             for i in range(1, n1 + 1)
         ],
     },
+    "transformer2": {
+        "config": hf_endpoint_url(f"/{name}/resolve/main/transformer/config.json"),
+        "weight": [
+            hf_endpoint_url(
+                f"/{name}/resolve/main/transformer_2/diffusion_pytorch_model-{str(i).rjust(5, '0')}-of-{str(n2).rjust(5, '0')}.safetensors"
+            )
+            for i in range(1, n2 + 1)
+        ],
+    },
     "text": {
         "config": hf_endpoint_url(f"/{name}/resolve/main/text_encoder/config.json"),
         "vocab": hf_endpoint_url(f"/{name}/resolve/main/tokenizer/spiece.model"),
         "weight": [
             hf_endpoint_url(
-                f"/{name}/resolve/main/text_encoder/model-{str(i).rjust(5, '0')}-of-{str(n2).rjust(5, '0')}.safetensors"
+                f"/{name}/resolve/main/text_encoder/model-{str(i).rjust(5, '0')}-of-{str(n3).rjust(5, '0')}.safetensors"
             )
-            for i in range(1, n2 + 1)
+            for i in range(1, n3 + 1)
         ],
     },
-    "image": (
-        {
-            "config": hf_endpoint_url(
-                f"/{name}/resolve/main/image_encoder/config.json"
-            ),
-            "vision_config": hf_endpoint_url(
-                f"/{name}/resolve/main/image_processor/preprocessor_config.json"
-            ),
-            "weight": hf_endpoint_url(
-                f"/{name}/resolve/main/image_encoder/model.safetensors"
-            ),
-        }
-        if im
-        else {}
-    ),
     "scheduler": hf_endpoint_url(
         f"/{name}/resolve/main/scheduler/scheduler_config.json"
     ),
@@ -306,38 +300,6 @@ __hf_hub_vae_safetensors_fp16_dict__ = lambda name: {
             f"/{name}/resolve/main/vae/diffusion_pytorch_model.fp16.safetensors"
         ),
     },
-}
-
-__hf_hub_controlnet_dict__ = lambda name: {
-    "controlnet": {
-        "config": hf_endpoint_url(f"/{name}/resolve/main/config.json"),
-        "weight": hf_endpoint_url(f"/{name}/resolve/main/diffusion_pytorch_model.bin"),
-    }
-}
-
-__hf_hub_controlnet_safetensors_dict__ = lambda name: {
-    "controlnet": {
-        "config": hf_endpoint_url(f"/{name}/resolve/main/config.json"),
-        "weight": hf_endpoint_url(
-            f"/{name}/resolve/main/diffusion_pytorch_model.safetensors"
-        ),
-    }
-}
-
-__hf_hub_adapter_dict__ = lambda name: {
-    "adapter": {
-        "config": hf_endpoint_url(f"/{name}/resolve/main/config.json"),
-        "weight": hf_endpoint_url(f"/{name}/resolve/main/diffusion_pytorch_model.bin"),
-    }
-}
-
-__hf_hub_adapter_safetensors_dict__ = lambda name: {
-    "adapter": {
-        "config": hf_endpoint_url(f"/{name}/resolve/main/config.json"),
-        "weight": hf_endpoint_url(
-            f"/{name}/resolve/main/diffusion_pytorch_model.safetensors"
-        ),
-    }
 }
 
 __hf_hub_stable_video_safetensors_dict__ = lambda name: {
@@ -528,18 +490,6 @@ pretrained_stable_infos = {
         ),
         **__hf_hub_vae_safetensors_dict__("fuliucansheng/FLUX.1-Fill-dev-diffusers"),
     },
-    "stable-flux-dev-canny": {
-        **__hf_hub_stable_flux_ctrl_safetensors_dict__(
-            "fuliucansheng/FLUX.1-Canny-dev-diffusers"
-        ),
-        **__hf_hub_vae_safetensors_dict__("fuliucansheng/FLUX.1-Canny-dev-diffusers"),
-    },
-    "stable-flux-dev-depth": {
-        **__hf_hub_stable_flux_ctrl_safetensors_dict__(
-            "fuliucansheng/FLUX.1-Depth-dev-diffusers"
-        ),
-        **__hf_hub_vae_safetensors_dict__("fuliucansheng/FLUX.1-Depth-dev-diffusers"),
-    },
     "stable-flux-dev-kontext": {
         **__hf_hub_stable_flux_safetensors_dict__(
             "fuliucansheng/FLUX.1-Kontext-dev-diffusers"
@@ -558,20 +508,6 @@ pretrained_stable_infos = {
         **__hf_hub_vae_safetensors_dict__("fuliucansheng/FLUX.1-Fill-dev-diffusers"),
         **__hf_flux_dev_redux_safetensors_dict__("tentpole/flux1-dev-redux"),
     },
-    "stable-flux-dev-redux-canny": {
-        **__hf_hub_stable_flux_ctrl_safetensors_dict__(
-            "fuliucansheng/FLUX.1-Canny-dev-diffusers"
-        ),
-        **__hf_hub_vae_safetensors_dict__("fuliucansheng/FLUX.1-Canny-dev-diffusers"),
-        **__hf_flux_dev_redux_safetensors_dict__("tentpole/flux1-dev-redux"),
-    },
-    "stable-flux-dev-redux-depth": {
-        **__hf_hub_stable_flux_ctrl_safetensors_dict__(
-            "fuliucansheng/FLUX.1-Depth-dev-diffusers"
-        ),
-        **__hf_hub_vae_safetensors_dict__("fuliucansheng/FLUX.1-Depth-dev-diffusers"),
-        **__hf_flux_dev_redux_safetensors_dict__("tentpole/flux1-dev-redux"),
-    },
     "stable-video-diffusion-img2vid-xt": {
         **__hf_hub_stable_video_safetensors_dict__(
             "stabilityai/stable-video-diffusion-img2vid-xt"
@@ -586,27 +522,17 @@ pretrained_stable_infos = {
         ),
         **__hf_hub_vae_safetensors_dict__("vdo/stable-video-diffusion-img2vid-xt-1-1"),
     },
-    "wan-v2.1-t2v-1.3b": {
-        **__hf_hub_wan_v2_1_safetensors_dict__("Wan-AI/Wan2.1-T2V-1.3B-Diffusers"),
-        **__hf_hub_vae_safetensors_dict__("Wan-AI/Wan2.1-T2V-1.3B-Diffusers"),
-    },
-    "wan-v2.1-t2v-14b": {
-        **__hf_hub_wan_v2_1_safetensors_dict__(
-            "Wan-AI/Wan2.1-T2V-14B-Diffusers", n1=12
+    "wan-v2.2-t2v-14b": {
+        **__hf_hub_wan_v2_2_safetensors_dict__(
+            "Wan-AI/Wan2.2-T2V-A14B-Diffusers", n1=12, n2=12, n3=3
         ),
-        **__hf_hub_vae_safetensors_dict__("Wan-AI/Wan2.1-T2V-14B-Diffusers"),
+        **__hf_hub_vae_safetensors_dict__("Wan-AI/Wan2.2-T2V-A14B-Diffusers"),
     },
-    "wan-v2.1-i2v-14b-480p": {
-        **__hf_hub_wan_v2_1_safetensors_dict__(
-            "Wan-AI/Wan2.1-I2V-14B-480P-Diffusers", n1=14, im=True
+    "wan-v2.2-i2v-14b": {
+        **__hf_hub_wan_v2_2_safetensors_dict__(
+            "Wan-AI/Wan2.2-I2V-A14B-Diffusers", n1=12, n2=12, n3=3
         ),
-        **__hf_hub_vae_safetensors_dict__("Wan-AI/Wan2.1-I2V-14B-480P-Diffusers"),
-    },
-    "wan-v2.1-i2v-14b-720p": {
-        **__hf_hub_wan_v2_1_safetensors_dict__(
-            "Wan-AI/Wan2.1-I2V-14B-720P-Diffusers", n1=14, im=True
-        ),
-        **__hf_hub_vae_safetensors_dict__("Wan-AI/Wan2.1-I2V-14B-720P-Diffusers"),
+        **__hf_hub_vae_safetensors_dict__("Wan-AI/Wan2.2-I2V-A14B-Diffusers"),
     },
     "qwen-image": {
         **__hf_hub_qwen_image_safetensors_dict__("Qwen/Qwen-Image"),
@@ -624,88 +550,6 @@ pretrained_stable_infos = {
 }
 
 pretrained_stable_extensions_infos = {
-    # sd 1.5 controlnet
-    "stable-v1.5-controlnet-canny": __hf_hub_controlnet_dict__(
-        "lllyasviel/sd-controlnet-canny"
-    ),
-    "stable-v1.5-controlnet-openpose": __hf_hub_controlnet_dict__(
-        "lllyasviel/sd-controlnet-openpose"
-    ),
-    "stable-v1.5-controlnet-softedge": __hf_hub_controlnet_dict__(
-        "lllyasviel/control_v11p_sd15_softedge",
-    ),
-    "stable-v1.5-controlnet-inpainting": __hf_hub_controlnet_dict__(
-        "lllyasviel/control_v11p_sd15_inpaint"
-    ),
-    "stable-v1.5-controlnet-depth": __hf_hub_controlnet_dict__(
-        "lllyasviel/control_v11f1p_sd15_depth"
-    ),
-    "stable-v1.5-controlnet-tile": __hf_hub_controlnet_dict__(
-        "lllyasviel/control_v11f1e_sd15_tile"
-    ),
-    "stable-v1.5-controlnet-lineart": __hf_hub_controlnet_dict__(
-        "lllyasviel/control_v11p_sd15_lineart"
-    ),
-    "stable-v1.5-controlnet-softedge": __hf_hub_controlnet_dict__(
-        "lllyasviel/control_v11p_sd15_softedge"
-    ),
-    "stable-v1.5-controlnet-scribble": __hf_hub_controlnet_dict__(
-        "lllyasviel/control_v11p_sd15_scribble"
-    ),
-    "stable-v1.5-controlnet-openpose": __hf_hub_controlnet_dict__(
-        "lllyasviel/control_v11p_sd15_openpose"
-    ),
-    # sd 1.5 adapter
-    "stable-v1.5-adapter-canny": __hf_hub_adapter_dict__(
-        "diffusers/t2iadapter_canny_sd15v2"
-    ),
-    "stable-v1.5-adapter-depth": __hf_hub_adapter_dict__(
-        "diffusers/t2iadapter_depth_sd15v2"
-    ),
-    "stable-v1.5-adapter-sketch": __hf_hub_adapter_dict__(
-        "diffusers/t2iadapter_sketch_sd15v2"
-    ),
-    # sdxl controlnet
-    "stable-xl-controlnet-canny": __hf_hub_controlnet_dict__(
-        "diffusers/controlnet-canny-sdxl-1.0"
-    ),
-    "stable-xl-controlnet-softedge-dexined": __hf_hub_controlnet_dict__(
-        "SargeZT/controlnet-sd-xl-1.0-softedge-dexined"
-    ),
-    "stable-xl-controlnet-depth": __hf_hub_controlnet_dict__(
-        "diffusers/controlnet-depth-sdxl-1.0"
-    ),
-    "stable-xl-controlnet-depth-small": __hf_hub_controlnet_dict__(
-        "diffusers/controlnet-depth-sdxl-1.0-small"
-    ),
-    "stable-xl-controlnet-tile": __hf_hub_controlnet_safetensors_dict__(
-        "xinsir/controlnet-tile-sdxl-1.0"
-    ),
-    "stable-xl-controlnet-openpose": __hf_hub_controlnet_safetensors_dict__(
-        "xinsir/controlnet-openpose-sdxl-1.0"
-    ),
-    "stable-xl-controlnet-scribble": __hf_hub_controlnet_safetensors_dict__(
-        "xinsir/controlnet-scribble-sdxl-1.0"
-    ),
-    # sdxl adapter
-    "stable-xl-adapter-canny": __hf_hub_adapter_safetensors_dict__(
-        "TencentARC/t2i-adapter-canny-sdxl-1.0"
-    ),
-    "stable-xl-adapter-sketch": __hf_hub_adapter_safetensors_dict__(
-        "TencentARC/t2i-adapter-sketch-sdxl-1.0"
-    ),
-    "stable-xl-adapter-depth": __hf_hub_adapter_safetensors_dict__(
-        "TencentARC/t2i-adapter-depth-zoe-sdxl-1.0"
-    ),
-    "stable-xl-adapter-depth-midas": __hf_hub_adapter_safetensors_dict__(
-        "TencentARC/t2i-adapter-depth-midas-sdxl-1.0"
-    ),
-    "stable-xl-adapter-openpose": __hf_hub_adapter_safetensors_dict__(
-        "TencentARC/t2i-adapter-openpose-sdxl-1.0"
-    ),
-    "stable-xl-adapter-lineart": __hf_hub_adapter_safetensors_dict__(
-        "TencentARC/t2i-adapter-lineart-sdxl-1.0"
-    ),
     # sdxl refiner
     "stable-xl-refiner-1.0": {
         "refiner": {
@@ -755,20 +599,6 @@ pretrained_stable_extensions_infos = {
             ),
         },
     },
-    # stable 3 controlnet
-    "stable-v3-controlnet-canny": __hf_hub_controlnet_safetensors_dict__(
-        "InstantX/SD3-Controlnet-Canny"
-    ),
-    "stable-v3-controlnet-tile": __hf_hub_controlnet_safetensors_dict__(
-        "InstantX/SD3-Controlnet-Tile"
-    ),
-    # stable flux controlnet
-    "stable-flux-controlnet-dev-union": __hf_hub_controlnet_safetensors_dict__(
-        "InstantX/FLUX.1-dev-Controlnet-Union"
-    ),
-    "stable-flux-controlnet-dev-union-pro": __hf_hub_controlnet_safetensors_dict__(
-        "Shakker-Labs/FLUX.1-dev-ControlNet-Union-Pro"
-    ),
 }
 
 from unitorch.cli.models.diffusion_utils import load_weight
@@ -778,12 +608,6 @@ import unitorch.cli.models.diffusers.modeling_stable_xl
 import unitorch.cli.models.diffusers.modeling_stable_3
 import unitorch.cli.models.diffusers.modeling_stable_flux
 import unitorch.cli.models.diffusers.modeling_qwen_image
-import unitorch.cli.models.diffusers.modeling_controlnet
-import unitorch.cli.models.diffusers.modeling_controlnet_xl
-import unitorch.cli.models.diffusers.modeling_controlnet_3
-import unitorch.cli.models.diffusers.modeling_controlnet_flux
-import unitorch.cli.models.diffusers.modeling_adapter
-import unitorch.cli.models.diffusers.modeling_adapter_xl
 import unitorch.cli.models.diffusers.modeling_wan
 import unitorch.cli.models.diffusers.modeling_vae
 import unitorch.cli.models.diffusers.processing_stable
@@ -791,13 +615,6 @@ import unitorch.cli.models.diffusers.processing_stable_xl
 import unitorch.cli.models.diffusers.processing_stable_3
 import unitorch.cli.models.diffusers.processing_stable_flux
 import unitorch.cli.models.diffusers.processing_qwen_image
-
-import unitorch.cli.models.diffusers.processing_controlnet
-import unitorch.cli.models.diffusers.processing_controlnet_xl
-import unitorch.cli.models.diffusers.processing_controlnet_3
-import unitorch.cli.models.diffusers.processing_controlnet_flux
-import unitorch.cli.models.diffusers.processing_adapter
-import unitorch.cli.models.diffusers.processing_adapter_xl
 
 if is_opencv_available():
     import unitorch.cli.models.diffusers.processing_wan

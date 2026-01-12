@@ -172,4 +172,4 @@ class BlipForImageCaptionPipeline(_BlipForImageCaption):
             self.to("cpu")
             torch.cuda.empty_cache()
 
-        return decoded[0].strip()
+        return decoded[0]

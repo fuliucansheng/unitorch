@@ -41,8 +41,6 @@ class WanLoraForText2VideoGeneration(_WanLoraForText2VideoGeneration):
         vae_config_path: str,
         scheduler_config_path: str,
         quant_config_path: Optional[str] = None,
-        in_channels: Optional[int] = None,
-        out_channels: Optional[int] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         snr_gamma: Optional[float] = 5.0,
@@ -66,8 +64,6 @@ class WanLoraForText2VideoGeneration(_WanLoraForText2VideoGeneration):
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
             quant_config_path=quant_config_path,
-            in_channels=in_channels,
-            out_channels=out_channels,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             snr_gamma=snr_gamma,
@@ -86,7 +82,7 @@ class WanLoraForText2VideoGeneration(_WanLoraForText2VideoGeneration):
     @add_default_section_for_init("core/model/diffusers/peft/lora/text2video/wan")
     def from_core_configure(cls, config, **kwargs):
         config.set_default_section("core/model/diffusers/peft/lora/text2video/wan")
-        pretrained_name = config.getoption("pretrained_name", "wan-v2.1-t2v-1.3b")
+        pretrained_name = config.getoption("pretrained_name", "wan-v2.2-t2v-14b")
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
 
         config_path = config.getoption("config_path", None)
@@ -121,8 +117,6 @@ class WanLoraForText2VideoGeneration(_WanLoraForText2VideoGeneration):
         if quant_config_path is not None:
             quant_config_path = cached_path(quant_config_path)
 
-        in_channels = config.getoption("in_channels", None)
-        out_channels = config.getoption("out_channels", None)
         num_train_timesteps = config.getoption("num_train_timesteps", 1000)
         num_infer_timesteps = config.getoption("num_infer_timesteps", 50)
         snr_gamma = config.getoption("snr_gamma", 5.0)
@@ -159,8 +153,6 @@ class WanLoraForText2VideoGeneration(_WanLoraForText2VideoGeneration):
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
             quant_config_path=quant_config_path,
-            in_channels=in_channels,
-            out_channels=out_channels,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             snr_gamma=snr_gamma,
@@ -271,8 +263,6 @@ class WanLoraForImage2VideoGeneration(_WanLoraForImage2VideoGeneration):
         vae_config_path: str,
         scheduler_config_path: str,
         quant_config_path: Optional[str] = None,
-        in_channels: Optional[int] = None,
-        out_channels: Optional[int] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         snr_gamma: Optional[float] = 5.0,
@@ -297,8 +287,6 @@ class WanLoraForImage2VideoGeneration(_WanLoraForImage2VideoGeneration):
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
             quant_config_path=quant_config_path,
-            in_channels=in_channels,
-            out_channels=out_channels,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             snr_gamma=snr_gamma,
@@ -317,7 +305,7 @@ class WanLoraForImage2VideoGeneration(_WanLoraForImage2VideoGeneration):
     @add_default_section_for_init("core/model/diffusers/peft/lora/image2video/wan")
     def from_core_configure(cls, config, **kwargs):
         config.set_default_section("core/model/diffusers/peft/lora/image2video/wan")
-        pretrained_name = config.getoption("pretrained_name", "wan-v2.1-i2v-14b")
+        pretrained_name = config.getoption("pretrained_name", "wan-v2.2-i2v-14b")
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
 
         config_path = config.getoption("config_path", None)
@@ -359,8 +347,6 @@ class WanLoraForImage2VideoGeneration(_WanLoraForImage2VideoGeneration):
         if quant_config_path is not None:
             quant_config_path = cached_path(quant_config_path)
 
-        in_channels = config.getoption("in_channels", None)
-        out_channels = config.getoption("out_channels", None)
         num_train_timesteps = config.getoption("num_train_timesteps", 1000)
         num_infer_timesteps = config.getoption("num_infer_timesteps", 50)
         snr_gamma = config.getoption("snr_gamma", 5.0)
@@ -398,8 +384,6 @@ class WanLoraForImage2VideoGeneration(_WanLoraForImage2VideoGeneration):
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
             quant_config_path=quant_config_path,
-            in_channels=in_channels,
-            out_channels=out_channels,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             snr_gamma=snr_gamma,

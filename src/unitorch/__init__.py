@@ -16,15 +16,17 @@ os.environ["HF_HOME"] = UNITORCH_CACHE
 os.environ["HF_DATASETS_CACHE"] = UNITORCH_CACHE
 
 
-def get_cache_home():
+def get_cache_dir():
     return UNITORCH_CACHE
 
 
-UNITORCH_TEMP = os.getenv("UNITORCH_TEMP", "/tmp/unitorch")
+UNITORCH_TEMP = os.getenv(
+    "UNITORCH_TEMP", os.path.join(tempfile.gettempdir(), "unitorch")
+)
 os.makedirs(UNITORCH_TEMP, exist_ok=True)
 
 
-def get_temp_home():
+def get_temp_dir():
     return UNITORCH_TEMP
 
 
@@ -33,40 +35,22 @@ def mktempdir(prefix: str = ""):
 
 
 def mktempfile(prefix: str = "", suffix: str = ""):
-    return tempfile.mktemp(prefix=prefix, suffix=suffix, dir=UNITORCH_TEMP)
+    return tempfile.mkstemp(prefix=prefix, suffix=suffix, dir=UNITORCH_TEMP)
 
 
 UNITORCH_HOME = os.environ.get(
     "UNITORCH_HOME", os.path.join(os.getenv("HOME", "."), ".unitorch")
 )
-if not os.path.exists(UNITORCH_HOME):
-    os.makedirs(UNITORCH_HOME)
+os.makedirs(UNITORCH_HOME, exist_ok=True)
 
 
-def get_unitorch_home():
+def get_dir():
     """Get the path to the Unitorch home directory."""
     return UNITORCH_HOME
 
 
 ### version
-VERSION = "0.0.1.4"
-
-### is offline mode
-UNITORCH_OFFLINE = os.environ.get("UNITORCH_OFFLINE", "0").upper()
-
-
-def is_offline_mode():
-    return UNITORCH_OFFLINE in ENV_VARS_TRUE_VALUES
-
-
-### is offline debug mode
-UNITORCH_OFFLINE_DEBUG_VALUES = {"1", "ON", "YES", "TRUE", "DEBUG"}
-UNITORCH_OFFLINE_DEBUG = os.environ.get("UNITORCH_OFFLINE_DEBUG", "0").upper()
-
-
-def is_offline_debug_mode():
-    return UNITORCH_OFFLINE_DEBUG in UNITORCH_OFFLINE_DEBUG_VALUES
-
+VERSION = "0.0.1.5"
 
 # before setup logging
 import sklearn
@@ -130,7 +114,6 @@ from unitorch.utils import (
     is_deepspeed_available,
     is_megatron_available,
     is_diffusers_available,
-    is_xformers_available,
     is_opencv_available,
     is_wandb_available,
 )

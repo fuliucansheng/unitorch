@@ -2,8 +2,11 @@
 # Licensed under the MIT License.
 
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
-import gradio as gr
+from unitorch.utils import is_gradio_available
 from unitorch.models import GenericOutputs
+
+if is_gradio_available():
+    import gradio as gr
 
 
 def create_element(
@@ -128,6 +131,7 @@ def create_element(
             elem_id=elem_id,
             elem_classes=elem_classes,
             datatype="markdown",
+            show_search="search",
             wrap=True,
         )
 
@@ -347,7 +351,9 @@ def create_tabs(*elements, elem_id=None, elem_classes="ut-bg-transparent"):
 
 
 def create_blocks(*layouts, js=None, css=None, fill_height=False, fill_width=False):
-    blocks = gr.Blocks(js=js, css=css, fill_height=fill_height, fill_width=fill_width)
+    blocks = gr.Blocks(fill_height=fill_height, fill_width=fill_width)
+    blocks.css = css or ""
+    blocks.js = js or ""
     elements = list(layouts)
     while len(elements) > 0:
         element = elements.pop(0)
@@ -381,84 +387,6 @@ def create_pretrain_layout(pretrained_names: List[str], default_name: str):
         status=status,
         start=start,
         stop=stop,
-        layout=layout,
-    )
-
-
-def create_controlnet_layout(
-    controlnets: List[str], processes: List[str], num_controlnets: Optional[int] = 5
-):
-    def create_controlnet():
-        input_image = create_element("image", "Input Image")
-        output_image = create_element("image", "Output Image")
-        checkpoint = create_element("dropdown", "Checkpoint", values=controlnets)
-        guidance_scale = create_element(
-            "slider", "Guidance Scale", min_value=0, max_value=2, step=0.1
-        )
-        process = create_element("radio", "Process", values=processes, default=None)
-        layout = create_column(
-            create_row(input_image, output_image),
-            create_row(checkpoint, guidance_scale),
-            create_row(process),
-        )
-        return (
-            GenericOutputs(
-                input_image=input_image,
-                output_image=output_image,
-                checkpoint=checkpoint,
-                guidance_scale=guidance_scale,
-                process=process,
-            ),
-            layout,
-        )
-
-    controlnet_groups = [create_controlnet() for _ in range(num_controlnets)]
-    tabs = [
-        create_tab(controlnet_group[-1], name=f"Net {i}")
-        for i, controlnet_group in enumerate(controlnet_groups)
-    ]
-    layout = create_accordion(create_tabs(*tabs), name="ControlNets")
-    return GenericOutputs(
-        controlnets=[controlnet_group[0] for controlnet_group in controlnet_groups],
-        layout=layout,
-    )
-
-
-def create_adapter_layout(
-    adapters: List[str], processes: List[str], num_adapters: Optional[int] = 5
-):
-    def create_adapter():
-        input_image = create_element("image", "Input Image")
-        output_image = create_element("image", "Output Image")
-        checkpoint = create_element("dropdown", "Checkpoint", values=adapters)
-        guidance_scale = create_element(
-            "slider", "Guidance Scale", min_value=0, max_value=2, step=0.1
-        )
-        process = create_element("radio", "Process", values=processes, default=None)
-        layout = create_column(
-            create_row(input_image, output_image),
-            create_row(checkpoint, guidance_scale),
-            create_row(process),
-        )
-        return (
-            GenericOutputs(
-                input_image=input_image,
-                output_image=output_image,
-                checkpoint=checkpoint,
-                guidance_scale=guidance_scale,
-                process=process,
-            ),
-            layout,
-        )
-
-    adapter_groups = [create_adapter() for _ in range(num_adapters)]
-    tabs = [
-        create_tab(controlnet_group[-1], name=f"Net {i}")
-        for i, controlnet_group in enumerate(adapter_groups)
-    ]
-    layout = create_accordion(create_tabs(*tabs), name="Adapters")
-    return GenericOutputs(
-        adapters=[adapter_group[0] for adapter_group in adapter_groups],
         layout=layout,
     )
 
