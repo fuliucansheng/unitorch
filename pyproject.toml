@@ -33,7 +33,7 @@ detection = ["timm>=1.0.0"]
 quantization = ["bitsandbytes>=0.41.1"]
 megatron = ["megatron-core>=0.12.0"]
 docs = ["mkdocstrings[python]>=0.18", "mkdocs-material", "markdown-exec", "mkdocs-gen-files", "mkdocs-coverage"]
-others = ["gradio>=5.0.0", "fastapi>=0.103.1", "wandb", "uvicorn", "python-multipart", "onnxruntime"]
+others = ["gradio>=6.0.0", "fastapi>=0.103.1", "wandb", "uvicorn", "python-multipart", "onnxruntime"]
 all = ["unitorch[deepspeed,diffusers,quantization,megatron,others]"]
 
 [project.scripts]
