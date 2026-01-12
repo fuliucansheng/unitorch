@@ -490,18 +490,6 @@ pretrained_stable_infos = {
         ),
         **__hf_hub_vae_safetensors_dict__("fuliucansheng/FLUX.1-Fill-dev-diffusers"),
     },
-    "stable-flux-dev-canny": {
-        **__hf_hub_stable_flux_ctrl_safetensors_dict__(
-            "fuliucansheng/FLUX.1-Canny-dev-diffusers"
-        ),
-        **__hf_hub_vae_safetensors_dict__("fuliucansheng/FLUX.1-Canny-dev-diffusers"),
-    },
-    "stable-flux-dev-depth": {
-        **__hf_hub_stable_flux_ctrl_safetensors_dict__(
-            "fuliucansheng/FLUX.1-Depth-dev-diffusers"
-        ),
-        **__hf_hub_vae_safetensors_dict__("fuliucansheng/FLUX.1-Depth-dev-diffusers"),
-    },
     "stable-flux-dev-kontext": {
         **__hf_hub_stable_flux_safetensors_dict__(
             "fuliucansheng/FLUX.1-Kontext-dev-diffusers"
@@ -518,20 +506,6 @@ pretrained_stable_infos = {
             "fuliucansheng/FLUX.1-Fill-dev-diffusers"
         ),
         **__hf_hub_vae_safetensors_dict__("fuliucansheng/FLUX.1-Fill-dev-diffusers"),
-        **__hf_flux_dev_redux_safetensors_dict__("tentpole/flux1-dev-redux"),
-    },
-    "stable-flux-dev-redux-canny": {
-        **__hf_hub_stable_flux_ctrl_safetensors_dict__(
-            "fuliucansheng/FLUX.1-Canny-dev-diffusers"
-        ),
-        **__hf_hub_vae_safetensors_dict__("fuliucansheng/FLUX.1-Canny-dev-diffusers"),
-        **__hf_flux_dev_redux_safetensors_dict__("tentpole/flux1-dev-redux"),
-    },
-    "stable-flux-dev-redux-depth": {
-        **__hf_hub_stable_flux_ctrl_safetensors_dict__(
-            "fuliucansheng/FLUX.1-Depth-dev-diffusers"
-        ),
-        **__hf_hub_vae_safetensors_dict__("fuliucansheng/FLUX.1-Depth-dev-diffusers"),
         **__hf_flux_dev_redux_safetensors_dict__("tentpole/flux1-dev-redux"),
     },
     "stable-video-diffusion-img2vid-xt": {
