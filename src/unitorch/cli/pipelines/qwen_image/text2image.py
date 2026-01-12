@@ -14,7 +14,7 @@ from diffusers.pipelines import (
     QwenImagePipeline,
     QwenImageEditPipeline,
 )
-from unitorch import is_xformers_available
+
 from unitorch.utils import is_remote_url
 from unitorch.models.diffusers import GenericQWenImageModel
 from unitorch.models.diffusers import QWenImageProcessor
@@ -52,7 +52,6 @@ class QWenImageForText2ImageGenerationPipeline(GenericQWenImageModel):
         state_dict: Optional[Dict[str, Any]] = None,
         device: Optional[Union[str, int]] = "cpu",
         enable_cpu_offload: Optional[bool] = False,
-        enable_xformers: Optional[bool] = False,
     ):
         super().__init__(
             config_path=config_path,
@@ -75,7 +74,6 @@ class QWenImageForText2ImageGenerationPipeline(GenericQWenImageModel):
         self.eval()
 
         self._enable_cpu_offload = enable_cpu_offload
-        self._enable_xformers = enable_xformers
 
     @classmethod
     @add_default_section_for_init("core/pipeline/qwen_image/text2image")
@@ -178,7 +176,6 @@ class QWenImageForText2ImageGenerationPipeline(GenericQWenImageModel):
         )
         device = config.getoption("device", "cpu") if device is None else device
         enable_cpu_offload = config.getoption("enable_cpu_offload", True)
-        enable_xformers = config.getoption("enable_xformers", False)
 
         state_dict = None
         if weight_path is None and pretrained_infos is not None:
@@ -216,7 +213,6 @@ class QWenImageForText2ImageGenerationPipeline(GenericQWenImageModel):
             state_dict=state_dict,
             device=device,
             enable_cpu_offload=enable_cpu_offload,
-            enable_xformers=enable_xformers,
         )
         return inst
 
@@ -327,10 +323,6 @@ class QWenImageForText2ImageGenerationPipeline(GenericQWenImageModel):
         prompt_embeds_mask = prompt_outputs.prompt_embeds_mask
         negative_prompt_embeds = prompt_outputs.negative_prompt_embeds
         negative_prompt_embeds_mask = prompt_outputs.negative_prompt_embeds_mask
-
-        if self._enable_xformers and self._device != "cpu":
-            assert is_xformers_available(), "Please install xformers first."
-            self.pipeline.enable_xformers_memory_efficient_attention()
 
         outputs = self.pipeline(
             prompt_embeds=prompt_embeds,

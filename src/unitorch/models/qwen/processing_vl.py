@@ -23,15 +23,13 @@ from unitorch.utils import (
 from unitorch.models import (
     HfTextClassificationProcessor,
     HfTextGenerationProcessor,
+    HfLlmProcessor,
     HfImageClassificationProcessor,
     GenericOutputs,
 )
 
 
-class QWenVLProcessor(
-    HfTextGenerationProcessor,
-    HfTextClassificationProcessor,
-):
+class QWenVLProcessor(HfLlmProcessor):
     def __init__(
         self,
         tokenizer_file: str,
@@ -105,29 +103,12 @@ class QWenVLProcessor(
         )
         self.vision_processor = Qwen2VLImageProcessor.from_json_file(vision_config_path)
 
-        HfTextClassificationProcessor.__init__(
-            self,
-            tokenizer=tokenizer,
-            max_seq_length=max_seq_length,
-        )
-
-        HfTextGenerationProcessor.__init__(
+        super().__init__(
             self,
             tokenizer=tokenizer,
             max_seq_length=max_seq_length,
             max_gen_seq_length=max_gen_seq_length,
         )
-
-    def chat_template(
-        self,
-        messages: List[Dict[str, Any]],
-    ):
-        text = self.tokenizer.apply_chat_template(
-            messages,
-            tokenize=False,
-            add_generation_prompt=True,
-        )
-        return text
 
     def processing_images(
         self,
@@ -157,11 +138,6 @@ class QWenVLProcessor(
         images: Union[Image.Image, str, List[Image.Image], List[str]],
         max_seq_length: Optional[int] = None,
     ):
-        max_seq_length = pop_value(
-            max_seq_length,
-            self.max_seq_length,
-        )
-        text = str(text)
         image_inputs = self.processing_images(images)
         image_index, image_merge_size = 0, self.vision_processor.merge_size**2
         image_grid_thw = image_inputs["image_grid_thw"] if image_inputs else None
@@ -173,20 +149,12 @@ class QWenVLProcessor(
                 1,
             )
             image_index += 1
-        text = text.replace("<|placeholder|>", self.image_token)
-        tokens = self.tokenizer.tokenize(text)
-        tokens = tokens[:max_seq_length]
-        input_ids = self.tokenizer.convert_tokens_to_ids(tokens)
+        text = str(text).replace("<|placeholder|>", self.image_token)
+        text_inputs = super().classification(text, max_seq_length=max_seq_length)
 
-        padding = [0] * (max_seq_length - len(input_ids))
-        attention_mask = [0] * len(padding) + [1] * len(input_ids)
-        input_ids = len(padding) * [self.pad_token_id] + input_ids
-
-        assert len(input_ids) == max_seq_length
-        assert len(attention_mask) == max_seq_length
         return GenericOutputs(
-            input_ids=torch.tensor(input_ids, dtype=torch.long),
-            attention_mask=torch.tensor(attention_mask, dtype=torch.long),
+            input_ids=torch.tensor(text_inputs.input_ids, dtype=torch.long),
+            attention_mask=torch.tensor(text_inputs.attention_mask, dtype=torch.long),
             image_grid_thw=torch.tensor(image_grid_thw, dtype=torch.long),
             pixel_values=torch.tensor(image_inputs["pixel_values"]),
         )
@@ -197,11 +165,6 @@ class QWenVLProcessor(
         images: Union[Image.Image, str, List[Image.Image], List[str]],
         max_seq_length: Optional[int] = None,
     ):
-        max_seq_length = pop_value(
-            max_seq_length,
-            self.max_seq_length,
-        )
-        text = str(text)
         image_inputs = self.processing_images(images) if images else None
         image_index, image_merge_size = 0, self.vision_processor.merge_size**2
         image_grid_thw = image_inputs["image_grid_thw"] if image_inputs else None
@@ -213,56 +176,13 @@ class QWenVLProcessor(
                 1,
             )
             image_index += 1
-        text = text.replace("<|placeholder|>", self.image_token)
-        tokens = self.tokenizer.tokenize(text)
-        tokens = tokens[-max_seq_length:]
-        padding = [self.pad_token] * (max_seq_length - len(tokens))
-        attention_mask = [0] * len(padding) + [1] * len(tokens)
-        tokens = padding + tokens
-        input_ids = self.tokenizer.convert_tokens_to_ids(tokens)
-        assert len(input_ids) == max_seq_length
+        text = str(text).replace("<|placeholder|>", self.image_token)
+        text_inputs = super().classification(text, max_seq_length=max_seq_length)
         return GenericOutputs(
-            input_ids=torch.tensor(input_ids, dtype=torch.long),
-            attention_mask=torch.tensor(attention_mask, dtype=torch.long),
+            input_ids=torch.tensor(text_inputs.input_ids, dtype=torch.long),
+            attention_mask=torch.tensor(text_inputs.attention_mask, dtype=torch.long),
             image_grid_thw=torch.tensor(image_grid_thw, dtype=torch.long),
             pixel_values=torch.tensor(image_inputs["pixel_values"]),
-        )
-
-    def generation_labels(
-        self,
-        text: str,
-        max_gen_seq_length: Optional[int] = None,
-    ):
-        """
-        Process text for generation labels.
-
-        Args:
-            text (str): Input text.
-            max_gen_seq_length (int, optional): Maximum generation sequence length. Defaults to None.
-
-        Returns:
-            GenericOutputs: Processed input_ids and attention_mask tensors.
-        """
-        max_gen_seq_length = pop_value(
-            max_gen_seq_length,
-            self.max_gen_seq_length,
-        )
-        tokens = self.tokenizer.tokenize(str(text))[: max_gen_seq_length - 1] + [
-            self.eos_token
-        ]
-        padding = [self.pad_token] * (max_gen_seq_length - len(tokens))
-        input_ids = self.tokenizer.convert_tokens_to_ids(tokens)
-        attention_mask = [1] * len(input_ids)
-
-        padding = [0] * (max_gen_seq_length - len(input_ids))
-        input_ids += [self.pad_token_id] * len(padding)
-        attention_mask += padding
-
-        assert len(input_ids) == max_gen_seq_length
-        assert len(attention_mask) == max_gen_seq_length
-        return GenericOutputs(
-            input_ids=torch.tensor(input_ids, dtype=torch.long),
-            attention_mask=torch.tensor(attention_mask, dtype=torch.long),
         )
 
     def generation(
@@ -287,42 +207,16 @@ class QWenVLProcessor(
             image_index += 1
         text = text.replace("<|placeholder|>", self.image_token)
 
-        max_seq_length = pop_value(
-            max_seq_length,
-            self.max_seq_length,
+        text_inputs = super().generation(
+            text,
+            text_pair=text_pair,
+            max_seq_length=max_seq_length,
+            max_gen_seq_length=max_gen_seq_length,
         )
-        max_gen_seq_length = pop_value(
-            max_gen_seq_length,
-            self.max_gen_seq_length,
-        )
-
-        tokens = self.tokenizer.tokenize(str(text))[-max_seq_length:]
-        tokens_pair = self.tokenizer.tokenize(str(text_pair))[
-            : max_gen_seq_length - 1
-        ] + [self.eos_token]
-        padding_a = [self.pad_token] * (max_seq_length - len(tokens))
-        padding_b = [self.pad_token] * (max_gen_seq_length - len(tokens_pair))
-        attention_mask = (
-            [0] * len(padding_a)
-            + [1] * (len(tokens) + len(tokens_pair))
-            + [0] * len(padding_b)
-        )
-        _tokens = padding_a + tokens + tokens_pair + padding_b
-        input_ids = self.tokenizer.convert_tokens_to_ids(_tokens)
-
-        tokens_label = tokens_pair + [self.pad_token] * (
-            max_gen_seq_length - len(tokens_pair) + 1
-        )
-        input_ids_label = self.tokenizer.convert_tokens_to_ids(tokens_label)
-        input_ids_label = [0] * (max_seq_length - 1) + input_ids_label
-        attention_mask_label = [1] * len(tokens_pair) + [0] * (
-            max_gen_seq_length - len(tokens_pair) + 1
-        )
-        attention_mask_label = [0] * (max_seq_length - 1) + attention_mask_label
 
         return GenericOutputs(
-            input_ids=torch.tensor(input_ids, dtype=torch.long),
-            attention_mask=torch.tensor(attention_mask, dtype=torch.long),
+            input_ids=torch.tensor(text_inputs.input_ids, dtype=torch.long),
+            attention_mask=torch.tensor(text_inputs.attention_mask, dtype=torch.long),
             image_grid_thw=(
                 torch.tensor(image_grid_thw, dtype=torch.long)
                 if image_grid_thw is not None
@@ -333,8 +227,10 @@ class QWenVLProcessor(
                 if image_inputs is not None
                 else None
             ),
-            input_ids_label=torch.tensor(input_ids_label, dtype=torch.long),
-            attention_mask_label=torch.tensor(attention_mask_label, dtype=torch.long),
+            input_ids_label=torch.tensor(text_inputs.input_ids_label, dtype=torch.long),
+            attention_mask_label=torch.tensor(
+                text_inputs.attention_mask_label, dtype=torch.long
+            ),
         )
 
     def messages_generation(

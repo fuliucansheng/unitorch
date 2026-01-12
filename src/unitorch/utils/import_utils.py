@@ -6,7 +6,6 @@ import logging
 import torch
 import importlib
 import importlib.metadata as importlib_metadata
-from unitorch import is_offline_debug_mode
 
 
 def reload_module(module):
@@ -27,7 +26,7 @@ except importlib_metadata.PackageNotFoundError:
 
 
 def is_deepspeed_available():
-    return _deepspeed_available or is_offline_debug_mode()
+    return _deepspeed_available
 
 
 # megatron
@@ -37,7 +36,7 @@ if _megatron_available:
 
 
 def is_megatron_available():
-    return _megatron_available or is_offline_debug_mode()
+    return _megatron_available
 
 
 # fastapi
@@ -50,7 +49,7 @@ except importlib_metadata.PackageNotFoundError:
 
 
 def is_fastapi_available():
-    return _fastapi_available or is_offline_debug_mode()
+    return _fastapi_available
 
 
 # diffusers
@@ -63,20 +62,7 @@ except importlib_metadata.PackageNotFoundError:
 
 
 def is_diffusers_available():
-    return _diffusers_available or is_offline_debug_mode()
-
-
-# xformers
-_xformers_available = importlib.util.find_spec("xformers") is not None
-try:
-    _xformers_version = importlib_metadata.version("xformers")
-    logging.debug(f"Successfully imported xformers version {_xformers_version}")
-except importlib_metadata.PackageNotFoundError:
-    _xformers_available = False
-
-
-def is_xformers_available():
-    return _xformers_available or is_offline_debug_mode()
+    return _diffusers_available
 
 
 # opencv
@@ -86,7 +72,7 @@ if _opencv_available:
 
 
 def is_opencv_available():
-    return _opencv_available or is_offline_debug_mode()
+    return _opencv_available
 
 
 # bitsandbytes
@@ -99,20 +85,7 @@ except importlib_metadata.PackageNotFoundError:
 
 
 def is_bitsandbytes_available():
-    return _bitsandbytes_available or is_offline_debug_mode()
-
-
-# auto_gptq
-_auto_gptq_available = importlib.util.find_spec("auto_gptq") is not None
-try:
-    _auto_gptq_version = importlib_metadata.version("auto_gptq")
-    logging.debug(f"Successfully imported auto_gptq version {_auto_gptq_version}")
-except importlib_metadata.PackageNotFoundError:
-    _auto_gptq_available = False
-
-
-def is_auto_gptq_available():
-    return _auto_gptq_available or is_offline_debug_mode()
+    return _bitsandbytes_available
 
 
 # onnxruntime
@@ -125,7 +98,7 @@ except importlib_metadata.PackageNotFoundError:
 
 
 def is_onnxruntime_available():
-    return _onnxruntime_available or is_offline_debug_mode()
+    return _onnxruntime_available
 
 
 # wandb
@@ -138,7 +111,20 @@ except importlib_metadata.PackageNotFoundError:
 
 
 def is_wandb_available():
-    return _wandb_available or is_offline_debug_mode()
+    return _wandb_available
+
+
+# gradio
+_gradio_available = importlib.util.find_spec("gradio") is not None
+try:
+    _gradio_version = importlib_metadata.version("gradio")
+    logging.debug(f"Successfully imported gradio version {_gradio_version}")
+except importlib_metadata.PackageNotFoundError:
+    _gradio_available = False
+
+
+def is_gradio_available():
+    return _gradio_available
 
 
 # is cuda & bfloat16 avaliable

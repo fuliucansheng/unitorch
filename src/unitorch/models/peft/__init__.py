@@ -347,6 +347,4 @@ if is_diffusers_available():
     from unitorch.models.peft.diffusers import (
         StableLoraForText2ImageGeneration,
         StableXLLoraForText2ImageGeneration,
-        ControlNetLoraForText2ImageGeneration,
-        ControlNetXLLoraForText2ImageGeneration,
     )

@@ -16,7 +16,7 @@ from PIL import Image
 from fastapi import APIRouter, UploadFile, File
 from fastapi.responses import StreamingResponse
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
-from unitorch import is_xformers_available
+
 from unitorch.utils import is_remote_url
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.cli import (

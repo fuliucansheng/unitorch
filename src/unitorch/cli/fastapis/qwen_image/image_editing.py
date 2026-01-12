@@ -20,7 +20,7 @@ from diffusers.pipelines import (
     QwenImagePipeline,
     QwenImageEditPipeline,
 )
-from unitorch import is_xformers_available
+
 from unitorch.utils import is_remote_url
 from unitorch.models.diffusers import GenericQWenImageModel
 from unitorch.models.diffusers import QWenImageProcessor
@@ -67,7 +67,6 @@ class QWenImageForImageEditingFastAPIPipeline(GenericQWenImageModel):
         lora_alphas: Optional[Union[float, List[float]]] = 32,
         device: Optional[Union[str, int]] = "cpu",
         enable_cpu_offload: Optional[bool] = False,
-        enable_xformers: Optional[bool] = False,
     ):
         super().__init__(
             config_path=config_path,
@@ -110,16 +109,11 @@ class QWenImageForImageEditingFastAPIPipeline(GenericQWenImageModel):
             )
 
         self._enable_cpu_offload = enable_cpu_offload
-        self._enable_xformers = enable_xformers
 
         if self._enable_cpu_offload and self._device != "cpu":
             self.pipeline.enable_model_cpu_offload(self._device)
         else:
             self.to(device=self._device)
-
-        if self._enable_xformers and self._device != "cpu":
-            assert is_xformers_available(), "Please install xformers first."
-            self.pipeline.enable_xformers_memory_efficient_attention()
 
     @classmethod
     @add_default_section_for_init("core/fastapi/pipeline/qwen_image/editing")
@@ -242,7 +236,6 @@ class QWenImageForImageEditingFastAPIPipeline(GenericQWenImageModel):
         )
         device = config.getoption("device", "cpu") if device is None else device
         enable_cpu_offload = config.getoption("enable_cpu_offload", True)
-        enable_xformers = config.getoption("enable_xformers", False)
 
         state_dict = None
         if weight_path is None and pretrained_infos is not None:
@@ -321,7 +314,6 @@ class QWenImageForImageEditingFastAPIPipeline(GenericQWenImageModel):
             lora_alphas=pretrained_lora_alphas,
             device=device,
             enable_cpu_offload=enable_cpu_offload,
-            enable_xformers=enable_xformers,
         )
         return inst
 

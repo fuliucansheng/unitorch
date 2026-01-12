@@ -79,8 +79,12 @@ def fastapi(config_path: str, **kwargs):
         datefmt="%Y-%m-%d %H:%M:%S",
     )
     # 修改 uvicorn 的日志格式器（让 access log 也带时间）
-    uvicorn.config.LOGGING_CONFIG["formatters"]["access"]["fmt"] = "%(asctime)s | %(levelname)s | %(message)s"
-    uvicorn.config.LOGGING_CONFIG["formatters"]["default"]["fmt"] = "%(asctime)s | %(levelname)s | %(message)s"
+    uvicorn.config.LOGGING_CONFIG["formatters"]["access"][
+        "fmt"
+    ] = "%(asctime)s | %(levelname)s | %(message)s"
+    uvicorn.config.LOGGING_CONFIG["formatters"]["default"][
+        "fmt"
+    ] = "%(asctime)s | %(levelname)s | %(message)s"
 
     uvicorn.run(app, host=host, port=port, log_level="info")
 

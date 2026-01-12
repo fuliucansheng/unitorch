@@ -17,7 +17,7 @@ from unitorch.cli.models.diffusers import (
 from unitorch.cli.pipelines.stable.image2video import (
     StableForImage2VideoGenerationPipeline,
 )
-from unitorch.cli.pipelines.tools import controlnet_processes
+
 from unitorch.cli.webuis import (
     supported_scheduler_names,
     matched_pretrained_names,
@@ -30,7 +30,6 @@ from unitorch.cli.webuis import (
     create_tabs,
     create_blocks,
     create_pretrain_layout,
-    create_controlnet_layout,
     create_lora_layout,
 )
 from unitorch.cli.webuis import SimpleWebUI

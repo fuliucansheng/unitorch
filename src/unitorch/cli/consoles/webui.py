@@ -61,30 +61,25 @@ def webui(config_path: str, **kwargs):
 
     webuis = [webui_instance(enabled_webui, config) for enabled_webui in enabled_webuis]
 
+    css = read_file(
+        os.path.join(importlib_resources.files("unitorch"), "cli/assets/style.css")
+    )
+    js = ""
     if len(webuis) == 1:
         webuis = webuis[0]
         demo_webui = webuis.iface
+        css += demo_webui.css or ""
+        js += demo_webui.js or ""
     else:
         demo_webui = gr.TabbedInterface(
             interface_list=[webui.iface for webui in webuis],
             tab_names=[webui.iname for webui in webuis],
             title=title,
         )
-        demo_webui.css = "\n".join([webui.iface.css or "" for webui in webuis])
-    demo_webui.title = title
-    _css_file = os.path.join(
-        os.path.join(importlib_resources.files("unitorch"), "cli/assets/style.css")
-    )
-    if os.path.exists(_css_file):
-        demo_webui.theme_css = read_file(_css_file)
-    else:
-        demo_webui.theme_css = ""
-    if not demo_webui.css:
-        demo_webui.css = demo_webui.theme_css
-    else:
-        demo_webui.css += demo_webui.theme_css
-        demo_webui.theme_css = demo_webui.css
+        css += "\n".join([webui.iface.css or "" for webui in webuis])
+        js += "\n".join([webui.iface.js or "" for webui in webuis])
 
+    demo_webui.title = title
     config.set_default_section("core/cli")
     host = config.getoption("host", "0.0.0.0")
     port = config.getoption("port", 7860)
@@ -105,6 +100,8 @@ def webui(config_path: str, **kwargs):
         ssl_verify=ssl_verify,
         auth=auth,
         allowed_paths=["/"],
+        css=css,
+        js=js,
     )
 
     os._exit(0)

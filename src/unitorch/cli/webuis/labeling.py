@@ -16,7 +16,7 @@ import gradio as gr
 from PIL import Image
 from collections import Counter, defaultdict
 from torch.hub import download_url_to_file
-from unitorch import get_temp_home
+from unitorch import get_temp_dir
 from unitorch.cli import CoreConfigureParser
 from unitorch.cli import register_webui
 from unitorch.cli.webuis import (
@@ -96,7 +96,7 @@ class LabelingWebUI(SimpleWebUI):
             names = [n.strip() for n in names]
 
         sep = config.getoption("sep", "\t")
-        temp_folder = config.getoption("temp_folder", get_temp_home())
+        temp_folder = config.getoption("temp_folder", get_temp_dir())
         os.makedirs(temp_folder, exist_ok=True)
         self.temp_folder = temp_folder
         self.tags = config.getoption("tags", "#Labeling")
@@ -247,7 +247,9 @@ class LabelingWebUI(SimpleWebUI):
             assert (
                 self.pre_label_col in self.dataset.columns
             ), f"pre_label_col {self.pre_label_col} not found in dataset"
-            self.dataset["Label"] = self.dataset[self.pre_label_col].map(lambda x: str(x).strip())
+            self.dataset["Label"] = self.dataset[self.pre_label_col].map(
+                lambda x: str(x).strip()
+            )
             self.dataset["Label"].fillna("", inplace=True)
 
         if isinstance(self.choices, str):
@@ -740,7 +742,9 @@ class LabelingWebUI(SimpleWebUI):
         new_htmls = new_one[self.html_cols].tolist()
         new_group = new_one[self.group_col] if self.group_col is not None else None
         new_comment = new_one["Comment"]
-        new_choices = new_one["Label"].split("<label-gap>") if new_one["Label"] != "" else None
+        new_choices = (
+            new_one["Label"].split("<label-gap>") if new_one["Label"] != "" else None
+        )
         new_choices = (
             new_choices[0]
             if not self.checkbox and new_choices is not None

@@ -10,7 +10,6 @@ from unitorch.cli import CoreConfigureParser
 import unitorch.cli.pipelines.stable_flux.text2image
 import unitorch.cli.pipelines.stable_flux.image2image
 import unitorch.cli.pipelines.stable_flux.inpainting
-import unitorch.cli.pipelines.stable_flux.image_control
 import unitorch.cli.pipelines.stable_flux.image_redux
 import unitorch.cli.pipelines.stable_flux.redux_inpainting
 import unitorch.cli.pipelines.stable_flux.kontext2image

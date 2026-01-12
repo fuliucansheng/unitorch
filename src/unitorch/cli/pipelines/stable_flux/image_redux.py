@@ -12,18 +12,15 @@ from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from transformers import PretrainedConfig, SiglipVisionConfig, SiglipVisionModel
 from diffusers.utils import numpy_to_pil
 from diffusers.models import (
-    FluxControlNetModel,
     FluxTransformer2DModel,
     AutoencoderKL,
 )
 from diffusers.pipelines import (
     FluxPipeline,
     FluxImg2ImgPipeline,
-    FluxControlPipeline,
-    FluxControlNetImg2ImgPipeline,
 )
 from diffusers.pipelines.flux.modeling_flux import ReduxImageEncoder
-from unitorch import is_xformers_available
+
 from unitorch.utils import is_remote_url
 from unitorch.models.diffusers import GenericStableFluxModel
 from unitorch.models.diffusers import StableFluxProcessor
@@ -66,7 +63,6 @@ class StableFluxForImageReduxGenerationPipeline(GenericStableFluxModel):
         state_dict: Optional[Dict[str, Any]] = None,
         device: Optional[Union[str, int]] = "cpu",
         enable_cpu_offload: Optional[bool] = False,
-        enable_xformers: Optional[bool] = False,
     ):
         super().__init__(
             config_path=config_path,
@@ -99,7 +95,7 @@ class StableFluxForImageReduxGenerationPipeline(GenericStableFluxModel):
         self.eval()
 
         self._enable_cpu_offload = enable_cpu_offload
-        self._enable_xformers = enable_xformers
+
         self.prompt_embeds_scale = 1.0
         self.pooled_prompt_embeds_scale = 1.0
 
@@ -238,7 +234,6 @@ class StableFluxForImageReduxGenerationPipeline(GenericStableFluxModel):
         )
         device = config.getoption("device", "cpu") if device is None else device
         enable_cpu_offload = config.getoption("enable_cpu_offload", True)
-        enable_xformers = config.getoption("enable_xformers", True)
 
         state_dict = None
         if weight_path is None and pretrained_infos is not None:
@@ -289,7 +284,6 @@ class StableFluxForImageReduxGenerationPipeline(GenericStableFluxModel):
             state_dict=state_dict,
             device=device,
             enable_cpu_offload=enable_cpu_offload,
-            enable_xformers=enable_xformers,
         )
         return inst
 
@@ -415,10 +409,6 @@ class StableFluxForImageReduxGenerationPipeline(GenericStableFluxModel):
             self.pipeline.enable_model_cpu_offload(self._device)
         else:
             self.to(device=self._device)
-
-        if self._enable_xformers and self._device != "cpu":
-            assert is_xformers_available(), "Please install xformers first."
-            self.pipeline.enable_xformers_memory_efficient_attention()
 
         outputs = self.pipeline(
             prompt_embeds=prompt_embeds.to(torch.bfloat16),

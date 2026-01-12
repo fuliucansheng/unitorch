@@ -10,11 +10,11 @@ from PIL import Image
 from torch import autocast
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from diffusers.utils import numpy_to_pil
-from diffusers.models import ControlNetModel
+
 from diffusers.pipelines import (
     WanImageToVideoPipeline,
 )
-from unitorch import is_xformers_available
+
 from unitorch.utils import (
     is_remote_url,
     is_bfloat16_available,
@@ -56,7 +56,6 @@ class WanForImage2VideoGenerationPipeline(WanForImage2VideoGeneration):
         state_dict: Optional[Dict[str, Any]] = None,
         device: Optional[Union[str, int]] = "cpu",
         enable_cpu_offload: Optional[bool] = False,
-        enable_xformers: Optional[bool] = False,
         boundary_ratio: Optional[float] = 0.9,
     ):
         super().__init__(
@@ -80,7 +79,6 @@ class WanForImage2VideoGenerationPipeline(WanForImage2VideoGeneration):
         self.eval()
 
         self._enable_cpu_offload = enable_cpu_offload
-        self._enable_xformers = enable_xformers
 
         if not self._enable_cpu_offload:
             self.image.to(device=self._device)
@@ -167,7 +165,6 @@ class WanForImage2VideoGenerationPipeline(WanForImage2VideoGeneration):
         )
         device = config.getoption("device", "cpu") if device is None else device
         enable_cpu_offload = config.getoption("enable_cpu_offload", True)
-        enable_xformers = config.getoption("enable_xformers", False)
 
         state_dict = None
         if weight_path is None and pretrained_infos is not None:
@@ -201,7 +198,6 @@ class WanForImage2VideoGenerationPipeline(WanForImage2VideoGeneration):
             state_dict=state_dict,
             device=device,
             enable_cpu_offload=enable_cpu_offload,
-            enable_xformers=enable_xformers,
         )
         return inst
 
@@ -311,10 +307,6 @@ class WanForImage2VideoGenerationPipeline(WanForImage2VideoGeneration):
             self.pipeline.enable_model_cpu_offload(self._device)
         else:
             self.to(device=self._device)
-
-        if self._enable_xformers and self._device != "cpu":
-            assert is_xformers_available(), "Please install xformers first."
-            self.pipeline.enable_xformers_memory_efficient_attention()
 
         outputs = self.get_prompt_outputs(
             input_ids=inputs["input_ids"],

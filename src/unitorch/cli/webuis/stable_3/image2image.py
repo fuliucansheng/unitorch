@@ -17,7 +17,7 @@ from unitorch.cli.models.diffusers import (
 from unitorch.cli.pipelines.stable_3.image2image import (
     Stable3ForImage2ImageGenerationPipeline,
 )
-from unitorch.cli.pipelines.tools import controlnet_processes
+
 from unitorch.cli.webuis import (
     supported_scheduler_names,
     matched_pretrained_names,
@@ -30,7 +30,6 @@ from unitorch.cli.webuis import (
     create_tabs,
     create_blocks,
     create_pretrain_layout,
-    create_controlnet_layout,
     create_lora_layout,
 )
 from unitorch.cli.webuis import SimpleWebUI
@@ -42,11 +41,6 @@ class Stable3Image2ImageWebUI(SimpleWebUI):
         pretrained_names, ["^stable-v3-", "^stable-v3.5-"]
     )
     pretrained_extension_names = list(pretrained_stable_extensions_infos.keys())
-    supported_controlnet_names = matched_pretrained_names(
-        pretrained_extension_names,
-        ["^stable-v3-controlnet-", "^stable-v3.5-controlnet-"],
-    )
-    supported_controlnet_process_names = list(controlnet_processes.keys())
     supported_lora_names = matched_pretrained_names(
         pretrained_extension_names, ["^stable-v3-lora-", "^stable-v3.5-lora-"]
     )
@@ -137,7 +131,7 @@ class Stable3Image2ImageWebUI(SimpleWebUI):
             name="Generation",
         )
         left_extension = create_tab(
-            # create_row(controlnet_layout),
+            #
             create_row(lora_layout),
             name="Extensions",
         )
@@ -210,12 +204,6 @@ class Stable3Image2ImageWebUI(SimpleWebUI):
         self._pipe = None
         self._status = "Stopped" if self._pipe is None else "Running"
         return self._status
-
-    def processing_controlnet_inputs(self, image, process):
-        pfunc = controlnet_processes.get(process, None)
-        if pfunc is not None and image is not None:
-            return pfunc(image)
-        return image
 
     def generate(
         self,

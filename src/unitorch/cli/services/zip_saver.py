@@ -138,8 +138,7 @@ class ZipSaverService(GenericService):
         self.zip_extension = config.getoption("zip_extension", ".zip")
         self.max_files_per_zip = config.getoption("max_files_per_zip", 10000000)
         assert self.zip_folder is not None
-        if not os.path.exists(self.zip_folder):
-            os.makedirs(self.zip_folder)
+        os.makedirs(self.zip_folder, exist_ok=True)
 
         self.num_thread = config.getoption("num_thread", 20)
         if isinstance(self.zip_folder, str):

@@ -29,7 +29,6 @@ from unitorch.cli.webuis import (
     create_tabs,
     create_blocks,
     create_pretrain_layout,
-    create_controlnet_layout,
     create_lora_layout,
 )
 from unitorch.cli.webuis import SimpleWebUI

@@ -18,8 +18,6 @@ from diffusers.training_utils import (
     compute_density_for_timestep_sampling,
 )
 from diffusers.models import (
-    FluxControlNetModel,
-    FluxMultiControlNetModel,
     FluxTransformer2DModel,
     AutoencoderKL,
 )
@@ -70,7 +68,6 @@ class GenericStableFluxLoraModel(GenericPeftModel, QuantizationMixin):
         scheduler_config_path: str,
         image_config_path: Optional[str] = None,
         redux_image_config_path: Optional[str] = None,
-        controlnet_configs_path: Union[str, List[str]] = None,
         quant_config_path: Optional[str] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
@@ -128,35 +125,6 @@ class GenericStableFluxLoraModel(GenericPeftModel, QuantizationMixin):
         else:
             self.image = None
             self.redux_image = None
-
-        if isinstance(controlnet_configs_path, list):
-            if len(controlnet_configs_path) == 0:
-                controlnet_configs_path = None
-            elif len(controlnet_configs_path) == 1:
-                controlnet_configs_path = controlnet_configs_path[0]
-
-        if isinstance(controlnet_configs_path, list):
-            controlnets = []
-            for controlnet_config_path in controlnet_configs_path:
-                controlnet_config_dict = json.load(open(controlnet_config_path))
-                controlnets.append(
-                    FluxControlNetModel.from_config(controlnet_config_dict).to(
-                        torch.bfloat16
-                    )
-                )
-            self.num_controlnets = len(controlnets)
-            self.controlnet = FluxMultiControlNetModel(
-                controlnets=controlnets,
-            )
-        elif isinstance(controlnet_configs_path, str):
-            controlnet_config_dict = json.load(open(controlnet_configs_path))
-            self.controlnet = FluxControlNetModel.from_config(
-                controlnet_config_dict
-            ).to(torch.bfloat16)
-            self.num_controlnets = 1
-        else:
-            self.controlnet = None
-            self.num_controlnets = 0
 
         scheduler_config_dict = json.load(open(scheduler_config_path))
         scheduler_class_name = scheduler_config_dict.get(
@@ -250,7 +218,6 @@ class StableFluxLoraForText2ImageGeneration(GenericStableFluxLoraModel):
         scheduler_config_path: str,
         image_config_path: Optional[str] = None,
         redux_image_config_path: Optional[str] = None,
-        controlnet_configs_path: Union[str, List[str]] = None,
         quant_config_path: Optional[str] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
@@ -285,7 +252,6 @@ class StableFluxLoraForText2ImageGeneration(GenericStableFluxLoraModel):
             scheduler_config_path=scheduler_config_path,
             image_config_path=image_config_path,
             redux_image_config_path=redux_image_config_path,
-            controlnet_configs_path=controlnet_configs_path,
             quant_config_path=quant_config_path,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
@@ -498,7 +464,6 @@ class StableFluxLoraForImageInpainting(GenericStableFluxLoraModel):
         scheduler_config_path: str,
         image_config_path: Optional[str] = None,
         redux_image_config_path: Optional[str] = None,
-        controlnet_configs_path: Union[str, List[str]] = None,
         quant_config_path: Optional[str] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
@@ -533,7 +498,6 @@ class StableFluxLoraForImageInpainting(GenericStableFluxLoraModel):
             image_config_path=image_config_path,
             redux_image_config_path=redux_image_config_path,
             scheduler_config_path=scheduler_config_path,
-            controlnet_configs_path=controlnet_configs_path,
             quant_config_path=quant_config_path,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
@@ -779,7 +743,6 @@ class StableFluxLoraForKontext2ImageGeneration(GenericStableFluxLoraModel):
         scheduler_config_path: str,
         image_config_path: Optional[str] = None,
         redux_image_config_path: Optional[str] = None,
-        controlnet_configs_path: Union[str, List[str]] = None,
         quant_config_path: Optional[str] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
@@ -814,7 +777,6 @@ class StableFluxLoraForKontext2ImageGeneration(GenericStableFluxLoraModel):
             scheduler_config_path=scheduler_config_path,
             image_config_path=image_config_path,
             redux_image_config_path=redux_image_config_path,
-            controlnet_configs_path=controlnet_configs_path,
             quant_config_path=quant_config_path,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
@@ -1052,7 +1014,6 @@ class StableFluxDPOLoraForText2ImageGeneration(GenericStableFluxLoraModel):
         scheduler_config_path: str,
         image_config_path: Optional[str] = None,
         redux_image_config_path: Optional[str] = None,
-        controlnet_configs_path: Union[str, List[str]] = None,
         quant_config_path: Optional[str] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
@@ -1086,7 +1047,6 @@ class StableFluxDPOLoraForText2ImageGeneration(GenericStableFluxLoraModel):
             scheduler_config_path=scheduler_config_path,
             image_config_path=image_config_path,
             redux_image_config_path=redux_image_config_path,
-            controlnet_configs_path=controlnet_configs_path,
             quant_config_path=quant_config_path,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
@@ -1332,7 +1292,6 @@ class StableFluxDPOLoraForImageInpainting(GenericStableFluxLoraModel):
         scheduler_config_path: str,
         image_config_path: Optional[str] = None,
         redux_image_config_path: Optional[str] = None,
-        controlnet_configs_path: Union[str, List[str]] = None,
         quant_config_path: Optional[str] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
@@ -1366,7 +1325,6 @@ class StableFluxDPOLoraForImageInpainting(GenericStableFluxLoraModel):
             image_config_path=image_config_path,
             redux_image_config_path=redux_image_config_path,
             scheduler_config_path=scheduler_config_path,
-            controlnet_configs_path=controlnet_configs_path,
             quant_config_path=quant_config_path,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
@@ -1646,7 +1604,6 @@ class StableFluxDPOLoraForKontext2ImageGeneration(GenericStableFluxLoraModel):
         scheduler_config_path: str,
         image_config_path: Optional[str] = None,
         redux_image_config_path: Optional[str] = None,
-        controlnet_configs_path: Union[str, List[str]] = None,
         quant_config_path: Optional[str] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
@@ -1680,7 +1637,6 @@ class StableFluxDPOLoraForKontext2ImageGeneration(GenericStableFluxLoraModel):
             scheduler_config_path=scheduler_config_path,
             image_config_path=image_config_path,
             redux_image_config_path=redux_image_config_path,
-            controlnet_configs_path=controlnet_configs_path,
             quant_config_path=quant_config_path,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,

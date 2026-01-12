@@ -10,13 +10,11 @@ import pandas as pd
 from PIL import Image
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from diffusers.utils import numpy_to_pil
-from diffusers.models import SD3ControlNetModel, SD3MultiControlNetModel
 from diffusers.pipelines import (
     StableDiffusion3Pipeline,
     StableDiffusion3InpaintPipeline,
-    StableDiffusion3ControlNetInpaintingPipeline,
 )
-from unitorch import is_xformers_available
+
 from unitorch.utils import is_remote_url
 from unitorch.models.diffusers import GenericStable3Model
 from unitorch.models.diffusers import Stable3Processor
@@ -60,7 +58,6 @@ class Stable3ForImageInpaintingPipeline(GenericStable3Model):
         state_dict: Optional[Dict[str, Any]] = None,
         device: Optional[Union[str, int]] = "cpu",
         enable_cpu_offload: Optional[bool] = False,
-        enable_xformers: Optional[bool] = False,
     ):
         super().__init__(
             config_path=config_path,
@@ -89,7 +86,6 @@ class Stable3ForImageInpaintingPipeline(GenericStable3Model):
         self.eval()
 
         self._enable_cpu_offload = enable_cpu_offload
-        self._enable_xformers = enable_xformers
 
     @classmethod
     @add_default_section_for_init("core/pipeline/stable_3/inpainting")
@@ -219,7 +215,6 @@ class Stable3ForImageInpaintingPipeline(GenericStable3Model):
         )
         device = config.getoption("device", "cpu") if device is None else device
         enable_cpu_offload = config.getoption("enable_cpu_offload", True)
-        enable_xformers = config.getoption("enable_xformers", True)
 
         state_dict = None
         if weight_path is None and pretrained_infos is not None:
@@ -267,7 +262,6 @@ class Stable3ForImageInpaintingPipeline(GenericStable3Model):
             state_dict=state_dict,
             device=device,
             enable_cpu_offload=enable_cpu_offload,
-            enable_xformers=enable_xformers,
         )
         return inst
 
@@ -286,9 +280,6 @@ class Stable3ForImageInpaintingPipeline(GenericStable3Model):
         num_timesteps: Optional[int] = 50,
         seed: Optional[int] = 1123,
         scheduler: Optional[str] = None,
-        controlnet_checkpoints: Optional[List[str]] = [],
-        controlnet_images: Optional[List[Image.Image]] = [],
-        controlnet_guidance_scales: Optional[List[float]] = [],
         lora_checkpoints: Optional[Union[str, List[str]]] = [],
         lora_weights: Optional[Union[float, List[float]]] = [],
         lora_alphas: Optional[Union[float, List[float]]] = [],
@@ -314,153 +305,18 @@ class Stable3ForImageInpaintingPipeline(GenericStable3Model):
                 self.scheduler.config
             )
 
-        if any(ckpt is not None for ckpt in controlnet_checkpoints) and any(
-            img is not None for img in controlnet_images
-        ):
-            controlnets, conditioning_scales, conditioning_images = [], [], []
-            (
-                inpaint_controlnet,
-                inpaint_conditioning_scale,
-                inpaint_conditioning_image,
-            ) = (None, None, None)
-            for checkpoint, conditioning_scale, conditioning_image in zip(
-                controlnet_checkpoints, controlnet_guidance_scales, controlnet_images
-            ):
-                if checkpoint is None or conditioning_image is None:
-                    continue
-
-                if "inpainting" in checkpoint:
-                    inpaint_controlnet_config_path = cached_path(
-                        nested_dict_value(
-                            pretrained_stable_extensions_infos,
-                            checkpoint,
-                            "controlnet",
-                            "config",
-                        )
-                    )
-                    inpaint_controlnet_config_dict = json.load(
-                        open(inpaint_controlnet_config_path)
-                    )
-                    inpaint_controlnet = SD3ControlNetModel.from_config(
-                        inpaint_controlnet_config_dict
-                    )
-                    inpaint_controlnet.load_state_dict(
-                        load_weight(
-                            nested_dict_value(
-                                pretrained_stable_extensions_infos,
-                                checkpoint,
-                                "controlnet",
-                                "weight",
-                            )
-                        )
-                    )
-                    inpaint_controlnet.to(device=self._device)
-                    logging.info(f"Loading inpaint controlnet from {checkpoint}")
-                    inpaint_conditioning_scale = conditioning_scale
-                    inpaint_conditioning_image = conditioning_image.resize(
-                        image.size, resample=Image.LANCZOS
-                    )
-                    continue
-
-                controlnet_config_path = cached_path(
-                    nested_dict_value(
-                        pretrained_stable_extensions_infos,
-                        checkpoint,
-                        "controlnet",
-                        "config",
-                    )
-                )
-                controlnet_config_dict = json.load(open(controlnet_config_path))
-                controlnet = SD3ControlNetModel.from_config(controlnet_config_dict)
-                controlnet.load_state_dict(
-                    load_weight(
-                        nested_dict_value(
-                            pretrained_stable_extensions_infos,
-                            checkpoint,
-                            "controlnet",
-                            "weight",
-                        )
-                    )
-                )
-                controlnet.to(device=self._device)
-                logging.info(f"Loading controlnet from {checkpoint}")
-                controlnets.append(controlnet)
-                conditioning_scales.append(conditioning_scale)
-                conditioning_images.append(
-                    conditioning_image.resize(image.size, resample=Image.LANCZOS)
-                )
-
-            if inpaint_controlnet is not None:
-                controlnets.append(inpaint_controlnet)
-                conditioning_scales.append(inpaint_conditioning_scale)
-
-            if len(controlnets) > 1:
-                controlnets = SD3MultiControlNetModel(controlnets)
-            else:
-                controlnets = controlnets[0]
-
-            # self.pipeline = StableDiffusion3ControlNetInpaintingPipeline(
-            #     vae=self.vae,
-            #     text_encoder=self.text,
-            #     text_encoder_2=self.text2,
-            #     text_encoder_3=self.text3,
-            #     transformer=self.transformer,
-            #     controlnet=controlnets,
-            #     scheduler=self.scheduler,
-            #     tokenizer=None,
-            #     tokenizer_2=None,
-            #     tokenizer_3=None,
-            # )
-            raise "StableDiffusion3ControlNetInpaintingPipeline is not implemented yet."
-            if len(conditioning_images) > 0:
-                controlnets_inputs = self.processor.controlnets_inputs(
-                    conditioning_images
-                )
-            else:
-                controlnets_inputs = None
-
-            if inpaint_conditioning_image is not None:
-                inpaint_controlnet_inputs = self.processor.inpainting_control_inputs(
-                    inpaint_conditioning_image, mask_image
-                )
-            else:
-                inpaint_controlnet_inputs = None
-
-            if controlnets_inputs is not None and inpaint_controlnet_inputs is not None:
-                condition_pixel_values = torch.cat(
-                    [
-                        controlnets_inputs.pixel_values,
-                        inpaint_controlnet_inputs.pixel_values.unsqueeze(0),
-                    ],
-                    dim=0,
-                )
-            elif controlnets_inputs is not None:
-                condition_pixel_values = controlnets_inputs.pixel_values
-            elif inpaint_controlnet_inputs is not None:
-                condition_pixel_values = (
-                    inpaint_controlnet_inputs.pixel_values.unsqueeze(0)
-                )
-
-            enable_controlnet = True
-            inputs = {
-                **text_inputs,
-                **image_inputs,
-                **{"condition_pixel_values": condition_pixel_values},
-            }
-        else:
-            self.pipeline = StableDiffusion3InpaintPipeline(
-                vae=self.vae,
-                text_encoder=self.text,
-                text_encoder_2=self.text2,
-                text_encoder_3=self.text3,
-                transformer=self.transformer,
-                scheduler=self.scheduler,
-                tokenizer=None,
-                tokenizer_2=None,
-                tokenizer_3=None,
-            )
-            enable_controlnet = False
-            inputs = {**text_inputs, **image_inputs}
+        self.pipeline = StableDiffusion3InpaintPipeline(
+            vae=self.vae,
+            text_encoder=self.text,
+            text_encoder_2=self.text2,
+            text_encoder_3=self.text3,
+            transformer=self.transformer,
+            scheduler=self.scheduler,
+            tokenizer=None,
+            tokenizer_2=None,
+            tokenizer_3=None,
+        )
+        inputs = {**text_inputs, **image_inputs}
         self.pipeline.set_progress_bar_config(disable=True)
         self.seed = seed
 
@@ -534,46 +390,22 @@ class Stable3ForImageInpaintingPipeline(GenericStable3Model):
         else:
             self.to(device=self._device)
 
-        if self._enable_xformers and self._device != "cpu":
-            assert is_xformers_available(), "Please install xformers first."
-            self.pipeline.enable_xformers_memory_efficient_attention()
-
-        if enable_controlnet:
-            outputs = self.pipeline(
-                image=inputs["pixel_values"],
-                prompt_embeds=prompt_embeds,
-                negative_prompt_embeds=negative_prompt_embeds,
-                pooled_prompt_embeds=pooled_prompt_embeds,
-                negative_pooled_prompt_embeds=negative_pooled_prompt_embeds,
-                width=inputs["pixel_values"].size(-1),
-                height=inputs["pixel_values"].size(-2),
-                generator=torch.Generator(device=self.pipeline.device).manual_seed(
-                    self.seed
-                ),
-                control_image=list(inputs["condition_pixel_values"].transpose(0, 1)),
-                num_inference_steps=num_timesteps,
-                guidance_scale=guidance_scale,
-                strength=strength,
-                controlnet_conditioning_scale=conditioning_scales,
-                output_type="np.array",
-            )
-        else:
-            outputs = self.pipeline(
-                image=inputs["pixel_values"],
-                prompt_embeds=prompt_embeds,
-                negative_prompt_embeds=negative_prompt_embeds,
-                pooled_prompt_embeds=pooled_prompt_embeds,
-                negative_pooled_prompt_embeds=negative_pooled_prompt_embeds,
-                width=inputs["pixel_values"].size(-1),
-                height=inputs["pixel_values"].size(-2),
-                generator=torch.Generator(device=self.pipeline.device).manual_seed(
-                    self.seed
-                ),
-                num_inference_steps=num_timesteps,
-                guidance_scale=guidance_scale,
-                strength=strength,
-                output_type="np.array",
-            )
+        outputs = self.pipeline(
+            image=inputs["pixel_values"],
+            prompt_embeds=prompt_embeds,
+            negative_prompt_embeds=negative_prompt_embeds,
+            pooled_prompt_embeds=pooled_prompt_embeds,
+            negative_pooled_prompt_embeds=negative_pooled_prompt_embeds,
+            width=inputs["pixel_values"].size(-1),
+            height=inputs["pixel_values"].size(-2),
+            generator=torch.Generator(device=self.pipeline.device).manual_seed(
+                self.seed
+            ),
+            num_inference_steps=num_timesteps,
+            guidance_scale=guidance_scale,
+            strength=strength,
+            output_type="np.array",
+        )
         self.unload_lora_weights()
 
         images = torch.from_numpy(outputs.images)

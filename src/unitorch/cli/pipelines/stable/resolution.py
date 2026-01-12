@@ -10,7 +10,7 @@ import pandas as pd
 from PIL import Image
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from diffusers.utils import numpy_to_pil
-from diffusers.models import ControlNetModel
+
 from diffusers.pipelines import (
     StableDiffusionPipeline,
     StableDiffusionImg2ImgPipeline,
@@ -18,11 +18,8 @@ from diffusers.pipelines import (
     StableDiffusionUpscalePipeline,
     StableDiffusionDepth2ImgPipeline,
     StableVideoDiffusionPipeline,
-    StableDiffusionControlNetPipeline,
-    StableDiffusionControlNetImg2ImgPipeline,
-    StableDiffusionControlNetInpaintPipeline,
 )
-from unitorch import is_xformers_available
+
 from unitorch.utils import is_remote_url
 from unitorch.models.diffusers import GenericStableModel
 from unitorch.models.diffusers import StableProcessor
@@ -59,7 +56,6 @@ class StableForImageResolutionPipeline(GenericStableModel):
         state_dict: Optional[Dict[str, Any]] = None,
         device: Optional[Union[str, int]] = "cpu",
         enable_cpu_offload: Optional[bool] = False,
-        enable_xformers: Optional[bool] = False,
     ):
         super().__init__(
             config_path=config_path,
@@ -81,7 +77,6 @@ class StableForImageResolutionPipeline(GenericStableModel):
         self.eval()
 
         self._enable_cpu_offload = enable_cpu_offload
-        self._enable_xformers = enable_xformers
 
     @classmethod
     @add_default_section_for_init("core/pipeline/stable/resolution")
@@ -165,7 +160,6 @@ class StableForImageResolutionPipeline(GenericStableModel):
         )
         device = config.getoption("device", "cpu") if device is None else device
         enable_cpu_offload = config.getoption("enable_cpu_offload", True)
-        enable_xformers = config.getoption("enable_xformers", True)
 
         state_dict = None
         if weight_path is None and pretrained_infos is not None:
@@ -189,7 +183,6 @@ class StableForImageResolutionPipeline(GenericStableModel):
             state_dict=state_dict,
             device=device,
             enable_cpu_offload=enable_cpu_offload,
-            enable_xformers=enable_xformers,
         )
         return inst
 
@@ -303,10 +296,6 @@ class StableForImageResolutionPipeline(GenericStableModel):
             self.pipeline.enable_model_cpu_offload(self._device)
         else:
             self.to(device=self._device)
-
-        if self._enable_xformers and self._device != "cpu":
-            assert is_xformers_available(), "Please install xformers first."
-            self.pipeline.enable_xformers_memory_efficient_attention()
 
         outputs = self.pipeline(
             image=inputs["pixel_values"],

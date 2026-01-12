@@ -9,14 +9,10 @@ import diffusers.schedulers as schedulers
 from transformers import CLIPTextConfig, CLIPTextModel, CLIPTextModelWithProjection
 from diffusers.schedulers import SchedulerMixin
 from diffusers.models import (
-    ControlNetModel,
     UNet2DModel,
     UNet2DConditionModel,
     AutoencoderKL,
-    MultiAdapter,
-    T2IAdapter,
 )
-from diffusers.pipelines.controlnet import MultiControlNetModel
 from diffusers.pipelines import (
     DDPMPipeline,
     StableDiffusionXLPipeline,
@@ -65,9 +61,6 @@ class GenericStableXLModel(GenericModel, QuantizationMixin, PeftWeightLoaderMixi
         text2_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
-        controlnet_configs_path: Union[str, List[str]] = None,
-        inpainting_controlnet_config_path: Union[str] = None,
-        adapter_configs_path: Union[str, List[str]] = None,
         quant_config_path: Optional[str] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
@@ -94,57 +87,6 @@ class GenericStableXLModel(GenericModel, QuantizationMixin, PeftWeightLoaderMixi
 
         vae_config_dict = json.load(open(vae_config_path))
         self.vae = AutoencoderKL.from_config(vae_config_dict)
-
-        if isinstance(controlnet_configs_path, str):
-            controlnet_configs_path = [controlnet_configs_path]
-        if isinstance(inpainting_controlnet_config_path, str):
-            controlnet_configs_path += [inpainting_controlnet_config_path]
-
-        if isinstance(controlnet_configs_path, list):
-            if len(controlnet_configs_path) == 0:
-                controlnet_configs_path = None
-            elif len(controlnet_configs_path) == 1:
-                controlnet_configs_path = controlnet_configs_path[0]
-
-        if isinstance(controlnet_configs_path, list):
-            controlnets = []
-            for controlnet_config_path in controlnet_configs_path:
-                controlnet_config_dict = json.load(open(controlnet_config_path))
-                controlnets.append(ControlNetModel.from_config(controlnet_config_dict))
-            self.num_controlnets = len(controlnets)
-            self.controlnet = MultiControlNetModel(
-                controlnets=controlnets,
-            )
-        elif isinstance(controlnet_configs_path, str):
-            controlnet_config_dict = json.load(open(controlnet_configs_path))
-            self.controlnet = ControlNetModel.from_config(controlnet_config_dict)
-            self.num_controlnets = 1
-        else:
-            self.controlnet = None
-            self.num_controlnets = 0
-
-        if isinstance(adapter_configs_path, list):
-            if len(adapter_configs_path) == 0:
-                adapter_configs_path = None
-            elif len(adapter_configs_path) == 1:
-                adapter_configs_path = adapter_configs_path[0]
-
-        if isinstance(adapter_configs_path, list):
-            adapters = []
-            for adapter_config_path in adapter_configs_path:
-                adapter_config_dict = json.load(open(adapter_config_path))
-                adapters.append(T2IAdapter.from_config(adapter_config_dict))
-            self.num_adapters = len(adapters)
-            self.adapter = MultiAdapter(
-                adapters=adapters,
-            )
-        elif isinstance(adapter_configs_path, str):
-            adapter_config_dict = json.load(open(adapter_configs_path))
-            self.adapter = T2IAdapter.from_config(adapter_config_dict)
-            self.num_adapters = 1
-        else:
-            self.adapter = None
-            self.num_adapters = 0
 
         scheduler_config_dict = json.load(open(scheduler_config_path))
         scheduler_class_name = scheduler_config_dict.get("_class_name", "DDPMScheduler")
