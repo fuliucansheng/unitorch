@@ -33,7 +33,7 @@ from unitorch.cli.webuis import (
 from unitorch.cli.webuis import SimpleWebUI
 
 _js = """
-() => {
+(() => {
     const shortcuts = (e) => {
         const event = document.all ? window.event : e;
         if(e.target.tagName.toLowerCase() == "body") {
@@ -60,7 +60,7 @@ _js = """
     };
     document.addEventListener("keyup", shortcuts);
     console.log("Shortcut keys for labeling loaded.");
-}
+})();
 """
 
 _css = """
