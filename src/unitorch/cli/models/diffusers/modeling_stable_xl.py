@@ -40,7 +40,6 @@ class StableXLForText2ImageGeneration(_StableXLForText2ImageGeneration):
         text2_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
-        quant_config_path: Optional[str] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         freeze_vae_encoder: Optional[bool] = True,
@@ -56,7 +55,6 @@ class StableXLForText2ImageGeneration(_StableXLForText2ImageGeneration):
             text2_config_path=text2_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
-            quant_config_path=quant_config_path,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             freeze_vae_encoder=freeze_vae_encoder,
@@ -111,10 +109,6 @@ class StableXLForText2ImageGeneration(_StableXLForText2ImageGeneration):
         )
         scheduler_config_path = cached_path(scheduler_config_path)
 
-        quant_config_path = config.getoption("quant_config_path", None)
-        if quant_config_path is not None:
-            quant_config_path = cached_path(quant_config_path)
-
         num_train_timesteps = config.getoption("num_train_timesteps", 1000)
         num_infer_timesteps = config.getoption("num_infer_timesteps", 50)
         freeze_vae_encoder = config.getoption("freeze_vae_encoder", True)
@@ -130,7 +124,6 @@ class StableXLForText2ImageGeneration(_StableXLForText2ImageGeneration):
             text2_config_path=text2_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
-            quant_config_path=quant_config_path,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             freeze_vae_encoder=freeze_vae_encoder,
@@ -272,7 +265,6 @@ class StableXLForImage2ImageGeneration(_StableXLForImage2ImageGeneration):
         text2_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
-        quant_config_path: Optional[str] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         freeze_vae_encoder: Optional[bool] = True,
@@ -288,7 +280,6 @@ class StableXLForImage2ImageGeneration(_StableXLForImage2ImageGeneration):
             text2_config_path=text2_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
-            quant_config_path=quant_config_path,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             freeze_vae_encoder=freeze_vae_encoder,
@@ -343,10 +334,6 @@ class StableXLForImage2ImageGeneration(_StableXLForImage2ImageGeneration):
         )
         scheduler_config_path = cached_path(scheduler_config_path)
 
-        quant_config_path = config.getoption("quant_config_path", None)
-        if quant_config_path is not None:
-            quant_config_path = cached_path(quant_config_path)
-
         num_train_timesteps = config.getoption("num_train_timesteps", 1000)
         num_infer_timesteps = config.getoption("num_infer_timesteps", 50)
         freeze_vae_encoder = config.getoption("freeze_vae_encoder", True)
@@ -362,7 +349,6 @@ class StableXLForImage2ImageGeneration(_StableXLForImage2ImageGeneration):
             text2_config_path=text2_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
-            quant_config_path=quant_config_path,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             freeze_vae_encoder=freeze_vae_encoder,
@@ -486,7 +472,6 @@ class StableXLForImageInpainting(_StableXLForImageInpainting):
         text2_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
-        quant_config_path: Optional[str] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         freeze_vae_encoder: Optional[bool] = True,
@@ -502,7 +487,6 @@ class StableXLForImageInpainting(_StableXLForImageInpainting):
             text2_config_path=text2_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
-            quant_config_path=quant_config_path,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             freeze_vae_encoder=freeze_vae_encoder,
@@ -557,10 +541,6 @@ class StableXLForImageInpainting(_StableXLForImageInpainting):
         )
         scheduler_config_path = cached_path(scheduler_config_path)
 
-        quant_config_path = config.getoption("quant_config_path", None)
-        if quant_config_path is not None:
-            quant_config_path = cached_path(quant_config_path)
-
         num_train_timesteps = config.getoption("num_train_timesteps", 1000)
         num_infer_timesteps = config.getoption("num_infer_timesteps", 50)
         freeze_vae_encoder = config.getoption("freeze_vae_encoder", True)
@@ -576,7 +556,6 @@ class StableXLForImageInpainting(_StableXLForImageInpainting):
             text2_config_path=text2_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
-            quant_config_path=quant_config_path,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             freeze_vae_encoder=freeze_vae_encoder,

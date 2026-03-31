@@ -15,18 +15,15 @@ from unitorch.utils.decorators import replace
 from unitorch.models import (
     GenericModel,
     GenericOutputs,
-    QuantizationConfig,
-    QuantizationMixin,
 )
 from unitorch.models.peft import PeftWeightLoaderMixin
 
 
-class LlamaForClassification(GenericModel, QuantizationMixin, PeftWeightLoaderMixin):
+class LlamaForClassification(GenericModel, PeftWeightLoaderMixin):
 
     def __init__(
         self,
         config_path: str,
-        quant_config_path: Optional[str] = None,
         num_classes: Optional[int] = 1,
         hidden_dropout_prob: Optional[float] = 0.1,
         gradient_checkpointing: Optional[bool] = False,
@@ -47,10 +44,6 @@ class LlamaForClassification(GenericModel, QuantizationMixin, PeftWeightLoaderMi
         self.dropout = nn.Dropout(hidden_dropout_prob)
         self.classifier = nn.Linear(self.config.hidden_size, num_classes)
         self.init_weights()
-
-        if quant_config_path is not None:
-            self.quant_config = QuantizationConfig.from_json_file(quant_config_path)
-            self.quantize(self.quant_config, ignore_modules=["lm_head"])
 
     def forward(
         self,
@@ -80,7 +73,7 @@ class LlamaForClassification(GenericModel, QuantizationMixin, PeftWeightLoaderMi
         return logits
 
 
-class LlamaForGeneration(GenericModel, QuantizationMixin, PeftWeightLoaderMixin):
+class LlamaForGeneration(GenericModel, PeftWeightLoaderMixin):
     prefix_keys_in_state_dict = {
         "^model.": "base_model.",
         "^lm_head.": "base_model.",
@@ -89,7 +82,6 @@ class LlamaForGeneration(GenericModel, QuantizationMixin, PeftWeightLoaderMixin)
     def __init__(
         self,
         config_path: str,
-        quant_config_path: Optional[str] = None,
         gradient_checkpointing: Optional[bool] = False,
     ):
         """
@@ -104,10 +96,6 @@ class LlamaForGeneration(GenericModel, QuantizationMixin, PeftWeightLoaderMixin)
         self.config.gradient_checkpointing = gradient_checkpointing
         self.base_model = LlamaForCausalLM(self.config)
         self.init_weights()
-
-        if quant_config_path is not None:
-            self.quant_config = QuantizationConfig.from_json_file(quant_config_path)
-            self.quantize(self.quant_config, ignore_modules=["lm_head"])
 
     def forward(
         self,

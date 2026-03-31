@@ -66,7 +66,7 @@ class QWenVLProcessor(_QWenVLProcessor):
             BloomProcessor: An instance of BloomProcessor initialized with the provided configuration.
         """
         config.set_default_section("core/process/qwen_vl")
-        pretrained_name = config.getoption("pretrained_name", "qwen2_5-vl-3b-instruct")
+        pretrained_name = config.getoption("pretrained_name", "qwen3-vl-8b-instruct")
         tokenizer_file = config.getoption("tokenizer_file", None)
         tokenizer_file = pop_value(
             tokenizer_file,

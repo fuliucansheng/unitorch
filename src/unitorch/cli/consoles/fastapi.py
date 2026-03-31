@@ -10,7 +10,6 @@ import uvicorn
 import unitorch.cli
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from transformers.utils import is_remote_url
 from unitorch.cli import CoreConfigureParser
 from unitorch.cli import (
     import_library,

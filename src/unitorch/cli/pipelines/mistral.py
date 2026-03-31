@@ -33,7 +33,6 @@ class MistralForGenerationPipeline(_MistralForGeneration):
         tokenizer_config: Optional[str] = None,
         special_tokens_map: Optional[str] = None,
         chat_template: Optional[str] = None,
-        quant_config_path: Optional[str] = None,
         max_seq_length: Optional[int] = 512,
         max_gen_seq_length: Optional[int] = 512,
         weight_path: Optional[Union[str, List[str]]] = None,
@@ -41,11 +40,9 @@ class MistralForGenerationPipeline(_MistralForGeneration):
         enable_cpu_offload: Optional[bool] = True,
         device: Optional[Union[str, int]] = "cpu",
     ):
-        if device == "cpu":
-            quant_config_path = None
+
         super().__init__(
             config_path=config_path,
-            quant_config_path=quant_config_path,
         )
         self.processor = MistralProcessor(
             tokenizer_file=tokenizer_file,
@@ -71,7 +68,6 @@ class MistralForGenerationPipeline(_MistralForGeneration):
         pretrained_name: Optional[str] = None,
         config_path: Optional[str] = None,
         tokenizer_file: Optional[str] = None,
-        quant_config_path: Optional[str] = None,
         pretrained_weight_path: Optional[str] = None,
         device: Optional[str] = None,
         **kwargs,
@@ -131,12 +127,6 @@ class MistralForGenerationPipeline(_MistralForGeneration):
             cached_path(chat_template) if chat_template is not None else None
         )
 
-        quant_config_path = quant_config_path or config.getoption(
-            "quant_config_path", None
-        )
-        if quant_config_path is not None:
-            quant_config_path = cached_path(quant_config_path)
-
         max_seq_length = config.getoption("max_seq_length", 512)
         max_gen_seq_length = config.getoption("max_gen_seq_length", 512)
         enable_cpu_offload = config.getoption("enable_cpu_offload", True)
@@ -156,7 +146,6 @@ class MistralForGenerationPipeline(_MistralForGeneration):
             tokenizer_config=tokenizer_config,
             special_tokens_map=special_tokens_map,
             chat_template=chat_template,
-            quant_config_path=quant_config_path,
             max_seq_length=max_seq_length,
             max_gen_seq_length=max_gen_seq_length,
             weight_path=weight_path,

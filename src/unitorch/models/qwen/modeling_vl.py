@@ -8,32 +8,29 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
-from transformers.models.qwen2_5_vl import (
-    Qwen2_5_VLConfig,
-    Qwen2_5_VLModel,
-    Qwen2_5_VLForConditionalGeneration,
+from transformers.models.qwen3_vl import (
+    Qwen3VLConfig,
+    Qwen3VLModel,
+    Qwen3VLForConditionalGeneration,
 )
 from unitorch.utils.decorators import replace
 from unitorch.models import (
     GenericModel,
     GenericOutputs,
-    QuantizationConfig,
-    QuantizationMixin,
 )
-from unitorch.models.quantization import quantize_model
+
 from unitorch.models.peft import PeftWeightLoaderMixin
 
 
-class QWen2_5VLForGeneration(GenericModel, PeftWeightLoaderMixin):
+class QWen3VLForGeneration(GenericModel, PeftWeightLoaderMixin):
     prefix_keys_in_state_dict = {
-        "^visual.": "model.model.",
-        "^model(?!\.model).": "model.model.language_",
+        "^model.visual.": "model.",
+        "^model(?!\.model).": "model.",
     }
 
     def __init__(
         self,
         config_path: str,
-        quant_config_path: Optional[str] = None,
         gradient_checkpointing: Optional[bool] = False,
     ):
         """
@@ -44,14 +41,10 @@ class QWen2_5VLForGeneration(GenericModel, PeftWeightLoaderMixin):
             gradient_checkpointing (bool, optional): Whether to use gradient checkpointing. Defaults to False.
         """
         super().__init__()
-        self.config = Qwen2_5_VLConfig.from_json_file(config_path)
+        self.config = Qwen3VLConfig.from_json_file(config_path)
         self.config.gradient_checkpointing = gradient_checkpointing
-        self.model = Qwen2_5_VLForConditionalGeneration(self.config)
+        self.model = Qwen3VLForConditionalGeneration(self.config)
         self.init_weights()
-
-        if quant_config_path is not None:
-            self.quant_config = QuantizationConfig.from_json_file(quant_config_path)
-            self.model = quantize_model(self.model, self.quant_config)
 
     def forward(
         self,

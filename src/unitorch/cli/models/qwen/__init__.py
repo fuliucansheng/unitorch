@@ -51,96 +51,70 @@ pretrained_qwen_infos = {
             for i in range(1, 18)
         ],
     },
-    "qwen2_5-vl-3b-instruct": {
+    "qwen3-vl-2b-instruct": {
         "config": hf_endpoint_url(
-            "/Qwen/Qwen2.5-VL-3B-Instruct/resolve/main/config.json"
+            "/Qwen/Qwen3-VL-2B-Instruct/resolve/main/config.json"
         ),
         "tokenizer": hf_endpoint_url(
-            "/Qwen/Qwen2.5-VL-3B-Instruct/resolve/main/tokenizer.json"
+            "/Qwen/Qwen3-VL-2B-Instruct/resolve/main/tokenizer.json"
         ),
         "vision_config": hf_endpoint_url(
-            "/Qwen/Qwen2.5-VL-3B-Instruct/resolve/main/preprocessor_config.json"
+            "/Qwen/Qwen3-VL-2B-Instruct/resolve/main/preprocessor_config.json"
         ),
         "tokenizer_config": hf_endpoint_url(
-            "/Qwen/Qwen2.5-VL-3B-Instruct/resolve/main/tokenizer_config.json"
+            "/Qwen/Qwen3-VL-2B-Instruct/resolve/main/tokenizer_config.json"
         ),
         "chat_template": hf_endpoint_url(
-            "/Qwen/Qwen2.5-VL-3B-Instruct/resolve/main/chat_template.json"
+            "/Qwen/Qwen3-VL-2B-Instruct/resolve/main/chat_template.json"
+        ),
+        "weight": hf_endpoint_url(
+            f"/Qwen/Qwen3-VL-2B-Instruct/resolve/main/model.safetensors"
+        ),
+    },
+    "qwen3-vl-8b-instruct": {
+        "config": hf_endpoint_url(
+            "/Qwen/Qwen3-VL-8B-Instruct/resolve/main/config.json"
+        ),
+        "tokenizer": hf_endpoint_url(
+            "/Qwen/Qwen3-VL-8B-Instruct/resolve/main/tokenizer.json"
+        ),
+        "vision_config": hf_endpoint_url(
+            "/Qwen/Qwen3-VL-8B-Instruct/resolve/main/preprocessor_config.json"
+        ),
+        "tokenizer_config": hf_endpoint_url(
+            "/Qwen/Qwen3-VL-8B-Instruct/resolve/main/tokenizer_config.json"
+        ),
+        "chat_template": hf_endpoint_url(
+            "/Qwen/Qwen3-VL-8B-Instruct/resolve/main/chat_template.json"
         ),
         "weight": [
             hf_endpoint_url(
-                f"/Qwen/Qwen2.5-VL-3B-Instruct/resolve/main/model-{str(i).rjust(5, '0')}-of-00002.safetensors"
+                f"/Qwen/Qwen3-VL-8B-Instruct/resolve/main/model-{str(i).rjust(5, '0')}-of-00004.safetensors"
             )
-            for i in range(1, 3)
+            for i in range(1, 5)
         ],
     },
-    "qwen2_5-vl-7b-instruct": {
+    "qwen3-vl-8b-thinking": {
         "config": hf_endpoint_url(
-            "/Qwen/Qwen2.5-VL-7B-Instruct/resolve/main/config.json"
+            "/Qwen/Qwen3-VL-8B-Thinking/resolve/main/config.json"
         ),
         "tokenizer": hf_endpoint_url(
-            "/Qwen/Qwen2.5-VL-7B-Instruct/resolve/main/tokenizer.json"
+            "/Qwen/Qwen3-VL-8B-Thinking/resolve/main/tokenizer.json"
         ),
         "vision_config": hf_endpoint_url(
-            "/Qwen/Qwen2.5-VL-7B-Instruct/resolve/main/preprocessor_config.json"
+            "/Qwen/Qwen3-VL-8B-Thinking/resolve/main/preprocessor_config.json"
         ),
         "tokenizer_config": hf_endpoint_url(
-            "/Qwen/Qwen2.5-VL-7B-Instruct/resolve/main/tokenizer_config.json"
+            "/Qwen/Qwen3-VL-8B-Thinking/resolve/main/tokenizer_config.json"
         ),
         "chat_template": hf_endpoint_url(
-            "/Qwen/Qwen2.5-VL-7B-Instruct/resolve/main/chat_template.json"
+            "/Qwen/Qwen3-VL-8B-Thinking/resolve/main/chat_template.json"
         ),
         "weight": [
             hf_endpoint_url(
-                f"/Qwen/Qwen2.5-VL-7B-Instruct/resolve/main/model-{str(i).rjust(5, '0')}-of-00005.safetensors"
+                f"/Qwen/Qwen3-VL-8B-Thinking/resolve/main/model-{str(i).rjust(5, '0')}-of-00004.safetensors"
             )
-            for i in range(1, 6)
-        ],
-    },
-    "qwen2_5-vl-32b-instruct": {
-        "config": hf_endpoint_url(
-            "/Qwen/Qwen2.5-VL-32B-Instruct/resolve/main/config.json"
-        ),
-        "tokenizer": hf_endpoint_url(
-            "/Qwen/Qwen2.5-VL-32B-Instruct/resolve/main/tokenizer.json"
-        ),
-        "vision_config": hf_endpoint_url(
-            "/Qwen/Qwen2.5-VL-32B-Instruct/resolve/main/preprocessor_config.json"
-        ),
-        "tokenizer_config": hf_endpoint_url(
-            "/Qwen/Qwen2.5-VL-32B-Instruct/resolve/main/tokenizer_config.json"
-        ),
-        "chat_template": hf_endpoint_url(
-            "/Qwen/Qwen2.5-VL-32B-Instruct/resolve/main/chat_template.json"
-        ),
-        "weight": [
-            hf_endpoint_url(
-                f"/Qwen/Qwen2.5-VL-32B-Instruct/resolve/main/model-{str(i).rjust(5, '0')}-of-00018.safetensors"
-            )
-            for i in range(1, 19)
-        ],
-    },
-    "qwen2_5-vl-72b-instruct": {
-        "config": hf_endpoint_url(
-            "/Qwen/Qwen2.5-VL-72B-Instruct/resolve/main/config.json"
-        ),
-        "tokenizer": hf_endpoint_url(
-            "/Qwen/Qwen2.5-VL-72B-Instruct/resolve/main/tokenizer.json"
-        ),
-        "vision_config": hf_endpoint_url(
-            "/Qwen/Qwen2.5-VL-72B-Instruct/resolve/main/preprocessor_config.json"
-        ),
-        "tokenizer_config": hf_endpoint_url(
-            "/Qwen/Qwen2.5-VL-72B-Instruct/resolve/main/tokenizer_config.json"
-        ),
-        "chat_template": hf_endpoint_url(
-            "/Qwen/Qwen2.5-VL-72B-Instruct/resolve/main/chat_template.json"
-        ),
-        "weight": [
-            hf_endpoint_url(
-                f"/Qwen/Qwen2.5-VL-72B-Instruct/resolve/main/model-{str(i).rjust(5, '0')}-of-00038.safetensors"
-            )
-            for i in range(1, 39)
+            for i in range(1, 5)
         ],
     },
 }

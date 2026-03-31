@@ -312,10 +312,6 @@ class PeftWeightLoaderMixin(nn.Module):
             self.__base_state_dict__ = None
 
 
-from unitorch.models.peft.modeling_bloom import (
-    BloomLoraForClassification,
-    BloomLoraForGeneration,
-)
 from unitorch.models.peft.modeling_clip import (
     ClipLoraForMatching,
     ClipLoraForTextMatching,
@@ -339,8 +335,8 @@ from unitorch.models.peft.modeling_qwen import (
     QWen3GRPOLoraForGeneration,
 )
 from unitorch.models.peft.modeling_qwen_vl import (
-    QWen2_5VLLoraForGeneration,
-    QWen2_5VLDPOLoraForGeneration,
+    QWen3VLLoraForGeneration,
+    QWen3VLDPOLoraForGeneration,
 )
 
 if is_diffusers_available():

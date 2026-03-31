@@ -6,7 +6,6 @@ import logging
 import torch
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from torch import autocast
-from transformers.utils import is_remote_url
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.peft import (
     MistralLoraForClassification as _MistralLoraForClassification,
@@ -30,7 +29,6 @@ class MistralLoraForClassification(_MistralLoraForClassification):
     def __init__(
         self,
         config_path: str,
-        quant_config_path: Optional[str] = None,
         lora_r: Optional[int] = 16,
         lora_alpha: Optional[int] = 32,
         lora_dropout: Optional[float] = 0.05,
@@ -54,7 +52,6 @@ class MistralLoraForClassification(_MistralLoraForClassification):
         """
         super().__init__(
             config_path=config_path,
-            quant_config_path=quant_config_path,
             lora_r=lora_r,
             lora_alpha=lora_alpha,
             lora_dropout=lora_dropout,
@@ -88,10 +85,6 @@ class MistralLoraForClassification(_MistralLoraForClassification):
         )
         config_path = cached_path(config_path)
 
-        quant_config_path = config.getoption("quant_config_path", None)
-        if quant_config_path is not None:
-            quant_config_path = cached_path(quant_config_path)
-
         lora_r = config.getoption("lora_r", 16)
         lora_alpha = config.getoption("lora_alpha", 32)
         lora_dropout = config.getoption("lora_dropout", 0.05)
@@ -103,7 +96,6 @@ class MistralLoraForClassification(_MistralLoraForClassification):
 
         inst = cls(
             config_path,
-            quant_config_path=quant_config_path,
             lora_r=lora_r,
             lora_alpha=lora_alpha,
             lora_dropout=lora_dropout,
@@ -172,7 +164,6 @@ class MistralLoraForGeneration(_MistralLoraForGeneration):
     def __init__(
         self,
         config_path: str,
-        quant_config_path: Optional[str] = None,
         lora_r: Optional[int] = 16,
         lora_alpha: Optional[int] = 32,
         lora_dropout: Optional[float] = 0.05,
@@ -194,7 +185,6 @@ class MistralLoraForGeneration(_MistralLoraForGeneration):
         """
         super().__init__(
             config_path=config_path,
-            quant_config_path=quant_config_path,
             lora_r=lora_r,
             lora_alpha=lora_alpha,
             lora_dropout=lora_dropout,
@@ -226,9 +216,6 @@ class MistralLoraForGeneration(_MistralLoraForGeneration):
             nested_dict_value(pretrained_mistral_infos, pretrained_name, "config"),
         )
         config_path = cached_path(config_path)
-        quant_config_path = config.getoption("quant_config_path", None)
-        if quant_config_path is not None:
-            quant_config_path = cached_path(quant_config_path)
 
         lora_r = config.getoption("lora_r", 16)
         lora_alpha = config.getoption("lora_alpha", 32)
@@ -240,7 +227,6 @@ class MistralLoraForGeneration(_MistralLoraForGeneration):
 
         inst = cls(
             config_path,
-            quant_config_path=quant_config_path,
             lora_r=lora_r,
             lora_alpha=lora_alpha,
             lora_dropout=lora_dropout,

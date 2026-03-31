@@ -8,7 +8,7 @@ import pandas as pd
 from PIL import Image
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from unitorch.utils import is_remote_url
-from unitorch.models.qwen import QWen2_5VLForGeneration as _QWen2_5VLForGeneration
+from unitorch.models.qwen import QWen3VLForGeneration as _QWen3VLForGeneration
 from unitorch.models.qwen import QWenVLProcessor
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.cli import (
@@ -24,7 +24,7 @@ from unitorch.cli.models.qwen import (
 )
 
 
-class QWen2_5VLForGenerationPipeline(_QWen2_5VLForGeneration):
+class QWen3VLForGenerationPipeline(_QWen3VLForGeneration):
     def __init__(
         self,
         config_path: str,
@@ -33,7 +33,6 @@ class QWen2_5VLForGenerationPipeline(_QWen2_5VLForGeneration):
         tokenizer_config: Optional[str] = None,
         special_tokens_map: Optional[str] = None,
         chat_template: Optional[str] = None,
-        quant_config_path: Optional[str] = None,
         max_seq_length: Optional[int] = 12800,
         max_gen_seq_length: Optional[int] = 512,
         weight_path: Optional[Union[str, List[str]]] = None,
@@ -41,11 +40,9 @@ class QWen2_5VLForGenerationPipeline(_QWen2_5VLForGeneration):
         enable_cpu_offload: Optional[bool] = True,
         device: Optional[Union[str, int]] = "cpu",
     ):
-        if device == "cpu":
-            quant_config_path = None
+
         super().__init__(
             config_path=config_path,
-            quant_config_path=quant_config_path,
         )
         self.processor = QWenVLProcessor(
             tokenizer_file=tokenizer_file,
@@ -65,7 +62,7 @@ class QWen2_5VLForGenerationPipeline(_QWen2_5VLForGeneration):
         self.eval()
 
     @classmethod
-    @add_default_section_for_init("core/pipeline/qwen2_5_vl")
+    @add_default_section_for_init("core/pipeline/qwen3_vl")
     def from_core_configure(
         cls,
         config,
@@ -73,14 +70,13 @@ class QWen2_5VLForGenerationPipeline(_QWen2_5VLForGeneration):
         config_path: Optional[str] = None,
         tokenizer_file: Optional[str] = None,
         vision_config_path: Optional[str] = None,
-        quant_config_path: Optional[str] = None,
         pretrained_weight_path: Optional[str] = None,
         device: Optional[str] = None,
         **kwargs,
     ):
-        config.set_default_section("core/pipeline/qwen3")
+        config.set_default_section("core/pipeline/qwen3_vl")
         pretrained_name = pretrained_name or config.getoption(
-            "pretrained_name", "qwen2_5-vl-3b-instruct"
+            "pretrained_name", "qwen3-vl-8b-instruct"
         )
 
         config_path = config_path or config.getoption("config_path", None)
@@ -140,12 +136,6 @@ class QWen2_5VLForGenerationPipeline(_QWen2_5VLForGeneration):
             cached_path(chat_template) if chat_template is not None else None
         )
 
-        quant_config_path = quant_config_path or config.getoption(
-            "quant_config_path", None
-        )
-        if quant_config_path is not None:
-            quant_config_path = cached_path(quant_config_path)
-
         max_seq_length = config.getoption("max_seq_length", 12800)
         max_gen_seq_length = config.getoption("max_gen_seq_length", 512)
         enable_cpu_offload = config.getoption("enable_cpu_offload", True)
@@ -166,7 +156,6 @@ class QWen2_5VLForGenerationPipeline(_QWen2_5VLForGeneration):
             tokenizer_config=tokenizer_config,
             special_tokens_map=special_tokens_map,
             chat_template=chat_template,
-            quant_config_path=quant_config_path,
             max_seq_length=max_seq_length,
             max_gen_seq_length=max_gen_seq_length,
             weight_path=weight_path,
@@ -177,7 +166,7 @@ class QWen2_5VLForGenerationPipeline(_QWen2_5VLForGeneration):
         return inst
 
     @torch.no_grad()
-    @add_default_section_for_function("core/pipeline/qwen2_5_vl")
+    @add_default_section_for_function("core/pipeline/qwen3_vl")
     def __call__(
         self,
         prompt: str,

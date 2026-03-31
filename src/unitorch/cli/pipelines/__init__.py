@@ -43,7 +43,6 @@ else:
     Schedulers = {}
 
 import unitorch.cli.pipelines.blip
-import unitorch.cli.pipelines.bloom
 import unitorch.cli.pipelines.bria
 import unitorch.cli.pipelines.detr
 import unitorch.cli.pipelines.dpt

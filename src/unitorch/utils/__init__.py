@@ -25,8 +25,10 @@ from pathlib import Path
 from zipfile import ZipFile, is_zipfile
 from transformers import AddedToken
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
-from transformers.utils.hub import is_remote_url, urlparse, http_get, http_user_agent
-from huggingface_hub import HfFolder
+from urllib.parse import urlparse
+from transformers.utils.hub import http_user_agent
+from huggingface_hub.file_download import http_get
+from huggingface_hub import get_token
 from huggingface_hub.utils import hf_raise_for_status
 
 from unitorch import get_cache_dir
@@ -68,6 +70,11 @@ from unitorch.utils.torch_utils import (
 )
 
 
+def is_remote_url(url_or_filename):
+    parsed = urlparse(url_or_filename)
+    return parsed.scheme in ("http", "https")
+
+
 def url_to_filename(url: str, etag: Optional[str] = None) -> str:
     url_bytes = url.encode("utf-8")
     filename = sha256(url_bytes).hexdigest()
@@ -104,7 +111,7 @@ def get_from_cache(
     if isinstance(use_auth_token, str):
         headers["authorization"] = f"Bearer {use_auth_token}"
     elif use_auth_token:
-        token = HfFolder.get_token()
+        token = get_token()
         if token is None:
             raise EnvironmentError(
                 "You specified use_auth_token=True, but a huggingface token was not found."

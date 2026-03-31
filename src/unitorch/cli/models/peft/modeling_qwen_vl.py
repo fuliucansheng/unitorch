@@ -6,11 +6,10 @@ import logging
 import torch
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from torch import autocast
-from transformers.utils import is_remote_url
 from unitorch.utils import pop_value, nested_dict_value, is_bfloat16_available
 from unitorch.models.peft import (
-    QWen2_5VLLoraForGeneration as _QWen2_5VLLoraForGeneration,
-    QWen2_5VLDPOLoraForGeneration as _QWen2_5VLDPOLoraForGeneration,
+    QWen3VLLoraForGeneration as _QWen3VLLoraForGeneration,
+    QWen3VLDPOLoraForGeneration as _QWen3VLDPOLoraForGeneration,
 )
 from unitorch.cli import (
     cached_path,
@@ -23,10 +22,8 @@ from unitorch.cli.models import ClassificationOutputs, GenerationOutputs, LossOu
 from unitorch.cli.models.qwen import pretrained_qwen_infos
 
 
-@register_model(
-    "core/model/generation/peft/lora/qwen2_5_vl", generation_model_decorator
-)
-class QWen2_5VLLoraForGeneration(_QWen2_5VLLoraForGeneration):
+@register_model("core/model/generation/peft/lora/qwen3_vl", generation_model_decorator)
+class QWen3VLLoraForGeneration(_QWen3VLLoraForGeneration):
     """QWen3Lora model for generation tasks."""
 
     def __init__(
@@ -62,7 +59,7 @@ class QWen2_5VLLoraForGeneration(_QWen2_5VLLoraForGeneration):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/generation/peft/lora/qwen2_5_vl")
+    @add_default_section_for_init("core/model/generation/peft/lora/qwen3_vl")
     def from_core_configure(cls, config, **kwargs):
         """
         Create an instance of QWen3LoraForGeneration from a core configuration.
@@ -74,8 +71,8 @@ class QWen2_5VLLoraForGeneration(_QWen2_5VLLoraForGeneration):
         Returns:
             QWen3LoraForGeneration: The initialized QWen3LoraForGeneration instance.
         """
-        config.set_default_section("core/model/generation/peft/lora/qwen2_5_vl")
-        pretrained_name = config.getoption("pretrained_name", "qwen2_5-vl-3b-instruct")
+        config.set_default_section("core/model/generation/peft/lora/qwen3_vl")
+        pretrained_name = config.getoption("pretrained_name", "qwen3-vl-8b-instruct")
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
             config_path,
@@ -241,9 +238,9 @@ class QWen2_5VLLoraForGeneration(_QWen2_5VLLoraForGeneration):
 
 
 @register_model(
-    "core/model/generation/peft/dpo/lora/qwen2_5_vl", generation_model_decorator
+    "core/model/generation/peft/dpo/lora/qwen3_vl", generation_model_decorator
 )
-class QWen2_5VLDPOLoraForGeneration(_QWen2_5VLDPOLoraForGeneration):
+class QWen3VLDPOLoraForGeneration(_QWen3VLDPOLoraForGeneration):
     """QWen3Lora model for generation tasks."""
 
     def __init__(
@@ -281,7 +278,7 @@ class QWen2_5VLDPOLoraForGeneration(_QWen2_5VLDPOLoraForGeneration):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/generation/peft/dpo/lora/qwen2_5_vl")
+    @add_default_section_for_init("core/model/generation/peft/dpo/lora/qwen3_vl")
     def from_core_configure(cls, config, **kwargs):
         """
         Create an instance of QWen3LoraForGeneration from a core configuration.
@@ -293,8 +290,8 @@ class QWen2_5VLDPOLoraForGeneration(_QWen2_5VLDPOLoraForGeneration):
         Returns:
             QWen3LoraForGeneration: The initialized QWen3LoraForGeneration instance.
         """
-        config.set_default_section("core/model/generation/peft/dpo/lora/qwen2_5_vl")
-        pretrained_name = config.getoption("pretrained_name", "qwen2_5-vl-3b-instruct")
+        config.set_default_section("core/model/generation/peft/dpo/lora/qwen3_vl")
+        pretrained_name = config.getoption("pretrained_name", "qwen3-vl-8b-instruct")
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
             config_path,

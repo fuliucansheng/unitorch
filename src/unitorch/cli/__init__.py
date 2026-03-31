@@ -12,9 +12,8 @@ import importlib_resources
 import importlib.metadata as importlib_metadata
 from functools import partial
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
-from transformers.utils import is_remote_url
 from unitorch.utils import cached_path as hf_cached_path
-from unitorch.utils import rpartial
+from unitorch.utils import rpartial, is_remote_url
 from unitorch.cli.core import CoreConfigureParser
 
 

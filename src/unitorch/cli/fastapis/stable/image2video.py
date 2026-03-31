@@ -56,7 +56,6 @@ class StableForImage2VideoFastAPIPipeline(StableForImage2VideoGeneration):
         image_process_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
-        quant_config_path: Optional[str] = None,
         weight_path: Optional[Union[str, List[str]]] = None,
         state_dict: Optional[Dict[str, Any]] = None,
         device: Optional[Union[str, int]] = "cpu",
@@ -68,7 +67,6 @@ class StableForImage2VideoFastAPIPipeline(StableForImage2VideoGeneration):
             image_process_config_path=image_process_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
-            quant_config_path=quant_config_path,
         )
         self.processor = StableVideoProcessor(
             vision_config_path=image_process_config_path,
@@ -105,7 +103,6 @@ class StableForImage2VideoFastAPIPipeline(StableForImage2VideoGeneration):
         vae_config_path: Optional[str] = None,
         scheduler_config_path: Optional[str] = None,
         image_process_config_path: Optional[str] = None,
-        quant_config_path: Optional[str] = None,
         pretrained_weight_path: Optional[str] = None,
         device: Optional[str] = None,
         **kwargs,
@@ -155,10 +152,6 @@ class StableForImage2VideoFastAPIPipeline(StableForImage2VideoGeneration):
         )
         image_process_config_path = cached_path(image_process_config_path)
 
-        quant_config_path = config.getoption("quant_config_path", quant_config_path)
-        if quant_config_path is not None:
-            quant_config_path = cached_path(quant_config_path)
-
         weight_path = config.getoption("pretrained_weight_path", pretrained_weight_path)
         device = config.getoption("device", "cpu") if device is None else device
         enable_cpu_offload = config.getoption("enable_cpu_offload", False)
@@ -177,7 +170,6 @@ class StableForImage2VideoFastAPIPipeline(StableForImage2VideoGeneration):
             image_process_config_path=image_process_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
-            quant_config_path=quant_config_path,
             weight_path=weight_path,
             state_dict=state_dict,
             device=device,

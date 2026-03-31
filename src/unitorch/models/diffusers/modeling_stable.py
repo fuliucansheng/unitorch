@@ -40,8 +40,6 @@ from diffusers.pipelines import (
 from unitorch.models import (
     GenericModel,
     GenericOutputs,
-    QuantizationConfig,
-    QuantizationMixin,
 )
 from unitorch.models.peft import PeftWeightLoaderMixin
 
@@ -74,7 +72,7 @@ def compute_snr(timesteps, noise_scheduler):
     return snr
 
 
-class GenericStableModel(GenericModel, QuantizationMixin, PeftWeightLoaderMixin):
+class GenericStableModel(GenericModel, PeftWeightLoaderMixin):
     prefix_keys_in_state_dict = {
         # unet weights
         "^conv_in.*": "unet.",
@@ -107,7 +105,6 @@ class GenericStableModel(GenericModel, QuantizationMixin, PeftWeightLoaderMixin)
         text_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
-        quant_config_path: Optional[str] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         freeze_vae_encoder: Optional[bool] = True,
@@ -154,10 +151,6 @@ class GenericStableModel(GenericModel, QuantizationMixin, PeftWeightLoaderMixin)
             for param in self.unet.parameters():
                 param.requires_grad = False
 
-        if quant_config_path is not None:
-            self.quant_config = QuantizationConfig.from_json_file(quant_config_path)
-            self.quantize(self.quant_config, ignore_modules=["lm_head", "unet", "vae"])
-
     def get_prompt_outputs(
         self,
         input_ids: torch.Tensor,
@@ -200,7 +193,6 @@ class StableForText2ImageGeneration(GenericStableModel):
         text_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
-        quant_config_path: Optional[str] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         freeze_vae_encoder: Optional[bool] = True,
@@ -213,7 +205,6 @@ class StableForText2ImageGeneration(GenericStableModel):
             text_config_path=text_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
-            quant_config_path=quant_config_path,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             freeze_vae_encoder=freeze_vae_encoder,
@@ -326,7 +317,6 @@ class StableForImage2ImageGeneration(GenericStableModel):
         text_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
-        quant_config_path: Optional[str] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         freeze_vae_encoder: Optional[bool] = True,
@@ -339,7 +329,6 @@ class StableForImage2ImageGeneration(GenericStableModel):
             text_config_path=text_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
-            quant_config_path=quant_config_path,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             freeze_vae_encoder=freeze_vae_encoder,
@@ -404,7 +393,6 @@ class StableForImageInpainting(GenericStableModel):
         text_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
-        quant_config_path: Optional[str] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         freeze_vae_encoder: Optional[bool] = True,
@@ -417,7 +405,6 @@ class StableForImageInpainting(GenericStableModel):
             text_config_path=text_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
-            quant_config_path=quant_config_path,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             freeze_vae_encoder=freeze_vae_encoder,
@@ -554,7 +541,6 @@ class StableForImageResolution(GenericStableModel):
         text_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
-        quant_config_path: Optional[str] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         freeze_vae_encoder: Optional[bool] = True,
@@ -568,7 +554,6 @@ class StableForImageResolution(GenericStableModel):
             text_config_path=text_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
-            quant_config_path=quant_config_path,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             freeze_vae_encoder=freeze_vae_encoder,
@@ -962,7 +947,6 @@ class StableForImage2VideoGeneration(GenericModel):
         image_process_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
-        quant_config_path: Optional[str] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 25,
         freeze_vae_encoder: Optional[bool] = True,
@@ -1008,10 +992,6 @@ class StableForImage2VideoGeneration(GenericModel):
         if freeze_vae_encoder:
             for param in self.vae.parameters():
                 param.requires_grad = False
-
-        if quant_config_path is not None:
-            self.quant_config = QuantizationConfig.from_json_file(quant_config_path)
-            self.quantize(self.quant_config, ignore_modules=["lm_head", "unet", "vae"])
 
     def forward(
         self,

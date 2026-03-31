@@ -12,7 +12,6 @@ import torch.nn.functional as F
 import transformers
 import torch.distributed as dist
 from torch import autocast
-from transformers.utils import is_remote_url
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from megatron.core import mpu
 from megatron.core.transformer import TransformerConfig

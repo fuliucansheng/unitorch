@@ -22,14 +22,12 @@ from diffusers.pipelines import (
 from unitorch.models import (
     GenericModel,
     GenericOutputs,
-    QuantizationConfig,
-    QuantizationMixin,
 )
 from unitorch.models.peft import PeftWeightLoaderMixin
 from unitorch.models.diffusers import compute_snr
 
 
-class GenericStableXLModel(GenericModel, QuantizationMixin, PeftWeightLoaderMixin):
+class GenericStableXLModel(GenericModel, PeftWeightLoaderMixin):
     prefix_keys_in_state_dict = {
         # unet weights
         "^add_embedding.*": "unet.",
@@ -61,7 +59,6 @@ class GenericStableXLModel(GenericModel, QuantizationMixin, PeftWeightLoaderMixi
         text2_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
-        quant_config_path: Optional[str] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         freeze_vae_encoder: Optional[bool] = True,
@@ -109,10 +106,6 @@ class GenericStableXLModel(GenericModel, QuantizationMixin, PeftWeightLoaderMixi
         if freeze_unet_encoder:
             for param in self.unet.parameters():
                 param.requires_grad = False
-
-        if quant_config_path is not None:
-            self.quant_config = QuantizationConfig.from_json_file(quant_config_path)
-            self.quantize(self.quant_config, ignore_modules=["lm_head", "unet", "vae"])
 
     def get_prompt_outputs(
         self,
@@ -198,7 +191,6 @@ class StableXLForText2ImageGeneration(GenericStableXLModel):
         text2_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
-        quant_config_path: Optional[str] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         freeze_vae_encoder: Optional[bool] = True,
@@ -212,7 +204,6 @@ class StableXLForText2ImageGeneration(GenericStableXLModel):
             text2_config_path=text2_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
-            quant_config_path=quant_config_path,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             freeze_vae_encoder=freeze_vae_encoder,
@@ -359,7 +350,6 @@ class StableXLForImage2ImageGeneration(GenericStableXLModel):
         text2_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
-        quant_config_path: Optional[str] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         freeze_vae_encoder: Optional[bool] = True,
@@ -373,7 +363,6 @@ class StableXLForImage2ImageGeneration(GenericStableXLModel):
             text2_config_path=text2_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
-            quant_config_path=quant_config_path,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             freeze_vae_encoder=freeze_vae_encoder,
@@ -449,7 +438,6 @@ class StableXLForImageInpainting(GenericStableXLModel):
         text2_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
-        quant_config_path: Optional[str] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         freeze_vae_encoder: Optional[bool] = True,
@@ -463,7 +451,6 @@ class StableXLForImageInpainting(GenericStableXLModel):
             text2_config_path=text2_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
-            quant_config_path=quant_config_path,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             freeze_vae_encoder=freeze_vae_encoder,

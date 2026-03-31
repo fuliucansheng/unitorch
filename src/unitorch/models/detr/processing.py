@@ -8,7 +8,7 @@ import numpy as np
 from PIL import Image
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from torchvision.transforms import Resize, CenterCrop, ToTensor, Normalize, Compose
-from transformers import DetrFeatureExtractor
+from transformers import DetrImageProcessor
 from unitorch.utils import resize_shortest_edge, pop_value
 from unitorch.models import GenericOutputs
 
@@ -26,7 +26,7 @@ class DetrProcessor(object):
             min_size_test: resize shortest edge parameters
             max_size_test: resize shortest edge parameters
         """
-        self.vision_processor = DetrFeatureExtractor.from_json_file(vision_config_path)
+        self.vision_processor = DetrImageProcessor.from_json_file(vision_config_path)
 
         self.image_mean = self.vision_processor.image_mean
         self.image_std = self.vision_processor.image_std

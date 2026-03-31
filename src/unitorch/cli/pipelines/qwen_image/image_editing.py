@@ -47,7 +47,6 @@ class QWenImageForImageEditingGenerationPipeline(GenericQWenImageModel):
         vision_config_path: str,
         tokenizer_config: Optional[str] = None,
         special_tokens_map: Optional[str] = None,
-        quant_config_path: Optional[str] = None,
         max_seq_length: Optional[int] = 12800,
         weight_path: Optional[Union[str, List[str]]] = None,
         state_dict: Optional[Dict[str, Any]] = None,
@@ -59,7 +58,6 @@ class QWenImageForImageEditingGenerationPipeline(GenericQWenImageModel):
             text_config_path=text_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
-            quant_config_path=quant_config_path,
         )
         self.processor = QWenImageProcessor(
             vocab_path=vocab_path,
@@ -90,7 +88,6 @@ class QWenImageForImageEditingGenerationPipeline(GenericQWenImageModel):
         vocab_path: Optional[str] = None,
         merge_path: Optional[str] = None,
         vision_config_path: Optional[str] = None,
-        quant_config_path: Optional[str] = None,
         pretrained_weight_path: Optional[str] = None,
         device: Optional[str] = None,
         **kwargs,
@@ -176,12 +173,6 @@ class QWenImageForImageEditingGenerationPipeline(GenericQWenImageModel):
         )
         vision_config_path = cached_path(vision_config_path)
 
-        quant_config_path = quant_config_path or config.getoption(
-            "quant_config_path", None
-        )
-        if quant_config_path is not None:
-            quant_config_path = cached_path(quant_config_path)
-
         max_seq_length = config.getoption("max_seq_length", 12800)
         weight_path = pretrained_weight_path or config.getoption(
             "pretrained_weight_path", None
@@ -220,7 +211,6 @@ class QWenImageForImageEditingGenerationPipeline(GenericQWenImageModel):
             tokenizer_config=tokenizer_config,
             special_tokens_map=special_tokens_map,
             vision_config_path=vision_config_path,
-            quant_config_path=quant_config_path,
             max_seq_length=max_seq_length,
             weight_path=weight_path,
             state_dict=state_dict,

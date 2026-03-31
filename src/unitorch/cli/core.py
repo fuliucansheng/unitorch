@@ -11,7 +11,6 @@ import torch.nn as nn
 import configparser
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from copy import copy, deepcopy
-from transformers.utils import is_remote_url
 
 
 # core config class

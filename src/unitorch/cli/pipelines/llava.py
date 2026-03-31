@@ -35,7 +35,6 @@ class LlavaMistralClipForGenerationPipeline(_LlavaMistralClipForGeneration):
         tokenizer_config: Optional[str] = None,
         special_tokens_map: Optional[str] = None,
         chat_template: Optional[str] = None,
-        quant_config_path: Optional[str] = None,
         max_seq_length: Optional[int] = 512,
         max_gen_seq_length: Optional[int] = 512,
         weight_path: Optional[Union[str, List[str]]] = None,
@@ -43,11 +42,9 @@ class LlavaMistralClipForGenerationPipeline(_LlavaMistralClipForGeneration):
         enable_cpu_offload: Optional[bool] = True,
         device: Optional[Union[str, int]] = "cpu",
     ):
-        if device == "cpu":
-            quant_config_path = None
+
         super().__init__(
             config_path=config_path,
-            quant_config_path=quant_config_path,
         )
         self.processor = LlavaMistralClipProcessor(
             tokenizer_file=tokenizer_file,
@@ -75,7 +72,6 @@ class LlavaMistralClipForGenerationPipeline(_LlavaMistralClipForGeneration):
         config_path: Optional[str] = None,
         vision_config_path: Optional[str] = None,
         tokenizer_file: Optional[str] = None,
-        quant_config_path: Optional[str] = None,
         pretrained_weight_path: Optional[str] = None,
         device: Optional[str] = None,
         **kwargs,
@@ -142,12 +138,6 @@ class LlavaMistralClipForGenerationPipeline(_LlavaMistralClipForGeneration):
         )
         vision_config_path = cached_path(vision_config_path)
 
-        quant_config_path = quant_config_path or config.getoption(
-            "quant_config_path", None
-        )
-        if quant_config_path is not None:
-            quant_config_path = cached_path(quant_config_path)
-
         max_seq_length = config.getoption("max_seq_length", 512)
         max_gen_seq_length = config.getoption("max_gen_seq_length", 512)
         enable_cpu_offload = config.getoption("enable_cpu_offload", True)
@@ -168,7 +158,6 @@ class LlavaMistralClipForGenerationPipeline(_LlavaMistralClipForGeneration):
             special_tokens_map=special_tokens_map,
             chat_template=chat_template,
             vision_config_path=vision_config_path,
-            quant_config_path=quant_config_path,
             max_seq_length=max_seq_length,
             max_gen_seq_length=max_gen_seq_length,
             weight_path=weight_path,
@@ -301,7 +290,6 @@ class LlavaLlamaSiglipForGenerationPipeline(_LlavaLlamaSiglipForGeneration):
         tokenizer_config: Optional[str] = None,
         special_tokens_map: Optional[str] = None,
         chat_template: Optional[str] = None,
-        quant_config_path: Optional[str] = None,
         max_seq_length: Optional[int] = 512,
         max_gen_seq_length: Optional[int] = 512,
         weight_path: Optional[Union[str, List[str]]] = None,
@@ -309,11 +297,9 @@ class LlavaLlamaSiglipForGenerationPipeline(_LlavaLlamaSiglipForGeneration):
         enable_cpu_offload: Optional[bool] = True,
         device: Optional[Union[str, int]] = "cpu",
     ):
-        if device == "cpu":
-            quant_config_path = None
+
         super().__init__(
             config_path=config_path,
-            quant_config_path=quant_config_path,
         )
         self.processor = LlavaLlamaSiglipProcessor(
             tokenizer_file=tokenizer_file,
@@ -341,7 +327,6 @@ class LlavaLlamaSiglipForGenerationPipeline(_LlavaLlamaSiglipForGeneration):
         config_path: Optional[str] = None,
         vision_config_path: Optional[str] = None,
         tokenizer_file: Optional[str] = None,
-        quant_config_path: Optional[str] = None,
         pretrained_weight_path: Optional[str] = None,
         device: Optional[str] = None,
         **kwargs,
@@ -408,12 +393,6 @@ class LlavaLlamaSiglipForGenerationPipeline(_LlavaLlamaSiglipForGeneration):
         )
         vision_config_path = cached_path(vision_config_path)
 
-        quant_config_path = quant_config_path or config.getoption(
-            "quant_config_path", None
-        )
-        if quant_config_path is not None:
-            quant_config_path = cached_path(quant_config_path)
-
         max_seq_length = config.getoption("max_seq_length", 128)
         max_gen_seq_length = config.getoption("max_gen_seq_length", 512)
         device = config.getoption("device", "cpu") if device is None else device
@@ -434,7 +413,6 @@ class LlavaLlamaSiglipForGenerationPipeline(_LlavaLlamaSiglipForGeneration):
             tokenizer_config=tokenizer_config,
             special_tokens_map=special_tokens_map,
             chat_template=chat_template,
-            quant_config_path=quant_config_path,
             max_seq_length=max_seq_length,
             max_gen_seq_length=max_gen_seq_length,
             weight_path=weight_path,

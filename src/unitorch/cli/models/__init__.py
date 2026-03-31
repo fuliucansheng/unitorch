@@ -82,7 +82,6 @@ import unitorch.cli.models.bart
 import unitorch.cli.models.bert
 import unitorch.cli.models.beit
 import unitorch.cli.models.blip
-import unitorch.cli.models.bloom
 import unitorch.cli.models.bria
 import unitorch.cli.models.chinese_clip
 import unitorch.cli.models.clip
@@ -96,7 +95,6 @@ import unitorch.cli.models.llava
 import unitorch.cli.models.mask2former
 import unitorch.cli.models.mbart
 import unitorch.cli.models.mistral
-import unitorch.cli.models.mt5
 import unitorch.cli.models.pegasus
 import unitorch.cli.models.peft
 import unitorch.cli.models.qwen

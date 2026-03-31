@@ -36,8 +36,6 @@ from diffusers.pipelines.flux.modeling_flux import ReduxImageEncoder
 from unitorch.models import (
     GenericModel,
     GenericOutputs,
-    QuantizationConfig,
-    QuantizationMixin,
 )
 from unitorch.models.peft import PeftWeightLoaderMixin
 from unitorch.models.diffusers import compute_snr
@@ -87,7 +85,7 @@ def _unpack_latents(latents, height, width, vae_scale_factor):
     return latents
 
 
-class GenericStableFluxModel(GenericModel, QuantizationMixin, PeftWeightLoaderMixin):
+class GenericStableFluxModel(GenericModel, PeftWeightLoaderMixin):
     prefix_keys_in_state_dict = {
         # vae weights
         "^encoder.*": "vae.",
@@ -110,7 +108,6 @@ class GenericStableFluxModel(GenericModel, QuantizationMixin, PeftWeightLoaderMi
         text2_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
-        quant_config_path: Optional[str] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         freeze_vae_encoder: Optional[bool] = True,
@@ -162,12 +159,6 @@ class GenericStableFluxModel(GenericModel, QuantizationMixin, PeftWeightLoaderMi
         if freeze_transformer_encoder:
             for param in self.transformer.parameters():
                 param.requires_grad = False
-
-        if quant_config_path is not None:
-            self.quant_config = QuantizationConfig.from_json_file(quant_config_path)
-            self.quantize(
-                self.quant_config, ignore_modules=["lm_head", "transformer", "vae"]
-            )
 
     def get_sigmas(self, timesteps, n_dim=4, dtype=torch.float32):
         sigmas = self.scheduler.sigmas.to(device=self.device, dtype=dtype)
@@ -231,7 +222,6 @@ class StableFluxForText2ImageGeneration(GenericStableFluxModel):
         text2_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
-        quant_config_path: Optional[str] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         freeze_vae_encoder: Optional[bool] = True,
@@ -247,7 +237,6 @@ class StableFluxForText2ImageGeneration(GenericStableFluxModel):
             text2_config_path=text2_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
-            quant_config_path=quant_config_path,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             freeze_vae_encoder=freeze_vae_encoder,
@@ -405,7 +394,6 @@ class StableFluxForImage2ImageGeneration(GenericStableFluxModel):
         text2_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
-        quant_config_path: Optional[str] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         freeze_vae_encoder: Optional[bool] = True,
@@ -421,7 +409,6 @@ class StableFluxForImage2ImageGeneration(GenericStableFluxModel):
             text2_config_path=text2_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
-            quant_config_path=quant_config_path,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             freeze_vae_encoder=freeze_vae_encoder,
@@ -492,7 +479,6 @@ class StableFluxForImageReduxGeneration(GenericStableFluxModel):
         scheduler_config_path: str,
         image_config_path: str,
         redux_image_config_path: str,
-        quant_config_path: Optional[str] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         freeze_vae_encoder: Optional[bool] = True,
@@ -509,7 +495,6 @@ class StableFluxForImageReduxGeneration(GenericStableFluxModel):
             text2_config_path=text2_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
-            quant_config_path=quant_config_path,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             freeze_vae_encoder=freeze_vae_encoder,
@@ -702,7 +687,6 @@ class StableFluxForImageInpainting(GenericStableFluxModel):
         text2_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
-        quant_config_path: Optional[str] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         freeze_vae_encoder: Optional[bool] = True,
@@ -718,7 +702,6 @@ class StableFluxForImageInpainting(GenericStableFluxModel):
             text2_config_path=text2_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
-            quant_config_path=quant_config_path,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             freeze_vae_encoder=freeze_vae_encoder,
@@ -912,7 +895,6 @@ class StableFluxForKontext2ImageGeneration(GenericStableFluxModel):
         text2_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
-        quant_config_path: Optional[str] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         freeze_vae_encoder: Optional[bool] = True,
@@ -928,7 +910,6 @@ class StableFluxForKontext2ImageGeneration(GenericStableFluxModel):
             text2_config_path=text2_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
-            quant_config_path=quant_config_path,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             freeze_vae_encoder=freeze_vae_encoder,

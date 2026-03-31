@@ -71,7 +71,6 @@ from unitorch.utils.webui_utils import (
 
 import unitorch.cli.webuis.tools
 import unitorch.cli.webuis.blip
-import unitorch.cli.webuis.bloom
 import unitorch.cli.webuis.bria
 import unitorch.cli.webuis.clip
 import unitorch.cli.webuis.detr

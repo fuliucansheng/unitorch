@@ -49,7 +49,6 @@ class StableForImage2ImageGenerationPipeline(GenericStableModel):
         scheduler_config_path: str,
         vocab_path: str,
         merge_path: str,
-        quant_config_path: Optional[str] = None,
         max_seq_length: Optional[int] = 77,
         pad_token: Optional[str] = "<|endoftext|>",
         weight_path: Optional[Union[str, List[str]]] = None,
@@ -62,7 +61,6 @@ class StableForImage2ImageGenerationPipeline(GenericStableModel):
             text_config_path=text_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
-            quant_config_path=quant_config_path,
         )
         self.processor = StableProcessor(
             vocab_path=vocab_path,
@@ -90,7 +88,6 @@ class StableForImage2ImageGenerationPipeline(GenericStableModel):
         scheduler_config_path: Optional[str] = None,
         vocab_path: Optional[str] = None,
         merge_path: Optional[str] = None,
-        quant_config_path: Optional[str] = None,
         pretrained_weight_path: Optional[str] = None,
         device: Optional[str] = None,
         **kwargs,
@@ -147,12 +144,6 @@ class StableForImage2ImageGenerationPipeline(GenericStableModel):
         )
         merge_path = cached_path(merge_path)
 
-        quant_config_path = quant_config_path or config.getoption(
-            "quant_config_path", None
-        )
-        if quant_config_path is not None:
-            quant_config_path = cached_path(quant_config_path)
-
         max_seq_length = config.getoption("max_seq_length", 77)
         pad_token = config.getoption("pad_token", "<|endoftext|>")
         weight_path = pretrained_weight_path or config.getoption(
@@ -176,7 +167,6 @@ class StableForImage2ImageGenerationPipeline(GenericStableModel):
             scheduler_config_path=scheduler_config_path,
             vocab_path=vocab_path,
             merge_path=merge_path,
-            quant_config_path=quant_config_path,
             pad_token=pad_token,
             max_seq_length=max_seq_length,
             weight_path=weight_path,
