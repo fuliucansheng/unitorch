@@ -39,7 +39,7 @@ class WanForText2VideoGeneration(_WanForText2VideoGeneration):
         vae_config_path: str,
         scheduler_config_path: str,
         config2_path: Optional[str] = None,
-        quant_config_path: Optional[str] = None,
+        
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         freeze_vae_encoder: Optional[bool] = True,
@@ -54,7 +54,7 @@ class WanForText2VideoGeneration(_WanForText2VideoGeneration):
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
             config2_path=config2_path,
-            quant_config_path=quant_config_path,
+            
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             freeze_vae_encoder=freeze_vae_encoder,
@@ -108,9 +108,7 @@ class WanForText2VideoGeneration(_WanForText2VideoGeneration):
         )
         scheduler_config_path = cached_path(scheduler_config_path)
 
-        quant_config_path = config.getoption("quant_config_path", None)
-        if quant_config_path is not None:
-            quant_config_path = cached_path(quant_config_path)
+        
 
         num_train_timesteps = config.getoption("num_train_timesteps", 1000)
         num_infer_timesteps = config.getoption("num_infer_timesteps", 50)
@@ -126,7 +124,7 @@ class WanForText2VideoGeneration(_WanForText2VideoGeneration):
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
             config2_path=config2_path,
-            quant_config_path=quant_config_path,
+            
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             freeze_vae_encoder=freeze_vae_encoder,
@@ -251,7 +249,7 @@ class WanForImage2VideoGeneration(_WanForImage2VideoGeneration):
         vae_config_path: str,
         scheduler_config_path: str,
         config2_path: Optional[str] = None,
-        quant_config_path: Optional[str] = None,
+        
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         freeze_vae_encoder: Optional[bool] = True,
@@ -266,7 +264,7 @@ class WanForImage2VideoGeneration(_WanForImage2VideoGeneration):
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
             config2_path=config2_path,
-            quant_config_path=quant_config_path,
+            
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             freeze_vae_encoder=freeze_vae_encoder,
@@ -320,9 +318,7 @@ class WanForImage2VideoGeneration(_WanForImage2VideoGeneration):
         )
         scheduler_config_path = cached_path(scheduler_config_path)
 
-        quant_config_path = config.getoption("quant_config_path", None)
-        if quant_config_path is not None:
-            quant_config_path = cached_path(quant_config_path)
+        
 
         num_train_timesteps = config.getoption("num_train_timesteps", 1000)
         num_infer_timesteps = config.getoption("num_infer_timesteps", 50)
@@ -338,7 +334,7 @@ class WanForImage2VideoGeneration(_WanForImage2VideoGeneration):
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
             config2_path=config2_path,
-            quant_config_path=quant_config_path,
+            
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             freeze_vae_encoder=freeze_vae_encoder,

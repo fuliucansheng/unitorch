@@ -31,14 +31,13 @@ from diffusers.pipelines import (
 )
 from unitorch.models import (
     GenericOutputs,
-    QuantizationConfig,
-    QuantizationMixin,
+    
 )
 from unitorch.models.peft import GenericPeftModel
 from unitorch.models.diffusers import compute_snr
 
 
-class GenericStableLoraModel(GenericPeftModel, QuantizationMixin):
+class GenericStableLoraModel(GenericPeftModel):
     prefix_keys_in_state_dict = {
         # unet weights
         "^conv_in.*": "unet.",
@@ -71,7 +70,7 @@ class GenericStableLoraModel(GenericPeftModel, QuantizationMixin):
         text_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
-        quant_config_path: Optional[str] = None,
+        
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         snr_gamma: Optional[float] = 5.0,
@@ -118,10 +117,6 @@ class GenericStableLoraModel(GenericPeftModel, QuantizationMixin):
 
         self.vae_scale_factor = 2 ** (len(self.vae.config.block_out_channels) - 1)
 
-        if quant_config_path is not None:
-            self.quant_config = QuantizationConfig.from_json_file(quant_config_path)
-            self.quantize(self.quant_config, ignore_modules=["lm_head", "unet", "vae"])
-
         for param in self.parameters():
             param.requires_grad = False
         lora_config = LoraConfig(
@@ -145,7 +140,7 @@ class StableLoraForText2ImageGeneration(GenericStableLoraModel):
         text_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
-        quant_config_path: Optional[str] = None,
+        
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         snr_gamma: Optional[float] = 5.0,
@@ -171,7 +166,7 @@ class StableLoraForText2ImageGeneration(GenericStableLoraModel):
             text_config_path=text_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
-            quant_config_path=quant_config_path,
+            
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             snr_gamma=snr_gamma,
@@ -291,7 +286,7 @@ class StableLoraForImageInpainting(GenericStableLoraModel):
         text_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
-        quant_config_path: Optional[str] = None,
+        
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         snr_gamma: Optional[float] = 5.0,
@@ -317,7 +312,7 @@ class StableLoraForImageInpainting(GenericStableLoraModel):
             text_config_path=text_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
-            quant_config_path=quant_config_path,
+            
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             snr_gamma=snr_gamma,

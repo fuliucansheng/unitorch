@@ -6,7 +6,6 @@ import logging
 import torch
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from torch import autocast
-from transformers.utils import is_remote_url
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.peft import (
     LlavaMistralClipLoraForClassification as _LlavaMistralClipLoraForClassification,
@@ -31,7 +30,7 @@ class LlavaMistralClipLoraForClassification(_LlavaMistralClipLoraForClassificati
     def __init__(
         self,
         config_path: str,
-        quant_config_path: Optional[str] = None,
+        
         image_token_index: Optional[int] = 32000,
         lora_r: Optional[int] = 16,
         lora_alpha: Optional[int] = 32,
@@ -58,7 +57,7 @@ class LlavaMistralClipLoraForClassification(_LlavaMistralClipLoraForClassificati
         """
         super().__init__(
             config_path=config_path,
-            quant_config_path=quant_config_path,
+            
             image_token_index=image_token_index,
             lora_r=lora_r,
             lora_alpha=lora_alpha,
@@ -99,9 +98,7 @@ class LlavaMistralClipLoraForClassification(_LlavaMistralClipLoraForClassificati
         )
         config_path = cached_path(config_path)
 
-        quant_config_path = config.getoption("quant_config_path", None)
-        if quant_config_path is not None:
-            quant_config_path = cached_path(quant_config_path)
+        
 
         image_token_index = config.getoption("image_token_index", 32000)
         lora_r = config.getoption("lora_r", 16)
@@ -118,7 +115,7 @@ class LlavaMistralClipLoraForClassification(_LlavaMistralClipLoraForClassificati
 
         inst = cls(
             config_path,
-            quant_config_path=quant_config_path,
+            
             image_token_index=image_token_index,
             lora_r=lora_r,
             lora_alpha=lora_alpha,
@@ -193,7 +190,7 @@ class LlavaMistralClipLoraForGeneration(_LlavaMistralClipLoraForGeneration):
     def __init__(
         self,
         config_path: str,
-        quant_config_path: Optional[str] = None,
+        
         image_token_index: Optional[int] = 32000,
         lora_r: Optional[int] = 16,
         lora_alpha: Optional[int] = 32,
@@ -217,7 +214,7 @@ class LlavaMistralClipLoraForGeneration(_LlavaMistralClipLoraForGeneration):
         """
         super().__init__(
             config_path=config_path,
-            quant_config_path=quant_config_path,
+            
             image_token_index=image_token_index,
             lora_r=lora_r,
             lora_alpha=lora_alpha,
@@ -251,9 +248,7 @@ class LlavaMistralClipLoraForGeneration(_LlavaMistralClipLoraForGeneration):
             nested_dict_value(pretrained_llava_infos, pretrained_name, "config"),
         )
         config_path = cached_path(config_path)
-        quant_config_path = config.getoption("quant_config_path", None)
-        if quant_config_path is not None:
-            quant_config_path = cached_path(quant_config_path)
+        
 
         image_token_index = config.getoption("image_token_index", 32000)
         lora_r = config.getoption("lora_r", 16)
@@ -268,7 +263,7 @@ class LlavaMistralClipLoraForGeneration(_LlavaMistralClipLoraForGeneration):
 
         inst = cls(
             config_path,
-            quant_config_path=quant_config_path,
+            
             image_token_index=image_token_index,
             lora_r=lora_r,
             lora_alpha=lora_alpha,
@@ -420,7 +415,7 @@ class LlavaLlamaSiglipLoraForGeneration(_LlavaLlamaSiglipLoraForGeneration):
     def __init__(
         self,
         config_path: str,
-        quant_config_path: Optional[str] = None,
+        
         image_token_index: Optional[int] = 128077,
         lora_r: Optional[int] = 16,
         lora_alpha: Optional[int] = 32,
@@ -444,7 +439,7 @@ class LlavaLlamaSiglipLoraForGeneration(_LlavaLlamaSiglipLoraForGeneration):
         """
         super().__init__(
             config_path=config_path,
-            quant_config_path=quant_config_path,
+            
             image_token_index=image_token_index,
             lora_r=lora_r,
             lora_alpha=lora_alpha,
@@ -476,9 +471,7 @@ class LlavaLlamaSiglipLoraForGeneration(_LlavaLlamaSiglipLoraForGeneration):
             nested_dict_value(pretrained_llava_infos, pretrained_name, "config"),
         )
         config_path = cached_path(config_path)
-        quant_config_path = config.getoption("quant_config_path", None)
-        if quant_config_path is not None:
-            quant_config_path = cached_path(quant_config_path)
+        
 
         image_token_index = config.getoption("image_token_index", 128077)
         lora_r = config.getoption("lora_r", 16)
@@ -493,7 +486,7 @@ class LlavaLlamaSiglipLoraForGeneration(_LlavaLlamaSiglipLoraForGeneration):
 
         inst = cls(
             config_path,
-            quant_config_path=quant_config_path,
+            
             image_token_index=image_token_index,
             lora_r=lora_r,
             lora_alpha=lora_alpha,

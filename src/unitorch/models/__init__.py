@@ -10,7 +10,7 @@ import torch.nn as nn
 import safetensors
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from collections import OrderedDict
-from transformers.utils import is_remote_url, ModelOutput as GenericOutputs
+from transformers.utils import ModelOutput as GenericOutputs
 from unitorch import hf_cached_path
 from unitorch.utils import (
     replace,
@@ -216,7 +216,6 @@ from unitorch.models.processing_utils import (
     HfImageClassificationProcessor,
 )
 from unitorch.models.modeling_ema import ExponentialMovingAverage
-from unitorch.models.quantization import QuantizationConfig, QuantizationMixin
 from unitorch.models.onnx import GenericOnnxModel
 
 # import models
@@ -224,7 +223,6 @@ import unitorch.models.bart
 import unitorch.models.beit
 import unitorch.models.bert
 import unitorch.models.blip
-import unitorch.models.bloom
 import unitorch.models.chinese_clip
 import unitorch.models.clip
 import unitorch.models.dpt
@@ -236,7 +234,6 @@ import unitorch.models.llava
 import unitorch.models.mask2former
 import unitorch.models.mbart
 import unitorch.models.mistral
-import unitorch.models.mt5
 import unitorch.models.onnx
 import unitorch.models.pegasus
 import unitorch.models.qwen

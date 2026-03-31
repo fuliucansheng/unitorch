@@ -4,10 +4,9 @@
 import torch
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from torch import autocast
-from transformers.utils import is_remote_url
 from unitorch.utils import pop_value, nested_dict_value, is_bfloat16_available
 from unitorch.models.qwen import (
-    QWen2_5VLForGeneration as _QWen2_5VLForGeneration,
+    QWen3VLForGeneration as _QWen3VLForGeneration,
 )
 from unitorch.cli import (
     cached_path,
@@ -23,8 +22,8 @@ from unitorch.cli.models.qwen import (
 )
 
 
-@register_model("core/model/generation/qwen2_5_vl", generation_model_decorator)
-class QWen2_5VLForGeneration(_QWen2_5VLForGeneration):
+@register_model("core/model/generation/qwen3_vl", generation_model_decorator)
+class QWen3VLForGeneration(_QWen3VLForGeneration):
     """Qwen3 model for text generation."""
 
     def __init__(
@@ -45,7 +44,7 @@ class QWen2_5VLForGeneration(_QWen2_5VLForGeneration):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/generation/qwen2_5_vl")
+    @add_default_section_for_init("core/model/generation/qwen3_vl")
     def from_core_configure(cls, config, **kwargs):
         """
         Create an instance of BloomForGeneration from the core configuration.
@@ -56,8 +55,8 @@ class QWen2_5VLForGeneration(_QWen2_5VLForGeneration):
         Returns:
             BloomForGeneration: An instance of BloomForGeneration initialized with the provided configuration.
         """
-        config.set_default_section("core/model/generation/qwen2_5_vl")
-        pretrained_name = config.getoption("pretrained_name", "qwen2_5-vl-3b-instruct")
+        config.set_default_section("core/model/generation/qwen3_vl")
+        pretrained_name = config.getoption("pretrained_name", "qwen3-vl-8b-instruct")
         pretrained_lora_name = config.getoption("pretrained_lora_name", None)
         config_path = config.getoption("config_path", None)
         config_path = pop_value(
@@ -128,7 +127,7 @@ class QWen2_5VLForGeneration(_QWen2_5VLForGeneration):
         )
         return GenerationOutputs(sequences=outputs)
 
-    @add_default_section_for_function("core/model/generation/qwen2_5_vl")
+    @add_default_section_for_function("core/model/generation/qwen3_vl")
     @torch.no_grad()
     @autocast(
         device_type=("cuda" if torch.cuda.is_available() else "cpu"),

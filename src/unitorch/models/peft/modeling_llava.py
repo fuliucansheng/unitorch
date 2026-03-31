@@ -26,10 +26,9 @@ from transformers import (
 from unitorch.models import (
     GenericModel,
     GenericOutputs,
-    QuantizationConfig,
-    QuantizationMixin,
+    
 )
-from unitorch.models.quantization import quantize_model
+
 from unitorch.models.peft import PeftModelForSequenceClassification, GenericPeftModel
 
 
@@ -44,7 +43,7 @@ class LlavaMistralClipLoraForClassification(GenericPeftModel):
     def __init__(
         self,
         config_path: str,
-        quant_config_path: Optional[str] = None,
+        
         image_token_index: Optional[int] = 32000,
         lora_r: Optional[int] = 16,
         lora_alpha: Optional[int] = 32,
@@ -76,12 +75,6 @@ class LlavaMistralClipLoraForClassification(GenericPeftModel):
         )
         self.language_model = MistralModel(self.config.text_config)
 
-        if quant_config_path is not None:
-            quant_config = QuantizationConfig.from_json_file(quant_config_path)
-            ignore_modules = target_modules + ["lm_head"]
-            self.language_model = quantize_model(
-                self.language_model, quant_config, ignore_modules=ignore_modules
-            )
         self.language_model.add_adapter(self.peft_config)
         self.dropout = nn.Dropout(hidden_dropout_prob)
         self.classifier = nn.Linear(self.config.text_config.hidden_size, num_classes)
@@ -191,7 +184,7 @@ class LlavaMistralClipLoraForGeneration(GenericPeftModel):
     def __init__(
         self,
         config_path: str,
-        quant_config_path: Optional[str] = None,
+        
         image_token_index: Optional[int] = 32000,
         lora_r: Optional[int] = 16,
         lora_alpha: Optional[int] = 32,
@@ -221,13 +214,6 @@ class LlavaMistralClipLoraForGeneration(GenericPeftModel):
             * embed_std
         )
         self.language_model = MistralForCausalLM(self.config.text_config)
-
-        if quant_config_path is not None:
-            quant_config = QuantizationConfig.from_json_file(quant_config_path)
-            ignore_modules = target_modules + ["lm_head"]
-            self.language_model = quantize_model(
-                self.language_model, quant_config, ignore_modules=ignore_modules
-            )
 
         self.language_model.add_adapter(self.peft_config)
         self.init_weights()
@@ -482,7 +468,7 @@ class LlavaLlamaSiglipLoraForGeneration(GenericPeftModel):
     def __init__(
         self,
         config_path: str,
-        quant_config_path: Optional[str] = None,
+        
         image_token_index: Optional[int] = 128077,
         lora_r: Optional[int] = 16,
         lora_alpha: Optional[int] = 32,
@@ -507,13 +493,6 @@ class LlavaLlamaSiglipLoraForGeneration(GenericPeftModel):
         self.vision_tower = SiglipVisionModel(self.config.vision_config)
         self.multi_modal_projector = LlavaMultiModalProjector(self.config)
         self.language_model = LlamaForCausalLM(self.config.text_config)
-
-        if quant_config_path is not None:
-            quant_config = QuantizationConfig.from_json_file(quant_config_path)
-            ignore_modules = target_modules + ["lm_head"]
-            self.language_model = quantize_model(
-                self.language_model, quant_config, ignore_modules=ignore_modules
-            )
 
         self.language_model.add_adapter(self.peft_config)
         self.init_weights()

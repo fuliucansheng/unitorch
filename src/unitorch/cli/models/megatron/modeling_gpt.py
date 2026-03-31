@@ -5,7 +5,6 @@ import torch
 import torch.distributed as dist
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from torch import autocast
-from transformers.utils import is_remote_url
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.megatron import (
     MegatronGPTForGeneration as _MegatronGPTForGeneration,

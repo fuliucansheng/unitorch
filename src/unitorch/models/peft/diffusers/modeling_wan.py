@@ -34,14 +34,13 @@ from diffusers.pipelines import (
 from unitorch.models import (
     GenericModel,
     GenericOutputs,
-    QuantizationConfig,
-    QuantizationMixin,
+    
 )
 from unitorch.models.peft import GenericPeftModel
 from unitorch.models.diffusers import compute_snr
 
 
-class GenericWanLoraModel(GenericPeftModel, QuantizationMixin):
+class GenericWanLoraModel(GenericPeftModel):
     prefix_keys_in_state_dict = {
         # vae weights
         "^encoder.*": "vae.",
@@ -64,7 +63,7 @@ class GenericWanLoraModel(GenericPeftModel, QuantizationMixin):
         vae_config_path: str,
         scheduler_config_path: str,
         config2_path: Optional[str] = None,
-        quant_config_path: Optional[str] = None,
+        
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         snr_gamma: Optional[float] = 5.0,
@@ -125,11 +124,7 @@ class GenericWanLoraModel(GenericPeftModel, QuantizationMixin):
         for param in self.transformer.parameters():
             param.requires_grad = False
 
-        if quant_config_path is not None:
-            self.quant_config = QuantizationConfig.from_json_file(quant_config_path)
-            self.quantize(
-                self.quant_config, ignore_modules=["lm_head", "transformer", "vae"]
-            )
+        
 
         lora_config = LoraConfig(
             r=lora_r,
@@ -188,7 +183,7 @@ class WanLoraForText2VideoGeneration(GenericWanLoraModel):
         vae_config_path: str,
         scheduler_config_path: str,
         config2_path: Optional[str] = None,
-        quant_config_path: Optional[str] = None,
+        
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         snr_gamma: Optional[float] = 5.0,
@@ -213,7 +208,7 @@ class WanLoraForText2VideoGeneration(GenericWanLoraModel):
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
             config2_path=config2_path,
-            quant_config_path=quant_config_path,
+            
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             snr_gamma=snr_gamma,
@@ -355,7 +350,7 @@ class WanLoraForImage2VideoGeneration(GenericWanLoraModel):
         vae_config_path: str,
         scheduler_config_path: str,
         config2_path: Optional[str] = None,
-        quant_config_path: Optional[str] = None,
+        
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         snr_gamma: Optional[float] = 5.0,
@@ -380,7 +375,7 @@ class WanLoraForImage2VideoGeneration(GenericWanLoraModel):
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
             config2_path=config2_path,
-            quant_config_path=quant_config_path,
+            
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             snr_gamma=snr_gamma,

@@ -6,7 +6,6 @@ import logging
 import torch
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from torch import autocast
-from transformers.utils import is_remote_url
 from unitorch.utils import pop_value, nested_dict_value, is_bfloat16_available
 from unitorch.models.peft import (
     QWen3LoraForGeneration as _QWen3LoraForGeneration,

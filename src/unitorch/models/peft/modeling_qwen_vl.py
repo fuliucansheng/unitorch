@@ -7,16 +7,16 @@ import torch.nn as nn
 import torch.nn.functional as F
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from peft import LoraConfig, PeftModelForCausalLM
-from transformers.models.qwen2_5_vl import (
-    Qwen2_5_VLConfig,
-    Qwen2_5_VLModel,
-    Qwen2_5_VLForConditionalGeneration,
+from transformers.models.qwen3_vl import (
+    Qwen3VLConfig,
+    Qwen3VLModel,
+    Qwen3VLForConditionalGeneration,
 )
 from unitorch.models import GenericModel, GenericOutputs
 from unitorch.models.peft import PeftModelForSequenceClassification, GenericPeftModel
 
 
-class QWen2_5VLLoraForGeneration(GenericPeftModel):
+class QWen3VLLoraForGeneration(GenericPeftModel):
     prefix_keys_in_state_dict = {
         "^visual.": "model.model.",
         "^model(?!\.model).": "model.model.language_",
@@ -46,7 +46,7 @@ class QWen2_5VLLoraForGeneration(GenericPeftModel):
             gradient_checkpointing (bool, optional): Whether to use gradient checkpointing. Defaults to False.
         """
         super().__init__()
-        self.config = Qwen2_5_VLConfig.from_json_file(config_path)
+        self.config = Qwen3VLConfig.from_json_file(config_path)
         self.config.gradient_checkpointing = gradient_checkpointing
         self.peft_config = LoraConfig(
             r=lora_r,
@@ -55,7 +55,7 @@ class QWen2_5VLLoraForGeneration(GenericPeftModel):
             fan_in_fan_out=fan_in_fan_out,
             target_modules=target_modules,
         )
-        self.model = Qwen2_5_VLForConditionalGeneration(self.config)
+        self.model = Qwen3VLForConditionalGeneration(self.config)
         self.model.add_adapter(self.peft_config)
         self.init_weights()
 
@@ -188,7 +188,7 @@ class QWen2_5VLLoraForGeneration(GenericPeftModel):
         )
 
 
-class QWen2_5VLDPOLoraForGeneration(GenericPeftModel):
+class QWen3VLDPOLoraForGeneration(GenericPeftModel):
     prefix_keys_in_state_dict = {
         "^visual.": "model.model.",
         "^model(?!\.model).": "model.model.language_",
@@ -219,7 +219,7 @@ class QWen2_5VLDPOLoraForGeneration(GenericPeftModel):
             gradient_checkpointing (bool, optional): Whether to use gradient checkpointing. Defaults to False.
         """
         super().__init__()
-        self.config = Qwen2_5_VLConfig.from_json_file(config_path)
+        self.config = Qwen3VLConfig.from_json_file(config_path)
         self.config.gradient_checkpointing = gradient_checkpointing
         self.peft_config = LoraConfig(
             r=lora_r,
@@ -228,7 +228,7 @@ class QWen2_5VLDPOLoraForGeneration(GenericPeftModel):
             fan_in_fan_out=fan_in_fan_out,
             target_modules=target_modules,
         )
-        self.model = Qwen2_5_VLForConditionalGeneration(self.config)
+        self.model = Qwen3VLForConditionalGeneration(self.config)
         self.model.add_adapter(self.peft_config)
         self.init_weights()
         self.dpo_beta = dpo_beta

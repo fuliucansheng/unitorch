@@ -4,7 +4,6 @@
 import torch
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from torch import autocast
-from transformers.utils import is_remote_url
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.llama import (
     LlamaForClassification as _LlamaForClassification,
@@ -31,7 +30,7 @@ class LlamaForClassification(_LlamaForClassification):
     def __init__(
         self,
         config_path: str,
-        quant_config_path: Optional[str] = None,
+        
         num_classes: Optional[int] = 1,
         gradient_checkpointing: Optional[bool] = False,
     ):
@@ -45,7 +44,7 @@ class LlamaForClassification(_LlamaForClassification):
         """
         super().__init__(
             config_path=config_path,
-            quant_config_path=quant_config_path,
+            
             num_classes=num_classes,
             gradient_checkpointing=gradient_checkpointing,
         )
@@ -73,15 +72,13 @@ class LlamaForClassification(_LlamaForClassification):
         )
 
         config_path = cached_path(config_path)
-        quant_config_path = config.getoption("quant_config_path", None)
-        if quant_config_path is not None:
-            quant_config_path = cached_path(quant_config_path)
+        
         gradient_checkpointing = config.getoption("gradient_checkpointing", False)
         num_classes = config.getoption("num_classes", 1)
 
         inst = cls(
             config_path,
-            quant_config_path=quant_config_path,
+            
             num_classes=num_classes,
             gradient_checkpointing=gradient_checkpointing,
         )
@@ -151,7 +148,7 @@ class LlamaForGeneration(_LlamaForGeneration):
     def __init__(
         self,
         config_path: str,
-        quant_config_path: Optional[str] = None,
+        
         gradient_checkpointing: Optional[bool] = False,
     ):
         """
@@ -163,7 +160,7 @@ class LlamaForGeneration(_LlamaForGeneration):
         """
         super().__init__(
             config_path=config_path,
-            quant_config_path=quant_config_path,
+            
             gradient_checkpointing=gradient_checkpointing,
         )
 
@@ -190,14 +187,12 @@ class LlamaForGeneration(_LlamaForGeneration):
         )
 
         config_path = cached_path(config_path)
-        quant_config_path = config.getoption("quant_config_path", None)
-        if quant_config_path is not None:
-            quant_config_path = cached_path(quant_config_path)
+        
         gradient_checkpointing = config.getoption("gradient_checkpointing", False)
 
         inst = cls(
             config_path,
-            quant_config_path=quant_config_path,
+            
             gradient_checkpointing=gradient_checkpointing,
         )
         pretrained_weight_path = config.getoption("pretrained_weight_path", None)

@@ -13,8 +13,7 @@ from unitorch.utils.decorators import replace
 from unitorch.models import (
     GenericModel,
     GenericOutputs,
-    QuantizationConfig,
-    QuantizationMixin,
+    
 )
 from unitorch.models.peft import PeftWeightLoaderMixin
 
@@ -25,7 +24,7 @@ class QWen3ForGeneration(GenericModel, PeftWeightLoaderMixin):
     def __init__(
         self,
         config_path: str,
-        quant_config_path: Optional[str] = None,
+        
         gradient_checkpointing: Optional[bool] = False,
     ):
         """
@@ -40,10 +39,6 @@ class QWen3ForGeneration(GenericModel, PeftWeightLoaderMixin):
         self.config.gradient_checkpointing = gradient_checkpointing
         self.model = Qwen3ForCausalLM(self.config)
         self.init_weights()
-
-        if quant_config_path is not None:
-            self.quant_config = QuantizationConfig.from_json_file(quant_config_path)
-            self.quantize(self.quant_config, ignore_modules=["lm_head"])
 
     def forward(
         self,

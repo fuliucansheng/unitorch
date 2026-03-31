@@ -10,10 +10,9 @@ from transformers import MistralModel, MistralConfig, MistralForCausalLM
 from unitorch.models import (
     GenericModel,
     GenericOutputs,
-    QuantizationConfig,
-    QuantizationMixin,
+    
 )
-from unitorch.models.quantization import quantize_model
+
 from unitorch.models.peft import PeftModelForSequenceClassification, GenericPeftModel
 
 
@@ -27,7 +26,7 @@ class MistralLoraForClassification(GenericPeftModel):
     def __init__(
         self,
         config_path: str,
-        quant_config_path: Optional[str] = None,
+        
         lora_r: Optional[int] = 16,
         lora_alpha: Optional[int] = 32,
         lora_dropout: Optional[float] = 0.05,
@@ -49,12 +48,6 @@ class MistralLoraForClassification(GenericPeftModel):
             target_modules=target_modules,
         )
         self.model = MistralModel(self.config)
-        if quant_config_path is not None:
-            quant_config = QuantizationConfig.from_json_file(quant_config_path)
-            ignore_modules = target_modules + ["lm_head"]
-            self.model = quantize_model(
-                self.model, quant_config, ignore_modules=ignore_modules
-            )
         self.model.add_adapter(self.peft_config)
         self.dropout = nn.Dropout(hidden_dropout_prob)
         self.classifier = nn.Linear(self.config.hidden_size, num_classes)
@@ -104,7 +97,7 @@ class MistralLoraForGeneration(GenericPeftModel):
     def __init__(
         self,
         config_path: str,
-        quant_config_path: Optional[str] = None,
+        
         lora_r: Optional[int] = 16,
         lora_alpha: Optional[int] = 32,
         lora_dropout: Optional[float] = 0.05,
@@ -125,12 +118,6 @@ class MistralLoraForGeneration(GenericPeftModel):
             target_modules=target_modules,
         )
         self.base_model = MistralForCausalLM(self.config)
-        if quant_config_path is not None:
-            quant_config = QuantizationConfig.from_json_file(quant_config_path)
-            ignore_modules = target_modules + ["lm_head"]
-            self.base_model = quantize_model(
-                self.base_model, quant_config, ignore_modules=ignore_modules
-            )
         self.base_model.add_adapter(self.peft_config)
         self.init_weights()
 

@@ -14,10 +14,9 @@ from transformers.models.llama.modeling_llama import (
 from unitorch.models import (
     GenericModel,
     GenericOutputs,
-    QuantizationConfig,
-    QuantizationMixin,
+    
 )
-from unitorch.models.quantization import quantize_model
+
 from unitorch.models.peft import PeftModelForSequenceClassification, GenericPeftModel
 
 
@@ -31,7 +30,7 @@ class LlamaLoraForClassification(GenericPeftModel):
     def __init__(
         self,
         config_path: str,
-        quant_config_path: Optional[str] = None,
+        
         lora_r: Optional[int] = 16,
         lora_alpha: Optional[int] = 32,
         lora_dropout: Optional[float] = 0.05,
@@ -53,10 +52,6 @@ class LlamaLoraForClassification(GenericPeftModel):
             target_modules=target_modules,
         )
         model = LlamaModel(self.config)
-        if quant_config_path is not None:
-            quant_config = QuantizationConfig.from_json_file(quant_config_path)
-            ignore_modules = target_modules + ["lm_head"]
-            model = quantize_model(model, quant_config, ignore_modules=ignore_modules)
         self.model = LlamaModel(self.config)
         self.model.add_adapter(self.peft_config)
         self.dropout = nn.Dropout(hidden_dropout_prob)
@@ -107,7 +102,7 @@ class LlamaLoraForGeneration(GenericPeftModel):
     def __init__(
         self,
         config_path: str,
-        quant_config_path: Optional[str] = None,
+        
         lora_r: Optional[int] = 16,
         lora_alpha: Optional[int] = 32,
         lora_dropout: Optional[float] = 0.05,
@@ -126,12 +121,6 @@ class LlamaLoraForGeneration(GenericPeftModel):
             target_modules=target_modules,
         )
         self.base_model = LlamaForCausalLM(self.config)
-        if quant_config_path is not None:
-            quant_config = QuantizationConfig.from_json_file(quant_config_path)
-            ignore_modules = target_modules + ["lm_head"]
-            self.base_model = quantize_model(
-                self.base_model, quant_config, ignore_modules=ignore_modules
-            )
         self.base_model.add_adapter(self.peft_config)
         self.init_weights()
 

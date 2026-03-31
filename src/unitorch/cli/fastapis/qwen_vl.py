@@ -25,16 +25,16 @@ from unitorch.cli import (
 )
 from unitorch.cli import CoreConfigureParser, GenericFastAPI
 from unitorch.cli.pipelines.qwen_vl import (
-    QWen2_5VLForGenerationPipeline,
+    QWen3VLForGenerationPipeline,
 )
 
 
-@register_fastapi("core/fastapi/qwen2_5_vl")
-class QWen2_5VLFastAPI(GenericFastAPI):
+@register_fastapi("core/fastapi/qwen3_vl")
+class QWen3VLFastAPI(GenericFastAPI):
     def __init__(self, config: CoreConfigureParser):
         self.config = config
-        config.set_default_section(f"core/fastapi/qwen2_5_vl")
-        router = config.getoption("router", "/core/fastapi/qwen2_5_vl")
+        config.set_default_section(f"core/fastapi/qwen3_vl")
+        router = config.getoption("router", "/core/fastapi/qwen3_vl")
         self._pipe = None
         self._router = APIRouter(prefix=router)
         self._router.add_api_route("/generate", self.generate, methods=["POST"])
@@ -47,8 +47,8 @@ class QWen2_5VLFastAPI(GenericFastAPI):
     def router(self):
         return self._router
 
-    def start(self, pretrained_name: str = "qwen2_5-vl-3b-instruct"):
-        self._pipe = QWen2_5VLForGenerationPipeline.from_core_configure(
+    def start(self, pretrained_name: str = "qwen3-vl-8b-instruct"):
+        self._pipe = QWen3VLForGenerationPipeline.from_core_configure(
             self.config,
             pretrained_name=pretrained_name,
         )

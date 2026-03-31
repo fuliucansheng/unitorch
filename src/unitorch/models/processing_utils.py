@@ -219,6 +219,7 @@ class HfLlmProcessor:
         self.eos_token = self.tokenizer.eos_token
         self.mask_token = self.tokenizer.mask_token
         self.pad_token_id = self.tokenizer.pad_token_id
+        self.vocab_size = len(self.tokenizer.get_vocab())
 
     def chat_template(
         self,
@@ -437,6 +438,48 @@ class HfLlmProcessor:
             input_ids_label=outputs.input_ids_label,
             attention_mask_label=outputs.attention_mask_label,
         )
+    
+    def detokenize(
+        self,
+        sequences: torch.Tensor,
+        skip_special_tokens: Optional[bool] = True,
+    ):
+        """
+        Detokenize the sequences.
+
+        Args:
+            sequences (torch.Tensor): The sequences to detokenize.
+            skip_special_tokens (bool, optional): Whether to skip special tokens. Defaults to True.
+
+        Returns:
+            list: The detokenized sequences.
+        """
+        if sequences.dim() == 3:
+            _, num_return_sequences, sequences_length = sequences.size()
+            sequences = sequences.reshape(-1, sequences_length).clamp_max(
+                self.vocab_size
+            )
+            sequences = sequences.clamp_min(0)
+            sequences[sequences == self.vocab_size] = self.pad_token_id
+            decode_tokens = self.tokenizer.batch_decode(
+                sequences,
+                skip_special_tokens=skip_special_tokens,
+            )
+            decode_tokens = [
+                decode_tokens[i : i + num_return_sequences]
+                for i in range(0, len(decode_tokens), num_return_sequences)
+            ]
+        elif sequences.dim() == 2:
+            sequences = sequences.clamp_min(0).clamp_max(self.vocab_size)
+            sequences[sequences == self.vocab_size] = self.pad_token_id
+            decode_tokens = self.tokenizer.batch_decode(
+                sequences,
+                skip_special_tokens=skip_special_tokens,
+            )
+        else:
+            raise ValueError(f"Can't decode the tensor with shape {sequences.shape}")
+
+        return decode_tokens
 
 
 class HfTextClassificationProcessor:
