@@ -31,7 +31,6 @@ class LlavaMistralClipForClassification(_LlavaMistralClipForClassification):
     def __init__(
         self,
         config_path: str,
-        
         image_token_index: Optional[int] = 32000,
         num_classes: Optional[int] = 1,
         hidden_dropout_prob: Optional[float] = 0.1,
@@ -50,7 +49,6 @@ class LlavaMistralClipForClassification(_LlavaMistralClipForClassification):
         """
         super().__init__(
             config_path=config_path,
-            
             image_token_index=image_token_index,
             num_classes=num_classes,
             hidden_dropout_prob=hidden_dropout_prob,
@@ -87,7 +85,7 @@ class LlavaMistralClipForClassification(_LlavaMistralClipForClassification):
         )
 
         config_path = cached_path(config_path)
-        
+
         image_token_index = config.getoption("image_token_index", 32000)
         num_classes = config.getoption("num_classes", 1)
         hidden_dropout_prob = config.getoption("hidden_dropout_prob", 0.1)
@@ -100,7 +98,6 @@ class LlavaMistralClipForClassification(_LlavaMistralClipForClassification):
 
         inst = cls(
             config_path,
-            
             image_token_index=image_token_index,
             num_classes=num_classes,
             hidden_dropout_prob=hidden_dropout_prob,
@@ -175,7 +172,6 @@ class LlavaMistralClipForGeneration(_LlavaMistralClipForGeneration):
     def __init__(
         self,
         config_path: str,
-        
         image_token_index: Optional[int] = 32000,
         freeze_vision_encoder: Optional[bool] = True,
         freeze_multi_modal_projector: Optional[bool] = False,
@@ -191,7 +187,6 @@ class LlavaMistralClipForGeneration(_LlavaMistralClipForGeneration):
         """
         super().__init__(
             config_path=config_path,
-            
             image_token_index=image_token_index,
             freeze_vision_encoder=freeze_vision_encoder,
             freeze_multi_modal_projector=freeze_multi_modal_projector,
@@ -226,7 +221,7 @@ class LlavaMistralClipForGeneration(_LlavaMistralClipForGeneration):
         )
 
         config_path = cached_path(config_path)
-        
+
         image_token_index = config.getoption("image_token_index", 32000)
         freeze_vision_encoder = config.getoption("freeze_vision_encoder", True)
         freeze_multi_modal_projector = config.getoption(
@@ -237,7 +232,6 @@ class LlavaMistralClipForGeneration(_LlavaMistralClipForGeneration):
 
         inst = cls(
             config_path,
-            
             image_token_index=image_token_index,
             freeze_vision_encoder=freeze_vision_encoder,
             freeze_multi_modal_projector=freeze_multi_modal_projector,
@@ -386,7 +380,6 @@ class LlavaLlamaSiglipForGeneration(_LlavaLlamaSiglipForGeneration):
     def __init__(
         self,
         config_path: str,
-        
         image_token_index: Optional[int] = 128077,
         freeze_vision_encoder: Optional[bool] = True,
         freeze_multi_modal_projector: Optional[bool] = False,
@@ -402,7 +395,6 @@ class LlavaLlamaSiglipForGeneration(_LlavaLlamaSiglipForGeneration):
         """
         super().__init__(
             config_path=config_path,
-            
             image_token_index=image_token_index,
             freeze_vision_encoder=freeze_vision_encoder,
             freeze_multi_modal_projector=freeze_multi_modal_projector,
@@ -435,7 +427,7 @@ class LlavaLlamaSiglipForGeneration(_LlavaLlamaSiglipForGeneration):
         )
 
         config_path = cached_path(config_path)
-        
+
         image_token_index = config.getoption("image_token_index", 128077)
         freeze_vision_encoder = config.getoption("freeze_vision_encoder", True)
         freeze_multi_modal_projector = config.getoption(
@@ -446,7 +438,6 @@ class LlavaLlamaSiglipForGeneration(_LlavaLlamaSiglipForGeneration):
 
         inst = cls(
             config_path,
-            
             image_token_index=image_token_index,
             freeze_vision_encoder=freeze_vision_encoder,
             freeze_multi_modal_projector=freeze_multi_modal_projector,

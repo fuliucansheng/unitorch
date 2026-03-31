@@ -68,8 +68,8 @@ pretrained_qwen_infos = {
             "/Qwen/Qwen3-VL-2B-Instruct/resolve/main/chat_template.json"
         ),
         "weight": hf_endpoint_url(
-                f"/Qwen/Qwen3-VL-2B-Instruct/resolve/main/model.safetensors"
-            ),
+            f"/Qwen/Qwen3-VL-2B-Instruct/resolve/main/model.safetensors"
+        ),
     },
     "qwen3-vl-8b-instruct": {
         "config": hf_endpoint_url(

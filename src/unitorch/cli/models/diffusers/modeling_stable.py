@@ -36,7 +36,6 @@ class StableForText2ImageGeneration(_StableForText2ImageGeneration):
         text_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
-        
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         freeze_vae_encoder: Optional[bool] = True,
@@ -49,7 +48,6 @@ class StableForText2ImageGeneration(_StableForText2ImageGeneration):
             text_config_path=text_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
-            
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             freeze_vae_encoder=freeze_vae_encoder,
@@ -93,8 +91,6 @@ class StableForText2ImageGeneration(_StableForText2ImageGeneration):
         )
         scheduler_config_path = cached_path(scheduler_config_path)
 
-        
-
         num_train_timesteps = config.getoption("num_train_timesteps", 1000)
         num_infer_timesteps = config.getoption("num_infer_timesteps", 50)
         freeze_vae_encoder = config.getoption("freeze_vae_encoder", True)
@@ -107,7 +103,6 @@ class StableForText2ImageGeneration(_StableForText2ImageGeneration):
             text_config_path=text_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
-            
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             freeze_vae_encoder=freeze_vae_encoder,
@@ -216,7 +211,6 @@ class StableForImage2ImageGeneration(_StableForImage2ImageGeneration):
         text_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
-        
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         freeze_vae_encoder: Optional[bool] = True,
@@ -229,7 +223,6 @@ class StableForImage2ImageGeneration(_StableForImage2ImageGeneration):
             text_config_path=text_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
-            
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             freeze_vae_encoder=freeze_vae_encoder,
@@ -275,8 +268,6 @@ class StableForImage2ImageGeneration(_StableForImage2ImageGeneration):
         )
         scheduler_config_path = cached_path(scheduler_config_path)
 
-        
-
         num_train_timesteps = config.getoption("num_train_timesteps", 1000)
         num_infer_timesteps = config.getoption("num_infer_timesteps", 50)
         freeze_vae_encoder = config.getoption("freeze_vae_encoder", True)
@@ -289,7 +280,6 @@ class StableForImage2ImageGeneration(_StableForImage2ImageGeneration):
             text_config_path=text_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
-            
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             freeze_vae_encoder=freeze_vae_encoder,
@@ -387,7 +377,6 @@ class StableForImageInpainting(_StableForImageInpainting):
         text_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
-        
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         freeze_vae_encoder: Optional[bool] = True,
@@ -400,7 +389,6 @@ class StableForImageInpainting(_StableForImageInpainting):
             text_config_path=text_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
-            
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             freeze_vae_encoder=freeze_vae_encoder,
@@ -444,8 +432,6 @@ class StableForImageInpainting(_StableForImageInpainting):
         )
         scheduler_config_path = cached_path(scheduler_config_path)
 
-        
-
         num_train_timesteps = config.getoption("num_train_timesteps", 1000)
         num_infer_timesteps = config.getoption("num_infer_timesteps", 50)
         freeze_vae_encoder = config.getoption("freeze_vae_encoder", True)
@@ -458,7 +444,6 @@ class StableForImageInpainting(_StableForImageInpainting):
             text_config_path=text_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
-            
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             freeze_vae_encoder=freeze_vae_encoder,
@@ -569,7 +554,6 @@ class StableForImageResolution(_StableForImageResolution):
         text_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
-        
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         freeze_vae_encoder: Optional[bool] = True,
@@ -583,7 +567,6 @@ class StableForImageResolution(_StableForImageResolution):
             text_config_path=text_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
-            
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             freeze_vae_encoder=freeze_vae_encoder,
@@ -628,8 +611,6 @@ class StableForImageResolution(_StableForImageResolution):
         )
         scheduler_config_path = cached_path(scheduler_config_path)
 
-        
-
         num_train_timesteps = config.getoption("num_train_timesteps", 1000)
         num_infer_timesteps = config.getoption("num_infer_timesteps", 50)
         freeze_vae_encoder = config.getoption("freeze_vae_encoder", True)
@@ -643,7 +624,6 @@ class StableForImageResolution(_StableForImageResolution):
             text_config_path=text_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
-            
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             freeze_vae_encoder=freeze_vae_encoder,
@@ -752,7 +732,6 @@ class StableForImage2VideoGeneration(_StableForImage2VideoGeneration):
         vision_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
-        
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         freeze_vae_encoder: Optional[bool] = True,
@@ -764,7 +743,6 @@ class StableForImage2VideoGeneration(_StableForImage2VideoGeneration):
             vision_config_path=vision_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
-            
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             freeze_vae_encoder=freeze_vae_encoder,
@@ -802,8 +780,6 @@ class StableForImage2VideoGeneration(_StableForImage2VideoGeneration):
 
         scheduler_config_path = config.getoption("scheduler_config_path", None)
 
-        
-
         num_train_timesteps = config.getoption("num_train_timesteps", 1000)
         num_infer_timesteps = config.getoption("num_infer_timesteps", 50)
         freeze_vae_encoder = config.getoption("freeze_vae_encoder", True)
@@ -816,7 +792,6 @@ class StableForImage2VideoGeneration(_StableForImage2VideoGeneration):
             vision_config_path=vision_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
-            
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             freeze_vae_encoder=freeze_vae_encoder,

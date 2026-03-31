@@ -59,7 +59,6 @@ class StableFluxForText2ImageFastAPIPipeline(GenericStableFluxModel):
         vocab_path: str,
         merge_path: str,
         vocab2_path: str,
-        
         max_seq_length: Optional[int] = 77,
         max_seq_length2: Optional[int] = 256,
         pad_token: Optional[str] = "<|endoftext|>",
@@ -77,7 +76,6 @@ class StableFluxForText2ImageFastAPIPipeline(GenericStableFluxModel):
             text2_config_path=text2_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
-            
         )
         self.processor = StableFluxProcessor(
             vocab_path=vocab_path,
@@ -134,7 +132,6 @@ class StableFluxForText2ImageFastAPIPipeline(GenericStableFluxModel):
         vocab_path: Optional[str] = None,
         merge_path: Optional[str] = None,
         vocab2_path: Optional[str] = None,
-        
         pretrained_weight_path: Optional[str] = None,
         device: Optional[str] = None,
         pretrained_lora_names: Optional[Union[str, List[str]]] = None,
@@ -210,8 +207,6 @@ class StableFluxForText2ImageFastAPIPipeline(GenericStableFluxModel):
             nested_dict_value(pretrained_infos, "text2", "vocab"),
         )
         vocab2_path = cached_path(vocab2_path)
-
-        
 
         max_seq_length = config.getoption("max_seq_length", 77)
         max_seq_length2 = config.getoption("max_seq_length2", 256)
@@ -289,7 +284,6 @@ class StableFluxForText2ImageFastAPIPipeline(GenericStableFluxModel):
             vocab_path=vocab_path,
             merge_path=merge_path,
             vocab2_path=vocab2_path,
-            
             pad_token=pad_token,
             max_seq_length=max_seq_length,
             max_seq_length2=max_seq_length2,

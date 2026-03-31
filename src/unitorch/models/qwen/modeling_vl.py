@@ -17,7 +17,6 @@ from unitorch.utils.decorators import replace
 from unitorch.models import (
     GenericModel,
     GenericOutputs,
-    
 )
 
 from unitorch.models.peft import PeftWeightLoaderMixin
@@ -32,7 +31,6 @@ class QWen3VLForGeneration(GenericModel, PeftWeightLoaderMixin):
     def __init__(
         self,
         config_path: str,
-        
         gradient_checkpointing: Optional[bool] = False,
     ):
         """

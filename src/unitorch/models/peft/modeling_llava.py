@@ -26,7 +26,6 @@ from transformers import (
 from unitorch.models import (
     GenericModel,
     GenericOutputs,
-    
 )
 
 from unitorch.models.peft import PeftModelForSequenceClassification, GenericPeftModel
@@ -43,7 +42,6 @@ class LlavaMistralClipLoraForClassification(GenericPeftModel):
     def __init__(
         self,
         config_path: str,
-        
         image_token_index: Optional[int] = 32000,
         lora_r: Optional[int] = 16,
         lora_alpha: Optional[int] = 32,
@@ -184,7 +182,6 @@ class LlavaMistralClipLoraForGeneration(GenericPeftModel):
     def __init__(
         self,
         config_path: str,
-        
         image_token_index: Optional[int] = 32000,
         lora_r: Optional[int] = 16,
         lora_alpha: Optional[int] = 32,
@@ -468,7 +465,6 @@ class LlavaLlamaSiglipLoraForGeneration(GenericPeftModel):
     def __init__(
         self,
         config_path: str,
-        
         image_token_index: Optional[int] = 128077,
         lora_r: Optional[int] = 16,
         lora_alpha: Optional[int] = 32,

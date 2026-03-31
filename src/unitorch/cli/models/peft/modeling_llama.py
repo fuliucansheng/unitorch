@@ -29,7 +29,6 @@ class LlamaLoraForClassification(_LlamaLoraForClassification):
     def __init__(
         self,
         config_path: str,
-        
         lora_r: Optional[int] = 16,
         lora_alpha: Optional[int] = 32,
         lora_dropout: Optional[float] = 0.05,
@@ -53,7 +52,6 @@ class LlamaLoraForClassification(_LlamaLoraForClassification):
         """
         super().__init__(
             config_path=config_path,
-            
             lora_r=lora_r,
             lora_alpha=lora_alpha,
             lora_dropout=lora_dropout,
@@ -85,8 +83,6 @@ class LlamaLoraForClassification(_LlamaLoraForClassification):
         )
         config_path = cached_path(config_path)
 
-        
-
         lora_r = config.getoption("lora_r", 16)
         lora_alpha = config.getoption("lora_alpha", 32)
         lora_dropout = config.getoption("lora_dropout", 0.05)
@@ -98,7 +94,6 @@ class LlamaLoraForClassification(_LlamaLoraForClassification):
 
         inst = cls(
             config_path,
-            
             lora_r=lora_r,
             lora_alpha=lora_alpha,
             lora_dropout=lora_dropout,
@@ -167,7 +162,6 @@ class LlamaLoraForGeneration(_LlamaLoraForGeneration):
     def __init__(
         self,
         config_path: str,
-        
         lora_r: Optional[int] = 16,
         lora_alpha: Optional[int] = 32,
         lora_dropout: Optional[float] = 0.05,
@@ -189,7 +183,6 @@ class LlamaLoraForGeneration(_LlamaLoraForGeneration):
         """
         super().__init__(
             config_path=config_path,
-            
             lora_r=lora_r,
             lora_alpha=lora_alpha,
             lora_dropout=lora_dropout,
@@ -219,7 +212,6 @@ class LlamaLoraForGeneration(_LlamaLoraForGeneration):
             nested_dict_value(pretrained_llama_infos, pretrained_name, "config"),
         )
         config_path = cached_path(config_path)
-        
 
         lora_r = config.getoption("lora_r", 16)
         lora_alpha = config.getoption("lora_alpha", 32)
@@ -231,7 +223,6 @@ class LlamaLoraForGeneration(_LlamaLoraForGeneration):
 
         inst = cls(
             config_path,
-            
             lora_r=lora_r,
             lora_alpha=lora_alpha,
             lora_dropout=lora_dropout,

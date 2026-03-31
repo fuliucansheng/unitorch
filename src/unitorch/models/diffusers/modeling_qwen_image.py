@@ -26,7 +26,6 @@ from diffusers.pipelines import (
 from unitorch.models import (
     GenericModel,
     GenericOutputs,
-    
 )
 from unitorch.models.peft import PeftWeightLoaderMixin
 from unitorch.models.diffusers import compute_snr
@@ -80,7 +79,6 @@ class GenericQWenImageModel(GenericModel, PeftWeightLoaderMixin):
         text_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
-        
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         freeze_vae_encoder: Optional[bool] = True,
@@ -129,8 +127,6 @@ class GenericQWenImageModel(GenericModel, PeftWeightLoaderMixin):
         if freeze_transformer_encoder:
             for param in self.transformer.parameters():
                 param.requires_grad = False
-
-        
 
     def get_sigmas(self, timesteps, n_dim=4, dtype=torch.float32):
         sigmas = self.scheduler.sigmas.to(device=self.device, dtype=dtype)
@@ -269,7 +265,6 @@ class QWenImageText2ImageGeneration(GenericQWenImageModel):
         text_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
-        
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         freeze_vae_encoder: Optional[bool] = True,
@@ -285,7 +280,6 @@ class QWenImageText2ImageGeneration(GenericQWenImageModel):
             text_config_path=text_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
-            
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             freeze_vae_encoder=freeze_vae_encoder,
@@ -479,7 +473,6 @@ class QWenImageEditingGeneration(GenericQWenImageModel):
         text_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
-        
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         freeze_vae_encoder: Optional[bool] = True,
@@ -495,7 +488,6 @@ class QWenImageEditingGeneration(GenericQWenImageModel):
             text_config_path=text_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
-            
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             freeze_vae_encoder=freeze_vae_encoder,

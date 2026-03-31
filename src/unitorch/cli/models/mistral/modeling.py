@@ -30,7 +30,6 @@ class MistralForClassification(_MistralForClassification):
     def __init__(
         self,
         config_path: str,
-        
         num_classes: Optional[int] = 1,
         gradient_checkpointing: Optional[bool] = False,
     ):
@@ -44,7 +43,6 @@ class MistralForClassification(_MistralForClassification):
         """
         super().__init__(
             config_path=config_path,
-            
             num_classes=num_classes,
             gradient_checkpointing=gradient_checkpointing,
         )
@@ -76,13 +74,12 @@ class MistralForClassification(_MistralForClassification):
         )
 
         config_path = cached_path(config_path)
-        
+
         gradient_checkpointing = config.getoption("gradient_checkpointing", False)
         num_classes = config.getoption("num_classes", 1)
 
         inst = cls(
             config_path,
-            
             num_classes=num_classes,
             gradient_checkpointing=gradient_checkpointing,
         )
@@ -154,7 +151,6 @@ class MistralForGeneration(_MistralForGeneration):
     def __init__(
         self,
         config_path: str,
-        
         gradient_checkpointing: Optional[bool] = False,
     ):
         """
@@ -166,7 +162,6 @@ class MistralForGeneration(_MistralForGeneration):
         """
         super().__init__(
             config_path=config_path,
-            
             gradient_checkpointing=gradient_checkpointing,
         )
 
@@ -197,12 +192,11 @@ class MistralForGeneration(_MistralForGeneration):
         )
 
         config_path = cached_path(config_path)
-        
+
         gradient_checkpointing = config.getoption("gradient_checkpointing", False)
 
         inst = cls(
             config_path,
-            
             gradient_checkpointing=gradient_checkpointing,
         )
         pretrained_weight_path = config.getoption("pretrained_weight_path", None)

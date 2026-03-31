@@ -29,7 +29,6 @@ from unitorch.utils.decorators import replace
 from unitorch.models import (
     GenericModel,
     GenericOutputs,
-    
 )
 
 from unitorch.models.peft import PeftWeightLoaderMixin
@@ -41,7 +40,6 @@ class LlavaMistralClipForClassification(GenericModel, PeftWeightLoaderMixin):
     def __init__(
         self,
         config_path: str,
-        
         image_token_index: Optional[int] = 32000,
         num_classes: Optional[int] = 1,
         hidden_dropout_prob: Optional[float] = 0.1,
@@ -172,7 +170,6 @@ class LlavaMistralClipForGeneration(GenericModel, PeftWeightLoaderMixin):
     def __init__(
         self,
         config_path: str,
-        
         image_token_index: Optional[int] = 32000,
         freeze_vision_encoder: Optional[bool] = True,
         freeze_multi_modal_projector: Optional[bool] = False,
@@ -447,7 +444,6 @@ class LlavaLlamaSiglipForGeneration(GenericModel, PeftWeightLoaderMixin):
     def __init__(
         self,
         config_path: str,
-        
         image_token_index: Optional[int] = 128077,
         freeze_vision_encoder: Optional[bool] = True,
         freeze_multi_modal_projector: Optional[bool] = False,

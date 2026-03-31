@@ -49,7 +49,6 @@ class WanForImage2VideoGenerationPipeline(WanForImage2VideoGeneration):
         scheduler_config_path: str,
         vocab_path: str,
         config2_path: Optional[str] = None,
-        
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         weight_path: Optional[Union[str, List[str]]] = None,
@@ -64,7 +63,6 @@ class WanForImage2VideoGenerationPipeline(WanForImage2VideoGeneration):
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
             config2_path=config2_path,
-            
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             boundary_ratio=boundary_ratio,
@@ -95,7 +93,6 @@ class WanForImage2VideoGenerationPipeline(WanForImage2VideoGeneration):
         scheduler_config_path: Optional[str] = None,
         config2_path: Optional[str] = None,
         vocab_path: Optional[str] = None,
-        
         pretrained_weight_path: Optional[str] = None,
         device: Optional[str] = None,
         **kwargs,
@@ -154,8 +151,6 @@ class WanForImage2VideoGenerationPipeline(WanForImage2VideoGeneration):
         )
         vocab_path = cached_path(vocab_path)
 
-        
-
         weight_path = pretrained_weight_path or config.getoption(
             "pretrained_weight_path", None
         )
@@ -189,7 +184,6 @@ class WanForImage2VideoGenerationPipeline(WanForImage2VideoGeneration):
             vae_config_path=vae_config_path,
             config2_path=config2_path,
             vocab_path=vocab_path,
-            
             weight_path=weight_path,
             state_dict=state_dict,
             device=device,

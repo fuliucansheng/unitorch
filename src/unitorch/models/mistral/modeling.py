@@ -13,7 +13,6 @@ from unitorch.utils.decorators import replace
 from unitorch.models import (
     GenericModel,
     GenericOutputs,
-    
 )
 from unitorch.models.peft import PeftWeightLoaderMixin
 
@@ -23,7 +22,6 @@ class MistralForClassification(GenericModel, PeftWeightLoaderMixin):
     def __init__(
         self,
         config_path: str,
-        
         num_classes: Optional[int] = 1,
         hidden_dropout_prob: Optional[float] = 0.1,
         gradient_checkpointing: Optional[bool] = False,
@@ -82,7 +80,6 @@ class MistralForGeneration(GenericModel, PeftWeightLoaderMixin):
     def __init__(
         self,
         config_path: str,
-        
         gradient_checkpointing: Optional[bool] = False,
         pad_token_id: Optional[int] = 0,
     ):

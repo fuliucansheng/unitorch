@@ -58,7 +58,6 @@ class QWenImageForText2ImageFastAPIPipeline(GenericQWenImageModel):
         tokenizer_config: Optional[str] = None,
         special_tokens_map: Optional[str] = None,
         max_seq_length: Optional[int] = 1024,
-        
         weight_path: Optional[Union[str, List[str]]] = None,
         state_dict: Optional[Dict[str, Any]] = None,
         lora_checkpoints: Optional[Union[str, List[str]]] = None,
@@ -72,7 +71,6 @@ class QWenImageForText2ImageFastAPIPipeline(GenericQWenImageModel):
             text_config_path=text_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
-            
         )
         self.processor = QWenImageProcessor(
             vocab_path=vocab_path,
@@ -126,7 +124,6 @@ class QWenImageForText2ImageFastAPIPipeline(GenericQWenImageModel):
         merge_path: Optional[str] = None,
         tokenizer_config: Optional[str] = None,
         special_tokens_map: Optional[str] = None,
-        
         pretrained_weight_path: Optional[str] = None,
         device: Optional[str] = None,
         pretrained_lora_names: Optional[Union[str, List[str]]] = None,
@@ -207,8 +204,6 @@ class QWenImageForText2ImageFastAPIPipeline(GenericQWenImageModel):
             cached_path(special_tokens_map) if special_tokens_map is not None else None
         )
 
-        
-
         max_seq_length = config.getoption("max_seq_length", 1024)
         weight_path = pretrained_weight_path or config.getoption(
             "pretrained_weight_path", None
@@ -283,7 +278,6 @@ class QWenImageForText2ImageFastAPIPipeline(GenericQWenImageModel):
             merge_path=merge_path,
             tokenizer_config=tokenizer_config,
             special_tokens_map=special_tokens_map,
-            
             max_seq_length=max_seq_length,
             weight_path=weight_path,
             state_dict=state_dict,

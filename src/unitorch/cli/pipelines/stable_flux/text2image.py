@@ -45,7 +45,6 @@ class StableFluxForText2ImageGenerationPipeline(GenericStableFluxModel):
         vocab_path: str,
         merge_path: str,
         vocab2_path: str,
-        
         max_seq_length: Optional[int] = 77,
         max_seq_length2: Optional[int] = 256,
         pad_token: Optional[str] = "<|endoftext|>",
@@ -60,7 +59,6 @@ class StableFluxForText2ImageGenerationPipeline(GenericStableFluxModel):
             text2_config_path=text2_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
-            
         )
         self.processor = StableFluxProcessor(
             vocab_path=vocab_path,
@@ -92,7 +90,6 @@ class StableFluxForText2ImageGenerationPipeline(GenericStableFluxModel):
         vocab_path: Optional[str] = None,
         merge_path: Optional[str] = None,
         vocab2_path: Optional[str] = None,
-        
         pretrained_weight_path: Optional[str] = None,
         device: Optional[str] = None,
         **kwargs,
@@ -165,8 +162,6 @@ class StableFluxForText2ImageGenerationPipeline(GenericStableFluxModel):
         )
         vocab2_path = cached_path(vocab2_path)
 
-        
-
         max_seq_length = config.getoption("max_seq_length", 77)
         max_seq_length2 = config.getoption("max_seq_length2", 256)
         pad_token = config.getoption("pad_token", "<|endoftext|>")
@@ -206,7 +201,6 @@ class StableFluxForText2ImageGenerationPipeline(GenericStableFluxModel):
             vocab_path=vocab_path,
             merge_path=merge_path,
             vocab2_path=vocab2_path,
-            
             max_seq_length=max_seq_length,
             max_seq_length2=max_seq_length2,
             pad_token=pad_token,

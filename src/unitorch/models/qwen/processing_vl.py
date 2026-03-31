@@ -102,7 +102,7 @@ class QWenVLProcessor(HfLlmProcessor):
             else tokenizer.convert_tokens_to_ids(self.video_token)
         )
         self.vision_processor = Qwen2VLImageProcessor.from_json_file(vision_config_path)
-        
+
         super().__init__(
             tokenizer=tokenizer,
             max_seq_length=max_seq_length,

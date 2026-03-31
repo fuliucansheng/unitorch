@@ -34,7 +34,6 @@ from diffusers.pipelines import (
 from unitorch.models import (
     GenericModel,
     GenericOutputs,
-    
 )
 from unitorch.models.peft import GenericPeftModel
 from unitorch.models.diffusers import compute_snr
@@ -63,7 +62,6 @@ class GenericWanLoraModel(GenericPeftModel):
         vae_config_path: str,
         scheduler_config_path: str,
         config2_path: Optional[str] = None,
-        
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         snr_gamma: Optional[float] = 5.0,
@@ -124,8 +122,6 @@ class GenericWanLoraModel(GenericPeftModel):
         for param in self.transformer.parameters():
             param.requires_grad = False
 
-        
-
         lora_config = LoraConfig(
             r=lora_r,
             lora_alpha=lora_alpha,
@@ -183,7 +179,6 @@ class WanLoraForText2VideoGeneration(GenericWanLoraModel):
         vae_config_path: str,
         scheduler_config_path: str,
         config2_path: Optional[str] = None,
-        
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         snr_gamma: Optional[float] = 5.0,
@@ -208,7 +203,6 @@ class WanLoraForText2VideoGeneration(GenericWanLoraModel):
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
             config2_path=config2_path,
-            
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             snr_gamma=snr_gamma,
@@ -350,7 +344,6 @@ class WanLoraForImage2VideoGeneration(GenericWanLoraModel):
         vae_config_path: str,
         scheduler_config_path: str,
         config2_path: Optional[str] = None,
-        
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         snr_gamma: Optional[float] = 5.0,
@@ -375,7 +368,6 @@ class WanLoraForImage2VideoGeneration(GenericWanLoraModel):
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
             config2_path=config2_path,
-            
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             snr_gamma=snr_gamma,

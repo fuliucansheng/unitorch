@@ -10,7 +10,6 @@ from transformers import MistralModel, MistralConfig, MistralForCausalLM
 from unitorch.models import (
     GenericModel,
     GenericOutputs,
-    
 )
 
 from unitorch.models.peft import PeftModelForSequenceClassification, GenericPeftModel
@@ -26,7 +25,6 @@ class MistralLoraForClassification(GenericPeftModel):
     def __init__(
         self,
         config_path: str,
-        
         lora_r: Optional[int] = 16,
         lora_alpha: Optional[int] = 32,
         lora_dropout: Optional[float] = 0.05,
@@ -97,7 +95,6 @@ class MistralLoraForGeneration(GenericPeftModel):
     def __init__(
         self,
         config_path: str,
-        
         lora_r: Optional[int] = 16,
         lora_alpha: Optional[int] = 32,
         lora_dropout: Optional[float] = 0.05,

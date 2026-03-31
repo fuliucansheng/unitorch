@@ -49,7 +49,6 @@ class Stable3ForText2ImageGenerationPipeline(GenericStable3Model):
         vocab2_path: str,
         merge2_path: str,
         vocab3_path: str,
-        
         max_seq_length: Optional[int] = 77,
         max_seq_length2: Optional[int] = 256,
         pad_token: Optional[str] = "<|endoftext|>",
@@ -66,7 +65,6 @@ class Stable3ForText2ImageGenerationPipeline(GenericStable3Model):
             text3_config_path=text3_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
-            
         )
         self.processor = Stable3Processor(
             vocab_path=vocab_path,
@@ -104,7 +102,6 @@ class Stable3ForText2ImageGenerationPipeline(GenericStable3Model):
         vocab2_path: Optional[str] = None,
         merge2_path: Optional[str] = None,
         vocab3_path: Optional[str] = None,
-        
         pretrained_weight_path: Optional[str] = None,
         device: Optional[str] = None,
         **kwargs,
@@ -200,8 +197,6 @@ class Stable3ForText2ImageGenerationPipeline(GenericStable3Model):
         )
         vocab3_path = cached_path(vocab3_path)
 
-        
-
         max_seq_length = config.getoption("max_seq_length", 77)
         max_seq_length2 = config.getoption("max_seq_length2", 256)
         pad_token = config.getoption("pad_token", "<|endoftext|>")
@@ -249,7 +244,6 @@ class Stable3ForText2ImageGenerationPipeline(GenericStable3Model):
             vocab2_path=vocab2_path,
             merge2_path=merge2_path,
             vocab3_path=vocab3_path,
-            
             max_seq_length=max_seq_length,
             max_seq_length2=max_seq_length2,
             pad_token=pad_token,

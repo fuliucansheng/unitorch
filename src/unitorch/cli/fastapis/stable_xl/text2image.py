@@ -60,7 +60,6 @@ class StableXLForText2ImageFastAPIPipeline(GenericStableXLModel):
         merge_path: str,
         vocab2_path: str,
         merge2_path: str,
-        
         max_seq_length: Optional[int] = 77,
         pad_token: Optional[str] = "<|endoftext|>",
         pad_token2: Optional[str] = "!",
@@ -78,7 +77,6 @@ class StableXLForText2ImageFastAPIPipeline(GenericStableXLModel):
             text2_config_path=text2_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
-            
         )
         self.processor = StableXLProcessor(
             vocab_path=vocab_path,
@@ -137,7 +135,6 @@ class StableXLForText2ImageFastAPIPipeline(GenericStableXLModel):
         merge_path: Optional[str] = None,
         vocab2_path: Optional[str] = None,
         merge2_path: Optional[str] = None,
-        
         pretrained_weight_path: Optional[str] = None,
         device: Optional[str] = None,
         pretrained_lora_names: Optional[Union[str, List[str]]] = None,
@@ -221,8 +218,6 @@ class StableXLForText2ImageFastAPIPipeline(GenericStableXLModel):
         )
         merge2_path = cached_path(merge2_path)
 
-        
-
         max_seq_length = config.getoption("max_seq_length", 77)
         pad_token = config.getoption("pad_token", "<|endoftext|>")
         pad_token2 = config.getoption("pad_token2", "!")
@@ -300,7 +295,6 @@ class StableXLForText2ImageFastAPIPipeline(GenericStableXLModel):
             merge_path=merge_path,
             vocab2_path=vocab2_path,
             merge2_path=merge2_path,
-            
             pad_token=pad_token,
             pad_token2=pad_token2,
             max_seq_length=max_seq_length,

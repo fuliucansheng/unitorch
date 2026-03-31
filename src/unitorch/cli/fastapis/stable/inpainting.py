@@ -55,7 +55,6 @@ class StableForImageInpaintingFastAPIPipeline(GenericStableModel):
         scheduler_config_path: str,
         vocab_path: str,
         merge_path: str,
-        
         max_seq_length: Optional[int] = 77,
         pad_token: Optional[str] = "<|endoftext|>",
         weight_path: Optional[Union[str, List[str]]] = None,
@@ -71,7 +70,6 @@ class StableForImageInpaintingFastAPIPipeline(GenericStableModel):
             text_config_path=text_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
-            
         )
         self.processor = StableProcessor(
             vocab_path=vocab_path,
@@ -124,7 +122,6 @@ class StableForImageInpaintingFastAPIPipeline(GenericStableModel):
         scheduler_config_path: Optional[str] = None,
         vocab_path: Optional[str] = None,
         merge_path: Optional[str] = None,
-        
         pretrained_weight_path: Optional[str] = None,
         pad_token: Optional[str] = "<|endoftext|>",
         device: Optional[str] = None,
@@ -186,8 +183,6 @@ class StableForImageInpaintingFastAPIPipeline(GenericStableModel):
         )
         merge_path = cached_path(merge_path)
 
-        
-
         max_seq_length = config.getoption("max_seq_length", 77)
         pad_token = pad_token or config.getoption("pad_token", "<|endoftext|>")
         weight_path = pretrained_weight_path or config.getoption(
@@ -248,7 +243,6 @@ class StableForImageInpaintingFastAPIPipeline(GenericStableModel):
             scheduler_config_path=scheduler_config_path,
             vocab_path=vocab_path,
             merge_path=merge_path,
-            
             pad_token=pad_token,
             max_seq_length=max_seq_length,
             weight_path=weight_path,

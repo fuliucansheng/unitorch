@@ -49,7 +49,6 @@ class StableForImage2VideoGenerationPipeline(StableForImage2VideoGeneration):
         image_process_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
-        
         weight_path: Optional[Union[str, List[str]]] = None,
         state_dict: Optional[Dict[str, Any]] = None,
         device: Optional[Union[str, int]] = "cpu",
@@ -61,7 +60,6 @@ class StableForImage2VideoGenerationPipeline(StableForImage2VideoGeneration):
             image_process_config_path=image_process_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
-            
         )
         self.processor = StableVideoProcessor(
             vision_config_path=image_process_config_path,
@@ -85,7 +83,6 @@ class StableForImage2VideoGenerationPipeline(StableForImage2VideoGeneration):
         vae_config_path: Optional[str] = None,
         scheduler_config_path: Optional[str] = None,
         image_process_config_path: Optional[str] = None,
-        
         pretrained_weight_path: Optional[str] = None,
         device: Optional[str] = None,
         **kwargs,
@@ -137,8 +134,6 @@ class StableForImage2VideoGenerationPipeline(StableForImage2VideoGeneration):
         )
         image_process_config_path = cached_path(image_process_config_path)
 
-        
-
         weight_path = pretrained_weight_path or config.getoption(
             "pretrained_weight_path", None
         )
@@ -159,7 +154,6 @@ class StableForImage2VideoGenerationPipeline(StableForImage2VideoGeneration):
             image_process_config_path=image_process_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
-            
             weight_path=weight_path,
             state_dict=state_dict,
             device=device,

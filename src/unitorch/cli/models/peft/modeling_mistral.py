@@ -29,7 +29,6 @@ class MistralLoraForClassification(_MistralLoraForClassification):
     def __init__(
         self,
         config_path: str,
-        
         lora_r: Optional[int] = 16,
         lora_alpha: Optional[int] = 32,
         lora_dropout: Optional[float] = 0.05,
@@ -53,7 +52,6 @@ class MistralLoraForClassification(_MistralLoraForClassification):
         """
         super().__init__(
             config_path=config_path,
-            
             lora_r=lora_r,
             lora_alpha=lora_alpha,
             lora_dropout=lora_dropout,
@@ -87,8 +85,6 @@ class MistralLoraForClassification(_MistralLoraForClassification):
         )
         config_path = cached_path(config_path)
 
-        
-
         lora_r = config.getoption("lora_r", 16)
         lora_alpha = config.getoption("lora_alpha", 32)
         lora_dropout = config.getoption("lora_dropout", 0.05)
@@ -100,7 +96,6 @@ class MistralLoraForClassification(_MistralLoraForClassification):
 
         inst = cls(
             config_path,
-            
             lora_r=lora_r,
             lora_alpha=lora_alpha,
             lora_dropout=lora_dropout,
@@ -169,7 +164,6 @@ class MistralLoraForGeneration(_MistralLoraForGeneration):
     def __init__(
         self,
         config_path: str,
-        
         lora_r: Optional[int] = 16,
         lora_alpha: Optional[int] = 32,
         lora_dropout: Optional[float] = 0.05,
@@ -191,7 +185,6 @@ class MistralLoraForGeneration(_MistralLoraForGeneration):
         """
         super().__init__(
             config_path=config_path,
-            
             lora_r=lora_r,
             lora_alpha=lora_alpha,
             lora_dropout=lora_dropout,
@@ -223,7 +216,6 @@ class MistralLoraForGeneration(_MistralLoraForGeneration):
             nested_dict_value(pretrained_mistral_infos, pretrained_name, "config"),
         )
         config_path = cached_path(config_path)
-        
 
         lora_r = config.getoption("lora_r", 16)
         lora_alpha = config.getoption("lora_alpha", 32)
@@ -235,7 +227,6 @@ class MistralLoraForGeneration(_MistralLoraForGeneration):
 
         inst = cls(
             config_path,
-            
             lora_r=lora_r,
             lora_alpha=lora_alpha,
             lora_dropout=lora_dropout,

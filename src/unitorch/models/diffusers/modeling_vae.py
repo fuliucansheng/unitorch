@@ -12,7 +12,6 @@ from diffusers import AutoencoderKL
 from unitorch.models import (
     GenericModel,
     GenericOutputs,
-    
 )
 
 

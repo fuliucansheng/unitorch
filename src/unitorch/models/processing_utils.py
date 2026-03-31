@@ -438,7 +438,7 @@ class HfLlmProcessor:
             input_ids_label=outputs.input_ids_label,
             attention_mask_label=outputs.attention_mask_label,
         )
-    
+
     def detokenize(
         self,
         sequences: torch.Tensor,

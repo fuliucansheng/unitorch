@@ -69,9 +69,11 @@ from unitorch.utils.torch_utils import (
     SequentialSkipSampler,
 )
 
+
 def is_remote_url(url_or_filename):
     parsed = urlparse(url_or_filename)
     return parsed.scheme in ("http", "https")
+
 
 def url_to_filename(url: str, etag: Optional[str] = None) -> str:
     url_bytes = url.encode("utf-8")

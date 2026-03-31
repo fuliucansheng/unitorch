@@ -22,9 +22,7 @@ from unitorch.cli.models import ClassificationOutputs, GenerationOutputs, LossOu
 from unitorch.cli.models.qwen import pretrained_qwen_infos
 
 
-@register_model(
-    "core/model/generation/peft/lora/qwen3_vl", generation_model_decorator
-)
+@register_model("core/model/generation/peft/lora/qwen3_vl", generation_model_decorator)
 class QWen3VLLoraForGeneration(_QWen3VLLoraForGeneration):
     """QWen3Lora model for generation tasks."""
 
