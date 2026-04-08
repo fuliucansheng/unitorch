@@ -8,7 +8,8 @@ import numpy as np
 from PIL import Image
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from torchvision.transforms import Resize, CenterCrop, ToTensor, Normalize, Compose
-from transformers import DetrImageProcessor
+from transformers import DetrImageProcessor, DetrImageProcessorPil
+from transformers.image_utils import ChannelDimension
 from unitorch.utils import resize_shortest_edge, pop_value
 from unitorch.models import GenericOutputs
 
@@ -26,7 +27,7 @@ class DetrProcessor(object):
             min_size_test: resize shortest edge parameters
             max_size_test: resize shortest edge parameters
         """
-        self.vision_processor = DetrImageProcessor.from_json_file(vision_config_path)
+        self.vision_processor = DetrImageProcessorPil.from_json_file(vision_config_path)
 
         self.image_mean = self.vision_processor.image_mean
         self.image_std = self.vision_processor.image_std
@@ -42,21 +43,12 @@ class DetrProcessor(object):
             image: input image
         """
         width, height = image.size
-        image = resize_shortest_edge(
-            image.convert("RGB"),
-            [self.min_size_test, self.max_size_test],
-            self.max_size_test,
-        )
-
-        image = np.array(image) / 255.0
-
-        image = self.vision_processor.normalize(
-            image=image,
-            mean=self.image_mean,
-            std=self.image_std,
-        )
+        image = self.vision_processor.preprocess(
+            images=image,
+            return_tensors="pt",
+        ).pixel_values.squeeze(0)
         return GenericOutputs(
-            image=torch.tensor(image).permute(2, 0, 1),
+            image=image,
             sizes=torch.tensor([height, width]),
         )
 

@@ -25,6 +25,12 @@ from unitorch.utils import image_list_to_tensor
 
 
 class DetrForDetection(GenericModel):
+    replace_keys_in_state_dict = {
+        "conv_encoder\.": "",
+        "out_proj": "o_proj",
+        r'(?<!mlp\.)fc1': "mlp.fc1",
+        r'(?<!mlp\.)fc2': "mlp.fc2",
+    }
     def __init__(
         self,
         config_path: str,
