@@ -7,12 +7,12 @@ from unitorch.schedulers.warmup import (
     CosineWarmupScheduler,
     LinearWarmupScheduler,
 )
-from unitorch.models import CheckpointMixin
+from unitorch.schedulers import SchedulerCheckpointMixin
 from unitorch.cli import add_default_section_for_init, register_scheduler
 
 
 @register_scheduler("core/scheduler/cosine_warmup")
-class CosineWarmupScheduler(CosineWarmupScheduler, CheckpointMixin):
+class CosineWarmupScheduler(CosineWarmupScheduler, SchedulerCheckpointMixin):
     def __init__(
         self,
         optimizer: optim.Optimizer,
@@ -54,7 +54,7 @@ class CosineWarmupScheduler(CosineWarmupScheduler, CheckpointMixin):
 
 
 @register_scheduler("core/scheduler/linear_warmup")
-class LinearWarmupScheduler(LinearWarmupScheduler, CheckpointMixin):
+class LinearWarmupScheduler(LinearWarmupScheduler, SchedulerCheckpointMixin):
     def __init__(
         self,
         optimizer: optim.Optimizer,
