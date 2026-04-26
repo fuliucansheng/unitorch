@@ -267,6 +267,26 @@ register_fastapi = partial(
     save_dict=registered_fastapi,
 )
 
+# copilot module
+class GenericCopilotTool(metaclass=abc.ABCMeta):
+    def __init__(self):
+        pass
+
+    @abc.abstractmethod
+    def launch(self, **kwargs):
+        pass
+
+    @abc.abstractmethod
+    def describe(self):
+        pass
+
+
+registered_copilot_tools = dict()
+register_copilot_tool = partial(
+    registry_func,
+    save_dict=registered_copilot_tools,
+)
+
 
 # usful function
 from unitorch.cli.writers import WriterMixin, WriterOutputs

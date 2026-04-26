@@ -50,7 +50,7 @@ def get_dir():
 
 
 ### version
-VERSION = "0.0.1.7"
+VERSION = "0.0.1.8"
 
 # before setup logging
 import sklearn

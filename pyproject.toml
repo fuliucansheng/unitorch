@@ -42,6 +42,8 @@ unitorch-infer = "unitorch.cli.consoles.infer:cli_main"
 unitorch-launch= "unitorch.cli.consoles.launch:cli_main"
 unitorch-fastapi= "unitorch.cli.consoles.fastapi:cli_main"
 unitorch-service = "unitorch.cli.consoles.service:cli_main"
+unitorch-copliot = "unitorch.cli.consoles.copliot:main"
+unitorch-copliot-cli = "unitorch.cli.consoles.copliot:cli_main"
 
 [tool.setuptools]
 include-package-data = true
