@@ -48,7 +48,6 @@ Seven commands defined in `pyproject.toml` under `[project.scripts]`:
 | `unitorch-eval` | `cli.consoles.eval` | Evaluate models |
 | `unitorch-infer` | `cli.consoles.infer` | Run inference |
 | `unitorch-launch` | `cli.consoles.launch` | Launch a quick script |
-| `unitorch-webui` | `cli.consoles.webui` | Gradio web interface |
 | `unitorch-fastapi` | `cli.consoles.fastapi` | FastAPI model server |
 | `unitorch-service` | `cli.consoles.service` | Background non-model service |
 
@@ -81,7 +80,6 @@ Every model/pipeline class follows this pattern: `__init__` takes explicit args,
   - `cli/pipelines/` — data processing pipelines (classification, generation, detection, segmentation, etc.)
   - `cli/tasks/` — task runners
   - `cli/consoles/` — entry point implementations
-  - `cli/webuis/` — Gradio UI definitions
   - `cli/fastapis/` — FastAPI endpoint definitions
 - `datasets/` — dataset implementations
 - `losses/`, `scores/` — loss functions and evaluation metrics

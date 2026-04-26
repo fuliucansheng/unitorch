@@ -40,19 +40,19 @@ def hf_endpoint_url(url):
 
 
 # extenstions
-UNITORCH_EXTENSTIONS = os.environ.get("UNITORCH_EXTENSTIONS", "")
-UNITORCH_EXTENSTIONS = [
-    e.strip() for e in re.split(r"[,;]", UNITORCH_EXTENSTIONS) if len(e.strip()) > 0
+UNITORCH_EXTENSIONS = os.environ.get("UNITORCH_EXTENSIONS", "")
+UNITORCH_EXTENSIONS = [
+    e.strip() for e in re.split(r"[,;]", UNITORCH_EXTENSIONS) if len(e.strip()) > 0
 ]
 
 
 def set_pkg_extensions(extensions: List[str]):
-    global UNITORCH_EXTENSTIONS
-    UNITORCH_EXTENSTIONS += extensions
+    global UNITORCH_EXTENSIONS
+    UNITORCH_EXTENSIONS += extensions
 
 
 def get_pkg_extensions():
-    return UNITORCH_EXTENSTIONS
+    return UNITORCH_EXTENSIONS
 
 
 def cached_path(
@@ -243,38 +243,6 @@ register_service = partial(
     save_dict=registered_service,
 )
 
-
-# webui module
-class GenericWebUI(metaclass=abc.ABCMeta):
-    ignore_elements = []
-
-    def __init__(self, config: CoreConfigureParser):
-        pass
-
-    @property
-    def iname(self):
-        pass
-
-    @property
-    def iface(self):
-        pass
-
-    @abc.abstractmethod
-    def start(self, **kwargs):
-        pass
-
-    @abc.abstractmethod
-    def stop(self, **kwargs):
-        pass
-
-
-registered_webui = dict()
-register_webui = partial(
-    registry_func,
-    save_dict=registered_webui,
-)
-
-
 # fastapi module
 class GenericFastAPI(metaclass=abc.ABCMeta):
     def __init__(self, config: CoreConfigureParser):
@@ -297,6 +265,26 @@ registered_fastapi = dict()
 register_fastapi = partial(
     registry_func,
     save_dict=registered_fastapi,
+)
+
+# copilot module
+class GenericCopilotTool(metaclass=abc.ABCMeta):
+    def __init__(self):
+        pass
+
+    @abc.abstractmethod
+    def launch(self, **kwargs):
+        pass
+
+    @abc.abstractmethod
+    def describe(self):
+        pass
+
+
+registered_copilot_tools = dict()
+register_copilot_tool = partial(
+    registry_func,
+    save_dict=registered_copilot_tools,
 )
 
 

@@ -1,4 +1,4 @@
-# Copyright (c) FULIUCANSHENG.
+# Copyright (c) MICROSOFT.
 # Licensed under the MIT License.
 
 import os
@@ -9,6 +9,7 @@ import importlib
 import uvicorn
 import unitorch.cli
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from unitorch.cli import CoreConfigureParser
 from unitorch.cli import (
@@ -57,8 +58,11 @@ def fastapi(config_path: str, **kwargs):
     app = FastAPI()
 
     for fastapi_instance in fastapi_instances:
-        # fastapi_instance.start()
         app.include_router(fastapi_instance.router)
+
+    statics = config.getoption("static", {})
+    for name, path in statics.items():
+        app.mount(f"/{name}", StaticFiles(directory=path), name=name)
 
     app.add_middleware(
         CORSMiddleware,
