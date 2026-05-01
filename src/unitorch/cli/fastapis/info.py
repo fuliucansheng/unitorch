@@ -1,30 +1,11 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
-import io
-import re
-import gc
-import json
-import logging
+import asyncio
 import psutil
 import torch
-import hashlib
-import asyncio
-import socket
-import pandas as pd
-from PIL import Image
-from fastapi import APIRouter, UploadFile, File
-from fastapi.responses import StreamingResponse
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
-
-from unitorch.utils import is_remote_url
-from unitorch.utils import pop_value, nested_dict_value
-from unitorch.cli import (
-    cached_path,
-    register_fastapi,
-    add_default_section_for_init,
-    add_default_section_for_function,
-)
+from fastapi import APIRouter
+from unitorch.cli import register_fastapi
 from unitorch.cli import CoreConfigureParser, GenericFastAPI
 
 

@@ -1,7 +1,7 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import Dict, List, Optional, Union
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.bart import BartProcessor as _BartProcessor
 from unitorch.cli import (
@@ -12,7 +12,7 @@ from unitorch.cli import (
 )
 from unitorch.cli import WriterOutputs
 from unitorch.cli.models import (
-    TensorsInputs,
+    TensorInputs,
     GenerationOutputs,
     GenerationTargets,
 )
@@ -30,16 +30,6 @@ class BartProcessor(_BartProcessor):
         max_seq_length: Optional[int] = 128,
         max_gen_seq_length: Optional[int] = 48,
     ):
-        """
-        Initialize BartProcessor.
-
-        Args:
-            vocab_path (str): The path to the vocabulary file.
-            merge_path (str): The path to the merge file.
-            special_input_ids (Dict, optional): Special input IDs. Defaults to an empty dictionary.
-            max_seq_length (int, optional): The maximum sequence length. Defaults to 128.
-            max_gen_seq_length (int, optional): The maximum generation sequence length. Defaults to 48.
-        """
         super().__init__(
             vocab_path=vocab_path,
             merge_path=merge_path,
@@ -51,16 +41,6 @@ class BartProcessor(_BartProcessor):
     @classmethod
     @add_default_section_for_init("core/process/bart")
     def from_core_configure(cls, config, **kwargs):
-        """
-        Create an instance of BartProcessor from a core configuration.
-
-        Args:
-            config: The core configuration.
-            **kwargs: Additional keyword arguments.
-
-        Returns:
-            BartProcessor: An instance of BartProcessor.
-        """
         config.set_default_section("core/process/bart")
         pretrained_name = config.getoption("pretrained_name", "bart-base")
         vocab_path = config.getoption("vocab_path", None)
@@ -90,25 +70,13 @@ class BartProcessor(_BartProcessor):
         max_seq_length: Optional[int] = None,
         max_gen_seq_length: Optional[int] = None,
     ):
-        """
-        Perform generation with BART model.
-
-        Args:
-            text (str): The input text.
-            text_pair (str, optional): The paired text. Defaults to None.
-            max_seq_length (int, optional): The maximum sequence length. Defaults to None.
-            max_gen_seq_length (int, optional): The maximum generation sequence length. Defaults to None.
-
-        Returns:
-            TensorsInputs, GenerationTargets: The input tensors and generation targets.
-        """
         outputs = super().generation(
             text=text,
             text_pair=text_pair,
             max_seq_length=max_seq_length,
             max_gen_seq_length=max_gen_seq_length,
         )
-        return TensorsInputs(
+        return TensorInputs(
             input_ids=outputs.input_ids,
             attention_mask=outputs.attention_mask,
             decoder_input_ids=outputs.input_ids_pair,
@@ -124,21 +92,11 @@ class BartProcessor(_BartProcessor):
         text: str,
         max_seq_length: Optional[int] = None,
     ):
-        """
-        Prepare input tensors for generation with BART model.
-
-        Args:
-            text (str): The input text.
-            max_seq_length (int, optional): The maximum sequence length. Defaults to None.
-
-        Returns:
-            TensorsInputs: The input tensors.
-        """
         outputs = super().generation_inputs(
             text=text,
             max_seq_length=max_seq_length,
         )
-        return TensorsInputs(input_ids=outputs.input_ids)
+        return TensorInputs(input_ids=outputs.input_ids)
 
     @register_process("core/process/bart/generation/labels")
     def _generation_labels(
@@ -146,16 +104,6 @@ class BartProcessor(_BartProcessor):
         text: str,
         max_gen_seq_length: Optional[int] = None,
     ):
-        """
-        Prepare generation targets for BART model.
-
-        Args:
-            text (str): The input text.
-            max_gen_seq_length (int, optional): The maximum generation sequence length. Defaults to None.
-
-        Returns:
-            GenerationTargets: The generation targets.
-        """
         outputs = super().generation_labels(
             text=text,
             max_gen_seq_length=max_gen_seq_length,
@@ -170,15 +118,6 @@ class BartProcessor(_BartProcessor):
         self,
         outputs: GenerationOutputs,
     ):
-        """
-        Detokenize the generation outputs.
-
-        Args:
-            outputs (GenerationOutputs): The generation outputs.
-
-        Returns:
-            WriterOutputs: The detokenized results.
-        """
         results = outputs.to_pandas()
         assert results.shape[0] == 0 or results.shape[0] == outputs.sequences.shape[0]
 

@@ -1,14 +1,12 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
-import os
 import ast
 import torch
-import datasets
 import torch.distributed as dist
 from copy import deepcopy
 from datasets import Dataset
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import Dict, List, Optional
 from unitorch.datasets.hf import HFDatasets, HFIterableDatasets
 from torch.utils.data import Dataset as TorchDataset, IterableDataset
 from unitorch.cli import CoreConfigureParser
@@ -18,8 +16,8 @@ from unitorch.cli import init_registered_process
 from unitorch.cli.models import (
     ModelInputs,
     ModelTargets,
-    CombineTensorsInputs,
-    CombineTensorsTargets,
+    TensorMixInputs,
+    TensorMixTargets,
 )
 
 
@@ -94,12 +92,12 @@ class ASTHFDatasets(TorchDataset):
                     if is_new:
                         model_targets_list.append(result)
         if len(model_inputs_list) == 0:
-            model_inputs_list = CombineTensorsInputs()
+            model_inputs_list = TensorMixInputs()
         elif len(model_inputs_list) == 1:
             model_inputs_list = model_inputs_list[0]
 
         if len(model_targets_list) == 0:
-            model_targets_list = CombineTensorsTargets()
+            model_targets_list = TensorMixTargets()
         elif len(model_targets_list) == 1:
             model_targets_list = model_targets_list[0]
 
@@ -161,10 +159,10 @@ class ASTHFIterableDatasets(IterableDataset):
                         else:
                             targets.add(result)
             if inputs is None:
-                inputs = CombineTensorsInputs()
+                inputs = TensorMixInputs()
 
             if targets is None:
-                targets = CombineTensorsTargets()
+                targets = TensorMixTargets()
 
             yield inputs, targets
 
@@ -181,24 +179,9 @@ class ASTDatasets:
     __ASTDatasets__ = dict()
 
     def __init__(self, configure: CoreConfigureParser):
-        """
-        Initialize ASTDatasets.
-
-        Args:
-            configure (CoreConfigureParser): The configuration parser for AST datasets.
-        """
         self.config = configure
 
     def __getdataset__(self, split):
-        """
-        Get the dataset for the specified split.
-
-        Args:
-            split (str): The split to get the dataset for.
-
-        Returns:
-            dataset: The dataset for the specified split.
-        """
         config = self.config
 
         registered_process_mapping = {
@@ -225,8 +208,6 @@ class ASTDatasets:
         _ASTDatasets = ASTHFIterableDatasets if _iterable else ASTHFDatasets
 
         config.set_default_section(f"core/dataset/ast/{split}")
-
-        template = config.getoption("template", _template)
         if config.getoption("data_name", _data_name) is not None:
             template = "hub"
 
@@ -235,7 +216,6 @@ class ASTDatasets:
         new_split = "validation" if split == "dev" else split
         new_split = config.getoption("split", new_split)
 
-        # get dataset
         dataset = None
         if template == "csv":
             data_dir = config.getoption("data_dir", _data_dir)
@@ -297,7 +277,6 @@ class ASTDatasets:
 
         assert dataset is not None
 
-        # get process functions
         process_functions = config.getoption("preprocess_functions", _process_functions)
         if process_functions is None:
             process_functions = []
@@ -332,26 +311,8 @@ class ASTDatasets:
     @classmethod
     @add_default_section_for_init("core/dataset/ast")
     def from_core_configure(cls, config, **kwargs):
-        """
-        Create an instance of ASTDatasets from a core configuration.
-
-        Args:
-            config: The core configuration.
-            **kwargs: Additional keyword arguments.
-
-        Returns:
-            ASTDatasets: An instance of ASTDatasets.
-        """
         return cls(configure=config)
 
     def get(self, split: Optional[str] = "train"):
-        """
-        Get the dataset for the specified split.
-
-        Args:
-            split (str, optional): The split to get the dataset for. Defaults to "train".
-
-        Returns:
-            dataset: The dataset for the specified split.
-        """
+        """Get the dataset for the specified split."""
         return self.__getdataset__(split)

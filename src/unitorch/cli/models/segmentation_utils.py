@@ -11,25 +11,24 @@ import numpy as np
 import torch.nn as nn
 from PIL import Image
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import Dict, List, Optional, Union
 from unitorch.utils import numpy_to_pil
 from unitorch.cli import (
     add_default_section_for_init,
-    add_default_section_for_function,
     register_process,
 )
 from unitorch.cli import WriterMixin, WriterOutputs
-from unitorch.cli.models.modeling_utils import ListTensorsOutputs, ListTensorsTargets
+from unitorch.cli.models.modeling_utils import TensorSeqOutputs, TensorSeqTargets
 
 
 @dataclass
-class SegmentationOutputs(ListTensorsOutputs, WriterMixin):
+class SegmentationOutputs(TensorSeqOutputs, WriterMixin):
     masks: Union[torch.Tensor, List[torch.Tensor]]
     classes: Union[torch.Tensor, List[torch.Tensor]] = torch.empty(0)
 
 
 @dataclass
-class SegmentationTargets(ListTensorsTargets):
+class SegmentationTargets(TensorSeqTargets):
     targets: Union[torch.Tensor, List[torch.Tensor]]
     sample_weight: Optional[torch.Tensor] = torch.empty(0)
 

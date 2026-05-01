@@ -2,7 +2,6 @@
 # Licensed under the MIT License.
 
 import os
-import re
 import io
 import torch
 import torch.nn as nn
@@ -12,20 +11,17 @@ import imageio
 import tempfile
 import logging
 import numpy as np
-import safetensors
 from PIL import Image
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import List, Optional
 from diffusers.utils import numpy_to_pil, pt_to_pil, export_to_gif
-from unitorch import is_opencv_available
 from unitorch.utils import load_weight, tensor2vid
 from unitorch.cli import WriterMixin, WriterOutputs
 from unitorch.cli import (
     add_default_section_for_init,
-    add_default_section_for_function,
     register_process,
 )
-from unitorch.cli.models.modeling_utils import TensorsOutputs, TensorsTargets
+from unitorch.cli.models.modeling_utils import TensorOutputs, TensorTargets
 
 from unitorch.cli import cached_path
 
@@ -35,10 +31,7 @@ def numpy2vid(video: np.ndarray) -> List[np.ndarray]:
         video = np.expand_dims(video, axis=0)
     i, f, c, h, w = video.shape
     images = np.transpose(video, (1, 3, 0, 4, 2))
-    images = np.transpose(video, (1, 3, 0, 4, 2))
-    # Reshape to (frames, height, batch_size * width, channels)
     images = images.reshape(f, h, i * w, c)
-    # Convert to uint8 and scale pixel values
     images = [(frame * 255).astype("uint8") for frame in images]
     return images
 
@@ -59,12 +52,12 @@ def export_to_video(
 
 
 @dataclass
-class DiffusionOutputs(TensorsOutputs, WriterMixin):
+class DiffusionOutputs(TensorOutputs, WriterMixin):
     outputs: torch.Tensor
 
 
 @dataclass
-class DiffusionTargets(TensorsTargets):
+class DiffusionTargets(TensorTargets):
     targets: torch.Tensor
     masks: Optional[torch.Tensor] = torch.empty(0)
 

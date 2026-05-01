@@ -1,7 +1,7 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import List, Optional, Union
 from PIL import Image
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.grounding_dino import (
@@ -10,16 +10,13 @@ from unitorch.models.grounding_dino import (
 from unitorch.cli import (
     cached_path,
     add_default_section_for_init,
-    add_default_section_for_function,
     register_process,
 )
 from unitorch.cli.models import (
-    TensorsInputs,
-    ListTensorsInputs,
+    TensorInputs,
+    TensorSeqInputs,
     DetectionOutputs,
     DetectionTargets,
-    SegmentationOutputs,
-    SegmentationTargets,
 )
 from unitorch.cli import WriterOutputs
 from unitorch.cli.models.grounding_dino import pretrained_grounding_dino_infos
@@ -76,7 +73,7 @@ class GroundingDinoProcessor(_GroundingDinoProcessor):
             image=image,
         )
 
-        return TensorsInputs(
+        return TensorInputs(
             pixel_values=outputs.pixel_values,
             input_ids=outputs.input_ids,
             attention_mask=outputs.attention_mask,
@@ -105,7 +102,7 @@ class GroundingDinoProcessor(_GroundingDinoProcessor):
             bboxes[:, 1] = bboxes[:, 1] * new_h
             bboxes[:, 2] = bboxes[:, 2] * new_w
             bboxes[:, 3] = bboxes[:, 3] * new_h
-            return TensorsInputs(
+            return TensorInputs(
                 pixel_values=outputs.pixel_values,
                 input_ids=outputs.input_ids,
                 attention_mask=outputs.attention_mask,
@@ -115,12 +112,12 @@ class GroundingDinoProcessor(_GroundingDinoProcessor):
                 classes=outputs.classes,
             )
 
-        return TensorsInputs(
+        return TensorInputs(
             pixel_values=outputs.pixel_values,
             input_ids=outputs.input_ids,
             attention_mask=outputs.attention_mask,
             token_type_ids=outputs.token_type_ids,
-        ), ListTensorsInputs(
+        ), TensorSeqInputs(
             bboxes=outputs.bboxes,
             classes=outputs.classes,
         )

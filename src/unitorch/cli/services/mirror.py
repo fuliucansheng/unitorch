@@ -22,7 +22,7 @@ class MirrorFilesService(GenericService):
         self.last_mtime = {src: None for src in self.mirror_files}
 
     def is_stable(self, path):
-        """Check whether the file write has completed"""
+        """Return True if the file size is stable across mirror_checks polls."""
         try:
             prev_size = os.path.getsize(path)
         except FileNotFoundError:
@@ -83,18 +83,15 @@ class MirrorFoldersService(GenericService):
         self.config = config
         config.set_default_section("core/service/mirror_folders")
         self.name = config.getoption("processname", "core_mirror_folders_service")
-        self.mirror_folders = config.getoption(
-            "mirror_folders", {}
-        )  # {src_dir: dst_dir}
+        self.mirror_folders = config.getoption("mirror_folders", {})
         self.mirror_folders = {k: v for k, v in self.mirror_folders.items() if k != v}
         self.mirror_interval = config.getoption("mirror_interval", 120)
         self.mirror_checks = config.getoption("mirror_checks", 2)
 
-        # Store the last modification time for each file
         self.last_mtime = {}
 
     def is_stable(self, path):
-        """Check whether the file write has completed"""
+        """Return True if the file size is stable across mirror_checks polls."""
         try:
             prev_size = os.path.getsize(path)
         except FileNotFoundError:
@@ -112,7 +109,7 @@ class MirrorFoldersService(GenericService):
         return True
 
     def mirror(self):
-        """Traverse all folders and synchronize"""
+        """Traverse all folders and synchronize changed files to their destinations."""
         for src_dir, dst_dir in self.mirror_folders.items():
             if not os.path.exists(src_dir):
                 logging.warning(f"Source folder does not exist: {src_dir}")

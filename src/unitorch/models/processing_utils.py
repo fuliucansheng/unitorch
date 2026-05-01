@@ -1,79 +1,58 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
+from typing import Any, Dict, List, Optional, Union
+
 import torch
 from PIL import Image
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from transformers import PreTrainedTokenizer
-from transformers.image_utils import to_numpy_array, ChannelDimension
-from transformers.image_transforms import to_channel_dimension_format
 from transformers.image_processing_utils import BaseImageProcessor
+
 from unitorch.models import GenericOutputs
 from unitorch.utils import pop_value, truncate_sequence_pair
 
 
 class HfTextGenerationProcessor:
-    """
-    Processor for text generation tasks.
-
-    Args:
-        tokenizer (PreTrainedTokenizer): The tokenizer to use for text generation.
-        max_seq_length (int, optional): Maximum sequence length. Defaults to 128.
-        max_gen_seq_length (int, optional): Maximum generated sequence length. Defaults to 48.
-    """
+    """Processor for encoder-decoder text generation tasks."""
 
     def __init__(
         self,
         tokenizer: PreTrainedTokenizer,
-        max_seq_length: Optional[int] = 128,
-        max_gen_seq_length: Optional[int] = 48,
-    ):
+        max_seq_length: int = 128,
+        max_gen_seq_length: int = 48,
+    ) -> None:
         self.tokenizer = tokenizer
         self.max_seq_length = max_seq_length
         self.max_gen_seq_length = max_gen_seq_length
-        self.pad_token = self.tokenizer.pad_token
-        self.bos_token = self.tokenizer.bos_token
-        self.eos_token = self.tokenizer.eos_token
-        self.mask_token = self.tokenizer.mask_token
-        self.pad_token_id = self.tokenizer.pad_token_id
-        self.vocab_size = len(self.tokenizer.get_vocab())
+        self.pad_token = tokenizer.pad_token
+        self.bos_token = tokenizer.bos_token
+        self.eos_token = tokenizer.eos_token
+        self.mask_token = tokenizer.mask_token
+        self.pad_token_id = tokenizer.pad_token_id
+        self.vocab_size = len(tokenizer.get_vocab())
 
     def generation_inputs(
         self,
         text: str,
         max_seq_length: Optional[int] = None,
-    ):
-        """
-        Generate inputs for text generation.
-
-        Args:
-            text (str): The input text.
-            max_seq_length (int, optional): Maximum sequence length. Defaults to None.
-
-        Returns:
-            GenericOutputs: The generated input tokens and attention mask.
-        """
+    ) -> GenericOutputs:
+        """Tokenise *text* into padded encoder input IDs and attention mask."""
         max_seq_length = pop_value(max_seq_length, self.max_seq_length)
         tokens = self.tokenizer.tokenize(str(text))
         tokens = tokens[:max_seq_length]
         if self.bos_token is not None:
-            tokens = tokens[: max_seq_length - 1]
-            tokens = [self.bos_token] + tokens
-
+            tokens = [self.bos_token] + tokens[: max_seq_length - 1]
         if self.eos_token is not None:
-            tokens = tokens[: max_seq_length - 1]
-            tokens = tokens + [self.eos_token]
-        input_ids = self.tokenizer.convert_tokens_to_ids(tokens)
-        input_ids = input_ids[:max_seq_length]
-        attention_mask = [1] * len(input_ids)
+            tokens = tokens[: max_seq_length - 1] + [self.eos_token]
 
-        padding = [0] * (max_seq_length - len(input_ids))
-        input_ids += [self.pad_token_id] * len(padding)
-        attention_mask += padding
+        input_ids = self.tokenizer.convert_tokens_to_ids(tokens)[:max_seq_length]
+        attention_mask = [1] * len(input_ids)
+        pad_len = max_seq_length - len(input_ids)
+        input_ids += [self.pad_token_id] * pad_len
+        attention_mask += [0] * pad_len
 
         assert len(input_ids) == max_seq_length
         assert len(attention_mask) == max_seq_length
-
         return GenericOutputs(
             input_ids=torch.tensor(input_ids, dtype=torch.long),
             attention_mask=torch.tensor(attention_mask, dtype=torch.long),
@@ -83,258 +62,21 @@ class HfTextGenerationProcessor:
         self,
         text: str,
         max_gen_seq_length: Optional[int] = None,
-    ):
-        """
-        Generate labels for text generation.
-
-        Args:
-            text (str): The input text.
-            max_gen_seq_length (int, optional): Maximum generated sequence length. Defaults to None.
-
-        Returns:
-            GenericOutputs: The generated label tokens and attention mask.
-        """
+    ) -> GenericOutputs:
+        """Tokenise *text* into padded decoder label IDs and attention mask."""
         max_gen_seq_length = pop_value(max_gen_seq_length, self.max_gen_seq_length)
         tokens = self.tokenizer.tokenize(str(text))
         tokens = tokens[:max_gen_seq_length]
         if self.bos_token is not None:
-            tokens = tokens[: max_gen_seq_length - 1]
-            tokens = [self.bos_token] + tokens
+            tokens = [self.bos_token] + tokens[: max_gen_seq_length - 1]
         if self.eos_token is not None:
-            tokens = tokens[: max_gen_seq_length - 1]
-            tokens = tokens + [self.eos_token]
-        input_ids = self.tokenizer.convert_tokens_to_ids(tokens)
-        input_ids = input_ids[1:max_gen_seq_length]
+            tokens = tokens[: max_gen_seq_length - 1] + [self.eos_token]
+
+        input_ids = self.tokenizer.convert_tokens_to_ids(tokens)[1:max_gen_seq_length]
         attention_mask = [1] * len(input_ids)
-
-        padding = [0] * (max_gen_seq_length - len(input_ids))
-        input_ids += [self.pad_token_id] * len(padding)
-        attention_mask += padding
-
-        assert len(input_ids) == max_gen_seq_length
-
-        return GenericOutputs(
-            input_ids=torch.tensor(input_ids, dtype=torch.long),
-            attention_mask=torch.tensor(attention_mask, dtype=torch.long),
-        )
-
-    def generation(
-        self,
-        text: str,
-        text_pair: str,
-        max_seq_length: Optional[int] = None,
-        max_gen_seq_length: Optional[int] = None,
-    ):
-        """
-        Generate inputs, labels, and tokens for text generation.
-
-        Args:
-            text (str): The input text.
-            text_pair (str): The paired text.
-            max_seq_length (int, optional): Maximum sequence length. Defaults to None.
-            max_gen_seq_length (int, optional): Maximum generated sequence length. Defaults to None.
-
-        Returns:
-            GenericOutputs: The generated input tokens, attention masks, label tokens, and attention masks.
-        """
-        max_seq_length = pop_value(max_seq_length, self.max_seq_length)
-        max_gen_seq_length = pop_value(max_gen_seq_length, self.max_gen_seq_length)
-
-        tokens = self.generation_inputs(text, max_seq_length)
-        tokens_pair = self.generation_inputs(text_pair, max_gen_seq_length)
-        labels = self.generation_labels(text_pair, max_gen_seq_length)
-
-        return GenericOutputs(
-            input_ids=tokens.input_ids,
-            attention_mask=tokens.attention_mask,
-            input_ids_pair=tokens_pair.input_ids,
-            attention_mask_pair=tokens_pair.attention_mask,
-            input_ids_label=labels.input_ids,
-            attention_mask_label=labels.attention_mask,
-        )
-
-    def detokenize(
-        self,
-        sequences: torch.Tensor,
-        skip_special_tokens: Optional[bool] = True,
-    ):
-        """
-        Detokenize the sequences.
-
-        Args:
-            sequences (torch.Tensor): The sequences to detokenize.
-            skip_special_tokens (bool, optional): Whether to skip special tokens. Defaults to True.
-
-        Returns:
-            list: The detokenized sequences.
-        """
-        if sequences.dim() == 3:
-            _, num_return_sequences, sequences_length = sequences.size()
-            sequences = sequences.reshape(-1, sequences_length).clamp_max(
-                self.vocab_size
-            )
-            sequences = sequences.clamp_min(0)
-            sequences[sequences == self.vocab_size] = self.pad_token_id
-            decode_tokens = self.tokenizer.batch_decode(
-                sequences,
-                skip_special_tokens=skip_special_tokens,
-            )
-            decode_tokens = [
-                decode_tokens[i : i + num_return_sequences]
-                for i in range(0, len(decode_tokens), num_return_sequences)
-            ]
-        elif sequences.dim() == 2:
-            sequences = sequences.clamp_min(0).clamp_max(self.vocab_size)
-            sequences[sequences == self.vocab_size] = self.pad_token_id
-            decode_tokens = self.tokenizer.batch_decode(
-                sequences,
-                skip_special_tokens=skip_special_tokens,
-            )
-        else:
-            raise ValueError(f"Can't decode the tensor with shape {sequences.shape}")
-
-        return decode_tokens
-
-
-class HfLlmProcessor:
-    """
-    Processor for LLM tasks.
-
-    Args:
-        tokenizer (PreTrainedTokenizer): The tokenizer to use for LLM tasks.
-        max_seq_length (int, optional): Maximum sequence length. Defaults to 2048.
-    """
-
-    def __init__(
-        self,
-        tokenizer: PreTrainedTokenizer,
-        max_seq_length: Optional[int] = 2048,
-        max_gen_seq_length: Optional[int] = 512,
-    ):
-        self.tokenizer = tokenizer
-        self.max_seq_length = max_seq_length
-        self.max_gen_seq_length = max_gen_seq_length
-        self.pad_token = self.tokenizer.pad_token
-        self.bos_token = self.tokenizer.bos_token
-        self.eos_token = self.tokenizer.eos_token
-        self.mask_token = self.tokenizer.mask_token
-        self.pad_token_id = self.tokenizer.pad_token_id
-        self.vocab_size = len(self.tokenizer.get_vocab())
-
-    def chat_template(
-        self,
-        messages: List[Dict[str, Any]],
-    ):
-        text = self.tokenizer.apply_chat_template(
-            messages,
-            tokenize=False,
-            add_generation_prompt=True,
-        )
-        return text
-
-    def classification(
-        self,
-        text: str,
-        text_pair: Optional[str] = None,
-        max_seq_length: Optional[int] = None,
-    ):
-        """
-        Process text for classification.
-
-        Args:
-            text (str): Input text.
-            text_pair (str, optional): Input text pair. Defaults to None.
-            max_seq_length (int, optional): Maximum sequence length. Defaults to None.
-
-        Returns:
-            GenericOutputs: Processed input_ids and attention_mask tensors.
-        """
-        max_seq_length = pop_value(
-            max_seq_length,
-            self.max_seq_length,
-        )
-
-        tokens = self.tokenizer.tokenize(str(text))
-        if text_pair is None:
-            tokens = tokens[:max_seq_length]
-            input_ids = self.tokenizer.convert_tokens_to_ids(tokens)
-        else:
-            tokens_pair = self.tokenizer.tokenize(str(text_pair))
-            truncate_sequence_pair(tokens, tokens_pair, max_seq_length)
-            tokens = tokens + tokens_pair
-            input_ids = self.tokenizer.convert_tokens_to_ids(tokens)
-
-        padding = [0] * (max_seq_length - len(input_ids))
-        attention_mask = [0] * len(padding) + [1] * len(input_ids)
-        input_ids = len(padding) * [self.pad_token_id] + input_ids
-
-        assert len(input_ids) == max_seq_length
-        assert len(attention_mask) == max_seq_length
-        return GenericOutputs(
-            input_ids=torch.tensor(input_ids, dtype=torch.long),
-            attention_mask=torch.tensor(attention_mask, dtype=torch.long),
-        )
-
-    def generation_inputs(
-        self,
-        text: str,
-        max_seq_length: Optional[int] = None,
-    ):
-        """
-        Process text for generation inputs.
-
-        Args:
-            text (str): Input text.
-            max_seq_length (int, optional): Maximum sequence length. Defaults to None.
-
-        Returns:
-            GenericOutputs: Processed input_ids tensor.
-        """
-        max_seq_length = pop_value(
-            max_seq_length,
-            self.max_seq_length,
-        )
-        if self.bos_token is not None:
-            tokens = [self.bos_token] + self.tokenizer.tokenize(str(text))[
-                -(max_seq_length - 1) :
-            ]
-        else:
-            tokens = self.tokenizer.tokenize(str(text))[-max_seq_length:]
-        padding = [self.pad_token] * (max_seq_length - len(tokens))
-        attention_mask = [0] * len(padding) + [1] * len(tokens)
-        tokens = padding + tokens
-        input_ids = self.tokenizer.convert_tokens_to_ids(tokens)
-        assert len(input_ids) == max_seq_length
-        return GenericOutputs(
-            input_ids=torch.tensor(input_ids, dtype=torch.long),
-            attention_mask=torch.tensor(attention_mask, dtype=torch.long),
-        )
-
-    def generation_labels(self, text, max_gen_seq_length=None):
-        """
-        Process text for generation labels.
-
-        Args:
-            text (str): Input text.
-            max_gen_seq_length (int, optional): Maximum generation sequence length. Defaults to None.
-
-        Returns:
-            GenericOutputs: Processed input_ids and attention_mask tensors.
-        """
-        max_gen_seq_length = pop_value(
-            max_gen_seq_length,
-            self.max_gen_seq_length,
-        )
-        tokens = self.tokenizer.tokenize(str(text))[: max_gen_seq_length - 1] + [
-            self.eos_token
-        ]
-        padding = [self.pad_token] * (max_gen_seq_length - len(tokens))
-        input_ids = self.tokenizer.convert_tokens_to_ids(tokens)
-        attention_mask = [1] * len(input_ids)
-
-        padding = [0] * (max_gen_seq_length - len(input_ids))
-        input_ids += [self.pad_token_id] * len(padding)
-        attention_mask += padding
+        pad_len = max_gen_seq_length - len(input_ids)
+        input_ids += [self.pad_token_id] * pad_len
+        attention_mask += [0] * pad_len
 
         assert len(input_ids) == max_gen_seq_length
         assert len(attention_mask) == max_gen_seq_length
@@ -349,56 +91,166 @@ class HfLlmProcessor:
         text_pair: str,
         max_seq_length: Optional[int] = None,
         max_gen_seq_length: Optional[int] = None,
-    ):
-        """
-        Process text for generation.
-
-        Args:
-            text (str): Input text.
-            text_pair (str): Input text pair.
-            max_seq_length (int, optional): Maximum sequence length. Defaults to None.
-            max_gen_seq_length (int, optional): Maximum generation sequence length. Defaults to None.
-
-        Returns:
-            GenericOutputs: Processed input_ids, attention_mask, input_ids_label, and attention_mask_label tensors.
-        """
-        max_seq_length = pop_value(
-            max_seq_length,
-            self.max_seq_length,
-        )
-        max_gen_seq_length = pop_value(
-            max_gen_seq_length,
-            self.max_gen_seq_length,
+    ) -> GenericOutputs:
+        """Return encoder inputs, decoder inputs, and decoder labels for a text pair."""
+        max_seq_length = pop_value(max_seq_length, self.max_seq_length)
+        max_gen_seq_length = pop_value(max_gen_seq_length, self.max_gen_seq_length)
+        tokens = self.generation_inputs(text, max_seq_length)
+        tokens_pair = self.generation_inputs(text_pair, max_gen_seq_length)
+        labels = self.generation_labels(text_pair, max_gen_seq_length)
+        return GenericOutputs(
+            input_ids=tokens.input_ids,
+            attention_mask=tokens.attention_mask,
+            input_ids_pair=tokens_pair.input_ids,
+            attention_mask_pair=tokens_pair.attention_mask,
+            input_ids_label=labels.input_ids,
+            attention_mask_label=labels.attention_mask,
         )
 
-        if self.bos_token is not None:
-            tokens = [self.bos_token] + self.tokenizer.tokenize(str(text))[
-                -(max_seq_length - 1) :
-            ]
+    def detokenize(
+        self,
+        sequences: torch.Tensor,
+        skip_special_tokens: bool = True,
+    ) -> list:
+        """Decode a 2-D or 3-D token-ID tensor back to strings."""
+        if sequences.dim() == 3:
+            _, num_return_sequences, seq_len = sequences.size()
+            sequences = sequences.reshape(-1, seq_len).clamp(0, self.vocab_size)
+            sequences[sequences == self.vocab_size] = self.pad_token_id
+            decoded = self.tokenizer.batch_decode(sequences, skip_special_tokens=skip_special_tokens)
+            return [decoded[i : i + num_return_sequences] for i in range(0, len(decoded), num_return_sequences)]
+        elif sequences.dim() == 2:
+            sequences = sequences.clamp(0, self.vocab_size)
+            sequences[sequences == self.vocab_size] = self.pad_token_id
+            return self.tokenizer.batch_decode(sequences, skip_special_tokens=skip_special_tokens)
         else:
-            tokens = self.tokenizer.tokenize(str(text))[-max_seq_length:]
-        tokens_pair = self.tokenizer.tokenize(str(text_pair))[
-            : max_gen_seq_length - 1
-        ] + [self.eos_token]
-        padding_a = [self.pad_token] * (max_seq_length - len(tokens))
-        padding_b = [self.pad_token] * (max_gen_seq_length - len(tokens_pair))
-        attention_mask = (
-            [0] * len(padding_a)
-            + [1] * (len(tokens) + len(tokens_pair))
-            + [0] * len(padding_b)
-        )
-        _tokens = padding_a + tokens + tokens_pair + padding_b
-        input_ids = self.tokenizer.convert_tokens_to_ids(_tokens)
+            raise ValueError(f"Cannot decode tensor with shape {sequences.shape}")
 
-        tokens_label = tokens_pair + [self.pad_token] * (
-            max_gen_seq_length - len(tokens_pair) + 1
+
+class HfLlmProcessor:
+    """Processor for causal / decoder-only language model tasks."""
+
+    def __init__(
+        self,
+        tokenizer: PreTrainedTokenizer,
+        max_seq_length: int = 2048,
+        max_gen_seq_length: int = 512,
+    ) -> None:
+        self.tokenizer = tokenizer
+        self.max_seq_length = max_seq_length
+        self.max_gen_seq_length = max_gen_seq_length
+        self.pad_token = tokenizer.pad_token
+        self.bos_token = tokenizer.bos_token
+        self.eos_token = tokenizer.eos_token
+        self.mask_token = tokenizer.mask_token
+        self.pad_token_id = tokenizer.pad_token_id
+        self.vocab_size = len(tokenizer.get_vocab())
+
+    def chat_template(self, messages: List[Dict[str, Any]]) -> str:
+        """Apply the tokenizer's chat template and return the rendered string."""
+        return self.tokenizer.apply_chat_template(
+            messages, tokenize=False, add_generation_prompt=True
         )
-        input_ids_label = self.tokenizer.convert_tokens_to_ids(tokens_label)
-        input_ids_label = [0] * (max_seq_length - 1) + input_ids_label
-        attention_mask_label = [1] * len(tokens_pair) + [0] * (
-            max_gen_seq_length - len(tokens_pair) + 1
+
+    def classification(
+        self,
+        text: str,
+        text_pair: Optional[str] = None,
+        max_seq_length: Optional[int] = None,
+    ) -> GenericOutputs:
+        """Tokenise text (and optional pair) for sequence classification (left-padded)."""
+        max_seq_length = pop_value(max_seq_length, self.max_seq_length)
+        tokens = self.tokenizer.tokenize(str(text))
+        if text_pair is None:
+            input_ids = self.tokenizer.convert_tokens_to_ids(tokens[:max_seq_length])
+        else:
+            tokens_pair = self.tokenizer.tokenize(str(text_pair))
+            truncate_sequence_pair(tokens, tokens_pair, max_seq_length)
+            input_ids = self.tokenizer.convert_tokens_to_ids(tokens + tokens_pair)
+
+        pad_len = max_seq_length - len(input_ids)
+        attention_mask = [0] * pad_len + [1] * len(input_ids)
+        input_ids = [self.pad_token_id] * pad_len + input_ids
+
+        assert len(input_ids) == max_seq_length
+        assert len(attention_mask) == max_seq_length
+        return GenericOutputs(
+            input_ids=torch.tensor(input_ids, dtype=torch.long),
+            attention_mask=torch.tensor(attention_mask, dtype=torch.long),
         )
-        attention_mask_label = [0] * (max_seq_length - 1) + attention_mask_label
+
+    def generation_inputs(
+        self,
+        text: str,
+        max_seq_length: Optional[int] = None,
+    ) -> GenericOutputs:
+        """Tokenise *text* as a left-padded generation prompt."""
+        max_seq_length = pop_value(max_seq_length, self.max_seq_length)
+        raw = self.tokenizer.tokenize(str(text))
+        if self.bos_token is not None:
+            tokens = [self.bos_token] + raw[-(max_seq_length - 1):]
+        else:
+            tokens = raw[-max_seq_length:]
+        pad_len = max_seq_length - len(tokens)
+        attention_mask = [0] * pad_len + [1] * len(tokens)
+        input_ids = self.tokenizer.convert_tokens_to_ids([self.pad_token] * pad_len + tokens)
+        assert len(input_ids) == max_seq_length
+        return GenericOutputs(
+            input_ids=torch.tensor(input_ids, dtype=torch.long),
+            attention_mask=torch.tensor(attention_mask, dtype=torch.long),
+        )
+
+    def generation_labels(
+        self,
+        text: str,
+        max_gen_seq_length: Optional[int] = None,
+    ) -> GenericOutputs:
+        """Tokenise *text* as right-padded generation labels (with EOS)."""
+        max_gen_seq_length = pop_value(max_gen_seq_length, self.max_gen_seq_length)
+        tokens = self.tokenizer.tokenize(str(text))[: max_gen_seq_length - 1] + [self.eos_token]
+        input_ids = self.tokenizer.convert_tokens_to_ids(tokens)
+        attention_mask = [1] * len(input_ids)
+        pad_len = max_gen_seq_length - len(input_ids)
+        input_ids += [self.pad_token_id] * pad_len
+        attention_mask += [0] * pad_len
+
+        assert len(input_ids) == max_gen_seq_length
+        assert len(attention_mask) == max_gen_seq_length
+        return GenericOutputs(
+            input_ids=torch.tensor(input_ids, dtype=torch.long),
+            attention_mask=torch.tensor(attention_mask, dtype=torch.long),
+        )
+
+    def generation(
+        self,
+        text: str,
+        text_pair: str,
+        max_seq_length: Optional[int] = None,
+        max_gen_seq_length: Optional[int] = None,
+    ) -> GenericOutputs:
+        """Combine prompt and response into a single packed sequence for causal LM training."""
+        max_seq_length = pop_value(max_seq_length, self.max_seq_length)
+        max_gen_seq_length = pop_value(max_gen_seq_length, self.max_gen_seq_length)
+
+        raw = self.tokenizer.tokenize(str(text))
+        if self.bos_token is not None:
+            tokens = [self.bos_token] + raw[-(max_seq_length - 1):]
+        else:
+            tokens = raw[-max_seq_length:]
+        tokens_pair = self.tokenizer.tokenize(str(text_pair))[: max_gen_seq_length - 1] + [self.eos_token]
+
+        pad_a = [self.pad_token] * (max_seq_length - len(tokens))
+        pad_b = [self.pad_token] * (max_gen_seq_length - len(tokens_pair))
+        attention_mask = [0] * len(pad_a) + [1] * (len(tokens) + len(tokens_pair)) + [0] * len(pad_b)
+        input_ids = self.tokenizer.convert_tokens_to_ids(pad_a + tokens + tokens_pair + pad_b)
+
+        label_tokens = tokens_pair + [self.pad_token] * (max_gen_seq_length - len(tokens_pair) + 1)
+        input_ids_label = [0] * (max_seq_length - 1) + self.tokenizer.convert_tokens_to_ids(label_tokens)
+        attention_mask_label = (
+            [0] * (max_seq_length - 1)
+            + [1] * len(tokens_pair)
+            + [0] * (max_gen_seq_length - len(tokens_pair) + 1)
+        )
 
         return GenericOutputs(
             input_ids=torch.tensor(input_ids, dtype=torch.long),
@@ -412,103 +264,53 @@ class HfLlmProcessor:
         messages: List[Dict[str, Any]],
         max_seq_length: Optional[int] = None,
     ) -> GenericOutputs:
-        """
-        Preprocesses messages for generation.
-
-        Args:
-            messages (List[Dict[str, Any]]): The list of messages to process.
-            max_seq_length (Optional[int]): The maximum sequence length. Defaults to None.
-
-        Returns:
-            GenericOutputs: The processed input IDs tensor.
-        """
+        """Format a chat message list into training inputs for causal LM generation."""
         while messages and messages[-1]["role"] != "assistant":
             messages.pop()
-
-        text = self.chat_template(messages[:-1])
-        text_pair = self.chat_template(messages[-1:])
-        outputs = self.generation(
-            text=text,
-            text_pair=text_pair,
+        return self.generation(
+            text=self.chat_template(messages[:-1]),
+            text_pair=self.chat_template(messages[-1:]),
             max_seq_length=max_seq_length,
-        )
-        return GenericOutputs(
-            input_ids=outputs.input_ids,
-            attention_mask=outputs.attention_mask,
-            input_ids_label=outputs.input_ids_label,
-            attention_mask_label=outputs.attention_mask_label,
         )
 
     def detokenize(
         self,
         sequences: torch.Tensor,
-        skip_special_tokens: Optional[bool] = True,
-    ):
-        """
-        Detokenize the sequences.
-
-        Args:
-            sequences (torch.Tensor): The sequences to detokenize.
-            skip_special_tokens (bool, optional): Whether to skip special tokens. Defaults to True.
-
-        Returns:
-            list: The detokenized sequences.
-        """
+        skip_special_tokens: bool = True,
+    ) -> list:
+        """Decode a 2-D or 3-D token-ID tensor back to strings."""
         if sequences.dim() == 3:
-            _, num_return_sequences, sequences_length = sequences.size()
-            sequences = sequences.reshape(-1, sequences_length).clamp_max(
-                self.vocab_size
-            )
-            sequences = sequences.clamp_min(0)
+            _, num_return_sequences, seq_len = sequences.size()
+            sequences = sequences.reshape(-1, seq_len).clamp(0, self.vocab_size)
             sequences[sequences == self.vocab_size] = self.pad_token_id
-            decode_tokens = self.tokenizer.batch_decode(
-                sequences,
-                skip_special_tokens=skip_special_tokens,
-            )
-            decode_tokens = [
-                decode_tokens[i : i + num_return_sequences]
-                for i in range(0, len(decode_tokens), num_return_sequences)
-            ]
+            decoded = self.tokenizer.batch_decode(sequences, skip_special_tokens=skip_special_tokens)
+            return [decoded[i : i + num_return_sequences] for i in range(0, len(decoded), num_return_sequences)]
         elif sequences.dim() == 2:
-            sequences = sequences.clamp_min(0).clamp_max(self.vocab_size)
+            sequences = sequences.clamp(0, self.vocab_size)
             sequences[sequences == self.vocab_size] = self.pad_token_id
-            decode_tokens = self.tokenizer.batch_decode(
-                sequences,
-                skip_special_tokens=skip_special_tokens,
-            )
+            return self.tokenizer.batch_decode(sequences, skip_special_tokens=skip_special_tokens)
         else:
-            raise ValueError(f"Can't decode the tensor with shape {sequences.shape}")
-
-        return decode_tokens
+            raise ValueError(f"Cannot decode tensor with shape {sequences.shape}")
 
 
 class HfTextClassificationProcessor:
-    """
-    Processor for text classification tasks.
-
-    Args:
-        tokenizer (PreTrainedTokenizer): The tokenizer to use for text classification.
-        max_seq_length (int, optional): Maximum sequence length. Defaults to 128.
-        source_type_id (int, optional): Source type ID. Defaults to 0.
-        target_type_id (int, optional): Target type ID. Defaults to 1.
-        position_start_id (int, optional): Start position ID. Defaults to 0.
-    """
+    """Processor for BERT-style text classification tasks."""
 
     def __init__(
         self,
         tokenizer: PreTrainedTokenizer,
-        max_seq_length: Optional[int] = 128,
-        source_type_id: Optional[int] = 0,
-        target_type_id: Optional[int] = 1,
-        position_start_id: Optional[int] = 0,
-    ):
+        max_seq_length: int = 128,
+        source_type_id: int = 0,
+        target_type_id: int = 1,
+        position_start_id: int = 0,
+    ) -> None:
         self.tokenizer = tokenizer
         self.max_seq_length = max_seq_length
-        self.pad_token = self.tokenizer.pad_token
-        self.sep_token = self.tokenizer.sep_token
-        self.cls_token = self.tokenizer.cls_token
-        self.mask_token = self.tokenizer.mask_token
-        self.pad_token_id = self.tokenizer.pad_token_id
+        self.pad_token = tokenizer.pad_token
+        self.sep_token = tokenizer.sep_token
+        self.cls_token = tokenizer.cls_token
+        self.mask_token = tokenizer.mask_token
+        self.pad_token_id = tokenizer.pad_token_id
         self.source_type_id = source_type_id
         self.target_type_id = target_type_id
         self.position_start_id = position_start_id
@@ -518,31 +320,16 @@ class HfTextClassificationProcessor:
         text: str,
         text_pair: Optional[str] = None,
         max_seq_length: Optional[int] = None,
-    ):
-        """
-        Generate inputs for text classification.
-
-        Args:
-            text (str): The input text.
-            text_pair (str, optional): The paired text. Defaults to None.
-            max_seq_length (int, optional): Maximum sequence length. Defaults to None.
-
-        Returns:
-            GenericOutputs: The generated input tokens, token type IDs, attention mask, and position IDs.
-        """
-        max_seq_length = pop_value(
-            max_seq_length,
-            self.max_seq_length,
-        )
-
+    ) -> GenericOutputs:
+        """Tokenise text (and optional pair) for sequence classification."""
+        max_seq_length = pop_value(max_seq_length, self.max_seq_length)
         tokens = self.tokenizer.tokenize(str(text))
+
         if text_pair is None:
             if self.cls_token is not None:
-                tokens = tokens[: max_seq_length - 2]
-                tokens = [self.cls_token] + tokens + [self.sep_token]
+                tokens = [self.cls_token] + tokens[: max_seq_length - 2] + [self.sep_token]
             else:
-                tokens = tokens[: max_seq_length - 1]
-                tokens = tokens + [self.sep_token]
+                tokens = tokens[: max_seq_length - 1] + [self.sep_token]
             input_ids = self.tokenizer.convert_tokens_to_ids(tokens)
             token_type_ids = [self.source_type_id] * len(input_ids)
             attention_mask = [1] * len(input_ids)
@@ -551,32 +338,24 @@ class HfTextClassificationProcessor:
             if self.cls_token is not None:
                 truncate_sequence_pair(tokens, tokens_pair, max_seq_length - 3)
                 token_type_ids = (
-                    [self.source_type_id]
-                    + [self.source_type_id] * len(tokens)
-                    + [self.source_type_id]
-                    + [self.target_type_id] * len(tokens_pair)
-                    + [self.target_type_id]
+                    [self.source_type_id] * (len(tokens) + 2)
+                    + [self.target_type_id] * (len(tokens_pair) + 1)
                 )
-                tokens = (
-                    [self.cls_token]
-                    + tokens
-                    + [self.sep_token]
-                    + tokens_pair
-                    + [self.sep_token]
-                )
+                tokens = [self.cls_token] + tokens + [self.sep_token] + tokens_pair + [self.sep_token]
             else:
                 truncate_sequence_pair(tokens, tokens_pair, max_seq_length - 2)
-                token_type_ids = [self.source_type_id] * len(tokens) + [
-                    self.target_type_id
-                ] * len(tokens_pair)
+                token_type_ids = (
+                    [self.source_type_id] * len(tokens)
+                    + [self.target_type_id] * len(tokens_pair)
+                )
                 tokens = tokens + [self.sep_token] + tokens_pair + [self.sep_token]
             input_ids = self.tokenizer.convert_tokens_to_ids(tokens)
             attention_mask = [1] * len(input_ids)
 
-        padding = [0] * (max_seq_length - len(input_ids))
-        input_ids += len(padding) * [self.pad_token_id]
-        attention_mask += padding
-        token_type_ids += len(padding) * [self.target_type_id]
+        pad_len = max_seq_length - len(input_ids)
+        input_ids += [self.pad_token_id] * pad_len
+        attention_mask += [0] * pad_len
+        token_type_ids += [self.target_type_id] * pad_len
 
         assert len(input_ids) == max_seq_length
         assert len(attention_mask) == max_seq_length
@@ -585,55 +364,23 @@ class HfTextClassificationProcessor:
             input_ids=torch.tensor(input_ids, dtype=torch.long),
             token_type_ids=torch.tensor(token_type_ids, dtype=torch.long),
             attention_mask=torch.tensor(attention_mask, dtype=torch.long),
-            position_ids=torch.tensor(
-                list(
-                    range(
-                        self.position_start_id,
-                        self.position_start_id + max_seq_length,
-                    )
-                ),
+            position_ids=torch.arange(
+                self.position_start_id,
+                self.position_start_id + max_seq_length,
                 dtype=torch.long,
             ),
         )
 
 
 class HfImageClassificationProcessor:
-    """
-    Processor for image classification tasks.
-    """
+    """Processor for image classification tasks using a HuggingFace vision processor."""
 
-    def __init__(
-        self,
-        vision_processor: BaseImageProcessor,
-    ):
-        """
-        Initialize the HfImageClassificationProcessor.
-
-        Args:
-            vision_processor (BaseImageProcessor): The vision processor object used for image transformations.
-        """
+    def __init__(self, vision_processor: BaseImageProcessor) -> None:
         self.vision_processor = vision_processor
 
-    def classification(
-        self,
-        image: Union[Image.Image, str],
-    ):
-        """
-        Perform image classification on the given image.
-
-        Args:
-            image (Image.Image): The input image.
-
-        Returns:
-            GenericOutputs: The output of the image classification, including pixel values.
-        """
+    def classification(self, image: Union[Image.Image, str]) -> GenericOutputs:
+        """Preprocess *image* into pixel values ready for a vision model."""
         if isinstance(image, str):
             image = Image.open(image)
-
-        pixel_values = self.vision_processor.preprocess(
-            image, return_tensors="pt"
-        ).pixel_values[0]
-
-        return GenericOutputs(
-            pixel_values=torch.tensor(pixel_values),
-        )
+        pixel_values = self.vision_processor.preprocess(image, return_tensors="pt").pixel_values[0]
+        return GenericOutputs(pixel_values=pixel_values)

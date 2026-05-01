@@ -1,94 +1,115 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
-from functools import partial
-from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
+from typing import Any, Dict, List
 
 
-def rpartial(
-    func,
-    *args,
-    **kwargs,
-):
-    """
-    Create a new function that partially applies the given arguments to the provided callable.
+def rpartial(func, *args, **kwargs):
+    """Return a callable that prepends *args* and *kwargs* to any future call.
+
+    Unlike :func:`functools.partial`, the partially-applied positional arguments
+    come *before* the arguments supplied at call time.
 
     Args:
-        func: The callable object or function to be partially applied.
-        *args: Positional arguments to be partially applied.
-        **kwargs: Keyword arguments to be partially applied.
+        func: The callable to wrap.
+        *args: Positional arguments prepended on each call.
+        **kwargs: Keyword arguments merged (overridable) on each call.
 
     Returns:
-        A new function that, when called, will invoke `func` with the original and partially applied arguments.
+        A lambda that calls ``func(*(args + call_args), **{**kwargs, **call_kwargs})``.
     """
     return lambda *a, **kw: func(*(args + a), **{**kwargs, **kw})
 
 
 def pop_value(
     *args,
-    msg: Optional[str] = "default error msg",
-    first: Optional[bool] = True,
-    last: Optional[bool] = False,
-    check_none: Optional[bool] = True,
+    msg: str = "default error msg",
+    first: bool = True,
+    last: bool = False,
+    check_none: bool = True,
 ) -> Any:
-    """
-    Returns the first non-None value from the list of arguments.
+    """Return the first (or last) non-``None`` value from *args*.
 
     Args:
-        *args: A list of Python values.
-        msg (str, optional): Error message to be raised if no non-None value is found (default: "default error msg").
-        first (bool, optional): If True, returns the first non-None value. If False, returns the last non-None value (default: True).
-        last (bool, optional): If True, returns the last non-None value. If False, returns the first non-None value (default: False).
-        check_none (bool, optional): If True, raises a ValueError if no non-None value is found. If False, returns None (default: True).
-
-    Raises:
-        ValueError: If check_none is True and no non-None value is found.
+        *args: Candidate values to inspect.
+        msg: Prefix for the :exc:`ValueError` message when no value is found.
+        first: When ``True`` (the default), return the first non-``None`` value.
+        last: When ``True``, return the last non-``None`` value.
+               At least one of *first* or *last* must be ``True``.
+        check_none: When ``True``, raise :exc:`ValueError` if every argument is
+                    ``None``; otherwise return ``None`` silently.
 
     Returns:
-        The first non-None value if found, None otherwise.
-    """
-    assert first is True or last is True
+        The selected non-``None`` value, or ``None`` when *check_none* is ``False``
+        and no such value exists.
 
-    if first:
-        for arg in args:
-            if arg is not None:
-                return arg
-    else:
-        for arg in reversed(args):
-            if arg is not None:
-                return arg
+    Raises:
+        AssertionError: If neither *first* nor *last* is ``True``.
+        ValueError: If *check_none* is ``True`` and no non-``None`` value is found.
+    """
+    assert first or last, "At least one of 'first' or 'last' must be True."
+
+    candidates = args if first else reversed(args)
+    for arg in candidates:
+        if arg is not None:
+            return arg
 
     if check_none:
-        raise ValueError(f"{msg} Can't find non-None value")
-
+        raise ValueError(f"{msg}: no non-None value found.")
     return None
 
 
 def truncate_sequence_pair(
-    tokens: List[str], tokens_pair: List[str], max_length: int
+    tokens: List[Any],
+    tokens_pair: List[Any],
+    max_length: int,
 ) -> None:
-    while True:
-        total_length = len(tokens) + len(tokens_pair)
-        if total_length <= max_length:
-            break
+    """Truncate two token lists in-place until their combined length ≤ *max_length*.
+
+    The longer list is always shortened first; ties favour *tokens_pair*.
+
+    Args:
+        tokens: First token list (modified in-place).
+        tokens_pair: Second token list (modified in-place).
+        max_length: Target combined maximum length.
+    """
+    while len(tokens) + len(tokens_pair) > max_length:
         if len(tokens) > len(tokens_pair):
             tokens.pop()
         else:
             tokens_pair.pop()
 
 
-def nested_dict_value(a, b, *c):
-    if b in a:
-        if isinstance(a[b], dict) and len(c) > 0:
-            return nested_dict_value(a[b], *c)
-        return a[b]
-    return None
+def nested_dict_value(mapping: Dict, key: Any, *keys: Any) -> Any:
+    """Retrieve a value from an arbitrarily nested dictionary.
+
+    Args:
+        mapping: The top-level dictionary to search.
+        key: Key at the current nesting level.
+        *keys: Additional keys for deeper nesting levels.
+
+    Returns:
+        The value at the specified path, or ``None`` if any key is missing.
+    """
+    if key not in mapping:
+        return None
+    if isinstance(mapping[key], dict) and keys:
+        return nested_dict_value(mapping[key], *keys)
+    return mapping[key]
 
 
-def update_nested_dict(a, b, c, *d):
-    if b not in a:
-        a.update({b: {}})
-    if isinstance(a[b], dict) and len(d) > 0:
-        update_nested_dict(a[b], c, *d)
+def update_nested_dict(mapping: Dict, key: Any, value: Any, *keys: Any) -> None:
+    """Set a value inside an arbitrarily nested dictionary, creating sub-dicts as needed.
+
+    Args:
+        mapping: The top-level dictionary to update (modified in-place).
+        key: Key at the current nesting level.
+        value: Value to assign, or the next-level key when *keys* is non-empty.
+        *keys: Additional ``(key, …, value)`` path components for deeper nesting.
+    """
+    if key not in mapping:
+        mapping[key] = {}
+    if isinstance(mapping[key], dict) and keys:
+        update_nested_dict(mapping[key], value, *keys)
     else:
-        a.update({b: c})
+        mapping[key] = value

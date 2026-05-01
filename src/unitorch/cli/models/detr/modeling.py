@@ -1,9 +1,7 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
-import torch
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
-from torch import autocast
+from typing import List, Optional
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.detr import DetrForDetection as _DetrForDetection
 from unitorch.cli import (
@@ -14,9 +12,7 @@ from unitorch.cli import (
 )
 from unitorch.cli.models import (
     detection_model_decorator,
-    segmentation_model_decorator,
     DetectionOutputs,
-    SegmentationOutputs,
     LossOutputs,
 )
 from unitorch.cli.models.detr import pretrained_detr_infos
@@ -63,7 +59,6 @@ class DetrForDetection(_DetrForDetection):
 
         return inst
 
-    # @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
     def forward(self, images, bboxes, classes):
         outputs = super().forward(
             images=images,

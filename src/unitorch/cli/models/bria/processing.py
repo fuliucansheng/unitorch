@@ -1,20 +1,17 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
-import torch
-import torch.nn as nn
+from typing import Optional, Union
 from PIL import Image
-from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
 from torchvision.transforms import Resize, CenterCrop, ToTensor, Normalize, Compose
 from unitorch.cli.models.segmentation_utils import SegmentationTargets
 from unitorch.models.bria import BRIAProcessor as _BRIAProcessor
 from unitorch.cli import (
     cached_path,
     add_default_section_for_init,
-    add_default_section_for_function,
     register_process,
 )
-from unitorch.cli.models import TensorsInputs
+from unitorch.cli.models import TensorInputs
 
 
 class BRIAProcessor(_BRIAProcessor):
@@ -42,7 +39,7 @@ class BRIAProcessor(_BRIAProcessor):
         if isinstance(image, str):
             image = Image.open(image)
         inputs = super().segmentation_inputs(image=image)
-        return TensorsInputs(images=inputs.image, sizes=inputs.sizes)
+        return TensorInputs(images=inputs.image, sizes=inputs.sizes)
 
     @register_process("core/process/bria/segmentation")
     def _segmentation(
@@ -56,6 +53,6 @@ class BRIAProcessor(_BRIAProcessor):
             mask = Image.open(mask)
         inputs = super().segmentation_inputs(image=image)
         labels = super().segmentation_labels(image=mask)
-        return TensorsInputs(images=inputs.image), SegmentationTargets(
+        return TensorInputs(images=inputs.image), SegmentationTargets(
             targets=labels.image
         )

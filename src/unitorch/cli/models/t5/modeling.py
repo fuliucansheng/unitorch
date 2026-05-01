@@ -2,7 +2,7 @@
 # Licensed under the MIT License.
 
 import torch
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import List, Optional, Union
 from torch import autocast
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.t5 import T5ForGeneration as _T5ForGeneration
@@ -26,13 +26,6 @@ class T5ForGeneration(_T5ForGeneration):
         config_path: str,
         gradient_checkpointing: Optional[bool] = False,
     ):
-        """
-        Initialize the T5ForGeneration model.
-
-        Args:
-            config_path (str): The path to the model configuration file.
-            gradient_checkpointing (Optional[bool]): Whether to use gradient checkpointing during training. Defaults to False.
-        """
         super().__init__(
             config_path=config_path,
             gradient_checkpointing=gradient_checkpointing,
@@ -41,16 +34,6 @@ class T5ForGeneration(_T5ForGeneration):
     @classmethod
     @add_default_section_for_init("core/model/generation/t5")
     def from_core_configure(cls, config, **kwargs):
-        """
-        Create an instance of T5ForGeneration from a core configuration.
-
-        Args:
-            config: The core configuration.
-            **kwargs: Additional keyword arguments.
-
-        Returns:
-            T5ForGeneration: An instance of the T5ForGeneration model.
-        """
         config.set_default_section("core/model/generation/t5")
         pretrained_name = config.getoption("pretrained_name", "t5-base")
         config_path = config.getoption("config_path", None)
@@ -82,18 +65,6 @@ class T5ForGeneration(_T5ForGeneration):
         decoder_input_ids: torch.Tensor,
         decoder_attention_mask: torch.Tensor,
     ):
-        """
-        Perform a forward pass through the model.
-
-        Args:
-            input_ids (torch.Tensor): Input token IDs.
-            attention_mask (torch.Tensor): Attention mask.
-            decoder_input_ids (torch.Tensor): Decoder input token IDs.
-            decoder_attention_mask (torch.Tensor): Decoder attention mask.
-
-        Returns:
-            GenerationOutputs: The generation outputs.
-        """
         outputs = super().forward(
             input_ids=input_ids,
             attention_mask=attention_mask,
@@ -125,31 +96,6 @@ class T5ForGeneration(_T5ForGeneration):
         top_k: Optional[int] = 50,
         top_p: Optional[float] = 1.0,
     ):
-        """
-        Generate sequences using the T5 model.
-
-        Args:
-            input_ids (torch.Tensor): Input token IDs.
-            num_beams (int, optional): Number of beams for beam search. Defaults to 5.
-            decoder_start_token_id (int, optional): Decoder start token ID. Defaults to 0.
-            decoder_end_token_id (int or List[int], optional): The ID(s) of the decoder end token(s). Defaults to 1.
-            num_return_sequences (int, optional): Number of generated sequences to return. Defaults to 1.
-            min_gen_seq_length (int, optional): Minimum generation sequence length. Defaults to 0.
-            max_gen_seq_length (int, optional): Maximum generation sequence length. Defaults to 48.
-            repetition_penalty (float, optional): Repetition penalty. Defaults to 1.0.
-            no_repeat_ngram_size (int, optional): Size of n-grams to prevent repetition. Defaults to 0.
-            early_stopping (bool, optional): Whether to perform early stopping. Defaults to True.
-            length_penalty (float, optional): Length penalty. Defaults to 1.0.
-            num_beam_groups (int, optional): Number of beam groups for diverse beam search. Defaults to 1.
-            diversity_penalty (float, optional): Diversity penalty for diverse beam search. Defaults to 0.0.
-            do_sample (bool, optional): Whether to use sampling for generation. Defaults to False.
-            temperature (float, optional): Sampling temperature. Defaults to 1.0.
-            top_k (int, optional): Top-k sampling parameter. Defaults to 50.
-            top_p (float, optional): Top-p sampling parameter. Defaults to 1.0.
-
-        Returns:
-            GenerationOutputs: The generation outputs.
-        """
 
         outputs = super().generate(
             input_ids,

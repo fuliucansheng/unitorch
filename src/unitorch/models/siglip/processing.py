@@ -1,16 +1,9 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
-import os
-import torch
-import numpy as np
 from PIL import Image
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
-from torchvision.transforms import Resize, CenterCrop, ToTensor, Normalize, Compose
+from typing import Optional, Union
 from transformers import SiglipImageProcessor, SiglipTokenizer
-from transformers.image_utils import to_numpy_array, ChannelDimension
-from transformers.image_transforms import to_channel_dimension_format
-from unitorch.utils import pop_value
 from unitorch.models import (
     HfImageClassificationProcessor,
     HfTextClassificationProcessor,
@@ -30,22 +23,18 @@ class SiglipProcessor(HfTextClassificationProcessor):
         Initializes the SiglipProcessor.
 
         Args:
-            vocab_path (str): The path to the vocabulary file.
-            merge_path (str): The path to the merge file.
-            vision_config_path (str): The path to the vision configuration file.
-            max_seq_length (int, optional): The maximum sequence length for text inputs. Defaults to 128.
-            position_start_id (int, optional): The starting position ID for positional embeddings. Defaults to 0.
+            vocab_path (str, optional): Path to the vocabulary file.
+            vision_config_path (str, optional): Path to the vision configuration file.
+            max_seq_length (int, optional): Maximum sequence length for text inputs. Defaults to 128.
+            position_start_id (int, optional): Starting position ID. Defaults to 0.
         """
         if vocab_path is not None:
-            tokenizer = SiglipTokenizer(
-                vocab_file=vocab_path,
-            )
+            tokenizer = SiglipTokenizer(vocab_file=vocab_path)
         else:
-            tokenizer = SiglipTokenizer.from_pretrained(
-                "google/siglip-base-patch16-224"
-            )
+            tokenizer = SiglipTokenizer.from_pretrained("google/siglip-base-patch16-224")
         tokenizer.cls_token = tokenizer.bos_token
         tokenizer.sep_token = tokenizer.eos_token
+
         super().__init__(
             tokenizer=tokenizer,
             max_seq_length=max_seq_length,
@@ -55,9 +44,7 @@ class SiglipProcessor(HfTextClassificationProcessor):
         )
 
         if vision_config_path is not None:
-            self.vision_processor = SiglipImageProcessor.from_json_file(
-                vision_config_path
-            )
+            self.vision_processor = SiglipImageProcessor.from_json_file(vision_config_path)
         else:
             self.vision_processor = SiglipImageProcessor.from_pretrained(
                 "google/siglip-base-patch16-224"
@@ -69,14 +56,14 @@ class SiglipProcessor(HfTextClassificationProcessor):
         max_seq_length: Optional[int] = None,
     ):
         """
-        Performs text classification.
+        Processes text for classification.
 
         Args:
-            text (str): The input text.
-            max_seq_length (int, optional): The maximum sequence length for text inputs. Defaults to None.
+            text (str): Input text.
+            max_seq_length (int, optional): Maximum sequence length. Defaults to None.
 
         Returns:
-            GenericOutputs: An object containing the processed inputs.
+            GenericOutputs: Processed text inputs.
         """
         outputs = HfTextClassificationProcessor.classification(
             self,
@@ -94,21 +81,18 @@ class SiglipProcessor(HfTextClassificationProcessor):
         image: Union[Image.Image, str],
     ):
         """
-        Performs image classification.
+        Processes an image for classification.
 
         Args:
-            image (PIL.Image.Image): The input image.
+            image (PIL.Image.Image or str): Input image or path.
 
         Returns:
-            GenericOutputs: An object containing the processed inputs.
+            GenericOutputs: Processed image inputs.
         """
         pixel_values = self.vision_processor.preprocess(
             image, return_tensors="pt"
         ).pixel_values[0]
-
-        return GenericOutputs(
-            pixel_values=pixel_values,
-        )
+        return GenericOutputs(pixel_values=pixel_values)
 
     def classification(
         self,
@@ -117,24 +101,20 @@ class SiglipProcessor(HfTextClassificationProcessor):
         max_seq_length: Optional[int] = None,
     ):
         """
-        Performs classification using text and image inputs.
+        Processes text and image for multimodal classification.
 
         Args:
-            text (str): The input text.
-            image (PIL.Image.Image): The input image.
-            max_seq_length (int, optional): The maximum sequence length for text inputs. Defaults to None.
+            text (str): Input text.
+            image (PIL.Image.Image or str): Input image or path.
+            max_seq_length (int, optional): Maximum sequence length. Defaults to None.
 
         Returns:
-            GenericOutputs: An object containing the processed inputs.
+            GenericOutputs: Processed text and image inputs.
         """
-        text_outputs = self.text_classification(
-            text=text,
-            max_seq_length=max_seq_length,
-        )
+        text_outputs = self.text_classification(text=text, max_seq_length=max_seq_length)
         pixel_values = self.vision_processor.preprocess(
             image, return_tensors="pt"
         ).pixel_values[0]
-
         return GenericOutputs(
             input_ids=text_outputs.input_ids,
             attention_mask=text_outputs.attention_mask,

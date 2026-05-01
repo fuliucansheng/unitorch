@@ -1,15 +1,10 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
-from hmac import new
-import os
 import torch
-import numpy as np
 from PIL import Image
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
-from torchvision.transforms import Resize, CenterCrop, ToTensor, Normalize, Compose
+from typing import List, Optional, Union
 from transformers import BertTokenizer, GroundingDinoImageProcessor
-from unitorch.utils import resize_shortest_edge, pop_value
 from unitorch.models import (
     HfTextClassificationProcessor,
     HfImageClassificationProcessor,
@@ -28,10 +23,13 @@ class GroundingDinoProcessor(
         position_start_id: Optional[int] = 0,
     ):
         """
+        Initializes the GroundingDinoProcessor.
+
         Args:
-            vision_config_path: vision config path to detr processor
-            min_size_test: resize shortest edge parameters
-            max_size_test: resize shortest edge parameters
+            vocab_path (str): Path to the BERT vocabulary file.
+            vision_config_path (str): Path to the GroundingDINO image processor configuration file.
+            max_seq_length (int, optional): Maximum sequence length. Defaults to 128.
+            position_start_id (int, optional): Starting position ID. Defaults to 0.
         """
         self.bert_tokenizer = BertTokenizer(
             vocab_path, do_basic_tokenize=True, do_lower_case=True
@@ -48,7 +46,6 @@ class GroundingDinoProcessor(
             target_type_id=1,
             position_start_id=position_start_id,
         )
-
         HfImageClassificationProcessor.__init__(
             self,
             vision_processor=self.vision_processor,
@@ -62,22 +59,29 @@ class GroundingDinoProcessor(
         classes: List[str],
     ):
         """
+        Processes image and text for training with ground-truth detections.
+
         Args:
-            image: input image
-            bboxes: bboxes to image
-            classes: class to each bbox
+            text (str): Input text describing objects.
+            image (str or PIL.Image.Image): Input image or path.
+            bboxes (List[List[float]]): Ground-truth bounding boxes in [x1, y1, x2, y2] format.
+            classes (List[str]): Class name for each bounding box.
+
+        Returns:
+            GenericOutputs: Processed inputs including pixel values, text tokens, boxes, and class IDs.
         """
         if isinstance(image, str):
             image = Image.open(image).convert("RGB")
         org_w, org_h = image.size
+
         pixel_outputs = HfImageClassificationProcessor.classification(self, image)
         text_outputs = HfTextClassificationProcessor.classification(self, text)
 
         bboxes = torch.tensor(bboxes).float()
-        bboxes[:, 0] = bboxes[:, 0] / org_w
-        bboxes[:, 1] = bboxes[:, 1] / org_h
-        bboxes[:, 2] = bboxes[:, 2] / org_w
-        bboxes[:, 3] = bboxes[:, 3] / org_h
+        bboxes[:, 0] /= org_w
+        bboxes[:, 1] /= org_h
+        bboxes[:, 2] /= org_w
+        bboxes[:, 3] /= org_h
 
         assert all(c in text for c in classes)
         ground_truth = text_outputs.input_ids.long().tolist()
@@ -92,9 +96,7 @@ class GroundingDinoProcessor(
         if bboxes.dim() == 1:
             bboxes = bboxes.unsqueeze(0)
 
-        assert (
-            bboxes.size(-1) == 4 and classes.dim() == 1 and len(classes) == len(bboxes)
-        )
+        assert bboxes.size(-1) == 4 and classes.dim() == 1 and len(classes) == len(bboxes)
         return GenericOutputs(
             pixel_values=pixel_outputs.pixel_values,
             input_ids=text_outputs.input_ids,
@@ -110,8 +112,14 @@ class GroundingDinoProcessor(
         image: Union[str, Image.Image],
     ):
         """
+        Processes image and text for inference.
+
         Args:
-            image: input image
+            text (str): Input text describing objects.
+            image (str or PIL.Image.Image): Input image or path.
+
+        Returns:
+            GenericOutputs: Processed pixel values and text tokens.
         """
         if isinstance(image, str):
             image = Image.open(image).convert("RGB")

@@ -1,23 +1,12 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
-import os
-import io
-import requests
-import time
-import base64
-import json
-import logging
 import torch
-import torch.nn as nn
-import numpy as np
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
-from random import random
+from typing import Dict, List, Optional, Union
 
 from unitorch.utils import pop_value
 from unitorch.cli import (
     add_default_section_for_init,
-    add_default_section_for_function,
     register_process,
 )
 from unitorch.cli import WriterOutputs
@@ -26,13 +15,13 @@ from unitorch.cli.models import (
     ModelInputs,
     ModelOutputs,
     ModelTargets,
-    TensorsInputs,
-    ListTensorsInputs,
+    TensorInputs,
+    TensorSeqInputs,
     EmbeddingOutputs,
 )
 
 
-def _process_returns(kwargs, dtype="TensorsInputs"):
+def _process_returns(kwargs, dtype="TensorInputs"):
     assert dtype in globals()
     cls = globals()[dtype]
     assert (
@@ -61,7 +50,7 @@ class PreProcessor:
         text: Union[int, float, str],
         dtype: Optional[str] = "int",
         key: Optional[str] = "num",
-        returns: Optional[str] = "TensorsInputs",
+        returns: Optional[str] = "TensorInputs",
     ):
         num = torch.tensor(float(text))
         if dtype == "int":
@@ -93,7 +82,7 @@ class PreProcessor:
         dtype: Optional[str] = "int",
         shape: Optional[tuple] = None,
         key: Optional[str] = "features",
-        returns: Optional[str] = "TensorsInputs",
+        returns: Optional[str] = "TensorInputs",
     ):
         if isinstance(features, str):
             features = features.split(sep=sep)

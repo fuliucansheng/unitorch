@@ -2,10 +2,8 @@
 # Licensed under the MIT License.
 
 import os
-import sys
 import fire
 import logging
-import importlib
 import unitorch.cli
 from unitorch.cli import CoreConfigureParser
 from unitorch.cli import (
@@ -14,7 +12,6 @@ from unitorch.cli import (
     registered_script,
     init_registered_module,
 )
-import unitorch.cli.pipelines
 import unitorch.cli.scripts
 
 

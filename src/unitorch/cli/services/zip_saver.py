@@ -3,11 +3,9 @@
 
 import os
 import uuid
-import time
 import logging
 import http.server
 import zipfile
-import tempfile
 import cgi
 from threading import Thread
 from urllib.parse import parse_qs, urlparse
@@ -16,18 +14,7 @@ from unitorch.cli import register_service, GenericService
 
 
 def get_zipfile(zfs, res, idx, step):
-    """
-    Extracts a subset of zip files from the given list.
-
-    Args:
-        zfs (list): List of zip files.
-        res (list): Result list to store extracted zip files.
-        idx (int): Starting index.
-        step (int): Step size.
-
-    Returns:
-        None
-    """
+    """Reads namelist from a subset of zip files into res, stepping by step."""
     for i in range(idx, len(zfs), step):
         try:
             zf = zipfile.ZipFile(zfs[i])
@@ -36,21 +23,10 @@ def get_zipfile(zfs, res, idx, step):
             logging.error(f"Failed to extract {zfs[i]}: {e}")
             os.remove(zfs[i])
             res[i] = None
-        finally:
-            pass
 
 
 def get_zipfiles(zipfiles, num_thread=48):
-    """
-    Extracts multiple zip files using multiple threads.
-
-    Args:
-        zipfiles (list): List of zip file paths.
-        num_thread (int): Number of threads to use.
-
-    Returns:
-        list: Extracted zip files.
-    """
+    """Reads namelists from multiple zip files concurrently using threads."""
     num_thread = min(len(zipfiles), num_thread)
     threads = [None] * num_thread
     results = [None] * len(zipfiles)

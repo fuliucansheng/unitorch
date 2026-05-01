@@ -2,43 +2,26 @@
 # Licensed under the MIT License.
 
 import torch
-import torch.nn as nn
-import pyarrow as pa
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import Dict, List, Optional, Union
 from unitorch.cli import (
     add_default_section_for_init,
-    add_default_section_for_function,
     register_process,
 )
 from unitorch.cli import WriterMixin, WriterOutputs
-from unitorch.cli.models import TensorsOutputs, TensorsTargets, ACT2FN
+from unitorch.cli.models import TensorOutputs, TensorTargets, ACT2FN
 
 
 @dataclass
-class ClassificationOutputs(TensorsOutputs, WriterMixin):
-    """
-    Outputs for classification models.
-
-    Args:
-        outputs (torch.Tensor): Output tensor containing the classification results.
-    """
+class ClassificationOutputs(TensorOutputs, WriterMixin):
+    """Outputs for classification models."""
 
     outputs: torch.Tensor
 
 
 @dataclass
-class EmbeddingOutputs(TensorsOutputs, WriterMixin):
-    """
-    Outputs for embedding models.
-
-    Args:
-        embedding (torch.Tensor): The embedding tensor.
-        embedding1 (Optional[torch.Tensor]): Additional embedding tensor 1. Defaults to an empty tensor.
-        embedding2 (Optional[torch.Tensor]): Additional embedding tensor 2. Defaults to an empty tensor.
-        embedding3 (Optional[torch.Tensor]): Additional embedding tensor 3. Defaults to an empty tensor.
-        embedding4 (Optional[torch.Tensor]): Additional embedding tensor 4. Defaults to an empty tensor.
-    """
+class EmbeddingOutputs(TensorOutputs, WriterMixin):
+    """Outputs for embedding models, with up to four optional auxiliary embeddings."""
 
     embedding: torch.Tensor
     embedding1: Optional[torch.Tensor] = torch.empty(0)
@@ -48,14 +31,8 @@ class EmbeddingOutputs(TensorsOutputs, WriterMixin):
 
 
 @dataclass
-class ClassificationTargets(TensorsTargets):
-    """
-    Targets for classification models.
-
-    Args:
-        targets (torch.Tensor): The target tensor.
-        sample_weight (Optional[torch.Tensor]): The weight associated with each target. Defaults to a tensor with a value of 1.0.
-    """
+class ClassificationTargets(TensorTargets):
+    """Targets for classification models."""
 
     targets: torch.Tensor
     sample_weight: Optional[torch.Tensor] = torch.tensor(1.0)
@@ -70,13 +47,6 @@ class ClassificationProcessor:
         return_scores: Optional[bool] = False,
         id2label: Optional[Dict[int, str]] = None,
     ):
-        """
-        Initialize the ClassificationProcessor.
-
-        Args:
-            act_fn (Optional[str]): Activation function to apply to the model outputs.
-            return_scores (Optional[bool]): Whether to return the scores in addition to the predictions.
-        """
         self.act_fn = ACT2FN.get(act_fn, None)
         self.return_scores = return_scores
         self.id2label = id2label
@@ -84,16 +54,6 @@ class ClassificationProcessor:
     @classmethod
     @add_default_section_for_init("core/process/classification")
     def from_core_configure(cls, config, **kwargs):
-        """
-        Create a ClassificationProcessor instance from core configuration.
-
-        Args:
-            config: Configuration object.
-            **kwargs: Additional keyword arguments.
-
-        Returns:
-            ClassificationProcessor: The initialized ClassificationProcessor instance.
-        """
         pass
 
     @register_process("core/postprocess/classification/binary_score")
@@ -101,15 +61,7 @@ class ClassificationProcessor:
         self,
         outputs: ClassificationOutputs,
     ):
-        """
-        Postprocess the classification outputs for binary classification with scores.
-
-        Args:
-            outputs (ClassificationOutputs): Outputs from the classification model.
-
-        Returns:
-            WriterOutputs: Processed outputs with scores.
-        """
+        """Return positive-class score for binary classification."""
         assert outputs.outputs.dim() == 2
 
         results = outputs.to_pandas()
@@ -131,15 +83,7 @@ class ClassificationProcessor:
         self,
         outputs: ClassificationOutputs,
     ):
-        """
-        Postprocess the classification outputs for multi-classes classification with scores.
-
-        Args:
-            outputs (ClassificationOutputs): Outputs from the classification model.
-
-        Returns:
-            WriterOutputs: Processed outputs with scores and predicted classes.
-        """
+        """Return argmax class and max score for multi-class classification."""
         assert outputs.outputs.dim() == 2
 
         results = outputs.to_pandas()
@@ -163,15 +107,7 @@ class ClassificationProcessor:
         self,
         outputs: EmbeddingOutputs,
     ):
-        """
-        Postprocess the embedding outputs.
-
-        Args:
-            outputs (EmbeddingOutputs): Outputs from the embedding model.
-
-        Returns:
-            WriterOutputs: Processed outputs with embeddings.
-        """
+        """Postprocess embedding outputs, writing each embedding field to results."""
         results = outputs.to_pandas()
         assert results.shape[0] == 0 or results.shape[0] == outputs.embedding.shape[0]
 
@@ -211,15 +147,7 @@ class ClassificationProcessor:
         self,
         outputs: EmbeddingOutputs,
     ):
-        """
-        Postprocess the embedding outputs as string representations.
-
-        Args:
-            outputs (EmbeddingOutputs): Outputs from the embedding model.
-
-        Returns:
-            WriterOutputs: Processed outputs with string representations of embeddings.
-        """
+        """Postprocess embedding outputs as space-joined string representations."""
         results = outputs.to_pandas()
         assert results.shape[0] == 0 or results.shape[0] == outputs.embedding.shape[0]
 

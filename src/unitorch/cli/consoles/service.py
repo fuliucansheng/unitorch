@@ -8,8 +8,6 @@ import atexit
 import signal
 import time
 import logging
-import torch
-import importlib
 import unitorch.cli
 import unitorch.cli.services
 from pathlib import Path

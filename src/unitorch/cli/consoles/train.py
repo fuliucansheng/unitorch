@@ -2,17 +2,14 @@
 # Licensed under the MIT License.
 
 import os
-import sys
 import fire
 import logging
-import importlib
 import unitorch.cli
 from unitorch.cli import CoreConfigureParser
 from unitorch.cli import (
     import_library,
     cached_path,
     registered_task,
-    registered_script,
     init_registered_module,
 )
 import unitorch.cli.wandb as wandb

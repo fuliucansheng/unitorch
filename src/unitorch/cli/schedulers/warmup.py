@@ -2,7 +2,7 @@
 # Licensed under the MIT License.
 
 import torch.optim as optim
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import Optional
 from unitorch.schedulers.warmup import (
     CosineWarmupScheduler,
     LinearWarmupScheduler,

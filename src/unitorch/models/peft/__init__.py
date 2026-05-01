@@ -2,12 +2,11 @@
 # Licensed under the MIT License.
 
 import os
-import re
 import warnings
 import logging
 import torch
 import torch.nn as nn
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import Dict, List, Optional, Union
 from peft import (
     PeftConfig,
     PeftType,
@@ -168,7 +167,6 @@ class PeftCheckpointMixin(CheckpointMixin):
 class GenericPeftModel(nn.Module, PeftCheckpointMixin):
     def __init__(self):
         super().__init__()
-        pass
 
     def _init_weights(self, module):
         """
@@ -224,8 +222,8 @@ class PeftWeightLoaderMixin(nn.Module):
         lora_files: Union[str, List[str]],
         lora_weights: Optional[Union[float, List[float]]] = None,
         lora_alphas: Optional[Union[float, List[float]]] = None,
-        replace_keys: Optional[Dict] = dict(),
-        prefix_keys: Optional[Dict] = dict(),
+        replace_keys: Optional[Dict] = None,
+        prefix_keys: Optional[Dict] = None,
         save_base_state: bool = True,
     ):
         if self.__base_state_dict__ is not None:
@@ -235,6 +233,11 @@ class PeftWeightLoaderMixin(nn.Module):
             state_dict = {k: v.cpu() for k, v in state_dict.items()}
             if save_base_state:
                 self.__base_state_dict__ = {k: v.clone() for k, v in state_dict.items()}
+
+        if replace_keys is None:
+            replace_keys = {}
+        if prefix_keys is None:
+            prefix_keys = {}
 
         if isinstance(self.replace_keys_in_peft_state_dict, dict):
             replace_keys = {**self.replace_keys_in_peft_state_dict, **replace_keys}
@@ -247,12 +250,12 @@ class PeftWeightLoaderMixin(nn.Module):
 
         if lora_weights is None:
             lora_weights = [1.0] * len(lora_files)
-        elif isinstance(lora_weights, float) or isinstance(lora_weights, int):
+        elif isinstance(lora_weights, (float, int)):
             lora_weights = [lora_weights] * len(lora_files)
 
         if lora_alphas is None:
             lora_alphas = [32.0] * len(lora_files)
-        elif isinstance(lora_alphas, float) or isinstance(lora_alphas, int):
+        elif isinstance(lora_alphas, (float, int)):
             lora_alphas = [lora_alphas] * len(lora_files)
 
         assert len(lora_files) == len(lora_weights) and len(lora_files) == len(
@@ -341,6 +344,14 @@ from unitorch.models.peft.modeling_qwen_vl import (
 
 if is_diffusers_available():
     from unitorch.models.peft.diffusers import (
-        StableLoraForText2ImageGeneration,
-        StableXLLoraForText2ImageGeneration,
+        StableFluxLoraForText2ImageGeneration,
+        StableFluxLoraForImageInpainting,
+        StableFluxLoraForKontext2ImageGeneration,
+        StableFluxDPOLoraForText2ImageGeneration,
+        StableFluxDPOLoraForImageInpainting,
+        StableFluxDPOLoraForKontext2ImageGeneration,
+        QWenImageLoraForText2ImageGeneration,
+        QWenImageLoraForImageEditing,
+        WanLoraForText2VideoGeneration,
+        WanLoraForImage2VideoGeneration,
     )

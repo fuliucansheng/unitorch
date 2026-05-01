@@ -4,21 +4,13 @@
 import json
 import random
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import Optional
 import diffusers.schedulers as schedulers
 from transformers import (
-    PretrainedConfig,
     UMT5Config,
     UMT5EncoderModel,
-    CLIPVisionConfig,
-    CLIPVisionModel,
-    CLIPVisionModelWithProjection,
 )
-from transformers.models.t5.configuration_t5 import T5Config
-from transformers.models.t5.modeling_t5 import T5EncoderModel
-from diffusers.schedulers import SchedulerMixin, FlowMatchEulerDiscreteScheduler
+from diffusers.schedulers import SchedulerMixin
 from diffusers.training_utils import (
     compute_loss_weighting_for_sd3,
     compute_density_for_timestep_sampling,
@@ -31,17 +23,12 @@ from diffusers.pipelines import (
     WanPipeline,
     WanImageToVideoPipeline,
 )
-from unitorch.models import (
-    GenericModel,
-    GenericOutputs,
-)
+from unitorch.models import GenericModel, GenericOutputs
 from unitorch.models.peft import PeftWeightLoaderMixin
-from unitorch.models.diffusers import compute_snr
 
 
 class GenericWanModel(GenericModel, PeftWeightLoaderMixin):
     prefix_keys_in_state_dict = {
-        # vae weights
         "^encoder.*": "vae.",
         "^decoder.*": "vae.",
         "^post_quant_conv.*": "vae.",
@@ -49,10 +36,10 @@ class GenericWanModel(GenericModel, PeftWeightLoaderMixin):
     }
 
     replace_keys_in_state_dict = {
-        "\.query\.": ".to_q.",
-        "\.key\.": ".to_k.",
-        "\.value\.": ".to_v.",
-        "\.proj_attn\.": ".to_out.0.",
+        r"\.query\.": ".to_q.",
+        r"\.key\.": ".to_k.",
+        r"\.value\.": ".to_v.",
+        r"\.proj_attn\.": ".to_out.0.",
     }
 
     def __init__(

@@ -4,43 +4,26 @@
 import torch
 import torch.nn as nn
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import Dict, List, Optional, Union
 from unitorch.cli import (
     add_default_section_for_init,
-    add_default_section_for_function,
     register_process,
 )
 from unitorch.cli import WriterMixin, WriterOutputs
-from unitorch.cli.models.modeling_utils import TensorsOutputs, TensorsTargets
+from unitorch.cli.models.modeling_utils import TensorOutputs, TensorTargets
 
 
 @dataclass
-class GenerationOutputs(TensorsOutputs, WriterMixin):
-    """
-    Outputs for generation models.
-
-    Args:
-        sequences (torch.Tensor): Generated sequences.
-        sequences_scores (Optional[torch.Tensor]): Scores associated with the generated sequences.
-            Defaults to an empty tensor.
-    """
+class GenerationOutputs(TensorOutputs, WriterMixin):
+    """Outputs for generation models."""
 
     sequences: torch.Tensor
     sequences_scores: Optional[torch.Tensor] = torch.empty(0)
 
 
 @dataclass
-class GenerationTargets(TensorsTargets):
-    """
-    Targets for generation models.
-
-    Args:
-        refs (torch.Tensor): Reference sequences.
-        masks (Optional[torch.Tensor]): Mask indicating the valid positions in the reference sequences.
-            Defaults to an empty tensor.
-        sample_weight (Optional[torch.Tensor]): Sample weights for the reference sequences.
-            Defaults to an empty tensor.
-    """
+class GenerationTargets(TensorTargets):
+    """Targets for generation models."""
 
     refs: torch.Tensor
     masks: Optional[torch.Tensor] = torch.empty(0)

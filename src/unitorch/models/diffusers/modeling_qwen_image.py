@@ -2,75 +2,72 @@
 # Licensed under the MIT License.
 
 import json
-import torch
-import torch.nn.functional as F
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import Optional
+
 import diffusers.schedulers as schedulers
-from transformers import (
-    Qwen2_5_VLConfig,
-    Qwen2_5_VLForConditionalGeneration,
-)
-from diffusers.schedulers import SchedulerMixin, FlowMatchEulerDiscreteScheduler
+import torch
+from diffusers.models import AutoencoderKLQwenImage, QwenImageTransformer2DModel
+from diffusers.pipelines import QwenImageEditPipeline, QwenImagePipeline
+from diffusers.schedulers import FlowMatchEulerDiscreteScheduler, SchedulerMixin
 from diffusers.training_utils import (
-    compute_loss_weighting_for_sd3,
     compute_density_for_timestep_sampling,
+    compute_loss_weighting_for_sd3,
 )
-from diffusers.models import (
-    QwenImageTransformer2DModel,
-    AutoencoderKLQwenImage,
-)
-from diffusers.pipelines import (
-    QwenImagePipeline,
-    QwenImageEditPipeline,
-)
-from unitorch.models import (
-    GenericModel,
-    GenericOutputs,
-)
+from transformers import Qwen2_5_VLConfig, Qwen2_5_VLForConditionalGeneration
+
+from unitorch.models import GenericModel, GenericOutputs
 from unitorch.models.peft import PeftWeightLoaderMixin
-from unitorch.models.diffusers import compute_snr
 
 
-def _pack_latents(latents, batch_size, num_channels_latents, height, width):
-    latents = latents.view(
-        batch_size, num_channels_latents, height // 2, 2, width // 2, 2
-    )
+def _pack_latents(
+    latents: torch.Tensor,
+    batch_size: int,
+    num_channels_latents: int,
+    height: int,
+    width: int,
+) -> torch.Tensor:
+    latents = latents.view(batch_size, num_channels_latents, height // 2, 2, width // 2, 2)
     latents = latents.permute(0, 2, 4, 1, 3, 5)
-    latents = latents.reshape(
-        batch_size, (height // 2) * (width // 2), num_channels_latents * 4
-    )
-
-    return latents
+    return latents.reshape(batch_size, (height // 2) * (width // 2), num_channels_latents * 4)
 
 
-def _unpack_latents(latents, height, width, vae_scale_factor):
-    batch_size, num_patches, channels = latents.shape
-
-    height = height // vae_scale_factor
-    width = width // vae_scale_factor
-
-    latents = latents.view(batch_size, height // 2, width // 2, channels // 4, 2, 2)
+def _unpack_latents(
+    latents: torch.Tensor, height: int, width: int, vae_scale_factor: int
+) -> torch.Tensor:
+    batch_size, _num_patches, channels = latents.shape
+    h = height // vae_scale_factor
+    w = width // vae_scale_factor
+    latents = latents.view(batch_size, h // 2, w // 2, channels // 4, 2, 2)
     latents = latents.permute(0, 3, 1, 4, 2, 5)
+    return latents.reshape(batch_size, channels // 4, 1, h, w)
 
-    latents = latents.reshape(batch_size, channels // (2 * 2), 1, height, width)
 
-    return latents
+def _build_padded_embeds(hidden_states, start_index: int, device):
+    """Trim, right-pad, and stack a list of hidden-state tensors."""
+    trimmed = [e[start_index:] for e in hidden_states]
+    masks = [torch.ones(e.size(0), dtype=torch.long, device=e.device) for e in trimmed]
+    max_len = max(e.size(0) for e in trimmed)
+    embeds = torch.stack([
+        torch.cat([u, u.new_zeros(max_len - u.size(0), u.size(1))]) for u in trimmed
+    ])
+    mask = torch.stack([
+        torch.cat([m, m.new_zeros(max_len - m.size(0))]) for m in masks
+    ])
+    return embeds, mask
 
 
 class GenericQWenImageModel(GenericModel, PeftWeightLoaderMixin):
     prefix_keys_in_state_dict = {
-        # vae weights
         "^encoder.*": "vae.",
         "^decoder.*": "vae.",
         "^post_quant_conv.*": "vae.",
         "^quant_conv.*": "vae.",
     }
-
     replace_keys_in_state_dict = {
-        "\.query\.": ".to_q.",
-        "\.key\.": ".to_k.",
-        "\.value\.": ".to_v.",
-        "\.proj_attn\.": ".to_out.0.",
+        "\\.query\\.": ".to_q.",
+        "\\.key\\.": ".to_k.",
+        "\\.value\\.": ".to_v.",
+        "\\.proj_attn\\.": ".to_out.0.",
     }
 
     def __init__(
@@ -79,34 +76,32 @@ class GenericQWenImageModel(GenericModel, PeftWeightLoaderMixin):
         text_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
-        num_train_timesteps: Optional[int] = 1000,
-        num_infer_timesteps: Optional[int] = 50,
-        freeze_vae_encoder: Optional[bool] = True,
-        freeze_text_encoder: Optional[bool] = True,
-        freeze_transformer_encoder: Optional[bool] = False,
-        snr_gamma: Optional[float] = 5.0,
-        seed: Optional[int] = 1123,
-    ):
+        num_train_timesteps: int = 1000,
+        num_infer_timesteps: int = 50,
+        freeze_vae_encoder: bool = True,
+        freeze_text_encoder: bool = True,
+        freeze_transformer_encoder: bool = False,
+        snr_gamma: float = 5.0,
+        seed: int = 1123,
+    ) -> None:
         super().__init__()
         self.seed = seed
         self.num_train_timesteps = num_train_timesteps
         self.num_infer_timesteps = num_infer_timesteps
         self.snr_gamma = snr_gamma
 
-        config_dict = json.load(open(config_path))
-        self.transformer = QwenImageTransformer2DModel.from_config(config_dict).to(
-            torch.bfloat16
-        )
+        with open(config_path) as f:
+            self.transformer = QwenImageTransformer2DModel.from_config(json.load(f)).to(torch.bfloat16)
 
-        text_config = Qwen2_5_VLConfig.from_json_file(text_config_path)
-        self.text = Qwen2_5_VLForConditionalGeneration(text_config).to(torch.bfloat16)
+        self.text = Qwen2_5_VLForConditionalGeneration(
+            Qwen2_5_VLConfig.from_json_file(text_config_path)
+        ).to(torch.bfloat16)
 
-        vae_config_dict = json.load(open(vae_config_path))
-        self.vae = AutoencoderKLQwenImage.from_config(vae_config_dict).to(
-            torch.bfloat16
-        )
+        with open(vae_config_path) as f:
+            self.vae = AutoencoderKLQwenImage.from_config(json.load(f)).to(torch.bfloat16)
 
-        scheduler_config_dict = json.load(open(scheduler_config_path))
+        with open(scheduler_config_path) as f:
+            scheduler_config_dict = json.load(f)
         scheduler_class_name = scheduler_config_dict.get(
             "_class_name", "FlowMatchEulerDiscreteScheduler"
         )
@@ -117,25 +112,22 @@ class GenericQWenImageModel(GenericModel, PeftWeightLoaderMixin):
         self.scheduler = scheduler_class.from_config(scheduler_config_dict)
 
         if freeze_vae_encoder:
-            for param in self.vae.parameters():
-                param.requires_grad = False
-
+            for p in self.vae.parameters():
+                p.requires_grad_(False)
         if freeze_text_encoder:
-            for param in self.text.parameters():
-                param.requires_grad = False
-
+            for p in self.text.parameters():
+                p.requires_grad_(False)
         if freeze_transformer_encoder:
-            for param in self.transformer.parameters():
-                param.requires_grad = False
+            for p in self.transformer.parameters():
+                p.requires_grad_(False)
 
-    def get_sigmas(self, timesteps, n_dim=4, dtype=torch.float32):
+    def get_sigmas(self, timesteps: torch.Tensor, n_dim: int = 4, dtype=torch.float32) -> torch.Tensor:
         sigmas = self.scheduler.sigmas.to(device=self.device, dtype=dtype)
         schedule_timesteps = self.scheduler.timesteps.to(self.device)
         timesteps = timesteps.to(self.device)
         step_indices = [(schedule_timesteps == t).nonzero().item() for t in timesteps]
-
         sigma = sigmas[step_indices].flatten()
-        while len(sigma.shape) < n_dim:
+        while sigma.dim() < n_dim:
             sigma = sigma.unsqueeze(-1)
         return sigma
 
@@ -143,9 +135,72 @@ class GenericQWenImageModel(GenericModel, PeftWeightLoaderMixin):
         bool_mask = mask.bool()
         valid_lengths = bool_mask.sum(dim=1)
         selected = hidden_states[bool_mask]
-        split_result = torch.split(selected, valid_lengths.tolist(), dim=0)
+        return torch.split(selected, valid_lengths.tolist(), dim=0)
 
-        return split_result
+    def _encode_prompt(
+        self,
+        input_ids: torch.Tensor,
+        attention_mask: torch.Tensor,
+        prompt_start_index: int,
+        pixel_values: Optional[torch.Tensor] = None,
+        image_grid_thw: Optional[torch.Tensor] = None,
+    ):
+        """Run the text encoder and return (prompt_embeds, prompt_embeds_mask)."""
+        if pixel_values is not None and image_grid_thw is not None:
+            image_grid_thw = image_grid_thw.view(-1, image_grid_thw.size(-1))
+            pixel_values = pixel_values.view(-1, pixel_values.size(-1))
+
+        outputs = self.text(
+            input_ids=input_ids,
+            attention_mask=attention_mask,
+            pixel_values=pixel_values,
+            image_grid_thw=image_grid_thw,
+            output_hidden_states=True,
+        )
+        split = self._extract_masked_hidden(outputs.hidden_states[-1], attention_mask)
+        return _build_padded_embeds(split, prompt_start_index, input_ids.device)
+
+    def _normalize_latents(self, latents: torch.Tensor, device) -> torch.Tensor:
+        latents_mean = torch.tensor(self.vae.config.latents_mean).view(
+            1, self.vae.config.z_dim, 1, 1, 1
+        ).to(device)
+        latents_std = 1.0 / torch.tensor(self.vae.config.latents_std).view(
+            1, self.vae.config.z_dim, 1, 1, 1
+        ).to(device)
+        return (latents - latents_mean) * latents_std
+
+    def _sample_timesteps_and_sigmas(self, latents: torch.Tensor):
+        u = compute_density_for_timestep_sampling(
+            weighting_scheme="none",
+            batch_size=latents.shape[0],
+            logit_mean=0.0,
+            logit_std=1.0,
+            mode_scale=1.29,
+        )
+        indices = (u * self.scheduler.config.num_train_timesteps).long()
+        timesteps = self.scheduler.timesteps[indices].to(device=self.device)
+        sigmas = self.get_sigmas(timesteps, n_dim=latents.ndim, dtype=latents.dtype)
+        return timesteps, sigmas
+
+    def _compute_flow_loss(
+        self,
+        pred: torch.Tensor,
+        noise: torch.Tensor,
+        latents: torch.Tensor,
+        sigmas: torch.Tensor,
+    ) -> torch.Tensor:
+        weighting = compute_loss_weighting_for_sd3(weighting_scheme="none", sigmas=sigmas)
+        target = noise - latents
+        loss = torch.mean(
+            (weighting.float() * (pred.float() - target.float()) ** 2).reshape(target.shape[0], -1),
+            dim=1,
+        )
+        return loss.mean()
+
+    def _make_guidance(self, batch_size: int) -> Optional[torch.Tensor]:
+        if self.transformer.config.guidance_embeds and self.guidance_scale is not None:
+            return torch.full([1], self.guidance_scale, device=self.device, dtype=torch.float32).expand(batch_size)
+        return None
 
     def get_prompt_outputs(
         self,
@@ -155,10 +210,10 @@ class GenericQWenImageModel(GenericModel, PeftWeightLoaderMixin):
         image_grid_thw: Optional[torch.Tensor] = None,
         attention_mask: Optional[torch.Tensor] = None,
         negative_attention_mask: Optional[torch.Tensor] = None,
-        prompt_start_index: Optional[int] = None,
-        enable_cpu_offload: Optional[bool] = False,
-        cpu_offload_device: Optional[str] = "cpu",
-    ):
+        prompt_start_index: int = 0,
+        enable_cpu_offload: bool = False,
+        cpu_offload_device: str = "cpu",
+    ) -> GenericOutputs:
         if enable_cpu_offload:
             self.text = self.text.to(cpu_offload_device)
             input_ids = input_ids.to(cpu_offload_device)
@@ -172,79 +227,12 @@ class GenericQWenImageModel(GenericModel, PeftWeightLoaderMixin):
             if negative_attention_mask is not None:
                 negative_attention_mask = negative_attention_mask.to(cpu_offload_device)
 
-        assert prompt_start_index is not None, "prompt_start_index must be provided"
-
-        if pixel_values is not None and image_grid_thw is not None:
-            image_grid_thw = image_grid_thw.view(-1, image_grid_thw.size(-1))
-            pixel_values = pixel_values.view(-1, pixel_values.size(-1))
-
-        prompt_outputs = self.text(
-            input_ids=input_ids,
-            attention_mask=attention_mask,
-            pixel_values=pixel_values,
-            image_grid_thw=image_grid_thw,
-            output_hidden_states=True,
+        prompt_embeds, prompt_embeds_mask = self._encode_prompt(
+            input_ids, attention_mask, prompt_start_index,
+            pixel_values=pixel_values, image_grid_thw=image_grid_thw,
         )
-
-        hidden_states = prompt_outputs.hidden_states[-1]
-        split_hidden_states = self._extract_masked_hidden(hidden_states, attention_mask)
-        split_hidden_states = [e[prompt_start_index:] for e in split_hidden_states]
-        attn_mask_list = [
-            torch.ones(e.size(0), dtype=torch.long, device=e.device)
-            for e in split_hidden_states
-        ]
-        max_seq_len = max([e.size(0) for e in split_hidden_states])
-        prompt_embeds = torch.stack(
-            [
-                torch.cat([u, u.new_zeros(max_seq_len - u.size(0), u.size(1))])
-                for u in split_hidden_states
-            ]
-        )
-        prompt_embeds_mask = torch.stack(
-            [
-                torch.cat([u, u.new_zeros(max_seq_len - u.size(0))])
-                for u in attn_mask_list
-            ]
-        )
-
-        negative_prompt_outputs = self.text(
-            negative_input_ids,
-            negative_attention_mask,
-            output_hidden_states=True,
-        )
-        negative_hidden_states = negative_prompt_outputs.hidden_states[-1]
-        negative_split_hidden_states = self._extract_masked_hidden(
-            negative_hidden_states, negative_attention_mask
-        )
-        negative_split_hidden_states = [
-            e[prompt_start_index:] for e in negative_split_hidden_states
-        ]
-        negative_attn_mask_list = [
-            torch.ones(e.size(0), dtype=torch.long, device=e.device)
-            for e in negative_split_hidden_states
-        ]
-        negative_max_seq_len = max([e.size(0) for e in negative_split_hidden_states])
-        negative_prompt_embeds = torch.stack(
-            [
-                torch.cat(
-                    [
-                        u,
-                        u.new_zeros(negative_max_seq_len - u.size(0), u.size(1)),
-                    ]
-                )
-                for u in negative_split_hidden_states
-            ]
-        )
-        negative_prompt_embeds_mask = torch.stack(
-            [
-                torch.cat(
-                    [
-                        u,
-                        u.new_zeros(negative_max_seq_len - u.size(0)),
-                    ]
-                )
-                for u in negative_attn_mask_list
-            ]
+        negative_prompt_embeds, negative_prompt_embeds_mask = self._encode_prompt(
+            negative_input_ids, negative_attention_mask, prompt_start_index,
         )
 
         if enable_cpu_offload:
@@ -265,16 +253,16 @@ class QWenImageText2ImageGeneration(GenericQWenImageModel):
         text_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
-        num_train_timesteps: Optional[int] = 1000,
-        num_infer_timesteps: Optional[int] = 50,
-        freeze_vae_encoder: Optional[bool] = True,
-        freeze_text_encoder: Optional[bool] = True,
-        snr_gamma: Optional[float] = 5.0,
-        seed: Optional[int] = 1123,
-        gradient_checkpointing: Optional[bool] = True,
-        guidance_scale: Optional[float] = 1.0,
-        prompt_start_index: Optional[int] = 34,
-    ):
+        num_train_timesteps: int = 1000,
+        num_infer_timesteps: int = 50,
+        freeze_vae_encoder: bool = True,
+        freeze_text_encoder: bool = True,
+        snr_gamma: float = 5.0,
+        seed: int = 1123,
+        gradient_checkpointing: bool = True,
+        guidance_scale: float = 1.0,
+        prompt_start_index: int = 34,
+    ) -> None:
         super().__init__(
             config_path=config_path,
             text_config_path=text_config_path,
@@ -306,139 +294,53 @@ class QWenImageText2ImageGeneration(GenericQWenImageModel):
         input_ids: torch.Tensor,
         pixel_values: torch.Tensor,
         attention_mask: Optional[torch.Tensor] = None,
-    ):
-        prompt_outputs = self.text(
-            input_ids=input_ids,
-            attention_mask=attention_mask,
-            output_hidden_states=True,
-        )
-
-        hidden_states = prompt_outputs.hidden_states[-1]
-        split_hidden_states = self._extract_masked_hidden(hidden_states, attention_mask)
-        split_hidden_states = [
-            e[self.prompt_start_index :] for e in split_hidden_states
-        ]
-        attn_mask_list = [
-            torch.ones(e.size(0), dtype=torch.long, device=e.device)
-            for e in split_hidden_states
-        ]
-        max_seq_len = max([e.size(0) for e in split_hidden_states])
-        prompt_embeds = torch.stack(
-            [
-                torch.cat([u, u.new_zeros(max_seq_len - u.size(0), u.size(1))])
-                for u in split_hidden_states
-            ]
-        )
-        prompt_embeds_mask = torch.stack(
-            [
-                torch.cat([u, u.new_zeros(max_seq_len - u.size(0))])
-                for u in attn_mask_list
-            ]
+    ) -> torch.Tensor:
+        prompt_embeds, prompt_embeds_mask = self._encode_prompt(
+            input_ids, attention_mask, self.prompt_start_index
         )
 
         if pixel_values.ndim == 4:
             pixel_values = pixel_values.unsqueeze(2)
 
-        latents = self.vae.encode(pixel_values).latent_dist.sample()
-        latents_mean = (
-            torch.tensor(self.vae.config.latents_mean).view(
-                1, self.vae.config.z_dim, 1, 1, 1
-            )
-        ).to(pixel_values.device)
-        latents_std = 1.0 / torch.tensor(self.vae.config.latents_std).view(
-            1, self.vae.config.z_dim, 1, 1, 1
-        ).to(pixel_values.device)
-        latents = (latents - latents_mean) * latents_std
-
-        noise = torch.randn(latents.shape).to(latents.device)
-
-        u = compute_density_for_timestep_sampling(
-            weighting_scheme="none",
-            batch_size=latents.shape[0],
-            logit_mean=0.0,
-            logit_std=1.0,
-            mode_scale=1.29,
+        latents = self._normalize_latents(
+            self.vae.encode(pixel_values).latent_dist.sample(), pixel_values.device
         )
-        indices = (u * self.scheduler.config.num_train_timesteps).long()
-        timesteps = self.scheduler.timesteps[indices].to(device=self.device)
-
-        sigmas = self.get_sigmas(timesteps, n_dim=latents.ndim, dtype=latents.dtype)
+        noise = torch.randn_like(latents)
+        timesteps, sigmas = self._sample_timesteps_and_sigmas(latents)
         noise_latents = (1.0 - sigmas) * latents + sigmas * noise
 
-        noise_latents = _pack_latents(
-            noise_latents,
-            batch_size=latents.shape[0],
-            num_channels_latents=latents.shape[1],
-            height=latents.shape[2],
-            width=latents.shape[3],
-        )
+        B, C, H, W = latents.shape[0], latents.shape[1], latents.shape[2], latents.shape[3]
+        noise_latents = _pack_latents(noise_latents, B, C, H, W)
 
         vae_scale_factor = 2 ** len(self.vae.temperal_downsample)
-        batch_size, width, height = (
-            pixel_values.size(0),
-            pixel_values.size(-1),
-            pixel_values.size(-2),
-        )
-        img_shapes = [
-            [
-                (
-                    1,
-                    height // vae_scale_factor // 2,
-                    width // vae_scale_factor // 2,
-                )
-            ]
-        ] * batch_size
+        height, width = pixel_values.size(-2), pixel_values.size(-1)
+        img_shapes = [[(1, height // vae_scale_factor // 2, width // vae_scale_factor // 2)]] * B
 
-        if self.transformer.config.guidance_embeds and self.guidance_scale is not None:
-            guidance = torch.full(
-                [1], self.guidance_scale, device=self.device, dtype=torch.float32
-            )
-            guidance = guidance.expand(latents.shape[0])
-        else:
-            guidance = None
-
-        outputs = self.transformer(
+        pred = self.transformer(
             hidden_states=noise_latents,
             timestep=timesteps / 1000,
-            guidance=guidance,
+            guidance=self._make_guidance(B),
             encoder_hidden_states=prompt_embeds,
             encoder_hidden_states_mask=prompt_embeds_mask,
             img_shapes=img_shapes,
             txt_seq_lens=prompt_embeds_mask.sum(dim=1).tolist(),
             return_dict=False,
         )[0]
+        pred = _unpack_latents(pred, H * vae_scale_factor, W * vae_scale_factor, vae_scale_factor)
+        return self._compute_flow_loss(pred, noise, latents, sigmas)
 
-        outputs = _unpack_latents(
-            outputs,
-            height=latents.shape[-2] * vae_scale_factor,
-            width=latents.shape[-1] * vae_scale_factor,
-            vae_scale_factor=vae_scale_factor,
-        )
-
-        weighting = compute_loss_weighting_for_sd3(
-            weighting_scheme="none", sigmas=sigmas
-        )
-        target = noise - latents
-        loss = torch.mean(
-            (weighting.float() * (outputs.float() - target.float()) ** 2).reshape(
-                target.shape[0], -1
-            ),
-            1,
-        )
-        loss = loss.mean()
-        return loss
-
+    @torch.no_grad()
     def generate(
         self,
         input_ids: torch.Tensor,
         negative_input_ids: torch.Tensor,
         attention_mask: Optional[torch.Tensor] = None,
         negative_attention_mask: Optional[torch.Tensor] = None,
-        height: Optional[int] = 1024,
-        width: Optional[int] = 1024,
-        guidance_scale: Optional[float] = 1.0,
-        true_cfg_scale: Optional[float] = 4.0,
-    ):
+        height: int = 1024,
+        width: int = 1024,
+        guidance_scale: float = 1.0,
+        true_cfg_scale: float = 4.0,
+    ) -> GenericOutputs:
         outputs = self.get_prompt_outputs(
             input_ids=input_ids,
             negative_input_ids=negative_input_ids,
@@ -446,15 +348,12 @@ class QWenImageText2ImageGeneration(GenericQWenImageModel):
             negative_attention_mask=negative_attention_mask,
             prompt_start_index=self.prompt_start_index,
         )
-
         images = self.pipeline(
             prompt_embeds=outputs.prompt_embeds,
             negative_prompt_embeds=outputs.negative_prompt_embeds,
             prompt_embeds_mask=outputs.prompt_embeds_mask,
             negative_prompt_embeds_mask=outputs.negative_prompt_embeds_mask,
-            generator=torch.Generator(device=self.pipeline.device).manual_seed(
-                self.seed
-            ),
+            generator=torch.Generator(device=self.pipeline.device).manual_seed(self.seed),
             num_inference_steps=self.num_infer_timesteps,
             height=height,
             width=width,
@@ -462,7 +361,6 @@ class QWenImageText2ImageGeneration(GenericQWenImageModel):
             true_cfg_scale=true_cfg_scale,
             output_type="np.array",
         ).images
-
         return GenericOutputs(images=torch.from_numpy(images))
 
 
@@ -473,16 +371,16 @@ class QWenImageEditingGeneration(GenericQWenImageModel):
         text_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
-        num_train_timesteps: Optional[int] = 1000,
-        num_infer_timesteps: Optional[int] = 50,
-        freeze_vae_encoder: Optional[bool] = True,
-        freeze_text_encoder: Optional[bool] = True,
-        snr_gamma: Optional[float] = 5.0,
-        seed: Optional[int] = 1123,
-        gradient_checkpointing: Optional[bool] = True,
-        guidance_scale: Optional[float] = 1.0,
-        prompt_start_index: Optional[int] = 64,
-    ):
+        num_train_timesteps: int = 1000,
+        num_infer_timesteps: int = 50,
+        freeze_vae_encoder: bool = True,
+        freeze_text_encoder: bool = True,
+        snr_gamma: float = 5.0,
+        seed: int = 1123,
+        gradient_checkpointing: bool = True,
+        guidance_scale: float = 1.0,
+        prompt_start_index: int = 64,
+    ) -> None:
         super().__init__(
             config_path=config_path,
             text_config_path=text_config_path,
@@ -518,40 +416,11 @@ class QWenImageEditingGeneration(GenericQWenImageModel):
         refer_image_grid_thw: torch.Tensor,
         refer_vae_pixel_values: torch.Tensor,
         attention_mask: Optional[torch.Tensor] = None,
-    ):
-        refer_image_grid_thw = refer_image_grid_thw.view(
-            -1, refer_image_grid_thw.size(-1)
-        )
-        refer_pixel_values = refer_pixel_values.view(-1, refer_pixel_values.size(-1))
-        prompt_outputs = self.text(
-            input_ids=input_ids,
-            attention_mask=attention_mask,
+    ) -> torch.Tensor:
+        prompt_embeds, prompt_embeds_mask = self._encode_prompt(
+            input_ids, attention_mask, self.prompt_start_index,
             pixel_values=refer_pixel_values,
             image_grid_thw=refer_image_grid_thw,
-            output_hidden_states=True,
-        )
-
-        hidden_states = prompt_outputs.hidden_states[-1]
-        split_hidden_states = self._extract_masked_hidden(hidden_states, attention_mask)
-        split_hidden_states = [
-            e[self.prompt_start_index :] for e in split_hidden_states
-        ]
-        attn_mask_list = [
-            torch.ones(e.size(0), dtype=torch.long, device=e.device)
-            for e in split_hidden_states
-        ]
-        max_seq_len = max([e.size(0) for e in split_hidden_states])
-        prompt_embeds = torch.stack(
-            [
-                torch.cat([u, u.new_zeros(max_seq_len - u.size(0), u.size(1))])
-                for u in split_hidden_states
-            ]
-        )
-        prompt_embeds_mask = torch.stack(
-            [
-                torch.cat([u, u.new_zeros(max_seq_len - u.size(0))])
-                for u in attn_mask_list
-            ]
         )
 
         if pixel_values.ndim == 4:
@@ -559,115 +428,46 @@ class QWenImageEditingGeneration(GenericQWenImageModel):
         if refer_vae_pixel_values.ndim == 4:
             refer_vae_pixel_values = refer_vae_pixel_values.unsqueeze(2)
 
-        latents = self.vae.encode(pixel_values).latent_dist.sample()
-        refer_latents = self.vae.encode(refer_vae_pixel_values).latent_dist.mode()
-        latents_mean = (
-            torch.tensor(self.vae.config.latents_mean).view(
-                1, self.vae.config.z_dim, 1, 1, 1
-            )
-        ).to(pixel_values.device)
-        latents_std = 1.0 / torch.tensor(self.vae.config.latents_std).view(
-            1, self.vae.config.z_dim, 1, 1, 1
-        ).to(pixel_values.device)
-        latents = (latents - latents_mean) * latents_std
-        refer_latents = (refer_latents - latents_mean) * latents_std
-
-        noise = torch.randn(latents.shape).to(latents.device)
-
-        u = compute_density_for_timestep_sampling(
-            weighting_scheme="none",
-            batch_size=latents.shape[0],
-            logit_mean=0.0,
-            logit_std=1.0,
-            mode_scale=1.29,
+        latents = self._normalize_latents(
+            self.vae.encode(pixel_values).latent_dist.sample(), pixel_values.device
         )
-        indices = (u * self.scheduler.config.num_train_timesteps).long()
-        timesteps = self.scheduler.timesteps[indices].to(device=self.device)
+        refer_latents = self._normalize_latents(
+            self.vae.encode(refer_vae_pixel_values).latent_dist.mode(), pixel_values.device
+        )
 
-        sigmas = self.get_sigmas(timesteps, n_dim=latents.ndim, dtype=latents.dtype)
+        noise = torch.randn_like(latents)
+        timesteps, sigmas = self._sample_timesteps_and_sigmas(latents)
         noise_latents = (1.0 - sigmas) * latents + sigmas * noise
 
-        noise_latents = _pack_latents(
-            noise_latents,
-            batch_size=latents.shape[0],
-            num_channels_latents=latents.shape[1],
-            height=latents.shape[2],
-            width=latents.shape[3],
-        )
-        refer_latents = _pack_latents(
-            refer_latents,
-            batch_size=refer_latents.shape[0],
-            num_channels_latents=refer_latents.shape[1],
-            height=refer_latents.shape[2],
-            width=refer_latents.shape[3],
-        )
-        latent_model_input = torch.cat([noise_latents, refer_latents], dim=1)
+        B, C, H, W = latents.shape[0], latents.shape[1], latents.shape[2], latents.shape[3]
+        noise_latents_packed = _pack_latents(noise_latents, B, C, H, W)
+        rB, rC, rH, rW = refer_latents.shape
+        refer_latents_packed = _pack_latents(refer_latents, rB, rC, rH, rW)
+        latent_model_input = torch.cat([noise_latents_packed, refer_latents_packed], dim=1)
 
         vae_scale_factor = 2 ** len(self.vae.temperal_downsample)
-        batch_size, width, height = (
-            pixel_values.size(0),
-            pixel_values.size(-1),
-            pixel_values.size(-2),
-        )
-        refer_width, refer_height = (
-            refer_vae_pixel_values.size(-1),
-            refer_vae_pixel_values.size(-2),
-        )
-        img_shapes = [
-            [
-                (
-                    1,
-                    height // vae_scale_factor // 2,
-                    width // vae_scale_factor // 2,
-                ),
-                (
-                    1,
-                    refer_height // vae_scale_factor // 2,
-                    refer_width // vae_scale_factor // 2,
-                ),
-            ]
-        ] * batch_size
+        height, width = pixel_values.size(-2), pixel_values.size(-1)
+        refer_height, refer_width = refer_vae_pixel_values.size(-2), refer_vae_pixel_values.size(-1)
+        img_shapes = [[
+            (1, height // vae_scale_factor // 2, width // vae_scale_factor // 2),
+            (1, refer_height // vae_scale_factor // 2, refer_width // vae_scale_factor // 2),
+        ]] * B
 
-        if self.transformer.config.guidance_embeds and self.guidance_scale is not None:
-            guidance = torch.full(
-                [1], self.guidance_scale, device=self.device, dtype=torch.float32
-            )
-            guidance = guidance.expand(latents.shape[0])
-        else:
-            guidance = None
-
-        outputs = self.transformer(
+        pred = self.transformer(
             hidden_states=latent_model_input,
             timestep=timesteps / 1000,
-            guidance=guidance,
+            guidance=self._make_guidance(B),
             encoder_hidden_states=prompt_embeds,
             encoder_hidden_states_mask=prompt_embeds_mask,
             img_shapes=img_shapes,
             txt_seq_lens=prompt_embeds_mask.sum(dim=1).tolist(),
             return_dict=False,
-        )[0]
-        outputs = outputs[:, : noise_latents.shape[1]]
+        )[0][:, : noise_latents_packed.shape[1]]
 
-        outputs = _unpack_latents(
-            outputs,
-            height=latents.shape[-2] * vae_scale_factor,
-            width=latents.shape[-1] * vae_scale_factor,
-            vae_scale_factor=vae_scale_factor,
-        )
+        pred = _unpack_latents(pred, H * vae_scale_factor, W * vae_scale_factor, vae_scale_factor)
+        return self._compute_flow_loss(pred, noise, latents, sigmas)
 
-        weighting = compute_loss_weighting_for_sd3(
-            weighting_scheme="none", sigmas=sigmas
-        )
-        target = noise - latents
-        loss = torch.mean(
-            (weighting.float() * (outputs.float() - target.float()) ** 2).reshape(
-                target.shape[0], -1
-            ),
-            1,
-        )
-        loss = loss.mean()
-        return loss
-
+    @torch.no_grad()
     def generate(
         self,
         input_ids: torch.Tensor,
@@ -677,11 +477,11 @@ class QWenImageEditingGeneration(GenericQWenImageModel):
         refer_vae_pixel_values: torch.Tensor,
         attention_mask: Optional[torch.Tensor] = None,
         negative_attention_mask: Optional[torch.Tensor] = None,
-        height: Optional[int] = 1024,
-        width: Optional[int] = 1024,
-        guidance_scale: Optional[float] = 1.0,
-        true_cfg_scale: Optional[float] = 4.0,
-    ):
+        height: int = 1024,
+        width: int = 1024,
+        guidance_scale: float = 1.0,
+        true_cfg_scale: float = 4.0,
+    ) -> GenericOutputs:
         outputs = self.get_prompt_outputs(
             input_ids=input_ids,
             negative_input_ids=negative_input_ids,
@@ -691,16 +491,13 @@ class QWenImageEditingGeneration(GenericQWenImageModel):
             negative_attention_mask=negative_attention_mask,
             prompt_start_index=self.prompt_start_index,
         )
-
         images = self.pipeline(
             image=refer_vae_pixel_values,
             prompt_embeds=outputs.prompt_embeds,
             negative_prompt_embeds=outputs.negative_prompt_embeds,
             prompt_embeds_mask=outputs.prompt_embeds_mask,
             negative_prompt_embeds_mask=outputs.negative_prompt_embeds_mask,
-            generator=torch.Generator(device=self.pipeline.device).manual_seed(
-                self.seed
-            ),
+            generator=torch.Generator(device=self.pipeline.device).manual_seed(self.seed),
             num_inference_steps=self.num_infer_timesteps,
             height=height,
             width=width,
@@ -708,5 +505,4 @@ class QWenImageEditingGeneration(GenericQWenImageModel):
             true_cfg_scale=true_cfg_scale,
             output_type="np.array",
         ).images
-
         return GenericOutputs(images=torch.from_numpy(images))

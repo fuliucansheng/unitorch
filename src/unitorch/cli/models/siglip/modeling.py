@@ -2,7 +2,7 @@
 # Licensed under the MIT License.
 
 import torch
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import Optional
 from torch import autocast
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.siglip import (
@@ -15,7 +15,6 @@ from unitorch.models.siglip import (
 from unitorch.cli import (
     cached_path,
     add_default_section_for_init,
-    add_default_section_for_function,
     register_model,
 )
 from unitorch.cli.models import ClassificationOutputs, LossOutputs
@@ -24,7 +23,7 @@ from unitorch.cli.models.siglip import pretrained_siglip_infos
 
 @register_model("core/model/pretrain/siglip")
 class SiglipForPretrain(_SiglipForPretrain):
-    """CLIP model for pretraining."""
+    """Siglip model for pretraining."""
 
     def __init__(
         self,
@@ -33,16 +32,6 @@ class SiglipForPretrain(_SiglipForPretrain):
         gradient_checkpointing: Optional[bool] = False,
         use_all_gather: Optional[bool] = True,
     ):
-        """
-        Initialize the SiglipForPretrain model.
-
-        Args:
-            config_path (str): The path to the model configuration file.
-            projection_dim (int, optional): The dimension of the projection head. Defaults to 512.
-            freeze_base_model (bool, optional): Whether to freeze the base model. Defaults to True.
-            gradient_checkpointing (bool, optional): Whether to use gradient checkpointing. Defaults to False.
-            use_all_gather (bool, optional): Whether to use all_gather operation. Defaults to True.
-        """
         super().__init__(
             config_path=config_path,
             freeze_base_model=freeze_base_model,
@@ -53,16 +42,6 @@ class SiglipForPretrain(_SiglipForPretrain):
     @classmethod
     @add_default_section_for_init("core/model/pretrain/siglip")
     def from_core_configure(cls, config, **kwargs):
-        """
-        Create an instance of SiglipForPretrain from a core configuration.
-
-        Args:
-            config: The core configuration.
-            **kwargs: Additional keyword arguments.
-
-        Returns:
-            SiglipForPretrain: An instance of the SiglipForPretrain model.
-        """
         config.set_default_section("core/model/pretrain/siglip")
         pretrained_name = config.getoption("pretrained_name", "siglip-base-patch16-224")
         config_path = config.getoption("config_path", None)
@@ -102,18 +81,6 @@ class SiglipForPretrain(_SiglipForPretrain):
         attention_mask: Optional[torch.Tensor] = None,
         position_ids: Optional[torch.Tensor] = None,
     ):
-        """
-        Perform a forward pass through the model.
-
-        Args:
-            input_ids (torch.Tensor): Input token IDs.
-            pixel_values (torch.Tensor): Input pixel values.
-            attention_mask (torch.Tensor, optional): Attention mask. Defaults to None.
-            position_ids (torch.Tensor, optional): Position IDs. Defaults to None.
-
-        Returns:
-            LossOutputs: The loss outputs.
-        """
         outputs = super().forward(
             input_ids=input_ids,
             pixel_values=pixel_values,
@@ -125,7 +92,7 @@ class SiglipForPretrain(_SiglipForPretrain):
 
 @register_model("core/model/classification/siglip")
 class SiglipForClassification(_SiglipForClassification):
-    """CLIP model for classification."""
+    """Siglip model for multimodal classification."""
 
     def __init__(
         self,
@@ -134,16 +101,6 @@ class SiglipForClassification(_SiglipForClassification):
         freeze_base_model: Optional[bool] = True,
         gradient_checkpointing: Optional[bool] = False,
     ):
-        """
-        Initialize the SiglipForClassification model.
-
-        Args:
-            config_path (str): The path to the model configuration file.
-            projection_dim (int, optional): The dimension of the projection head. Defaults to 512.
-            num_classes (int, optional): The number of output classes. Defaults to 1.
-            freeze_base_model (bool, optional): Whether to freeze the base model. Defaults to True.
-            gradient_checkpointing (bool, optional): Whether to use gradient checkpointing. Defaults to False.
-        """
         super().__init__(
             config_path=config_path,
             num_classes=num_classes,
@@ -154,16 +111,6 @@ class SiglipForClassification(_SiglipForClassification):
     @classmethod
     @add_default_section_for_init("core/model/classification/siglip")
     def from_core_configure(cls, config, **kwargs):
-        """
-        Create an instance of SiglipForClassification from a core configuration.
-
-        Args:
-            config: The core configuration.
-            **kwargs: Additional keyword arguments.
-
-        Returns:
-            SiglipForClassification: An instance of the SiglipForClassification model.
-        """
         config.set_default_section("core/model/classification/siglip")
         pretrained_name = config.getoption("pretrained_name", "siglip-base-patch16-224")
         config_path = config.getoption("config_path", None)
@@ -203,18 +150,6 @@ class SiglipForClassification(_SiglipForClassification):
         attention_mask: Optional[torch.Tensor] = None,
         position_ids: Optional[torch.Tensor] = None,
     ):
-        """
-        Perform a forward pass through the model.
-
-        Args:
-            input_ids (torch.Tensor): Input token IDs.
-            pixel_values (torch.Tensor): Input pixel values.
-            attention_mask (torch.Tensor, optional): Attention mask. Defaults to None.
-            position_ids (torch.Tensor, optional): Position IDs. Defaults to None.
-
-        Returns:
-            ClassificationOutputs: The classification outputs.
-        """
         outputs = super().forward(
             input_ids=input_ids,
             pixel_values=pixel_values,
@@ -226,7 +161,7 @@ class SiglipForClassification(_SiglipForClassification):
 
 @register_model("core/model/classification/siglip/text")
 class SiglipForTextClassification(_SiglipForTextClassification):
-    """CLIP model for text classification."""
+    """Siglip model for text classification."""
 
     def __init__(
         self,
@@ -235,16 +170,6 @@ class SiglipForTextClassification(_SiglipForTextClassification):
         freeze_base_model: Optional[bool] = True,
         gradient_checkpointing: Optional[bool] = False,
     ):
-        """
-        Initialize the SiglipForTextClassification model.
-
-        Args:
-            config_path (str): The path to the model configuration file.
-            projection_dim (int, optional): The dimension of the projection head. Defaults to 512.
-            num_classes (int, optional): The number of output classes. Defaults to 1.
-            freeze_base_model (bool, optional): Whether to freeze the base model. Defaults to True.
-            gradient_checkpointing (bool, optional): Whether to use gradient checkpointing. Defaults to False.
-        """
         super().__init__(
             config_path=config_path,
             num_classes=num_classes,
@@ -255,16 +180,6 @@ class SiglipForTextClassification(_SiglipForTextClassification):
     @classmethod
     @add_default_section_for_init("core/model/classification/siglip/text")
     def from_core_configure(cls, config, **kwargs):
-        """
-        Create an instance of SiglipForTextClassification from a core configuration.
-
-        Args:
-            config: The core configuration.
-            **kwargs: Additional keyword arguments.
-
-        Returns:
-            SiglipForTextClassification: An instance of the SiglipForTextClassification model.
-        """
         config.set_default_section("core/model/classification/siglip/text")
         pretrained_name = config.getoption("pretrained_name", "siglip-base-patch16-224")
         config_path = config.getoption("config_path", None)
@@ -303,17 +218,6 @@ class SiglipForTextClassification(_SiglipForTextClassification):
         attention_mask: Optional[torch.Tensor] = None,
         position_ids: Optional[torch.Tensor] = None,
     ):
-        """
-        Perform a forward pass through the model.
-
-        Args:
-            input_ids (torch.Tensor, optional): Input token IDs. Defaults to None.
-            attention_mask (torch.Tensor, optional): Attention mask. Defaults to None.
-            position_ids (torch.Tensor, optional): Position IDs. Defaults to None.
-
-        Returns:
-            ClassificationOutputs: The classification outputs.
-        """
         outputs = super().forward(
             input_ids=input_ids,
             attention_mask=attention_mask,
@@ -324,7 +228,7 @@ class SiglipForTextClassification(_SiglipForTextClassification):
 
 @register_model("core/model/classification/siglip/image")
 class SiglipForImageClassification(_SiglipForImageClassification):
-    """CLIP model for image classification."""
+    """Siglip model for image-only classification."""
 
     def __init__(
         self,
@@ -333,16 +237,6 @@ class SiglipForImageClassification(_SiglipForImageClassification):
         freeze_base_model: Optional[bool] = True,
         gradient_checkpointing: Optional[bool] = False,
     ):
-        """
-        Initialize the SiglipForImageClassification model.
-
-        Args:
-            config_path (str): The path to the model configuration file.
-            projection_dim (int, optional): The dimension of the projection head. Defaults to 512.
-            num_classes (int, optional): The number of output classes. Defaults to 1.
-            freeze_base_model (bool, optional): Whether to freeze the base model. Defaults to True.
-            gradient_checkpointing (bool, optional): Whether to use gradient checkpointing. Defaults to False.
-        """
         super().__init__(
             config_path=config_path,
             num_classes=num_classes,
@@ -353,16 +247,6 @@ class SiglipForImageClassification(_SiglipForImageClassification):
     @classmethod
     @add_default_section_for_init("core/model/classification/siglip/image")
     def from_core_configure(cls, config, **kwargs):
-        """
-        Create an instance of SiglipForImageClassification from a core configuration.
-
-        Args:
-            config: The core configuration.
-            **kwargs: Additional keyword arguments.
-
-        Returns:
-            SiglipForImageClassification: An instance of the SiglipForImageClassification model.
-        """
         config.set_default_section("core/model/classification/siglip/image")
         pretrained_name = config.getoption("pretrained_name", "siglip-base-patch16-224")
         config_path = config.getoption("config_path", None)
@@ -399,22 +283,13 @@ class SiglipForImageClassification(_SiglipForImageClassification):
         self,
         pixel_values: torch.Tensor,
     ):
-        """
-        Perform a forward pass through the model.
-
-        Args:
-            pixel_values (torch.Tensor): Input pixel values.
-
-        Returns:
-            ClassificationOutputs: The classification outputs.
-        """
         outputs = super().forward(pixel_values=pixel_values)
         return ClassificationOutputs(outputs=outputs)
 
 
 @register_model("core/model/matching/siglip")
 class SiglipForMatching(_SiglipForMatching):
-    """CLIP model for classification."""
+    """Siglip model for image-text matching."""
 
     def __init__(
         self,
@@ -422,16 +297,6 @@ class SiglipForMatching(_SiglipForMatching):
         freeze_base_model: Optional[bool] = True,
         gradient_checkpointing: Optional[bool] = False,
     ):
-        """
-        Initialize the SiglipForClassification model.
-
-        Args:
-            config_path (str): The path to the model configuration file.
-            projection_dim (int, optional): The dimension of the projection head. Defaults to 512.
-            num_classes (int, optional): The number of output classes. Defaults to 1.
-            freeze_base_model (bool, optional): Whether to freeze the base model. Defaults to True.
-            gradient_checkpointing (bool, optional): Whether to use gradient checkpointing. Defaults to False.
-        """
         super().__init__(
             config_path=config_path,
             freeze_base_model=freeze_base_model,
@@ -441,16 +306,6 @@ class SiglipForMatching(_SiglipForMatching):
     @classmethod
     @add_default_section_for_init("core/model/matching/siglip")
     def from_core_configure(cls, config, **kwargs):
-        """
-        Create an instance of SiglipForClassification from a core configuration.
-
-        Args:
-            config: The core configuration.
-            **kwargs: Additional keyword arguments.
-
-        Returns:
-            SiglipForClassification: An instance of the SiglipForClassification model.
-        """
         config.set_default_section("core/model/matching/siglip")
         pretrained_name = config.getoption("pretrained_name", "siglip-base-patch16-224")
         config_path = config.getoption("config_path", None)
@@ -488,18 +343,6 @@ class SiglipForMatching(_SiglipForMatching):
         attention_mask: Optional[torch.Tensor] = None,
         position_ids: Optional[torch.Tensor] = None,
     ):
-        """
-        Perform a forward pass through the model.
-
-        Args:
-            input_ids (torch.Tensor): Input token IDs.
-            pixel_values (torch.Tensor): Input pixel values.
-            attention_mask (torch.Tensor, optional): Attention mask. Defaults to None.
-            position_ids (torch.Tensor, optional): Position IDs. Defaults to None.
-
-        Returns:
-            ClassificationOutputs: The classification outputs.
-        """
         outputs = super().forward(
             input_ids=input_ids,
             pixel_values=pixel_values,

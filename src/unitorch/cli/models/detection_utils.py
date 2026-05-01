@@ -4,18 +4,17 @@
 import torch
 import torch.nn as nn
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import Dict, List, Optional, Union
 from unitorch.cli import (
     add_default_section_for_init,
-    add_default_section_for_function,
     register_process,
 )
 from unitorch.cli import WriterMixin, WriterOutputs
-from unitorch.cli.models.modeling_utils import ListTensorsOutputs, ListTensorsTargets
+from unitorch.cli.models.modeling_utils import TensorSeqOutputs, TensorSeqTargets
 
 
 @dataclass
-class DetectionOutputs(ListTensorsOutputs, WriterMixin):
+class DetectionOutputs(TensorSeqOutputs, WriterMixin):
     bboxes: Union[torch.Tensor, List[torch.Tensor]]
     scores: Union[torch.Tensor, List[torch.Tensor]]
     classes: Union[torch.Tensor, List[torch.Tensor]]
@@ -23,7 +22,7 @@ class DetectionOutputs(ListTensorsOutputs, WriterMixin):
 
 
 @dataclass
-class DetectionTargets(ListTensorsTargets):
+class DetectionTargets(TensorSeqTargets):
     bboxes: Union[torch.Tensor, List[torch.Tensor]]
     classes: Union[torch.Tensor, List[torch.Tensor]]
     sample_weight: Optional[torch.Tensor] = torch.empty(0)

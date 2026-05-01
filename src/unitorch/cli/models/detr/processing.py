@@ -1,23 +1,20 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import List, Optional, Union
 from PIL import Image
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.detr import DetrProcessor as _DetrProcessor
 from unitorch.cli import (
     cached_path,
     add_default_section_for_init,
-    add_default_section_for_function,
     register_process,
 )
 from unitorch.cli.models import (
-    TensorsInputs,
-    ListTensorsInputs,
+    TensorInputs,
+    TensorSeqInputs,
     DetectionOutputs,
     DetectionTargets,
-    SegmentationOutputs,
-    SegmentationTargets,
 )
 from unitorch.cli import WriterOutputs
 from unitorch.cli.models.detr import pretrained_detr_infos
@@ -57,7 +54,7 @@ class DetrProcessor(_DetrProcessor):
         outputs = super().image(
             image=image,
         )
-        return ListTensorsInputs(
+        return TensorSeqInputs(
             images=outputs.image,
         )
 
@@ -81,12 +78,12 @@ class DetrProcessor(_DetrProcessor):
             bboxes[:, 1] = bboxes[:, 1] * new_h
             bboxes[:, 2] = bboxes[:, 2] * new_w
             bboxes[:, 3] = bboxes[:, 3] * new_h
-            return ListTensorsInputs(images=outputs.image), DetectionTargets(
+            return TensorSeqInputs(images=outputs.image), DetectionTargets(
                 bboxes=bboxes,
                 classes=outputs.classes,
             )
 
-        return ListTensorsInputs(
+        return TensorSeqInputs(
             images=outputs.image,
             bboxes=outputs.bboxes,
             classes=outputs.classes,

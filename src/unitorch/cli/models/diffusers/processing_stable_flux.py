@@ -2,17 +2,16 @@
 # Licensed under the MIT License.
 
 from PIL import Image
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import Optional, Tuple, Union
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.diffusers import StableFluxProcessor as _StableFluxProcessor
 from unitorch.cli import (
     cached_path,
     add_default_section_for_init,
-    add_default_section_for_function,
     register_process,
 )
 from unitorch.cli.models import (
-    TensorsInputs,
+    TensorInputs,
 )
 from unitorch.cli.models.diffusers import pretrained_stable_infos
 
@@ -116,7 +115,7 @@ class StableFluxProcessor(_StableFluxProcessor):
             max_seq_length=max_seq_length,
             max_seq_length2=max_seq_length2,
         )
-        return TensorsInputs(
+        return TensorInputs(
             input_ids=outputs.input_ids,
             attention_mask=outputs.attention_mask,
             pixel_values=outputs.pixel_values,
@@ -144,7 +143,7 @@ class StableFluxProcessor(_StableFluxProcessor):
         if isinstance(lose_image, str):
             lose_image = Image.open(lose_image).convert("RGB")
         lose_pixel_values = self.vision_processor(lose_image)
-        return TensorsInputs(
+        return TensorInputs(
             input_ids=outputs.input_ids,
             attention_mask=outputs.attention_mask,
             win_pixel_values=outputs.pixel_values,
@@ -167,7 +166,7 @@ class StableFluxProcessor(_StableFluxProcessor):
             max_seq_length=max_seq_length,
             max_seq_length2=max_seq_length2,
         )
-        return TensorsInputs(
+        return TensorInputs(
             input_ids=outputs.input_ids,
             input2_ids=outputs.input2_ids,
             attention_mask=outputs.attention_mask,
@@ -190,7 +189,7 @@ class StableFluxProcessor(_StableFluxProcessor):
             max_seq_length2=max_seq_length2,
         )
         image_outputs = super().image2image_inputs(image=image)
-        return TensorsInputs(
+        return TensorInputs(
             pixel_values=image_outputs.pixel_values,
             input_ids=text_outputs.input_ids,
             input2_ids=text_outputs.input2_ids,
@@ -204,7 +203,7 @@ class StableFluxProcessor(_StableFluxProcessor):
         image: Union[Image.Image, str],
     ):
         image_outputs = super().image2image_inputs(image=image)
-        return TensorsInputs(
+        return TensorInputs(
             control_pixel_values=image_outputs.pixel_values,
         )
 
@@ -214,7 +213,7 @@ class StableFluxProcessor(_StableFluxProcessor):
         image: Union[Image.Image, str],
     ):
         image_outputs = super().redux_image_inputs(image=image)
-        return TensorsInputs(
+        return TensorInputs(
             redux_pixel_values=image_outputs.pixel_values,
         )
 
@@ -238,7 +237,7 @@ class StableFluxProcessor(_StableFluxProcessor):
             image=image,
             mask_image=mask_image,
         )
-        return TensorsInputs(
+        return TensorInputs(
             pixel_values=image_outputs.pixel_values,
             pixel_masks=image_outputs.pixel_masks,
             input_ids=text_outputs.input_ids,
@@ -272,7 +271,7 @@ class StableFluxProcessor(_StableFluxProcessor):
             image=lose_image,
             mask_image=mask_image,
         )
-        return TensorsInputs(
+        return TensorInputs(
             win_pixel_values=win_image_outputs.pixel_values,
             lose_pixel_values=lose_image_outputs.pixel_values,
             pixel_masks=win_image_outputs.pixel_masks,
@@ -302,7 +301,7 @@ class StableFluxProcessor(_StableFluxProcessor):
             image=image,
             mask_image=mask_image,
         )
-        return TensorsInputs(
+        return TensorInputs(
             pixel_values=image_outputs.pixel_values,
             pixel_masks=image_outputs.pixel_masks,
             input_ids=text_outputs.input_ids,
@@ -321,6 +320,6 @@ class StableFluxProcessor(_StableFluxProcessor):
             image=image,
             size=size,
         )
-        return TensorsInputs(
+        return TensorInputs(
             kontext_pixel_values=image_outputs.pixel_values,
         )

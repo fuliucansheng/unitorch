@@ -1,73 +1,78 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
-import sys
+import functools
 import inspect
 import logging
-import functools
 import random
+import sys
 import time
+from typing import Tuple, Type
 
-OPTIMIZED_CLASSES = dict()
+OPTIMIZED_CLASSES: dict = {}
 
 
-# replace decorator from fastseq
 def replace(target_obj):
-    """A decorator to replace the specified obj.
+    """Replace a class or function in-place across all loaded modules.
 
-    `target_obj` can be a class or a function.
+    After decoration, every module that referenced *target_obj* will see the
+    new object instead, including uses as a base class.
 
-    Example:
+    Example::
 
-    ```python
-    class A:
-        def f(self):
-            print('class A')
-    @replace(A)
-    class B:
-        def f(self):
-            print('class B')
-    ```
+        class A:
+            def f(self):
+                print('class A')
+
+        @replace(A)
+        class B:
+            def f(self):
+                print('class B')
 
     Args:
-        target_obj (class/func/method): a class, method, or function to be
-                                        replaced.
+        target_obj: The class, method, or function to be replaced.
 
     Returns:
-        A decorator function to replace the input object.
+        A decorator that performs the replacement and returns the new object.
     """
 
     def decorator(new_obj):
         if target_obj in OPTIMIZED_CLASSES:
-            logging.warning("{} has been optimized again.".format(target_obj))
+            logging.warning("%s has been replaced more than once.", target_obj)
+
         setattr(new_obj, "__replaced_class__", target_obj)
         OPTIMIZED_CLASSES[target_obj] = new_obj
-        for k, v in list(sys.modules.items()):
+
+        for module_name, module in list(sys.modules.items()):
+            module_dict = module.__dict__
+
+            # Replace direct references to target_obj.
             if (
-                target_obj.__name__ in v.__dict__
-                and v.__dict__[target_obj.__name__] is target_obj
+                target_obj.__name__ in module_dict
+                and module_dict[target_obj.__name__] is target_obj
             ):
-                delattr(sys.modules[k], target_obj.__name__)
-                setattr(sys.modules[k], target_obj.__name__, new_obj)
+                setattr(module, target_obj.__name__, new_obj)
                 logging.debug(
-                    "In module {}, {} is replaced by {}".format(k, target_obj, new_obj)
+                    "Module %s: replaced %s with %s.",
+                    module_name, target_obj, new_obj,
                 )
-            # replace target_obj if it is used as the base classes.
-            for key in list(v.__dict__.keys()):
+
+            # Replace target_obj where it appears as a base class.
+            for attr_name in list(module_dict.keys()):
+                attr = module_dict[attr_name]
                 if (
-                    inspect.isclass(v.__dict__[key])
-                    and v.__dict__[key] != new_obj
-                    and target_obj in v.__dict__[key].__bases__
+                    inspect.isclass(attr)
+                    and attr is not new_obj
+                    and target_obj in attr.__bases__
                 ):
-                    idx = v.__dict__[key].__bases__.index(target_obj)
-                    bases = list(v.__dict__[key].__bases__)
-                    bases[idx] = new_obj
-                    v.__dict__[key].__bases__ = tuple(bases)
+                    bases = list(attr.__bases__)
+                    bases[bases.index(target_obj)] = new_obj
+                    attr.__bases__ = tuple(bases)
                     logging.debug(
-                        "In module {}, the base class of {} is replaced by {}".format(
-                            k, v.__dict__[key], new_obj
-                        )
+                        "Module %s: base class of %s replaced with %s.",
+                        module_name, attr, new_obj,
                     )
+
         return new_obj
 
     return decorator
@@ -77,9 +82,23 @@ def retry(
     times: int = 3,
     base_delay: float = 0.5,
     max_delay: float = 60.0,
-    exceptions=(Exception,),
+    exceptions: Tuple[Type[BaseException], ...] = (Exception,),
     jitter: bool = True,
 ):
+    """Retry a function call with exponential back-off on failure.
+
+    Args:
+        times: Maximum number of attempts before re-raising the exception.
+        base_delay: Initial delay in seconds between retries.
+        max_delay: Upper bound on the computed delay.
+        exceptions: Exception types that trigger a retry.
+        jitter: When ``True``, multiply the delay by a random factor in
+                ``[0.5, 1.5]`` to avoid thundering-herd behaviour.
+
+    Returns:
+        A decorator that wraps the target function with retry logic.
+    """
+
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
@@ -89,7 +108,7 @@ def retry(
                 except exceptions:
                     if attempt == times - 1:
                         raise
-                    delay = min(base_delay * (2**attempt), max_delay)
+                    delay = min(base_delay * (2 ** attempt), max_delay)
                     if jitter:
                         delay *= random.uniform(0.5, 1.5)
                     time.sleep(delay)

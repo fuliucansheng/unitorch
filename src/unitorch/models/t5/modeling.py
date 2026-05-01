@@ -1,18 +1,9 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
-import os
-import logging
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import transformers
-from copy import deepcopy
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
-from transformers import T5Config, T5Model, T5ForConditionalGeneration
-from transformers.models.t5.modeling_t5 import T5Stack
-
-from unitorch.utils.decorators import replace
+from typing import Dict, List, Optional, Union
+from transformers import T5Config, T5ForConditionalGeneration
 from unitorch.models import GenericModel, GenericOutputs
 
 
@@ -32,8 +23,8 @@ class T5ForGeneration(GenericModel):
         Initializes the T5ForGeneration model.
 
         Args:
-            config_path (str): Path to the configuration file.
-            gradient_checkpointing (Optional[bool]): Whether to use gradient checkpointing. Defaults to False.
+            config_path (str): Path to the T5 configuration file.
+            gradient_checkpointing (bool, optional): Whether to use gradient checkpointing. Defaults to False.
         """
         super().__init__()
         self.config = T5Config.from_json_file(config_path)
@@ -49,16 +40,16 @@ class T5ForGeneration(GenericModel):
         decoder_attention_mask: torch.Tensor,
     ):
         """
-        Performs forward pass of the T5ForGeneration model.
+        Forward pass of the T5ForGeneration model.
 
         Args:
-            input_ids (torch.Tensor): Tensor of input token IDs.
-            attention_mask (torch.Tensor): Tensor of attention mask.
-            decoder_input_ids (torch.Tensor): Tensor of decoder input token IDs.
-            decoder_attention_mask (torch.Tensor): Tensor of decoder attention mask.
+            input_ids (torch.Tensor): Encoder input token IDs.
+            attention_mask (torch.Tensor): Encoder attention mask.
+            decoder_input_ids (torch.Tensor): Decoder input token IDs.
+            decoder_attention_mask (torch.Tensor): Decoder attention mask.
 
         Returns:
-            (torch.Tensor):The model's logits.
+            torch.Tensor: Output logits.
         """
         outputs = self.model(
             input_ids=input_ids,
@@ -67,8 +58,7 @@ class T5ForGeneration(GenericModel):
             decoder_attention_mask=decoder_attention_mask,
             return_dict=True,
         )
-        logits = outputs.logits
-        return logits
+        return outputs.logits
 
     @torch.no_grad()
     def generate(
@@ -95,26 +85,26 @@ class T5ForGeneration(GenericModel):
         Generates sequences using the T5ForGeneration model.
 
         Args:
-            input_ids: The input token IDs.
-            num_beams (int, optional): The number of beams for beam search. Defaults to 5.
-            decoder_start_token_id (int, optional): The decoder's start token ID. Defaults to 2.
-            decoder_end_token_id (int or List[int], optional): The decoder's end token ID. Defaults to 2.
-            num_return_sequences (int, optional): The number of generated sequences to return. Defaults to 1.
-            min_gen_seq_length (int, optional): The minimum length of the generated sequences. Defaults to 0.
-            max_gen_seq_length (int, optional): The maximum length of the generated sequences. Defaults to 48.
-            repetition_penalty (float, optional): The repetition penalty. Defaults to 1.0.
-            no_repeat_ngram_size (int, optional): The size of n-grams to avoid repeating. Defaults to 0.
-            early_stopping (bool, optional): Whether to stop generation early. Defaults to True.
-            length_penalty (float, optional): The length penalty. Defaults to 1.0.
-            num_beam_groups (int, optional): The number of beam groups for diverse beam search. Defaults to 1.
-            diversity_penalty (float, optional): The diversity penalty. Defaults to 0.0.
-            do_sample (bool, optional): Whether to use sampling for generation. Defaults to False.
-            temperature (float, optional): The temperature for sampling. Defaults to 1.0.
-            top_k (int, optional): The value for top-k sampling. Defaults to 50.
-            top_p (float, optional): The value for top-p (nucleus) sampling. Defaults to 1.0.
+            input_ids (torch.Tensor): Encoder input token IDs.
+            num_beams (int, optional): Number of beams for beam search. Defaults to 5.
+            decoder_start_token_id (int, optional): Decoder start token ID. Defaults to 0.
+            decoder_end_token_id (int or List[int], optional): Decoder end token ID. Defaults to 1.
+            num_return_sequences (int, optional): Number of sequences to return. Defaults to 1.
+            min_gen_seq_length (int, optional): Minimum generated sequence length. Defaults to 0.
+            max_gen_seq_length (int, optional): Maximum generated sequence length. Defaults to 48.
+            repetition_penalty (float, optional): Repetition penalty. Defaults to 1.0.
+            no_repeat_ngram_size (int, optional): N-gram size to avoid repeating. Defaults to 0.
+            early_stopping (bool, optional): Whether to stop early. Defaults to True.
+            length_penalty (float, optional): Length penalty. Defaults to 1.0.
+            num_beam_groups (int, optional): Number of beam groups. Defaults to 1.
+            diversity_penalty (float, optional): Diversity penalty. Defaults to 0.0.
+            do_sample (bool, optional): Whether to use sampling. Defaults to False.
+            temperature (float, optional): Sampling temperature. Defaults to 1.0.
+            top_k (int, optional): Top-k sampling. Defaults to 50.
+            top_p (float, optional): Top-p (nucleus) sampling. Defaults to 1.0.
 
         Returns:
-            GenericOutputs: The generated sequences and their scores.
+            GenericOutputs: Generated sequences and their scores.
         """
         outputs = self.model.generate(
             input_ids,
@@ -141,15 +131,16 @@ class T5ForGeneration(GenericModel):
         sequences = outputs.sequences.reshape(
             -1, num_return_sequences, outputs.sequences.size(-1)
         )
-        outputs.sequences = torch.zeros(
-            sequences.size(0), num_return_sequences, max_gen_seq_length
-        ).to(device=sequences.device)
-        outputs.sequences[:, :, : sequences.size(-1)].copy_(sequences)
+        padded = torch.zeros(
+            sequences.size(0), num_return_sequences, max_gen_seq_length,
+            device=sequences.device,
+        )
+        padded[:, :, : sequences.size(-1)].copy_(sequences)
 
         if num_return_sequences == 1:
-            outputs.sequences = outputs.sequences.reshape(-1, max_gen_seq_length)
+            padded = padded.reshape(-1, max_gen_seq_length)
 
         return GenericOutputs(
-            sequences=outputs.sequences,
+            sequences=padded,
             sequences_scores=outputs.sequences_scores,
         )

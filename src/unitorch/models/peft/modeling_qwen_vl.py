@@ -1,12 +1,11 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
-import json
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
-from peft import LoraConfig, PeftModelForCausalLM
+from typing import List, Optional, Union
+from peft import LoraConfig
 from transformers.models.qwen3_vl import (
     Qwen3VLConfig,
     Qwen3VLModel,
@@ -39,7 +38,7 @@ class QWen3VLLoraForGeneration(GenericPeftModel):
         gradient_checkpointing: Optional[bool] = False,
     ):
         """
-        Bloom Lora model for text generation tasks.
+        QWen3-VL LoRA model for multimodal generation.
 
         Args:
             config_path (str): Path to the model configuration file.
@@ -75,7 +74,7 @@ class QWen3VLLoraForGeneration(GenericPeftModel):
             position_ids (torch.Tensor, optional): Position IDs tensor of shape (batch_size, sequence_length). Defaults to None.
 
         Returns:
-            torch Output logits.Tensor: tensor of shape (batch_size, sequence_length, vocab_size).
+            torch.Tensor: Output logits of shape (batch_size, sequence_length, vocab_size).
         """
         image_grid_thw = image_grid_thw.view(-1, image_grid_thw.size(-1))
         pixel_values = pixel_values.view(-1, pixel_values.size(-1))
@@ -212,7 +211,7 @@ class QWen3VLDPOLoraForGeneration(GenericPeftModel):
         dpo_beta: Optional[float] = 0.1,
     ):
         """
-        Bloom Lora model for text generation tasks.
+        QWen3-VL LoRA model for multimodal generation.
 
         Args:
             config_path (str): Path to the model configuration file.
@@ -253,7 +252,7 @@ class QWen3VLDPOLoraForGeneration(GenericPeftModel):
             position_ids (torch.Tensor, optional): Position IDs tensor of shape (batch_size, sequence_length). Defaults to None.
 
         Returns:
-            torch Output logits.Tensor: tensor of shape (batch_size, sequence_length, vocab_size).
+            torch.Tensor: Output logits of shape (batch_size, sequence_length, vocab_size).
         """
         image_grid_thw = image_grid_thw.view(-1, image_grid_thw.size(-1))
         pixel_values = pixel_values.view(-1, pixel_values.size(-1))

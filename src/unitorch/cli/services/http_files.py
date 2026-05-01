@@ -2,11 +2,7 @@
 # Licensed under the MIT License.
 
 import os
-import time
-import logging
 import http.server
-import zipfile
-from urllib.parse import parse_qs, urlparse
 from unitorch.cli import CoreConfigureParser
 from unitorch.cli import register_service, GenericService
 

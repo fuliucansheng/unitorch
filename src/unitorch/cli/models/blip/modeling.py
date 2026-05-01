@@ -2,7 +2,7 @@
 # Licensed under the MIT License.
 
 import torch
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import List, Optional, Union
 from torch import autocast
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.blip import (
@@ -35,16 +35,6 @@ class BlipForPretrain(_BlipForPretrain):
         gradient_checkpointing: Optional[bool] = False,
         use_all_gather: Optional[bool] = True,
     ):
-        """
-        Initialize BlipForPretrain.
-
-        Args:
-            config_path (str): The path to the model configuration file.
-            projection_dim (int, optional): The dimension of the projection head. Defaults to 512.
-            freeze_base_model (bool, optional): Whether to freeze the base model parameters. Defaults to True.
-            gradient_checkpointing (bool, optional): Whether to use gradient checkpointing. Defaults to False.
-            use_all_gather (bool, optional): Whether to use all_gather operation. Defaults to True.
-        """
         super().__init__(
             config_path=config_path,
             projection_dim=projection_dim,
@@ -56,16 +46,6 @@ class BlipForPretrain(_BlipForPretrain):
     @classmethod
     @add_default_section_for_init("core/model/pretrain/blip")
     def from_core_configure(cls, config, **kwargs):
-        """
-        Create an instance of BlipForPretrain from a core configuration.
-
-        Args:
-            config: The core configuration.
-            **kwargs: Additional keyword arguments.
-
-        Returns:
-            BlipForPretrain: An instance of BlipForPretrain.
-        """
         config.set_default_section("core/model/pretrain/blip")
         pretrained_name = config.getoption(
             "pretrained_name", "blip-image-captioning-base"
@@ -109,18 +89,6 @@ class BlipForPretrain(_BlipForPretrain):
         attention_mask: torch.Tensor = None,
         position_ids: torch.Tensor = None,
     ):
-        """
-        Forward pass of the BlipForPretrain model.
-
-        Args:
-            input_ids (torch.Tensor): The input token IDs.
-            pixel_values (torch.Tensor): The pixel values of the images.
-            attention_mask (torch.Tensor, optional): The attention mask. Defaults to None.
-            position_ids (torch.Tensor, optional): The position IDs. Defaults to None.
-
-        Returns:
-            LossOutputs: The loss outputs.
-        """
         outputs = super().forward(
             input_ids=input_ids,
             pixel_values=pixel_values,
@@ -142,16 +110,6 @@ class BlipForClassification(_BlipForClassification):
         freeze_base_model: Optional[bool] = True,
         gradient_checkpointing: Optional[bool] = False,
     ):
-        """
-        Initialize BlipForClassification.
-
-        Args:
-            config_path (str): The path to the model configuration file.
-            projection_dim (int, optional): The dimension of the projection head. Defaults to 512.
-            num_classes (int, optional): The number of classes for classification. Defaults to 1.
-            freeze_base_model (bool, optional): Whether to freeze the base model parameters. Defaults to True.
-            gradient_checkpointing (bool, optional): Whether to use gradient checkpointing. Defaults to False.
-        """
         super().__init__(
             config_path=config_path,
             projection_dim=projection_dim,
@@ -163,16 +121,6 @@ class BlipForClassification(_BlipForClassification):
     @classmethod
     @add_default_section_for_init("core/model/classification/blip")
     def from_core_configure(cls, config, **kwargs):
-        """
-        Create an instance of BlipForClassification from a core configuration.
-
-        Args:
-            config: The core configuration.
-            **kwargs: Additional keyword arguments.
-
-        Returns:
-            BlipForClassification: An instance of BlipForClassification.
-        """
         config.set_default_section("core/model/classification/blip")
         pretrained_name = config.getoption(
             "pretrained_name", "blip-image-captioning-base"
@@ -216,18 +164,6 @@ class BlipForClassification(_BlipForClassification):
         attention_mask: torch.Tensor = None,
         position_ids: torch.Tensor = None,
     ):
-        """
-        Forward pass of the BlipForClassification model.
-
-        Args:
-            input_ids (torch.Tensor): The input token IDs.
-            pixel_values (torch.Tensor): The pixel values of the images.
-            attention_mask (torch.Tensor, optional): The attention mask. Defaults to None.
-            position_ids (torch.Tensor, optional): The position IDs. Defaults to None.
-
-        Returns:
-            ClassificationOutputs: The classification outputs.
-        """
         outputs = super().forward(
             input_ids=input_ids,
             pixel_values=pixel_values,
@@ -249,16 +185,6 @@ class BlipForTextClassification(_BlipForTextClassification):
         freeze_base_model: Optional[bool] = True,
         gradient_checkpointing: Optional[bool] = False,
     ):
-        """
-        Initialize BlipForTextClassification.
-
-        Args:
-            config_path (str): The path to the model configuration file.
-            projection_dim (int, optional): The dimension of the projection head. Defaults to 512.
-            num_classes (int, optional): The number of classes for classification. Defaults to 1.
-            freeze_base_model (bool, optional): Whether to freeze the base model parameters. Defaults to True.
-            gradient_checkpointing (bool, optional): Whether to use gradient checkpointing. Defaults to False.
-        """
         super().__init__(
             config_path=config_path,
             projection_dim=projection_dim,
@@ -270,16 +196,6 @@ class BlipForTextClassification(_BlipForTextClassification):
     @classmethod
     @add_default_section_for_init("core/model/classification/blip/text")
     def from_core_configure(cls, config, **kwargs):
-        """
-        Create an instance of BlipForTextClassification from a core configuration.
-
-        Args:
-            config: The core configuration.
-            **kwargs: Additional keyword arguments.
-
-        Returns:
-            BlipForTextClassification: An instance of BlipForTextClassification.
-        """
         config.set_default_section("core/model/classification/blip/text")
         pretrained_name = config.getoption(
             "pretrained_name", "blip-image-captioning-base"
@@ -322,17 +238,6 @@ class BlipForTextClassification(_BlipForTextClassification):
         attention_mask: Optional[torch.Tensor] = None,
         position_ids: Optional[torch.Tensor] = None,
     ):
-        """
-        Forward pass of the BlipForTextClassification model.
-
-        Args:
-            input_ids (torch.Tensor, optional): The input token IDs. Defaults to None.
-            attention_mask (torch.Tensor, optional): The attention mask. Defaults to None.
-            position_ids (torch.Tensor, optional): The position IDs. Defaults to None.
-
-        Returns:
-            ClassificationOutputs: The classification outputs.
-        """
         outputs = super().forward(
             input_ids=input_ids,
             attention_mask=attention_mask,
@@ -353,16 +258,6 @@ class BlipForImageClassification(_BlipForImageClassification):
         freeze_base_model: Optional[bool] = True,
         gradient_checkpointing: Optional[bool] = False,
     ):
-        """
-        Initialize BlipForImageClassification.
-
-        Args:
-            config_path (str): The path to the model configuration file.
-            projection_dim (int, optional): The dimension of the projection head. Defaults to 512.
-            num_classes (int, optional): The number of classes for classification. Defaults to 1.
-            freeze_base_model (bool, optional): Whether to freeze the base model parameters. Defaults to True.
-            gradient_checkpointing (bool, optional): Whether to use gradient checkpointing. Defaults to False.
-        """
         super().__init__(
             config_path=config_path,
             projection_dim=projection_dim,
@@ -374,16 +269,6 @@ class BlipForImageClassification(_BlipForImageClassification):
     @classmethod
     @add_default_section_for_init("core/model/classification/blip/image")
     def from_core_configure(cls, config, **kwargs):
-        """
-        Create an instance of BlipForImageClassification from a core configuration.
-
-        Args:
-            config: The core configuration.
-            **kwargs: Additional keyword arguments.
-
-        Returns:
-            BlipForImageClassification: An instance of BlipForImageClassification.
-        """
         config.set_default_section("core/model/classification/blip/image")
         pretrained_name = config.getoption(
             "pretrained_name", "blip-image-captioning-base"
@@ -424,15 +309,6 @@ class BlipForImageClassification(_BlipForImageClassification):
         self,
         pixel_values: torch.Tensor,
     ):
-        """
-        Forward pass of the BlipForImageClassification model.
-
-        Args:
-            pixel_values (torch.Tensor): The pixel values of the images.
-
-        Returns:
-            ClassificationOutputs: The classification outputs.
-        """
         outputs = super().forward(pixel_values=pixel_values)
         return ClassificationOutputs(outputs=outputs)
 
@@ -446,13 +322,6 @@ class BlipForImageCaption(_BlipForImageCaption):
         config_path: str,
         gradient_checkpointing: Optional[bool] = False,
     ):
-        """
-        Initialize BlipForImageCaption.
-
-        Args:
-            config_path (str): The path to the model configuration file.
-            gradient_checkpointing (bool, optional): Whether to use gradient checkpointing. Defaults to False.
-        """
         super().__init__(
             config_path=config_path,
             gradient_checkpointing=gradient_checkpointing,
@@ -461,16 +330,6 @@ class BlipForImageCaption(_BlipForImageCaption):
     @classmethod
     @add_default_section_for_init("core/model/caption/blip")
     def from_core_configure(cls, config, **kwargs):
-        """
-        Create an instance of BlipForImageCaption from a core configuration.
-
-        Args:
-            config: The core configuration.
-            **kwargs: Additional keyword arguments.
-
-        Returns:
-            BlipForImageCaption: An instance of BlipForImageCaption.
-        """
         config.set_default_section("core/model/caption/blip")
         pretrained_name = config.getoption(
             "pretrained_name", "blip-image-captioning-base"
@@ -506,16 +365,6 @@ class BlipForImageCaption(_BlipForImageCaption):
         input_ids: torch.Tensor,
         attention_mask: Optional[torch.Tensor] = None,
     ):
-        """
-        Forward pass of the BlipForImageCaption model.
-
-        Args:
-            pixel_values (torch.Tensor): The pixel values of the images.
-            input_ids (torch.Tensor): The input captions.
-
-        Returns:
-            GenerationOutputs: The generation outputs.
-        """
         outputs = super().forward(
             pixel_values=pixel_values,
             input_ids=input_ids,
@@ -545,31 +394,6 @@ class BlipForImageCaption(_BlipForImageCaption):
         top_k: Optional[int] = 50,
         top_p: Optional[float] = 1.0,
     ):
-        """
-        Generate captions using the BlipForImageCaption model.
-
-        Args:
-            pixel_values (torch.Tensor): The pixel values of the images.
-            num_beams (int, optional): The number of beams for beam search. Defaults to 5.
-            decoder_start_token_id (int, optional): The start token ID for the decoder. Defaults to 30522.
-            decoder_end_token_id (int or List[int], optional): The end token ID for the decoder. Defaults to 2.
-            num_return_sequences (int, optional): The number of sequences to return. Defaults to 1.
-            min_gen_seq_length (int, optional): The minimum length of generated sequences. Defaults to 0.
-            max_gen_seq_length (int, optional): The maximum length of generated sequences. Defaults to 48.
-            repetition_penalty (float, optional): The repetition penalty. Defaults to 1.0.
-            no_repeat_ngram_size (int, optional): The size of n-grams to avoid repeating. Defaults to 0.
-            early_stopping (bool, optional): Whether to perform early stopping. Defaults to True.
-            length_penalty (float, optional): The length penalty. Defaults to 1.0.
-            num_beam_groups (int, optional): The number of beam groups. Defaults to 1.
-            diversity_penalty (float, optional): The diversity penalty. Defaults to 0.0.
-            do_sample (bool, optional): Whether to use sampling for generation. Defaults to False.
-            temperature (float, optional): The temperature value for sampling. Defaults to 1.0.
-            top_k (int, optional): The top-k value for sampling. Defaults to 50.
-            top_p (float, optional): The top-p value for sampling. Defaults to 1.0.
-
-        Returns:
-            GenerationOutputs: The generation outputs.
-        """
         outputs = super().generate(
             pixel_values=pixel_values,
             num_beams=num_beams,

@@ -2,10 +2,8 @@
 # Licensed under the MIT License.
 
 import os
-import sys
 import fire
 import logging
-import importlib
 import uvicorn
 import unitorch.cli
 from fastapi import FastAPI

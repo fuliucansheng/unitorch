@@ -2,17 +2,16 @@
 # Licensed under the MIT License.
 
 from PIL import Image
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import Optional, Tuple, Union
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.diffusers import QWenImageProcessor as _QWenImageProcessor
 from unitorch.cli import (
     cached_path,
     add_default_section_for_init,
-    add_default_section_for_function,
     register_process,
 )
 from unitorch.cli.models import (
-    TensorsInputs,
+    TensorInputs,
 )
 from unitorch.cli.models.diffusers import pretrained_stable_infos
 
@@ -121,7 +120,7 @@ class QWenImageProcessor(_QWenImageProcessor):
             image=image,
             max_seq_length=max_seq_length,
         )
-        return TensorsInputs(
+        return TensorInputs(
             input_ids=outputs.input_ids,
             attention_mask=outputs.attention_mask,
             pixel_values=outputs.pixel_values,
@@ -139,7 +138,7 @@ class QWenImageProcessor(_QWenImageProcessor):
             negative_prompt=negative_prompt,
             max_seq_length=max_seq_length,
         )
-        return TensorsInputs(
+        return TensorInputs(
             input_ids=outputs.input_ids,
             attention_mask=outputs.attention_mask,
             negative_input_ids=outputs.negative_input_ids,
@@ -161,7 +160,7 @@ class QWenImageProcessor(_QWenImageProcessor):
             max_seq_length=max_seq_length,
         )
 
-        return TensorsInputs(
+        return TensorInputs(
             input_ids=outputs.input_ids,
             attention_mask=outputs.attention_mask,
             refer_pixel_values=outputs.refer_pixel_values,
@@ -185,7 +184,7 @@ class QWenImageProcessor(_QWenImageProcessor):
             image=image,
             max_seq_length=max_seq_length,
         )
-        return TensorsInputs(
+        return TensorInputs(
             input_ids=outputs.input_ids,
             attention_mask=outputs.attention_mask,
             pixel_values=outputs.pixel_values,

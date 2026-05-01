@@ -1,15 +1,14 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
-import json
 import torch
 import torch.nn as nn
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
-from peft import LoraConfig, PeftModelForCausalLM
+from typing import List, Optional, Union
+from peft import LoraConfig
 from transformers.models.clip.modeling_clip import (
     CLIPConfig,
-    CLIPTextTransformer,
-    CLIPVisionTransformer,
+    CLIPTextModel,
+    CLIPVisionModel,
 )
 from unitorch.models import GenericModel, GenericOutputs
 from unitorch.models.peft import (
@@ -20,9 +19,7 @@ from unitorch.models.peft import (
 
 
 class ClipForMatching(GenericModel):
-    """
-    Clip model for pretraining.
-    """
+    """CLIP model for image-text matching."""
 
     def __init__(
         self,
@@ -30,14 +27,11 @@ class ClipForMatching(GenericModel):
         projection_dim: Optional[int] = 512,
     ):
         """
-        Initializes the ClipForPretrain model.
+        Initializes the ClipForMatching model.
 
         Args:
             config_path (str): Path to the model configuration file.
             projection_dim (int, optional): Dimension of the projected embeddings. Defaults to 512.
-            freeze_base_model (bool, optional): Whether to freeze the base model parameters. Defaults to True.
-            gradient_checkpointing (bool, optional): Whether to use gradient checkpointing. Defaults to False.
-            use_all_gather (bool, optional): Whether to use all-gather operation. Defaults to True.
         """
         super().__init__()
 
@@ -50,8 +44,8 @@ class ClipForMatching(GenericModel):
         self.text_embed_dim = text_config.hidden_size
         self.vision_embed_dim = vision_config.hidden_size
 
-        self.text_model = CLIPTextTransformer(text_config)
-        self.vision_model = CLIPVisionTransformer(vision_config)
+        self.text_model = CLIPTextModel(text_config)
+        self.vision_model = CLIPVisionModel(vision_config)
 
         self.visual_projection = nn.Linear(
             self.vision_embed_dim,
@@ -78,18 +72,16 @@ class ClipForMatching(GenericModel):
         return_dict=None,
     ):
         """
-        Forward pass of the Clip model.
+        Forward pass of the ClipForMatching model.
 
         Args:
-            input_ids (torch.Tensor, optional): Input text token IDs. Defaults to None.
-            pixel_values (torch.Tensor, optional): Input image pixel values. Defaults to None.
-            attention_mask (torch.Tensor, optional): Attention mask for the input. Defaults to None.
-            position_ids (torch.Tensor, optional): Position IDs for the input tokens. Defaults to None.
-            output_attentions (bool, optional): Whether to output attentions. Defaults to None.
-            output_hidden_states (bool, optional): Whether to output hidden states. Defaults to None.
+            input_ids (torch.Tensor): Input text token IDs.
+            pixel_values (torch.Tensor): Input image pixel values.
+            attention_mask (torch.Tensor): Attention mask for text input.
+            position_ids (torch.Tensor): Position IDs for text input.
 
         Returns:
-            (torch.Tensor):Logits per text.
+            tuple[torch.Tensor, torch.Tensor]: (text_embeds, image_embeds).
         """
         vision_outputs = self.vision_model(
             pixel_values=pixel_values,
@@ -111,9 +103,7 @@ class ClipForMatching(GenericModel):
 
 
 class ClipForTextMatching(GenericModel):
-    """
-    Clip model for pretraining.
-    """
+    """CLIP model for text-to-text matching."""
 
     def __init__(
         self,
@@ -121,14 +111,11 @@ class ClipForTextMatching(GenericModel):
         projection_dim: Optional[int] = 512,
     ):
         """
-        Initializes the ClipForPretrain model.
+        Initializes the ClipForTextMatching model.
 
         Args:
             config_path (str): Path to the model configuration file.
             projection_dim (int, optional): Dimension of the projected embeddings. Defaults to 512.
-            freeze_base_model (bool, optional): Whether to freeze the base model parameters. Defaults to True.
-            gradient_checkpointing (bool, optional): Whether to use gradient checkpointing. Defaults to False.
-            use_all_gather (bool, optional): Whether to use all-gather operation. Defaults to True.
         """
         super().__init__()
 
@@ -139,8 +126,8 @@ class ClipForTextMatching(GenericModel):
 
         self.text_embed_dim = text_config.hidden_size
 
-        self.query_model = CLIPTextTransformer(text_config)
-        self.doc_model = CLIPTextTransformer(text_config)
+        self.query_model = CLIPTextModel(text_config)
+        self.doc_model = CLIPTextModel(text_config)
 
         self.query_projection = nn.Linear(
             self.text_embed_dim,
@@ -169,18 +156,18 @@ class ClipForTextMatching(GenericModel):
         return_dict=None,
     ):
         """
-        Forward pass of the Clip model.
+        Forward pass of the ClipForTextMatching model.
 
         Args:
-            input_ids (torch.Tensor, optional): Input text token IDs. Defaults to None.
-            pixel_values (torch.Tensor, optional): Input image pixel values. Defaults to None.
-            attention_mask (torch.Tensor, optional): Attention mask for the input. Defaults to None.
-            position_ids (torch.Tensor, optional): Position IDs for the input tokens. Defaults to None.
-            output_attentions (bool, optional): Whether to output attentions. Defaults to None.
-            output_hidden_states (bool, optional): Whether to output hidden states. Defaults to None.
+            query_input_ids (torch.Tensor): Query text token IDs.
+            query_attention_mask (torch.Tensor): Query attention mask.
+            query_position_ids (torch.Tensor): Query position IDs.
+            doc_input_ids (torch.Tensor): Document text token IDs.
+            doc_attention_mask (torch.Tensor): Document attention mask.
+            doc_position_ids (torch.Tensor): Document position IDs.
 
         Returns:
-            (torch.Tensor):Logits per text.
+            tuple[torch.Tensor, torch.Tensor]: (query_embeds, doc_embeds).
         """
 
         query_outputs = self.query_model(

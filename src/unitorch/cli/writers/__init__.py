@@ -5,7 +5,7 @@ import os
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import List, Optional, Union
 from unitorch.utils.io import GenericWriter
 from unitorch.cli import add_default_section_for_init, register_writer
 
@@ -304,6 +304,3 @@ class GeneralParquetWriter(GenericWriter):
             dataframe = dataframe[[h for h in self.columns if h in columns]]
         pa_table = pa.Table.from_pandas(dataframe, schema=self.pq_schema)
         self.pq_writer.write_table(pa_table)
-
-
-# more writers

@@ -2,36 +2,22 @@
 # Licensed under the MIT License.
 
 import io
-import re
 import gc
-import json
-import logging
 import torch
-import hashlib
 import asyncio
-import pandas as pd
 from PIL import Image
 from torch import autocast
-from fastapi import APIRouter, UploadFile, File
+from fastapi import APIRouter, UploadFile
 from fastapi.responses import StreamingResponse
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Dict, List, Optional, Union
 from diffusers.utils import numpy_to_pil
-
-from diffusers.pipelines import (
-    FluxPipeline,
-    FluxImg2ImgPipeline,
-    FluxInpaintPipeline,
-)
-
-from unitorch.utils import is_remote_url
+from diffusers.pipelines import FluxImg2ImgPipeline
 from unitorch.models.diffusers import GenericStableFluxModel
 from unitorch.models.diffusers import StableFluxProcessor
-
 from unitorch.utils import (
     pop_value,
     nested_dict_value,
     is_bfloat16_available,
-    is_cuda_available,
 )
 from unitorch.cli import (
     cached_path,
@@ -45,7 +31,6 @@ from unitorch.cli.models.diffusers import (
     pretrained_stable_extensions_infos,
     load_weight,
 )
-from unitorch.cli.pipelines import Schedulers
 
 
 class StableFluxForImage2ImageFastAPIPipeline(GenericStableFluxModel):

@@ -2,7 +2,7 @@
 # Licensed under the MIT License.
 
 import torch
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import List, Optional, Union
 from torch import autocast
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.bart import BartForGeneration as _BartForGeneration
@@ -26,13 +26,6 @@ class BartForGeneration(_BartForGeneration):
         config_path: str,
         gradient_checkpointing: Optional[bool] = False,
     ):
-        """
-        Initialize the BartForGeneration model.
-
-        Args:
-            config_path (str): Path to the model configuration file.
-            gradient_checkpointing (bool, optional): Whether to use gradient checkpointing for memory optimization.
-        """
         super().__init__(
             config_path=config_path, gradient_checkpointing=gradient_checkpointing
         )
@@ -40,16 +33,6 @@ class BartForGeneration(_BartForGeneration):
     @classmethod
     @add_default_section_for_init("core/model/generation/bart")
     def from_core_configure(cls, config, **kwargs):
-        """
-        Create an instance of BartForGeneration from core configuration.
-
-        Args:
-            config: The core configuration object.
-            **kwargs: Additional keyword arguments.
-
-        Returns:
-            BartForGeneration: The initialized BartForGeneration instance.
-        """
         config.set_default_section("core/model/generation/bart")
         pretrained_name = config.getoption("pretrained_name", "default-bart")
         config_path = config.getoption("config_path", None)
@@ -81,18 +64,6 @@ class BartForGeneration(_BartForGeneration):
         decoder_input_ids: torch.Tensor,
         decoder_attention_mask: torch.Tensor,
     ):
-        """
-        Forward pass of the BartForGeneration model.
-
-        Args:
-            input_ids (torch.Tensor): Input IDs.
-            attention_mask (torch.Tensor): Attention mask.
-            decoder_input_ids (torch.Tensor): Decoder input IDs.
-            decoder_attention_mask (torch.Tensor): Decoder attention mask.
-
-        Returns:
-            GenerationOutputs: The generated sequences and their scores.
-        """
         outputs = super().forward(
             input_ids=input_ids,
             attention_mask=attention_mask,
@@ -124,31 +95,6 @@ class BartForGeneration(_BartForGeneration):
         top_k: Optional[int] = 50,
         top_p: Optional[float] = 1.0,
     ):
-        """
-        Generate sequences using the BartForGeneration model.
-
-        Args:
-            input_ids (torch.Tensor): Input IDs.
-            num_beams (int, optional): Number of beams for beam search.
-            decoder_start_token_id (int, optional): ID of the decoder start token.
-            decoder_end_token_id (int or List[int], optional): ID of the decoder end token.
-            num_return_sequences (int, optional): Number of generated sequences to return.
-            min_gen_seq_length (int, optional): Minimum length of generated sequences.
-            max_gen_seq_length (int, optional): Maximum length of generated sequences.
-            repetition_penalty (float, optional): Repetition penalty.
-            no_repeat_ngram_size (int, optional): Size of n-grams to avoid repeating.
-            early_stopping (bool, optional): Whether to stop generation early.
-            length_penalty (float, optional): Length penalty for generated sequences.
-            num_beam_groups (int, optional): Number of groups for diverse beam search.
-            diversity_penalty (float, optional): Diversity penalty for diverse beam search.
-            do_sample (bool, optional): Whether to use sampling for generation.
-            temperature (float, optional): Sampling temperature.
-            top_k (int, optional): Top-k sampling parameter.
-            top_p (float, optional): Top-p sampling parameter.
-
-        Returns:
-            GenerationOutputs: The generated sequences and their scores.
-        """
         outputs = super().generate(
             input_ids=input_ids,
             num_beams=num_beams,

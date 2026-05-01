@@ -1,21 +1,15 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import Dict, Optional
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.bert import BertProcessor as _BertProcessor
 from unitorch.cli import (
     cached_path,
     add_default_section_for_init,
-    add_default_section_for_function,
     register_process,
 )
-from unitorch.cli import WriterOutputs
-from unitorch.cli.models import (
-    TensorsInputs,
-    GenerationOutputs,
-    GenerationTargets,
-)
+from unitorch.cli.models import TensorInputs
 from unitorch.cli.models.bert import pretrained_bert_infos
 
 
@@ -33,19 +27,6 @@ class BertProcessor(_BertProcessor):
         masked_lm_prob: Optional[float] = 0.15,
         max_predictions_per_seq: Optional[int] = 20,
     ):
-        """
-        Initialize BertProcessor.
-
-        Args:
-            vocab_path (str): The path to the vocabulary file.
-            max_seq_length (int, optional): The maximum sequence length. Defaults to 128.
-            special_input_ids (Dict, optional): Special input IDs. Defaults to an empty dictionary.
-            do_lower_case (bool, optional): Whether to lower case the input text. Defaults to True.
-            do_basic_tokenize (bool, optional): Whether to perform basic tokenization. Defaults to True.
-            do_whole_word_mask (bool, optional): Whether to use whole word masking. Defaults to True.
-            masked_lm_prob (float, optional): The probability of masking a token for masked language modeling. Defaults to 0.15.
-            max_predictions_per_seq (int, optional): The maximum number of masked LM predictions per sequence. Defaults to 20.
-        """
         super().__init__(
             vocab_path=vocab_path,
             max_seq_length=max_seq_length,
@@ -60,16 +41,6 @@ class BertProcessor(_BertProcessor):
     @classmethod
     @add_default_section_for_init("core/process/bert")
     def from_core_configure(cls, config, **kwargs):
-        """
-        Create an instance of BertProcessor from a core configuration.
-
-        Args:
-            config: The core configuration.
-            **kwargs: Additional keyword arguments.
-
-        Returns:
-            BertProcessor: An instance of BertProcessor.
-        """
         config.set_default_section("core/process/bert")
         pretrained_name = config.getoption("pretrained_name", "bert-base-uncased")
         vocab_path = config.getoption("vocab_path", None)
@@ -90,23 +61,12 @@ class BertProcessor(_BertProcessor):
         text_pair: Optional[str] = None,
         max_seq_length: Optional[int] = None,
     ):
-        """
-        Run classification process using the BertProcessor.
-
-        Args:
-            text (str): The input text.
-            text_pair (str, optional): The second input text for sequence pair classification. Defaults to None.
-            max_seq_length (int, optional): The maximum sequence length. Defaults to None.
-
-        Returns:
-            TensorsInputs: Inputs for the classification process.
-        """
         outputs = super().classification(
             text=text,
             text_pair=text_pair,
             max_seq_length=max_seq_length,
         )
-        return TensorsInputs(
+        return TensorInputs(
             input_ids=outputs.input_ids,
             attention_mask=outputs.attention_mask,
             token_type_ids=outputs.token_type_ids,
@@ -124,21 +84,6 @@ class BertProcessor(_BertProcessor):
         do_whole_word_mask: Optional[bool] = None,
         max_predictions_per_seq: Optional[int] = None,
     ):
-        """
-        Run pretraining process using the BertProcessor.
-
-        Args:
-            text (str): The input text.
-            text_pair (str): The second input text for sequence pair pretraining.
-            nsp_label (int): The next sentence prediction label.
-            max_seq_length (int, optional): The maximum sequence length. Defaults to None.
-            masked_lm_prob (float, optional): The probability of masking a token for masked language modeling. Defaults to None.
-            do_whole_word_mask (bool, optional): Whether to use whole word masking. Defaults to None.
-            max_predictions_per_seq (int, optional): The maximum number of masked LM predictions per sequence. Defaults to None.
-
-        Returns:
-            TensorsInputs: Inputs for the pretraining process.
-        """
         outputs = super().pretrain(
             text=text,
             text_pair=text_pair,
@@ -148,7 +93,7 @@ class BertProcessor(_BertProcessor):
             do_whole_word_mask=do_whole_word_mask,
             max_predictions_per_seq=max_predictions_per_seq,
         )
-        return TensorsInputs(
+        return TensorInputs(
             input_ids=outputs.input_ids,
             attention_mask=outputs.attention_mask,
             token_type_ids=outputs.token_type_ids,

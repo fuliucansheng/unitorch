@@ -1,38 +1,26 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import Optional, Union
 from PIL import Image
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.vit import ViTProcessor as _ViTProcessor
 from unitorch.cli import (
     cached_path,
     add_default_section_for_init,
-    add_default_section_for_function,
     register_process,
 )
-from unitorch.cli import WriterOutputs
-from unitorch.cli.models import (
-    TensorsInputs,
-    GenerationOutputs,
-    GenerationTargets,
-)
+from unitorch.cli.models import TensorInputs
 from unitorch.cli.models.vit import pretrained_vit_infos
 
 
 class ViTProcessor(_ViTProcessor):
-    """Vision Transformer (ViT) Processor for handling image processing tasks."""
+    """Vision Transformer (ViT) processor for image tasks."""
 
     def __init__(
         self,
         vision_config_path: str,
     ):
-        """
-        Initialize ViTProcessor.
-
-        Args:
-            vision_config_path (str): The path to the vision config file.
-        """
         super().__init__(
             vision_config_path=vision_config_path,
         )
@@ -40,16 +28,6 @@ class ViTProcessor(_ViTProcessor):
     @classmethod
     @add_default_section_for_init("core/process/vit")
     def from_core_configure(cls, config, **kwargs):
-        """
-        Create an instance of ViTProcessor from a core configuration.
-
-        Args:
-            config: The core configuration.
-            **kwargs: Additional keyword arguments.
-
-        Returns:
-            dict: The processed arguments for initializing the processor.
-        """
         config.set_default_section("core/process/vit")
         pretrained_name = config.getoption(
             "pretrained_name", "vit-base-patch16-224-in21k"
@@ -71,17 +49,7 @@ class ViTProcessor(_ViTProcessor):
         self,
         image: Union[Image.Image, str],
     ):
-        """
-        Process an image for image classification tasks.
-
-        Args:
-            image (Union[Image.Image, str]): The input image or path to the image.
-
-        Returns:
-            TensorsInputs: The processed input tensors.
-        """
-
         if isinstance(image, str):
             image = Image.open(image)
         outputs = super().classification(image=image)
-        return TensorsInputs(pixel_values=outputs.pixel_values)
+        return TensorInputs(pixel_values=outputs.pixel_values)

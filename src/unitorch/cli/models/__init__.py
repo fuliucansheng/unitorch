@@ -1,86 +1,80 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
-import os
-import io
-import requests
-import time
-import base64
-import json
-import logging
-import torch
-import torch.nn as nn
 import numpy as np
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
-from random import random
+from typing import Dict
 
-ACT2FN = {
+from unitorch import is_diffusers_available, is_megatron_available, is_opencv_available
+from unitorch.cli.models.modeling_utils import (
+    LossOutputs,
+    ModelInputs,
+    ModelOutputs,
+    ModelTargets,
+    TensorBatchMixin,
+    TensorInputs,
+    TensorMixInputs,
+    TensorMixMixin,
+    TensorMixOutputs,
+    TensorMixTargets,
+    TensorOutputs,
+    TensorSeqInputs,
+    TensorSeqMixin,
+    TensorSeqOutputs,
+    TensorSeqTargets,
+    TensorTargets,
+)
+
+ACT2FN: Dict = {
     "relu": lambda v: np.maximum(v, 0),
     "tanh": np.tanh,
     "sigmoid": lambda v: 1 / (1 + np.exp(-v)),
     "softmax": lambda v: np.exp(v) / np.sum(np.exp(v), axis=-1, keepdims=True),
 }
-from unitorch import is_diffusers_available, is_opencv_available, is_megatron_available
 
-# import modeling utils
-from unitorch.cli.models.modeling_utils import (
-    ModelInputs,
-    ModelOutputs,
-    ModelTargets,
-    TensorsInputs,
-    ListTensorsInputs,
-    CombineTensorsInputs,
-    TensorsOutputs,
-    ListTensorsOutputs,
-    CombineTensorsOutputs,
-    TensorsTargets,
-    ListTensorsTargets,
-    CombineTensorsTargets,
-    LossOutputs,
-)
 from unitorch.cli.models.classification_utils import (
     ClassificationOutputs,
-    EmbeddingOutputs,
     ClassificationTargets,
+    EmbeddingOutputs,
 )
 from unitorch.cli.models.detection_utils import (
     DetectionOutputs,
     DetectionTargets,
+    detection_model_decorator,
 )
-from unitorch.cli.models.detection_utils import detection_model_decorator
 from unitorch.cli.models.generation_utils import (
     GenerationOutputs,
     GenerationTargets,
+    generation_model_decorator,
 )
-from unitorch.cli.models.generation_utils import generation_model_decorator
 from unitorch.cli.models.ranking_utils import RankingOutputs, RankingTargets
 from unitorch.cli.models.segmentation_utils import (
     SegmentationOutputs,
     SegmentationTargets,
+    segmentation_model_decorator,
 )
-from unitorch.cli.models.segmentation_utils import segmentation_model_decorator
 
-# import processing utils
 import unitorch.cli.models.image_utils
-import unitorch.cli.models.random_utils
 import unitorch.cli.models.label_utils
 import unitorch.cli.models.processing_utils
+import unitorch.cli.models.random_utils
 
 if is_opencv_available():
     import unitorch.cli.models.video_utils
 
 if is_diffusers_available():
-    from unitorch.cli.models.diffusion_utils import DiffusionOutputs, DiffusionTargets
-    from unitorch.cli.models.diffusion_utils import diffusion_model_decorator
+    from unitorch.cli.models.diffusion_utils import (
+        DiffusionOutputs,
+        DiffusionTargets,
+        diffusion_model_decorator,
+    )
     import unitorch.cli.models.diffusers
 
 if is_megatron_available():
     import unitorch.cli.models.megatron
 
-# import model classes & process functions
 import unitorch.cli.models.bart
-import unitorch.cli.models.bert
 import unitorch.cli.models.beit
+import unitorch.cli.models.bert
 import unitorch.cli.models.blip
 import unitorch.cli.models.bria
 import unitorch.cli.models.chinese_clip
@@ -99,10 +93,10 @@ import unitorch.cli.models.pegasus
 import unitorch.cli.models.peft
 import unitorch.cli.models.qwen
 import unitorch.cli.models.roberta
-import unitorch.cli.models.swin
 import unitorch.cli.models.sam
-import unitorch.cli.models.siglip
 import unitorch.cli.models.segformer
+import unitorch.cli.models.siglip
+import unitorch.cli.models.swin
 import unitorch.cli.models.t5
 import unitorch.cli.models.visualbert
 import unitorch.cli.models.vit

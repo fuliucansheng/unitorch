@@ -1,37 +1,25 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
-import os
-import logging
+from typing import List, Optional, Union
+
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-import transformers
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
-from transformers import BartConfig, BartModel, BartForConditionalGeneration
-from unitorch.utils.decorators import replace
+from transformers import BartConfig, BartForConditionalGeneration
+
 from unitorch.models import GenericModel, GenericOutputs
 
 
 class BartForGeneration(GenericModel):
-    """
-    BART model for text generation.
-    """
+    """BART model for sequence-to-sequence text generation."""
 
     prefix_keys_in_state_dict = {"^(?!model\.model\.|model\.).*": "model.model."}
 
     def __init__(
         self,
         config_path: str,
-        gradient_checkpointing: Optional[bool] = False,
-    ):
-        """
-        Initializes a BartForGeneration model.
-
-        Args:
-            config_path (str): Path to the BART model configuration file.
-            gradient_checkpointing (bool, optional): Whether to use gradient checkpointing during training. Defaults to False.
-        """
+        gradient_checkpointing: bool = False,
+    ) -> None:
         super().__init__()
         self.config = BartConfig.from_json_file(config_path)
         self.config.gradient_checkpointing = gradient_checkpointing
@@ -45,75 +33,36 @@ class BartForGeneration(GenericModel):
         attention_mask: torch.Tensor,
         decoder_input_ids: torch.Tensor,
         decoder_attention_mask: torch.Tensor,
-    ):
-        """
-        Performs forward pass of the BartForGeneration model.
-
-        Args:
-            input_ids (torch.Tensor): Tensor of input token IDs.
-            attention_mask (torch.Tensor): Tensor indicating which tokens should be attended to.
-            decoder_input_ids (torch.Tensor): Tensor of decoder input token IDs.
-            decoder_attention_mask (torch.Tensor): Tensor indicating which decoder tokens should be attended to.
-
-        Returns:
-            (torch.Tensor): Output logits of the model.
-        """
-        outputs = self.model(
+    ) -> torch.Tensor:
+        return self.model(
             input_ids=input_ids,
             attention_mask=attention_mask,
             decoder_input_ids=decoder_input_ids,
             decoder_attention_mask=decoder_attention_mask,
             return_dict=True,
-        )
-        logits = outputs.logits
-        return logits
+        ).logits
 
     @torch.no_grad()
     def generate(
         self,
         input_ids: torch.Tensor,
-        num_beams: Optional[int] = 5,
-        decoder_start_token_id: Optional[int] = 2,
-        decoder_end_token_id: Optional[Union[int, List[int]]] = 2,
-        num_return_sequences: Optional[int] = 1,
-        min_gen_seq_length: Optional[int] = 0,
-        max_gen_seq_length: Optional[int] = 48,
-        repetition_penalty: Optional[float] = 1.0,
-        no_repeat_ngram_size: Optional[int] = 0,
-        early_stopping: Optional[bool] = True,
-        length_penalty: Optional[float] = 1.0,
-        num_beam_groups: Optional[int] = 1,
-        diversity_penalty: Optional[float] = 0.0,
-        do_sample: Optional[bool] = False,
-        temperature: Optional[float] = 1.0,
-        top_k: Optional[int] = 50,
-        top_p: Optional[float] = 1.0,
-    ):
-        """
-        Generates text using the BartForGeneration model.
-
-        Args:
-            input_ids (torch.Tensor): Tensor of input token IDs.
-            num_beams (int, optional): Number of beams for beam search. Defaults to 5.
-            decoder_start_token_id (int, optional): The ID of the decoder start token. Defaults to 2.
-            decoder_end_token_id (int or List[int], optional): The ID(s) of the decoder end token(s). Defaults to 2.
-            num_return_sequences (int, optional): Number of sequences to return. Defaults to 1.
-            min_gen_seq_length (int, optional): Minimum length of generated sequences. Defaults to 0.
-            max_gen_seq_length (int, optional): Maximum length of generated sequences. Defaults to 48.
-            repetition_penalty (float, optional): Repetition penalty for generated sequences. Defaults to 1.0.
-            no_repeat_ngram_size (int, optional): Size of n-grams to avoid repetition. Defaults to 0.
-            early_stopping (bool, optional): Whether to stop generation early. Defaults to True.
-            length_penalty (float, optional): Length penalty for generated sequences. Defaults to 1.0.
-            num_beam_groups (int, optional): Number of beam groups for diverse beam search. Defaults to 1.
-            diversity_penalty (float, optional): Diversity penalty for diverse beam search. Defaults to 0.0.
-            do_sample (bool, optional): Whether to use sampling during generation. Defaults to False.
-            temperature (float, optional): Temperature for sampling. Defaults to 1.0.
-            top_k (int, optional): Value for top-k sampling. Defaults to 50.
-            top_p (float, optional): Value for top-p sampling. Defaults to 1.0.
-
-        Returns:
-            GenericOutputs: Generated sequences and their scores.
-        """
+        num_beams: int = 5,
+        decoder_start_token_id: int = 2,
+        decoder_end_token_id: Union[int, List[int]] = 2,
+        num_return_sequences: int = 1,
+        min_gen_seq_length: int = 0,
+        max_gen_seq_length: int = 48,
+        repetition_penalty: float = 1.0,
+        no_repeat_ngram_size: int = 0,
+        early_stopping: bool = True,
+        length_penalty: float = 1.0,
+        num_beam_groups: int = 1,
+        diversity_penalty: float = 0.0,
+        do_sample: bool = False,
+        temperature: float = 1.0,
+        top_k: int = 50,
+        top_p: float = 1.0,
+    ) -> GenericOutputs:
         outputs = self.model.generate(
             input_ids,
             max_length=max_gen_seq_length,
@@ -136,20 +85,16 @@ class BartForGeneration(GenericModel):
             output_scores=True,
         )
 
-        sequences = outputs.sequences.reshape(
-            -1, num_return_sequences, outputs.sequences.size(-1)
+        sequences = outputs.sequences.reshape(-1, num_return_sequences, outputs.sequences.size(-1))
+        padded = torch.full(
+            (sequences.size(0), num_return_sequences, max_gen_seq_length),
+            fill_value=decoder_start_token_id,
+            device=sequences.device,
+            dtype=sequences.dtype,
         )
-        outputs.sequences = (
-            torch.zeros(sequences.size(0), num_return_sequences, max_gen_seq_length).to(
-                device=sequences.device
-            )
-            + decoder_start_token_id
-        )
-        outputs.sequences[:, :, : sequences.size(-1)].copy_(sequences)
+        padded[:, :, : sequences.size(-1)].copy_(sequences)
 
         if num_return_sequences == 1:
-            outputs.sequences = outputs.sequences.reshape(-1, max_gen_seq_length)
+            padded = padded.reshape(-1, max_gen_seq_length)
 
-        return GenericOutputs(
-            sequences=outputs.sequences, sequences_scores=outputs.sequences_scores
-        )
+        return GenericOutputs(sequences=padded, sequences_scores=outputs.sequences_scores)

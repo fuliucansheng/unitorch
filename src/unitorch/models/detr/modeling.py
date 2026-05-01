@@ -1,103 +1,97 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
-import os
-import json
-import random
-import logging
+from typing import List, Optional, Union
+
 import torch
-import torch.nn.functional as F
-from torch import nn
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+import torch.nn as nn
+from transformers.loss.loss_for_object_detection import HungarianMatcher as DetrHungarianMatcher
+from transformers.loss.loss_for_object_detection import ImageLoss as DetrLoss
 from transformers.models.detr import DetrConfig
-from transformers.models.detr.modeling_detr import (
-    DetrModel,
-    DetrMLPPredictionHead,
-    DetrMaskHeadSmallConv,
-    DetrMHAttentionMap,
-)
-from transformers.loss.loss_for_object_detection import (
-    HungarianMatcher as DetrHungarianMatcher,
-    ImageLoss as DetrLoss,
-)
+from transformers.models.detr.modeling_detr import DetrMLPPredictionHead, DetrModel
+
 from unitorch.models import GenericModel, GenericOutputs
 from unitorch.utils import image_list_to_tensor
 
 
+def _xyxy_to_xywh(boxes: torch.Tensor) -> torch.Tensor:
+    """Convert [x1, y1, x2, y2] boxes to [cx, cy, w, h] format."""
+    return torch.stack([
+        (boxes[..., 0] + boxes[..., 2]) / 2,
+        (boxes[..., 1] + boxes[..., 3]) / 2,
+        boxes[..., 2] - boxes[..., 0],
+        boxes[..., 3] - boxes[..., 1],
+    ], dim=-1)
+
+
+def _xywh_to_xyxy(boxes: torch.Tensor) -> torch.Tensor:
+    """Convert [cx, cy, w, h] boxes to [x1, y1, x2, y2] format."""
+    return torch.stack([
+        boxes[..., 0] - boxes[..., 2] / 2,
+        boxes[..., 1] - boxes[..., 3] / 2,
+        boxes[..., 0] + boxes[..., 2] / 2,
+        boxes[..., 1] + boxes[..., 3] / 2,
+    ], dim=-1)
+
+
 class DetrForDetection(GenericModel):
+    """DETR model for object detection."""
+
     replace_keys_in_state_dict = {
-        "conv_encoder\.": "",
+        "conv_encoder\\.": "",
         "out_proj": "o_proj",
-        r'(?<!mlp\.)fc1': "mlp.fc1",
-        r'(?<!mlp\.)fc2': "mlp.fc2",
+        r"(?<!mlp\.)fc1": "mlp.fc1",
+        r"(?<!mlp\.)fc2": "mlp.fc2",
     }
+
     def __init__(
         self,
         config_path: str,
         num_classes: Optional[int] = None,
-    ):
+    ) -> None:
         super().__init__()
-        config = DetrConfig.from_json_file(config_path)
-
-        self.model = DetrModel(config)
+        self.config = DetrConfig.from_json_file(config_path)
         if num_classes is not None:
-            config.num_labels = num_classes
-        self.class_labels_classifier = nn.Linear(config.d_model, config.num_labels + 1)
+            self.config.num_labels = num_classes
+
+        self.model = DetrModel(self.config)
+        self.class_labels_classifier = nn.Linear(self.config.d_model, self.config.num_labels + 1)
         self.bbox_predictor = DetrMLPPredictionHead(
-            input_dim=config.d_model,
-            hidden_dim=config.d_model,
+            input_dim=self.config.d_model,
+            hidden_dim=self.config.d_model,
             output_dim=4,
             num_layers=3,
         )
-        self.config = config
         self.init_weights()
 
-        # modules for loss
-        self.enable_auxiliary_loss = config.auxiliary_loss
+        self.enable_auxiliary_loss = self.config.auxiliary_loss
         matcher = DetrHungarianMatcher(
-            class_cost=config.class_cost,
-            bbox_cost=config.bbox_cost,
-            giou_cost=config.giou_cost,
+            class_cost=self.config.class_cost,
+            bbox_cost=self.config.bbox_cost,
+            giou_cost=self.config.giou_cost,
         )
-        losses = ["labels", "boxes", "cardinality"]
         self.criterion = DetrLoss(
             matcher=matcher,
-            num_classes=config.num_labels,
-            eos_coef=config.eos_coefficient,
-            losses=losses,
+            num_classes=self.config.num_labels,
+            eos_coef=self.config.eos_coefficient,
+            losses=["labels", "boxes", "cardinality"],
         )
         self.weight_dict = {
             "loss_ce": 1,
-            "loss_bbox": config.bbox_loss_coefficient,
-            "loss_giou": config.giou_loss_coefficient,
+            "loss_bbox": self.config.bbox_loss_coefficient,
+            "loss_giou": self.config.giou_loss_coefficient,
         }
         if self.enable_auxiliary_loss:
-            aux_weight_dict = {}
-            for i in range(config.decoder_layers - 1):
-                aux_weight_dict.update(
-                    {k + f"_{i}": v for k, v in self.weight_dict.items()}
-                )
+            aux_weight_dict = {
+                f"{k}_{i}": v
+                for i in range(self.config.decoder_layers - 1)
+                for k, v in self.weight_dict.items()
+            }
             self.weight_dict.update(aux_weight_dict)
 
-    @property
-    def dtype(self):
-        """
-        `torch.dtype`: which dtype the parameters are (assuming that all the parameters are the same dtype).
-        """
-
-        return next(self.parameters()).dtype
-
-    @property
-    def device(self):
-        """
-        `torch.device`: The device on which the module is (assuming that all the module parameters are on the same device).
-        """
-        return next(self.parameters()).device
-
-    def _set_aux_loss(self, outputs_class, outputs_coord):
-        # this is a workaround to make torchscript happy, as torchscript
-        # doesn't support dictionary with non-homogeneous values, such
-        # as a dict having both a Tensor and a list.
+    def _set_aux_loss(
+        self, outputs_class: torch.Tensor, outputs_coord: torch.Tensor
+    ) -> list:
         return [
             {"logits": a, "pred_boxes": b}
             for a, b in zip(outputs_class[:-1], outputs_coord[:-1])
@@ -108,7 +102,7 @@ class DetrForDetection(GenericModel):
         images: Union[List[torch.Tensor], torch.Tensor],
         bboxes: Union[List[torch.Tensor], torch.Tensor],
         classes: Union[List[torch.Tensor], torch.Tensor],
-    ):
+    ) -> torch.Tensor:
         if not isinstance(images, torch.Tensor):
             images = image_list_to_tensor(images)
         assert images.dim() == 4
@@ -116,99 +110,60 @@ class DetrForDetection(GenericModel):
         outputs = self.model(images.to(self.dtype))
         sequence_output = outputs[0]
 
-        # class logits + predicted bounding boxes
         logits = self.class_labels_classifier(sequence_output)
         pred_boxes = self.bbox_predictor(sequence_output).sigmoid()
-        outputs_loss = {}
-        outputs_loss["logits"] = logits
-        outputs_loss["pred_boxes"] = pred_boxes
+        outputs_loss = {"logits": logits, "pred_boxes": pred_boxes}
+
         if self.enable_auxiliary_loss:
             intermediate = outputs[4]
-            outputs_class = self.class_labels_classifier(intermediate)
-            outputs_coord = self.bbox_predictor(intermediate).sigmoid()
-            auxiliary_outputs = self._set_aux_loss(
-                outputs_class,
-                outputs_coord,
+            outputs_loss["auxiliary_outputs"] = self._set_aux_loss(
+                self.class_labels_classifier(intermediate),
+                self.bbox_predictor(intermediate).sigmoid(),
             )
-            outputs_loss["auxiliary_outputs"] = auxiliary_outputs
-        xyxy2xywh = lambda x: torch.stack(
-            [
-                (x[..., 0] + x[..., 2]) / 2,
-                (x[..., 1] + x[..., 3]) / 2,
-                x[..., 2] - x[..., 0],
-                x[..., 3] - x[..., 1],
-            ],
-            -1,
-        )
-        bboxes = [xyxy2xywh(bbox) for bbox in bboxes]
-        labels = [{"class_labels": c, "boxes": b} for b, c in zip(bboxes, classes)]
+
+        labels = [
+            {"class_labels": c, "boxes": _xyxy_to_xywh(b)}
+            for b, c in zip(bboxes, classes)
+        ]
         loss_dict = self.criterion(outputs_loss, labels)
-        loss = sum(
+        return sum(
             loss_dict[k] * self.weight_dict[k]
-            for k in loss_dict.keys()
+            for k in loss_dict
             if k in self.weight_dict
         )
-        return loss
 
     @torch.no_grad()
     def detect(
         self,
         images: Union[List[torch.Tensor], torch.Tensor],
-        norm_bboxes: Optional[bool] = False,
-        threshold: Optional[float] = 0.5,
-    ):
+        norm_bboxes: bool = False,
+        threshold: float = 0.5,
+    ) -> GenericOutputs:
         image_sizes = [(img.size(-2), img.size(-1)) for img in images]
         if not isinstance(images, torch.Tensor):
             images = image_list_to_tensor(images)
         assert images.dim() == 4
 
         outputs = self.model(images.to(self.dtype))
-        sequence_output = outputs[0]
+        logits = self.class_labels_classifier(outputs[0]).softmax(dim=-1)
+        pred_boxes = [_xywh_to_xyxy(b) for b in self.bbox_predictor(outputs[0]).sigmoid()]
 
-        # class logits + predicted bounding boxes
-        logits = self.class_labels_classifier(sequence_output)
-        pred_boxes = self.bbox_predictor(sequence_output).sigmoid()
+        scores, classes = zip(*[p.max(-1) for p in logits])
 
-        logits = logits.softmax(dim=-1)
-
-        scores, classes = list(zip(*[p.max(-1) for p in logits]))
-        xywh2xyxy = lambda x: torch.stack(
-            [
-                x[..., 0] - x[..., 2] / 2,
-                x[..., 1] - x[..., 3] / 2,
-                x[..., 0] + x[..., 2] / 2,
-                x[..., 1] + x[..., 3] / 2,
-            ],
-            -1,
-        )
-        pred_boxes = [xywh2xyxy(bbox) for bbox in pred_boxes]
-        if not norm_bboxes:
-            sizes = image_sizes
+        if norm_bboxes:
+            bboxes = pred_boxes
+        else:
             bboxes = [
                 b * torch.tensor([s[1], s[0], s[1], s[0]]).to(b)
-                for b, s in zip(pred_boxes, sizes)
+                for b, s in zip(pred_boxes, image_sizes)
             ]
-        else:
-            bboxes = pred_boxes
 
-        bboxes, scores, classes = list(
-            zip(
-                *[
-                    (
-                        b[(c != self.config.num_labels) & (s > threshold)],
-                        s[(c != self.config.num_labels) & (s > threshold)],
-                        c[(c != self.config.num_labels) & (s > threshold)],
-                    )
-                    for b, s, c in zip(bboxes, scores, classes)
-                ]
-            )
-        )
+        keep = [
+            (c != self.config.num_labels) & (s > threshold)
+            for s, c in zip(scores, classes)
+        ]
+        bboxes = [b[m] for b, m in zip(bboxes, keep)]
+        scores = [s[m] for s, m in zip(scores, keep)]
+        classes = [c[m] for c, m in zip(classes, keep)]
 
-        outputs = dict(
-            {
-                "bboxes": list(bboxes),
-                "scores": list(scores),
-                "classes": list(classes),
-            }
-        )
-        return GenericOutputs(outputs)
+        return GenericOutputs(bboxes=bboxes, scores=scores, classes=classes)

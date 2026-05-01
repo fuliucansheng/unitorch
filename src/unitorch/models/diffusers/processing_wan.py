@@ -1,14 +1,12 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
-import os
-import cv2
 import torch
+import cv2
 import json
-import numpy as np
 from PIL import Image
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
-from transformers import CLIPTokenizer, T5Tokenizer, CLIPImageProcessor
+from typing import List, Optional, Tuple, Union
+from transformers import T5Tokenizer
 from torchvision.transforms import (
     Resize,
     CenterCrop,
@@ -22,7 +20,6 @@ from torchvision.transforms import (
 from diffusers.image_processor import VaeImageProcessor
 from unitorch.models import (
     HfTextClassificationProcessor,
-    HfImageClassificationProcessor,
     GenericOutputs,
 )
 

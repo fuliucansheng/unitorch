@@ -1,141 +1,109 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
+import logging
 import os
 import re
-import json
-import torch
-import logging
-import torch.nn as nn
+from typing import Dict, List, Optional, Union
+
 import safetensors
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
-from collections import OrderedDict
+import torch
+import torch.nn as nn
 from transformers.utils import ModelOutput as GenericOutputs
+
 from unitorch import hf_cached_path
 from unitorch.utils import (
-    replace,
-    load_weight,
     is_diffusers_available,
     is_megatron_available,
+    load_weight,
+    replace,
 )
 
 
 class CheckpointMixin:
+    """Mixin that adds checkpoint save/load and pretrained-weight loading to a model."""
+
     checkpoint_name = "pytorch_model.bin"
-    replace_keys_in_state_dict = {}
-    prefix_keys_in_state_dict = {}
+    replace_keys_in_state_dict: Dict[str, str] = {}
+    prefix_keys_in_state_dict: Dict[str, str] = {}
 
     def from_checkpoint(
         self,
         ckpt_dir: str,
         weight_name: Optional[str] = None,
         **kwargs,
-    ):
-        """
-        Load model weights from a checkpoint.
-
-        Args:
-            ckpt_dir (str): Directory path of the checkpoint.
-            weight_name (str): Name of the weight file.
-
-        Returns:
-            None
-        """
-        if weight_name is None:
-            weight_name = self.checkpoint_name
+    ) -> None:
+        """Load model weights from *ckpt_dir*."""
+        weight_name = weight_name or self.checkpoint_name
         weight_path = os.path.join(ckpt_dir, weight_name)
         if not os.path.exists(weight_path):
             return
-
         if weight_path.endswith(".safetensors"):
             state_dict = safetensors.torch.load_file(weight_path)
         else:
-            state_dict = torch.load(weight_path, map_location="cpu")
+            state_dict = torch.load(weight_path, map_location="cpu", weights_only=False)
         self.load_state_dict(state_dict)
-        logging.info(
-            f"{type(self).__name__} model load weight from checkpoint {weight_path}"
-        )
+        logging.info("%s loaded weights from %s", type(self).__name__, weight_path)
 
     def save_checkpoint(
         self,
         ckpt_dir: str,
         weight_name: Optional[str] = None,
         **kwargs,
-    ):
-        """
-        Save the model's current state as a checkpoint.
-
-        Args:
-            ckpt_dir (str): Directory path to save the checkpoint.
-            weight_name (str): Name of the weight file.
-
-        Returns:
-            None
-        """
-        if weight_name is None:
-            weight_name = self.checkpoint_name
-
-        state_dict = self.state_dict()
+    ) -> None:
+        """Save model weights to *ckpt_dir*."""
+        weight_name = weight_name or self.checkpoint_name
         weight_path = os.path.join(ckpt_dir, weight_name)
+        state_dict = self.state_dict()
         if weight_path.endswith(".safetensors"):
             safetensors.torch.save_file(state_dict, weight_path)
         else:
             torch.save(state_dict, weight_path)
-        logging.info(f"{type(self).__name__} model save checkpoint to {weight_path}")
+        logging.info("%s saved checkpoint to %s", type(self).__name__, weight_path)
 
     def from_pretrained(
         self,
-        weight_path: Union[str, List[str]] = None,
-        state_dict: Union[Dict, List[Dict]] = None,
-        replace_keys: Optional[Dict] = dict(),
-        prefix_keys: Optional[Dict] = dict(),
-    ):
-        """
-        Load pretrained weights into the model.
+        weight_path: Optional[Union[str, List[str]]] = None,
+        state_dict: Optional[Union[Dict, List[Dict]]] = None,
+        replace_keys: Optional[Dict[str, str]] = None,
+        prefix_keys: Optional[Dict[str, str]] = None,
+    ) -> None:
+        """Load pretrained weights into the model.
 
         Args:
-            weight_path (str or List[str]): Path(s) to the pretrained weight file(s).
-            state_dict (Dict or List[Dict]): Pretrained state_dict(s) to load weights from.
-            replace_keys (Dict): Dictionary mapping keys in the pretrained state_dict to the model's keys.
-            prefix_keys (Dict): Dictionary prefix keys in the pretrained state_dict to the model's keys.
-
-        Returns:
-            None
+            weight_path: Path(s) to pretrained weight file(s).
+            state_dict: Pretrained state dict(s) to load from.
+            replace_keys: Regex substitution rules ``{pattern: replacement}``
+                applied to each key before matching.
+            prefix_keys: Regex prefix rules ``{pattern: prefix}`` — the first
+                matching pattern prepends *prefix* to the key.
         """
-        assert weight_path or state_dict, "weight_path or state_dict must be set"
+        assert weight_path or state_dict, "weight_path or state_dict must be provided"
 
-        # Load state_dict(s) based on the provided weight_path or state_dict
-        state_dicts = []
+        replace_keys = {**self.replace_keys_in_state_dict, **(replace_keys or {})}
+        prefix_keys = {**self.prefix_keys_in_state_dict, **(prefix_keys or {})}
+
+        state_dicts: List[Dict] = []
         if weight_path:
             if isinstance(weight_path, str):
                 weight_path = [weight_path]
             for path in weight_path:
-                logging.debug(f"Loading weights from {path}")
-            state_dicts += [load_weight(path) for path in weight_path]
-
+                logging.debug("Loading weights from %s", path)
+            state_dicts += [load_weight(p) for p in weight_path]
         if state_dict:
             state_dicts += state_dict if isinstance(state_dict, list) else [state_dict]
 
-        self_state_dict = self.state_dict()  # Get the current state_dict of the model
-        load_keys = []  # Keep track of the keys loaded from the state_dict(s)
-        non_load_keys = []  # Keep track of the keys not loaded from the state_dict(s)
+        self_state_dict = self.state_dict()
+        load_keys: List[str] = []
 
-        if isinstance(self.replace_keys_in_state_dict, dict):
-            replace_keys = {**self.replace_keys_in_state_dict, **replace_keys}
-
-        if isinstance(self.prefix_keys_in_state_dict, dict):
-            prefix_keys = {**self.prefix_keys_in_state_dict, **prefix_keys}
-
-        # Iterate over the state_dict(s) and load the matching keys into the model's state_dict
-        for _state_dict in state_dicts:
-            if not _state_dict:
+        for sd in state_dicts:
+            if not sd:
                 continue
-            for key, value in list(_state_dict.items()):
-                for rkey, prefix in prefix_keys.items():
+            for key, value in sd.items():
+                for rkey, pfx in prefix_keys.items():
                     if re.match(rkey, key):
-                        key = prefix + key
+                        key = pfx + key
                         break
-
                 for rkey, nkey in replace_keys.items():
                     key = re.sub(rkey, nkey, key)
                 if key in self_state_dict and value.shape == self_state_dict[key].shape:
@@ -144,89 +112,72 @@ class CheckpointMixin:
                         load_keys.append(key)
                 else:
                     logging.debug(
-                        f"Key {key} in pretrained weights {value.shape} does not match model's state_dict {self_state_dict.get(key, torch.empty(0)).shape}."
+                        "Key %s with shape %s does not match model shape %s",
+                        key,
+                        value.shape,
+                        self_state_dict.get(key, torch.empty(0)).shape,
                     )
-                    non_load_keys.append(key)
 
-        self.load_state_dict(self_state_dict, False)
-        load_percent = (
-            len(load_keys) / len(self_state_dict) * 100
-        )  # Calculate the percentage of loaded keys
+        self.load_state_dict(self_state_dict, strict=False)
         missed_keys = set(self_state_dict.keys()) - set(load_keys)
         for key in missed_keys:
             logging.debug(
-                f"{type(self).__name__} key {key} not found in pretrained weights. shape: {self_state_dict[key].shape}"
+                "%s key %s not in pretrained weights (shape %s)",
+                type(self).__name__,
+                key,
+                self_state_dict[key].shape,
             )
-        logging.info(f"{type(self).__name__} loaded weights ({int(load_percent)}%)")
+        load_percent = len(load_keys) / len(self_state_dict) * 100 if self_state_dict else 0
+        logging.info("%s loaded weights (%d%%)", type(self).__name__, int(load_percent))
 
 
 class GenericModel(nn.Module, CheckpointMixin):
-    def __init__(self):
+    """Base class for all unitorch models."""
+
+    def __init__(self) -> None:
         super().__init__()
-        pass
 
-    def _init_weights(self, module):
-        """
-        Initialize the weights of the given module.
-
-        Args:
-            module (nn.Module): The module to initialize weights for.
-        """
+    def _init_weights(self, module: nn.Module) -> None:
         if isinstance(module, (nn.Linear, nn.Embedding)):
             module.weight.data.normal_(mean=0.0, std=0.02)
-
         if isinstance(module, nn.LayerNorm):
             module.bias.data.zero_()
             module.weight.data.fill_(1.0)
-
         if isinstance(module, nn.Linear) and module.bias is not None:
             module.bias.data.zero_()
 
-    def init_weights(self):
-        """
-        Initialize the weights of the model.
-        """
+    def init_weights(self) -> None:
+        """Initialise all submodule weights with the default scheme."""
         self.apply(self._init_weights)
 
     @property
     def dtype(self) -> torch.dtype:
-        """
-        Returns the data type of the model's parameters.
-
-        Returns:
-            torch.dtype: The data type of the model's parameters.
-        """
+        """Data type of the model's parameters."""
         return next(self.parameters()).dtype
 
     @property
-    def device(self):
-        """
-        Returns the device of the model's parameters.
-
-        Returns:
-            torch.device: The device of the model's parameters.
-        """
+    def device(self) -> torch.device:
+        """Device of the model's parameters."""
         return next(self.parameters()).device
 
 
 from unitorch.models.processing_utils import (
-    HfTextGenerationProcessor,
-    HfTextClassificationProcessor,
-    HfLlmProcessor,
     HfImageClassificationProcessor,
+    HfLlmProcessor,
+    HfTextClassificationProcessor,
+    HfTextGenerationProcessor,
 )
 from unitorch.models.modeling_ema import ExponentialMovingAverage
 from unitorch.models.onnx import GenericOnnxModel
 
-# import models
 import unitorch.models.bart
 import unitorch.models.beit
 import unitorch.models.bert
 import unitorch.models.blip
 import unitorch.models.chinese_clip
 import unitorch.models.clip
-import unitorch.models.dpt
 import unitorch.models.dinov2
+import unitorch.models.dpt
 import unitorch.models.grounding_dino
 import unitorch.models.kolors
 import unitorch.models.llama
@@ -236,6 +187,7 @@ import unitorch.models.mbart
 import unitorch.models.mistral
 import unitorch.models.onnx
 import unitorch.models.pegasus
+import unitorch.models.peft
 import unitorch.models.qwen
 import unitorch.models.roberta
 import unitorch.models.segformer
@@ -246,7 +198,6 @@ import unitorch.models.visualbert
 import unitorch.models.vit
 import unitorch.models.xlm_roberta
 import unitorch.models.xpegasus
-import unitorch.models.peft
 
 if is_diffusers_available():
     import unitorch.models.diffusers

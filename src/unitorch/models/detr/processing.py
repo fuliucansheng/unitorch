@@ -1,104 +1,64 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
-from hmac import new
-import os
-import torch
+from typing import List, Optional
+
 import numpy as np
+import torch
 from PIL import Image
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
-from torchvision.transforms import Resize, CenterCrop, ToTensor, Normalize, Compose
-from transformers import DetrImageProcessor, DetrImageProcessorPil
-from transformers.image_utils import ChannelDimension
-from unitorch.utils import resize_shortest_edge, pop_value
+from transformers import DetrImageProcessorPil
+
 from unitorch.models import GenericOutputs
 
 
-class DetrProcessor(object):
+class DetrProcessor:
+    """Image processor for DETR detection and segmentation models."""
+
     def __init__(
         self,
         vision_config_path: str,
-        min_size_test: Optional[int] = 800,
-        max_size_test: Optional[int] = 1333,
-    ):
-        """
-        Args:
-            vision_config_path: vision config path to detr processor
-            min_size_test: resize shortest edge parameters
-            max_size_test: resize shortest edge parameters
-        """
+        min_size_test: int = 800,
+        max_size_test: int = 1333,
+    ) -> None:
         self.vision_processor = DetrImageProcessorPil.from_json_file(vision_config_path)
-
-        self.image_mean = self.vision_processor.image_mean
-        self.image_std = self.vision_processor.image_std
         self.min_size_test = min_size_test
         self.max_size_test = max_size_test
 
-    def image(
-        self,
-        image: Image.Image,
-    ):
-        """
-        Args:
-            image: input image
-        """
+    def image(self, image: Image.Image) -> GenericOutputs:
+        """Preprocess a single image and return pixel values with original size."""
         width, height = image.size
-        image = self.vision_processor.preprocess(
-            images=image,
-            return_tensors="pt",
+        pixel_values = self.vision_processor.preprocess(
+            images=image, return_tensors="pt"
         ).pixel_values.squeeze(0)
-        return GenericOutputs(
-            image=image,
-            sizes=torch.tensor([height, width]),
-        )
+        return GenericOutputs(image=pixel_values, sizes=torch.tensor([height, width]))
 
     def detection(
         self,
         image: Image.Image,
         bboxes: List[List[float]],
         classes: List[int],
-    ):
-        """
-        Args:
-            image: input image
-            bboxes: bboxes to image
-            classes: class to each bbox
-        """
+    ) -> GenericOutputs:
+        """Preprocess an image and normalise bounding boxes for detection training."""
         outputs = self.image(image)
-        # new_h, new_w = outputs.image.size()[1:]
         org_h, org_w = outputs.sizes
-        image = outputs.image
-        bboxes = torch.tensor(bboxes).float()
-        bboxes[:, 0] = bboxes[:, 0] / org_w
-        bboxes[:, 1] = bboxes[:, 1] / org_h
-        bboxes[:, 2] = bboxes[:, 2] / org_w
-        bboxes[:, 3] = bboxes[:, 3] / org_h
-        classes = torch.tensor(classes)
+        bboxes = torch.tensor(bboxes, dtype=torch.float)
         if bboxes.dim() == 1:
             bboxes = bboxes.unsqueeze(0)
-
-        assert (
-            bboxes.size(-1) == 4 and classes.dim() == 1 and len(classes) == len(bboxes)
-        )
-        return GenericOutputs(image=image, bboxes=bboxes, classes=classes)
+        scale = torch.tensor([org_w, org_h, org_w, org_h], dtype=torch.float)
+        bboxes = bboxes / scale
+        classes = torch.tensor(classes)
+        assert bboxes.size(-1) == 4 and classes.dim() == 1 and len(classes) == len(bboxes)
+        return GenericOutputs(image=outputs.image, bboxes=bboxes, classes=classes)
 
     def segmentation(
         self,
         image: Image.Image,
         gt_image: Image.Image,
         num_classes: Optional[int] = None,
-    ):
-        """
-        Args:
-            image: input image
-            gt_image: ground truth image
-            num_classes: num classes to classification
-        """
-        image = self.image(image).image
-        gt_image = np.array(gt_image)
+    ) -> GenericOutputs:
+        """Preprocess an image and its ground-truth segmentation mask."""
+        pixel_values = self.image(image).image
+        gt = np.array(gt_image)
         if num_classes is not None:
-            gt_image = np.minimum(gt_image, num_classes)
-        return GenericOutputs(
-            image=torch.tensor(image),
-            gt_image=torch.tensor(gt_image),
-        )
+            gt = np.minimum(gt, num_classes)
+        return GenericOutputs(image=pixel_values, gt_image=torch.tensor(gt))

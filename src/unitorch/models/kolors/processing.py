@@ -1,16 +1,9 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
-import os
-import torch
-import numpy as np
 from PIL import Image
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
-from torchvision.transforms import Resize, CenterCrop, ToTensor, Normalize, Compose
+from typing import Optional, Union
 from transformers import CLIPImageProcessor, CLIPTokenizer
-from transformers.image_utils import to_numpy_array, ChannelDimension
-from transformers.image_transforms import to_channel_dimension_format
-from unitorch.utils import pop_value
 from unitorch.models import (
     HfImageClassificationProcessor,
     HfTextClassificationProcessor,
@@ -28,14 +21,14 @@ class KolorsMPSProcessor(HfImageClassificationProcessor, HfTextClassificationPro
         position_start_id: Optional[int] = 0,
     ):
         """
-        Initializes the ClipProcessor.
+        Initializes the KolorsMPSProcessor.
 
         Args:
-            vocab_path (str): The path to the vocabulary file.
-            merge_path (str): The path to the merge file.
-            vision_config_path (str): The path to the vision configuration file.
-            max_seq_length (int, optional): The maximum sequence length for text inputs. Defaults to 128.
-            position_start_id (int, optional): The starting position ID for positional embeddings. Defaults to 0.
+            vocab_path (str, optional): Path to the vocabulary file.
+            merge_path (str, optional): Path to the merge file.
+            vision_config_path (str, optional): Path to the vision processor configuration file.
+            max_seq_length (int, optional): Maximum sequence length. Defaults to 77.
+            position_start_id (int, optional): Starting position ID. Defaults to 0.
         """
         if vision_config_path is not None:
             vision_processor = CLIPImageProcessor.from_json_file(vision_config_path)
@@ -43,16 +36,10 @@ class KolorsMPSProcessor(HfImageClassificationProcessor, HfTextClassificationPro
             vision_processor = CLIPImageProcessor.from_pretrained(
                 "laion/CLIP-ViT-H-14-laion2B-s32B-b79K"
             )
-        HfImageClassificationProcessor.__init__(
-            self,
-            vision_processor=vision_processor,
-        )
+        HfImageClassificationProcessor.__init__(self, vision_processor=vision_processor)
 
         if vocab_path is not None and merge_path is not None:
-            tokenizer = CLIPTokenizer(
-                vocab_file=vocab_path,
-                merges_file=merge_path,
-            )
+            tokenizer = CLIPTokenizer(vocab_file=vocab_path, merges_file=merge_path)
         else:
             tokenizer = CLIPTokenizer.from_pretrained(
                 "laion/CLIP-ViT-H-14-laion2B-s32B-b79K"
@@ -74,19 +61,17 @@ class KolorsMPSProcessor(HfImageClassificationProcessor, HfTextClassificationPro
         max_seq_length: Optional[int] = None,
     ):
         """
-        Performs text classification.
+        Processes text for classification.
 
         Args:
-            text (str): The input text.
-            max_seq_length (int, optional): The maximum sequence length for text inputs. Defaults to None.
+            text (str): Input text.
+            max_seq_length (int, optional): Maximum sequence length. Defaults to None.
 
         Returns:
-            GenericOutputs: An object containing the processed inputs.
+            GenericOutputs: Processed text inputs.
         """
         outputs = HfTextClassificationProcessor.classification(
-            self,
-            text=text,
-            max_seq_length=max_seq_length,
+            self, text=text, max_seq_length=max_seq_length
         )
         return GenericOutputs(
             input_ids=outputs.input_ids,
@@ -99,22 +84,16 @@ class KolorsMPSProcessor(HfImageClassificationProcessor, HfTextClassificationPro
         image: Union[Image.Image, str],
     ):
         """
-        Performs image classification.
+        Processes an image for classification.
 
         Args:
-            image (PIL.Image.Image): The input image.
+            image (PIL.Image.Image or str): Input image or path.
 
         Returns:
-            GenericOutputs: An object containing the processed inputs.
+            GenericOutputs: Processed image inputs.
         """
-        outputs = HfImageClassificationProcessor.classification(
-            self,
-            image=image,
-        )
-
-        return GenericOutputs(
-            pixel_values=outputs.pixel_values,
-        )
+        outputs = HfImageClassificationProcessor.classification(self, image=image)
+        return GenericOutputs(pixel_values=outputs.pixel_values)
 
     def classification(
         self,
@@ -124,28 +103,20 @@ class KolorsMPSProcessor(HfImageClassificationProcessor, HfTextClassificationPro
         max_seq_length: Optional[int] = None,
     ):
         """
-        Performs classification using text and image inputs.
+        Processes text, image, and condition for multimodal classification.
 
         Args:
-            text (str): The input text.
-            image (PIL.Image.Image): The input image.
-            max_seq_length (int, optional): The maximum sequence length for text inputs. Defaults to None.
+            text (str): Input text.
+            image (PIL.Image.Image or str): Input image or path.
+            condition (str): Condition text.
+            max_seq_length (int, optional): Maximum sequence length. Defaults to None.
 
         Returns:
-            GenericOutputs: An object containing the processed inputs.
+            GenericOutputs: Processed text, image, and condition inputs.
         """
-        text_outputs = self.text_classification(
-            text=text,
-            max_seq_length=max_seq_length,
-        )
-        pixel_outputs = self.image_classification(
-            image=image,
-        )
-        condition_outputs = self.text_classification(
-            text=condition,
-            max_seq_length=max_seq_length,
-        )
-
+        text_outputs = self.text_classification(text=text, max_seq_length=max_seq_length)
+        pixel_outputs = self.image_classification(image=image)
+        condition_outputs = self.text_classification(text=condition, max_seq_length=max_seq_length)
         return GenericOutputs(
             input_ids=text_outputs.input_ids,
             attention_mask=text_outputs.attention_mask,

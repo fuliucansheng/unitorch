@@ -2,8 +2,7 @@
 # Licensed under the MIT License.
 
 import torch
-from PIL import Image
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import Optional
 from torch import autocast
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.segformer import (
@@ -74,12 +73,10 @@ class SegformerForSegmentation(_SegformerForSegmentation):
         outputs = super().forward(
             pixel_values=pixel_values,
         )
-        # batch, width, height, num_classes -> batch, num_classes, width, height + batch, num_classes
         batch = outputs.logits.shape[0]
         num_classes = outputs.logits.shape[-1]
 
         masks = torch.softmax(outputs.logits, dim=1)
-        # set the logit of not the highest class to 0
         masks = masks * (masks == masks.max(dim=1, keepdim=True).values).float()
         classes = (
             torch.arange(num_classes, device=masks.device)

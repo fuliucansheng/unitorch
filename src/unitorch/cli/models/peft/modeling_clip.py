@@ -1,10 +1,8 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
-import os
-import logging
 import torch
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import List, Optional, Union
 from torch import autocast
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.peft import (
@@ -17,8 +15,7 @@ from unitorch.cli import (
     add_default_section_for_function,
     register_model,
 )
-from unitorch.cli.models import generation_model_decorator
-from unitorch.cli.models import ClassificationOutputs, GenerationOutputs, LossOutputs
+from unitorch.cli.models import ClassificationOutputs
 from unitorch.cli.models.clip import pretrained_clip_infos
 
 
@@ -34,19 +31,6 @@ class ClipLoraForMatching(_ClipLoraForMatching):
         fan_in_fan_out: Optional[bool] = True,
         target_modules: Optional[Union[List[str], str]] = ["q_proj", "v_proj"],
     ):
-        """
-        Initialize the BloomLoraForClassification model.
-
-        Args:
-            config_path (str): The path to the model configuration file.
-            lora_r (int, optional): The number of Lora ranks. Defaults to 16.
-            lora_alpha (int, optional): The Lora alpha value. Defaults to 32.
-            lora_dropout (float, optional): The Lora dropout rate. Defaults to 0.05.
-            fan_in_fan_out (bool, optional): Whether to use fan-in/fan-out weight initialization. Defaults to True.
-            target_modules (Union[List[str], str], optional): The target modules for Lora regularization. Defaults to ["q_proj", "v_proj"].
-            num_classes (int, optional): The number of classes. Defaults to 1.
-            gradient_checkpointing (bool, optional): Whether to use gradient checkpointing during training. Defaults to False.
-        """
         super().__init__(
             config_path=config_path,
             projection_dim=projection_dim,
@@ -60,16 +44,6 @@ class ClipLoraForMatching(_ClipLoraForMatching):
     @classmethod
     @add_default_section_for_init("core/model/matching/peft/lora/clip")
     def from_core_configure(cls, config, **kwargs):
-        """
-        Create an instance of BloomLoraForClassification from a core configuration.
-
-        Args:
-            config: The core configuration.
-            **kwargs: Additional keyword arguments.
-
-        Returns:
-            BloomLoraForClassification: The initialized BloomLoraForClassification instance.
-        """
         config.set_default_section("core/model/matching/peft/lora/clip")
         pretrained_name = config.getoption("pretrained_name", "clip-vit-base-patch16")
         config_path = config.getoption("config_path", None)
@@ -130,17 +104,6 @@ class ClipLoraForMatching(_ClipLoraForMatching):
         attention_mask: torch.Tensor,
         position_ids: torch.Tensor,
     ):
-        """
-        Perform forward pass of the BloomLoraForClassification model.
-
-        Args:
-            input_ids (torch.Tensor): The input IDs.
-            attention_mask (torch.Tensor, optional): The attention mask.
-            position_ids (torch.Tensor, optional): The position IDs.
-
-        Returns:
-            ClassificationOutputs: The output of the classification task.
-        """
         outputs = super().forward(
             input_ids=input_ids,
             pixel_values=pixel_values,

@@ -2,7 +2,7 @@
 # Licensed under the MIT License.
 
 import torch
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import List, Optional, Union
 from torch import autocast
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.grounding_dino import (
@@ -16,9 +16,7 @@ from unitorch.cli import (
 )
 from unitorch.cli.models import (
     detection_model_decorator,
-    segmentation_model_decorator,
     DetectionOutputs,
-    SegmentationOutputs,
     LossOutputs,
 )
 from unitorch.cli.models.grounding_dino import pretrained_grounding_dino_infos

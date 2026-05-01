@@ -2,7 +2,7 @@
 # Licensed under the MIT License.
 
 import torch
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import List, Optional, Union
 from torch import autocast
 
 from unitorch.models.peft.diffusers import (
@@ -13,12 +13,7 @@ from unitorch.models.peft.diffusers import (
     StableFluxDPOLoraForImageInpainting as _StableFluxDPOLoraForImageInpainting,
     StableFluxDPOLoraForKontext2ImageGeneration as _StableFluxDPOLoraForKontext2ImageGeneration,
 )
-from unitorch.utils import (
-    pop_value,
-    nested_dict_value,
-    is_bfloat16_available,
-    is_cuda_available,
-)
+from unitorch.utils import pop_value, nested_dict_value, is_bfloat16_available
 from unitorch.cli import (
     cached_path,
     add_default_section_for_init,
@@ -27,11 +22,7 @@ from unitorch.cli import (
 )
 from unitorch.cli.models import DiffusionOutputs, LossOutputs
 from unitorch.cli.models import diffusion_model_decorator
-from unitorch.cli.models.diffusers import (
-    pretrained_stable_infos,
-    pretrained_stable_extensions_infos,
-    load_weight,
-)
+from unitorch.cli.models.diffusers import pretrained_stable_infos, load_weight
 
 
 @register_model(

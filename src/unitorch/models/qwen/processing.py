@@ -1,26 +1,10 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
-import os
-import random
-from functools import partial
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
-
-import numpy as np
-import torch
-from transformers import Qwen2Tokenizer, AddedToken, Qwen2TokenizerFast
-from unitorch.utils import (
-    pop_value,
-    truncate_sequence_pair,
-    read_json_file,
-    get_added_token,
-)
-from unitorch.models import (
-    HfTextClassificationProcessor,
-    HfLlmProcessor,
-    HfTextGenerationProcessor,
-    GenericOutputs,
-)
+from typing import Dict, Optional
+from transformers import Qwen2TokenizerFast
+from unitorch.utils import read_json_file, get_added_token
+from unitorch.models import HfLlmProcessor
 
 
 class QWenProcessor(HfLlmProcessor):
@@ -34,17 +18,19 @@ class QWenProcessor(HfLlmProcessor):
         max_gen_seq_length: Optional[int] = 512,
     ):
         """
-        Initializes the ClipProcessor.
+        Initializes the QWenProcessor.
 
         Args:
-            vocab_path (str): The path to the vocabulary file.
-            merge_path (str): The path to the merge file.
-            max_seq_length (int, optional): The maximum sequence length for text inputs. Defaults to 262144.
+            tokenizer_file (str): Path to the tokenizer file.
+            tokenizer_config (str, optional): Path to the tokenizer config JSON file.
+            special_tokens_map (str, optional): Path to the special tokens map JSON file.
+            chat_template (str, optional): Path to the chat template JSON file.
+            max_seq_length (int, optional): Maximum sequence length. Defaults to 12800.
+            max_gen_seq_length (int, optional): Maximum generated sequence length. Defaults to 512.
         """
         tokenizer_config = read_json_file(tokenizer_config) if tokenizer_config else {}
-        special_tokens_map = (
-            read_json_file(special_tokens_map) if special_tokens_map else {}
-        )
+        special_tokens_map = read_json_file(special_tokens_map) if special_tokens_map else {}
+
         added_tokens_decoder = tokenizer_config.pop("added_tokens_decoder", {})
         tokenizer_config = {
             k: (
@@ -54,6 +40,7 @@ class QWenProcessor(HfLlmProcessor):
             )
             for k, v in tokenizer_config.items()
         }
+
         tokenizer = Qwen2TokenizerFast(
             tokenizer_file=tokenizer_file,
             **tokenizer_config,
@@ -63,14 +50,18 @@ class QWenProcessor(HfLlmProcessor):
             tokenizer.added_tokens_decoder[idx] = get_added_token(spec)
             tokenizer.added_tokens_encoder[token] = idx
 
-        special_tokens = {}
-        for name, spec in special_tokens_map.items():
-            special_tokens[name] = get_added_token(spec)
+        special_tokens = {
+            name: get_added_token(spec)
+            for name, spec in special_tokens_map.items()
+        }
         tokenizer.add_special_tokens(special_tokens)
+
         if chat_template:
             tokenizer.chat_template = read_json_file(chat_template)["chat_template"]
+
         tokenizer.cls_token = tokenizer.bos_token
         tokenizer.sep_token = tokenizer.eos_token
+
         super().__init__(
             tokenizer=tokenizer,
             max_seq_length=max_seq_length,

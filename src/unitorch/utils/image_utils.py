@@ -1,44 +1,41 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
-import io
-import requests
+from typing import Dict, List, Optional, Union
+
+import numpy as np
 import torch
 from PIL import Image
-from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
 
 
 def make_grid(
-    images: List[Image.Image], rows: int, cols: int, resize: Optional[List[int]] = None
+    images: List[Image.Image],
+    rows: int,
+    cols: int,
+    resize: Optional[List[int]] = None,
 ) -> Image.Image:
-    """
-    Combines a list of images into a grid layout.
+    """Arrange a list of images into a grid.
 
     Args:
-        images (List[Image.Image]): List of PIL Images to combine into a grid.
-        rows (int): Number of rows in the grid.
-        cols (int): Number of columns in the grid.
-        resize (Optional[List[int]], optional): Size to resize the images. Defaults to None.
+        images: PIL images to arrange; must contain exactly ``rows * cols`` items.
+        rows: Number of rows in the grid.
+        cols: Number of columns in the grid.
+        resize: ``[width, height]`` to resize each cell. Defaults to the size of
+                the first image.
 
     Returns:
-        Image.Image: PIL Image object representing the grid layout.
+        A single PIL image containing all inputs arranged in the grid.
 
     Raises:
-        AssertionError: If the number of images is not equal to the product of rows and cols.
+        AssertionError: If ``len(images) != rows * cols``.
     """
-    assert (
-        len(images) == rows * cols
-    ), "Number of images must be equal to the product of rows and cols."
-
-    if resize is not None:
-        w, h = resize
-    else:
-        w, h = images[0].size
-
+    assert len(images) == rows * cols, (
+        "Number of images must equal rows * cols."
+    )
+    w, h = resize if resize is not None else images[0].size
     grid = Image.new("RGB", (w * cols, h * rows))
     for i, image in enumerate(images):
         grid.paste(image, box=(w * (i % cols), h * (i // cols)))
-
     return grid
 
 
@@ -46,25 +43,23 @@ def resize_shortest_edge(
     image: Image.Image,
     short_size: List[int],
     max_size: int,
-):
-    """
-    Resize the image to the given short size and maximum size.
+) -> Image.Image:
+    """Resize *image* so its shortest edge fits within *short_size* and no edge exceeds *max_size*.
 
     Args:
-        image (Image.Image): Input image.
-        short_size (List[int]): Shortest edge size.
-        max_size (int): Maximum size.
+        image: Input PIL image.
+        short_size: ``[min, max]`` range for the shortest-edge length.
+        max_size: Hard upper bound for any edge length after scaling.
 
     Returns:
-        Image.Image: Resized image.
+        Resized PIL image.
     """
     w, h = image.size
-    size = min(w, h)
-    scale = min(short_size[0] / size, short_size[1] / size)
-    if scale * size > max_size:
-        scale = max_size / size
-    new_w, new_h = int(w * scale), int(h * scale)
-    return image.resize((new_w, new_h), resample=Image.LANCZOS)
+    shortest = min(w, h)
+    scale = min(short_size[0] / shortest, short_size[1] / shortest)
+    if scale * shortest > max_size:
+        scale = max_size / shortest
+    return image.resize((int(w * scale), int(h * scale)), resample=Image.LANCZOS)
 
 
 def image_list_to_tensor(
@@ -73,53 +68,56 @@ def image_list_to_tensor(
     pad_value: float = 0.0,
     padding_constraints: Optional[Dict[str, int]] = None,
 ) -> torch.Tensor:
-    """
-    Convert a list of images to a tensor.
+    """Batch a list of image tensors into a single padded tensor.
+
+    All tensors are right/bottom-padded to the maximum observed spatial size.
+    Optionally rounds dimensions up to the nearest multiple of *size_divisibility*.
 
     Args:
-        images (List[torch.Tensor]): List of images to convert to a tensor.
-        size_divisibility (int, optional): Size divisibility. Defaults to 0.
-        pad_value (float, optional): Padding value. Defaults to 0.0.
-        padding_constraints (Optional[Dict[str, int]], optional): Padding constraints. Defaults to None.
+        images: List of ``(C, H, W)`` tensors to batch.
+        size_divisibility: When > 0, pad spatial dimensions to a multiple of this value.
+        pad_value: Fill value used for padding.
+        padding_constraints: Unused minimum padding per side; defaults to all zeros.
 
     Returns:
-        torch.Tensor: Tensor representing the images.
+        A ``(N, C, H, W)`` tensor containing all images.
     """
     if padding_constraints is None:
         padding_constraints = {"top": 0, "bottom": 0, "left": 0, "right": 0}
-    max_size = tuple(max(s) for s in zip(*[img.shape for img in images]))
+
+    max_size = list(max(s) for s in zip(*[img.shape for img in images]))
     if size_divisibility > 0:
-        stride = size_divisibility
-        max_size = [(s + stride - 1) // stride * stride for s in max_size]
-    batch_shape = (len(images),) + max_size
-    batched_imgs = images[0].new_full(batch_shape, pad_value)
-    for img, pad in zip(images, batched_imgs):
-        pad[
-            : img.shape[0],
-            : img.shape[1],
-            : img.shape[2],
-        ] = img
-    return batched_imgs
+        max_size = [
+            (s + size_divisibility - 1) // size_divisibility * size_divisibility
+            for s in max_size
+        ]
+
+    batched = images[0].new_full((len(images), *max_size), pad_value)
+    for img, slot in zip(images, batched):
+        slot[: img.shape[0], : img.shape[1], : img.shape[2]] = img
+    return batched
 
 
-def numpy_to_pil(images):
+def numpy_to_pil(
+    images: "np.ndarray",
+) -> Union[Image.Image, List[Image.Image]]:
+    """Convert a NumPy array (single image or batch) to PIL image(s).
+
+    Args:
+        images: Float array with values in ``[0, 1]``. Shape ``(H, W, C)`` for a
+                single image or ``(N, H, W, C)`` for a batch.
+
+    Returns:
+        A single :class:`PIL.Image.Image` for a single input, or a list of them
+        for a batch.
     """
-    Convert a numpy image or a batch of images to a PIL image.
-    """
-    if images.ndim <= 3:
-        # single image
-        images = (images * 255).round().astype("uint8")
-        if images.shape[-1] == 1:
-            # special case for grayscale (single channel) images
-            return Image.fromarray(images.squeeze(), mode="L")
-        else:
-            return Image.fromarray(images)
-
     images = (images * 255).round().astype("uint8")
-    if images.shape[-1] == 1:
-        # special case for grayscale (single channel) images
-        pil_images = [Image.fromarray(image.squeeze(), mode="L") for image in images]
-    else:
-        pil_images = [Image.fromarray(image) for image in images]
 
-    return pil_images
+    if images.ndim <= 3:
+        if images.shape[-1] == 1:
+            return Image.fromarray(images.squeeze(), mode="L")
+        return Image.fromarray(images)
+
+    if images.shape[-1] == 1:
+        return [Image.fromarray(img.squeeze(), mode="L") for img in images]
+    return [Image.fromarray(img) for img in images]

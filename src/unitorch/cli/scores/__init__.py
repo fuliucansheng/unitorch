@@ -3,7 +3,7 @@
 
 import torch
 import torch.nn as nn
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import List, Optional, Union
 from unitorch.scores import (
     accuracy_score,
     recall_score,

@@ -2,7 +2,7 @@
 # Licensed under the MIT License.
 
 import re
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Dict, List, Optional, Union
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.llama import LlamaProcessor as _LlamaProcessor
 from unitorch.cli import (
@@ -13,7 +13,7 @@ from unitorch.cli import (
 )
 from unitorch.cli import WriterOutputs
 from unitorch.cli.models import (
-    TensorsInputs,
+    TensorInputs,
     GenerationOutputs,
     GenerationTargets,
 )
@@ -32,14 +32,6 @@ class LlamaProcessor(_LlamaProcessor):
         max_seq_length: Optional[int] = 128,
         max_gen_seq_length: Optional[int] = 128,
     ):
-        """
-        Initialize the LlamaProcessor.
-
-        Args:
-            vocab_path (str): The path to the vocabulary file.
-            max_seq_length (int, optional): The maximum sequence length. Defaults to 128.
-            max_gen_seq_length (int, optional): The maximum generated sequence length. Defaults to 128.
-        """
         super().__init__(
             tokenizer_file=tokenizer_file,
             tokenizer_config=tokenizer_config,
@@ -52,16 +44,6 @@ class LlamaProcessor(_LlamaProcessor):
     @classmethod
     @add_default_section_for_init("core/process/llama")
     def from_core_configure(cls, config, **kwargs):
-        """
-        Create an instance of LlamaProcessor from a core configuration.
-
-        Args:
-            config: The core configuration.
-            **kwargs: Additional keyword arguments.
-
-        Returns:
-            LlamaProcessor: An instance of LlamaProcessor.
-        """
         config.set_default_section("core/process/llama")
         pretrained_name = config.getoption("pretrained_name", "llama-7b")
 
@@ -127,23 +109,12 @@ class LlamaProcessor(_LlamaProcessor):
         text_pair: Optional[str] = None,
         max_seq_length: Optional[int] = None,
     ):
-        """
-        Process inputs for classification.
-
-        Args:
-            text (str): The input text.
-            text_pair (str, optional): The second input text for sequence pair classification. Defaults to None.
-            max_seq_length (int, optional): The maximum sequence length. Defaults to None.
-
-        Returns:
-            TensorsInputs: Processed tensors inputs.
-        """
         outputs = super().classification(
             text=text,
             text_pair=text_pair,
             max_seq_length=max_seq_length,
         )
-        return TensorsInputs(
+        return TensorInputs(
             input_ids=outputs.input_ids,
             attention_mask=outputs.attention_mask,
         )
@@ -154,21 +125,11 @@ class LlamaProcessor(_LlamaProcessor):
         text: str,
         max_seq_length: Optional[int] = None,
     ):
-        """
-        Preprocess the input text for generation tasks.
-
-        Args:
-            text (str): The input text.
-            max_seq_length (int, optional): The maximum sequence length. Defaults to None.
-
-        Returns:
-            TensorsInputs: The processed input tensors.
-        """
         outputs = super().generation_inputs(
             text=text,
             max_seq_length=max_seq_length,
         )
-        return TensorsInputs(input_ids=outputs.input_ids)
+        return TensorInputs(input_ids=outputs.input_ids)
 
     @register_process("core/process/llama/generation/labels")
     def _generation_labels(
@@ -176,16 +137,6 @@ class LlamaProcessor(_LlamaProcessor):
         text: str,
         max_gen_seq_length: Optional[int] = None,
     ):
-        """
-        Preprocess the target text for generation tasks.
-
-        Args:
-            text (str): The target text.
-            max_gen_seq_length (int, optional): The maximum generation sequence length. Defaults to None.
-
-        Returns:
-            GenerationTargets: The processed generation targets.
-        """
         outputs = super().generation_labels(
             text=text,
             max_gen_seq_length=max_gen_seq_length,
@@ -203,25 +154,13 @@ class LlamaProcessor(_LlamaProcessor):
         max_seq_length: Optional[int] = None,
         max_gen_seq_length: Optional[int] = None,
     ):
-        """
-        Preprocess the input and target texts for generation tasks.
-
-        Args:
-            text (str): The input text.
-            text_pair (str, optional): The paired input text. Defaults to None.
-            max_seq_length (int, optional): The maximum sequence length. Defaults to None.
-            max_gen_seq_length (int, optional): The maximum generation sequence length. Defaults to None.
-
-        Returns:
-            Tuple[TensorsInputs, GenerationTargets]: The processed input tensors and generation targets.
-        """
         outputs = super().generation(
             text=text,
             text_pair=text_pair,
             max_seq_length=max_seq_length,
             max_gen_seq_length=max_gen_seq_length,
         )
-        return TensorsInputs(
+        return TensorInputs(
             input_ids=outputs.input_ids,
             attention_mask=outputs.attention_mask,
         ), GenerationTargets(
@@ -239,7 +178,7 @@ class LlamaProcessor(_LlamaProcessor):
             messages=messages,
             max_seq_length=max_seq_length,
         )
-        return TensorsInputs(
+        return TensorInputs(
             input_ids=outputs.input_ids,
             attention_mask=outputs.attention_mask,
         ), GenerationTargets(
@@ -252,15 +191,6 @@ class LlamaProcessor(_LlamaProcessor):
         self,
         outputs: GenerationOutputs,
     ):
-        """
-        Detokenize the generated sequences.
-
-        Args:
-            outputs (GenerationOutputs): The generation outputs.
-
-        Returns:
-            WriterOutputs: The detokenized writer outputs.
-        """
         results = outputs.to_pandas()
         assert results.shape[0] == 0 or results.shape[0] == outputs.sequences.shape[0]
 

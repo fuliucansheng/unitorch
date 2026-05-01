@@ -77,7 +77,6 @@ Every model/pipeline class follows this pattern: `__init__` takes explicit args,
 - `models/` — 38+ model wrappers (each with `modeling.py`, `processing.py`), thin layers over HuggingFace Transformers
 - `cli/` — configuration-driven layer
   - `cli/models/` — model config adapters
-  - `cli/pipelines/` — data processing pipelines (classification, generation, detection, segmentation, etc.)
   - `cli/tasks/` — task runners
   - `cli/consoles/` — entry point implementations
   - `cli/fastapis/` — FastAPI endpoint definitions
@@ -97,9 +96,18 @@ Every model/pipeline class follows this pattern: `__init__` takes explicit args,
 | `UNITORCH_DEBUG` | `INFO` | Log level: OFF, INFO, DETAIL, CPU, ALL. CPU mode disables CUDA |
 | `UNITORCH_EXTENSIONS` | unset | Set to "NGRAM" to build CUDA extensions |
 
+## `@replace` Decorator
+
+Defined in `src/unitorch/utils/decorators.py`. Process-global monkey-patcher: replaces a target class across all loaded modules at import time, including rewriting subclass `__bases__`. Used to override upstream library behaviour (e.g. `diffusers`, `datasets`) without forking. Replacement classes inherit from the target and are named `<Original>V2` by convention. See `.claude/skills/replace-decorator.md` for full details.
+
+## Code Constraints
+
+> **No AutoClass — ever.**
+> All model and processor classes in this repo must be instantiated and defined explicitly using their full concrete class names. Using any HuggingFace AutoClass (`AutoModel`, `AutoModelForCausalLM`, `AutoTokenizer`, `AutoProcessor`, `AutoConfig`, `AutoFeatureExtractor`, etc.) is **strictly prohibited**. Every class definition and its implementation must be fully transparent and visible in source — no dynamic dispatch, no opaque factory resolution.
+
 ## Key Patterns
 
 - Models are thin wrappers around HuggingFace `transformers` classes — check upstream docs for model-specific behavior.
 - PEFT (LoRA/QLoRA) integration lives in `models/peft/` and is applied as a wrapper around base models.
 - Diffusion model support (Stable Diffusion, SDXL, ControlNet, Kolors) uses the `diffusers` library under `models/diffusers/`.
-- Config files use INI format with section names like `core/model`, `core/pipeline`, `core/task` to wire components together.
+- Config files use INI format with section names like `core/model`, `core/fastapi/pipeline`, `core/task` to wire components together.

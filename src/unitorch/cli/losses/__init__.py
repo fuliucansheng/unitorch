@@ -2,7 +2,7 @@
 # Licensed under the MIT License.
 
 import torch
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import Optional, Union
 from unitorch.losses import (
     CELoss as _CELoss,
     BCELoss as _BCELoss,

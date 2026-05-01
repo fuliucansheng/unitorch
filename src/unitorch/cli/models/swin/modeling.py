@@ -2,7 +2,7 @@
 # Licensed under the MIT License.
 
 import torch
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import Optional
 from torch import autocast
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.swin import (
@@ -11,10 +11,9 @@ from unitorch.models.swin import (
 from unitorch.cli import (
     cached_path,
     add_default_section_for_init,
-    add_default_section_for_function,
     register_model,
 )
-from unitorch.cli.models import ClassificationOutputs, LossOutputs
+from unitorch.cli.models import ClassificationOutputs
 from unitorch.cli.models.swin import pretrained_swin_infos
 
 
@@ -27,13 +26,6 @@ class SwinForImageClassification(_SwinForImageClassification):
         config_path: str,
         num_classes: Optional[int] = 1,
     ):
-        """
-        Initialize the SwinForImageClassification model.
-
-        Args:
-            config_path (str): The path to the model configuration file.
-            num_classes (Optional[int]): The number of classes for classification. Defaults to 1.
-        """
         super().__init__(
             config_path=config_path,
             num_classes=num_classes,
@@ -42,16 +34,6 @@ class SwinForImageClassification(_SwinForImageClassification):
     @classmethod
     @add_default_section_for_init("core/model/classification/swin")
     def from_core_configure(cls, config, **kwargs):
-        """
-        Create an instance of SwinForImageClassification from a core configuration.
-
-        Args:
-            config: The core configuration.
-            **kwargs: Additional keyword arguments.
-
-        Returns:
-            SwinForImageClassification: An instance of the SwinForImageClassification model.
-        """
         config.set_default_section("core/model/classification/swin")
         pretrained_name = config.getoption(
             "pretrained_name", "swin-tiny-patch4-window7-224"
@@ -85,14 +67,5 @@ class SwinForImageClassification(_SwinForImageClassification):
         self,
         pixel_values: torch.Tensor,
     ):
-        """
-        Perform forward pass of the SwinForImageClassification model.
-
-        Args:
-            pixel_values (torch.Tensor): The input pixel values of shape (batch_size, channels, height, width).
-
-        Returns:
-            ClassificationOutputs: The model outputs.
-        """
         outputs = super().forward(pixel_values=pixel_values)
         return ClassificationOutputs(outputs=outputs)
