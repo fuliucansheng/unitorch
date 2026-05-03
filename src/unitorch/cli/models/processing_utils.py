@@ -6,7 +6,7 @@ from typing import Dict, List, Optional, Union
 
 from unitorch.utils import pop_value
 from unitorch.cli import (
-    add_default_section_for_init,
+    config_defaults_init,
     register_process,
 )
 from unitorch.cli import WriterOutputs
@@ -40,8 +40,8 @@ class PreProcessor:
         self.map_dict = map_dict if map_dict is not None else {}
 
     @classmethod
-    @add_default_section_for_init("core/process")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/process")
+    def from_config(cls, config, **kwargs):
         pass
 
     @register_process("core/process/number")
@@ -109,6 +109,6 @@ class PostProcessor:
         self.act_fn = ACT2FN.get(act_fn, None)
 
     @classmethod
-    @add_default_section_for_init("core/postprocess")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/postprocess")
+    def from_config(cls, config, **kwargs):
         pass

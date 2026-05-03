@@ -6,8 +6,7 @@ from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.xpegasus import XPegasusProcessor as _XPegasusProcessor
 from unitorch.cli import (
     cached_path,
-    add_default_section_for_init,
-    add_default_section_for_function,
+    config_defaults_init,
     register_process,
 )
 from unitorch.cli import WriterOutputs
@@ -37,8 +36,8 @@ class XPegasusProcessor(_XPegasusProcessor):
         )
 
     @classmethod
-    @add_default_section_for_init("core/process/xpegasus")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/process/xpegasus")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/process/xpegasus")
         pretrained_name = config.getoption("pretrained_name", "xpegasus-base")
         vocab_path = config.getoption("vocab_path", None)

@@ -18,9 +18,9 @@ from unitorch.utils import pop_value, nested_dict_value
 from unitorch.cli import (
     register_fastapi,
     cached_path,
-    add_default_section_for_init,
-    add_default_section_for_function,
-    CoreConfigureParser,
+    config_defaults_init,
+    config_defaults_method,
+    Config,
     GenericFastAPI,
 )
 from unitorch.cli.models.mask2former import pretrained_mask2former_infos
@@ -51,8 +51,8 @@ class Mask2FormerForSegmentationPipeline(_Mask2FormerForSegmentation):
         self.eval()
 
     @classmethod
-    @add_default_section_for_init("core/fastapi/pipeline/mask2former")
-    def from_core_configure(
+    @config_defaults_init("core/fastapi/pipeline/mask2former")
+    def from_config(
         cls,
         config,
         pretrained_name: Optional[str] = None,
@@ -107,7 +107,7 @@ class Mask2FormerForSegmentationPipeline(_Mask2FormerForSegmentation):
         return inst
 
     @torch.no_grad()
-    @add_default_section_for_function("core/fastapi/pipeline/mask2former")
+    @config_defaults_method("core/fastapi/pipeline/mask2former")
     def __call__(
         self,
         image: Union[Image.Image, str],
@@ -140,7 +140,7 @@ class Mask2FormerForSegmentationPipeline(_Mask2FormerForSegmentation):
 
 @register_fastapi("core/fastapi/mask2former")
 class Mask2FormerForSegmentationFastAPI(GenericFastAPI):
-    def __init__(self, config: CoreConfigureParser):
+    def __init__(self, config: Config):
         self.config = config
         config.set_default_section("core/fastapi/mask2former")
         router = config.getoption("router", "/core/fastapi/mask2former")
@@ -157,7 +157,7 @@ class Mask2FormerForSegmentationFastAPI(GenericFastAPI):
         return self._router
 
     def start(self, pretrained_name: Optional[str] = "mask2former-swin-tiny-ade-semantic"):
-        self._pipe = Mask2FormerForSegmentationPipeline.from_core_configure(
+        self._pipe = Mask2FormerForSegmentationPipeline.from_config(
             self.config,
             pretrained_name=pretrained_name,
         )

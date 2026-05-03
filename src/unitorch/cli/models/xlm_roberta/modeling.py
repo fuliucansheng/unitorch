@@ -11,7 +11,7 @@ from unitorch.models.xlm_roberta import (
 )
 from unitorch.cli import (
     cached_path,
-    add_default_section_for_init,
+    config_defaults_init,
     register_model,
 )
 from unitorch.cli.models import ClassificationOutputs
@@ -35,8 +35,8 @@ class XLMRobertaForClassification(_XLMRobertaForClassification):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/classification/xlm_roberta")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/model/classification/xlm_roberta")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/classification/xlm_roberta")
         pretrained_name = config.getoption("pretrained_name", "xlm-roberta-base")
         config_path = config.getoption("config_path", None)
@@ -96,8 +96,8 @@ class XLMRobertaXLForClassification(_XLMRobertaXLForClassification):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/classification/xlm_roberta_xl")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/model/classification/xlm_roberta_xl")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/classification/xlm_roberta_xl")
         pretrained_name = config.getoption("pretrained_name", "xlm-roberta-xl")
         config_path = config.getoption("config_path", None)

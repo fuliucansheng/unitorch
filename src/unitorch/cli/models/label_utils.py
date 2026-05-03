@@ -6,7 +6,7 @@ from typing import Dict, List, Optional, Union
 
 from unitorch.utils import pop_value
 from unitorch.cli import (
-    add_default_section_for_init,
+    config_defaults_init,
     register_process,
 )
 from unitorch.cli.models.classification_utils import ClassificationTargets
@@ -20,15 +20,16 @@ class LabelProcessor:
         num_classes: Optional[int] = None,
         sep: Optional[str] = ",",
         max_seq_length: Optional[int] = 128,
-        map_dict: Optional[Dict] = dict(),
+        map_dict: Optional[Dict] = None,
     ):
         self.num_classes = num_classes
         self.sep = sep
-        self.map_dict = map_dict
+        self.max_seq_length = max_seq_length
+        self.map_dict = map_dict if map_dict is not None else {}
 
     @classmethod
-    @add_default_section_for_init("core/process/label")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/process/label")
+    def from_config(cls, config, **kwargs):
         pass
 
     @register_process("core/process/label")

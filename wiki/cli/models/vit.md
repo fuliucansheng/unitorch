@@ -5,11 +5,11 @@
 !!! tip
     **`core/process/vit`** is the section for configuration of ViTProcessor.
 
-::: unitorch.cli.models.vit.ViTProcessor
+::: unitorch.cli.models.vit.processing.ViTProcessor
 
 ## ViTForImageClassification
 
 !!! tip
     **`core/model/classification/vit`** is the section for configuration of ViTForImageClassification.
 
-::: unitorch.cli.models.vit.ViTForImageClassification
+::: unitorch.cli.models.vit.modeling.ViTForImageClassification

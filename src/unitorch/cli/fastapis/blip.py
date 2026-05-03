@@ -15,11 +15,11 @@ from unitorch.models.blip import BlipProcessor
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.cli import (
     cached_path,
-    add_default_section_for_init,
-    add_default_section_for_function,
+    config_defaults_init,
+    config_defaults_method,
     register_fastapi,
 )
-from unitorch.cli import CoreConfigureParser, GenericFastAPI
+from unitorch.cli import Config, GenericFastAPI
 from unitorch.cli.models.blip import pretrained_blip_infos
 
 
@@ -54,8 +54,8 @@ class BlipForImageCaptionPipeline(_BlipForImageCaption):
         self.eval()
 
     @classmethod
-    @add_default_section_for_init("core/fastapi/pipeline/blip")
-    def from_core_configure(
+    @config_defaults_init("core/fastapi/pipeline/blip")
+    def from_config(
         cls,
         config,
         pretrained_name: Optional[str] = None,
@@ -121,7 +121,7 @@ class BlipForImageCaptionPipeline(_BlipForImageCaption):
         return inst
 
     @torch.no_grad()
-    @add_default_section_for_function("core/fastapi/pipeline/blip")
+    @config_defaults_method("core/fastapi/pipeline/blip")
     def __call__(
         self,
         image: Image.Image,
@@ -179,7 +179,7 @@ class BlipForImageCaptionPipeline(_BlipForImageCaption):
 
 @register_fastapi("core/fastapi/blip")
 class BlipForImageCaptionFastAPI(GenericFastAPI):
-    def __init__(self, config: CoreConfigureParser):
+    def __init__(self, config: Config):
         self.config = config
         config.set_default_section("core/fastapi/blip")
         router = config.getoption("router", "/core/fastapi/blip")
@@ -196,7 +196,7 @@ class BlipForImageCaptionFastAPI(GenericFastAPI):
         return self._router
 
     def start(self, pretrained_name: str = "blip-image-captioning-base"):
-        self._pipe = BlipForImageCaptionPipeline.from_core_configure(
+        self._pipe = BlipForImageCaptionPipeline.from_config(
             self.config,
             pretrained_name=pretrained_name,
         )

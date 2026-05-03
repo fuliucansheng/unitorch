@@ -12,7 +12,7 @@ from typing import List, Optional, Union
 from random import random
 from PIL import Image, ImageFile
 from unitorch.cli import (
-    add_default_section_for_init,
+    config_defaults_init,
     register_process,
 )
 
@@ -33,8 +33,8 @@ class VideoProcessor:
         self.http_url = http_url
 
     @classmethod
-    @add_default_section_for_init("core/process/video")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/process/video")
+    def from_config(cls, config, **kwargs):
         pass
 
     def _request_url(self, url):

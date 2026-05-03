@@ -18,9 +18,9 @@ from unitorch.utils import pop_value, nested_dict_value
 from unitorch.cli import (
     register_fastapi,
     cached_path,
-    add_default_section_for_init,
-    add_default_section_for_function,
-    CoreConfigureParser,
+    config_defaults_init,
+    config_defaults_method,
+    Config,
     GenericFastAPI,
 )
 from unitorch.cli.models.grounding_dino import pretrained_grounding_dino_infos
@@ -53,8 +53,8 @@ class GroundingDinoForDetectionPipeline(_GroundingDinoForDetection):
         self.eval()
 
     @classmethod
-    @add_default_section_for_init("core/fastapi/pipeline/grounding_dino")
-    def from_core_configure(
+    @config_defaults_init("core/fastapi/pipeline/grounding_dino")
+    def from_config(
         cls,
         config,
         pretrained_name: Optional[str] = None,
@@ -124,7 +124,7 @@ class GroundingDinoForDetectionPipeline(_GroundingDinoForDetection):
         return inst
 
     @torch.no_grad()
-    @add_default_section_for_function("core/fastapi/pipeline/grounding_dino")
+    @config_defaults_method("core/fastapi/pipeline/grounding_dino")
     def __call__(
         self,
         text: str,
@@ -178,7 +178,7 @@ class GroundingDinoForDetectionPipeline(_GroundingDinoForDetection):
 
 @register_fastapi("core/fastapi/grounding_dino")
 class GroundingDinoForDetectionFastAPI(GenericFastAPI):
-    def __init__(self, config: CoreConfigureParser):
+    def __init__(self, config: Config):
         self.config = config
         config.set_default_section("core/fastapi/grounding_dino")
         router = config.getoption("router", "/core/fastapi/grounding_dino")
@@ -195,7 +195,7 @@ class GroundingDinoForDetectionFastAPI(GenericFastAPI):
         return self._router
 
     def start(self, pretrained_name: Optional[str] = "grounding-dino-tiny"):
-        self._pipe = GroundingDinoForDetectionPipeline.from_core_configure(
+        self._pipe = GroundingDinoForDetectionPipeline.from_config(
             self.config,
             pretrained_name=pretrained_name,
         )

@@ -13,12 +13,12 @@ from unitorch.models.mistral import MistralProcessor
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.cli import (
     cached_path,
-    add_default_section_for_init,
-    add_default_section_for_function,
+    config_defaults_init,
+    config_defaults_method,
 )
 from fastapi import APIRouter
 from unitorch.cli import register_fastapi
-from unitorch.cli import CoreConfigureParser, GenericFastAPI
+from unitorch.cli import Config, GenericFastAPI
 from unitorch.cli.models.mistral import (
     pretrained_mistral_infos,
     pretrained_mistral_extensions_infos,
@@ -61,8 +61,8 @@ class MistralForGenerationPipeline(_MistralForGeneration):
         self.eval()
 
     @classmethod
-    @add_default_section_for_init("core/fastapi/pipeline/mistral")
-    def from_core_configure(
+    @config_defaults_init("core/fastapi/pipeline/mistral")
+    def from_config(
         cls,
         config,
         pretrained_name: Optional[str] = None,
@@ -156,7 +156,7 @@ class MistralForGenerationPipeline(_MistralForGeneration):
         return inst
 
     @torch.no_grad()
-    @add_default_section_for_function("core/fastapi/pipeline/mistral")
+    @config_defaults_method("core/fastapi/pipeline/mistral")
     def __call__(
         self,
         prompt: str,
@@ -267,7 +267,7 @@ class MistralForGenerationPipeline(_MistralForGeneration):
 
 @register_fastapi("core/fastapi/mistral")
 class MistralForGenerationFastAPI(GenericFastAPI):
-    def __init__(self, config: CoreConfigureParser):
+    def __init__(self, config: Config):
         self.config = config
         config.set_default_section("core/fastapi/mistral")
         router = config.getoption("router", "/core/fastapi/mistral")
@@ -284,7 +284,7 @@ class MistralForGenerationFastAPI(GenericFastAPI):
         return self._router
 
     def start(self, pretrained_name: str = "mistral-7b-instruct-v0.1"):
-        self._pipe = MistralForGenerationPipeline.from_core_configure(
+        self._pipe = MistralForGenerationPipeline.from_config(
             self.config,
             pretrained_name=pretrained_name,
         )

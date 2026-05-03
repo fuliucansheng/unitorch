@@ -8,7 +8,7 @@ import zipfile
 from urllib.parse import parse_qs, urlparse
 from threading import Thread
 from functools import lru_cache
-from unitorch.cli import CoreConfigureParser
+from unitorch.cli import Config
 from unitorch.cli import register_service, GenericService
 
 
@@ -86,7 +86,7 @@ class ZipFilesServer(http.server.BaseHTTPRequestHandler):
 
 @register_service("core/service/zip_files")
 class ZipFilesService(GenericService):
-    def __init__(self, config: CoreConfigureParser):
+    def __init__(self, config: Config):
         self.config = config
         config.set_default_section("core/service/zip_files")
         self.ip = config.getoption("ip", "0.0.0.0")

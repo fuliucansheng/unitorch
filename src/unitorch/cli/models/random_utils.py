@@ -6,7 +6,7 @@ from typing import Any, List, Optional
 from random import random
 
 from unitorch.cli import (
-    add_default_section_for_init,
+    config_defaults_init,
     register_process,
 )
 
@@ -18,8 +18,8 @@ class RandomProcessor:
         pass
 
     @classmethod
-    @add_default_section_for_init("core/process/random")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/process/random")
+    def from_config(cls, config, **kwargs):
         pass
 
     @register_process("core/process/random/float")

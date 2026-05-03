@@ -8,7 +8,7 @@ from typing import List, Optional, Tuple, Union
 from unitorch.models.bria import BRIAForSegmentation as _BRIAForSegmentation
 from unitorch.cli import (
     cached_path,
-    add_default_section_for_init,
+    config_defaults_init,
     register_model,
 )
 from unitorch.cli.models import (
@@ -24,8 +24,8 @@ class BRIAForSegmentation(_BRIAForSegmentation):
         super().__init__()
 
     @classmethod
-    @add_default_section_for_init("core/model/segmentation/bria")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/model/segmentation/bria")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/segmentation/bria")
 
         inst = cls()

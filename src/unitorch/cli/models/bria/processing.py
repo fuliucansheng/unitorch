@@ -8,7 +8,7 @@ from unitorch.cli.models.segmentation_utils import SegmentationTargets
 from unitorch.models.bria import BRIAProcessor as _BRIAProcessor
 from unitorch.cli import (
     cached_path,
-    add_default_section_for_init,
+    config_defaults_init,
     register_process,
 )
 from unitorch.cli.models import TensorInputs
@@ -22,8 +22,8 @@ class BRIAProcessor(_BRIAProcessor):
         super().__init__(image_size=image_size)
 
     @classmethod
-    @add_default_section_for_init("core/process/bria")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/process/bria")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/process/bria")
         image_size = config.getoption("image_size", 1024)
 

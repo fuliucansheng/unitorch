@@ -11,8 +11,7 @@ from unitorch.models.visualbert import (
 from unitorch.models.visualbert import VisualBertForPretrain as _VisualBertForPretrain
 from unitorch.cli import (
     cached_path,
-    add_default_section_for_init,
-    add_default_section_for_function,
+    config_defaults_init,
     register_model,
 )
 from unitorch.cli.models import ClassificationOutputs, LossOutputs
@@ -36,8 +35,8 @@ class VisualBertForClassification(_VisualBertForClassification):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/classification/visualbert")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/model/classification/visualbert")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/classification/visualbert")
         pretrained_name = config.getoption("pretrained_name", "visualbert-vqa-coco-pre")
         config_path = config.getoption("config_path", None)
@@ -101,8 +100,8 @@ class VisualBertForPretrain(_VisualBertForPretrain):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/pretrain/visualbert")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/model/pretrain/visualbert")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/pretrain/visualbert")
         pretrained_name = config.getoption("pretrained_name", "visualbert-vqa-coco-pre")
         config_path = config.getoption("config_path", None)

@@ -15,7 +15,7 @@ from typing import Any, Callable, Dict, List, Optional, Union
 
 from unitorch.utils import cached_path as hf_cached_path
 from unitorch.utils import rpartial, is_remote_url
-from unitorch.cli.core import CoreConfigureParser
+from unitorch.cli.core import Config
 
 
 def import_library(library: str) -> bool:
@@ -87,8 +87,8 @@ def cached_path(
 
 
 from unitorch.cli.decorators import (
-    add_default_section_for_init,
-    add_default_section_for_function,
+    config_defaults_init,
+    config_defaults_method,
 )
 
 
@@ -148,7 +148,7 @@ def register_process(
 
 def init_registered_module(
     name: str,
-    config: CoreConfigureParser,
+    config: Config,
     registered_module: Dict,
     **kwargs,
 ):
@@ -156,27 +156,27 @@ def init_registered_module(
         return None
     v = registered_module[name]
     if v["decorators"]:
-        return v["decorators"](v["obj"]).from_core_configure(config, **kwargs)
-    return v["obj"].from_core_configure(config, **kwargs)
+        return v["decorators"](v["obj"]).from_config(config, **kwargs)
+    return v["obj"].from_config(config, **kwargs)
 
 
 def init_registered_process(
     name: str,
-    config: CoreConfigureParser,
+    config: Config,
     **kwargs,
 ):
     if name not in registered_process:
         return None
     v = registered_process[name]
     cls = getattr(v["cls"]["module"], v["cls"]["name"])
-    inst = cls.from_core_configure(config, **kwargs)
+    inst = cls.from_config(config, **kwargs)
     if v["decorators"]:
         return rpartial(v["decorators"](v["obj"]), inst)
     return rpartial(v["obj"], inst)
 
 
 class GenericScript(abc.ABC):
-    def __init__(self, config: CoreConfigureParser):
+    def __init__(self, config: Config):
         pass
 
     @abc.abstractmethod
@@ -189,7 +189,7 @@ register_script = partial(registry_func, save_dict=registered_script)
 
 
 class GenericService(abc.ABC):
-    def __init__(self, config: CoreConfigureParser):
+    def __init__(self, config: Config):
         pass
 
     @abc.abstractmethod
@@ -210,7 +210,7 @@ register_service = partial(registry_func, save_dict=registered_service)
 
 
 class GenericFastAPI(abc.ABC):
-    def __init__(self, config: CoreConfigureParser):
+    def __init__(self, config: Config):
         pass
 
     @property

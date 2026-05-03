@@ -18,9 +18,9 @@ from unitorch.models.dpt import (
 from unitorch.cli import (
     register_fastapi,
     cached_path,
-    add_default_section_for_init,
-    add_default_section_for_function,
-    CoreConfigureParser,
+    config_defaults_init,
+    config_defaults_method,
+    Config,
     GenericFastAPI,
 )
 from unitorch.cli.models.dpt import pretrained_dpt_infos
@@ -51,8 +51,8 @@ class DPTForDepthEstimationPipeline(_DPTForDepthEstimation):
         self.eval()
 
     @classmethod
-    @add_default_section_for_init("core/fastapi/pipeline/dpt")
-    def from_core_configure(
+    @config_defaults_init("core/fastapi/pipeline/dpt")
+    def from_config(
         cls,
         config,
         pretrained_name: Optional[str] = None,
@@ -105,7 +105,7 @@ class DPTForDepthEstimationPipeline(_DPTForDepthEstimation):
         return inst
 
     @torch.no_grad()
-    @add_default_section_for_function("core/fastapi/pipeline/dpt")
+    @config_defaults_method("core/fastapi/pipeline/dpt")
     def __call__(
         self,
         image: Union[Image.Image, str],
@@ -129,7 +129,7 @@ class DPTForDepthEstimationPipeline(_DPTForDepthEstimation):
 
 @register_fastapi("core/fastapi/dpt")
 class DPTForDepthEstimationFastAPI(GenericFastAPI):
-    def __init__(self, config: CoreConfigureParser):
+    def __init__(self, config: Config):
         self.config = config
         config.set_default_section("core/fastapi/dpt")
         router = config.getoption("router", "/core/fastapi/dpt")
@@ -146,7 +146,7 @@ class DPTForDepthEstimationFastAPI(GenericFastAPI):
         return self._router
 
     def start(self, pretrained_name: Optional[str] = "dpt-large"):
-        self._pipe = DPTForDepthEstimationPipeline.from_core_configure(
+        self._pipe = DPTForDepthEstimationPipeline.from_config(
             self.config,
             pretrained_name=pretrained_name,
         )

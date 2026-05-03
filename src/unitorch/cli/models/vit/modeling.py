@@ -8,7 +8,7 @@ from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.vit import ViTForImageClassification as _ViTForImageClassification
 from unitorch.cli import (
     cached_path,
-    add_default_section_for_init,
+    config_defaults_init,
     register_model,
 )
 from unitorch.cli.models import ClassificationOutputs
@@ -30,8 +30,8 @@ class ViTForImageClassification(_ViTForImageClassification):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/classification/vit")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/model/classification/vit")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/classification/vit")
         pretrained_name = config.getoption(
             "pretrained_name", "vit-base-patch16-224-in21k"

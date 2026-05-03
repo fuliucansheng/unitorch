@@ -6,8 +6,7 @@ from PIL import Image
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.blip import BlipProcessor as _BlipProcessor
 from unitorch.cli import (
-    add_default_section_for_init,
-    add_default_section_for_function,
+    config_defaults_init,
     register_process,
 )
 from unitorch.cli import cached_path
@@ -40,8 +39,8 @@ class BlipProcessor(_BlipProcessor):
         )
 
     @classmethod
-    @add_default_section_for_init("core/process/blip")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/process/blip")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/process/blip")
         pretrained_name = config.getoption(
             "pretrained_name", "blip-image-captioning-base"

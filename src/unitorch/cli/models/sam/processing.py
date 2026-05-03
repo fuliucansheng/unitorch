@@ -9,7 +9,7 @@ from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.sam import SamProcessor as _SamProcessor
 from unitorch.cli import (
     cached_path,
-    add_default_section_for_init,
+    config_defaults_init,
     register_process,
 )
 from unitorch.cli import WriterOutputs
@@ -32,8 +32,8 @@ class SamProcessor(_SamProcessor):
             os.makedirs(self.output_folder, exist_ok=True)
 
     @classmethod
-    @add_default_section_for_init("core/process/sam")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/process/sam")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/process/sam")
         pretrained_name = config.getoption("pretrained_name", "sam-vit-base")
         vision_config_path = config.getoption("vision_config_path", None)

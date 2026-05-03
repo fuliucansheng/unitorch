@@ -10,7 +10,7 @@ from unitorch.models.beit import (
 )
 from unitorch.cli import (
     cached_path,
-    add_default_section_for_init,
+    config_defaults_init,
     register_model,
 )
 from unitorch.cli.models import ClassificationOutputs
@@ -32,8 +32,8 @@ class BeitForImageClassification(_BeitForImageClassification):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/classification/beit")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/model/classification/beit")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/classification/beit")
         pretrained_name = config.getoption("pretrained_name", "beit-base-patch16-224")
         config_path = config.getoption("config_path", None)

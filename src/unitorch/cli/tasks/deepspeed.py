@@ -43,21 +43,22 @@ from unitorch.cli import (
     registered_writer,
     init_registered_module,
     init_registered_process,
-    add_default_section_for_init,
-    add_default_section_for_function,
+    config_defaults_init,
+    config_defaults_method,
 )
 from unitorch.cli.models import LossOutputs
 from unitorch.cli.tasks.supervised import (
     DatasetFeature,
     collate_fn,
-    run_inference as infer,
-    run_monitor as monitor,
+    infer,
+    monitor,
     save_snapshot,
 )
 import unitorch.cli.wandb as wandb
 
 
 def _strip_model_prefix(state_dict):
+    """Remove the 'model.' prefix added by DeepSpeed wrappers."""
     return {(k[6:] if k.startswith("model.") else k): v for k, v in state_dict.items()}
 
 
@@ -67,14 +68,18 @@ def save_snapshot_zero_3(
     iter_dev,
     score_fn,
     monitor_fns,
-    save_checkpoint="default",
-    merge_checkpoint=False,
-    exclude_freeze_parameters=True,
-    best_score=-np.inf,
-    info_path=None,
-    local_rank=-1,
-    **kwargs,
+    save_checkpoint="default",  # checkpoint policy: default/best/latest/every/all
+    merge_checkpoint=False,     # merge ZeRO-3 shards into a single fp32 bin file
+    exclude_freeze_parameters=True,  # skip frozen parameters when merging
+    best_score=-np.inf,         # best validation score seen so far
+    info_path=None,             # path to info.json for persisting training state
+    local_rank=-1,              # only rank 0 (or -1) writes files
+    **kwargs,                   # extra fields forwarded to info.json (e.g. global_epoch)
 ):
+    """Evaluate a ZeRO stage-3 model and save checkpoints according to policy.
+
+    Returns the (possibly updated) *best_score*.
+    """
     os.makedirs(ckpt_dir, exist_ok=True)
 
     results = infer(model, iter_dev)
@@ -84,11 +89,11 @@ def save_snapshot_zero_3(
     if local_rank in [-1, 0]:
         monitor(results.outputs, results.targets, monitor_fns)
 
-    if save_checkpoint in ["all", "default", "best"] and new_score > best_score:
+    if save_checkpoint in ("all", "default", "best") and new_score > best_score:
         best_score = new_score
         model.save_checkpoint(os.path.join(ckpt_dir, "pytorch_model"))
         if merge_checkpoint and local_rank in [-1, 0]:
-            state_dict = _strip_model_prefix(
+            _strip_model_prefix(
                 get_fp32_state_dict_from_zero_checkpoint(
                     os.path.join(ckpt_dir, "pytorch_model"),
                     exclude_frozen_parameters=exclude_freeze_parameters,
@@ -97,9 +102,9 @@ def save_snapshot_zero_3(
 
     if local_rank in [-1, 0] and info_path is not None:
         with open(info_path, "w") as f:
-            json.dump({"best_score": best_score, **kwargs}, f)
+            json.dump({"best_score": best_score, **kwargs}, f, indent=4)
 
-    if save_checkpoint in ["all", "default", "latest"]:
+    if save_checkpoint in ("all", "default", "latest"):
         model.save_checkpoint(os.path.join(ckpt_dir, "pytorch_model_latest"))
         if merge_checkpoint and local_rank in [-1, 0]:
             state_dict = _strip_model_prefix(
@@ -110,7 +115,7 @@ def save_snapshot_zero_3(
             )
             torch.save(state_dict, os.path.join(ckpt_dir, "pytorch_model_latest.bin"))
 
-    if save_checkpoint in ["all", "every"]:
+    if save_checkpoint in ("all", "every"):
         if merge_checkpoint and local_rank in [-1, 0]:
             state_dict = _strip_model_prefix(
                 get_fp32_state_dict_from_zero_checkpoint(
@@ -118,10 +123,7 @@ def save_snapshot_zero_3(
                     exclude_frozen_parameters=exclude_freeze_parameters,
                 )
             )
-            torch.save(
-                state_dict,
-                os.path.join(ckpt_dir, f"pytorch_model_latest_{snapshot_time}.bin"),
-            )
+            torch.save(state_dict, os.path.join(ckpt_dir, f"pytorch_model_{snapshot_time}.bin"))
         else:
             model.save_checkpoint(ckpt_dir, f"pytorch_model_{snapshot_time}")
 
@@ -137,9 +139,9 @@ class DeepspeedTask:
         configure,
         model,
         datasets,
-        local_rank: int = -1,
-        seed: int = 1123,
-        cpu_offload: bool = False,
+        local_rank: int = -1,      # GPU index for distributed training; -1 for single-GPU
+        seed: int = 1123,           # global random seed for reproducibility
+        cpu_offload: bool = False,  # keep model on CPU (e.g. for ZeRO-Infinity offload)
     ):
         set_seed(seed)
         self.n_gpu = 1 if torch.cuda.is_available() else 0
@@ -160,8 +162,8 @@ class DeepspeedTask:
         self.best_score = -np.inf
 
     @classmethod
-    @add_default_section_for_init("core/task/deepspeed/supervised")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/task/deepspeed/supervised")
+    def from_config(cls, config, **kwargs):
         try:
             deepspeed.init_distributed(dist_backend="nccl", init_method="env://")
         except Exception:
@@ -174,62 +176,55 @@ class DeepspeedTask:
 
         if model is not None:
             model = init_registered_module(model, config, registered_model)
-
         if dataset is not None:
             dataset = init_registered_module(dataset, config, registered_dataset)
-
-        local_rank = config.getdefault("core/cli", "local_rank", get_local_rank())
-        cpu_offload = config.getdefault("core/task/deepspeed/supervised", "cpu_offload", False)
 
         return dict(
             configure=config,
             model=model,
             datasets=dataset,
-            local_rank=local_rank,
-            cpu_offload=cpu_offload,
+            local_rank=config.getdefault("core/cli", "local_rank", get_local_rank()),
+            cpu_offload=config.getdefault("core/task/deepspeed/supervised", "cpu_offload", False),
         )
 
-    @add_default_section_for_function("core/task/deepspeed/supervised")
+    @config_defaults_method("core/task/deepspeed/supervised")
     def train(
         self,
-        config_path: str,
-        optim: str,
-        loss_fn: str,
-        score_fn: str,
-        monitor_fns: Optional[Union[str, List[str]]] = None,
-        from_ckpt_dir: str = "./from_ckpt",
-        to_ckpt_dir: str = "./to_ckpt",
-        train_batch_size: int = 128,
-        dev_batch_size: int = 128,
-        pin_memory: bool = True,
-        num_workers: int = 4,
-        save_optimizer: bool = False,
-        save_scheduler: bool = False,
-        save_checkpoint: str = "default",
-        log_freq: int = 100,
-        ckpt_freq: int = 10000,
-        grad_acc_step: int = 1,
-        max_grad_norm: float = 1.0,
-        learning_rate: Optional[float] = None,
-        max_warmup_learning_rate: Optional[float] = None,
-        num_warmup_steps: Optional[int] = None,
-        epochs: int = 5,
-        zero_stage: Optional[int] = None,
-        merge_zero3_checkpoint: bool = True,
-        exclude_freeze_parameters: bool = True,
-        use_ema: bool = False,
-        ema_decay: float = 0.9999,
-        ema_tau: int = 2000,
+        config_path: str,                               # path to DeepSpeed JSON config file
+        optim: str,                                     # registered optimizer name
+        loss_fn: str,                                   # registered loss function name
+        score_fn: str,                                  # registered scoring function name
+        monitor_fns: Optional[Union[str, List[str]]] = None,  # extra metrics logged at checkpoints
+        from_ckpt_dir: str = "./from_ckpt",            # directory to load pretrained weights from
+        to_ckpt_dir: str = "./to_ckpt",                # directory to write checkpoints to
+        train_batch_size: int = 128,                   # per-GPU micro-batch size for training
+        dev_batch_size: int = 128,                     # per-GPU batch size for validation
+        pin_memory: bool = True,                       # pin DataLoader memory for faster GPU transfer
+        num_workers: int = 4,                          # DataLoader worker processes
+        save_optimizer: bool = False,                  # include optimizer state in non-ZeRO-3 checkpoints
+        save_scheduler: bool = False,                  # include scheduler state in non-ZeRO-3 checkpoints
+        save_checkpoint: str = "default",              # checkpoint policy: default/best/latest/every/all
+        log_freq: int = 100,                           # log training loss every N steps
+        ckpt_freq: int = 10000,                        # save checkpoint every N steps
+        grad_acc_step: int = 1,                        # gradient accumulation steps before optimizer update
+        learning_rate: Optional[float] = None,         # override optimizer lr in DeepSpeed config
+        max_warmup_learning_rate: Optional[float] = None,  # WarmupLR warmup_max_lr override
+        num_warmup_steps: Optional[int] = None,        # WarmupLR warmup_num_steps override
+        epochs: int = 5,                               # total training epochs
+        zero_stage: Optional[int] = None,              # ZeRO optimisation stage (1/2/3); inferred from config if None
+        merge_zero3_checkpoint: bool = True,           # merge ZeRO-3 shards into a single fp32 bin
+        exclude_freeze_parameters: bool = True,        # skip frozen parameters when merging ZeRO-3
+        use_ema: bool = False,                         # maintain an EMA shadow model for evaluation
+        ema_decay: float = 0.9999,                     # EMA decay factor
+        ema_tau: int = 2000,                           # EMA warm-up steps
     ):
         if self.local_rank in [-1, 0]:
             os.makedirs(to_ckpt_dir, exist_ok=True)
 
         if loss_fn is not None:
             loss_fn = init_registered_module(loss_fn, self.config, registered_loss)
-
         if score_fn is not None:
             score_fn = init_registered_module(score_fn, self.config, registered_score)
-
         if monitor_fns is not None:
             monitor_fns = [
                 init_registered_module(fn, self.config, registered_score)
@@ -248,19 +243,19 @@ class DeepspeedTask:
         if os.path.exists(from_ckpt_dir):
             self.model.from_checkpoint(from_ckpt_dir)
 
+        # Resume from latest checkpoint for non-ZeRO-3 (ZeRO-3 uses load_checkpoint below)
         if os.path.exists(to_ckpt_dir) and zero_stage != 3:
             self.model.from_checkpoint(to_ckpt_dir, weight_name="pytorch_model_latest.bin")
 
-        params = filter(lambda x: x.requires_grad, self.model.parameters())
+        params = filter(lambda p: p.requires_grad, self.model.parameters())
 
         assert "optimizer" in config_dict
-
         update_nested_dict(config_dict, "zero_optimization", "stage", zero_stage)
 
-        scheduler_type = nested_dict_value(config_dict, "scheduler", "type")
         if learning_rate is not None:
             update_nested_dict(config_dict, "optimizer", "params", "lr", learning_rate)
 
+        scheduler_type = nested_dict_value(config_dict, "scheduler", "type")
         if scheduler_type == "WarmupLR":
             if learning_rate is not None:
                 update_nested_dict(config_dict, "scheduler", "params", "warmup_max_lr", learning_rate)
@@ -294,10 +289,10 @@ class DeepspeedTask:
             if os.path.exists(to_ckpt_dir):
                 self.ema_model.from_checkpoint(to_ckpt_dir, weight_name="pytorch_ema_model_latest.bin")
 
-        for n, p in self.model.named_parameters():
+        for name, param in self.model.named_parameters():
             logging.debug(
                 "%s: trainable=%s dtype=%s shape=%s device=%s",
-                n, p.requires_grad, p.dtype, p.shape, p.device,
+                name, param.requires_grad, param.dtype, param.shape, param.device,
             )
 
         self.model, optim, _, scheduler = deepspeed.initialize(
@@ -306,6 +301,7 @@ class DeepspeedTask:
             model_parameters=params,
         )
 
+        # ZeRO-3 checkpoints must be loaded after deepspeed.initialize
         if os.path.exists(os.path.join(to_ckpt_dir, "pytorch_model_latest")) and zero_stage == 3:
             self.model.load_checkpoint(os.path.join(to_ckpt_dir, "pytorch_model_latest"))
 
@@ -334,9 +330,6 @@ class DeepspeedTask:
             num_workers=num_workers,
             collate_fn=collate_fn,
         )
-
-        log_loss = 0
-        dev_epoch = 0
 
         snapshot_kwargs = dict(
             save_checkpoint=save_checkpoint,
@@ -374,6 +367,9 @@ class DeepspeedTask:
                 **snapshot_kwargs,
             )
 
+        log_loss = 0.0
+        dev_epoch = 0
+
         for e in range(epochs):
             torch.cuda.empty_cache()
             if e < global_epoch:
@@ -400,30 +396,26 @@ class DeepspeedTask:
                     targets = targets.cuda()
 
                 outputs = self.model(**inputs.dict())
-                if isinstance(outputs, LossOutputs):
-                    loss = outputs.loss / grad_acc_step
-                else:
-                    loss = loss_fn(outputs=outputs, targets=targets) / grad_acc_step
+                loss = (
+                    outputs.loss if isinstance(outputs, LossOutputs)
+                    else loss_fn(outputs=outputs, targets=targets)
+                ) / grad_acc_step
 
-                nn.utils.clip_grad_norm_(self.model.parameters(), max_grad_norm)
                 self.model.backward(loss)
-                log_loss += loss.data * grad_acc_step
+                log_loss += loss.item() * grad_acc_step
 
                 if (step + 1) % grad_acc_step == 0:
                     is_update_step = True
-                    optim.step()
-                    if scheduler is not None:
-                        scheduler.step()
-                    optim.zero_grad()
+                    self.model.step()
                     if use_ema and self.ema_model is not None:
                         self.ema_model.step(self.model.module)
 
                 if (step + 1) % log_freq == 0 and global_rank in [-1, 0]:
                     avg_loss = log_loss / log_freq
-                    logging.info("epoch %d step %d: loss=%.6f", e, step, avg_loss)
+                    logging.info("epoch %d step %d: train/loss=%.6f", e, step, avg_loss)
                     if wandb.is_available():
                         wandb.log({"epoch": e, "step": step, "train/loss": avg_loss})
-                    log_loss = 0
+                    log_loss = 0.0
 
                 if (step + 1) % ckpt_freq == 0:
                     if hasattr(dataset_dev, "set_epoch"):
@@ -433,15 +425,13 @@ class DeepspeedTask:
                     dev_epoch += 1
                     self.best_score = _snapshot(e, step + 1)
 
+            # Flush remaining accumulated gradients at epoch end
             if not is_update_step:
-                optim.step()
-                if scheduler is not None:
-                    scheduler.step()
-                optim.zero_grad()
+                self.model.step()
                 if use_ema and self.ema_model is not None:
                     self.ema_model.step(self.model.module)
 
-            log_loss = 0
+            log_loss = 0.0
 
             if hasattr(dataset_dev, "set_epoch"):
                 dataset_dev.set_epoch(dev_epoch)
@@ -453,12 +443,12 @@ class DeepspeedTask:
             self.best_score = _snapshot(e + 1, 0)
 
     @torch.no_grad()
-    @add_default_section_for_function("core/task/deepspeed/supervised")
+    @config_defaults_method("core/task/deepspeed/supervised")
     def eval(
         self,
-        monitor_fns: Union[str, List[str]],
-        from_ckpt_dir: str = "./from_ckpt",
-        dev_batch_size: int = 128,
+        monitor_fns: Union[str, List[str]],  # list of registered scoring function names
+        from_ckpt_dir: str = "./from_ckpt",  # directory to load model weights from
+        dev_batch_size: int = 128,           # per-GPU batch size for evaluation
         pin_memory: bool = True,
         num_workers: int = 4,
     ):
@@ -499,21 +489,21 @@ class DeepspeedTask:
             monitor(outputs=results.outputs, targets=results.targets, monitor_fns=monitor_fns)
 
     @torch.no_grad()
-    @add_default_section_for_function("core/task/deepspeed/supervised")
+    @config_defaults_method("core/task/deepspeed/supervised")
     def infer(
         self,
-        postprocess_fn: str,
-        writer: str,
-        test_batch_size: int = 128,
+        postprocess_fn: str,                    # registered postprocessing function name
+        writer: str,                            # registered writer name for output serialisation
+        test_batch_size: int = 128,            # per-GPU batch size for inference
         pin_memory: bool = True,
         num_workers: int = 4,
-        max_size: int = 10000,
-        from_ckpt_dir: str = "./from_ckpt",
-        output_header: Optional[List] = None,
-        output_path: str = "./output.txt",
-        postprocess_workers: int = 2,
+        max_size: int = 10000,                 # maximum queue depth for async postprocessing
+        from_ckpt_dir: str = "./from_ckpt",   # directory to load model weights from
+        output_header: Optional[List] = None, # column names to copy from raw dataset into output
+        output_path: str = "./output.txt",    # file path for inference results
+        postprocess_workers: int = 2,         # number of parallel postprocessing workers
     ):
-        assert self.n_gpu <= 1
+        assert self.n_gpu <= 1, "inference only supports single-GPU mode"
         assert writer is not None
 
         output_dir = os.path.dirname(output_path)
@@ -523,7 +513,9 @@ class DeepspeedTask:
         if postprocess_fn is not None:
             postprocess_fn = init_registered_process(postprocess_fn, self.config)
 
-        writer = init_registered_module(writer, self.config, registered_writer, output_file=output_path)
+        writer = init_registered_module(
+            writer, self.config, registered_writer, output_file=output_path
+        )
         skip_step = writer.skip_n_samples
 
         if os.path.exists(from_ckpt_dir):
@@ -548,6 +540,7 @@ class DeepspeedTask:
             if hasattr(iter_test.sampler, "set_skip_step"):
                 iter_test.sampler.set_skip_step(skip_step)
 
+        # Build a parallel loader for raw dataset metadata when available
         iter_data = None
         if hasattr(dataset_test, "dataset"):
             data_info = DatasetFeature(dataset_test.dataset)
@@ -585,13 +578,13 @@ class DeepspeedTask:
                 outputs = self.model(**inputs.dict()).cpu()
                 data_queue.put((step, outputs))
         else:
-            for step, ((inputs, _), _infos) in enumerate(zip(iter_test, iter_data)):
+            for step, ((inputs, _), raw_info) in enumerate(zip(iter_test, iter_data)):
                 if torch.cuda.is_available():
                     inputs = inputs.cuda()
                 outputs = self.model(**inputs.dict()).cpu()
                 if output_header is not None:
-                    _infos = {k: _infos[k] for k in output_header if k in _infos}
-                    outputs.from_pandas(pd.DataFrame(_infos))
+                    raw_info = {k: raw_info[k] for k in output_header if k in raw_info}
+                    outputs.from_pandas(pd.DataFrame(raw_info))
                 data_queue.put((step, outputs))
 
         data_queue.put((-1, GENERATE_FINISHED))

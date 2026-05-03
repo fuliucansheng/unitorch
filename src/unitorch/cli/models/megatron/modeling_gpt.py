@@ -9,7 +9,7 @@ from unitorch.models.megatron import (
 )
 from unitorch.cli import (
     cached_path,
-    add_default_section_for_init,
+    config_defaults_init,
     register_model,
 )
 from unitorch.cli.models import LossOutputs
@@ -46,8 +46,8 @@ class MegatronGPTForGeneration(_MegatronGPTForGeneration):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/generation/megatron/gpt")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/model/generation/megatron/gpt")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/generation/megatron/gpt")
         config_path = config.getoption("config_path", None)
 

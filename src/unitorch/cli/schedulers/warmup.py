@@ -8,7 +8,7 @@ from unitorch.schedulers.warmup import (
     LinearWarmupScheduler,
 )
 from unitorch.schedulers import SchedulerCheckpointMixin
-from unitorch.cli import add_default_section_for_init, register_scheduler
+from unitorch.cli import config_defaults_init, register_scheduler
 
 
 @register_scheduler("core/scheduler/cosine_warmup")
@@ -30,8 +30,8 @@ class CosineWarmupScheduler(CosineWarmupScheduler, SchedulerCheckpointMixin):
         )
 
     @classmethod
-    @add_default_section_for_init("core/scheduler/cosine_warmup")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/scheduler/cosine_warmup")
+    def from_config(cls, config, **kwargs):
         num_warmup_steps = config.getdefault(
             "core/scheduler/cosine_warmup", "num_warmup_steps", -1
         )
@@ -44,13 +44,11 @@ class CosineWarmupScheduler(CosineWarmupScheduler, SchedulerCheckpointMixin):
         num_training_steps = kwargs.get("num_training_steps", 1000000)
         if num_warmup_steps < 0:
             num_warmup_steps = int(num_training_steps * num_warmup_rate)
-        return dict(
-            {
-                "num_warmup_steps": num_warmup_steps,
-                "num_training_steps": num_training_steps,
-                "num_cycles": num_cycles,
-            }
-        )
+        return {
+            "num_warmup_steps": num_warmup_steps,
+            "num_training_steps": num_training_steps,
+            "num_cycles": num_cycles,
+        }
 
 
 @register_scheduler("core/scheduler/linear_warmup")
@@ -70,8 +68,8 @@ class LinearWarmupScheduler(LinearWarmupScheduler, SchedulerCheckpointMixin):
         )
 
     @classmethod
-    @add_default_section_for_init("core/scheduler/linear_warmup")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/scheduler/linear_warmup")
+    def from_config(cls, config, **kwargs):
         num_warmup_steps = config.getdefault(
             "core/scheduler/linear_warmup", "num_warmup_steps", -1
         )
@@ -81,9 +79,7 @@ class LinearWarmupScheduler(LinearWarmupScheduler, SchedulerCheckpointMixin):
         num_training_steps = kwargs.get("num_training_steps", 1000000)
         if num_warmup_steps < 0:
             num_warmup_steps = int(num_training_steps * num_warmup_rate)
-        return dict(
-            {
-                "num_warmup_steps": num_warmup_steps,
-                "num_training_steps": num_training_steps,
-            }
-        )
+        return {
+            "num_warmup_steps": num_warmup_steps,
+            "num_training_steps": num_training_steps,
+        }

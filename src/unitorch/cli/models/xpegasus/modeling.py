@@ -8,8 +8,8 @@ from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.xpegasus import XPegasusForGeneration as _XPegasusForGeneration
 from unitorch.cli import (
     cached_path,
-    add_default_section_for_init,
-    add_default_section_for_function,
+    config_defaults_init,
+    config_defaults_method,
     register_model,
 )
 from unitorch.cli.models import generation_model_decorator
@@ -32,8 +32,8 @@ class XPegasusForGeneration(_XPegasusForGeneration):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/generation/xpegasus")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/model/generation/xpegasus")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/generation/xpegasus")
         pretrained_name = config.getoption("pretrained_name", "xpegasus-base")
         config_path = config.getoption("config_path", None)
@@ -73,7 +73,7 @@ class XPegasusForGeneration(_XPegasusForGeneration):
         )
         return GenerationOutputs(sequences=outputs)
 
-    @add_default_section_for_function("core/model/generation/xpegasus")
+    @config_defaults_method("core/model/generation/xpegasus")
     @torch.no_grad()
     @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
     def generate(

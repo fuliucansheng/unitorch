@@ -7,7 +7,7 @@ from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.detr import DetrProcessor as _DetrProcessor
 from unitorch.cli import (
     cached_path,
-    add_default_section_for_init,
+    config_defaults_init,
     register_process,
 )
 from unitorch.cli.models import (
@@ -30,8 +30,8 @@ class DetrProcessor(_DetrProcessor):
         )
 
     @classmethod
-    @add_default_section_for_init("core/process/detr")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/process/detr")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/process/detr")
         pretrained_name = config.getoption("pretrained_name", "detr-resnet-50")
         vision_config_path = config.getoption("vision_config_path", None)

@@ -6,7 +6,7 @@ import torch.nn as nn
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Union
 from unitorch.cli import (
-    add_default_section_for_init,
+    config_defaults_init,
     register_process,
 )
 from unitorch.cli import WriterMixin, WriterOutputs
@@ -38,8 +38,8 @@ class GenerationProcessor:
         self.tokenizer = tokenizer
 
     @classmethod
-    @add_default_section_for_init("core/process/generation")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/process/generation")
+    def from_config(cls, config, **kwargs):
         pass
 
     @register_process("core/postprocess/generation")
@@ -77,8 +77,8 @@ def generation_model_decorator(cls):
             return self.model.generate(*args, **kwargs)
 
         @classmethod
-        def from_core_configure(_cls, cfg, **kwargs):
-            model = cls.from_core_configure(cfg, **kwargs)
+        def from_config(_cls, cfg, **kwargs):
+            model = cls.from_config(cfg, **kwargs)
             return _cls(__generation_model__=model)
 
     return GenerationModel

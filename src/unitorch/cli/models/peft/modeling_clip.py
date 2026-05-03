@@ -11,8 +11,7 @@ from unitorch.models.peft import (
 )
 from unitorch.cli import (
     cached_path,
-    add_default_section_for_init,
-    add_default_section_for_function,
+    config_defaults_init,
     register_model,
 )
 from unitorch.cli.models import ClassificationOutputs
@@ -42,8 +41,8 @@ class ClipLoraForMatching(_ClipLoraForMatching):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/matching/peft/lora/clip")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/model/matching/peft/lora/clip")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/matching/peft/lora/clip")
         pretrained_name = config.getoption("pretrained_name", "clip-vit-base-patch16")
         config_path = config.getoption("config_path", None)

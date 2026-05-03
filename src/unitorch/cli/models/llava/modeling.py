@@ -12,8 +12,8 @@ from unitorch.models.llava import (
 )
 from unitorch.cli import (
     cached_path,
-    add_default_section_for_init,
-    add_default_section_for_function,
+    config_defaults_init,
+    config_defaults_method,
     register_model,
 )
 from unitorch.cli.models import generation_model_decorator
@@ -51,8 +51,8 @@ class LlavaMistralClipForClassification(_LlavaMistralClipForClassification):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/classification/llava/mistral_clip")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/model/classification/llava/mistral_clip")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/classification/llava/mistral_clip")
         pretrained_name = config.getoption(
             "pretrained_name", "llava-v1.6-mistral-7b-hf"
@@ -159,8 +159,8 @@ class LlavaMistralClipForGeneration(_LlavaMistralClipForGeneration):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/generation/llava/mistral_clip")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/model/generation/llava/mistral_clip")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/generation/llava/mistral_clip")
         pretrained_name = config.getoption(
             "pretrained_name", "llava-v1.6-mistral-7b-hf"
@@ -238,7 +238,7 @@ class LlavaMistralClipForGeneration(_LlavaMistralClipForGeneration):
         )
         return GenerationOutputs(sequences=outputs)
 
-    @add_default_section_for_function("core/model/generation/llava/mistral_clip")
+    @config_defaults_method("core/model/generation/llava/mistral_clip")
     @torch.no_grad()
     @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
     def generate(
@@ -314,8 +314,8 @@ class LlavaLlamaSiglipForGeneration(_LlavaLlamaSiglipForGeneration):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/generation/llava/llama_siglip")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/model/generation/llava/llama_siglip")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/generation/llava/llama_siglip")
         pretrained_name = config.getoption("pretrained_name", "llava-v1.6-joycaption-2")
         pretrained_lora_name = config.getoption(
@@ -395,7 +395,7 @@ class LlavaLlamaSiglipForGeneration(_LlavaLlamaSiglipForGeneration):
         )
         return GenerationOutputs(sequences=outputs)
 
-    @add_default_section_for_function("core/model/generation/llava/llama_siglip")
+    @config_defaults_method("core/model/generation/llava/llama_siglip")
     @torch.no_grad()
     @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
     def generate(

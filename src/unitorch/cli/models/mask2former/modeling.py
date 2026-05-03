@@ -11,8 +11,8 @@ from unitorch.models.mask2former import (
 )
 from unitorch.cli import (
     cached_path,
-    add_default_section_for_init,
-    add_default_section_for_function,
+    config_defaults_init,
+    config_defaults_method,
     register_model,
 )
 from unitorch.cli.models import SegmentationOutputs, LossOutputs
@@ -31,8 +31,8 @@ class Mask2FormerForSegmentation(_Mask2FormerForSegmentation):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/segmentation/mask2former")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/model/segmentation/mask2former")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/segmentation/mask2former")
         pretrained_name = config.getoption(
             "pretrained_name", "mask2former-swin-tiny-ade-semantic"
@@ -64,7 +64,7 @@ class Mask2FormerForSegmentation(_Mask2FormerForSegmentation):
     ):
         raise NotImplementedError
 
-    @add_default_section_for_function("core/model/segmentation/mask2former")
+    @config_defaults_method("core/model/segmentation/mask2former")
     @torch.no_grad()
     def segment(
         self,

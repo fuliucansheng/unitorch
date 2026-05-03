@@ -14,7 +14,7 @@ from unitorch.models.clip import (
 )
 from unitorch.cli import (
     cached_path,
-    add_default_section_for_init,
+    config_defaults_init,
     register_model,
 )
 from unitorch.cli.models import ClassificationOutputs, LossOutputs
@@ -42,8 +42,8 @@ class ClipForPretrain(_ClipForPretrain):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/pretrain/clip")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/model/pretrain/clip")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/pretrain/clip")
         pretrained_name = config.getoption("pretrained_name", "clip-vit-base-patch16")
         config_path = config.getoption("config_path", None)
@@ -115,8 +115,8 @@ class ClipForClassification(_ClipForClassification):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/classification/clip")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/model/classification/clip")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/classification/clip")
         pretrained_name = config.getoption("pretrained_name", "clip-vit-base-patch16")
         config_path = config.getoption("config_path", None)
@@ -188,8 +188,8 @@ class ClipForTextClassification(_ClipForTextClassification):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/classification/clip/text")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/model/classification/clip/text")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/classification/clip/text")
         pretrained_name = config.getoption("pretrained_name", "clip-vit-base-patch16")
         config_path = config.getoption("config_path", None)
@@ -259,8 +259,8 @@ class ClipForImageClassification(_ClipForImageClassification):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/classification/clip/image")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/model/classification/clip/image")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/classification/clip/image")
         pretrained_name = config.getoption("pretrained_name", "clip-vit-base-patch16")
         config_path = config.getoption("config_path", None)
@@ -322,8 +322,8 @@ class ClipForMatching(_ClipForMatching):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/matching/clip")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/model/matching/clip")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/matching/clip")
         pretrained_name = config.getoption("pretrained_name", "clip-vit-base-patch16")
         config_path = config.getoption("config_path", None)

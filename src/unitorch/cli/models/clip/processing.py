@@ -6,7 +6,7 @@ from PIL import Image
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.clip import ClipProcessor as _ClipProcessor
 from unitorch.cli import (
-    add_default_section_for_init,
+    config_defaults_init,
     register_process,
 )
 from unitorch.cli import cached_path
@@ -39,8 +39,8 @@ class ClipProcessor(_ClipProcessor):
         )
 
     @classmethod
-    @add_default_section_for_init("core/process/clip")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/process/clip")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/process/clip")
         pretrained_name = config.getoption("pretrained_name", "clip-vit-base-patch16")
         vocab_path = config.getoption("vocab_path", None)

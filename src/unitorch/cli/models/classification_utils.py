@@ -5,7 +5,7 @@ import torch
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Union
 from unitorch.cli import (
-    add_default_section_for_init,
+    config_defaults_init,
     register_process,
 )
 from unitorch.cli import WriterMixin, WriterOutputs
@@ -52,8 +52,8 @@ class ClassificationProcessor:
         self.id2label = id2label
 
     @classmethod
-    @add_default_section_for_init("core/process/classification")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/process/classification")
+    def from_config(cls, config, **kwargs):
         pass
 
     @register_process("core/postprocess/classification/binary_score")

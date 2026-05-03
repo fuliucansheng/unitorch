@@ -22,10 +22,10 @@ from unitorch.utils import (
 from unitorch.cli import (
     cached_path,
     register_fastapi,
-    add_default_section_for_init,
-    add_default_section_for_function,
+    config_defaults_init,
+    config_defaults_method,
 )
-from unitorch.cli import CoreConfigureParser, GenericFastAPI
+from unitorch.cli import Config, GenericFastAPI
 from unitorch.cli.models.diffusers import (
     pretrained_stable_infos,
     pretrained_stable_extensions_infos,
@@ -104,8 +104,8 @@ class StableFluxForText2ImageFastAPIPipeline(GenericStableFluxModel):
             self.to(device=self._device)
 
     @classmethod
-    @add_default_section_for_init("core/fastapi/pipeline/stable_flux/text2image")
-    def from_core_configure(
+    @config_defaults_init("core/fastapi/pipeline/stable_flux/text2image")
+    def from_config(
         cls,
         config,
         pretrained_name: Optional[str] = None,
@@ -287,7 +287,7 @@ class StableFluxForText2ImageFastAPIPipeline(GenericStableFluxModel):
         device_type=("cuda" if torch.cuda.is_available() else "cpu"),
         dtype=(torch.bfloat16 if is_bfloat16_available() else torch.float32),
     )
-    @add_default_section_for_function("core/fastapi/pipeline/stable_flux/text2image")
+    @config_defaults_method("core/fastapi/pipeline/stable_flux/text2image")
     def __call__(
         self,
         text: str,
@@ -343,7 +343,7 @@ class StableFluxForText2ImageFastAPIPipeline(GenericStableFluxModel):
 
 @register_fastapi("core/fastapi/stable_flux/text2image")
 class StableFluxText2ImageFastAPI(GenericFastAPI):
-    def __init__(self, config: CoreConfigureParser):
+    def __init__(self, config: Config):
         self.config = config
         config.set_default_section(f"core/fastapi/stable_flux/text2image")
         router = config.getoption("router", "/core/fastapi/stable_flux/text2image")
@@ -366,7 +366,7 @@ class StableFluxText2ImageFastAPI(GenericFastAPI):
         pretrained_lora_weights: Optional[Union[float, List[float]]] = 1.0,
         pretrained_lora_alphas: Optional[Union[float, List[float]]] = 32.0,
     ):
-        self._pipe = StableFluxForText2ImageFastAPIPipeline.from_core_configure(
+        self._pipe = StableFluxForText2ImageFastAPIPipeline.from_config(
             self.config,
             pretrained_name=pretrained_name,
             pretrained_lora_names=pretrained_lora_names,

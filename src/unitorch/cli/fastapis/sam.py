@@ -19,9 +19,9 @@ from unitorch.utils import is_remote_url
 from unitorch.cli import (
     register_fastapi,
     cached_path,
-    add_default_section_for_init,
-    add_default_section_for_function,
-    CoreConfigureParser,
+    config_defaults_init,
+    config_defaults_method,
+    Config,
     GenericFastAPI,
 )
 from unitorch.cli.models.sam import (
@@ -55,8 +55,8 @@ class SamForSegmentationPipeline(_SamForSegmentation):
         self.eval()
 
     @classmethod
-    @add_default_section_for_init("core/fastapi/pipeline/sam")
-    def from_core_configure(
+    @config_defaults_init("core/fastapi/pipeline/sam")
+    def from_config(
         cls,
         config,
         pretrained_name: Optional[str] = None,
@@ -109,7 +109,7 @@ class SamForSegmentationPipeline(_SamForSegmentation):
         return inst
 
     @torch.no_grad()
-    @add_default_section_for_function("core/fastapi/pipeline/sam")
+    @config_defaults_method("core/fastapi/pipeline/sam")
     def __call__(
         self,
         image: Union[Image.Image, str],
@@ -239,7 +239,7 @@ class SamForSegmentationPipeline(_SamForSegmentation):
 
 @register_fastapi("core/fastapi/sam")
 class SamForSegmentationFastAPI(GenericFastAPI):
-    def __init__(self, config: CoreConfigureParser):
+    def __init__(self, config: Config):
         self.config = config
         config.set_default_section("core/fastapi/sam")
         router = config.getoption("router", "/core/fastapi/sam")
@@ -256,7 +256,7 @@ class SamForSegmentationFastAPI(GenericFastAPI):
         return self._router
 
     def start(self, pretrained_name: Optional[str] = "sam-vit-base"):
-        self._pipe = SamForSegmentationPipeline.from_core_configure(
+        self._pipe = SamForSegmentationPipeline.from_config(
             self.config,
             pretrained_name=pretrained_name,
         )

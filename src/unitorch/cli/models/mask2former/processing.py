@@ -7,7 +7,7 @@ from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.mask2former import Mask2FormerProcessor as _Mask2FormerProcessor
 from unitorch.cli import (
     cached_path,
-    add_default_section_for_init,
+    config_defaults_init,
     register_process,
 )
 from unitorch.cli import WriterOutputs
@@ -27,8 +27,8 @@ class Mask2FormerProcessor(_Mask2FormerProcessor):
         )
 
     @classmethod
-    @add_default_section_for_init("core/process/mask2former")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/process/mask2former")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/process/mask2former")
         pretrained_name = config.getoption(
             "pretrained_name", "mask2former-swin-tiny-ade-semantic"

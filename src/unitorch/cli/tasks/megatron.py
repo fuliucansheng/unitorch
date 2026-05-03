@@ -31,39 +31,50 @@ from unitorch.cli import (
     registered_score,
     registered_scheduler,
     init_registered_module,
-    add_default_section_for_init,
-    add_default_section_for_function,
+    config_defaults_init,
+    config_defaults_method,
 )
 from unitorch.cli.models import LossOutputs
 from unitorch.cli.tasks.supervised import collate_fn
 import unitorch.cli.wandb as wandb
 
 
-def get_batch_on_this_cp_rank(batch: Dict[str, Any]) -> Dict[str, Any]:
+def _get_batch_on_cp_rank(batch: Dict[str, Any]) -> Dict[str, Any]:
+    """Slice *batch* tensors to only the tokens owned by the current context-parallel rank.
+
+    Each sequence is split into ``2 * cp_size`` chunks; the rank takes chunks at positions
+    ``[cp_rank, 2*cp_size - cp_rank - 1]`` (ring-attention interleaving).
+    """
     cp_size = mpu.get_context_parallel_world_size()
-    if cp_size > 1:
-        cp_rank = mpu.get_context_parallel_rank()
-        for key, val in batch.items():
-            if val is not None:
-                seq_dim = 1
-                val = val.view(
-                    *val.shape[:seq_dim],
-                    2 * cp_size,
-                    val.shape[seq_dim] // (2 * cp_size),
-                    *val.shape[seq_dim + 1:],
-                )
-                index = torch.tensor(
-                    [cp_rank, 2 * cp_size - cp_rank - 1],
-                    device="cpu",
-                    pin_memory=True,
-                ).cuda(non_blocking=True)
-                val = val.index_select(seq_dim, index)
-                val = val.view(*val.shape[:seq_dim], -1, *val.shape[seq_dim + 2:])
-                batch[key] = val
+    if cp_size <= 1:
+        return batch
+
+    cp_rank = mpu.get_context_parallel_rank()
+    for key, val in batch.items():
+        if val is None:
+            continue
+        seq_dim = 1
+        val = val.view(
+            *val.shape[:seq_dim],
+            2 * cp_size,
+            val.shape[seq_dim] // (2 * cp_size),
+            *val.shape[seq_dim + 1:],
+        )
+        index = torch.tensor(
+            [cp_rank, 2 * cp_size - cp_rank - 1],
+            device="cpu",
+            pin_memory=True,
+        ).cuda(non_blocking=True)
+        val = val.index_select(seq_dim, index)
+        batch[key] = val.view(*val.shape[:seq_dim], -1, *val.shape[seq_dim + 2:])
+
     return batch
 
 
-def process_batch_data(inputs, targets):
+def _prepare_batch(inputs, targets) -> Dict[str, Any]:
+    """Broadcast *inputs* and *targets* across the tensor-model-parallel group, move to GPU,
+    and apply context-parallel sequence slicing.
+    """
     data = [inputs, targets]
     dist.broadcast_object_list(
         data,
@@ -72,7 +83,7 @@ def process_batch_data(inputs, targets):
     )
     batch = {**data[0], **data[1]}
     batch = {k: v.cuda() if v is not None else v for k, v in batch.items()}
-    return get_batch_on_this_cp_rank(batch)
+    return _get_batch_on_cp_rank(batch)
 
 
 @register_task("core/task/megatron/supervised")
@@ -84,8 +95,8 @@ class MegatronTask:
         configure,
         model,
         datasets,
-        local_rank: int = -1,
-        seed: int = 1123,
+        local_rank: int = -1,  # GPU index for distributed training; -1 for single-GPU
+        seed: int = 1123,       # global random seed for reproducibility
     ):
         set_seed(seed)
         tensor_parallel.model_parallel_cuda_manual_seed(seed)
@@ -105,17 +116,16 @@ class MegatronTask:
         self.dp_size = mpu.get_data_parallel_world_size()
         self.pp_rank = mpu.get_pipeline_model_parallel_rank()
         self.pp_size = mpu.get_pipeline_model_parallel_world_size()
-        self.vp_rank = mpu.get_virtual_pipeline_model_parallel_rank()
         self.vp_size = mpu.get_virtual_pipeline_model_parallel_world_size()
         self.cp_rank = mpu.get_context_parallel_rank()
         self.cp_group = mpu.get_context_parallel_group()
         self.cp_size = mpu.get_context_parallel_world_size()
         self.tp_rank = mpu.get_tensor_model_parallel_rank()
-        self.tp_size = mpu.get_tensor_model_parallel_world_size()
         self.is_pp_last_rank = mpu.is_pipeline_last_stage(ignore_virtual=True)
 
     @property
     def _is_primary_rank(self) -> bool:
+        """True only on the single rank responsible for logging and checkpoint writes."""
         return (
             self.dp_rank == 0
             and self.is_pp_last_rank
@@ -124,8 +134,8 @@ class MegatronTask:
         )
 
     @classmethod
-    @add_default_section_for_init("core/task/megatron/supervised")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/task/megatron/supervised")
+    def from_config(cls, config, **kwargs):
         try:
             torch.distributed.init_process_group(backend="nccl", init_method="env://")
         except Exception:
@@ -154,28 +164,28 @@ class MegatronTask:
             local_rank=config.getdefault("core/cli", "local_rank", get_local_rank()),
         )
 
-    @add_default_section_for_function("core/task/megatron/supervised")
+    @config_defaults_method("core/task/megatron/supervised")
     def train(
         self,
-        optim: str,
-        loss_fn: str,
-        score_fn: str,
-        monitor_fns: Optional[Union[str, List[str]]] = None,
-        scheduler: Optional[str] = None,
-        from_ckpt_dir: str = "./from_ckpt",
-        to_ckpt_dir: str = "./to_ckpt",
-        train_batch_size: int = 128,
-        dev_batch_size: int = 128,
-        pin_memory: bool = True,
-        num_workers: int = 4,
-        log_freq: int = 100,
-        ckpt_freq: int = 10000,
-        grad_acc_step: int = 1,
-        max_grad_norm: float = 1.0,
-        num_training_samples: int = 1_000_000_000,
-        num_dev_samples: int = 10000,
-        seq_length: Optional[int] = None,
-        epochs: int = 5,
+        optim: str,                                     # registered optimizer name
+        loss_fn: str,                                   # registered loss function name
+        score_fn: str,                                  # registered scoring function name
+        monitor_fns: Optional[Union[str, List[str]]] = None,  # extra metrics logged at checkpoints
+        scheduler: Optional[str] = None,               # registered LR scheduler name
+        from_ckpt_dir: str = "./from_ckpt",            # directory to load pretrained weights from
+        to_ckpt_dir: str = "./to_ckpt",                # directory to write checkpoints to
+        train_batch_size: int = 128,                   # per-DP-rank micro-batch size for training
+        dev_batch_size: int = 128,                     # per-DP-rank batch size for validation
+        pin_memory: bool = True,                       # pin DataLoader memory for faster GPU transfer
+        num_workers: int = 4,                          # DataLoader worker processes
+        log_freq: int = 100,                           # log training loss every N steps
+        ckpt_freq: int = 10000,                        # save checkpoint every N steps
+        grad_acc_step: int = 1,                        # gradient accumulation microbatches
+        max_grad_norm: float = 1.0,                    # gradient clipping max norm
+        num_training_samples: int = 1_000_000_000,     # fallback total samples for iterable datasets
+        num_dev_samples: int = 10000,                  # number of samples used per validation pass
+        seq_length: Optional[int] = None,              # sequence length hint passed to pipeline schedules
+        epochs: int = 5,                               # total training epochs
     ):
         if self.local_rank in [-1, 0]:
             os.makedirs(to_ckpt_dir, exist_ok=True)
@@ -190,12 +200,13 @@ class MegatronTask:
                 for fn in monitor_fns
                 if fn in registered_score
             ]
+
         if optim is not None and self.model is not None:
             optim = init_registered_module(
                 optim,
                 self.config,
                 registered_optim,
-                params=filter(lambda x: x.requires_grad, self.model.parameters()),
+                params=filter(lambda p: p.requires_grad, self.model.parameters()),
             )
 
         if os.path.exists(from_ckpt_dir):
@@ -215,10 +226,10 @@ class MegatronTask:
         self.best_score = info.get("best_score", self.best_score)
         logging.info("best score so far: %s", self.best_score)
 
-        for n, p in self.model.named_parameters():
+        for name, param in self.model.named_parameters():
             logging.debug(
                 "%s: trainable=%s dtype=%s shape=%s device=%s",
-                n, p.requires_grad, p.dtype, p.shape, p.device,
+                name, param.requires_grad, param.dtype, param.shape, param.device,
             )
 
         if self.dp_size > 1:
@@ -263,6 +274,7 @@ class MegatronTask:
                 num_training_steps=num_training_steps,
             )
 
+        # Select pipeline schedule based on parallelism configuration
         if self.pp_size == 1:
             forward_backward_pipeline = forward_backward_no_pipelining
         elif self.vp_size is not None:
@@ -270,25 +282,27 @@ class MegatronTask:
         else:
             forward_backward_pipeline = forward_backward_pipelining_without_interleaving
 
-        def forward_step_func(_iter, _model):
-            inputs, targets = next(_iter)
-            inputs, targets = inputs.cuda(), targets.cuda()
-            batch = process_batch_data(inputs.dict(), targets.dict())
-            outputs = _model(**batch)
-            if isinstance(outputs, LossOutputs):
-                loss = outputs.loss
-                if self.cp_size > 1:
-                    dist.all_reduce(loss, group=self.cp_group)
-                    loss = loss / self.cp_size
-                return loss.unsqueeze(0), lambda x: (x.squeeze(0), x.detach().squeeze(0))
-            return outputs, None
+        def _forward_step(data_iter, model):
+            inputs, targets = next(data_iter)
+            batch = _prepare_batch(inputs.dict(), targets.dict())
+            outputs = model(**batch)
+            if not isinstance(outputs, LossOutputs):
+                return outputs, None
+            loss = outputs.loss
+            if self.cp_size > 1:
+                dist.all_reduce(loss, group=self.cp_group)
+                loss = loss / self.cp_size
+            return loss.unsqueeze(0), lambda x: (x.squeeze(0), x.detach().squeeze(0))
+
+        num_train_steps = num_training_samples // train_batch_size // self.dp_size
+        num_dev_steps = num_dev_samples // dev_batch_size // self.dp_size
 
         def _run_eval():
             self.model.eval()
             dev_loss = 0.0
             for _ in range(num_dev_steps):
-                _loss = forward_backward_pipeline(
-                    forward_step_func=forward_step_func,
+                loss_list = forward_backward_pipeline(
+                    forward_step_func=_forward_step,
                     data_iterator=iter_dev,
                     model=self.model,
                     num_microbatches=grad_acc_step,
@@ -297,7 +311,7 @@ class MegatronTask:
                     forward_only=True,
                 )
                 if self.is_pp_last_rank:
-                    dev_loss += _loss[0].item() / num_dev_steps
+                    dev_loss += loss_list[0].item() / num_dev_steps
             self.model.train()
             if self._is_primary_rank:
                 logging.info("val/loss: %.6f", dev_loss)
@@ -305,7 +319,7 @@ class MegatronTask:
                     wandb.log({"val/loss": dev_loss})
             return dev_loss
 
-        def _save_checkpoints(epoch, step):
+        def _save_checkpoint(epoch, step):
             base_model = getattr(self.model, "module", self.model)
             dev_loss = _run_eval()
             if -dev_loss > self.best_score:
@@ -319,13 +333,12 @@ class MegatronTask:
                 weight_name="common.pt",
             )
             info.update(best_score=self.best_score, global_epoch=epoch, global_step=step)
-            with open(info_path, "w") as f:
-                json.dump(info, f, indent=4)
+            if self._is_primary_rank:
+                with open(info_path, "w") as f:
+                    json.dump(info, f, indent=4)
 
-        log_loss = 0
+        log_loss = 0.0
         dev_epoch = 0
-        num_train_steps = num_training_samples // train_batch_size // self.dp_size
-        num_dev_steps = num_dev_samples // dev_batch_size // self.dp_size
 
         for e in range(epochs):
             torch.cuda.empty_cache()
@@ -338,11 +351,12 @@ class MegatronTask:
                 dataset_train.set_skip_step(global_step * train_batch_size)
 
             self.model.train()
+
             for step in range(num_train_steps):
                 step = step + global_step
 
-                loss = forward_backward_pipeline(
-                    forward_step_func=forward_step_func,
+                loss_list = forward_backward_pipeline(
+                    forward_step_func=_forward_step,
                     data_iterator=iter_train,
                     model=self.model,
                     num_microbatches=grad_acc_step,
@@ -350,12 +364,13 @@ class MegatronTask:
                     micro_batch_size=train_batch_size,
                 )
 
+                # Copy main_grad into .grad so standard optimizers can consume it
                 for param in self.model.parameters():
                     if hasattr(param, "main_grad") and param.main_grad is not None:
                         param.grad = param.main_grad
 
                 if self.is_pp_last_rank:
-                    log_loss += loss[0].item()
+                    log_loss += loss_list[0].item()
 
                 nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=max_grad_norm)
                 optim.step()
@@ -365,26 +380,26 @@ class MegatronTask:
 
                 if (step + 1) % log_freq == 0 and self._is_primary_rank:
                     avg_loss = log_loss / log_freq
-                    logging.info("epoch %d step %d: loss=%.6f", e, step, avg_loss)
+                    logging.info("epoch %d step %d: train/loss=%.6f", e, step, avg_loss)
                     if wandb.is_available():
                         wandb.log({"epoch": e, "step": step, "train/loss": avg_loss})
-                    log_loss = 0
+                    log_loss = 0.0
 
                 if (step + 1) % ckpt_freq == 0:
                     dist.barrier()
                     if hasattr(dataset_dev, "set_epoch"):
                         dataset_dev.set_epoch(dev_epoch)
                     dev_epoch += 1
-                    _save_checkpoints(e, step + 1)
+                    _save_checkpoint(e, step + 1)
                     dist.barrier()
 
-            log_loss = 0
+            log_loss = 0.0
             dist.barrier()
 
             if hasattr(dataset_dev, "set_epoch"):
                 dataset_dev.set_epoch(dev_epoch)
             dev_epoch += 1
-            _save_checkpoints(e + 1, 0)
+            _save_checkpoint(e + 1, 0)
 
             dist.barrier()
             global_step = 0

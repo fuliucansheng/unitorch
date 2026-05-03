@@ -19,11 +19,11 @@ from unitorch.models.clip import ClipProcessor
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.cli import (
     cached_path,
-    add_default_section_for_init,
-    add_default_section_for_function,
+    config_defaults_init,
+    config_defaults_method,
     register_fastapi,
 )
-from unitorch.cli import CoreConfigureParser, GenericFastAPI
+from unitorch.cli import Config, GenericFastAPI
 from unitorch.cli.models.clip import (
     pretrained_clip_infos,
     pretrained_clip_extensions_infos,
@@ -67,8 +67,8 @@ class ClipForClassificationPipeline(_ClipForClassification):
         self.eval()
 
     @classmethod
-    @add_default_section_for_init("core/fastapi/pipeline/clip")
-    def from_core_configure(
+    @config_defaults_init("core/fastapi/pipeline/clip")
+    def from_config(
         cls,
         config,
         pretrained_name: Optional[str] = None,
@@ -149,7 +149,7 @@ class ClipForClassificationPipeline(_ClipForClassification):
         return inst
 
     @torch.no_grad()
-    @add_default_section_for_function("core/fastapi/pipeline/clip")
+    @config_defaults_method("core/fastapi/pipeline/clip")
     def __call__(
         self,
         text: str,
@@ -218,8 +218,8 @@ class ClipForTextClassificationPipeline(_ClipForTextClassification):
         self.eval()
 
     @classmethod
-    @add_default_section_for_init("core/fastapi/pipeline/clip/text")
-    def from_core_configure(
+    @config_defaults_init("core/fastapi/pipeline/clip/text")
+    def from_config(
         cls,
         config,
         pretrained_name: Optional[str] = None,
@@ -288,7 +288,7 @@ class ClipForTextClassificationPipeline(_ClipForTextClassification):
         return inst
 
     @torch.no_grad()
-    @add_default_section_for_function("core/fastapi/pipeline/clip/text")
+    @config_defaults_method("core/fastapi/pipeline/clip/text")
     def __call__(
         self,
         text: str,
@@ -350,8 +350,8 @@ class ClipForImageClassificationPipeline(_ClipForImageClassification):
         self.eval()
 
     @classmethod
-    @add_default_section_for_init("core/fastapi/pipeline/clip/image")
-    def from_core_configure(
+    @config_defaults_init("core/fastapi/pipeline/clip/image")
+    def from_config(
         cls,
         config,
         pretrained_name: Optional[str] = None,
@@ -414,7 +414,7 @@ class ClipForImageClassificationPipeline(_ClipForImageClassification):
         return inst
 
     @torch.no_grad()
-    @add_default_section_for_function("core/fastapi/pipeline/clip/image")
+    @config_defaults_method("core/fastapi/pipeline/clip/image")
     def __call__(
         self,
         image: Image.Image,
@@ -474,8 +474,8 @@ class ClipForMatchingPipeline(_ClipForMatching):
         self.eval()
 
     @classmethod
-    @add_default_section_for_init("core/fastapi/pipeline/matching/clip")
-    def from_core_configure(
+    @config_defaults_init("core/fastapi/pipeline/matching/clip")
+    def from_config(
         cls,
         config,
         pretrained_name: Optional[str] = None,
@@ -551,7 +551,7 @@ class ClipForMatchingPipeline(_ClipForMatching):
         return inst
 
     @torch.no_grad()
-    @add_default_section_for_function("core/fastapi/pipeline/matching/clip")
+    @config_defaults_method("core/fastapi/pipeline/matching/clip")
     def __call__(
         self,
         text: str,
@@ -635,7 +635,7 @@ class ClipForMatchingPipeline(_ClipForMatching):
 
 @register_fastapi("core/fastapi/clip")
 class ClipForClassificationFastAPI(GenericFastAPI):
-    def __init__(self, config: CoreConfigureParser):
+    def __init__(self, config: Config):
         self.config = config
         config.set_default_section("core/fastapi/clip")
         router = config.getoption("router", "/core/fastapi/clip")
@@ -652,7 +652,7 @@ class ClipForClassificationFastAPI(GenericFastAPI):
         return self._router
 
     def start(self, pretrained_name: str = "clip-vit-base-patch16"):
-        self._pipe = ClipForClassificationPipeline.from_core_configure(
+        self._pipe = ClipForClassificationPipeline.from_config(
             self.config,
             pretrained_name=pretrained_name,
         )
@@ -690,7 +690,7 @@ class ClipForClassificationFastAPI(GenericFastAPI):
 
 @register_fastapi("core/fastapi/clip/text")
 class ClipForTextClassificationFastAPI(GenericFastAPI):
-    def __init__(self, config: CoreConfigureParser):
+    def __init__(self, config: Config):
         self.config = config
         config.set_default_section("core/fastapi/clip/text")
         router = config.getoption("router", "/core/fastapi/clip/text")
@@ -707,7 +707,7 @@ class ClipForTextClassificationFastAPI(GenericFastAPI):
         return self._router
 
     def start(self, pretrained_name: str = "clip-vit-base-patch16"):
-        self._pipe = ClipForTextClassificationPipeline.from_core_configure(
+        self._pipe = ClipForTextClassificationPipeline.from_config(
             self.config,
             pretrained_name=pretrained_name,
         )
@@ -741,7 +741,7 @@ class ClipForTextClassificationFastAPI(GenericFastAPI):
 
 @register_fastapi("core/fastapi/clip/image")
 class ClipForImageClassificationFastAPI(GenericFastAPI):
-    def __init__(self, config: CoreConfigureParser):
+    def __init__(self, config: Config):
         self.config = config
         config.set_default_section("core/fastapi/clip/image")
         router = config.getoption("router", "/core/fastapi/clip/image")
@@ -758,7 +758,7 @@ class ClipForImageClassificationFastAPI(GenericFastAPI):
         return self._router
 
     def start(self, pretrained_name: str = "clip-vit-base-patch16"):
-        self._pipe = ClipForImageClassificationPipeline.from_core_configure(
+        self._pipe = ClipForImageClassificationPipeline.from_config(
             self.config,
             pretrained_name=pretrained_name,
         )
@@ -790,7 +790,7 @@ class ClipForImageClassificationFastAPI(GenericFastAPI):
 
 @register_fastapi("core/fastapi/clip/matching")
 class ClipForMatchingFastAPI(GenericFastAPI):
-    def __init__(self, config: CoreConfigureParser):
+    def __init__(self, config: Config):
         self.config = config
         config.set_default_section("core/fastapi/clip/matching")
         router = config.getoption("router", "/core/fastapi/clip/matching")
@@ -807,7 +807,7 @@ class ClipForMatchingFastAPI(GenericFastAPI):
         return self._router
 
     def start(self, pretrained_name: str = "clip-vit-base-patch16"):
-        self._pipe = ClipForMatchingPipeline.from_core_configure(
+        self._pipe = ClipForMatchingPipeline.from_config(
             self.config,
             pretrained_name=pretrained_name,
         )

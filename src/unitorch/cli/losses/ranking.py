@@ -7,7 +7,7 @@ from unitorch.losses import (
     ApproxNDCGLoss as _ApproxNDCGLoss,
     ApproxMRRLoss as _ApproxMRRLoss,
 )
-from unitorch.cli import add_default_section_for_init, register_loss
+from unitorch.cli import config_defaults_init, register_loss
 from unitorch.cli.models import (
     RankingOutputs,
     RankingTargets,
@@ -22,8 +22,8 @@ class ListMLELoss(_ListMLELoss):
         super().__init__()
 
     @classmethod
-    @add_default_section_for_init("core/loss/ranking/listmle")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/loss/ranking/listmle")
+    def from_config(cls, config, **kwargs):
         pass
 
     def forward(
@@ -55,8 +55,8 @@ class ApproxNDCGLoss(_ApproxNDCGLoss):
         )
 
     @classmethod
-    @add_default_section_for_init("core/loss/ranking/approxndcg")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/loss/ranking/approxndcg")
+    def from_config(cls, config, **kwargs):
         pass
 
     def forward(
@@ -88,8 +88,8 @@ class ApproxMRRLoss(_ApproxMRRLoss):
         )
 
     @classmethod
-    @add_default_section_for_init("core/loss/ranking/approxmrr")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/loss/ranking/approxmrr")
+    def from_config(cls, config, **kwargs):
         pass
 
     def forward(

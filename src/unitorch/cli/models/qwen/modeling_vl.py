@@ -10,8 +10,8 @@ from unitorch.models.qwen import (
 )
 from unitorch.cli import (
     cached_path,
-    add_default_section_for_init,
-    add_default_section_for_function,
+    config_defaults_init,
+    config_defaults_method,
     register_model,
 )
 from unitorch.cli.models import generation_model_decorator
@@ -37,8 +37,8 @@ class QWen3VLForGeneration(_QWen3VLForGeneration):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/generation/qwen3_vl")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/model/generation/qwen3_vl")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/generation/qwen3_vl")
         pretrained_name = config.getoption("pretrained_name", "qwen3-vl-8b-instruct")
         pretrained_lora_name = config.getoption("pretrained_lora_name", None)
@@ -101,7 +101,7 @@ class QWen3VLForGeneration(_QWen3VLForGeneration):
         )
         return GenerationOutputs(sequences=outputs)
 
-    @add_default_section_for_function("core/model/generation/qwen3_vl")
+    @config_defaults_method("core/model/generation/qwen3_vl")
     @torch.no_grad()
     @autocast(
         device_type=("cuda" if torch.cuda.is_available() else "cpu"),

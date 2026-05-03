@@ -16,11 +16,11 @@ from unitorch.models.siglip import SiglipProcessor
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.cli import (
     cached_path,
-    add_default_section_for_init,
-    add_default_section_for_function,
+    config_defaults_init,
+    config_defaults_method,
     register_fastapi,
 )
-from unitorch.cli import CoreConfigureParser, GenericFastAPI
+from unitorch.cli import Config, GenericFastAPI
 from unitorch.cli.models.siglip import (
     pretrained_siglip_infos,
     pretrained_siglip_extensions_infos,
@@ -56,8 +56,8 @@ class Siglip2ForMatchingPipeline(_SiglipForMatching):
         self.eval()
 
     @classmethod
-    @add_default_section_for_init("core/fastapi/pipeline/matching/siglip")
-    def from_core_configure(
+    @config_defaults_init("core/fastapi/pipeline/matching/siglip")
+    def from_config(
         cls,
         config,
         pretrained_name: Optional[str] = None,
@@ -120,7 +120,7 @@ class Siglip2ForMatchingPipeline(_SiglipForMatching):
         return inst
 
     @torch.no_grad()
-    @add_default_section_for_function("core/fastapi/pipeline/matching/siglip")
+    @config_defaults_method("core/fastapi/pipeline/matching/siglip")
     def __call__(
         self,
         text: str,
@@ -204,7 +204,7 @@ class Siglip2ForMatchingPipeline(_SiglipForMatching):
 
 @register_fastapi("core/fastapi/siglip")
 class Siglip2ForMatchingFastAPI(GenericFastAPI):
-    def __init__(self, config: CoreConfigureParser):
+    def __init__(self, config: Config):
         self.config = config
         config.set_default_section("core/fastapi/siglip")
         router = config.getoption("router", "/core/fastapi/siglip")
@@ -221,7 +221,7 @@ class Siglip2ForMatchingFastAPI(GenericFastAPI):
         return self._router
 
     def start(self, pretrained_name: str = "siglip-base-patch16-224"):
-        self._pipe = Siglip2ForMatchingPipeline.from_core_configure(
+        self._pipe = Siglip2ForMatchingPipeline.from_config(
             self.config,
             pretrained_name=pretrained_name,
         )

@@ -5,13 +5,13 @@ import os
 import time
 import logging
 import shutil
-from unitorch.cli import CoreConfigureParser
+from unitorch.cli import Config
 from unitorch.cli import register_service, GenericService
 
 
 @register_service("core/service/mirror_files")
 class MirrorFilesService(GenericService):
-    def __init__(self, config: CoreConfigureParser):
+    def __init__(self, config: Config):
         self.config = config
         config.set_default_section("core/service/mirror_files")
         self.name = config.getoption("processname", "core_mirror_files_service")
@@ -79,7 +79,7 @@ class MirrorFilesService(GenericService):
 
 @register_service("core/service/mirror_folders")
 class MirrorFoldersService(GenericService):
-    def __init__(self, config: CoreConfigureParser):
+    def __init__(self, config: Config):
         self.config = config
         config.set_default_section("core/service/mirror_folders")
         self.name = config.getoption("processname", "core_mirror_folders_service")

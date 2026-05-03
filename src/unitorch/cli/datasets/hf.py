@@ -9,9 +9,9 @@ from datasets import Dataset
 from typing import Dict, List, Optional
 from unitorch.datasets.hf import HFDatasets, HFIterableDatasets
 from torch.utils.data import Dataset as TorchDataset, IterableDataset
-from unitorch.cli import CoreConfigureParser
+from unitorch.cli import Config
 from unitorch.cli import cached_path, registered_process, register_dataset
-from unitorch.cli import add_default_section_for_init, add_default_section_for_function
+from unitorch.cli import config_defaults_init, config_defaults_method
 from unitorch.cli import init_registered_process
 from unitorch.cli.models import (
     ModelInputs,
@@ -73,7 +73,7 @@ class ASTHFDatasets(TorchDataset):
                 if isinstance(result, ModelInputs):
                     is_new = True
                     for _inputs in model_inputs_list:
-                        if type(_inputs) == type(result):
+                        if type(_inputs) is type(result):
                             _inputs.add(result)
                             is_new = False
                             break
@@ -84,7 +84,7 @@ class ASTHFDatasets(TorchDataset):
                 if isinstance(result, ModelTargets):
                     is_new = True
                     for _targets in model_targets_list:
-                        if type(_targets) == type(result):
+                        if type(_targets) is type(result):
                             _targets.add(result)
                             is_new = False
                             break
@@ -178,7 +178,7 @@ class ASTDatasets:
     templates = ["csv", "json", "parquet", "hub"]
     __ASTDatasets__ = dict()
 
-    def __init__(self, configure: CoreConfigureParser):
+    def __init__(self, configure: Config):
         self.config = configure
 
     def __getdataset__(self, split):
@@ -208,6 +208,7 @@ class ASTDatasets:
         _ASTDatasets = ASTHFIterableDatasets if _iterable else ASTHFDatasets
 
         config.set_default_section(f"core/dataset/ast/{split}")
+        template = config.getoption("template", _template)
         if config.getoption("data_name", _data_name) is not None:
             template = "hub"
 
@@ -309,8 +310,8 @@ class ASTDatasets:
         return self.__ASTDatasets__.get(split)
 
     @classmethod
-    @add_default_section_for_init("core/dataset/ast")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/dataset/ast")
+    def from_config(cls, config, **kwargs):
         return cls(configure=config)
 
     def get(self, split: Optional[str] = "train"):

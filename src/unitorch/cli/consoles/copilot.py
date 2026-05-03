@@ -4,9 +4,7 @@
 import os
 import fire
 import unitorch.cli
-from unitorch.cli import (
-    registered_copilot_tools,
-)
+from unitorch.cli import registered_copilot_tools
 
 
 @fire.decorators.SetParseFn(str)
@@ -17,15 +15,17 @@ def copilot(**kwargs):
 @fire.decorators.SetParseFn(str)
 def cli(name: str, **kwargs):
     if name not in registered_copilot_tools:
-        print(f"Copilot tool '{name}' is not registered.")
+        print(f"Copilot tool {name!r} is not registered.")
         os._exit(1)
-    cls = registered_copilot_tools[name]
-    inst = cls()
+    entry = registered_copilot_tools[name]
+    inst = entry["obj"]()
     inst.launch(**kwargs)
     os._exit(0)
 
+
 def main():
     fire.Fire(copilot)
+
 
 def cli_main():
     fire.Fire(cli)

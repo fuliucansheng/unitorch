@@ -4,7 +4,7 @@
 from typing import Optional
 from unitorch.optims.lion import Lion
 from unitorch.models import CheckpointMixin
-from unitorch.cli import add_default_section_for_init, register_optim
+from unitorch.cli import config_defaults_init, register_optim
 
 
 @register_optim("core/optim/lion")
@@ -20,6 +20,6 @@ class LionOptimizer(Lion, CheckpointMixin):
         )
 
     @classmethod
-    @add_default_section_for_init("core/optim/lion")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/optim/lion")
+    def from_config(cls, config, **kwargs):
         pass

@@ -7,8 +7,7 @@ from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.pegasus import PegasusProcessor as _PegasusProcessor
 from unitorch.cli import (
     cached_path,
-    add_default_section_for_init,
-    add_default_section_for_function,
+    config_defaults_init,
     register_process,
 )
 from unitorch.cli import WriterOutputs
@@ -38,8 +37,8 @@ class PegasusProcessor(_PegasusProcessor):
         )
 
     @classmethod
-    @add_default_section_for_init("core/process/pegasus")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/process/pegasus")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/process/pegasus")
         pretrained_name = config.getoption("pretrained_name", "pegasus-xsum")
         vocab_path = config.getoption("vocab_path", None)

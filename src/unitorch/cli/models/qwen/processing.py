@@ -8,8 +8,7 @@ from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.qwen import QWenProcessor as _QWenProcessor
 from unitorch.cli import (
     cached_path,
-    add_default_section_for_init,
-    add_default_section_for_function,
+    config_defaults_init,
     register_process,
 )
 from unitorch.cli import WriterOutputs
@@ -43,8 +42,8 @@ class QWenProcessor(_QWenProcessor):
         )
 
     @classmethod
-    @add_default_section_for_init("core/process/qwen")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/process/qwen")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/process/qwen")
         pretrained_name = config.getoption("pretrained_name", "qwen3-4b-thinking")
         tokenizer_file = config.getoption("tokenizer_file", None)

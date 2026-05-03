@@ -11,8 +11,8 @@ from unitorch.models.segformer import (
 )
 from unitorch.cli import (
     cached_path,
-    add_default_section_for_init,
-    add_default_section_for_function,
+    config_defaults_init,
+    config_defaults_method,
     register_model,
 )
 from unitorch.cli.models import SegmentationOutputs, LossOutputs
@@ -31,8 +31,8 @@ class SegformerForSegmentation(_SegformerForSegmentation):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/segmentation/segformer")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/model/segmentation/segformer")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/segmentation/segformer")
         pretrained_name = config.getoption(
             "pretrained_name", "segformer-b2-human-parse-24"
@@ -64,7 +64,7 @@ class SegformerForSegmentation(_SegformerForSegmentation):
     ):
         raise NotImplementedError
 
-    @add_default_section_for_function("core/model/segmentation/segformer")
+    @config_defaults_method("core/model/segmentation/segformer")
     @torch.no_grad()
     def segment(
         self,

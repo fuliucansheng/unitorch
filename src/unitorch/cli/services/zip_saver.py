@@ -9,7 +9,7 @@ import zipfile
 import cgi
 from threading import Thread
 from urllib.parse import parse_qs, urlparse
-from unitorch.cli import CoreConfigureParser
+from unitorch.cli import Config
 from unitorch.cli import register_service, GenericService
 
 
@@ -102,7 +102,7 @@ class ZipSaverServer(http.server.BaseHTTPRequestHandler):
 
 @register_service("core/service/zip_saver")
 class ZipSaverService(GenericService):
-    def __init__(self, config: CoreConfigureParser):
+    def __init__(self, config: Config):
         self.config = config
         config.set_default_section("core/service/zip_saver")
         self.ip = config.getoption("ip", "0.0.0.0")

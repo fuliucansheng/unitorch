@@ -4,7 +4,7 @@
 from typing import Optional
 from unitorch.optims import SGD, Adam, AdamW, Adafactor
 from unitorch.models import CheckpointMixin
-from unitorch.cli import add_default_section_for_init, register_optim
+from unitorch.cli import config_defaults_init, register_optim
 
 
 @register_optim("core/optim/sgd")
@@ -20,8 +20,8 @@ class SGDOptimizer(SGD, CheckpointMixin):
         )
 
     @classmethod
-    @add_default_section_for_init("core/optim/sgd")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/optim/sgd")
+    def from_config(cls, config, **kwargs):
         pass
 
 
@@ -38,8 +38,8 @@ class AdamOptimizer(Adam, CheckpointMixin):
         )
 
     @classmethod
-    @add_default_section_for_init("core/optim/adam")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/optim/adam")
+    def from_config(cls, config, **kwargs):
         pass
 
 
@@ -56,8 +56,8 @@ class AdamWOptimizer(AdamW, CheckpointMixin):
         )
 
     @classmethod
-    @add_default_section_for_init("core/optim/adamw")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/optim/adamw")
+    def from_config(cls, config, **kwargs):
         pass
 
 
@@ -80,8 +80,8 @@ class AdafactorOptimizer(Adafactor, CheckpointMixin):
         )
 
     @classmethod
-    @add_default_section_for_init("core/optim/adafactor")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/optim/adafactor")
+    def from_config(cls, config, **kwargs):
         pass
 
 

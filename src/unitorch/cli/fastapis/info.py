@@ -6,12 +6,12 @@ import psutil
 import torch
 from fastapi import APIRouter
 from unitorch.cli import register_fastapi
-from unitorch.cli import CoreConfigureParser, GenericFastAPI
+from unitorch.cli import Config, GenericFastAPI
 
 
 @register_fastapi("core/fastapi/info")
 class InfoFastAPI(GenericFastAPI):
-    def __init__(self, config: CoreConfigureParser):
+    def __init__(self, config: Config):
         self.config = config
         config.set_default_section(f"core/fastapi/info")
         router = config.getoption("router", "/core/fastapi/info")

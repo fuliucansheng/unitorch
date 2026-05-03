@@ -6,8 +6,8 @@ import logging
 from typing import Dict, Optional
 
 
-def add_default_section_for_init(section: str, default_params: Optional[Dict] = None):
-    """Class decorator for ``from_core_configure`` classmethods.
+def config_defaults_init(section: str, default_params: Optional[Dict] = None):
+    """Class decorator for ``from_config`` classmethods.
 
     Populates missing ``__init__`` parameters from *section* in the config,
     then attaches the config as ``__unitorch_setting__`` on the returned instance.
@@ -24,9 +24,9 @@ def add_default_section_for_init(section: str, default_params: Optional[Dict] = 
         obj.__unitorch_setting__ = config
         return obj
 
-    def decorator(from_core_configure):
+    def decorator(from_config):
         def wrapped(cls, config, **kwargs):
-            result = from_core_configure(cls, config, **kwargs)
+            result = from_config(cls, config, **kwargs)
             if isinstance(result, cls):
                 result.__unitorch_setting__ = config
                 return result
@@ -40,10 +40,10 @@ def add_default_section_for_init(section: str, default_params: Optional[Dict] = 
     return decorator
 
 
-def add_default_section_for_function(section: str, default_params: Optional[Dict] = None):
+def config_defaults_method(section: str, default_params: Optional[Dict] = None):
     """Method decorator that fills missing parameters from the instance's config.
 
-    Reads ``self.__unitorch_setting__`` (a ``CoreConfigureParser``) to resolve
+    Reads ``self.__unitorch_setting__`` (a ``Config``) to resolve
     any argument not explicitly passed by the caller.
     """
     _defaults = default_params or {}

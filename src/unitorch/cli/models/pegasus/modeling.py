@@ -8,8 +8,8 @@ from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.pegasus import PegasusForGeneration as _PegasusForGeneration
 from unitorch.cli import (
     cached_path,
-    add_default_section_for_init,
-    add_default_section_for_function,
+    config_defaults_init,
+    config_defaults_method,
     register_model,
 )
 from unitorch.cli.models import generation_model_decorator
@@ -31,8 +31,8 @@ class PegasusForGeneration(_PegasusForGeneration):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/generation/pegasus")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/model/generation/pegasus")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/generation/pegasus")
         pretrained_name = config.getoption("pretrained_name", "pegasus-xsum")
         config_path = config.getoption("config_path", None)
@@ -73,7 +73,7 @@ class PegasusForGeneration(_PegasusForGeneration):
         )
         return GenerationOutputs(sequences=outputs)
 
-    @add_default_section_for_function("core/model/generation/pegasus")
+    @config_defaults_method("core/model/generation/pegasus")
     @torch.no_grad()
     @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
     def generate(

@@ -18,9 +18,9 @@ from unitorch.utils import pop_value, nested_dict_value
 from unitorch.cli import (
     register_fastapi,
     cached_path,
-    add_default_section_for_init,
-    add_default_section_for_function,
-    CoreConfigureParser,
+    config_defaults_init,
+    config_defaults_method,
+    Config,
     GenericFastAPI,
 )
 from unitorch.cli.models.detr import pretrained_detr_infos
@@ -51,8 +51,8 @@ class DetrForDetectionPipeline(_DetrForDetection):
         self.eval()
 
     @classmethod
-    @add_default_section_for_init("core/fastapi/pipeline/detr")
-    def from_core_configure(
+    @config_defaults_init("core/fastapi/pipeline/detr")
+    def from_config(
         cls,
         config,
         pretrained_name: Optional[str] = None,
@@ -105,7 +105,7 @@ class DetrForDetectionPipeline(_DetrForDetection):
         return inst
 
     @torch.no_grad()
-    @add_default_section_for_function("core/fastapi/pipeline/detr")
+    @config_defaults_method("core/fastapi/pipeline/detr")
     def __call__(
         self,
         image: Union[Image.Image, str],
@@ -150,7 +150,7 @@ class DetrForDetectionPipeline(_DetrForDetection):
 
 @register_fastapi("core/fastapi/detr")
 class DetrForDetectionFastAPI(GenericFastAPI):
-    def __init__(self, config: CoreConfigureParser):
+    def __init__(self, config: Config):
         self.config = config
         config.set_default_section("core/fastapi/detr")
         router = config.getoption("router", "/core/fastapi/detr")
@@ -167,7 +167,7 @@ class DetrForDetectionFastAPI(GenericFastAPI):
         return self._router
 
     def start(self, pretrained_name: Optional[str] = "detr-resnet-50"):
-        self._pipe = DetrForDetectionPipeline.from_core_configure(
+        self._pipe = DetrForDetectionPipeline.from_config(
             self.config,
             pretrained_name=pretrained_name,
         )

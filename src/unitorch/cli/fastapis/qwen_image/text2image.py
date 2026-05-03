@@ -22,10 +22,10 @@ from unitorch.utils import (
 from unitorch.cli import (
     cached_path,
     register_fastapi,
-    add_default_section_for_init,
-    add_default_section_for_function,
+    config_defaults_init,
+    config_defaults_method,
 )
-from unitorch.cli import CoreConfigureParser, GenericFastAPI
+from unitorch.cli import Config, GenericFastAPI
 from unitorch.cli.models.diffusers import (
     pretrained_stable_infos,
     pretrained_stable_extensions_infos,
@@ -98,8 +98,8 @@ class QWenImageForText2ImageFastAPIPipeline(GenericQWenImageModel):
             self.to(device=self._device)
 
     @classmethod
-    @add_default_section_for_init("core/fastapi/pipeline/qwen_image/text2image")
-    def from_core_configure(
+    @config_defaults_init("core/fastapi/pipeline/qwen_image/text2image")
+    def from_config(
         cls,
         config,
         pretrained_name: Optional[str] = None,
@@ -281,7 +281,7 @@ class QWenImageForText2ImageFastAPIPipeline(GenericQWenImageModel):
         device_type=("cuda" if torch.cuda.is_available() else "cpu"),
         dtype=(torch.bfloat16 if is_bfloat16_available() else torch.float32),
     )
-    @add_default_section_for_function("core/fastapi/pipeline/qwen_image/text2image")
+    @config_defaults_method("core/fastapi/pipeline/qwen_image/text2image")
     def __call__(
         self,
         text: str,
@@ -343,7 +343,7 @@ class QWenImageForText2ImageFastAPIPipeline(GenericQWenImageModel):
 
 @register_fastapi("core/fastapi/qwen_image/text2image")
 class QWenImageText2ImageFastAPI(GenericFastAPI):
-    def __init__(self, config: CoreConfigureParser):
+    def __init__(self, config: Config):
         self.config = config
         config.set_default_section(f"core/fastapi/qwen_image/text2image")
         router = config.getoption("router", "/core/fastapi/qwen_image/text2image")
@@ -366,7 +366,7 @@ class QWenImageText2ImageFastAPI(GenericFastAPI):
         pretrained_lora_weights: Optional[Union[float, List[float]]] = 1.0,
         pretrained_lora_alphas: Optional[Union[float, List[float]]] = 32.0,
     ):
-        self._pipe = QWenImageForText2ImageFastAPIPipeline.from_core_configure(
+        self._pipe = QWenImageForText2ImageFastAPIPipeline.from_config(
             self.config,
             pretrained_name=pretrained_name,
             pretrained_lora_names=pretrained_lora_names,

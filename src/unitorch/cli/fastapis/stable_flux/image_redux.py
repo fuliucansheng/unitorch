@@ -24,10 +24,10 @@ from unitorch.utils import (
 from unitorch.cli import (
     cached_path,
     register_fastapi,
-    add_default_section_for_init,
-    add_default_section_for_function,
+    config_defaults_init,
+    config_defaults_method,
 )
-from unitorch.cli import CoreConfigureParser, GenericFastAPI
+from unitorch.cli import Config, GenericFastAPI
 from unitorch.cli.models.diffusers import (
     pretrained_stable_infos,
     pretrained_stable_extensions_infos,
@@ -120,8 +120,8 @@ class StableFluxForImageReduxGenerationFastAPIPipeline(GenericStableFluxModel):
             self.to(device=self._device)
 
     @classmethod
-    @add_default_section_for_init("core/fastapi/pipeline/stable_flux/image_redux")
-    def from_core_configure(
+    @config_defaults_init("core/fastapi/pipeline/stable_flux/image_redux")
+    def from_config(
         cls,
         config,
         pretrained_name: Optional[str] = None,
@@ -344,7 +344,7 @@ class StableFluxForImageReduxGenerationFastAPIPipeline(GenericStableFluxModel):
         device_type=("cuda" if torch.cuda.is_available() else "cpu"),
         dtype=(torch.bfloat16 if is_bfloat16_available() else torch.float32),
     )
-    @add_default_section_for_function("core/fastapi/pipeline/stable_flux/image_redux")
+    @config_defaults_method("core/fastapi/pipeline/stable_flux/image_redux")
     def __call__(
         self,
         text: str,
@@ -412,7 +412,7 @@ class StableFluxForImageReduxGenerationFastAPIPipeline(GenericStableFluxModel):
 
 @register_fastapi("core/fastapi/stable_flux/image_redux")
 class StableFluxImageReduxGenerationFastAPI(GenericFastAPI):
-    def __init__(self, config: CoreConfigureParser):
+    def __init__(self, config: Config):
         self.config = config
         config.set_default_section(f"core/fastapi/stable_flux/image_redux")
         router = config.getoption("router", "/core/fastapi/stable_flux/image_redux")
@@ -436,7 +436,7 @@ class StableFluxImageReduxGenerationFastAPI(GenericFastAPI):
         pretrained_lora_alphas: Optional[Union[float, List[float]]] = 32.0,
     ):
         self._pipe = (
-            StableFluxForImageReduxGenerationFastAPIPipeline.from_core_configure(
+            StableFluxForImageReduxGenerationFastAPIPipeline.from_config(
                 self.config,
                 pretrained_name=pretrained_name,
                 pretrained_lora_names=pretrained_lora_names,

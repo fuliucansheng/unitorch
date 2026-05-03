@@ -7,8 +7,7 @@ from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.t5 import T5Processor as _T5Processor
 from unitorch.cli import (
     cached_path,
-    add_default_section_for_init,
-    add_default_section_for_function,
+    config_defaults_init,
     register_process,
 )
 from unitorch.cli import WriterOutputs
@@ -38,8 +37,8 @@ class T5Processor(_T5Processor):
         )
 
     @classmethod
-    @add_default_section_for_init("core/process/t5")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/process/t5")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/process/t5")
         pretrained_name = config.getoption("pretrained_name", "t5-base")
         vocab_path = config.getoption("vocab_path", None)

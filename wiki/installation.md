@@ -2,38 +2,64 @@
 
 ## Requirements
 
-- python version >= 3.8
-- [torch](http://pytorch.org/) >= 1.13
-- [torchvision](http://pytorch.org/)
-- [torchaudio](http://pytorch.org/)
-- fire
-- configparser
-- pandas <= 1.5.3
-- scikit-learn >= 0.24.2
-- [diffusers](https://github.com/huggingface/diffusers) >= 0.16.1
-- [deepspeed](https://github.com/microsoft/deepspeed) >= 0.9.0
-- [peft](https://github.com/huggingface/peft) >= 0.3.0
-- [datasets](https://github.com/huggingface/datasets) >= 2.12.0
-- [transformers](https://github.com/huggingface/transformers) >= 4.29.1
+- Python >= 3.10
+- [torch](http://pytorch.org/) >= 2.5
+- [torchvision](http://pytorch.org/) >= 0.20
+- [torchaudio](http://pytorch.org/) >= 2.5
+- [transformers](https://github.com/huggingface/transformers)
+- [peft](https://github.com/huggingface/peft)
+- [datasets](https://github.com/huggingface/datasets)
 
-
-## Install Pypi
+## Install from PyPI
 
 ```bash
-pip3 install unitorch
-pip3 install unitorch[deepspeed]
+pip install unitorch
 ```
 
-## Install Source
+## Install with Optional Extras
 
 ```bash
-pip3 install \
-    "git+https://github.com/fuliucansheng/unitorch#egg=unitorch[deepspeed]"
+# All extras (recommended)
+pip install "unitorch[all]"
+
+# DeepSpeed support
+pip install "unitorch[deepspeed]"
+
+# Image generation (Stable Diffusion, SDXL, ControlNet, Kolors)
+pip install "unitorch[diffusers]"
+
+# Object detection (timm)
+pip install "unitorch[detection]"
+
+# Megatron-LM support
+pip install "unitorch[megatron]"
+
+# FastAPI / ONNX / W&B
+pip install "unitorch[others]"
 ```
 
-## Install Extension
+## Install from Source
 
 ```bash
-UNITORCH_EXTENSIONS=NGRAM pip3 install \
-    "git+https://github.com/fuliucansheng/unitorch"
+pip install "git+https://github.com/fuliucansheng/unitorch"
+
+# With extras
+pip install "git+https://github.com/fuliucansheng/unitorch#egg=unitorch[all]"
 ```
+
+## Install with CUDA Extensions
+
+```bash
+# Build the ngram CUDA kernel
+UNITORCH_EXTENSIONS=NGRAM pip install .
+```
+
+## Environment Variables
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `UNITORCH_CACHE` | `~/.cache/unitorch` | Model/data cache (also sets `HF_HOME`, `TRANSFORMERS_CACHE`) |
+| `UNITORCH_TEMP` | `/tmp/unitorch` | Temporary files |
+| `UNITORCH_HOME` | `~/.unitorch` | Home directory |
+| `UNITORCH_DEBUG` | `INFO` | Log level: `OFF`, `INFO`, `DETAIL`, `CPU`, `ALL` |
+| `UNITORCH_EXTENSIONS` | _(unset)_ | Set to `NGRAM` to build CUDA extensions |

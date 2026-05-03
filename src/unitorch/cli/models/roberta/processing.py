@@ -6,7 +6,7 @@ from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.roberta import RobertaProcessor as _RobertaProcessor
 from unitorch.cli import (
     cached_path,
-    add_default_section_for_init,
+    config_defaults_init,
     register_process,
 )
 from unitorch.cli.models import TensorInputs
@@ -33,8 +33,8 @@ class RobertaProcessor(_RobertaProcessor):
         )
 
     @classmethod
-    @add_default_section_for_init("core/process/roberta")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/process/roberta")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/process/roberta")
         pretrained_name = config.getoption("pretrained_name", "roberta-base")
         vocab_path = config.getoption("vocab_path", None)

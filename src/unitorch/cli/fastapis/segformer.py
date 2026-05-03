@@ -18,9 +18,9 @@ from unitorch.utils import pop_value, nested_dict_value
 from unitorch.cli import (
     register_fastapi,
     cached_path,
-    add_default_section_for_init,
-    add_default_section_for_function,
-    CoreConfigureParser,
+    config_defaults_init,
+    config_defaults_method,
+    Config,
     GenericFastAPI,
 )
 from unitorch.cli.models.segformer import pretrained_segformer_infos
@@ -51,8 +51,8 @@ class SegformerForSegmentationPipeline(_SegformerForSegmentation):
         self.eval()
 
     @classmethod
-    @add_default_section_for_init("core/fastapi/pipeline/segformer")
-    def from_core_configure(
+    @config_defaults_init("core/fastapi/pipeline/segformer")
+    def from_config(
         cls,
         config,
         pretrained_name: Optional[str] = None,
@@ -107,7 +107,7 @@ class SegformerForSegmentationPipeline(_SegformerForSegmentation):
         return inst
 
     @torch.no_grad()
-    @add_default_section_for_function("core/fastapi/pipeline/segformer")
+    @config_defaults_method("core/fastapi/pipeline/segformer")
     def __call__(
         self,
         image: Union[Image.Image, str],
@@ -148,7 +148,7 @@ class SegformerForSegmentationPipeline(_SegformerForSegmentation):
 
 @register_fastapi("core/fastapi/segformer")
 class SegformerForSegmentationFastAPI(GenericFastAPI):
-    def __init__(self, config: CoreConfigureParser):
+    def __init__(self, config: Config):
         self.config = config
         config.set_default_section("core/fastapi/segformer")
         router = config.getoption("router", "/core/fastapi/segformer")
@@ -165,7 +165,7 @@ class SegformerForSegmentationFastAPI(GenericFastAPI):
         return self._router
 
     def start(self, pretrained_name: Optional[str] = "segformer-swin-tiny-ade-semantic"):
-        self._pipe = SegformerForSegmentationPipeline.from_core_configure(
+        self._pipe = SegformerForSegmentationPipeline.from_config(
             self.config,
             pretrained_name=pretrained_name,
         )

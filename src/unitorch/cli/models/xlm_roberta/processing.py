@@ -6,7 +6,7 @@ from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.xlm_roberta import XLMRobertaProcessor as _XLMRobertaProcessor
 from unitorch.cli import (
     cached_path,
-    add_default_section_for_init,
+    config_defaults_init,
     register_process,
 )
 from unitorch.cli.models import TensorInputs
@@ -31,8 +31,8 @@ class XLMRobertaProcessor(_XLMRobertaProcessor):
         )
 
     @classmethod
-    @add_default_section_for_init("core/process/xlm_roberta")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/process/xlm_roberta")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/process/xlm_roberta")
         pretrained_name = config.getoption("pretrained_name", "xlm-roberta-base")
         vocab_path = config.getoption("vocab_path", None)

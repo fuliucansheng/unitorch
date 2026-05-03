@@ -7,7 +7,7 @@ from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.diffusers import StableFluxProcessor as _StableFluxProcessor
 from unitorch.cli import (
     cached_path,
-    add_default_section_for_init,
+    config_defaults_init,
     register_process,
 )
 from unitorch.cli.models import (
@@ -48,8 +48,8 @@ class StableFluxProcessor(_StableFluxProcessor):
         )
 
     @classmethod
-    @add_default_section_for_init("core/process/diffusion/stable_flux")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/process/diffusion/stable_flux")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/process/diffusion/stable_flux")
         pretrained_name = config.getoption("pretrained_name", "stable-flux-schnell")
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)

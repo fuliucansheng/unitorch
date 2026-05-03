@@ -15,9 +15,9 @@ from unitorch.models.bria import (
     BRIAProcessor,
     BRIAForSegmentation as _BRIAForSegmentation,
 )
-from unitorch.cli import cached_path, add_default_section_for_init, add_default_section_for_function
+from unitorch.cli import cached_path, config_defaults_init, config_defaults_method
 from unitorch.cli import register_fastapi
-from unitorch.cli import CoreConfigureParser, GenericFastAPI
+from unitorch.cli import Config, GenericFastAPI
 
 
 class BRIAForSegmentationPipeline(_BRIAForSegmentation):
@@ -39,8 +39,8 @@ class BRIAForSegmentationPipeline(_BRIAForSegmentation):
         self.eval()
 
     @classmethod
-    @add_default_section_for_init("core/fastapi/pipeline/bria")
-    def from_core_configure(cls, config, pretrained_weight_path=None, device=None, **kwargs):
+    @config_defaults_init("core/fastapi/pipeline/bria")
+    def from_config(cls, config, pretrained_weight_path=None, device=None, **kwargs):
         config.set_default_section("core/fastapi/pipeline/bria")
         image_size = config.getoption("image_size", 1024)
         enable_cpu_offload = config.getoption("enable_cpu_offload", True)
@@ -49,7 +49,7 @@ class BRIAForSegmentationPipeline(_BRIAForSegmentation):
         return cls(image_size=image_size, weight_path=weight_path, enable_cpu_offload=enable_cpu_offload, device=device)
 
     @torch.no_grad()
-    @add_default_section_for_function("core/fastapi/pipeline/bria")
+    @config_defaults_method("core/fastapi/pipeline/bria")
     def __call__(self, image, threshold=0.5):
         if self._enable_cpu_offload:
             self.to(self._device)
@@ -67,7 +67,7 @@ class BRIAForSegmentationPipeline(_BRIAForSegmentation):
 
 @register_fastapi("core/fastapi/bria")
 class BRIAFastAPI(GenericFastAPI):
-    def __init__(self, config: CoreConfigureParser):
+    def __init__(self, config: Config):
         self.config = config
         config.set_default_section(f"core/fastapi/bria")
         router = config.getoption("router", "/core/fastapi/bria")
@@ -84,7 +84,7 @@ class BRIAFastAPI(GenericFastAPI):
         return self._router
 
     def start(self):
-        self._pipe = BRIAForSegmentationPipeline.from_core_configure(
+        self._pipe = BRIAForSegmentationPipeline.from_config(
             self.config,
             pretrained_weight_path="https://huggingface.co/datasets/fuliucansheng/hubfiles/resolve/main/bria_rmbg2.0_pytorch_model.bin",
         )

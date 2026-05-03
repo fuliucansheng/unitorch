@@ -6,7 +6,7 @@ from PIL import Image
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.siglip import SiglipProcessor as _SiglipProcessor
 from unitorch.cli import (
-    add_default_section_for_init,
+    config_defaults_init,
     register_process,
     cached_path,
 )
@@ -32,8 +32,8 @@ class SiglipProcessor(_SiglipProcessor):
         )
 
     @classmethod
-    @add_default_section_for_init("core/process/siglip")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/process/siglip")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/process/siglip")
         pretrained_name = config.getoption("pretrained_name", "siglip-base-patch16-224")
         vocab_path = config.getoption("vocab_path", None)

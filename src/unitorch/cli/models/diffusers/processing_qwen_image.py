@@ -7,7 +7,7 @@ from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.diffusers import QWenImageProcessor as _QWenImageProcessor
 from unitorch.cli import (
     cached_path,
-    add_default_section_for_init,
+    config_defaults_init,
     register_process,
 )
 from unitorch.cli.models import (
@@ -44,8 +44,8 @@ class QWenImageProcessor(_QWenImageProcessor):
         )
 
     @classmethod
-    @add_default_section_for_init("core/process/diffusion/qwen_image")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/process/diffusion/qwen_image")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/process/diffusion/qwen_image")
         pretrained_name = config.getoption("pretrained_name", "qwen-image")
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)

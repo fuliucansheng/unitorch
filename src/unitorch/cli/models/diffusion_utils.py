@@ -14,16 +14,14 @@ import numpy as np
 from PIL import Image
 from dataclasses import dataclass
 from typing import List, Optional
-from diffusers.utils import numpy_to_pil, pt_to_pil, export_to_gif
-from unitorch.utils import load_weight, tensor2vid
+from diffusers.utils import numpy_to_pil, export_to_gif
+from unitorch.utils import load_weight
 from unitorch.cli import WriterMixin, WriterOutputs
 from unitorch.cli import (
-    add_default_section_for_init,
+    config_defaults_init,
     register_process,
 )
 from unitorch.cli.models.modeling_utils import TensorOutputs, TensorTargets
-
-from unitorch.cli import cached_path
 
 
 def numpy2vid(video: np.ndarray) -> List[np.ndarray]:
@@ -79,8 +77,8 @@ class DiffusionProcessor:
             self.output_folder = tempfile.mkdtemp()
 
     @classmethod
-    @add_default_section_for_init("core/process/diffusion")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/process/diffusion")
+    def from_config(cls, config, **kwargs):
         pass
 
     def save_image(self, image: Image.Image):
@@ -207,8 +205,8 @@ def diffusion_model_decorator(cls):
             return self.model.generate(*args, **kwargs)
 
         @classmethod
-        def from_core_configure(_cls, cfg, **kwargs):
-            model = cls.from_core_configure(cfg, **kwargs)
+        def from_config(_cls, cfg, **kwargs):
+            model = cls.from_config(cfg, **kwargs)
             return _cls(__diffusion_model__=model)
 
     return DiffusionModel

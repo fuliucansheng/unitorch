@@ -13,7 +13,7 @@ from unitorch.models.chinese_clip import (
 )
 from unitorch.cli import (
     cached_path,
-    add_default_section_for_init,
+    config_defaults_init,
     register_model,
 )
 from unitorch.cli.models import ClassificationOutputs, LossOutputs
@@ -41,8 +41,8 @@ class ChineseClipForPretrain(_ChineseClipForPretrain):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/pretrain/chinese_clip")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/model/pretrain/chinese_clip")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/pretrain/chinese_clip")
         pretrained_name = config.getoption(
             "pretrained_name", "chinese-clip-vit-base-patch16"
@@ -118,8 +118,8 @@ class ChineseClipForClassification(_ChineseClipForClassification):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/classification/chinese_clip")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/model/classification/chinese_clip")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/classification/chinese_clip")
         pretrained_name = config.getoption(
             "pretrained_name", "chinese-clip-vit-base-patch16"
@@ -195,8 +195,8 @@ class ChineseClipForTextClassification(_ChineseClipForTextClassification):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/classification/chinese_clip/text")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/model/classification/chinese_clip/text")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/classification/chinese_clip/text")
         pretrained_name = config.getoption(
             "pretrained_name", "chinese-clip-vit-base-patch16"
@@ -270,8 +270,8 @@ class ChineseClipForImageClassification(_ChineseClipForImageClassification):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/classification/chinese_clip/image")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/model/classification/chinese_clip/image")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/classification/chinese_clip/image")
         pretrained_name = config.getoption(
             "pretrained_name", "chinese-clip-vit-base-patch16"

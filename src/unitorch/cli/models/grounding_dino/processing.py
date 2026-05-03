@@ -9,7 +9,7 @@ from unitorch.models.grounding_dino import (
 )
 from unitorch.cli import (
     cached_path,
-    add_default_section_for_init,
+    config_defaults_init,
     register_process,
 )
 from unitorch.cli.models import (
@@ -34,8 +34,8 @@ class GroundingDinoProcessor(_GroundingDinoProcessor):
         )
 
     @classmethod
-    @add_default_section_for_init("core/process/grounding_dino")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/process/grounding_dino")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/process/grounding_dino")
         pretrained_name = config.getoption("pretrained_name", "grounding-dino-tiny")
 

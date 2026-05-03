@@ -14,7 +14,7 @@ from unitorch.models.siglip import (
 )
 from unitorch.cli import (
     cached_path,
-    add_default_section_for_init,
+    config_defaults_init,
     register_model,
 )
 from unitorch.cli.models import ClassificationOutputs, LossOutputs
@@ -40,8 +40,8 @@ class SiglipForPretrain(_SiglipForPretrain):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/pretrain/siglip")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/model/pretrain/siglip")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/pretrain/siglip")
         pretrained_name = config.getoption("pretrained_name", "siglip-base-patch16-224")
         config_path = config.getoption("config_path", None)
@@ -109,8 +109,8 @@ class SiglipForClassification(_SiglipForClassification):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/classification/siglip")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/model/classification/siglip")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/classification/siglip")
         pretrained_name = config.getoption("pretrained_name", "siglip-base-patch16-224")
         config_path = config.getoption("config_path", None)
@@ -178,8 +178,8 @@ class SiglipForTextClassification(_SiglipForTextClassification):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/classification/siglip/text")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/model/classification/siglip/text")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/classification/siglip/text")
         pretrained_name = config.getoption("pretrained_name", "siglip-base-patch16-224")
         config_path = config.getoption("config_path", None)
@@ -245,8 +245,8 @@ class SiglipForImageClassification(_SiglipForImageClassification):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/classification/siglip/image")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/model/classification/siglip/image")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/classification/siglip/image")
         pretrained_name = config.getoption("pretrained_name", "siglip-base-patch16-224")
         config_path = config.getoption("config_path", None)
@@ -304,8 +304,8 @@ class SiglipForMatching(_SiglipForMatching):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/matching/siglip")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/model/matching/siglip")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/matching/siglip")
         pretrained_name = config.getoption("pretrained_name", "siglip-base-patch16-224")
         config_path = config.getoption("config_path", None)

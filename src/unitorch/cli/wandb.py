@@ -7,7 +7,7 @@ import os
 import time
 
 from unitorch.utils import is_wandb_available, read_json_file
-from unitorch.cli.core import CoreConfigureParser
+from unitorch.cli.core import Config
 
 if is_wandb_available():
     import wandb
@@ -20,7 +20,7 @@ _wandb_available: bool = False
 config = getattr(wandb, "config", None)
 
 
-def setup(config: CoreConfigureParser) -> None:
+def setup(config: Config) -> None:
     """Initialise a wandb run from *config* (section ``core/wandb``)."""
     global _wandb_available
 

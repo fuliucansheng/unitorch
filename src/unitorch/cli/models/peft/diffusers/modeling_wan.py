@@ -12,8 +12,8 @@ from unitorch.models.peft.diffusers import (
 from unitorch.utils import pop_value, nested_dict_value, is_bfloat16_available
 from unitorch.cli import (
     cached_path,
-    add_default_section_for_init,
-    add_default_section_for_function,
+    config_defaults_init,
+    config_defaults_method,
     register_model,
 )
 from unitorch.cli.models import DiffusionOutputs, LossOutputs
@@ -68,8 +68,8 @@ class WanLoraForText2VideoGeneration(_WanLoraForText2VideoGeneration):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/diffusers/peft/lora/text2video/wan")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/model/diffusers/peft/lora/text2video/wan")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/diffusers/peft/lora/text2video/wan")
         pretrained_name = config.getoption("pretrained_name", "wan-v2.2-t2v-14b")
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
@@ -205,7 +205,7 @@ class WanLoraForText2VideoGeneration(_WanLoraForText2VideoGeneration):
         )
         return LossOutputs(loss=loss)
 
-    @add_default_section_for_function("core/model/diffusers/peft/lora/text2video/wan")
+    @config_defaults_method("core/model/diffusers/peft/lora/text2video/wan")
     @autocast(
         device_type=("cuda" if torch.cuda.is_available() else "cpu"),
         dtype=(torch.bfloat16 if is_bfloat16_available() else torch.float32),
@@ -284,8 +284,8 @@ class WanLoraForImage2VideoGeneration(_WanLoraForImage2VideoGeneration):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/diffusers/peft/lora/image2video/wan")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/model/diffusers/peft/lora/image2video/wan")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/diffusers/peft/lora/image2video/wan")
         pretrained_name = config.getoption("pretrained_name", "wan-v2.2-i2v-14b")
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
@@ -438,7 +438,7 @@ class WanLoraForImage2VideoGeneration(_WanLoraForImage2VideoGeneration):
         )
         return LossOutputs(loss=loss)
 
-    @add_default_section_for_function("core/model/diffusers/peft/lora/image2video/wan")
+    @config_defaults_method("core/model/diffusers/peft/lora/image2video/wan")
     @autocast(
         device_type=("cuda" if torch.cuda.is_available() else "cpu"),
         dtype=(torch.bfloat16 if is_bfloat16_available() else torch.float32),

@@ -12,9 +12,9 @@ from fastapi import APIRouter, UploadFile, File
 from unitorch.utils import is_remote_url, pop_value, nested_dict_value
 from unitorch.models.qwen import QWen3VLForGeneration as _QWen3VLForGeneration
 from unitorch.models.qwen import QWenVLProcessor
-from unitorch.cli import cached_path, add_default_section_for_init, add_default_section_for_function
+from unitorch.cli import cached_path, config_defaults_init, config_defaults_method
 from unitorch.cli import register_fastapi
-from unitorch.cli import CoreConfigureParser, GenericFastAPI
+from unitorch.cli import Config, GenericFastAPI
 from unitorch.cli.models.qwen import pretrained_qwen_infos, pretrained_qwen_extensions_infos
 
 
@@ -54,8 +54,8 @@ class QWen3VLForGenerationPipeline(_QWen3VLForGeneration):
         self.eval()
 
     @classmethod
-    @add_default_section_for_init("core/fastapi/pipeline/qwen3_vl")
-    def from_core_configure(
+    @config_defaults_init("core/fastapi/pipeline/qwen3_vl")
+    def from_config(
         cls,
         config,
         pretrained_name: Optional[str] = None,
@@ -151,7 +151,7 @@ class QWen3VLForGenerationPipeline(_QWen3VLForGeneration):
         return inst
 
     @torch.no_grad()
-    @add_default_section_for_function("core/fastapi/pipeline/qwen3_vl")
+    @config_defaults_method("core/fastapi/pipeline/qwen3_vl")
     def __call__(
         self,
         prompt: str,
@@ -271,7 +271,7 @@ class QWen3VLForGenerationPipeline(_QWen3VLForGeneration):
 
 @register_fastapi("core/fastapi/qwen3_vl")
 class QWen3VLFastAPI(GenericFastAPI):
-    def __init__(self, config: CoreConfigureParser):
+    def __init__(self, config: Config):
         self.config = config
         config.set_default_section(f"core/fastapi/qwen3_vl")
         router = config.getoption("router", "/core/fastapi/qwen3_vl")
@@ -288,7 +288,7 @@ class QWen3VLFastAPI(GenericFastAPI):
         return self._router
 
     def start(self, pretrained_name: str = "qwen3-vl-8b-instruct"):
-        self._pipe = QWen3VLForGenerationPipeline.from_core_configure(
+        self._pipe = QWen3VLForGenerationPipeline.from_config(
             self.config,
             pretrained_name=pretrained_name,
         )

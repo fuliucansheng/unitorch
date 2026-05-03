@@ -14,8 +14,7 @@ from unitorch.models.blip import (
 )
 from unitorch.cli import (
     cached_path,
-    add_default_section_for_init,
-    add_default_section_for_function,
+    config_defaults_init,
     register_model,
 )
 from unitorch.cli.models import generation_model_decorator
@@ -44,8 +43,8 @@ class BlipForPretrain(_BlipForPretrain):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/pretrain/blip")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/model/pretrain/blip")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/pretrain/blip")
         pretrained_name = config.getoption(
             "pretrained_name", "blip-image-captioning-base"
@@ -119,8 +118,8 @@ class BlipForClassification(_BlipForClassification):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/classification/blip")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/model/classification/blip")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/classification/blip")
         pretrained_name = config.getoption(
             "pretrained_name", "blip-image-captioning-base"
@@ -194,8 +193,8 @@ class BlipForTextClassification(_BlipForTextClassification):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/classification/blip/text")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/model/classification/blip/text")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/classification/blip/text")
         pretrained_name = config.getoption(
             "pretrained_name", "blip-image-captioning-base"
@@ -267,8 +266,8 @@ class BlipForImageClassification(_BlipForImageClassification):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/classification/blip/image")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/model/classification/blip/image")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/classification/blip/image")
         pretrained_name = config.getoption(
             "pretrained_name", "blip-image-captioning-base"
@@ -328,8 +327,8 @@ class BlipForImageCaption(_BlipForImageCaption):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/caption/blip")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/model/caption/blip")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/caption/blip")
         pretrained_name = config.getoption(
             "pretrained_name", "blip-image-captioning-base"

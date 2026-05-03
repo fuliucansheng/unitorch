@@ -74,8 +74,8 @@ from unitorch.models.bart import BartForGeneration
 model = BartForGeneration("path/to/bart/config.json")
 
 # use the configuration class
-from unitorch.cli import CoreConfigureParser
-config = CoreConfigureParser("path/to/config.ini")
+from unitorch.cli import Config
+config = Config("path/to/config.ini")
 ```
 
 ### Multi-GPU Training

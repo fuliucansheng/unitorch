@@ -15,10 +15,10 @@ from unitorch.models.llava import (
 )
 from unitorch.models.llava import LlavaMistralClipProcessor, LlavaLlamaSiglipProcessor
 from unitorch.utils import pop_value, nested_dict_value
-from unitorch.cli import cached_path, add_default_section_for_init, add_default_section_for_function
+from unitorch.cli import cached_path, config_defaults_init, config_defaults_method
 from unitorch.cli.models.llava import pretrained_llava_infos, pretrained_llava_extensions_infos
 from unitorch.cli import register_fastapi
-from unitorch.cli import CoreConfigureParser, GenericFastAPI
+from unitorch.cli import Config, GenericFastAPI
 
 
 class LlavaMistralClipForGenerationPipeline(_LlavaMistralClipForGeneration):
@@ -59,8 +59,8 @@ class LlavaMistralClipForGenerationPipeline(_LlavaMistralClipForGeneration):
         self.eval()
 
     @classmethod
-    @add_default_section_for_init("core/fastapi/pipeline/llava/mistral_clip")
-    def from_core_configure(
+    @config_defaults_init("core/fastapi/pipeline/llava/mistral_clip")
+    def from_config(
         cls,
         config,
         pretrained_name: Optional[str] = None,
@@ -163,7 +163,7 @@ class LlavaMistralClipForGenerationPipeline(_LlavaMistralClipForGeneration):
         return inst
 
     @torch.no_grad()
-    @add_default_section_for_function("core/fastapi/pipeline/llava/mistral_clip")
+    @config_defaults_method("core/fastapi/pipeline/llava/mistral_clip")
     def __call__(
         self,
         prompt: str,
@@ -314,8 +314,8 @@ class LlavaLlamaSiglipForGenerationPipeline(_LlavaLlamaSiglipForGeneration):
         self.eval()
 
     @classmethod
-    @add_default_section_for_init("core/fastapi/pipeline/llava/llama_siglip")
-    def from_core_configure(
+    @config_defaults_init("core/fastapi/pipeline/llava/llama_siglip")
+    def from_config(
         cls,
         config,
         pretrained_name: Optional[str] = None,
@@ -418,7 +418,7 @@ class LlavaLlamaSiglipForGenerationPipeline(_LlavaLlamaSiglipForGeneration):
         return inst
 
     @torch.no_grad()
-    @add_default_section_for_function("core/fastapi/pipeline/llava/llama_siglip")
+    @config_defaults_method("core/fastapi/pipeline/llava/llama_siglip")
     def __call__(
         self,
         prompt: str,
@@ -538,7 +538,7 @@ class LlavaLlamaSiglipForGenerationPipeline(_LlavaLlamaSiglipForGeneration):
 
 @register_fastapi("core/fastapi/llava/mistral_clip")
 class LlavaMistralClipFastAPI(GenericFastAPI):
-    def __init__(self, config: CoreConfigureParser):
+    def __init__(self, config: Config):
         self.config = config
         config.set_default_section(f"core/fastapi/llava/mistral_clip")
         router = config.getoption("router", "/core/fastapi/llava/mistral_clip")
@@ -555,7 +555,7 @@ class LlavaMistralClipFastAPI(GenericFastAPI):
         return self._router
 
     def start(self):
-        self._pipe = LlavaMistralClipForGenerationPipeline.from_core_configure(
+        self._pipe = LlavaMistralClipForGenerationPipeline.from_config(
             self.config,
             pretrained_name="llava-v1.6-mistral-7b-hf",
         )
@@ -597,7 +597,7 @@ class LlavaMistralClipFastAPI(GenericFastAPI):
 
 @register_fastapi("core/fastapi/llava/joycaption2")
 class LlavaLlamaSiglipFastAPI(GenericFastAPI):
-    def __init__(self, config: CoreConfigureParser):
+    def __init__(self, config: Config):
         self.config = config
         config.set_default_section(f"core/fastapi/llava/joycaption2")
         router = config.getoption("router", "/core/fastapi/llava/joycaption2")
@@ -614,7 +614,7 @@ class LlavaLlamaSiglipFastAPI(GenericFastAPI):
         return self._router
 
     def start(self):
-        self._pipe = LlavaLlamaSiglipForGenerationPipeline.from_core_configure(
+        self._pipe = LlavaLlamaSiglipForGenerationPipeline.from_config(
             self.config,
             pretrained_name="llava-v1.6-joycaption-2",
         )

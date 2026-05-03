@@ -8,7 +8,7 @@ import configparser
 from typing import Any, List, Optional, Tuple, Union
 
 
-class CoreConfigureParser(configparser.ConfigParser):
+class Config(configparser.ConfigParser):
     """Config parser with extended interpolation and safe AST-based value parsing."""
 
     def __init__(

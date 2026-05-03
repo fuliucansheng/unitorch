@@ -11,8 +11,7 @@ from unitorch.models.llava import (
 )
 from unitorch.cli import (
     cached_path,
-    add_default_section_for_init,
-    add_default_section_for_function,
+    config_defaults_init,
     register_process,
 )
 from unitorch.cli import WriterOutputs
@@ -48,8 +47,8 @@ class LlavaMistralClipProcessor(_LlavaMistralClipProcessor):
         )
 
     @classmethod
-    @add_default_section_for_init("core/process/llava/mistral_clip")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/process/llava/mistral_clip")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/process/llava/mistral_clip")
         pretrained_name = config.getoption(
             "pretrained_name", "llava-v1.6-mistral-7b-hf"
@@ -259,8 +258,8 @@ class LlavaLlamaSiglipProcessor(_LlavaLlamaSiglipProcessor):
         )
 
     @classmethod
-    @add_default_section_for_init("core/process/llava/llama_siglip")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/process/llava/llama_siglip")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/process/llava/llama_siglip")
         pretrained_name = config.getoption("pretrained_name", "llava-v1.6-joycaption-2")
 

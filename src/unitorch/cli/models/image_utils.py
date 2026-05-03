@@ -12,7 +12,7 @@ from random import random
 from PIL import Image, ImageOps, ImageFile, ImageFilter
 from unitorch.utils import is_opencv_available
 from unitorch.cli import (
-    add_default_section_for_init,
+    config_defaults_init,
     register_process,
 )
 
@@ -33,8 +33,8 @@ class ImageProcessor:
         self.http_url = http_url
 
     @classmethod
-    @add_default_section_for_init("core/process/image")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/process/image")
+    def from_config(cls, config, **kwargs):
         pass
 
     def _request_url(self, url):

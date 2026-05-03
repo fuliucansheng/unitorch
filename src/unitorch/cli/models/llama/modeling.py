@@ -11,8 +11,8 @@ from unitorch.models.llama import (
 )
 from unitorch.cli import (
     cached_path,
-    add_default_section_for_init,
-    add_default_section_for_function,
+    config_defaults_init,
+    config_defaults_method,
     register_model,
 )
 from unitorch.cli.models import generation_model_decorator
@@ -40,8 +40,8 @@ class LlamaForClassification(_LlamaForClassification):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/classification/llama")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/model/classification/llama")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/classification/llama")
         pretrained_name = config.getoption("pretrained_name", "llama-7b")
         pretrained_lora_name = config.getoption("pretrained_lora_name", "llama-7b-lora")
@@ -124,8 +124,8 @@ class LlamaForGeneration(_LlamaForGeneration):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/generation/llama")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/model/generation/llama")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/generation/llama")
         pretrained_name = config.getoption("pretrained_name", "llama-7b")
         pretrained_lora_name = config.getoption("pretrained_lora_name", "llama-7b-lora")
@@ -189,7 +189,7 @@ class LlamaForGeneration(_LlamaForGeneration):
         )
         return GenerationOutputs(sequences=outputs)
 
-    @add_default_section_for_function("core/model/generation/llama")
+    @config_defaults_method("core/model/generation/llama")
     @torch.no_grad()
     @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
     def generate(
