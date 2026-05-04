@@ -79,7 +79,7 @@ class ASTHFIterableDatasets(IterableDataset):
             mod *= worker_info.num_workers
             shift = self.dp_rank * worker_info.num_workers + worker_info.id
         for i, row in enumerate(cycle(self.dataset)):
-            if (i + shift) % mod != 0:
+            if i % mod != shift:
                 continue
             if not (self.is_pp_first_rank or self.is_pp_last_rank) or self.tp_rank > 0:
                 yield TensorMixInputs(), TensorMixTargets()
@@ -114,7 +114,7 @@ class ASTHFIterableDatasets(IterableDataset):
                 yield inputs, targets
 
     def set_skip_step(self, step):
-        self.dataset = self.dataset.skip(step * self.world_size)
+        self.dataset = self.dataset.skip(step * self.dp_world_size)
 
 
 @register_dataset("core/dataset/megatron/ast")

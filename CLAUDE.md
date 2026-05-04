@@ -100,6 +100,14 @@ Every model/pipeline class follows this pattern: `__init__` takes explicit args,
 
 Defined in `src/unitorch/utils/decorators.py`. Process-global monkey-patcher: replaces a target class across all loaded modules at import time, including rewriting subclass `__bases__`. Used to override upstream library behaviour (e.g. `diffusers`, `datasets`) without forking. Replacement classes inherit from the target and are named `<Original>V2` by convention. See `.claude/skills/replace-decorator.md` for full details.
 
+## CLI Argument Conventions
+
+- All command-line scripts must use the `fire` package for argument parsing. Do **not** use `argparse`, `click`, or `sys.argv` directly.
+
+## INI Config Generation Conventions
+
+- When generating `.ini` config files, always set `device = cpu` as the default value in `[core/cli]`.
+
 ## Code Constraints
 
 > **No AutoClass — ever.**

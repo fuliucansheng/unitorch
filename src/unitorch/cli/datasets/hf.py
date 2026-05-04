@@ -178,8 +178,8 @@ class ASTDatasets:
     templates = ["csv", "json", "parquet", "hub"]
     __ASTDatasets__ = dict()
 
-    def __init__(self, configure: Config):
-        self.config = configure
+    def __init__(self, config: Config):
+        self.config = config
 
     def __getdataset__(self, split):
         config = self.config
@@ -310,9 +310,8 @@ class ASTDatasets:
         return self.__ASTDatasets__.get(split)
 
     @classmethod
-    @config_defaults_init("core/dataset/ast")
     def from_config(cls, config, **kwargs):
-        return cls(configure=config)
+        return cls(config=config)
 
     def get(self, split: Optional[str] = "train"):
         """Get the dataset for the specified split."""

@@ -232,12 +232,23 @@ class MegatronTask:
                 name, param.requires_grad, param.dtype, param.shape, param.device,
             )
 
+        _ddp_config = DistributedDataParallelConfig(use_distributed_optimizer=False)
         if self.dp_size > 1:
-            self.model = DistributedDataParallel(
-                config=self.model.config,
-                module=self.model,
-                ddp_config=DistributedDataParallelConfig(use_distributed_optimizer=False),
-            )
+            if isinstance(self.model, list):
+                self.model = [
+                    DistributedDataParallel(
+                        config=chunk.config,
+                        module=chunk,
+                        ddp_config=_ddp_config,
+                    )
+                    for chunk in self.model
+                ]
+            else:
+                self.model = DistributedDataParallel(
+                    config=self.model.config,
+                    module=self.model,
+                    ddp_config=_ddp_config,
+                )
 
         dataset_train = self.datasets.get("train")
         dataset_dev = self.datasets.get("dev")
@@ -274,7 +285,8 @@ class MegatronTask:
                 num_training_steps=num_training_steps,
             )
 
-        # Select pipeline schedule based on parallelism configuration
+        # Select pipeline schedule based on parallelism configuration.
+        # Interleaved VP requires model and data_iterator as lists (one per virtual chunk).
         if self.pp_size == 1:
             forward_backward_pipeline = forward_backward_no_pipelining
         elif self.vp_size is not None:
@@ -282,16 +294,26 @@ class MegatronTask:
         else:
             forward_backward_pipeline = forward_backward_pipelining_without_interleaving
 
+        def _make_pipeline_args(model, data_iterator):
+            """Wrap model/data_iterator into lists when using interleaved VP schedule."""
+            if self.vp_size is not None:
+                if not isinstance(model, list):
+                    model = [model]
+                if not isinstance(data_iterator, list):
+                    data_iterator = [data_iterator] * len(model)
+            return model, data_iterator
+
         def _forward_step(data_iter, model):
             inputs, targets = next(data_iter)
             batch = _prepare_batch(inputs.dict(), targets.dict())
             outputs = model(**batch)
             if not isinstance(outputs, LossOutputs):
-                return outputs, None
+                # Non-loss output: return tensor + identity loss_func
+                return outputs, lambda x: (x, x.detach())
             loss = outputs.loss
-            if self.cp_size > 1:
-                dist.all_reduce(loss, group=self.cp_group)
-                loss = loss / self.cp_size
+            # CP loss averaging is handled internally by Megatron's forward_step
+            # (it multiplies by cp_world_size after dividing by num_microbatches).
+            # Do NOT manually all_reduce or scale here to avoid double-scaling.
             return loss.unsqueeze(0), lambda x: (x.squeeze(0), x.detach().squeeze(0))
 
         num_train_steps = num_training_samples // train_batch_size // self.dp_size
@@ -300,11 +322,12 @@ class MegatronTask:
         def _run_eval():
             self.model.eval()
             dev_loss = 0.0
+            _model, _iter_dev = _make_pipeline_args(self.model, iter_dev)
             for _ in range(num_dev_steps):
                 loss_list = forward_backward_pipeline(
                     forward_step_func=_forward_step,
-                    data_iterator=iter_dev,
-                    model=self.model,
+                    data_iterator=_iter_dev,
+                    model=_model,
                     num_microbatches=grad_acc_step,
                     seq_length=seq_length,
                     micro_batch_size=dev_batch_size,
@@ -348,17 +371,18 @@ class MegatronTask:
             if hasattr(dataset_train, "set_epoch"):
                 dataset_train.set_epoch(e)
             if hasattr(dataset_train, "set_skip_step"):
-                dataset_train.set_skip_step(global_step * train_batch_size)
+                dataset_train.set_skip_step(global_step)
 
             self.model.train()
 
             for step in range(num_train_steps):
                 step = step + global_step
 
+                _model, _iter_train = _make_pipeline_args(self.model, iter_train)
                 loss_list = forward_backward_pipeline(
                     forward_step_func=_forward_step,
-                    data_iterator=iter_train,
-                    model=self.model,
+                    data_iterator=_iter_train,
+                    model=_model,
                     num_microbatches=grad_acc_step,
                     seq_length=seq_length,
                     micro_batch_size=train_batch_size,
