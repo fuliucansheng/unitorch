@@ -65,16 +65,21 @@ class ZipFilesServer(http.server.BaseHTTPRequestHandler):
         if self.path == "/all-files":
             self.send_response(200)
             self.end_headers()
+            # zip_dict already contains only file entries (no directory entries)
             names = list(self.zip_dict.keys())
             self.wfile.write("\n".join(names).encode("utf-8"))
         else:
-            self.send_response(200)
-            self.end_headers()
             params = parse_params(self.path)
             file = params.get("file")
-            resp = self.none_resp
-            if file is not None:
-                resp = self._get_file(file)
+            # Reject missing file param or directory-style paths
+            if file is None or file.endswith("/"):
+                self.send_response(400)
+                self.end_headers()
+                self.wfile.write(self.none_resp)
+                return
+            self.send_response(200)
+            self.end_headers()
+            resp = self._get_file(file)
             self.wfile.write(resp)
 
     def log_request(self, format, *args):
@@ -115,8 +120,12 @@ class ZipFilesService(GenericService):
                 ]
 
         self.zip_data = get_zipfiles(zip_files, self.num_thread)
+        # Only index file entries; skip directory entries (names ending with '/').
         self.zip_dict = {
-            v: i for i, k in enumerate(self.zip_data) for v in k.namelist()
+            v: i
+            for i, k in enumerate(self.zip_data)
+            for v in k.namelist()
+            if not v.endswith("/")
         }
 
     def start(self, **kwargs):
