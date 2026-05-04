@@ -3,17 +3,16 @@
 
 import cv2
 from PIL import Image
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import List, Optional, Tuple, Union
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.diffusers import WanProcessor as _WanProcessor
 from unitorch.cli import (
     cached_path,
-    add_default_section_for_init,
-    add_default_section_for_function,
+    config_defaults_init,
     register_process,
 )
 from unitorch.cli.models import (
-    TensorsInputs,
+    TensorInputs,
 )
 from unitorch.cli.models.diffusers import pretrained_stable_infos
 
@@ -36,8 +35,8 @@ class WanProcessor(_WanProcessor):
         )
 
     @classmethod
-    @add_default_section_for_init("core/process/diffusion/wan")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/process/diffusion/wan")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/process/diffusion/wan")
         pretrained_name = config.getoption("pretrained_name", "wan-v2.2-i2v-14b")
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
@@ -73,7 +72,7 @@ class WanProcessor(_WanProcessor):
             video=video,
             max_seq_length=max_seq_length,
         )
-        return TensorsInputs(
+        return TensorInputs(
             pixel_values=outputs.pixel_values,
             input_ids=outputs.input_ids,
             attention_mask=outputs.attention_mask,
@@ -91,7 +90,7 @@ class WanProcessor(_WanProcessor):
             negative_prompt=negative_prompt,
             max_seq_length=max_seq_length,
         )
-        return TensorsInputs(
+        return TensorInputs(
             input_ids=outputs.input_ids,
             negative_input_ids=outputs.negative_input_ids,
             attention_mask=outputs.attention_mask,
@@ -112,7 +111,7 @@ class WanProcessor(_WanProcessor):
             image=image,
             max_seq_length=max_seq_length,
         )
-        return TensorsInputs(
+        return TensorInputs(
             pixel_values=outputs.pixel_values,
             input_ids=outputs.input_ids,
             attention_mask=outputs.attention_mask,
@@ -133,7 +132,7 @@ class WanProcessor(_WanProcessor):
             negative_prompt=negative_prompt,
             max_seq_length=max_seq_length,
         )
-        return TensorsInputs(
+        return TensorInputs(
             vae_pixel_values=outputs.vae_pixel_values,
             input_ids=outputs.input_ids,
             attention_mask=outputs.attention_mask,

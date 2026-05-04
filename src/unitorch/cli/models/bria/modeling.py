@@ -2,21 +2,17 @@
 # Licensed under the MIT License.
 
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 from torch import autocast
-from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union
 from unitorch.models.bria import BRIAForSegmentation as _BRIAForSegmentation
 from unitorch.cli import (
     cached_path,
-    add_default_section_for_init,
-    add_default_section_for_function,
+    config_defaults_init,
     register_model,
 )
 from unitorch.cli.models import (
-    detection_model_decorator,
     segmentation_model_decorator,
-    DetectionOutputs,
     SegmentationOutputs,
     LossOutputs,
 )
@@ -28,8 +24,8 @@ class BRIAForSegmentation(_BRIAForSegmentation):
         super().__init__()
 
     @classmethod
-    @add_default_section_for_init("core/model/segmentation/bria")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/model/segmentation/bria")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/segmentation/bria")
 
         inst = cls()

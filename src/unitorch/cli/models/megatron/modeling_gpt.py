@@ -2,25 +2,22 @@
 # Licensed under the MIT License.
 
 import torch
-import torch.distributed as dist
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
-from torch import autocast
-from unitorch.utils import pop_value, nested_dict_value
+from typing import Optional
+from unitorch.utils import pop_value
 from unitorch.models.megatron import (
     MegatronGPTForGeneration as _MegatronGPTForGeneration,
 )
 from unitorch.cli import (
     cached_path,
-    add_default_section_for_init,
-    add_default_section_for_function,
+    config_defaults_init,
     register_model,
 )
-from unitorch.cli.models import ClassificationOutputs, GenerationOutputs, LossOutputs
+from unitorch.cli.models import LossOutputs
 
 
 @register_model("core/model/generation/megatron/gpt")
 class MegatronGPTForGeneration(_MegatronGPTForGeneration):
-    """Megatron model for generation tasks."""
+    """Megatron GPT model for generation tasks."""
 
     def __init__(
         self,
@@ -35,13 +32,6 @@ class MegatronGPTForGeneration(_MegatronGPTForGeneration):
         num_experts: Optional[int] = None,
         use_transformer_engine: Optional[bool] = False,
     ):
-        """
-        Initialize the LlamaForGeneration model.
-
-        Args:
-            config_path (str): The path to the model configuration file.
-            gradient_checkpointing (bool, optional): Whether to use gradient checkpointing during training. Defaults to False.
-        """
         super().__init__(
             config_path=config_path,
             vocab_size=vocab_size,
@@ -56,18 +46,8 @@ class MegatronGPTForGeneration(_MegatronGPTForGeneration):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/generation/megatron/gpt")
-    def from_core_configure(cls, config, **kwargs):
-        """
-        Create an instance of LlamaForGeneration from a core configuration.
-
-        Args:
-            config: The core configuration.
-            **kwargs: Additional keyword arguments.
-
-        Returns:
-            LlamaForGeneration: An instance of LlamaForGeneration.
-        """
+    @config_defaults_init("core/model/generation/megatron/gpt")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/generation/megatron/gpt")
         config_path = config.getoption("config_path", None)
 
@@ -101,17 +81,6 @@ class MegatronGPTForGeneration(_MegatronGPTForGeneration):
         masks: Optional[torch.Tensor] = None,
         sample_weight: Optional[torch.Tensor] = None,
     ):
-        """
-        Perform a forward pass on the LlamaForGeneration model.
-
-        Args:
-            input_ids (torch.Tensor, optional): The input tensor containing the input IDs. Defaults to None.
-            attention_mask (torch.Tensor, optional): The attention mask tensor. Defaults to None.
-            position_ids (torch.Tensor, optional): The position IDs tensor. Defaults to None.
-
-        Returns:
-            GenerationOutputs: The output of the generation model.
-        """
         outputs = super().forward(
             input_ids=input_ids,
             input_ids_label=refs,

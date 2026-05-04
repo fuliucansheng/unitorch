@@ -2,45 +2,24 @@
 # Licensed under the MIT License.
 
 import os
-import time
 import logging
 import http.server
 import zipfile
 from urllib.parse import parse_qs, urlparse
 from threading import Thread
 from functools import lru_cache
-from unitorch.cli import CoreConfigureParser
+from unitorch.cli import Config
 from unitorch.cli import register_service, GenericService
 
 
 def get_zipfile(zfs, res, idx, step):
-    """
-    Extracts a subset of zip files from the given list.
-
-    Args:
-        zfs (list): List of zip files.
-        res (list): Result list to store extracted zip files.
-        idx (int): Starting index.
-        step (int): Step size.
-
-    Returns:
-        None
-    """
+    """Extracts a subset of zip files into res, stepping by step."""
     for i in range(idx, len(zfs), step):
         res[i] = zipfile.ZipFile(zfs[i])
 
 
 def get_zipfiles(zipfiles, num_thread=48):
-    """
-    Extracts multiple zip files using multiple threads.
-
-    Args:
-        zipfiles (list): List of zip file paths.
-        num_thread (int): Number of threads to use.
-
-    Returns:
-        list: Extracted zip files.
-    """
+    """Opens multiple zip files concurrently using threads."""
     num_thread = min(len(zipfiles), num_thread)
     threads = [None] * num_thread
     results = [None] * len(zipfiles)
@@ -57,40 +36,20 @@ def get_zipfiles(zipfiles, num_thread=48):
 
 
 def parse_params(path):
-    """
-    Parses query parameters from the URL path.
-
-    Args:
-        path (str): URL path.
-
-    Returns:
-        dict: Parsed query parameters.
-    """
+    """Parses query parameters from a URL path."""
     url_components = urlparse(path)
     query_params = parse_qs(url_components.query)
     return {k: v[0] for k, v in query_params.items()}
 
 
 class ZipFilesServer(http.server.BaseHTTPRequestHandler):
-    """
-    HTTP request handler class.
-    """
-
     zip_data = None
     zip_dict = dict()
     none_resp = "".encode("utf-8")
 
     @lru_cache(maxsize=10000)
     def _get_file(self, file):
-        """
-        Retrieves the file data from zip files.
-
-        Args:
-            file (str): Image filename.
-
-        Returns:
-            bytes: Image data.
-        """
+        """Retrieves file bytes from the indexed zip archives."""
         zf = self.zip_dict.get(file)
         if zf is None:
             logging.warning(f"File {file} not found.")
@@ -103,49 +62,36 @@ class ZipFilesServer(http.server.BaseHTTPRequestHandler):
         return file
 
     def do_GET(self):
-        """
-        Handles GET requests.
-
-        Returns:
-            None
-        """
         if self.path == "/all-files":
             self.send_response(200)
             self.end_headers()
+            # zip_dict already contains only file entries (no directory entries)
             names = list(self.zip_dict.keys())
             self.wfile.write("\n".join(names).encode("utf-8"))
         else:
-            self.send_response(200)
-            self.end_headers()
             params = parse_params(self.path)
             file = params.get("file")
-            resp = self.none_resp
-            if file is not None:
-                resp = self._get_file(file)
+            # Reject missing file param or directory-style paths
+            if file is None or file.endswith("/"):
+                self.send_response(400)
+                self.end_headers()
+                self.wfile.write(self.none_resp)
+                return
+            self.send_response(200)
+            self.end_headers()
+            resp = self._get_file(file)
             self.wfile.write(resp)
 
     def log_request(self, format, *args):
-        """
-        Logs the HTTP request.
-
-        Returns:
-            None
-        """
         return
 
     def log_message(self, format, *args):
-        """
-        Logs the message.
-
-        Returns:
-            None
-        """
         return
 
 
 @register_service("core/service/zip_files")
 class ZipFilesService(GenericService):
-    def __init__(self, config: CoreConfigureParser):
+    def __init__(self, config: Config):
         self.config = config
         config.set_default_section("core/service/zip_files")
         self.ip = config.getoption("ip", "0.0.0.0")
@@ -174,8 +120,12 @@ class ZipFilesService(GenericService):
                 ]
 
         self.zip_data = get_zipfiles(zip_files, self.num_thread)
+        # Only index file entries; skip directory entries (names ending with '/').
         self.zip_dict = {
-            v: i for i, k in enumerate(self.zip_data) for v in k.namelist()
+            v: i
+            for i, k in enumerate(self.zip_data)
+            for v in k.namelist()
+            if not v.endswith("/")
         }
 
     def start(self, **kwargs):

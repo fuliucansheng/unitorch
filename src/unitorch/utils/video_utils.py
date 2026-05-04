@@ -1,19 +1,24 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
-import torch
+from typing import List
+
 import numpy as np
-from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
+import torch
 
 
 def tensor2vid(video: torch.Tensor) -> List[np.ndarray]:
-    # prepare the final outputs
-    i, f, c, h, w = video.shape
-    images = video.permute(1, 3, 0, 4, 2).reshape(
-        f, h, i * w, c
-    )  # 1st (frames, h, batch_size, w, c) 2nd (frames, h, batch_size * w, c)
-    images = images.unbind(dim=0)  # prepare a list of indvidual (consecutive frames)
-    images = [
-        (image.cpu().numpy() * 255).astype("uint8") for image in images
-    ]  # f h w c
-    return images
+    """Convert a batched video tensor to a list of per-frame uint8 NumPy arrays.
+
+    Args:
+        video: Float tensor of shape ``(batch, frames, channels, height, width)``
+               with values in ``[0, 1]``.
+
+    Returns:
+        A list of ``frames`` arrays, each of shape
+        ``(height, batch * width, channels)`` and dtype ``uint8``.
+    """
+    batch, frames, channels, height, width = video.shape
+    # Rearrange to (frames, height, batch * width, channels)
+    images = video.permute(1, 3, 0, 4, 2).reshape(frames, height, batch * width, channels)
+    return [(frame.cpu().numpy() * 255).astype("uint8") for frame in images.unbind(dim=0)]

@@ -2,12 +2,8 @@
 # Licensed under the MIT License.
 
 import os
-import time
-import logging
 import http.server
-import zipfile
-from urllib.parse import parse_qs, urlparse
-from unitorch.cli import CoreConfigureParser
+from unitorch.cli import Config
 from unitorch.cli import register_service, GenericService
 
 
@@ -20,7 +16,7 @@ class HttpFilesServer(http.server.SimpleHTTPRequestHandler):
 
 @register_service("core/service/http_files")
 class HttpFilesService(GenericService):
-    def __init__(self, config: CoreConfigureParser):
+    def __init__(self, config: Config):
         self.config = config
         config.set_default_section("core/service/http_files")
         self.ip = config.getoption("ip", "0.0.0.0")

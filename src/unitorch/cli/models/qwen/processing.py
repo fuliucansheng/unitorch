@@ -3,18 +3,17 @@
 
 import re
 import torch
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Dict, List, Optional, Union
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.qwen import QWenProcessor as _QWenProcessor
 from unitorch.cli import (
     cached_path,
-    add_default_section_for_init,
-    add_default_section_for_function,
+    config_defaults_init,
     register_process,
 )
 from unitorch.cli import WriterOutputs
 from unitorch.cli.models import (
-    TensorsInputs,
+    TensorInputs,
     GenerationOutputs,
     GenerationTargets,
 )
@@ -33,15 +32,6 @@ class QWenProcessor(_QWenProcessor):
         max_seq_length: Optional[int] = 128,
         max_gen_seq_length: Optional[int] = 128,
     ):
-        """
-        Initialize the BloomProcessor.
-
-        Args:
-            vocab_path (str): The path to the vocabulary file.
-            merge_path (str): The path to the merges file.
-            max_seq_length (int, optional): The maximum sequence length. Defaults to 128.
-            max_gen_seq_length (int, optional): The maximum generation sequence length. Defaults to 128.
-        """
         super().__init__(
             tokenizer_file=tokenizer_file,
             tokenizer_config=tokenizer_config,
@@ -52,17 +42,8 @@ class QWenProcessor(_QWenProcessor):
         )
 
     @classmethod
-    @add_default_section_for_init("core/process/qwen")
-    def from_core_configure(cls, config, **kwargs):
-        """
-        Create an instance of BloomProcessor from the core configuration.
-
-        Args:
-            config (Config): The core configuration object.
-
-        Returns:
-            BloomProcessor: An instance of BloomProcessor initialized with the provided configuration.
-        """
+    @config_defaults_init("core/process/qwen")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/process/qwen")
         pretrained_name = config.getoption("pretrained_name", "qwen3-4b-thinking")
         tokenizer_file = config.getoption("tokenizer_file", None)
@@ -126,21 +107,11 @@ class QWenProcessor(_QWenProcessor):
         text: str,
         max_seq_length: Optional[int] = None,
     ):
-        """
-        Preprocess the input text for generation tasks.
-
-        Args:
-            text (str): The input text.
-            max_seq_length (int, optional): The maximum sequence length. Defaults to None.
-
-        Returns:
-            TensorsInputs: The processed input tensors.
-        """
         outputs = super().generation_inputs(
             text=text,
             max_seq_length=max_seq_length,
         )
-        return TensorsInputs(input_ids=outputs.input_ids)
+        return TensorInputs(input_ids=outputs.input_ids)
 
     @register_process("core/process/qwen/generation/labels")
     def _generation_labels(
@@ -148,16 +119,6 @@ class QWenProcessor(_QWenProcessor):
         text: str,
         max_gen_seq_length: Optional[int] = None,
     ):
-        """
-        Preprocess the target text for generation tasks.
-
-        Args:
-            text (str): The target text.
-            max_gen_seq_length (int, optional): The maximum generation sequence length. Defaults to None.
-
-        Returns:
-            GenerationTargets: The processed generation targets.
-        """
         outputs = super().generation_labels(
             text=text,
             max_gen_seq_length=max_gen_seq_length,
@@ -175,25 +136,13 @@ class QWenProcessor(_QWenProcessor):
         max_seq_length: Optional[int] = None,
         max_gen_seq_length: Optional[int] = None,
     ):
-        """
-        Preprocess the input and target texts for generation tasks.
-
-        Args:
-            text (str): The input text.
-            text_pair (str, optional): The paired input text. Defaults to None.
-            max_seq_length (int, optional): The maximum sequence length. Defaults to None.
-            max_gen_seq_length (int, optional): The maximum generation sequence length. Defaults to None.
-
-        Returns:
-            Tuple[TensorsInputs, GenerationTargets]: The processed input tensors and generation targets.
-        """
         outputs = super().generation(
             text=text,
             text_pair=text_pair,
             max_seq_length=max_seq_length,
             max_gen_seq_length=max_gen_seq_length,
         )
-        return TensorsInputs(
+        return TensorInputs(
             input_ids=outputs.input_ids,
             attention_mask=outputs.attention_mask,
         ), GenerationTargets(
@@ -210,18 +159,6 @@ class QWenProcessor(_QWenProcessor):
         max_seq_length: Optional[int] = None,
         max_gen_seq_length: Optional[int] = None,
     ):
-        """
-        Preprocess the input and target texts for generation tasks.
-
-        Args:
-            text (str): The input text.
-            text_pair (str, optional): The paired input text. Defaults to None.
-            max_seq_length (int, optional): The maximum sequence length. Defaults to None.
-            max_gen_seq_length (int, optional): The maximum generation sequence length. Defaults to None.
-
-        Returns:
-            Tuple[TensorsInputs, GenerationTargets]: The processed input tensors and generation targets.
-        """
         inputs = super().generation_inputs(
             text=text,
             max_seq_length=max_seq_length,
@@ -234,7 +171,7 @@ class QWenProcessor(_QWenProcessor):
             text=lose_text_pair,
             max_gen_seq_length=max_gen_seq_length,
         )
-        return TensorsInputs(
+        return TensorInputs(
             input_ids=inputs.input_ids,
             attention_mask=inputs.attention_mask,
             win_input_ids=win_labels.input_ids,
@@ -253,7 +190,7 @@ class QWenProcessor(_QWenProcessor):
             messages=messages,
             max_seq_length=max_seq_length,
         )
-        return TensorsInputs(
+        return TensorInputs(
             input_ids=outputs.input_ids,
             attention_mask=outputs.attention_mask,
         ), GenerationTargets(
@@ -288,7 +225,7 @@ class QWenProcessor(_QWenProcessor):
             text=super().chat_template(messages=lose_messages),
             max_gen_seq_length=max_gen_seq_length,
         )
-        return TensorsInputs(
+        return TensorInputs(
             input_ids=inputs.input_ids,
             attention_mask=inputs.attention_mask,
             win_input_ids=win_labels.input_ids,
@@ -313,11 +250,10 @@ class QWenProcessor(_QWenProcessor):
             text=super().chat_template(messages=messages_labels),
             max_gen_seq_length=max_gen_seq_length,
         )
-        # sample results from fastapi of the base model. debug with dummy data here
         sample_ids = labels.input_ids
         sample_attention_mask = labels.attention_mask
         sampled_rewards = torch.tensor(1.0).float()
-        return TensorsInputs(
+        return TensorInputs(
             input_ids=inputs.input_ids,
             attention_mask=inputs.attention_mask,
             sampled_ids=torch.stack([sample_ids, sample_ids], dim=0),
@@ -332,15 +268,6 @@ class QWenProcessor(_QWenProcessor):
         self,
         outputs: GenerationOutputs,
     ):
-        """
-        Detokenize the generated sequences.
-
-        Args:
-            outputs (GenerationOutputs): The generation outputs.
-
-        Returns:
-            WriterOutputs: The detokenized writer outputs.
-        """
         results = outputs.to_pandas()
         assert results.shape[0] == 0 or results.shape[0] == outputs.sequences.shape[0]
 

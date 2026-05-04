@@ -11,25 +11,24 @@ import numpy as np
 import torch.nn as nn
 from PIL import Image
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import Dict, List, Optional, Union
 from unitorch.utils import numpy_to_pil
 from unitorch.cli import (
-    add_default_section_for_init,
-    add_default_section_for_function,
+    config_defaults_init,
     register_process,
 )
 from unitorch.cli import WriterMixin, WriterOutputs
-from unitorch.cli.models.modeling_utils import ListTensorsOutputs, ListTensorsTargets
+from unitorch.cli.models.modeling_utils import TensorSeqOutputs, TensorSeqTargets
 
 
 @dataclass
-class SegmentationOutputs(ListTensorsOutputs, WriterMixin):
+class SegmentationOutputs(TensorSeqOutputs, WriterMixin):
     masks: Union[torch.Tensor, List[torch.Tensor]]
     classes: Union[torch.Tensor, List[torch.Tensor]] = torch.empty(0)
 
 
 @dataclass
-class SegmentationTargets(ListTensorsTargets):
+class SegmentationTargets(TensorSeqTargets):
     targets: Union[torch.Tensor, List[torch.Tensor]]
     sample_weight: Optional[torch.Tensor] = torch.empty(0)
 
@@ -49,8 +48,8 @@ class SegmentationProcessor:
         self.http_url = http_url
 
     @classmethod
-    @add_default_section_for_init("core/process/segmentation")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/process/segmentation")
+    def from_config(cls, config, **kwargs):
         pass
 
     def save_image(self, image: Image.Image):
@@ -173,8 +172,8 @@ def segmentation_model_decorator(cls):
             return self.model.segment(*args, **kwargs)
 
         @classmethod
-        def from_core_configure(_cls, cfg, **kwargs):
-            model = cls.from_core_configure(cfg, **kwargs)
+        def from_config(_cls, cfg, **kwargs):
+            model = cls.from_config(cfg, **kwargs)
             return _cls(__segmentation_model__=model)
 
     return SegmentationModel

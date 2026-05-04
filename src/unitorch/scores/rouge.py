@@ -1,75 +1,41 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
-import torch
 import itertools
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
-from unitorch.scores import (
-    convert_tensor_to_strings,
-    remove_strings_ignore_tokens,
-)
+from typing import Dict, List, Optional, Set, Tuple, Union
+
+import torch
+
+from unitorch.scores._utils import convert_tensor_to_strings, remove_strings_ignore_tokens
 
 
-def _get_ngrams(n, text):
-    """Calcualtes n-grams.
-    Args:
-      n: which n-grams to calculate
-      text: An array of tokens
-    Returns:
-      A set of n-grams
-    """
-    ngram_set = set()
-    text_length = len(text)
-    max_index_ngram_start = text_length - n
-    for i in range(max_index_ngram_start + 1):
-        ngram_set.add(tuple(text[i : i + n]))
-    return ngram_set
+# ---------------------------------------------------------------------------
+# Internal helpers
+# ---------------------------------------------------------------------------
+
+def _get_ngrams(n: int, text: List) -> Set[Tuple]:
+    """Return the set of all n-grams of order *n* from *text*."""
+    return {tuple(text[i : i + n]) for i in range(len(text) - n + 1)}
 
 
-def _split_into_words(sentences):
-    """Splits multiple sentences into words and flattens the result"""
-    return list(itertools.chain(*[_.split(" ") for _ in sentences]))
+def _split_into_words(sentences: List[str]) -> List[str]:
+    """Flatten a list of whitespace-tokenised sentences into a word list."""
+    return list(itertools.chain.from_iterable(s.split() for s in sentences))
 
 
-def _get_word_ngrams(n, sentences):
-    """Calculates word n-grams for multiple sentences."""
-    assert len(sentences) > 0
-    assert n > 0
-
-    words = _split_into_words(sentences)
-    return _get_ngrams(n, words)
+def _get_word_ngrams(n: int, sentences: List[str]) -> Set[Tuple]:
+    """Return the set of word n-grams of order *n* across *sentences*."""
+    assert n > 0 and len(sentences) > 0
+    return _get_ngrams(n, _split_into_words(sentences))
 
 
-def _len_lcs(x, y):
-    """
-    Returns the length of the Longest Common Subsequence between sequences x
-    and y.
-    Source: http://www.algorithmist.com/index.php/Longest_Common_Subsequence
-    Args:
-      x: sequence of words
-      y: sequence of words
-    Returns
-      integer: Length of LCS between x and y
-    """
-    table = _lcs(x, y)
-    n, m = len(x), len(y)
-    return table[n, m]
+def _lcs_table(x: List, y: List) -> Dict[Tuple[int, int], int]:
+    """Build the DP table for the Longest Common Subsequence of *x* and *y*.
 
-
-def _lcs(x, y):
-    """
-    Computes the length of the longest common subsequence (lcs) between two
-    strings. The implementation below uses a DP programming algorithm and runs
-    in O(nm) time where n = len(x) and m = len(y).
-    Source: http://www.algorithmist.com/index.php/Longest_Common_Subsequence
-    Args:
-      x: collection of words
-      y: collection of words
-    Returns:
-      Table of dictionary of coord and len lcs
+    Runs in O(|x| · |y|) time and space.
     """
     n, m = len(x), len(y)
-    table = dict()
+    table: Dict[Tuple[int, int], int] = {}
     for i in range(n + 1):
         for j in range(m + 1):
             if i == 0 or j == 0:
@@ -81,219 +47,145 @@ def _lcs(x, y):
     return table
 
 
-def _recon_lcs(x, y):
-    """
-    Returns the Longest Subsequence between x and y.
-    Source: http://www.algorithmist.com/index.php/Longest_Common_Subsequence
-    Args:
-      x: sequence of words
-      y: sequence of words
-    Returns:
-      sequence: LCS of x and y
-    """
-    i, j = len(x), len(y)
-    table = _lcs(x, y)
+def _len_lcs(x: List, y: List) -> int:
+    """Return the length of the Longest Common Subsequence of *x* and *y*."""
+    return _lcs_table(x, y)[len(x), len(y)]
 
-    def _recon(i, j):
-        """private recon calculation"""
+
+def _recon_lcs(x: List, y: List) -> Tuple:
+    """Return the Longest Common Subsequence of *x* and *y* as a tuple."""
+    table = _lcs_table(x, y)
+
+    def _recon(i: int, j: int) -> List:
         if i == 0 or j == 0:
             return []
-        elif x[i - 1] == y[j - 1]:
-            return _recon(i - 1, j - 1) + [(x[i - 1], i)]
-        elif table[i - 1, j] > table[i, j - 1]:
+        if x[i - 1] == y[j - 1]:
+            return _recon(i - 1, j - 1) + [x[i - 1]]
+        if table[i - 1, j] > table[i, j - 1]:
             return _recon(i - 1, j)
-        else:
-            return _recon(i, j - 1)
+        return _recon(i, j - 1)
 
-    recon_tuple = tuple(map(lambda x: x[0], _recon(i, j)))
-    return recon_tuple
+    return tuple(_recon(len(x), len(y)))
 
 
-def _multi_rouge_n(sequences, scores_ids, n=2):
-    """
-    Efficient way to compute highly repetitive scoring
-    i.e. sequences are involved multiple time
-    Args:
-        sequences(list[str]): list of sequences (either hyp or ref)
-        scores_ids(list[tuple(int)]): list of pairs (hyp_id, ref_id)
-            ie. scores[i] = _rouge_n(scores_ids[i][0],
-                                    scores_ids[i][1])
-    Returns:
-        scores: list of length `len(scores_ids)` containing rouge `n`
-                scores as a dict with 'f', 'r', 'p'
-    Raises:
-        KeyError: if there's a value of i in scores_ids that is not in
-                  [0, len(sequences)[
-    """
-    ngrams = [_get_word_ngrams(n, sequence) for sequence in sequences]
-    counts = [len(ngram) for ngram in ngrams]
-
-    scores = []
-    for hyp_id, ref_id in scores_ids:
-        evaluated_ngrams = ngrams[hyp_id]
-        evaluated_count = counts[hyp_id]
-
-        reference_ngrams = ngrams[ref_id]
-        reference_count = counts[ref_id]
-
-        overlapping_ngrams = evaluated_ngrams.intersection(reference_ngrams)
-        overlapping_count = len(overlapping_ngrams)
-
-        scores += [_f_r_p_rouge_n(evaluated_count, reference_count, overlapping_count)]
-    return scores
+def _f_r_p_rouge_n(
+    evaluated_count: int,
+    reference_count: int,
+    overlapping_count: int,
+) -> Dict[str, float]:
+    """Compute precision, recall, and F1 for a ROUGE-N overlap."""
+    precision = overlapping_count / evaluated_count if evaluated_count else 0.0
+    recall = overlapping_count / reference_count if reference_count else 0.0
+    f1 = 2.0 * precision * recall / (precision + recall + 1e-8)
+    return {"f": f1, "p": precision, "r": recall}
 
 
-def _rouge_n(evaluated_sentences, reference_sentences, n=2):
-    """
-    Computes ROUGE-N of two text collections of sentences.
-    Sourece: http://research.microsoft.com/en-us/um/people/cyl/download/
-    papers/rouge-working-note-v1.3.1.pdf
-    Args:
-      evaluated_sentences: The sentences that have been picked by the
-                           summarizer
-      reference_sentences: The sentences from the referene set
-      n: Size of ngram.  Defaults to 2.
-    Returns:
-      A tuple (f1, precision, recall) for ROUGE-N
-    Raises:
-      ValueError: raises exception if a param has len <= 0
-    """
-    if len(evaluated_sentences) <= 0:
+def _rouge_n(
+    evaluated_sentences: List[str],
+    reference_sentences: List[str],
+    n: int = 2,
+) -> Dict[str, float]:
+    """Compute ROUGE-N F1, precision, and recall for a single pair."""
+    if not evaluated_sentences:
         raise ValueError("Hypothesis is empty.")
-    if len(reference_sentences) <= 0:
+    if not reference_sentences:
         raise ValueError("Reference is empty.")
 
     evaluated_ngrams = _get_word_ngrams(n, evaluated_sentences)
     reference_ngrams = _get_word_ngrams(n, reference_sentences)
-    reference_count = len(reference_ngrams)
-    evaluated_count = len(evaluated_ngrams)
-
-    # Gets the overlapping ngrams between evaluated and reference
-    overlapping_ngrams = evaluated_ngrams.intersection(reference_ngrams)
-    overlapping_count = len(overlapping_ngrams)
-
-    return _f_r_p_rouge_n(evaluated_count, reference_count, overlapping_count)
+    overlap = len(evaluated_ngrams & reference_ngrams)
+    return _f_r_p_rouge_n(len(evaluated_ngrams), len(reference_ngrams), overlap)
 
 
-def _f_r_p_rouge_n(evaluated_count, reference_count, overlapping_count):
-    # Handle edge case. This isn't mathematically correct, but it's good enough
-    if evaluated_count == 0:
-        precision = 0.0
-    else:
-        precision = overlapping_count / evaluated_count
+def _union_lcs(
+    evaluated_sentences: List[str],
+    reference_sentence: str,
+    prev_union: Optional[Set] = None,
+) -> Tuple[int, Set]:
+    """Compute the union LCS count between *reference_sentence* and *evaluated_sentences*.
 
-    if reference_count == 0:
-        recall = 0.0
-    else:
-        recall = overlapping_count / reference_count
-
-    f1_score = 2.0 * ((precision * recall) / (precision + recall + 1e-8))
-
-    return {"f": f1_score, "p": precision, "r": recall}
-
-
-def _union_lcs(evaluated_sentences, reference_sentence, prev_union=None):
+    Returns the number of *new* LCS tokens added beyond *prev_union*, and the
+    updated union set.
     """
-    Returns LCS_u(r_i, C) which is the LCS score of the union longest common
-    subsequence between reference sentence ri and candidate summary C.
-    For example:
-    if r_i= w1 w2 w3 w4 w5, and C contains two sentences: c1 = w1 w2 w6 w7 w8
-    and c2 = w1 w3 w8 w9 w5, then the longest common subsequence of r_i and c1
-    is "w1 w2" and the longest common subsequence of r_i and c2 is "w1 w3 w5".
-    The union longest common subsequence of r_i, c1, and c2 is "w1 w2 w3 w5"
-    and LCS_u(r_i, C) = 4/5.
-    Args:
-      evaluated_sentences: The sentences that have been picked by the
-                           summarizer
-      reference_sentence: One of the sentences in the reference summaries
-    Returns:
-      float: LCS_u(r_i, C)
-    ValueError:
-      Raises exception if a param has len <= 0
-    """
-    if prev_union is None:
-        prev_union = set()
-
-    if len(evaluated_sentences) <= 0:
+    if not evaluated_sentences:
         raise ValueError("Collections must contain at least 1 sentence.")
 
-    lcs_union = prev_union
-    prev_count = len(prev_union)
+    lcs_union = prev_union or set()
+    prev_count = len(lcs_union)
     reference_words = _split_into_words([reference_sentence])
 
     combined_lcs_length = 0
-    for eval_s in evaluated_sentences:
-        evaluated_words = _split_into_words([eval_s])
-        lcs = set(_recon_lcs(reference_words, evaluated_words))
+    for sentence in evaluated_sentences:
+        lcs = set(_recon_lcs(reference_words, _split_into_words([sentence])))
         combined_lcs_length += len(lcs)
-        lcs_union = lcs_union.union(lcs)
+        lcs_union = lcs_union | lcs
 
-    new_lcs_count = len(lcs_union) - prev_count
-    return new_lcs_count, lcs_union
+    return len(lcs_union) - prev_count, lcs_union
 
 
-def _rouge_l_summary_level(evaluated_sentences, reference_sentences):
-    """
-    Computes ROUGE-L (summary level) of two text collections of sentences.
-    http://research.microsoft.com/en-us/um/people/cyl/download/papers/
-    rouge-working-note-v1.3.1.pdf
-    Calculated according to:
-    R_lcs = SUM(1, u)[LCS<union>(r_i,C)]/m
-    P_lcs = SUM(1, u)[LCS<union>(r_i,C)]/n
-    F_lcs = ((1 + beta^2)*R_lcs*P_lcs) / (R_lcs + (beta^2) * P_lcs)
-    where:
-    SUM(i,u) = SUM from i through u
-    u = number of sentences in reference summary
-    C = Candidate summary made up of v sentences
-    m = number of words in reference summary
-    n = number of words in candidate summary
-    Args:
-      evaluated_sentences: The sentences that have been picked by the
-                           summarizer
-      reference_sentence: One of the sentences in the reference summaries
-    Returns:
-      A float: F_lcs
-    Raises:
-      ValueError: raises exception if a param has len <= 0
-    """
-    if len(evaluated_sentences) <= 0 or len(reference_sentences) <= 0:
+def _rouge_l_summary_level(
+    evaluated_sentences: List[str],
+    reference_sentences: List[str],
+) -> Dict[str, float]:
+    """Compute summary-level ROUGE-L F1, precision, and recall."""
+    if not evaluated_sentences or not reference_sentences:
         raise ValueError("Collections must contain at least 1 sentence.")
 
-    # total number of words in reference sentences
     m = len(set(_split_into_words(reference_sentences)))
-
-    # total number of words in evaluated sentences
     n = len(set(_split_into_words(evaluated_sentences)))
 
-    # print("m,n %d %d" % (m, n))
-    union_lcs_sum_across_all_references = 0
-    union = set()
+    union: Set = set()
+    llcs = 0
     for ref_s in reference_sentences:
         lcs_count, union = _union_lcs(evaluated_sentences, ref_s, prev_union=union)
-        union_lcs_sum_across_all_references += lcs_count
+        llcs += lcs_count
 
-    llcs = union_lcs_sum_across_all_references
     r_lcs = llcs / m
     p_lcs = llcs / n
     beta = p_lcs / (r_lcs + 1e-12)
-    num = (1 + (beta**2)) * r_lcs * p_lcs
-    denom = r_lcs + ((beta**2) * p_lcs)
-    f_lcs = num / (denom + 1e-12)
+    f_lcs = (1 + beta ** 2) * r_lcs * p_lcs / (r_lcs + beta ** 2 * p_lcs + 1e-12)
     return {"f": f_lcs, "p": p_lcs, "r": r_lcs}
 
 
-def rouge1_score(
-    y_true: List[Union[str, int, List[Union[str, int]]]],
-    y_pred: List[Union[str, int, List[Union[str, int]]]],
-    ignore_tokens: Optional[List[Union[str, int]]] = None,
-):
-    """
-    Args:
-        y_true: list of lists of int/str tokens of ground truth.
-        y_pred: list of lists of int/str tokens of generation results.
-        ignore_tokens: the token list to filtration
-    """
+def _multi_rouge_n(
+    sequences: List[List[str]],
+    scores_ids: List[Tuple[int, int]],
+    n: int = 2,
+) -> List[Dict[str, float]]:
+    """Compute ROUGE-N for multiple (hypothesis, reference) index pairs efficiently.
 
+    Pre-computes n-gram sets for all sequences so each is processed only once.
+
+    Args:
+        sequences: List of token sequences (hypotheses and references combined).
+        scores_ids: List of ``(hyp_idx, ref_idx)`` pairs into *sequences*.
+        n: N-gram order.
+
+    Returns:
+        A list of ``{"f", "p", "r"}`` dicts, one per pair in *scores_ids*.
+    """
+    ngrams = [_get_word_ngrams(n, seq) for seq in sequences]
+    counts = [len(ng) for ng in ngrams]
+    return [
+        _f_r_p_rouge_n(
+            counts[hyp_id],
+            counts[ref_id],
+            len(ngrams[hyp_id] & ngrams[ref_id]),
+        )
+        for hyp_id, ref_id in scores_ids
+    ]
+
+
+# ---------------------------------------------------------------------------
+# Shared pre-processing
+# ---------------------------------------------------------------------------
+
+def _prepare_inputs(
+    y_true,
+    y_pred,
+    ignore_tokens: Optional[List[Union[str, int]]],
+):
+    """Normalise inputs to string lists and strip ignore tokens."""
     if isinstance(y_true, torch.Tensor):
         if y_true.dim() == 2:
             y_true = y_true.unsqueeze(1)
@@ -307,93 +199,81 @@ def rouge1_score(
 
     y_true = remove_strings_ignore_tokens(y_true, ignore_tokens=ignore_tokens)
     y_pred = remove_strings_ignore_tokens(y_pred, ignore_tokens=ignore_tokens)
+    # Take the first reference for each example.
+    y_true = [refs[0] for refs in y_true]
+    return y_true, y_pred
 
-    y_true = [_y_true[0] for _y_true in y_true]
 
-    num = len(y_pred)
-    pre, rec, f1 = 0, 0, 0
-    for t, p in zip(y_true, y_pred):
-        r = _rouge_n(p, t, n=1)
-        pre += r["p"]
-        rec += r["r"]
-        f1 += r["f"]
-    pre, rec, f1 = pre / num, rec / num, f1 / num
-    return dict(pre=pre, rec=rec, f1=f1)
+def _average_rouge(rouge_fn, y_true, y_pred) -> Dict[str, float]:
+    """Average per-sentence ROUGE scores across a corpus."""
+    totals = {"p": 0.0, "r": 0.0, "f": 0.0}
+    for ref, hyp in zip(y_true, y_pred):
+        scores = rouge_fn(hyp, ref)
+        for key in totals:
+            totals[key] += scores[key]
+    n = len(y_pred)
+    return {k: v / n for k, v in totals.items()}
+
+
+# ---------------------------------------------------------------------------
+# Public API
+# ---------------------------------------------------------------------------
+
+def rouge1_score(
+    y_true: List[Union[str, int, List[Union[str, int]]]],
+    y_pred: List[Union[str, int, List[Union[str, int]]]],
+    ignore_tokens: Optional[List[Union[str, int]]] = None,
+) -> Dict[str, float]:
+    """Compute corpus-level ROUGE-1 precision, recall, and F1.
+
+    Args:
+        y_true: Reference sequences (tokens or nested lists); tensors accepted.
+        y_pred: Hypothesis sequences in the same format.
+        ignore_tokens: Tokens stripped from both inputs before scoring.
+
+    Returns:
+        ``{"pre": float, "rec": float, "f1": float}``
+    """
+    y_true, y_pred = _prepare_inputs(y_true, y_pred, ignore_tokens)
+    scores = _average_rouge(lambda h, r: _rouge_n(h, r, n=1), y_true, y_pred)
+    return {"pre": scores["p"], "rec": scores["r"], "f1": scores["f"]}
 
 
 def rouge2_score(
     y_true: List[Union[str, int, List[Union[str, int]]]],
     y_pred: List[Union[str, int, List[Union[str, int]]]],
     ignore_tokens: Optional[List[Union[str, int]]] = None,
-):
-    """
+) -> Dict[str, float]:
+    """Compute corpus-level ROUGE-2 precision, recall, and F1.
+
     Args:
-        y_true: list of lists of int/str tokens of ground truth.
-        y_pred: list of lists of int/str tokens of generation results.
-        ignore_tokens: the token list to filtration
+        y_true: Reference sequences (tokens or nested lists); tensors accepted.
+        y_pred: Hypothesis sequences in the same format.
+        ignore_tokens: Tokens stripped from both inputs before scoring.
+
+    Returns:
+        ``{"pre": float, "rec": float, "f1": float}``
     """
-
-    if isinstance(y_true, torch.Tensor):
-        if y_true.dim() == 2:
-            y_true = y_true.unsqueeze(1)
-        y_true = convert_tensor_to_strings(y_true)
-
-    if isinstance(y_pred, torch.Tensor) and y_pred.dim() == 2:
-        y_pred = convert_tensor_to_strings(y_pred)
-
-    if ignore_tokens is not None:
-        ignore_tokens = [str(t) for t in ignore_tokens]
-
-    y_true = remove_strings_ignore_tokens(y_true, ignore_tokens=ignore_tokens)
-    y_pred = remove_strings_ignore_tokens(y_pred, ignore_tokens=ignore_tokens)
-
-    y_true = [_y_true[0] for _y_true in y_true]
-
-    num = len(y_pred)
-    pre, rec, f1 = 0, 0, 0
-    for t, p in zip(y_true, y_pred):
-        r = _rouge_n(p, t, n=2)
-        pre += r["p"]
-        rec += r["r"]
-        f1 += r["f"]
-    pre, rec, f1 = pre / num, rec / num, f1 / num
-    return dict(pre=pre, rec=rec, f1=f1)
+    y_true, y_pred = _prepare_inputs(y_true, y_pred, ignore_tokens)
+    scores = _average_rouge(lambda h, r: _rouge_n(h, r, n=2), y_true, y_pred)
+    return {"pre": scores["p"], "rec": scores["r"], "f1": scores["f"]}
 
 
 def rougel_score(
     y_true: List[Union[str, int, List[Union[str, int]]]],
     y_pred: List[Union[str, int, List[Union[str, int]]]],
     ignore_tokens: Optional[List[Union[str, int]]] = None,
-):
-    """
+) -> Dict[str, float]:
+    """Compute corpus-level ROUGE-L precision, recall, and F1.
+
     Args:
-        y_true: list of lists of int/str tokens of ground truth.
-        y_pred: list of lists of int/str tokens of generation results.
-        ignore_tokens: the token list to filtration
+        y_true: Reference sequences (tokens or nested lists); tensors accepted.
+        y_pred: Hypothesis sequences in the same format.
+        ignore_tokens: Tokens stripped from both inputs before scoring.
+
+    Returns:
+        ``{"pre": float, "rec": float, "f1": float}``
     """
-
-    if isinstance(y_true, torch.Tensor):
-        if y_true.dim() == 2:
-            y_true = y_true.unsqueeze(1)
-        y_true = convert_tensor_to_strings(y_true)
-
-    if isinstance(y_pred, torch.Tensor) and y_pred.dim() == 2:
-        y_pred = convert_tensor_to_strings(y_pred)
-
-    if ignore_tokens is not None:
-        ignore_tokens = [str(t) for t in ignore_tokens]
-
-    y_true = remove_strings_ignore_tokens(y_true, ignore_tokens=ignore_tokens)
-    y_pred = remove_strings_ignore_tokens(y_pred, ignore_tokens=ignore_tokens)
-
-    y_true = [_y_true[0] for _y_true in y_true]
-
-    num = len(y_pred)
-    pre, rec, f1 = 0, 0, 0
-    for t, p in zip(y_true, y_pred):
-        r = _rouge_l_summary_level(p, t)
-        pre += r["p"]
-        rec += r["r"]
-        f1 += r["f"]
-    pre, rec, f1 = pre / num, rec / num, f1 / num
-    return dict(pre=pre, rec=rec, f1=f1)
+    y_true, y_pred = _prepare_inputs(y_true, y_pred, ignore_tokens)
+    scores = _average_rouge(_rouge_l_summary_level, y_true, y_pred)
+    return {"pre": scores["p"], "rec": scores["r"], "f1": scores["f"]}

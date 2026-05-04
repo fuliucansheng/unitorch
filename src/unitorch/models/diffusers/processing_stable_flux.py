@@ -1,12 +1,10 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
-import os
 import torch
 import json
-import numpy as np
 from PIL import Image
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 from transformers import CLIPTokenizer, T5Tokenizer, SiglipImageProcessor
 from torchvision.transforms import (
     Resize,

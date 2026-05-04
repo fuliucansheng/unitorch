@@ -1,19 +1,25 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
-import os
-import torch
-from functools import partial
-from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
-
+from typing import Dict, Optional
 from transformers import T5Tokenizer
 from unitorch.models import HfTextGenerationProcessor
 
 
 def get_t5_tokenizer(
-    vocab_path,
-    special_input_ids=dict(),
+    vocab_path: str,
+    special_input_ids: Dict = dict(),
 ):
+    """
+    Creates and configures a T5Tokenizer with optional special tokens.
+
+    Args:
+        vocab_path (str): Path to the vocabulary file.
+        special_input_ids (Dict, optional): Mapping of special tokens to IDs.
+
+    Returns:
+        T5Tokenizer: Configured tokenizer.
+    """
     tokenizer = T5Tokenizer(vocab_path)
     for token, _id in special_input_ids.items():
         tokenizer.added_tokens_encoder[token] = _id
@@ -40,14 +46,11 @@ class T5Processor(HfTextGenerationProcessor):
 
         Args:
             vocab_path (str): Path to the vocabulary file.
-            special_input_ids (Optional[Dict]): Special input IDs. Defaults to an empty dictionary.
-            max_seq_length (Optional[int]): Maximum sequence length. Defaults to 128.
-            max_gen_seq_length (Optional[int]): Maximum generated sequence length. Defaults to 48.
+            special_input_ids (Dict, optional): Special input token IDs. Defaults to empty dict.
+            max_seq_length (int, optional): Maximum sequence length. Defaults to 128.
+            max_gen_seq_length (int, optional): Maximum generated sequence length. Defaults to 48.
         """
-        tokenizer = get_t5_tokenizer(
-            vocab_path,
-            special_input_ids=special_input_ids,
-        )
+        tokenizer = get_t5_tokenizer(vocab_path, special_input_ids=special_input_ids)
         tokenizer.bos_token_id = 0
         tokenizer.bos_token = tokenizer.convert_ids_to_tokens(0)
         tokenizer.sep_token = tokenizer.eos_token

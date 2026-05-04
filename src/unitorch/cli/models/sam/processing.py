@@ -3,18 +3,17 @@
 
 import os
 import hashlib
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import List, Optional, Union
 from PIL import Image
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.sam import SamProcessor as _SamProcessor
 from unitorch.cli import (
     cached_path,
-    add_default_section_for_init,
-    add_default_section_for_function,
+    config_defaults_init,
     register_process,
 )
 from unitorch.cli import WriterOutputs
-from unitorch.cli.models import SegmentationOutputs, TensorsInputs
+from unitorch.cli.models import SegmentationOutputs, TensorInputs
 from unitorch.cli.models.sam import pretrained_sam_infos
 
 
@@ -33,8 +32,8 @@ class SamProcessor(_SamProcessor):
             os.makedirs(self.output_folder, exist_ok=True)
 
     @classmethod
-    @add_default_section_for_init("core/process/sam")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/process/sam")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/process/sam")
         pretrained_name = config.getoption("pretrained_name", "sam-vit-base")
         vision_config_path = config.getoption("vision_config_path", None)
@@ -68,7 +67,7 @@ class SamProcessor(_SamProcessor):
             image=image,
             points_per_crop=points_per_crop,
         )
-        return TensorsInputs(
+        return TensorInputs(
             pixel_values=outputs.pixel_values,
             original_sizes=outputs.original_sizes,
             reshaped_input_sizes=outputs.reshaped_input_sizes,

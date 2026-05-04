@@ -1,22 +1,16 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import Optional, Union
 from PIL import Image
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.swin import SwinProcessor as _SwinProcessor
 from unitorch.cli import (
     cached_path,
-    add_default_section_for_init,
-    add_default_section_for_function,
+    config_defaults_init,
     register_process,
 )
-from unitorch.cli import WriterOutputs
-from unitorch.cli.models import (
-    TensorsInputs,
-    GenerationOutputs,
-    GenerationTargets,
-)
+from unitorch.cli.models import TensorInputs
 from unitorch.cli.models.swin import pretrained_swin_infos
 
 
@@ -27,29 +21,13 @@ class SwinProcessor(_SwinProcessor):
         self,
         vision_config_path: str,
     ):
-        """
-        Initialize the SwinProcessor.
-
-        Args:
-            vision_config_path (str): The path to the vision model configuration file.
-        """
         super().__init__(
             vision_config_path=vision_config_path,
         )
 
     @classmethod
-    @add_default_section_for_init("core/process/swin")
-    def from_core_configure(cls, config, **kwargs):
-        """
-        Create an instance of SwinProcessor from a core configuration.
-
-        Args:
-            config: The core configuration.
-            **kwargs: Additional keyword arguments.
-
-        Returns:
-            dict: The SwinProcessor configuration.
-        """
+    @config_defaults_init("core/process/swin")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/process/swin")
         pretrained_name = config.getoption(
             "pretrained_name", "swin-tiny-patch4-window7-224"
@@ -71,16 +49,7 @@ class SwinProcessor(_SwinProcessor):
         self,
         image: Union[Image.Image, str],
     ):
-        """
-        Process image classification using SwinProcessor.
-
-        Args:
-            image (Union[Image.Image, str]): The input image or path to the image.
-
-        Returns:
-            TensorsInputs: The processed tensors inputs.
-        """
         if isinstance(image, str):
             image = Image.open(image)
         outputs = super().classification(image=image)
-        return TensorsInputs(pixel_values=outputs.pixel_values)
+        return TensorInputs(pixel_values=outputs.pixel_values)

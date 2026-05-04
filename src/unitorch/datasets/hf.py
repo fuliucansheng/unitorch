@@ -2,15 +2,34 @@
 # Licensed under the MIT License.
 
 import os
-from datasets import load_dataset, Dataset
-from torch.utils.data import Dataset as TorchDataset, IterableDataset
-from datasets.features import Features
 from itertools import cycle
-from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
+from typing import Iterator, List, Optional, Union
+
+from datasets import Dataset, load_dataset
+from datasets.features import Features
+from torch.utils.data import Dataset as TorchDataset, IterableDataset
+
+
+def _select_split(dataset, split: Optional[str]):
+    """Return the requested split, falling back to 'train' if not found."""
+    if split in dataset:
+        return dataset[split]
+    return dataset["train"]
+
+
+def _data_files_exist(data_files: Optional[Union[str, List[str]]]) -> bool:
+    """Return False if data_files is None or a single non-existent path."""
+    if data_files is None:
+        return False
+    if isinstance(data_files, str) and not os.path.exists(data_files):
+        return False
+    return True
 
 
 class HFDatasets(TorchDataset):
-    def __init__(self, dataset: Dataset):
+    """Map-style wrapper around a HuggingFace :class:`datasets.Dataset`."""
+
+    def __init__(self, dataset: Dataset) -> None:
         self.dataset = dataset
 
     @classmethod
@@ -19,17 +38,13 @@ class HFDatasets(TorchDataset):
         data_dir: Optional[str] = None,
         data_files: Optional[Union[str, List[str]]] = None,
         names: Optional[List[str]] = None,
-        sep: Optional[str] = "\t",
-        quoting: Optional[int] = 3,
+        sep: str = "\t",
+        quoting: int = 3,
         escapechar: Optional[str] = None,
         split: Optional[str] = None,
     ) -> Optional["HFDatasets"]:
-        if data_files is None:
+        if not _data_files_exist(data_files):
             return None
-
-        if isinstance(data_files, str) and not os.path.exists(data_files):
-            return None
-
         dataset = load_dataset(
             "csv",
             data_dir=data_dir,
@@ -39,13 +54,7 @@ class HFDatasets(TorchDataset):
             quoting=quoting,
             escapechar=escapechar,
         )
-
-        if split not in dataset:
-            dataset = dataset.get("train")
-        else:
-            dataset = dataset.get(split)
-
-        return cls(dataset)
+        return cls(_select_split(dataset, split))
 
     @classmethod
     def from_json(
@@ -55,25 +64,15 @@ class HFDatasets(TorchDataset):
         field: Optional[str] = None,
         split: Optional[str] = None,
     ) -> Optional["HFDatasets"]:
-        if data_files is None:
+        if not _data_files_exist(data_files):
             return None
-
-        if isinstance(data_files, str) and not os.path.exists(data_files):
-            return None
-
         dataset = load_dataset(
             "json",
             data_dir=data_dir,
             data_files=data_files,
             field=field,
         )
-
-        if split not in dataset:
-            dataset = dataset.get("train")
-        else:
-            dataset = dataset.get(split)
-
-        return cls(dataset)
+        return cls(_select_split(dataset, split))
 
     @classmethod
     def from_parquet(
@@ -83,25 +82,15 @@ class HFDatasets(TorchDataset):
         split: Optional[str] = None,
         features: Optional[Features] = None,
     ) -> Optional["HFDatasets"]:
-        if data_files is None:
+        if not _data_files_exist(data_files):
             return None
-
-        if isinstance(data_files, str) and not os.path.exists(data_files):
-            return None
-
         dataset = load_dataset(
             "parquet",
             data_dir=data_dir,
             data_files=data_files,
             features=features,
         )
-
-        if split not in dataset:
-            dataset = dataset.get("train")
-        else:
-            dataset = dataset.get(split)
-
-        return cls(dataset)
+        return cls(_select_split(dataset, split))
 
     @classmethod
     def from_hub(
@@ -118,12 +107,11 @@ class HFDatasets(TorchDataset):
             data_dir=data_dir,
             data_files=data_files,
         )
+        if split not in dataset:
+            return None
+        return cls(dataset[split])
 
-        if split in dataset:
-            dataset = dataset.get(split)
-            return cls(dataset)
-
-    def __getitem__(self, idx: int) -> Any:
+    def __getitem__(self, idx: int):
         return self.dataset[idx]
 
     def __len__(self) -> int:
@@ -131,10 +119,9 @@ class HFDatasets(TorchDataset):
 
 
 class HFIterableDatasets(IterableDataset):
-    def __init__(
-        self,
-        dataset: Dataset,
-    ):
+    """Iterable wrapper around a HuggingFace streaming dataset."""
+
+    def __init__(self, dataset: Dataset) -> None:
         self.dataset = dataset
 
     @classmethod
@@ -143,17 +130,13 @@ class HFIterableDatasets(IterableDataset):
         data_dir: Optional[str] = None,
         data_files: Optional[Union[str, List[str]]] = None,
         names: Optional[List[str]] = None,
-        sep: Optional[str] = "\t",
-        quoting: Optional[int] = 3,
+        sep: str = "\t",
+        quoting: int = 3,
         escapechar: Optional[str] = None,
         split: Optional[str] = None,
     ) -> Optional["HFIterableDatasets"]:
-        if data_files is None:
+        if not _data_files_exist(data_files):
             return None
-
-        if isinstance(data_files, str) and not os.path.exists(data_files):
-            return None
-
         dataset = load_dataset(
             "csv",
             data_dir=data_dir,
@@ -164,13 +147,7 @@ class HFIterableDatasets(IterableDataset):
             escapechar=escapechar,
             streaming=True,
         )
-
-        if split not in dataset:
-            dataset = dataset.get("train")
-        else:
-            dataset = dataset.get(split)
-
-        return cls(dataset)
+        return cls(_select_split(dataset, split))
 
     @classmethod
     def from_json(
@@ -180,12 +157,8 @@ class HFIterableDatasets(IterableDataset):
         field: Optional[str] = None,
         split: Optional[str] = None,
     ) -> Optional["HFIterableDatasets"]:
-        if data_files is None:
+        if not _data_files_exist(data_files):
             return None
-
-        if isinstance(data_files, str) and not os.path.exists(data_files):
-            return None
-
         dataset = load_dataset(
             "json",
             data_dir=data_dir,
@@ -193,13 +166,7 @@ class HFIterableDatasets(IterableDataset):
             field=field,
             streaming=True,
         )
-
-        if split not in dataset:
-            dataset = dataset.get("train")
-        else:
-            dataset = dataset.get(split)
-
-        return cls(dataset)
+        return cls(_select_split(dataset, split))
 
     @classmethod
     def from_parquet(
@@ -208,25 +175,15 @@ class HFIterableDatasets(IterableDataset):
         data_files: Optional[Union[str, List[str]]] = None,
         split: Optional[str] = None,
     ) -> Optional["HFIterableDatasets"]:
-        if data_files is None:
+        if not _data_files_exist(data_files):
             return None
-
-        if isinstance(data_files, str) and not os.path.exists(data_files):
-            return None
-
         dataset = load_dataset(
             "parquet",
             data_dir=data_dir,
             data_files=data_files,
             streaming=True,
         )
-
-        if split not in dataset:
-            dataset = dataset.get("train")
-        else:
-            dataset = dataset.get(split)
-
-        return cls(dataset)
+        return cls(_select_split(dataset, split))
 
     @classmethod
     def from_hub(
@@ -244,12 +201,11 @@ class HFIterableDatasets(IterableDataset):
             data_files=data_files,
             streaming=True,
         )
+        if split not in dataset:
+            return None
+        return cls(dataset[split])
 
-        if split in dataset:
-            dataset = dataset.get(split)
-            return cls(dataset)
-
-    def __iter__(self) -> Iterable:
+    def __iter__(self) -> Iterator:
         return iter(cycle(self.dataset))
 
     def __len__(self) -> int:

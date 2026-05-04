@@ -3,17 +3,17 @@
 
 import torch
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import Optional
 from unitorch.cli import WriterMixin, WriterOutputs
-from unitorch.cli.models.modeling_utils import TensorsOutputs, TensorsTargets
+from unitorch.cli.models.modeling_utils import TensorOutputs, TensorTargets
 
 
 @dataclass
-class RankingOutputs(TensorsOutputs, WriterMixin):
+class RankingOutputs(TensorOutputs, WriterMixin):
     outputs: torch.Tensor
 
 
 @dataclass
-class RankingTargets(TensorsTargets):
+class RankingTargets(TensorTargets):
     targets: torch.Tensor
     masks: Optional[torch.Tensor] = torch.empty(0)

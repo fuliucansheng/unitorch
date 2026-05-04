@@ -4,13 +4,12 @@
 import json
 import torch
 import torch.nn.functional as F
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import Optional
 import diffusers.schedulers as schedulers
 from transformers import (
     PretrainedConfig,
     CLIPTextConfig,
     CLIPTextModel,
-    CLIPTextModelWithProjection,
     SiglipVisionConfig,
     SiglipVisionModel,
 )
@@ -33,12 +32,28 @@ from diffusers.pipelines import (
 )
 from diffusers.pipelines.flux.pipeline_flux_kontext import FluxKontextPipeline
 from diffusers.pipelines.flux.modeling_flux import ReduxImageEncoder
-from unitorch.models import (
-    GenericModel,
-    GenericOutputs,
-)
+from unitorch.models import GenericModel, GenericOutputs
 from unitorch.models.peft import PeftWeightLoaderMixin
-from unitorch.models.diffusers import compute_snr
+
+
+def compute_snr(timesteps, noise_scheduler):
+    """Computes SNR for min-SNR loss weighting."""
+    alphas_cumprod = noise_scheduler.alphas_cumprod
+    sqrt_alphas_cumprod = alphas_cumprod ** 0.5
+    sqrt_one_minus_alphas_cumprod = (1.0 - alphas_cumprod) ** 0.5
+
+    sqrt_alphas_cumprod = sqrt_alphas_cumprod.to(device=timesteps.device)[timesteps].float()
+    while len(sqrt_alphas_cumprod.shape) < len(timesteps.shape):
+        sqrt_alphas_cumprod = sqrt_alphas_cumprod[..., None]
+    alpha = sqrt_alphas_cumprod.expand(timesteps.shape)
+
+    sqrt_one_minus_alphas_cumprod = sqrt_one_minus_alphas_cumprod.to(device=timesteps.device)[timesteps].float()
+    while len(sqrt_one_minus_alphas_cumprod.shape) < len(timesteps.shape):
+        sqrt_one_minus_alphas_cumprod = sqrt_one_minus_alphas_cumprod[..., None]
+    sigma = sqrt_one_minus_alphas_cumprod.expand(timesteps.shape)
+
+    snr = (alpha / sigma) ** 2
+    return snr
 
 
 def _prepare_latent_image_ids(batch_size, height, width, device, dtype):
@@ -87,7 +102,6 @@ def _unpack_latents(latents, height, width, vae_scale_factor):
 
 class GenericStableFluxModel(GenericModel, PeftWeightLoaderMixin):
     prefix_keys_in_state_dict = {
-        # vae weights
         "^encoder.*": "vae.",
         "^decoder.*": "vae.",
         "^post_quant_conv.*": "vae.",
@@ -95,10 +109,10 @@ class GenericStableFluxModel(GenericModel, PeftWeightLoaderMixin):
     }
 
     replace_keys_in_state_dict = {
-        "\.query\.": ".to_q.",
-        "\.key\.": ".to_k.",
-        "\.value\.": ".to_v.",
-        "\.proj_attn\.": ".to_out.0.",
+        r"\.query\.": ".to_q.",
+        r"\.key\.": ".to_k.",
+        r"\.value\.": ".to_v.",
+        r"\.proj_attn\.": ".to_out.0.",
     }
 
     def __init__(
@@ -188,7 +202,6 @@ class GenericStableFluxModel(GenericModel, PeftWeightLoaderMixin):
 
         prompt_outputs = self.text(
             input_ids,
-            # attention_mask,
             output_hidden_states=False,
         )
         pooled_prompt_embeds = prompt_outputs.pooler_output
@@ -788,7 +801,7 @@ class StableFluxForImageInpainting(GenericStableFluxModel):
             )
             pixel_masks = pixel_masks.permute(
                 0, 2, 4, 1, 3
-            )  # batch_size, 8, 8, height, width
+            )
             pixel_masks = pixel_masks.reshape(
                 batch_size, vae_scale_factor * vae_scale_factor, height, width
             )

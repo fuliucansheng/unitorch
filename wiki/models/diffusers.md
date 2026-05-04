@@ -1,64 +1,45 @@
 # unitorch.models.diffusers
 
-## StableProcessor
+## StableFluxProcessor
 
-::: unitorch.models.diffusers.StableProcessor
+::: unitorch.models.diffusers.StableFluxProcessor
 
-## StableForText2ImageGeneration
+## StableFluxForText2ImageGeneration
 
-::: unitorch.models.diffusers.StableForText2ImageGeneration
+::: unitorch.models.diffusers.StableFluxForText2ImageGeneration
 
-## StableForImage2ImageGeneration
+## StableFluxForImage2ImageGeneration
 
-::: unitorch.models.diffusers.StableForImage2ImageGeneration
+::: unitorch.models.diffusers.StableFluxForImage2ImageGeneration
 
-## StableForImageInpainting
+## StableFluxForImageReduxGeneration
 
-::: unitorch.models.diffusers.StableForImageInpainting
+::: unitorch.models.diffusers.StableFluxForImageReduxGeneration
 
-## StableForImageResolution
+## StableFluxForImageInpainting
 
-::: unitorch.models.diffusers.StableForImageResolution
+::: unitorch.models.diffusers.StableFluxForImageInpainting
 
-## StableXLProcessor
+## StableFluxForKontext2ImageGeneration
 
-::: unitorch.models.diffusers.StableXLProcessor
+::: unitorch.models.diffusers.StableFluxForKontext2ImageGeneration
 
-## StableXLForText2ImageGeneration
+## WanForText2VideoGeneration
 
-::: unitorch.models.diffusers.StableXLForText2ImageGeneration
+::: unitorch.models.diffusers.WanForText2VideoGeneration
 
-## StableXLForImage2ImageGeneration
+## WanForImage2VideoGeneration
 
-::: unitorch.models.diffusers.StableXLForImage2ImageGeneration
+::: unitorch.models.diffusers.WanForImage2VideoGeneration
 
-## StableXLForImageInpainting
+## QWenImageProcessor
 
-::: unitorch.models.diffusers.StableXLForImageInpainting
+::: unitorch.models.diffusers.QWenImageProcessor
 
-## ControlNetForText2ImageGeneration
+## QWenImageText2ImageGeneration
 
-::: unitorch.models.diffusers.ControlNetForText2ImageGeneration
+::: unitorch.models.diffusers.QWenImageText2ImageGeneration
 
-## ControlNetForImage2ImageGeneration
+## QWenImageEditingGeneration
 
-::: unitorch.models.diffusers.ControlNetForImage2ImageGeneration
-
-## ControlNetForImageInpainting
-
-::: unitorch.models.diffusers.ControlNetForImageInpainting
-
-## ControlNetXLForText2ImageGeneration
-
-::: unitorch.models.diffusers.ControlNetXLForText2ImageGeneration
-
-## ControlNetXLForImage2ImageGeneration
-
-::: unitorch.models.diffusers.ControlNetXLForImage2ImageGeneration
-
-## ControlNetXLForImageInpainting
-
-::: unitorch.models.diffusers.ControlNetXLForImageInpainting
-
-
-
+::: unitorch.models.diffusers.QWenImageEditingGeneration

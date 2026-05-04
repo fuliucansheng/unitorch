@@ -2,28 +2,26 @@
 # Licensed under the MIT License.
 
 import abc
-import pandas as pd
-import torch
-import torch.nn as nn
-import torch.distributed as dist
-import torch.nn.functional as F
-from dataclasses import dataclass, field, fields
+from dataclasses import dataclass, fields
 from itertools import chain
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import Dict, List, Optional, Union
+
+import torch
+import torch.distributed as dist
 
 
-class TensorsMixin:
-    def __init__(self, tensors: Optional[Dict] = dict(), **kwargs):
-        self.__tensors__ = {}
-        for k, v in {**tensors, **kwargs}.items():
+class TensorBatchMixin:
+    """Holds a flat dict of tensors with collective batch operations."""
+
+    def __init__(self, tensors: Optional[Dict] = None, **kwargs):
+        self.__tensors__: Dict = {}
+        for k, v in {**(tensors or {}), **kwargs}.items():
             if not hasattr(self, k):
                 setattr(self, k, v)
             self.__tensors__[k] = v
         self.__post_init__()
 
-    def __post_init__(
-        self,
-    ):
+    def __post_init__(self):
         if not hasattr(self, "__tensors__"):
             self.__tensors__ = {}
         for key, tensor in self.__tensors__.items():
@@ -31,567 +29,430 @@ class TensorsMixin:
             setattr(self, key, tensor)
 
     @classmethod
-    def union(cls, *list_tensors, dim=0):
-        if len(list_tensors) == 0:
+    def union(cls, *items, dim: int = 0):
+        if not items:
             return cls()
-        first_tensors = list_tensors[0]
-        keys = list(first_tensors.__tensors__.keys())
-        for tensors in list_tensors:
-            assert keys == list(tensors.__tensors__.keys())
-
-        new_tensors = {}
+        keys = list(items[0].__tensors__.keys())
+        for item in items:
+            assert list(item.__tensors__.keys()) == keys
+        merged = {}
         for key in keys:
-            new_tensor = [tensors.__tensors__[key] for tensors in list_tensors]
-            if new_tensor[0] is not None:
-                new_tensors[key] = torch.cat(new_tensor, dim=dim)
-            else:
-                new_tensors[key] = None
-
-        return cls(**new_tensors)
+            parts = [item.__tensors__[key] for item in items]
+            merged[key] = torch.cat(parts, dim=dim) if parts[0] is not None else None
+        return cls(**merged)
 
     @classmethod
-    def stack(cls, *list_tensors, dim=0):
-        if len(list_tensors) == 0:
+    def stack(cls, *items, dim: int = 0):
+        if not items:
             return cls()
-        first_tensors = list_tensors[0]
-        keys = list(first_tensors.__tensors__.keys())
-        for tensors in list_tensors:
-            assert keys == list(tensors.__tensors__.keys())
-
-        new_tensors = {}
+        keys = list(items[0].__tensors__.keys())
+        for item in items:
+            assert list(item.__tensors__.keys()) == keys
+        merged = {}
         for key in keys:
-            new_tensor = [tensors.__tensors__[key] for tensors in list_tensors]
-            if new_tensor[0] is not None:
-                new_tensors[key] = torch.stack(new_tensor, dim=dim)
-            else:
-                new_tensors[key] = None
+            parts = [item.__tensors__[key] for item in items]
+            merged[key] = torch.stack(parts, dim=dim) if parts[0] is not None else None
+        return cls(**merged)
 
-        return cls(**new_tensors)
-
-    def add(self, tensors: Union[Dict, "TensorsMixin"]):
-        if isinstance(tensors, dict):
-            tensors_dict = tensors
-        else:
-            tensors_dict = tensors.__tensors__
-        for key, value in tensors_dict.items():
+    def add(self, tensors: Union[Dict, "TensorBatchMixin"]):
+        src = tensors if isinstance(tensors, dict) else tensors.__tensors__
+        for key, value in src.items():
             assert isinstance(value, torch.Tensor)
             if key in self.__tensors__:
-                assert ValueError(f"{key} already in the tensor.")
-            else:
-                self.__tensors__[key] = value
-                setattr(self, key, value)
+                raise ValueError(f"{key!r} already exists in tensors.")
+            self.__tensors__[key] = value
+            setattr(self, key, value)
 
-    def cpu(self, inplace=False):
-        new_tensors = {}
-        for key, value in self.__tensors__.items():
-            new_value = value.cpu() if value is not None else None
-            new_tensors[key] = new_value
+    def cpu(self, inplace: bool = False):
+        updated = {k: (v.cpu() if v is not None else None) for k, v in self.__tensors__.items()}
         if inplace:
-            for key, value in new_tensors.items():
-                self.__tensors__[key] = value
+            self.__tensors__.update(updated)
             return
-        return TensorsMixin(**new_tensors)
+        return TensorBatchMixin(**updated)
 
-    def cuda(self, inplace=False):
-        new_tensors = {}
-        for key, value in self.__tensors__.items():
-            new_value = value.cuda() if value is not None else None
-            new_tensors[key] = new_value
+    def cuda(self, inplace: bool = False):
+        updated = {k: (v.cuda() if v is not None else None) for k, v in self.__tensors__.items()}
         if inplace:
-            for key, value in new_tensors.items():
-                self.__tensors__[key] = value
+            self.__tensors__.update(updated)
             return
-        return TensorsMixin(**new_tensors)
+        return TensorBatchMixin(**updated)
 
-    def sync(self, dim=0, inplace=False):
-        new_tensors = {}
+    def sync(self, dim: int = 0, inplace: bool = False):
+        updated = {}
         for key, value in self.__tensors__.items():
             if value is not None:
-                new_value = [value.clone() for _ in range(dist.get_world_size())]
-                dist.all_gather(new_value, value)
-                new_value = torch.cat(new_value, dim=dim)
+                buckets = [value.clone() for _ in range(dist.get_world_size())]
+                dist.all_gather(buckets, value)
+                updated[key] = torch.cat(buckets, dim=dim)
             else:
-                new_value = None
-            new_tensors[key] = new_value
+                updated[key] = None
         if inplace:
-            for key, value in new_tensors.items():
-                self.__tensors__[key] = value
+            self.__tensors__.update(updated)
             return
-        return TensorsMixin(**new_tensors)
+        return TensorBatchMixin(**updated)
 
-    def dict(self):
+    def dict(self) -> Dict:
         return self.__tensors__
 
 
-class ListTensorsMixin:
-    def __init__(self, list_tensors: Optional[Dict] = dict(), **kwargs):
-        self.__list_tensors__ = {}
-        for k, v in {**list_tensors, **kwargs}.items():
+class TensorSeqMixin:
+    """Holds a flat dict of tensor *lists* (variable-length sequences per sample)."""
+
+    def __init__(self, list_tensors: Optional[Dict] = None, **kwargs):
+        self.__list_tensors__: Dict = {}
+        for k, v in {**(list_tensors or {}), **kwargs}.items():
             if not hasattr(self, k):
                 setattr(self, k, v)
             self.__list_tensors__[k] = v
         self.__post_init__()
 
-    def __post_init__(
-        self,
-    ):
+    def __post_init__(self):
         if not hasattr(self, "__list_tensors__"):
             self.__list_tensors__ = {}
-        new_list_tensors = {}
+        normalised = {}
         for key, value in self.__list_tensors__.items():
             if isinstance(value, torch.Tensor):
                 value = [value]
-            new_list_tensors[key] = value
-        self.__list_tensors__ = new_list_tensors
-        for key, list_tensor in self.__list_tensors__.items():
-            assert isinstance(list_tensor, list)
-            assert all([isinstance(tensor, torch.Tensor) for tensor in list_tensor])
-            setattr(self, key, list_tensor)
+            normalised[key] = value
+        self.__list_tensors__ = normalised
+        for key, lst in self.__list_tensors__.items():
+            assert isinstance(lst, list) and all(isinstance(t, torch.Tensor) for t in lst)
+            setattr(self, key, lst)
 
     @classmethod
-    def union(cls, *list_of_list_tensors, dim=0):
-        if len(list_of_list_tensors) == 0:
+    def union(cls, *items, dim: int = 0):
+        if not items:
             return cls()
-        first_list_tensors = list_of_list_tensors[0]
-        keys = list(first_list_tensors.__list_tensors__.keys())
-        for list_tensors in list_of_list_tensors:
-            assert keys == list(list_tensors.__list_tensors__.keys())
-
-        new_list_tensors = {}
+        keys = list(items[0].__list_tensors__.keys())
+        for item in items:
+            assert list(item.__list_tensors__.keys()) == keys
+        merged = {}
         for key in keys:
-            new_list_tensor = [
-                list_tensors.__list_tensors__[key]
-                for list_tensors in list_of_list_tensors
-            ]
-            if new_list_tensor[0] is not None:
-                new_list_tensors[key] = list(chain.from_iterable(new_list_tensor))
-            else:
-                new_list_tensors[key] = None
-
-        return cls(**new_list_tensors)
+            parts = [item.__list_tensors__[key] for item in items]
+            merged[key] = list(chain.from_iterable(parts)) if parts[0] is not None else None
+        return cls(**merged)
 
     @classmethod
-    def stack(cls, *list_of_list_tensors, dim=0):
-        if len(list_of_list_tensors) == 0:
+    def stack(cls, *items, dim: int = 0):
+        if not items:
             return cls()
-        first_list_tensors = list_of_list_tensors[0]
-        keys = list(first_list_tensors.__list_tensors__.keys())
-        for list_tensors in list_of_list_tensors:
-            assert keys == list(list_tensors.__list_tensors__.keys())
-
-        new_list_tensors = {}
+        keys = list(items[0].__list_tensors__.keys())
+        for item in items:
+            assert list(item.__list_tensors__.keys()) == keys
+        merged = {}
         for key in keys:
-            new_list_tensor = [
-                list_tensors.__list_tensors__[key]
-                for list_tensors in list_of_list_tensors
-            ]
-            if new_list_tensor[0] is not None:
-                assert all([len(list_tensor) == 1 for list_tensor in new_list_tensor])
-                new_list_tensors[key] = list(chain.from_iterable(new_list_tensor))
+            parts = [item.__list_tensors__[key] for item in items]
+            if parts[0] is not None:
+                assert all(len(p) == 1 for p in parts)
+                merged[key] = list(chain.from_iterable(parts))
             else:
-                new_list_tensors[key] = None
+                merged[key] = None
+        return cls(**merged)
 
-        return cls(**new_list_tensors)
-
-    def add(self, list_tensors: Union[Dict, "ListTensorsMixin"]):
-        if isinstance(list_tensors, dict):
-            list_tensors_dict = list_tensors
-        else:
-            list_tensors_dict = list_tensors.__list_tensors__
-        for key, value in list_tensors_dict.items():
-            assert isinstance(value, list)
+    def add(self, list_tensors: Union[Dict, "TensorSeqMixin"]):
+        src = list_tensors if isinstance(list_tensors, dict) else list_tensors.__list_tensors__
+        for key, value in src.items():
             if key in self.__list_tensors__:
-                assert ValueError(f"{key} already in the list tensor.")
-            else:
-                if isinstance(value, torch.Tensor):
-                    value = [value]
-                self.__list_tensors__[key] = value
-                setattr(self, key, value)
+                raise ValueError(f"{key!r} already exists in list tensors.")
+            if isinstance(value, torch.Tensor):
+                value = [value]
+            self.__list_tensors__[key] = value
+            setattr(self, key, value)
 
-    def cpu(self, inplace=False):
-        new_list_tensors = {}
+    def cpu(self, inplace: bool = False):
+        updated = {}
         for key, value in self.__list_tensors__.items():
-            if value is not None and value[0] is not None:
-                new_value = [_value.cpu() for _value in value]
-                new_list_tensors[key] = new_value
-            else:
-                new_list_tensors[key] = None
+            updated[key] = [v.cpu() for v in value] if value is not None and value[0] is not None else None
         if inplace:
-            for key, value in new_list_tensors.items():
-                self.__tensors__[key] = value
+            self.__list_tensors__.update(updated)
             return
-        return ListTensorsMixin(**new_list_tensors)
+        return TensorSeqMixin(**updated)
 
-    def cuda(self, inplace=False):
-        new_list_tensors = {}
+    def cuda(self, inplace: bool = False):
+        updated = {}
         for key, value in self.__list_tensors__.items():
-            if value is not None and value[0] is not None:
-                new_value = [_value.cuda() for _value in value]
-                new_list_tensors[key] = new_value
-            else:
-                new_list_tensors[key] = None
+            updated[key] = [v.cuda() for v in value] if value is not None and value[0] is not None else None
         if inplace:
-            for key, value in new_list_tensors.items():
-                self.__list_tensors__[key] = value
+            self.__list_tensors__.update(updated)
             return
-        return ListTensorsMixin(**new_list_tensors)
+        return TensorSeqMixin(**updated)
 
-    def sync(self, inplace=False):
-        new_list_tensors = {}
+    def sync(self, inplace: bool = False):
+        updated = {}
         for key, value in self.__list_tensors__.items():
             if value is not None:
-                new_value = [[] for _ in range(dist.get_world_size())]
-                dist.all_gather_object(new_value, value)
-                new_value = list(chain.from_iterable(new_value))
+                buckets = [[] for _ in range(dist.get_world_size())]
+                dist.all_gather_object(buckets, value)
+                updated[key] = list(chain.from_iterable(buckets))
             else:
-                new_value = None
-            new_list_tensors[key] = new_value
+                updated[key] = None
         if inplace:
-            for key, value in new_list_tensors.items():
-                self.__list_tensors__[key] = value
+            self.__list_tensors__.update(updated)
             return
-        return ListTensorsMixin(**new_list_tensors)
+        return TensorSeqMixin(**updated)
 
-    def dict(self):
+    def dict(self) -> Dict:
         return self.__list_tensors__
 
 
-class CombineTensorsMixin(TensorsMixin, ListTensorsMixin):
+class TensorMixMixin(TensorBatchMixin, TensorSeqMixin):
+    """Combines a batch tensor dict and a sequence tensor dict."""
+
     def __init__(
         self,
-        dict_of_tensors: Dict[str, torch.Tensor] = dict(),
-        dict_of_list_tensors: Dict[str, List[torch.Tensor]] = dict(),
+        dict_of_tensors: Optional[Dict[str, torch.Tensor]] = None,
+        dict_of_list_tensors: Optional[Dict[str, List[torch.Tensor]]] = None,
     ):
-        self.__tensors__ = dict_of_tensors
-        self.__list_tensors__ = dict_of_list_tensors
+        self.__tensors__ = dict_of_tensors or {}
+        self.__list_tensors__ = dict_of_list_tensors or {}
         self.__post_init__()
 
-    def __post_init__(
-        self,
-    ):
-        TensorsMixin.__post_init__(self)
-        ListTensorsMixin.__post_init__(self)
+    def __post_init__(self):
+        TensorBatchMixin.__post_init__(self)
+        TensorSeqMixin.__post_init__(self)
 
     @classmethod
-    def union(cls, *list_of_mix_tensors, dim=0):
-        if len(list_of_mix_tensors) == 0:
+    def union(cls, *items, dim: int = 0):
+        if not items:
             return cls()
-        first_mix_tensors = list_of_mix_tensors[0]
-        tensors_keys = list(first_mix_tensors.__tensors__.keys())
-        list_tensors_keys = list(first_mix_tensors.__list_tensors__.keys())
-        for mix_tensors in list_of_mix_tensors:
-            assert tensors_keys == list(mix_tensors.__tensors__.keys())
-            assert list_tensors_keys == list(mix_tensors.__list_tensors__.keys())
-
-        new_tensors = {}
-        for key in tensors_keys:
-            new_tensor = [
-                mix_tensors.__tensors__[key] for mix_tensors in list_of_mix_tensors
-            ]
-            if new_tensor[0] is not None:
-                new_tensors[key] = torch.cat(new_tensor, dim=dim)
-            else:
-                new_tensors[key] = None
-
-        new_list_tensors = {}
-        for key in list_tensors_keys:
-            new_list_tensor = [
-                mix_tensors.__list_tensors__[key] for mix_tensors in list_of_mix_tensors
-            ]
-            if new_list_tensor[0] is not None:
-                new_list_tensors[key] = list(chain.from_iterable(new_list_tensor))
-            else:
-                new_list_tensors[key] = None
-
-        return cls(dict_of_tensors=new_tensors, dict_of_list_tensors=new_list_tensors)
+        t_keys = list(items[0].__tensors__.keys())
+        l_keys = list(items[0].__list_tensors__.keys())
+        for item in items:
+            if list(item.__tensors__.keys()) != t_keys:
+                raise ValueError("Tensor key mismatch in union.")
+            if list(item.__list_tensors__.keys()) != l_keys:
+                raise ValueError("List-tensor key mismatch in union.")
+        new_t = {k: torch.cat([i.__tensors__[k] for i in items], dim=dim)
+                 if items[0].__tensors__[k] is not None else None for k in t_keys}
+        new_l = {k: list(chain.from_iterable(i.__list_tensors__[k] for i in items))
+                 if items[0].__list_tensors__[k] is not None else None for k in l_keys}
+        return cls(dict_of_tensors=new_t, dict_of_list_tensors=new_l)
 
     @classmethod
-    def stack(cls, *list_of_mix_tensors, dim=0):
-        if len(list_of_mix_tensors) == 0:
+    def stack(cls, *items, dim: int = 0):
+        if not items:
             return cls()
-        first_mix_tensors = list_of_mix_tensors[0]
-        tensors_keys = list(first_mix_tensors.__tensors__.keys())
-        list_tensors_keys = list(first_mix_tensors.__list_tensors__.keys())
-        for mix_tensors in list_of_mix_tensors:
-            if tensors_keys != list(mix_tensors.__tensors__.keys()):
-                raise ValueError(
-                    f"Keys of tensors are not the same. {tensors_keys} != {list(mix_tensors.__tensors__.keys())}"
-                )
+        t_keys = list(items[0].__tensors__.keys())
+        l_keys = list(items[0].__list_tensors__.keys())
+        for item in items:
+            if list(item.__tensors__.keys()) != t_keys:
+                raise ValueError("Tensor key mismatch in stack.")
+            if list(item.__list_tensors__.keys()) != l_keys:
+                raise ValueError("List-tensor key mismatch in stack.")
+        new_t = {k: torch.stack([i.__tensors__[k] for i in items], dim=dim)
+                 if items[0].__tensors__[k] is not None else None for k in t_keys}
+        new_l = {k: [i.__list_tensors__[k] for i in items]
+                 if items[0].__list_tensors__[k] is not None else None for k in l_keys}
+        return cls(dict_of_tensors=new_t, dict_of_list_tensors=new_l)
 
-            if list_tensors_keys != list(mix_tensors.__list_tensors__.keys()):
-                raise ValueError(
-                    f"Keys of list tensors are not the same. {list_tensors_keys} != {list(mix_tensors.__list_tensors__.keys())}"
-                )
+    def add(self, other: Union[TensorBatchMixin, TensorSeqMixin]):
+        if isinstance(other, TensorBatchMixin):
+            TensorBatchMixin.add(self, other.__tensors__)
+        if isinstance(other, TensorSeqMixin):
+            TensorSeqMixin.add(self, other.__list_tensors__)
 
-        new_tensors = {}
-        for key in tensors_keys:
-            new_tensor = [
-                mix_tensors.__tensors__[key] for mix_tensors in list_of_mix_tensors
-            ]
-            if new_tensor[0] is not None:
-                new_tensors[key] = torch.stack(new_tensor, dim=dim)
-            else:
-                new_tensors[key] = None
-
-        new_list_tensors = {}
-        for key in list_tensors_keys:
-            new_list_tensor = [
-                mix_tensors.__list_tensors__[key] for mix_tensors in list_of_mix_tensors
-            ]
-            if new_list_tensor[0] is not None:
-                new_list_tensors[key] = new_list_tensor
-            else:
-                new_list_tensors[key] = None
-
-        return cls(dict_of_tensors=new_tensors, dict_of_list_tensors=new_list_tensors)
-
-    def add(self, mix_tensors: Union[TensorsMixin, ListTensorsMixin]):
-        if isinstance(mix_tensors, TensorsMixin):
-            TensorsMixin.add(self, mix_tensors.__tensors__)
-        if isinstance(mix_tensors, ListTensorsMixin):
-            ListTensorsMixin.add(self, mix_tensors.__list_tensors__)
-
-    def cpu(self, inplace=False):
-        new_tensors = TensorsMixin.cpu(self, inplace=inplace)
-        new_list_tensors = ListTensorsMixin.cpu(self, inplace=inplace)
+    def cpu(self, inplace: bool = False):
+        t = TensorBatchMixin.cpu(self, inplace=inplace)
+        l = TensorSeqMixin.cpu(self, inplace=inplace)
         if inplace:
             return
-        return CombineTensorsMixin(
-            dict_of_tensors=new_tensors.__tensors__,
-            dict_of_list_tensors=new_list_tensors.__list_tensors__,
-        )
+        return TensorMixMixin(dict_of_tensors=t.__tensors__, dict_of_list_tensors=l.__list_tensors__)
 
-    def cuda(self, inplace=False):
-        new_tensors = TensorsMixin.cuda(self, inplace=inplace)
-        new_list_tensors = ListTensorsMixin.cuda(self, inplace=inplace)
+    def cuda(self, inplace: bool = False):
+        t = TensorBatchMixin.cuda(self, inplace=inplace)
+        l = TensorSeqMixin.cuda(self, inplace=inplace)
         if inplace:
             return
-        return CombineTensorsMixin(
-            dict_of_tensors=new_tensors.__tensors__,
-            dict_of_list_tensors=new_list_tensors.__list_tensors__,
-        )
+        return TensorMixMixin(dict_of_tensors=t.__tensors__, dict_of_list_tensors=l.__list_tensors__)
 
-    def sync(self, inplace=False):
-        new_tensors = TensorsMixin.sync(self, inplace=inplace)
-        new_list_tensors = ListTensorsMixin.sync(self, inplace=inplace)
+    def sync(self, inplace: bool = False):
+        t = TensorBatchMixin.sync(self, inplace=inplace)
+        l = TensorSeqMixin.sync(self, inplace=inplace)
         if inplace:
             return
-        return CombineTensorsMixin(
-            dict_of_tensors=new_tensors.__tensors__,
-            dict_of_list_tensors=new_list_tensors.__list_tensors__,
-        )
+        return TensorMixMixin(dict_of_tensors=t.__tensors__, dict_of_list_tensors=l.__list_tensors__)
 
-    def dict(self):
+    def dict(self) -> Dict:
         return {**self.__tensors__, **self.__list_tensors__}
 
 
-class ModelInputs(metaclass=abc.ABCMeta):
+# ---------------------------------------------------------------------------
+# Abstract base markers
+# ---------------------------------------------------------------------------
+
+class ModelInputs(abc.ABC):
     pass
 
 
-class ModelOutputs(metaclass=abc.ABCMeta):
+class ModelOutputs(abc.ABC):
     pass
 
 
-class ModelTargets(metaclass=abc.ABCMeta):
+class ModelTargets(abc.ABC):
     pass
+
+
+# ---------------------------------------------------------------------------
+# Concrete Input / Output / Target types
+# ---------------------------------------------------------------------------
+
+@dataclass(init=False)
+class TensorInputs(ModelInputs, TensorBatchMixin):
+    def __init__(self, inputs: Optional[Dict] = None, **kwargs):
+        TensorBatchMixin.__init__(self, tensors=inputs, **kwargs)
+
+    def cpu(self, inplace=False):
+        r = TensorBatchMixin.cpu(self, inplace=inplace)
+        if inplace: return
+        return TensorInputs(**r.__tensors__)
+
+    def cuda(self, inplace=False):
+        r = TensorBatchMixin.cuda(self, inplace=inplace)
+        if inplace: return
+        return TensorInputs(**r.__tensors__)
+
+    def sync(self, inplace=False):
+        r = TensorBatchMixin.sync(self, inplace=inplace)
+        if inplace: return
+        return TensorInputs(**r.__tensors__)
+
+
+@dataclass
+class TensorOutputs(ModelOutputs, TensorBatchMixin):
+    def __post_init__(self):
+        self.__tensors__ = {f.name: getattr(self, f.name) for f in fields(self)}
+        TensorBatchMixin.__post_init__(self)
+
+    def cpu(self, inplace=False):
+        r = TensorBatchMixin.cpu(self, inplace=inplace)
+        if inplace: return
+        return type(self)(**r.__tensors__)
+
+    def cuda(self, inplace=False):
+        r = TensorBatchMixin.cuda(self, inplace=inplace)
+        if inplace: return
+        return type(self)(**r.__tensors__)
+
+    def sync(self, inplace=False):
+        r = TensorBatchMixin.sync(self, inplace=inplace)
+        if inplace: return
+        return type(self)(**r.__tensors__)
+
+
+@dataclass
+class TensorTargets(ModelTargets, TensorBatchMixin):
+    def __post_init__(self):
+        self.__tensors__ = {f.name: getattr(self, f.name) for f in fields(self)}
+        TensorBatchMixin.__post_init__(self)
+
+    def cpu(self, inplace=False):
+        r = TensorBatchMixin.cpu(self, inplace=inplace)
+        if inplace: return
+        return type(self)(**r.__tensors__)
+
+    def cuda(self, inplace=False):
+        r = TensorBatchMixin.cuda(self, inplace=inplace)
+        if inplace: return
+        return type(self)(**r.__tensors__)
+
+    def sync(self, inplace=False):
+        r = TensorBatchMixin.sync(self, inplace=inplace)
+        if inplace: return
+        return type(self)(**r.__tensors__)
 
 
 @dataclass(init=False)
-class TensorsInputs(ModelInputs, TensorsMixin):
-    def __init__(self, inputs: Optional[Dict] = dict(), **kwargs):
-        TensorsMixin.__init__(self, tensors=inputs, **kwargs)
+class TensorSeqInputs(ModelInputs, TensorSeqMixin):
+    def __init__(self, inputs: Optional[Dict] = None, **kwargs):
+        TensorSeqMixin.__init__(self, list_tensors=inputs, **kwargs)
 
     def cpu(self, inplace=False):
-        results = TensorsMixin.cpu(self, inplace=inplace)
-        if inplace:
-            return
-        return TensorsInputs(**results.__tensors__)
+        r = TensorSeqMixin.cpu(self, inplace=inplace)
+        if inplace: return
+        return TensorSeqInputs(**r.__list_tensors__)
 
     def cuda(self, inplace=False):
-        results = TensorsMixin.cuda(self, inplace=inplace)
-        if inplace:
-            return
-        return TensorsInputs(**results.__tensors__)
+        r = TensorSeqMixin.cuda(self, inplace=inplace)
+        if inplace: return
+        return TensorSeqInputs(**r.__list_tensors__)
 
     def sync(self, inplace=False):
-        results = TensorsMixin.sync(self, inplace=inplace)
-        if inplace:
-            return
-        return TensorsInputs(**results.__tensors__)
+        r = TensorSeqMixin.sync(self, inplace=inplace)
+        if inplace: return
+        return TensorSeqInputs(**r.__list_tensors__)
 
 
 @dataclass
-class TensorsOutputs(ModelOutputs, TensorsMixin):
+class TensorSeqOutputs(ModelOutputs, TensorSeqMixin):
     def __post_init__(self):
-        self.__tensors__ = {}
-        for f in fields(self):
-            self.__tensors__[f.name] = getattr(self, f.name)
-        super().__post_init__()
+        self.__list_tensors__ = {f.name: getattr(self, f.name) for f in fields(self)}
+        TensorSeqMixin.__post_init__(self)
 
     def cpu(self, inplace=False):
-        results = TensorsMixin.cpu(self, inplace=inplace)
-        if inplace:
-            return
-        return type(self)(**results.__tensors__)
+        r = TensorSeqMixin.cpu(self, inplace=inplace)
+        if inplace: return
+        return type(self)(**r.__list_tensors__)
 
     def cuda(self, inplace=False):
-        results = TensorsMixin.cuda(self, inplace=inplace)
-        if inplace:
-            return
-        return type(self)(**results.__tensors__)
+        r = TensorSeqMixin.cuda(self, inplace=inplace)
+        if inplace: return
+        return type(self)(**r.__list_tensors__)
 
     def sync(self, inplace=False):
-        results = TensorsMixin.sync(self, inplace=inplace)
-        if inplace:
-            return
-        return type(self)(**results.__tensors__)
+        r = TensorSeqMixin.sync(self, inplace=inplace)
+        if inplace: return
+        return type(self)(**r.__list_tensors__)
 
 
 @dataclass
-class TensorsTargets(ModelTargets, TensorsMixin):
+class TensorSeqTargets(ModelTargets, TensorSeqMixin):
     def __post_init__(self):
-        self.__tensors__ = {}
-        for f in fields(self):
-            self.__tensors__[f.name] = getattr(self, f.name)
-        super().__post_init__()
+        self.__list_tensors__ = {f.name: getattr(self, f.name) for f in fields(self)}
+        TensorSeqMixin.__post_init__(self)
 
     def cpu(self, inplace=False):
-        results = TensorsMixin.cpu(self, inplace=inplace)
-        if inplace:
-            return
-        return type(self)(**results.__tensors__)
+        r = TensorSeqMixin.cpu(self, inplace=inplace)
+        if inplace: return
+        return type(self)(**r.__list_tensors__)
 
     def cuda(self, inplace=False):
-        results = TensorsMixin.cuda(self, inplace=inplace)
-        if inplace:
-            return
-        return type(self)(**results.__tensors__)
+        r = TensorSeqMixin.cuda(self, inplace=inplace)
+        if inplace: return
+        return type(self)(**r.__list_tensors__)
 
     def sync(self, inplace=False):
-        results = TensorsMixin.sync(self, inplace=inplace)
-        if inplace:
-            return
-        return type(self)(**results.__tensors__)
+        r = TensorSeqMixin.sync(self, inplace=inplace)
+        if inplace: return
+        return type(self)(**r.__list_tensors__)
 
 
-@dataclass(init=False)
-class ListTensorsInputs(ModelInputs, ListTensorsMixin):
-    def __init__(self, inputs: Optional[Dict] = dict(), **kwargs):
-        ListTensorsMixin.__init__(self, list_tensors=inputs, **kwargs)
-
-    def cpu(self, inplace=False):
-        results = ListTensorsMixin.cpu(self, inplace=inplace)
-        if inplace:
-            return
-        return ListTensorsInputs(**results.__list_tensors__)
-
-    def cuda(self, inplace=False):
-        results = ListTensorsMixin.cuda(self, inplace=inplace)
-        if inplace:
-            return
-        return ListTensorsInputs(**results.__list_tensors__)
-
-    def sync(self, inplace=False):
-        results = ListTensorsMixin.sync(self, inplace=inplace)
-        if inplace:
-            return
-        return ListTensorsInputs(**results.__list_tensors__)
-
-
-@dataclass
-class ListTensorsOutputs(ModelOutputs, ListTensorsMixin):
-    def __post_init__(self):
-        self.__list_tensors__ = {}
-        for f in fields(self):
-            self.__list_tensors__[f.name] = getattr(self, f.name)
-        super().__post_init__()
-
-    def cpu(self, inplace=False):
-        results = ListTensorsMixin.cpu(self, inplace=inplace)
-        if inplace:
-            return
-        return type(self)(**results.__list_tensors__)
-
-    def cuda(self, inplace=False):
-        results = ListTensorsMixin.cuda(self, inplace=inplace)
-        if inplace:
-            return
-        return type(self)(**results.__list_tensors__)
-
-    def sync(self, inplace=False):
-        results = ListTensorsMixin.sync(self, inplace=inplace)
-        if inplace:
-            return
-        return type(self)(**results.__list_tensors__)
-
-
-@dataclass
-class ListTensorsTargets(ModelTargets, ListTensorsMixin):
-    def __post_init__(self):
-        self.__list_tensors__ = {}
-        for f in fields(self):
-            self.__list_tensors__[f.name] = getattr(self, f.name)
-        super().__post_init__()
-
-    def cpu(self, inplace=False):
-        results = ListTensorsMixin.cpu(self, inplace=inplace)
-        if inplace:
-            return
-        return type(self)(**results.__list_tensors__)
-
-    def cuda(self, inplace=False):
-        results = ListTensorsMixin.cuda(self, inplace=inplace)
-        if inplace:
-            return
-        return type(self)(**results.__list_tensors__)
-
-    def sync(self, inplace=False):
-        results = ListTensorsMixin.sync(self, inplace=inplace)
-        if inplace:
-            return
-        return type(self)(**results.__list_tensors__)
-
-
-class CombineTensorsInputs(ModelInputs, CombineTensorsMixin):
+class TensorMixInputs(ModelInputs, TensorMixMixin):
     def __init__(
         self,
-        dict_of_tensors: Dict[str, torch.Tensor] = dict(),
-        dict_of_list_tensors: Dict[str, List[torch.Tensor]] = dict(),
+        dict_of_tensors: Optional[Dict[str, torch.Tensor]] = None,
+        dict_of_list_tensors: Optional[Dict[str, List[torch.Tensor]]] = None,
     ):
-        CombineTensorsMixin.__init__(
-            self,
-            dict_of_tensors=dict_of_tensors,
-            dict_of_list_tensors=dict_of_list_tensors,
-        )
+        TensorMixMixin.__init__(self, dict_of_tensors=dict_of_tensors, dict_of_list_tensors=dict_of_list_tensors)
 
 
-class CombineTensorsOutputs(ModelOutputs, CombineTensorsMixin):
+class TensorMixOutputs(ModelOutputs, TensorMixMixin):
     def __init__(
         self,
-        dict_of_tensors: Dict[str, torch.Tensor] = dict(),
-        dict_of_list_tensors: Dict[str, List[torch.Tensor]] = dict(),
+        dict_of_tensors: Optional[Dict[str, torch.Tensor]] = None,
+        dict_of_list_tensors: Optional[Dict[str, List[torch.Tensor]]] = None,
     ):
-        CombineTensorsMixin.__init__(
-            self,
-            dict_of_tensors=dict_of_tensors,
-            dict_of_list_tensors=dict_of_list_tensors,
-        )
+        TensorMixMixin.__init__(self, dict_of_tensors=dict_of_tensors, dict_of_list_tensors=dict_of_list_tensors)
 
 
-class CombineTensorsTargets(ModelTargets, CombineTensorsMixin):
+class TensorMixTargets(ModelTargets, TensorMixMixin):
     def __init__(
         self,
-        dict_of_tensors: Dict[str, torch.Tensor] = dict(),
-        dict_of_list_tensors: Dict[str, List[torch.Tensor]] = dict(),
+        dict_of_tensors: Optional[Dict[str, torch.Tensor]] = None,
+        dict_of_list_tensors: Optional[Dict[str, List[torch.Tensor]]] = None,
     ):
-        CombineTensorsMixin.__init__(
-            self,
-            dict_of_tensors=dict_of_tensors,
-            dict_of_list_tensors=dict_of_list_tensors,
-        )
+        TensorMixMixin.__init__(self, dict_of_tensors=dict_of_tensors, dict_of_list_tensors=dict_of_list_tensors)
 
 
 @dataclass
-class LossOutputs(TensorsOutputs):
+class LossOutputs(TensorOutputs):
     loss: torch.Tensor

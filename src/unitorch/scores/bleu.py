@@ -1,101 +1,110 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
-import torch
 import collections
 import math
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
-from unitorch.scores import convert_tensor_to_strings, remove_strings_ignore_tokens
+from typing import List, Optional, Tuple, Union
+
+import torch
+
+from unitorch.scores._utils import convert_tensor_to_strings, remove_strings_ignore_tokens
 
 
-def _get_ngrams(segment, max_order):
-    """Extracts all n-grams upto a given maximum order from an input segment.
+def _get_ngrams(segment: List, max_order: int) -> collections.Counter:
+    """Extract all n-grams up to *max_order* from *segment*.
+
     Args:
-        segment: text segment from which n-grams will be extracted.
-        max_order: maximum length in tokens of the n-grams returned by this
-            methods.
+        segment: Tokenised sequence to extract n-grams from.
+        max_order: Maximum n-gram order (inclusive).
+
     Returns:
-        The Counter containing all n-grams upto max_order in segment
-        with a count of how many times each n-gram occurred.
+        A :class:`collections.Counter` mapping each n-gram tuple to its count.
     """
-    ngram_counts = collections.Counter()
+    counts = collections.Counter()
     for order in range(1, max_order + 1):
-        for i in range(0, len(segment) - order + 1):
-            ngram = tuple(segment[i : i + order])
-            ngram_counts[ngram] += 1
-    return ngram_counts
+        for i in range(len(segment) - order + 1):
+            counts[tuple(segment[i : i + order])] += 1
+    return counts
 
 
-def _compute_bleu(reference_corpus, translation_corpus, max_order=4, smooth=False):
-    """Computes BLEU score of translated segments against one or more references.
+def _compute_bleu(
+    reference_corpus: List[List[List]],
+    translation_corpus: List[List],
+    max_order: int = 4,
+    smooth: bool = False,
+) -> Tuple[float, List[float], float, float, int, int]:
+    """Compute the BLEU score for *translation_corpus* against *reference_corpus*.
+
     Args:
-        reference_corpus: list of lists of references for each translation. Each
-            reference should be tokenized into a list of tokens.
-        translation_corpus: list of translations to score. Each translation
-            should be tokenized into a list of tokens.
-        max_order: Maximum n-gram order to use when computing BLEU score.
-        smooth: Whether or not to apply Lin et al. 2004 smoothing.
+        reference_corpus: For each sentence, a list of reference token lists.
+        translation_corpus: List of hypothesis token lists to evaluate.
+        max_order: Maximum n-gram order used when computing the score.
+        smooth: Apply Lin et al. (2004) smoothing when ``True``.
+
     Returns:
-        3-Tuple with the BLEU score, n-gram precisions, geometric mean of n-gram
-        precisions and brevity penalty.
+        A 6-tuple of ``(bleu, precisions, brevity_penalty, ratio,
+        translation_length, reference_length)``.
     """
     matches_by_order = [0] * max_order
     possible_matches_by_order = [0] * max_order
     reference_length = 0
     translation_length = 0
+
     for references, translation in zip(reference_corpus, translation_corpus):
         reference_length += min(len(r) for r in references)
         translation_length += len(translation)
 
-        merged_ref_ngram_counts = collections.Counter()
+        merged_ref_ngrams: collections.Counter = collections.Counter()
         for reference in references:
-            merged_ref_ngram_counts |= _get_ngrams(reference, max_order)
-            translation_ngram_counts = _get_ngrams(translation, max_order)
-            overlap = translation_ngram_counts & merged_ref_ngram_counts
-        for ngram in overlap:
-            matches_by_order[len(ngram) - 1] += overlap[ngram]
-        for order in range(1, max_order + 1):
-            possible_matches = len(translation) - order + 1
-            if possible_matches > 0:
-                possible_matches_by_order[order - 1] += possible_matches
+            merged_ref_ngrams |= _get_ngrams(reference, max_order)
+            translation_ngrams = _get_ngrams(translation, max_order)
+            overlap = translation_ngrams & merged_ref_ngrams
 
-    precisions = [0] * max_order
-    for i in range(0, max_order):
+        for ngram, count in overlap.items():
+            matches_by_order[len(ngram) - 1] += count
+
+        for order in range(1, max_order + 1):
+            possible = len(translation) - order + 1
+            if possible > 0:
+                possible_matches_by_order[order - 1] += possible
+
+    precisions = [0.0] * max_order
+    for i in range(max_order):
         if smooth:
-            precisions[i] = (matches_by_order[i] + 1.0) / (
-                possible_matches_by_order[i] + 1.0
-            )
-        else:
-            if possible_matches_by_order[i] > 0:
-                precisions[i] = (
-                    float(matches_by_order[i]) / possible_matches_by_order[i]
-                )
-            else:
-                precisions[i] = 0.0
+            precisions[i] = (matches_by_order[i] + 1.0) / (possible_matches_by_order[i] + 1.0)
+        elif possible_matches_by_order[i] > 0:
+            precisions[i] = float(matches_by_order[i]) / possible_matches_by_order[i]
 
     if min(precisions) > 0:
-        p_log_sum = sum((1.0 / max_order) * math.log(p) for p in precisions)
-        geo_mean = math.exp(p_log_sum)
+        geo_mean = math.exp(sum((1.0 / max_order) * math.log(p) for p in precisions))
     else:
-        geo_mean = 0
+        geo_mean = 0.0
 
     ratio = float(translation_length) / reference_length
+    brevity_penalty = 1.0 if ratio > 1.0 else math.exp(1 - 1.0 / ratio)
+    bleu = geo_mean * brevity_penalty
 
-    if ratio > 1.0:
-        bp = 1.0
-    else:
-        bp = math.exp(1 - 1.0 / ratio)
-
-    bleu = geo_mean * bp
-
-    return (bleu, precisions, bp, ratio, translation_length, reference_length)
+    return bleu, precisions, brevity_penalty, ratio, translation_length, reference_length
 
 
 def bleu_score(
     y_true: List[Union[str, int, List[Union[str, int]]]],
     y_pred: List[Union[str, int, List[Union[str, int]]]],
     ignore_tokens: Optional[List[Union[str, int]]] = None,
-):
+) -> float:
+    """Compute the corpus-level BLEU score.
+
+    Args:
+        y_true: Reference sequences. Each element may be a string list, an
+                integer list, or (for multiple references) a list of such lists.
+                Tensors of shape ``(N, T)`` or ``(N, R, T)`` are also accepted.
+        y_pred: Hypothesis sequences in the same format as *y_true*.
+        ignore_tokens: Tokens to strip from both references and hypotheses
+                       before scoring.
+
+    Returns:
+        Corpus-level BLEU score as a float in ``[0, 1]``.
+    """
     if isinstance(y_true, torch.Tensor):
         if y_true.dim() == 2:
             y_true = y_true.unsqueeze(1)

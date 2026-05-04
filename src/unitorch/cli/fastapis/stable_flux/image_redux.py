@@ -2,53 +2,37 @@
 # Licensed under the MIT License.
 
 import io
-import re
 import gc
-import json
-import logging
 import torch
-import hashlib
 import asyncio
-import pandas as pd
 from PIL import Image
 from torch import autocast
-from fastapi import APIRouter, UploadFile, File
+from fastapi import APIRouter, UploadFile
 from fastapi.responses import StreamingResponse
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Dict, List, Optional, Union
 from transformers import PretrainedConfig, SiglipVisionConfig, SiglipVisionModel
 from diffusers.utils import numpy_to_pil
-
-from diffusers.pipelines import (
-    FluxPipeline,
-    FluxImg2ImgPipeline,
-    FluxInpaintPipeline,
-    FluxFillPipeline,
-)
+from diffusers.pipelines import FluxPipeline
 from diffusers.pipelines.flux.modeling_flux import ReduxImageEncoder
-
-from unitorch.utils import is_remote_url
 from unitorch.models.diffusers import GenericStableFluxModel
 from unitorch.models.diffusers import StableFluxProcessor
-
 from unitorch.utils import (
     pop_value,
     nested_dict_value,
     is_bfloat16_available,
-    is_cuda_available,
 )
 from unitorch.cli import (
     cached_path,
     register_fastapi,
-    add_default_section_for_init,
-    add_default_section_for_function,
+    config_defaults_init,
+    config_defaults_method,
 )
-from unitorch.cli import CoreConfigureParser, GenericFastAPI
+from unitorch.cli import Config, GenericFastAPI
 from unitorch.cli.models.diffusers import (
     pretrained_stable_infos,
     pretrained_stable_extensions_infos,
     load_weight,
 )
-from unitorch.cli.pipelines import Schedulers
 
 
 class StableFluxForImageReduxGenerationFastAPIPipeline(GenericStableFluxModel):
@@ -136,8 +120,8 @@ class StableFluxForImageReduxGenerationFastAPIPipeline(GenericStableFluxModel):
             self.to(device=self._device)
 
     @classmethod
-    @add_default_section_for_init("core/fastapi/pipeline/stable_flux/image_redux")
-    def from_core_configure(
+    @config_defaults_init("core/fastapi/pipeline/stable_flux/image_redux")
+    def from_config(
         cls,
         config,
         pretrained_name: Optional[str] = None,
@@ -360,7 +344,7 @@ class StableFluxForImageReduxGenerationFastAPIPipeline(GenericStableFluxModel):
         device_type=("cuda" if torch.cuda.is_available() else "cpu"),
         dtype=(torch.bfloat16 if is_bfloat16_available() else torch.float32),
     )
-    @add_default_section_for_function("core/fastapi/pipeline/stable_flux/image_redux")
+    @config_defaults_method("core/fastapi/pipeline/stable_flux/image_redux")
     def __call__(
         self,
         text: str,
@@ -428,7 +412,7 @@ class StableFluxForImageReduxGenerationFastAPIPipeline(GenericStableFluxModel):
 
 @register_fastapi("core/fastapi/stable_flux/image_redux")
 class StableFluxImageReduxGenerationFastAPI(GenericFastAPI):
-    def __init__(self, config: CoreConfigureParser):
+    def __init__(self, config: Config):
         self.config = config
         config.set_default_section(f"core/fastapi/stable_flux/image_redux")
         router = config.getoption("router", "/core/fastapi/stable_flux/image_redux")
@@ -452,7 +436,7 @@ class StableFluxImageReduxGenerationFastAPI(GenericFastAPI):
         pretrained_lora_alphas: Optional[Union[float, List[float]]] = 32.0,
     ):
         self._pipe = (
-            StableFluxForImageReduxGenerationFastAPIPipeline.from_core_configure(
+            StableFluxForImageReduxGenerationFastAPIPipeline.from_config(
                 self.config,
                 pretrained_name=pretrained_name,
                 pretrained_lora_names=pretrained_lora_names,

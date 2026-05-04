@@ -2,7 +2,7 @@
 # Licensed under the MIT License.
 
 import torch
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import List, Optional, Union
 from torch import autocast
 
 from unitorch.models.peft.diffusers import (
@@ -13,25 +13,16 @@ from unitorch.models.peft.diffusers import (
     StableFluxDPOLoraForImageInpainting as _StableFluxDPOLoraForImageInpainting,
     StableFluxDPOLoraForKontext2ImageGeneration as _StableFluxDPOLoraForKontext2ImageGeneration,
 )
-from unitorch.utils import (
-    pop_value,
-    nested_dict_value,
-    is_bfloat16_available,
-    is_cuda_available,
-)
+from unitorch.utils import pop_value, nested_dict_value, is_bfloat16_available
 from unitorch.cli import (
     cached_path,
-    add_default_section_for_init,
-    add_default_section_for_function,
+    config_defaults_init,
+    config_defaults_method,
     register_model,
 )
 from unitorch.cli.models import DiffusionOutputs, LossOutputs
 from unitorch.cli.models import diffusion_model_decorator
-from unitorch.cli.models.diffusers import (
-    pretrained_stable_infos,
-    pretrained_stable_extensions_infos,
-    load_weight,
-)
+from unitorch.cli.models.diffusers import pretrained_stable_infos, load_weight
 
 
 @register_model(
@@ -97,10 +88,10 @@ class StableFluxLoraForText2ImageGeneration(_StableFluxLoraForText2ImageGenerati
         )
 
     @classmethod
-    @add_default_section_for_init(
+    @config_defaults_init(
         "core/model/diffusers/peft/lora/text2image/stable_flux"
     )
-    def from_core_configure(cls, config, **kwargs):
+    def from_config(cls, config, **kwargs):
         config.set_default_section(
             "core/model/diffusers/peft/lora/text2image/stable_flux"
         )
@@ -304,7 +295,7 @@ class StableFluxLoraForText2ImageGeneration(_StableFluxLoraForText2ImageGenerati
         )
         return LossOutputs(loss=loss)
 
-    @add_default_section_for_function(
+    @config_defaults_method(
         "core/model/diffusers/peft/lora/text2image/stable_flux"
     )
     @autocast(
@@ -399,10 +390,10 @@ class StableFluxLoraForImageInpainting(_StableFluxLoraForImageInpainting):
         )
 
     @classmethod
-    @add_default_section_for_init(
+    @config_defaults_init(
         "core/model/diffusers/peft/lora/inpainting/stable_flux"
     )
-    def from_core_configure(cls, config, **kwargs):
+    def from_config(cls, config, **kwargs):
         config.set_default_section(
             "core/model/diffusers/peft/lora/inpainting/stable_flux"
         )
@@ -608,7 +599,7 @@ class StableFluxLoraForImageInpainting(_StableFluxLoraForImageInpainting):
         )
         return LossOutputs(loss=loss)
 
-    @add_default_section_for_function(
+    @config_defaults_method(
         "core/model/diffusers/peft/lora/inpainting/stable_flux"
     )
     @autocast(
@@ -708,10 +699,10 @@ class StableFluxLoraForKontext2ImageGeneration(
         )
 
     @classmethod
-    @add_default_section_for_init(
+    @config_defaults_init(
         "core/model/diffusers/peft/lora/kontext2image/stable_flux"
     )
-    def from_core_configure(cls, config, **kwargs):
+    def from_config(cls, config, **kwargs):
         config.set_default_section(
             "core/model/diffusers/peft/lora/kontext2image/stable_flux"
         )
@@ -917,7 +908,7 @@ class StableFluxLoraForKontext2ImageGeneration(
         )
         return LossOutputs(loss=loss)
 
-    @add_default_section_for_function(
+    @config_defaults_method(
         "core/model/diffusers/peft/lora/kontext2image/stable_flux"
     )
     @autocast(
@@ -1015,10 +1006,10 @@ class StableFluxDPOLoraForText2ImageGeneration(
         )
 
     @classmethod
-    @add_default_section_for_init(
+    @config_defaults_init(
         "core/model/diffusers/peft/dpo/lora/text2image/stable_flux"
     )
-    def from_core_configure(cls, config, **kwargs):
+    def from_config(cls, config, **kwargs):
         config.set_default_section(
             "core/model/diffusers/peft/dpo/lora/text2image/stable_flux"
         )
@@ -1217,7 +1208,7 @@ class StableFluxDPOLoraForText2ImageGeneration(
         )
         return LossOutputs(loss=loss)
 
-    @add_default_section_for_function(
+    @config_defaults_method(
         "core/model/diffusers/peft/dpo/lora/text2image/stable_flux"
     )
     @autocast(
@@ -1311,10 +1302,10 @@ class StableFluxDPOLoraForImageInpainting(_StableFluxDPOLoraForImageInpainting):
         )
 
     @classmethod
-    @add_default_section_for_init(
+    @config_defaults_init(
         "core/model/diffusers/peft/dpo/lora/inpainting/stable_flux"
     )
-    def from_core_configure(cls, config, **kwargs):
+    def from_config(cls, config, **kwargs):
         config.set_default_section(
             "core/model/diffusers/peft/dpo/lora/inpainting/stable_flux"
         )
@@ -1515,7 +1506,7 @@ class StableFluxDPOLoraForImageInpainting(_StableFluxDPOLoraForImageInpainting):
         )
         return LossOutputs(loss=loss)
 
-    @add_default_section_for_function(
+    @config_defaults_method(
         "core/model/diffusers/peft/dpo/lora/inpainting/stable_flux"
     )
     @autocast(
@@ -1613,10 +1604,10 @@ class StableFluxDPOLoraForKontext2ImageGeneration(
         )
 
     @classmethod
-    @add_default_section_for_init(
+    @config_defaults_init(
         "core/model/diffusers/peft/dpo/lora/kontext2image/stable_flux"
     )
-    def from_core_configure(cls, config, **kwargs):
+    def from_config(cls, config, **kwargs):
         config.set_default_section(
             "core/model/diffusers/peft/dpo/lora/kontext2image/stable_flux"
         )
@@ -1817,7 +1808,7 @@ class StableFluxDPOLoraForKontext2ImageGeneration(
         )
         return LossOutputs(loss=loss)
 
-    @add_default_section_for_function(
+    @config_defaults_method(
         "core/model/diffusers/peft/dpo/lora/kontext2image/stable_flux"
     )
     @autocast(

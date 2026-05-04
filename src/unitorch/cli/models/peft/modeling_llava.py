@@ -1,10 +1,8 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
-import os
-import logging
 import torch
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import List, Optional, Union
 from torch import autocast
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.peft import (
@@ -14,12 +12,12 @@ from unitorch.models.peft import (
 )
 from unitorch.cli import (
     cached_path,
-    add_default_section_for_init,
-    add_default_section_for_function,
+    config_defaults_init,
+    config_defaults_method,
     register_model,
 )
 from unitorch.cli.models import generation_model_decorator
-from unitorch.cli.models import ClassificationOutputs, GenerationOutputs, LossOutputs
+from unitorch.cli.models import ClassificationOutputs, GenerationOutputs
 from unitorch.cli.models.llava import pretrained_llava_infos
 
 
@@ -41,19 +39,6 @@ class LlavaMistralClipLoraForClassification(_LlavaMistralClipLoraForClassificati
         freeze_classifer: Optional[bool] = True,
         gradient_checkpointing: Optional[bool] = False,
     ):
-        """
-        Initialize the LlavaMistralClipLoraForClassification model.
-
-        Args:
-            config_path (str): The path to the model configuration file.
-            lora_r (int, optional): The number of Lora ranks. Defaults to 16.
-            lora_alpha (int, optional): The Lora alpha value. Defaults to 32.
-            lora_dropout (float, optional): The Lora dropout rate. Defaults to 0.05.
-            fan_in_fan_out (bool, optional): Whether to use fan-in/fan-out weight initialization. Defaults to True.
-            target_modules (Union[List[str], str], optional): The target modules for Lora regularization. Defaults to ["q_proj", "v_proj"].
-            num_classes (int, optional): The number of classes. Defaults to 1.
-            gradient_checkpointing (bool, optional): Whether to use gradient checkpointing during training. Defaults to False.
-        """
         super().__init__(
             config_path=config_path,
             image_token_index=image_token_index,
@@ -69,20 +54,10 @@ class LlavaMistralClipLoraForClassification(_LlavaMistralClipLoraForClassificati
         )
 
     @classmethod
-    @add_default_section_for_init(
+    @config_defaults_init(
         "core/model/classification/peft/lora/llava/mistral_clip"
     )
-    def from_core_configure(cls, config, **kwargs):
-        """
-        Create an instance of LlavaMistralClipLoraForClassification from a core configuration.
-
-        Args:
-            config: The core configuration.
-            **kwargs: Additional keyword arguments.
-
-        Returns:
-            LlavaMistralClipLoraForClassification: The initialized LlavaMistralClipLoraForClassification instance.
-        """
+    def from_config(cls, config, **kwargs):
         config.set_default_section(
             "core/model/classification/peft/lora/llava/mistral_clip"
         )
@@ -156,17 +131,6 @@ class LlavaMistralClipLoraForClassification(_LlavaMistralClipLoraForClassificati
         pixel_values: torch.Tensor,
         attention_mask: Optional[torch.Tensor] = None,
     ):
-        """
-        Perform forward pass of the LlavaMistralClipLoraForClassification model.
-
-        Args:
-            input_ids (torch.Tensor): The input IDs.
-            attention_mask (torch.Tensor, optional): The attention mask.
-            position_ids (torch.Tensor, optional): The position IDs.
-
-        Returns:
-            ClassificationOutputs: The output of the classification task.
-        """
         outputs = super().forward(
             input_ids=input_ids,
             pixel_values=pixel_values,
@@ -194,18 +158,6 @@ class LlavaMistralClipLoraForGeneration(_LlavaMistralClipLoraForGeneration):
         freeze_multi_modal_projector: Optional[bool] = True,
         gradient_checkpointing: Optional[bool] = False,
     ):
-        """
-        Initialize the LlavaMistralClipLoraForGeneration model.
-
-        Args:
-            config_path (str): The path to the model configuration file.
-            lora_r (int, optional): The number of Lora ranks. Defaults to 16.
-            lora_alpha (int, optional): The Lora alpha value. Defaults to 32.
-            lora_dropout (float, optional): The Lora dropout rate. Defaults to 0.05.
-            fan_in_fan_out (bool, optional): Whether to use fan-in/fan-out weight initialization. Defaults to True.
-            target_modules (Union[List[str], str], optional): The target modules for Lora regularization. Defaults to ["q_proj", "v_proj"].
-            gradient_checkpointing (bool, optional): Whether to use gradient checkpointing during training. Defaults to False.
-        """
         super().__init__(
             config_path=config_path,
             image_token_index=image_token_index,
@@ -219,18 +171,8 @@ class LlavaMistralClipLoraForGeneration(_LlavaMistralClipLoraForGeneration):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/generation/peft/lora/llava/mistral_clip")
-    def from_core_configure(cls, config, **kwargs):
-        """
-        Create an instance of LlavaMistralClipLoraForGeneration from a core configuration.
-
-        Args:
-            config: The core configuration.
-            **kwargs: Additional keyword arguments.
-
-        Returns:
-            LlavaMistralClipLoraForGeneration: The initialized LlavaMistralClipLoraForGeneration instance.
-        """
+    @config_defaults_init("core/model/generation/peft/lora/llava/mistral_clip")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/generation/peft/lora/llava/mistral_clip")
         pretrained_name = config.getoption(
             "pretrained_name", "llava-v1.6-mistral-7b-hf"
@@ -298,17 +240,6 @@ class LlavaMistralClipLoraForGeneration(_LlavaMistralClipLoraForGeneration):
         pixel_values: torch.Tensor,
         attention_mask: Optional[torch.Tensor] = None,
     ):
-        """
-        Perform forward pass of the LlavaMistralClipLoraForGeneration model.
-
-        Args:
-            input_ids (torch.Tensor, optional): The input IDs.
-            attention_mask (torch.Tensor, optional): The attention mask.
-            position_ids (torch.Tensor, optional): The position IDs.
-
-        Returns:
-            GenerationOutputs: The output of the generation task.
-        """
         outputs = super().forward(
             input_ids=input_ids,
             pixel_values=pixel_values,
@@ -316,7 +247,7 @@ class LlavaMistralClipLoraForGeneration(_LlavaMistralClipLoraForGeneration):
         )
         return GenerationOutputs(sequences=outputs)
 
-    @add_default_section_for_function(
+    @config_defaults_method(
         "core/model/generation/peft/lora/llava/mistral_clip"
     )
     @torch.no_grad()
@@ -343,31 +274,6 @@ class LlavaMistralClipLoraForGeneration(_LlavaMistralClipLoraForGeneration):
         top_k: Optional[int] = 50,
         top_p: Optional[float] = 1.0,
     ):
-        """
-        Generate sequences using the LlavaMistralClip model.
-
-        Args:
-            input_ids (torch.Tensor): Input token IDs.
-            num_beams (int, optional): Number of beams for beam search. Defaults to 5.
-            decoder_start_token_id (int, optional): Decoder start token ID. Defaults to 0.
-            decoder_end_token_id (int or List[int], optional): The ID(s) of the decoder end token(s). Defaults to 1.
-            num_return_sequences (int, optional): Number of generated sequences to return. Defaults to 1.
-            min_gen_seq_length (int, optional): Minimum generation sequence length. Defaults to 0.
-            max_gen_seq_length (int, optional): Maximum generation sequence length. Defaults to 48.
-            repetition_penalty (float, optional): Repetition penalty. Defaults to 1.0.
-            no_repeat_ngram_size (int, optional): Size of n-grams to prevent repetition. Defaults to 0.
-            early_stopping (bool, optional): Whether to perform early stopping. Defaults to True.
-            length_penalty (float, optional): Length penalty. Defaults to 1.0.
-            num_beam_groups (int, optional): Number of beam groups for diverse beam search. Defaults to 1.
-            diversity_penalty (float, optional): Diversity penalty for diverse beam search. Defaults to 0.0.
-            do_sample (bool, optional): Whether to use sampling for generation. Defaults to False.
-            temperature (float, optional): Sampling temperature. Defaults to 1.0.
-            top_k (int, optional): Top-k sampling parameter. Defaults to 50.
-            top_p (float, optional): Top-p sampling parameter. Defaults to 1.0.
-
-        Returns:
-            GenerationOutputs: The generation outputs.
-        """
         outputs = super().generate(
             input_ids,
             pixel_values=pixel_values,
@@ -415,18 +321,6 @@ class LlavaLlamaSiglipLoraForGeneration(_LlavaLlamaSiglipLoraForGeneration):
         freeze_multi_modal_projector: Optional[bool] = True,
         gradient_checkpointing: Optional[bool] = False,
     ):
-        """
-        Initialize the LlavaMistralClipLoraForGeneration model.
-
-        Args:
-            config_path (str): The path to the model configuration file.
-            lora_r (int, optional): The number of Lora ranks. Defaults to 16.
-            lora_alpha (int, optional): The Lora alpha value. Defaults to 32.
-            lora_dropout (float, optional): The Lora dropout rate. Defaults to 0.05.
-            fan_in_fan_out (bool, optional): Whether to use fan-in/fan-out weight initialization. Defaults to True.
-            target_modules (Union[List[str], str], optional): The target modules for Lora regularization. Defaults to ["q_proj", "v_proj"].
-            gradient_checkpointing (bool, optional): Whether to use gradient checkpointing during training. Defaults to False.
-        """
         super().__init__(
             config_path=config_path,
             image_token_index=image_token_index,
@@ -440,18 +334,8 @@ class LlavaLlamaSiglipLoraForGeneration(_LlavaLlamaSiglipLoraForGeneration):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/generation/peft/lora/llava/llama_siglip")
-    def from_core_configure(cls, config, **kwargs):
-        """
-        Create an instance of LlavaMistralClipLoraForGeneration from a core configuration.
-
-        Args:
-            config: The core configuration.
-            **kwargs: Additional keyword arguments.
-
-        Returns:
-            LlavaMistralClipLoraForGeneration: The initialized LlavaMistralClipLoraForGeneration instance.
-        """
+    @config_defaults_init("core/model/generation/peft/lora/llava/llama_siglip")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/generation/peft/lora/llava/llama_siglip")
         pretrained_name = config.getoption("pretrained_name", "llava-v1.6-joycaption-2")
         config_path = config.getoption("config_path", None)
@@ -517,17 +401,6 @@ class LlavaLlamaSiglipLoraForGeneration(_LlavaLlamaSiglipLoraForGeneration):
         pixel_values: torch.Tensor,
         attention_mask: Optional[torch.Tensor] = None,
     ):
-        """
-        Perform forward pass of the LlavaMistralClipLoraForGeneration model.
-
-        Args:
-            input_ids (torch.Tensor, optional): The input IDs.
-            attention_mask (torch.Tensor, optional): The attention mask.
-            position_ids (torch.Tensor, optional): The position IDs.
-
-        Returns:
-            GenerationOutputs: The output of the generation task.
-        """
         outputs = super().forward(
             input_ids=input_ids,
             pixel_values=pixel_values,
@@ -535,7 +408,7 @@ class LlavaLlamaSiglipLoraForGeneration(_LlavaLlamaSiglipLoraForGeneration):
         )
         return GenerationOutputs(sequences=outputs)
 
-    @add_default_section_for_function(
+    @config_defaults_method(
         "core/model/generation/peft/lora/llava/llama_siglip"
     )
     @torch.no_grad()
@@ -566,31 +439,6 @@ class LlavaLlamaSiglipLoraForGeneration(_LlavaLlamaSiglipLoraForGeneration):
         top_k: Optional[int] = 50,
         top_p: Optional[float] = 1.0,
     ):
-        """
-        Generate sequences using the LlavaMistralClip model.
-
-        Args:
-            input_ids (torch.Tensor): Input token IDs.
-            num_beams (int, optional): Number of beams for beam search. Defaults to 5.
-            decoder_start_token_id (int, optional): Decoder start token ID. Defaults to 0.
-            decoder_end_token_id (int or List[int], optional): The ID(s) of the decoder end token(s). Defaults to 1.
-            num_return_sequences (int, optional): Number of generated sequences to return. Defaults to 1.
-            min_gen_seq_length (int, optional): Minimum generation sequence length. Defaults to 0.
-            max_gen_seq_length (int, optional): Maximum generation sequence length. Defaults to 48.
-            repetition_penalty (float, optional): Repetition penalty. Defaults to 1.0.
-            no_repeat_ngram_size (int, optional): Size of n-grams to prevent repetition. Defaults to 0.
-            early_stopping (bool, optional): Whether to perform early stopping. Defaults to True.
-            length_penalty (float, optional): Length penalty. Defaults to 1.0.
-            num_beam_groups (int, optional): Number of beam groups for diverse beam search. Defaults to 1.
-            diversity_penalty (float, optional): Diversity penalty for diverse beam search. Defaults to 0.0.
-            do_sample (bool, optional): Whether to use sampling for generation. Defaults to False.
-            temperature (float, optional): Sampling temperature. Defaults to 1.0.
-            top_k (int, optional): Top-k sampling parameter. Defaults to 50.
-            top_p (float, optional): Top-p sampling parameter. Defaults to 1.0.
-
-        Returns:
-            GenerationOutputs: The generation outputs.
-        """
         outputs = super().generate(
             input_ids,
             pixel_values=pixel_values,

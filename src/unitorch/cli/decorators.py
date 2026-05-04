@@ -3,129 +3,70 @@
 
 import inspect
 import logging
+from typing import Dict, Optional
 
 
-def add_default_section_for_init(section, default_params=dict()):
-    def default_init_func(cls, config, **kwargs):
-        sign = inspect.signature(cls)
-        params = sign.parameters
-        for k, v in params.items():
-            dvalue = v.default
-            if kwargs.get(k) is not None:
-                continue
-            kwargs[k] = config.getdefault(section, k, dvalue)
-        for k, v in default_params.items():
-            kwargs[k] = config.getdefault(section, k, v)
+def config_defaults_init(section: str, default_params: Optional[Dict] = None):
+    """Class decorator for ``from_config`` classmethods.
+
+    Populates missing ``__init__`` parameters from *section* in the config,
+    then attaches the config as ``__unitorch_setting__`` on the returned instance.
+    """
+    _defaults = default_params or {}
+
+    def _build_instance(cls, config, **kwargs):
+        for name, param in inspect.signature(cls).parameters.items():
+            if kwargs.get(name) is None:
+                kwargs[name] = config.getdefault(section, name, param.default)
+        for name, fallback in _defaults.items():
+            kwargs[name] = config.getdefault(section, name, fallback)
         obj = cls(**kwargs)
-        setattr(obj, "__unitorch_setting__", config)
+        obj.__unitorch_setting__ = config
         return obj
 
-    def add_func(init_func):
-        def _init_func(cls, config, **kwargs):
-            ret = init_func(cls, config, **kwargs)
-            if isinstance(ret, cls):
-                setattr(ret, "__unitorch_setting__", config)
-                return ret
-            assert isinstance(ret, dict) or ret is None
-            if ret is not None:
-                kwargs.update(ret)
-            ret = default_init_func(cls, config, **kwargs)
-            return ret
+    def decorator(from_config):
+        def wrapped(cls, config, **kwargs):
+            result = from_config(cls, config, **kwargs)
+            if isinstance(result, cls):
+                result.__unitorch_setting__ = config
+                return result
+            assert result is None or isinstance(result, dict)
+            if result is not None:
+                kwargs.update(result)
+            return _build_instance(cls, config, **kwargs)
 
-        return _init_func
+        return wrapped
 
-    return add_func
+    return decorator
 
 
-def add_default_section_for_function(
-    section,
-    default_params=dict(),
-):
-    def get_func_params(
-        func,
-        config,
-        args,
-        kwargs,
-    ):
-        sign = inspect.signature(func)
-        params = sign.parameters
-        for k, v in default_params.items():
-            if k in kwargs:
+def config_defaults_method(section: str, default_params: Optional[Dict] = None):
+    """Method decorator that fills missing parameters from the instance's config.
+
+    Reads ``self.__unitorch_setting__`` (a ``Config``) to resolve
+    any argument not explicitly passed by the caller.
+    """
+    _defaults = default_params or {}
+
+    def _resolve_kwargs(func, config, args, kwargs):
+        for name, fallback in _defaults.items():
+            if name not in kwargs:
+                kwargs[name] = config.getdefault(section, name, fallback)
+        for i, (name, param) in enumerate(inspect.signature(func).parameters.items()):
+            if name == "self" or name in kwargs:
                 continue
-            kwargs[k] = config.getdefault(section, k, v)
-
-        for i, (k, v) in enumerate(params.items()):
-            if k == "self" or k in kwargs:
-                continue
-            dvalue = args[i] if i < len(args) else v.default
-            kwargs[k] = config.getdefault(section, k, dvalue)
+            positional = args[i] if i < len(args) else param.default
+            kwargs[name] = config.getdefault(section, name, positional)
         return kwargs
 
-    def add_func(func):
-        def _new_func(*args, **kwargs):
-            if len(args) > 0 and hasattr(args[0], "__unitorch_setting__"):
-                kwargs = get_func_params(
-                    func,
-                    args[0].__unitorch_setting__,
-                    args,
-                    kwargs,
-                )
-                ret = func(args[0], **kwargs)
-            else:
-                # raise ValueError("Can't find the unitorch setting")
-                logging.warning(
-                    "Can't find the unitorch setting, using default parameters."
-                )
-                ret = func(*args, **kwargs)
-            return ret
+    def decorator(func):
+        def wrapped(*args, **kwargs):
+            if args and hasattr(args[0], "__unitorch_setting__"):
+                kwargs = _resolve_kwargs(func, args[0].__unitorch_setting__, args, kwargs)
+                return func(args[0], **kwargs)
+            logging.warning("__unitorch_setting__ not found; using default parameters.")
+            return func(*args, **kwargs)
 
-        return _new_func
+        return wrapped
 
-    return add_func
-
-
-# import gradio as gr
-# def save_and_load_latest_state(init_func):
-#     dtypes = [
-#         gr.Dropdown,
-#         gr.Slider,
-#         gr.Checkbox,
-#         gr.Radio,
-#         gr.Textbox,
-#         gr.Image,
-#         gr.Gallery,
-#         gr.Audio,
-#         gr.Video,
-#         gr.File,
-#     ]
-#     states = {}
-
-#     def save_state(v, i):
-#         states[i] = v
-
-#     def load_state(i):
-#         return states.get(i, None)
-
-#     def actual_func(*args, **kwargs):
-#         inst = init_func(*args, **kwargs)
-#         iface = inst.iface
-#         ignore_elements = inst.ignore_elements
-#         ignore_indexes = [element._id for element in ignore_elements]
-#         with iface:
-#             indexes = []
-
-#             for index, block in iface.blocks.items():
-#                 if (
-#                     any([isinstance(block, dtype) for dtype in dtypes])
-#                     and index not in ignore_indexes
-#                 ):
-#                     indexes.append(index)
-
-#             for index in indexes:
-#                 block = iface.blocks[index]
-#                 block.change(
-#                     fn=lambda x: save_state(x, f"blockid-{index}"), inputs=[block]
-#                 )
-#                 iface.load(fn=lambda: load_state(f"blockid-{index}"), outputs=[block])
-
-#     return actual_func
+    return decorator

@@ -1,21 +1,14 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
-import os
-import random
-from PIL import Image
-from functools import partial
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
-
-import numpy as np
 import torch
+from PIL import Image
+from typing import Any, Dict, List, Optional, Union
 
 from transformers import (
-    LlamaTokenizer,
     LlamaTokenizerFast,
     CLIPImageProcessor,
     SiglipImageProcessor,
-    AddedToken,
 )
 from unitorch.utils import (
     pop_value,
@@ -46,14 +39,6 @@ class LlavaMistralClipProcessor(
         max_seq_length: Optional[int] = 128,
         max_gen_seq_length: Optional[int] = 48,
     ):
-        """
-        Initialize the LlamaProcessor.
-
-        Args:
-            vocab_file (str): Path to the vocabulary file.
-            max_seq_length (int, optional): Maximum sequence length for text classification. Defaults to 128.
-            max_gen_seq_length (int, optional): Maximum sequence length for text generation. Defaults to 48.
-        """
         tokenizer_config = read_json_file(tokenizer_config) if tokenizer_config else {}
         special_tokens_map = (
             read_json_file(special_tokens_map) if special_tokens_map else {}
@@ -128,15 +113,6 @@ class LlavaMistralClipProcessor(
         self,
         image: Union[Image.Image, str],
     ):
-        """
-        Performs image classification.
-
-        Args:
-            image (PIL.Image.Image): The input image.
-
-        Returns:
-            GenericOutputs: An object containing the processed inputs.
-        """
         outputs = HfImageClassificationProcessor.classification(
             self,
             image=image,
@@ -153,17 +129,6 @@ class LlavaMistralClipProcessor(
         text_pair: Optional[str] = None,
         max_seq_length: Optional[int] = None,
     ):
-        """
-        Process text for classification.
-
-        Args:
-            text (str): Input text.
-            text_pair (str, optional): Input text pair. Defaults to None.
-            max_seq_length (int, optional): Maximum sequence length. Defaults to None.
-
-        Returns:
-            GenericOutputs: Processed input_ids and attention_mask tensors.
-        """
         assert "<image>" in text and not text.endswith("<image>")
         max_seq_length = pop_value(
             max_seq_length,
@@ -202,16 +167,6 @@ class LlavaMistralClipProcessor(
         image: Union[Image.Image, str],
         max_seq_length: Optional[int] = None,
     ):
-        """
-        Process text for generation inputs.
-
-        Args:
-            text (str): Input text.
-            max_seq_length (int, optional): Maximum sequence length. Defaults to None.
-
-        Returns:
-            GenericOutputs: Processed input_ids tensor.
-        """
         assert "<image>" in text and not text.endswith("<image>")
         max_seq_length = pop_value(
             max_seq_length,
@@ -241,16 +196,6 @@ class LlavaMistralClipProcessor(
         text: str,
         max_gen_seq_length: Optional[int] = None,
     ):
-        """
-        Process text for generation labels.
-
-        Args:
-            text (str): Input text.
-            max_gen_seq_length (int, optional): Maximum generation sequence length. Defaults to None.
-
-        Returns:
-            GenericOutputs: Processed input_ids and attention_mask tensors.
-        """
         max_gen_seq_length = pop_value(
             max_gen_seq_length,
             self.max_gen_seq_length,
@@ -281,18 +226,6 @@ class LlavaMistralClipProcessor(
         max_seq_length: Optional[int] = None,
         max_gen_seq_length: Optional[int] = None,
     ):
-        """
-        Process text for generation.
-
-        Args:
-            text (str): Input text.
-            text_pair (str): Input text pair.
-            max_seq_length (int, optional): Maximum sequence length. Defaults to None.
-            max_gen_seq_length (int, optional): Maximum generation sequence length. Defaults to None.
-
-        Returns:
-            GenericOutputs: Processed input_ids, attention_mask, input_ids_label, and attention_mask_label tensors.
-        """
         assert "<image>" in text and not text.endswith("<image>")
         max_seq_length = pop_value(
             max_seq_length,
@@ -346,16 +279,6 @@ class LlavaMistralClipProcessor(
         messages: List[Dict[str, Any]],
         max_seq_length: Optional[int] = None,
     ) -> GenericOutputs:
-        """
-        Preprocesses messages for generation.
-
-        Args:
-            messages (List[Dict[str, Any]]): The list of messages to process.
-            max_seq_length (Optional[int]): The maximum sequence length. Defaults to None.
-
-        Returns:
-            GenericOutputs: The processed input IDs tensor.
-        """
         while messages and messages[-1]["role"] != "assistant":
             messages.pop()
 
@@ -465,15 +388,6 @@ class LlavaLlamaSiglipProcessor(
         self,
         image: Union[Image.Image, str],
     ):
-        """
-        Performs image classification.
-
-        Args:
-            image (PIL.Image.Image): The input image.
-
-        Returns:
-            GenericOutputs: An object containing the processed inputs.
-        """
         pixel_values = self.vision_processor.preprocess(
             image, return_tensors="pt"
         ).pixel_values[0]
@@ -489,17 +403,6 @@ class LlavaLlamaSiglipProcessor(
         text_pair: Optional[str] = None,
         max_seq_length: Optional[int] = None,
     ):
-        """
-        Process text for classification.
-
-        Args:
-            text (str): Input text.
-            text_pair (str, optional): Input text pair. Defaults to None.
-            max_seq_length (int, optional): Maximum sequence length. Defaults to None.
-
-        Returns:
-            GenericOutputs: Processed input_ids and attention_mask tensors.
-        """
         max_seq_length = pop_value(
             max_seq_length,
             self.max_seq_length,
@@ -537,16 +440,6 @@ class LlavaLlamaSiglipProcessor(
         image: Union[Image.Image, str],
         max_seq_length: Optional[int] = None,
     ):
-        """
-        Process text for generation inputs.
-
-        Args:
-            text (str): Input text.
-            max_seq_length (int, optional): Maximum sequence length. Defaults to None.
-
-        Returns:
-            GenericOutputs: Processed input_ids tensor.
-        """
         max_seq_length = pop_value(
             max_seq_length,
             self.max_seq_length,
@@ -575,16 +468,6 @@ class LlavaLlamaSiglipProcessor(
         text: str,
         max_gen_seq_length: Optional[int] = None,
     ):
-        """
-        Process text for generation labels.
-
-        Args:
-            text (str): Input text.
-            max_gen_seq_length (int, optional): Maximum generation sequence length. Defaults to None.
-
-        Returns:
-            GenericOutputs: Processed input_ids and attention_mask tensors.
-        """
         max_gen_seq_length = pop_value(
             max_gen_seq_length,
             self.max_gen_seq_length,
@@ -615,18 +498,6 @@ class LlavaLlamaSiglipProcessor(
         max_seq_length: Optional[int] = None,
         max_gen_seq_length: Optional[int] = None,
     ):
-        """
-        Process text for generation.
-
-        Args:
-            text (str): Input text.
-            text_pair (str): Input text pair.
-            max_seq_length (int, optional): Maximum sequence length. Defaults to None.
-            max_gen_seq_length (int, optional): Maximum generation sequence length. Defaults to None.
-
-        Returns:
-            GenericOutputs: Processed input_ids, attention_mask, input_ids_label, and attention_mask_label tensors.
-        """
         max_seq_length = pop_value(
             max_seq_length,
             self.max_seq_length,
@@ -679,16 +550,6 @@ class LlavaLlamaSiglipProcessor(
         messages: List[Dict[str, Any]],
         max_seq_length: Optional[int] = None,
     ) -> GenericOutputs:
-        """
-        Preprocesses messages for generation.
-
-        Args:
-            messages (List[Dict[str, Any]]): The list of messages to process.
-            max_seq_length (Optional[int]): The maximum sequence length. Defaults to None.
-
-        Returns:
-            GenericOutputs: The processed input IDs tensor.
-        """
         while messages and messages[-1]["role"] != "assistant":
             messages.pop()
 

@@ -2,32 +2,23 @@
 # Licensed under the MIT License.
 
 import torch
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import List, Optional, Union
 from torch import autocast
 
 from unitorch.models.peft.diffusers import (
     QWenImageLoraForText2ImageGeneration as _QWenImageLoraForText2ImageGeneration,
     QWenImageLoraForImageEditing as _QWenImageLoraForImageEditing,
 )
-from unitorch.utils import (
-    pop_value,
-    nested_dict_value,
-    is_bfloat16_available,
-    is_cuda_available,
-)
+from unitorch.utils import pop_value, nested_dict_value, is_bfloat16_available
 from unitorch.cli import (
     cached_path,
-    add_default_section_for_init,
-    add_default_section_for_function,
+    config_defaults_init,
+    config_defaults_method,
     register_model,
 )
 from unitorch.cli.models import DiffusionOutputs, LossOutputs
 from unitorch.cli.models import diffusion_model_decorator
-from unitorch.cli.models.diffusers import (
-    pretrained_stable_infos,
-    pretrained_stable_extensions_infos,
-    load_weight,
-)
+from unitorch.cli.models.diffusers import pretrained_stable_infos, load_weight
 
 
 @register_model(
@@ -87,10 +78,10 @@ class QWenImageLoraForText2ImageGeneration(_QWenImageLoraForText2ImageGeneration
         )
 
     @classmethod
-    @add_default_section_for_init(
+    @config_defaults_init(
         "core/model/diffusers/peft/lora/text2image/qwen_image"
     )
-    def from_core_configure(cls, config, **kwargs):
+    def from_config(cls, config, **kwargs):
         config.set_default_section(
             "core/model/diffusers/peft/lora/text2image/qwen_image"
         )
@@ -248,7 +239,7 @@ class QWenImageLoraForText2ImageGeneration(_QWenImageLoraForText2ImageGeneration
         )
         return LossOutputs(loss=loss)
 
-    @add_default_section_for_function(
+    @config_defaults_method(
         "core/model/diffusers/peft/lora/text2image/qwen_image"
     )
     @autocast(
@@ -337,8 +328,8 @@ class QWenImageLoraForImageEditing(_QWenImageLoraForImageEditing):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/diffusers/peft/lora/editing/qwen_image")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/model/diffusers/peft/lora/editing/qwen_image")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/diffusers/peft/lora/editing/qwen_image")
         pretrained_name = config.getoption("pretrained_name", "qwen-image-editing")
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
@@ -500,7 +491,7 @@ class QWenImageLoraForImageEditing(_QWenImageLoraForImageEditing):
         )
         return LossOutputs(loss=loss)
 
-    @add_default_section_for_function(
+    @config_defaults_method(
         "core/model/diffusers/peft/lora/editing/qwen_image"
     )
     @autocast(

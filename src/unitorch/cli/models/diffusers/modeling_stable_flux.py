@@ -2,7 +2,7 @@
 # Licensed under the MIT License.
 
 import torch
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import Optional
 from torch import autocast
 
 from unitorch.models.diffusers import (
@@ -16,12 +16,11 @@ from unitorch.utils import (
     pop_value,
     nested_dict_value,
     is_bfloat16_available,
-    is_cuda_available,
 )
 from unitorch.cli import (
     cached_path,
-    add_default_section_for_init,
-    add_default_section_for_function,
+    config_defaults_init,
+    config_defaults_method,
     register_model,
 )
 from unitorch.cli.models import DiffusionOutputs, LossOutputs
@@ -70,8 +69,8 @@ class StableFluxForText2ImageGeneration(_StableFluxForText2ImageGeneration):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/diffusers/text2image/stable_flux")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/model/diffusers/text2image/stable_flux")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/diffusers/text2image/stable_flux")
         pretrained_name = config.getoption("pretrained_name", "stable-flux-schnell")
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
@@ -216,7 +215,7 @@ class StableFluxForText2ImageGeneration(_StableFluxForText2ImageGeneration):
         )
         return LossOutputs(loss=loss)
 
-    @add_default_section_for_function("core/model/diffusers/text2image/stable_flux")
+    @config_defaults_method("core/model/diffusers/text2image/stable_flux")
     @autocast(
         device_type=("cuda" if torch.cuda.is_available() else "cpu"),
         dtype=(torch.bfloat16 if is_bfloat16_available() else torch.float32),
@@ -281,8 +280,8 @@ class StableFluxForImage2ImageGeneration(_StableFluxForImage2ImageGeneration):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/diffusers/image2image/stable_flux")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/model/diffusers/image2image/stable_flux")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/diffusers/image2image/stable_flux")
         pretrained_name = config.getoption("pretrained_name", "stable-flux-schnell")
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
@@ -415,7 +414,7 @@ class StableFluxForImage2ImageGeneration(_StableFluxForImage2ImageGeneration):
     ):
         raise NotImplementedError
 
-    @add_default_section_for_function("core/model/diffusers/image2image/stable_flux")
+    @config_defaults_method("core/model/diffusers/image2image/stable_flux")
     @autocast(
         device_type=("cuda" if torch.cuda.is_available() else "cpu"),
         dtype=(torch.bfloat16 if is_bfloat16_available() else torch.float32),
@@ -486,8 +485,8 @@ class StableFluxForImageReduxGeneration(_StableFluxForImageReduxGeneration):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/diffusers/image_redux/stable_flux")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/model/diffusers/image_redux/stable_flux")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/diffusers/image_redux/stable_flux")
         pretrained_name = config.getoption("pretrained_name", "stable-flux-dev-redux")
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
@@ -666,7 +665,7 @@ class StableFluxForImageReduxGeneration(_StableFluxForImageReduxGeneration):
         )
         return LossOutputs(loss=loss)
 
-    @add_default_section_for_function("core/model/diffusers/image_redux/stable_flux")
+    @config_defaults_method("core/model/diffusers/image_redux/stable_flux")
     @autocast(
         device_type=("cuda" if torch.cuda.is_available() else "cpu"),
         dtype=(torch.bfloat16 if is_bfloat16_available() else torch.float32),
@@ -733,8 +732,8 @@ class StableFluxForImageInpainting(_StableFluxForImageInpainting):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/diffusers/inpainting/stable_flux")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/model/diffusers/inpainting/stable_flux")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/diffusers/inpainting/stable_flux")
         pretrained_name = config.getoption("pretrained_name", "stable-flux-schnell")
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
@@ -884,7 +883,7 @@ class StableFluxForImageInpainting(_StableFluxForImageInpainting):
         )
         return LossOutputs(loss=loss)
 
-    @add_default_section_for_function("core/model/diffusers/inpainting/stable_flux")
+    @config_defaults_method("core/model/diffusers/inpainting/stable_flux")
     @autocast(
         device_type=("cuda" if torch.cuda.is_available() else "cpu"),
         dtype=(torch.bfloat16 if is_bfloat16_available() else torch.float32),
@@ -951,8 +950,8 @@ class StableFluxForKontext2ImageGeneration(_StableFluxForKontext2ImageGeneration
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/diffusers/kontext2image/stable_flux")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/model/diffusers/kontext2image/stable_flux")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/diffusers/kontext2image/stable_flux")
         pretrained_name = config.getoption("pretrained_name", "stable-flux-dev-kontext")
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
@@ -1099,7 +1098,7 @@ class StableFluxForKontext2ImageGeneration(_StableFluxForKontext2ImageGeneration
         )
         return LossOutputs(loss=loss)
 
-    @add_default_section_for_function("core/model/diffusers/kontext2image/stable_flux")
+    @config_defaults_method("core/model/diffusers/kontext2image/stable_flux")
     @autocast(
         device_type=("cuda" if torch.cuda.is_available() else "cpu"),
         dtype=(torch.bfloat16 if is_bfloat16_available() else torch.float32),

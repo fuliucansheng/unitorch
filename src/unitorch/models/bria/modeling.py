@@ -372,7 +372,7 @@ class Config:
         print(self.task)
 
 
-class Mlp(nn.Module):
+class PvtMlp(nn.Module):
     def __init__(
         self,
         in_features,
@@ -547,7 +547,7 @@ class Block(nn.Module):
         self.drop_path = DropPath(drop_path) if drop_path > 0.0 else nn.Identity()
         self.norm2 = norm_layer(dim)
         mlp_hidden_dim = int(dim * mlp_ratio)
-        self.mlp = Mlp(
+        self.mlp = PvtMlp(
             in_features=dim,
             hidden_features=mlp_hidden_dim,
             act_layer=act_layer,
@@ -2576,8 +2576,10 @@ class SimpleConvs(nn.Module):
 class BRIAForSegmentation(GenericModel):
     config_class = BiRefNetConfig
 
-    def __init__(self, bb_pretrained=True, config=BiRefNetConfig()):
+    def __init__(self, bb_pretrained=False, config=None):
         super().__init__()
+        if config is None:
+            config = BiRefNetConfig()
         self.config = config
         bb_pretrained = config.bb_pretrained
         self.config = Config()
@@ -2741,4 +2743,4 @@ class BRIAForSegmentation(GenericModel):
 
     def forward(self, x):
         scaled_preds, class_preds = self.forward_ori(x)
-        return GenericOutputs(logits=F.sigmoid(scaled_preds[-1]), classes=class_preds)
+        return GenericOutputs(logits=torch.sigmoid(scaled_preds[-1]), classes=class_preds)

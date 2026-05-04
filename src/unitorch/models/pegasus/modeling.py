@@ -1,24 +1,17 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
-import os
-import logging
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import transformers
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
-from transformers import PegasusConfig, PegasusModel, PegasusForConditionalGeneration
-from transformers.models.pegasus.modeling_pegasus import (
-    PegasusEncoder,
-    PegasusDecoder,
-)
-
-from unitorch.utils.decorators import replace
+from typing import Dict, List, Optional, Union
+from transformers import PegasusConfig, PegasusForConditionalGeneration
 from unitorch.models import GenericModel, GenericOutputs
 
 
 class PegasusForGeneration(GenericModel):
+    """
+    Pegasus model for text generation tasks.
+    """
+
     prefix_keys_in_state_dict = {
         "^(?!model\.model\.|model\.lm_head\.)model\.": "model.",
         "^lm_head.": "model.",
@@ -30,17 +23,16 @@ class PegasusForGeneration(GenericModel):
         gradient_checkpointing: Optional[bool] = False,
     ):
         """
-        Initializes a PegasusForGeneration model.
+        Initializes the PegasusForGeneration model.
 
         Args:
-            config_path (str): The path to the model configuration file.
+            config_path (str): Path to the Pegasus configuration file.
             gradient_checkpointing (bool, optional): Whether to use gradient checkpointing. Defaults to False.
         """
         super().__init__()
         self.config = PegasusConfig.from_json_file(config_path)
         self.config.gradient_checkpointing = gradient_checkpointing
         self.model = PegasusForConditionalGeneration(self.config)
-
         self.init_weights()
 
     def forward(
@@ -51,16 +43,16 @@ class PegasusForGeneration(GenericModel):
         decoder_attention_mask: torch.Tensor,
     ):
         """
-        Performs a forward pass of the PegasusForGeneration model.
+        Forward pass of the PegasusForGeneration model.
 
         Args:
-            input_ids (torch.Tensor): Tensor of input token IDs.
-            attention_mask (torch.Tensor): Tensor of attention mask.
-            decoder_input_ids (torch.Tensor): Tensor of decoder input token IDs.
-            decoder_attention_mask (torch.Tensor): Tensor of decoder attention mask.
+            input_ids (torch.Tensor): Encoder input token IDs.
+            attention_mask (torch.Tensor): Encoder attention mask.
+            decoder_input_ids (torch.Tensor): Decoder input token IDs.
+            decoder_attention_mask (torch.Tensor): Decoder attention mask.
 
         Returns:
-            (torch.Tensor):The model's logits.
+            torch.Tensor: Output logits.
         """
         outputs = self.model(
             input_ids=input_ids,
@@ -69,8 +61,7 @@ class PegasusForGeneration(GenericModel):
             decoder_attention_mask=decoder_attention_mask,
             return_dict=True,
         )
-        logits = outputs.logits
-        return logits
+        return outputs.logits
 
     @torch.no_grad()
     def generate(
@@ -97,26 +88,26 @@ class PegasusForGeneration(GenericModel):
         Generates sequences using the PegasusForGeneration model.
 
         Args:
-            input_ids: The input token IDs.
-            num_beams (int, optional): The number of beams for beam search. Defaults to 5.
-            decoder_start_token_id (int, optional): The decoder's start token ID. Defaults to 2.
-            decoder_end_token_id (int or List[int], optional): The decoder's end token ID. Defaults to 2.
-            num_return_sequences (int, optional): The number of generated sequences to return. Defaults to 1.
-            min_gen_seq_length (int, optional): The minimum length of the generated sequences. Defaults to 0.
-            max_gen_seq_length (int, optional): The maximum length of the generated sequences. Defaults to 48.
-            repetition_penalty (float, optional): The repetition penalty. Defaults to 1.0.
-            no_repeat_ngram_size (int, optional): The size of n-grams to avoid repeating. Defaults to 0.
-            early_stopping (bool, optional): Whether to stop generation early. Defaults to True.
-            length_penalty (float, optional): The length penalty. Defaults to 1.0.
-            num_beam_groups (int, optional): The number of beam groups for diverse beam search. Defaults to 1.
-            diversity_penalty (float, optional): The diversity penalty. Defaults to 0.0.
-            do_sample (bool, optional): Whether to use sampling for generation. Defaults to False.
-            temperature (float, optional): The temperature for sampling. Defaults to 1.0.
-            top_k (int, optional): The value for top-k sampling. Defaults to 50.
-            top_p (float, optional): The value for top-p (nucleus) sampling. Defaults to 1.0.
+            input_ids (torch.Tensor): Encoder input token IDs.
+            num_beams (int, optional): Number of beams for beam search. Defaults to 5.
+            decoder_start_token_id (int, optional): Decoder start token ID. Defaults to 0.
+            decoder_end_token_id (int or List[int], optional): Decoder end token ID. Defaults to 1.
+            num_return_sequences (int, optional): Number of sequences to return. Defaults to 1.
+            min_gen_seq_length (int, optional): Minimum generated sequence length. Defaults to 0.
+            max_gen_seq_length (int, optional): Maximum generated sequence length. Defaults to 48.
+            repetition_penalty (float, optional): Repetition penalty. Defaults to 1.0.
+            no_repeat_ngram_size (int, optional): N-gram size to avoid repeating. Defaults to 0.
+            early_stopping (bool, optional): Whether to stop early. Defaults to True.
+            length_penalty (float, optional): Length penalty. Defaults to 1.0.
+            num_beam_groups (int, optional): Number of beam groups. Defaults to 1.
+            diversity_penalty (float, optional): Diversity penalty. Defaults to 0.0.
+            do_sample (bool, optional): Whether to use sampling. Defaults to False.
+            temperature (float, optional): Sampling temperature. Defaults to 1.0.
+            top_k (int, optional): Top-k sampling. Defaults to 50.
+            top_p (float, optional): Top-p (nucleus) sampling. Defaults to 1.0.
 
         Returns:
-            GenericOutputs: The generated sequences and their scores.
+            GenericOutputs: Generated sequences and their scores.
         """
         outputs = self.model.generate(
             input_ids,
@@ -143,18 +134,17 @@ class PegasusForGeneration(GenericModel):
         sequences = outputs.sequences.reshape(
             -1, num_return_sequences, outputs.sequences.size(-1)
         )
-        outputs.sequences = (
-            torch.zeros(sequences.size(0), num_return_sequences, max_gen_seq_length).to(
-                device=sequences.device
-            )
-            + decoder_start_token_id
+        padded = torch.full(
+            (sequences.size(0), num_return_sequences, max_gen_seq_length),
+            fill_value=decoder_start_token_id,
+            device=sequences.device,
         )
-        outputs.sequences[:, :, : sequences.size(-1)].copy_(sequences)
+        padded[:, :, : sequences.size(-1)].copy_(sequences)
 
         if num_return_sequences == 1:
-            outputs.sequences = outputs.sequences.reshape(-1, max_gen_seq_length)
+            padded = padded.reshape(-1, max_gen_seq_length)
 
         return GenericOutputs(
-            sequences=outputs.sequences,
+            sequences=padded,
             sequences_scores=outputs.sequences_scores,
         )

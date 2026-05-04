@@ -51,8 +51,8 @@ class BartForGeneration(_BartForGeneration):
         pass
 
     @classmethod
-    @add_default_section_for_init("core/model/generation/bart")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/model/generation/bart")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/generation/bart")
         pretrained_name = config.getoption("pretrained_name", "bart-base")
         config_path = config.getoption("config_path", None)
@@ -76,7 +76,7 @@ class BartForGeneration(_BartForGeneration):
 
         return inst
 
-    @add_default_section_for_function("core/model/generation/bart")
+    @config_defaults_method("core/model/generation/bart")
     def generate(
         self,
         input_ids: torch.Tensor,
@@ -101,4 +101,4 @@ class BartForGeneration(_BartForGeneration):
 
 ```
 
-&nbsp;&nbsp;&nbsp;&nbsp;The `from_core_configure` method is a class method used to create an instance of BartForGeneration based on a provided configuration object (config). It retrieves various options from the configuration and initializes the instance with the appropriate values. It also loads pretrained weights if a pretrained_weight_path is specified in the configuration. It also has `add_default_section_for_function` decorator to override the parameter value from coniguration object with specific section. The `num_beams` is set to **20** and `no_repeat_ngram_size` is set to 3 in this example.
+&nbsp;&nbsp;&nbsp;&nbsp;The `from_config` method is a class method used to create an instance of BartForGeneration based on a provided configuration object (config). It retrieves various options from the configuration and initializes the instance with the appropriate values. It also loads pretrained weights if a pretrained_weight_path is specified in the configuration. It also has `config_defaults_method` decorator to override the parameter value from coniguration object with specific section. The `num_beams` is set to **20** and `no_repeat_ngram_size` is set to 3 in this example.

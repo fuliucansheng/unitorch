@@ -11,65 +11,62 @@ import importlib
 import importlib_resources
 import importlib.metadata as importlib_metadata
 from functools import partial
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Union
+
 from unitorch.utils import cached_path as hf_cached_path
 from unitorch.utils import rpartial, is_remote_url
-from unitorch.cli.core import CoreConfigureParser
+from unitorch.cli.core import Config
 
 
-def import_library(library):
-    is_load_success = False
+def import_library(library: str) -> bool:
+    """Try to import *library*; return True on success, False on failure."""
     try:
         importlib.import_module(library)
-        is_load_success = True
+        return True
     except importlib_metadata.PackageNotFoundError:
-        logging.debug(f"import {library} failed.")
-        is_load_success = False
-    return is_load_success
+        logging.debug("import %s failed.", library)
+        return False
 
 
 UNITORCH_HF_ENDPOINT = os.environ.get("UNITORCH_HF_ENDPOINT", "https://huggingface.co")
 
 
-def hf_endpoint_url(url):
+def hf_endpoint_url(url: str) -> str:
     if is_remote_url(url):
         return url
-    if url.startswith("/"):
-        url = url[1:]
-    return f"{UNITORCH_HF_ENDPOINT}/{url}"
+    return f"{UNITORCH_HF_ENDPOINT}/{url.lstrip('/')}"
 
 
-# extenstions
-UNITORCH_EXTENSTIONS = os.environ.get("UNITORCH_EXTENSTIONS", "")
-UNITORCH_EXTENSTIONS = [
-    e.strip() for e in re.split(r"[,;]", UNITORCH_EXTENSTIONS) if len(e.strip()) > 0
+UNITORCH_EXTENSIONS: List[str] = [
+    e.strip()
+    for e in re.split(r"[,;]", os.environ.get("UNITORCH_EXTENSIONS", ""))
+    if e.strip()
 ]
 
 
-def set_pkg_extensions(extensions: List[str]):
-    global UNITORCH_EXTENSTIONS
-    UNITORCH_EXTENSTIONS += extensions
+def set_pkg_extensions(extensions: List[str]) -> None:
+    global UNITORCH_EXTENSIONS
+    UNITORCH_EXTENSIONS += extensions
 
 
-def get_pkg_extensions():
-    return UNITORCH_EXTENSTIONS
+def get_pkg_extensions() -> List[str]:
+    return UNITORCH_EXTENSIONS
 
 
 def cached_path(
-    url_or_filename,
+    url_or_filename: str,
     cache_dir: Optional[str] = None,
-    force_download: Optional[bool] = False,
+    force_download: bool = False,
     proxies: Optional[str] = None,
-    resume_download: Optional[bool] = False,
+    resume_download: bool = False,
     user_agent: Union[Dict, str, None] = None,
-    extract_compressed_file: Optional[bool] = False,
-    force_extract: Optional[bool] = False,
+    extract_compressed_file: bool = False,
+    force_extract: bool = False,
     use_auth_token: Union[bool, str, None] = None,
-    local_files_only: Optional[bool] = False,
+    local_files_only: bool = False,
 ) -> Optional[str]:
     if not is_remote_url(url_or_filename):
-        pkgs = ["unitorch"] + get_pkg_extensions()
-        for pkg in pkgs:
+        for pkg in ["unitorch"] + get_pkg_extensions():
             pkg_filename = os.path.join(importlib_resources.files(pkg), url_or_filename)
             if os.path.exists(pkg_filename):
                 url_or_filename = pkg_filename
@@ -90,121 +87,96 @@ def cached_path(
 
 
 from unitorch.cli.decorators import (
-    add_default_section_for_init,
-    add_default_section_for_function,
+    config_defaults_init,
+    config_defaults_method,
 )
 
 
-# registry function
 def registry_func(
     name: str,
-    decorators: Union[Callable, List[Callable]] = None,
-    save_dict: Optional[Dict] = dict(),
-):
+    decorators: Union[Callable, List[Callable], None] = None,
+    save_dict: Optional[Dict] = None,
+) -> Callable:
+    """Return a class decorator that registers *name* in *save_dict*."""
+    if save_dict is None:
+        save_dict = {}
+
     def actual_func(obj):
-        save_dict[name] = dict(
-            {
-                "obj": obj,
-                "decorators": decorators,
-            }
-        )
+        save_dict[name] = {"obj": obj, "decorators": decorators}
         return obj
 
     return actual_func
 
 
-# register score/dataset/loss/model/optim/writer/scheduler/task
-core_modules = [
-    "score",
-    "dataset",
-    "loss",
-    "model",
-    "optim",
-    "writer",
-    "scheduler",
-    "task",
-]
+_CORE_MODULES = ["score", "dataset", "loss", "model", "optim", "writer", "scheduler", "task"]
 
-for module in core_modules:
-    globals()[f"registered_{module}"] = dict()
-    globals()[f"register_{module}"] = partial(
+for _module in _CORE_MODULES:
+    globals()[f"registered_{_module}"] = dict()
+    globals()[f"register_{_module}"] = partial(
         registry_func,
-        save_dict=globals()[f"registered_{module}"],
+        save_dict=globals()[f"registered_{_module}"],
     )
 
-# register process function
-registered_process = dict()
+registered_process: Dict = {}
 
 
-def get_import_module(import_file):
-    modules = sys.modules.copy()
-    for k, v in modules.items():
-        if hasattr(v, "__file__") and v.__file__ == import_file:
-            return v
-    raise "can't find the module"
+def get_import_module(import_file: str):
+    for mod in sys.modules.copy().values():
+        if hasattr(mod, "__file__") and mod.__file__ == import_file:
+            return mod
+    raise ValueError(f"Cannot find module for file: {import_file!r}")
 
 
 def register_process(
     name: str,
-    decorators: Union[Callable, List[Callable]] = None,
-):
+    decorators: Union[Callable, List[Callable], None] = None,
+) -> Callable:
     def actual_func(obj):
         trace_stacks = traceback.extract_stack()
         import_file = trace_stacks[-2][0]
         import_cls_name = trace_stacks[-2][2]
         import_module = get_import_module(import_file)
-        registered_process[name] = dict(
-            {
-                "cls": {
-                    "module": import_module,
-                    "name": import_cls_name,
-                },
-                "obj": obj,
-                "decorators": decorators,
-            }
-        )
+        registered_process[name] = {
+            "cls": {"module": import_module, "name": import_cls_name},
+            "obj": obj,
+            "decorators": decorators,
+        }
         return obj
 
     return actual_func
 
 
-# init registered modules
 def init_registered_module(
     name: str,
-    config: CoreConfigureParser,
+    config: Config,
     registered_module: Dict,
     **kwargs,
 ):
     if name not in registered_module:
-        return
-
+        return None
     v = registered_module[name]
-
     if v["decorators"]:
-        return v["decorators"](v["obj"]).from_core_configure(config, **kwargs)
-    return v["obj"].from_core_configure(config, **kwargs)
+        return v["decorators"](v["obj"]).from_config(config, **kwargs)
+    return v["obj"].from_config(config, **kwargs)
 
 
 def init_registered_process(
     name: str,
-    config: CoreConfigureParser,
+    config: Config,
     **kwargs,
 ):
     if name not in registered_process:
-        return
-
+        return None
     v = registered_process[name]
     cls = getattr(v["cls"]["module"], v["cls"]["name"])
-    inst = cls.from_core_configure(config, **kwargs)
+    inst = cls.from_config(config, **kwargs)
     if v["decorators"]:
         return rpartial(v["decorators"](v["obj"]), inst)
-    else:
-        return rpartial(v["obj"], inst)
+    return rpartial(v["obj"], inst)
 
 
-# script module
-class GenericScript(metaclass=abc.ABCMeta):
-    def __init__(self, config: CoreConfigureParser):
+class GenericScript(abc.ABC):
+    def __init__(self, config: Config):
         pass
 
     @abc.abstractmethod
@@ -212,16 +184,12 @@ class GenericScript(metaclass=abc.ABCMeta):
         pass
 
 
-registered_script = dict()
-register_script = partial(
-    registry_func,
-    save_dict=registered_script,
-)
+registered_script: Dict = {}
+register_script = partial(registry_func, save_dict=registered_script)
 
 
-# service module
-class GenericService(metaclass=abc.ABCMeta):
-    def __init__(self, config: CoreConfigureParser):
+class GenericService(abc.ABC):
+    def __init__(self, config: Config):
         pass
 
     @abc.abstractmethod
@@ -237,47 +205,12 @@ class GenericService(metaclass=abc.ABCMeta):
         pass
 
 
-registered_service = dict()
-register_service = partial(
-    registry_func,
-    save_dict=registered_service,
-)
+registered_service: Dict = {}
+register_service = partial(registry_func, save_dict=registered_service)
 
 
-# webui module
-class GenericWebUI(metaclass=abc.ABCMeta):
-    ignore_elements = []
-
-    def __init__(self, config: CoreConfigureParser):
-        pass
-
-    @property
-    def iname(self):
-        pass
-
-    @property
-    def iface(self):
-        pass
-
-    @abc.abstractmethod
-    def start(self, **kwargs):
-        pass
-
-    @abc.abstractmethod
-    def stop(self, **kwargs):
-        pass
-
-
-registered_webui = dict()
-register_webui = partial(
-    registry_func,
-    save_dict=registered_webui,
-)
-
-
-# fastapi module
-class GenericFastAPI(metaclass=abc.ABCMeta):
-    def __init__(self, config: CoreConfigureParser):
+class GenericFastAPI(abc.ABC):
+    def __init__(self, config: Config):
         pass
 
     @property
@@ -293,17 +226,29 @@ class GenericFastAPI(metaclass=abc.ABCMeta):
         pass
 
 
-registered_fastapi = dict()
-register_fastapi = partial(
-    registry_func,
-    save_dict=registered_fastapi,
-)
+registered_fastapi: Dict = {}
+register_fastapi = partial(registry_func, save_dict=registered_fastapi)
 
 
-# usful function
+class GenericCopilotTool(abc.ABC):
+    def __init__(self):
+        pass
+
+    @abc.abstractmethod
+    def launch(self, **kwargs):
+        pass
+
+    @abc.abstractmethod
+    def describe(self):
+        pass
+
+
+registered_copilot_tools: Dict = {}
+register_copilot_tool = partial(registry_func, save_dict=registered_copilot_tools)
+
+
 from unitorch.cli.writers import WriterMixin, WriterOutputs
 
-# import cli modules
 import unitorch.cli.datasets
 import unitorch.cli.losses
 import unitorch.cli.models

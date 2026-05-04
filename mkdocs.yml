@@ -18,15 +18,27 @@ nav:
       - Beit: models/beit.md
       - Bert: models/bert.md
       - Blip: models/blip.md
-      - Bloom: models/bloom.md
+      - BRIA: models/bria.md
+      - ChineseClip: models/chinese_clip.md
       - Clip: models/clip.md
+      - DETR: models/detr.md
+      - DinoV2: models/dinov2.md
+      - DPT: models/dpt.md
       - Diffusers: models/diffusers.md
+      - GroundingDino: models/grounding_dino.md
+      - Kolors: models/kolors.md
       - Llama: models/llama.md
+      - LLaVA: models/llava.md
+      - Mask2Former: models/mask2former.md
       - MBart: models/mbart.md
-      - MT5: models/mt5.md
+      - Mistral: models/mistral.md
       - Peft: models/peft.md
       - Pegasus: models/pegasus.md
+      - QWen: models/qwen.md
       - Roberta: models/roberta.md
+      - SAM: models/sam.md
+      - Segformer: models/segformer.md
+      - SigLIP: models/siglip.md
       - Swin: models/swin.md
       - T5: models/t5.md
       - VisualBert: models/visualbert.md
@@ -36,27 +48,38 @@ nav:
   - Commands:
     - Configuration: configuration.md
     - Examples:
-      - Service: 
+      - Service:
         - Zip Files: examples/service/zip_files.md
       - Classification:
         - Roberta: examples/classification/roberta.md
         - Swin: examples/classification/swin.md
         - Clip: examples/classification/clip.md
-      - Caption: 
+      - Caption:
         - Blip: examples/caption/blip.md
-      - Generation: 
+      - Generation:
         - Bart: examples/generation/bart.md
-      # - Diffusion: 
-      #  - ControlNet: examples/diffusion/controlnet.md
     - Task:
       - Supervised: cli/supervised.md
       - Deepspeed: cli/deepspeed.md
+      - Tasks: cli/tasks.md
     - Dataset:
       - Ast: cli/ast.md
     - DataTypes: cli/datatypes.md
     - Processing:
       - Preprocess: cli/preprocess.md
       - Postprocess: cli/postprocess.md
+    - Loss:
+      - Losses: cli/losses.md
+    - Score:
+      - Scores: cli/scores.md
+    - Optimizer:
+      - Optimizers: cli/optims.md
+    - Scheduler:
+      - Schedulers: cli/schedulers.md
+    - Service:
+      - Services: cli/services.md
+    - FastAPI:
+      - FastAPIs: cli/fastapis.md
     - Writer:
       - Csv: cli/csv.md
       - Jsonl: cli/jsonl.md
@@ -66,15 +89,27 @@ nav:
       - Beit: cli/models/beit.md
       - Bert: cli/models/bert.md
       - Blip: cli/models/blip.md
-      - Bloom: cli/models/bloom.md
+      - BRIA: cli/models/bria.md
+      - ChineseClip: cli/models/chinese_clip.md
       - Clip: cli/models/clip.md
+      - DETR: cli/models/detr.md
+      - DinoV2: cli/models/dinov2.md
+      - DPT: cli/models/dpt.md
       - Diffusers: cli/models/diffusers.md
+      - GroundingDino: cli/models/grounding_dino.md
+      - Kolors: cli/models/kolors.md
       - Llama: cli/models/llama.md
+      - LLaVA: cli/models/llava.md
+      - Mask2Former: cli/models/mask2former.md
       - MBart: cli/models/mbart.md
-      - MT5: cli/models/mt5.md
+      - Mistral: cli/models/mistral.md
       - Peft: cli/models/peft.md
       - Pegasus: cli/models/pegasus.md
+      - QWen: cli/models/qwen.md
       - Roberta: cli/models/roberta.md
+      - SAM: cli/models/sam.md
+      - Segformer: cli/models/segformer.md
+      - SigLIP: cli/models/siglip.md
       - Swin: cli/models/swin.md
       - T5: cli/models/t5.md
       - VisualBert: cli/models/visualbert.md
@@ -130,8 +165,8 @@ markdown_extensions:
         kwds:
           case: lower
   - pymdownx.emoji:
-      emoji_index: !!python/name:materialx.emoji.twemoji
-      emoji_generator: !!python/name:materialx.emoji.to_svg
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
   - pymdownx.magiclink
   - pymdownx.superfences
   - pymdownx.tabbed:
@@ -168,6 +203,12 @@ plugins:
             show_signature: True
             show_signature_annotations: True
             separate_signature: True
+            members_order: source
+            show_if_no_docstring: False
+            show_source: True
+            members: True
+            filters:
+              - "!^_"
 
 extra:
   social:
