@@ -58,17 +58,28 @@ nav:
         - Blip: examples/caption/blip.md
       - Generation:
         - Bart: examples/generation/bart.md
-      - Diffusion:
-        - ControlNet: examples/diffusion/controlnet.md
     - Task:
       - Supervised: cli/supervised.md
       - Deepspeed: cli/deepspeed.md
+      - Tasks: cli/tasks.md
     - Dataset:
       - Ast: cli/ast.md
     - DataTypes: cli/datatypes.md
     - Processing:
       - Preprocess: cli/preprocess.md
       - Postprocess: cli/postprocess.md
+    - Loss:
+      - Losses: cli/losses.md
+    - Score:
+      - Scores: cli/scores.md
+    - Optimizer:
+      - Optimizers: cli/optims.md
+    - Scheduler:
+      - Schedulers: cli/schedulers.md
+    - Service:
+      - Services: cli/services.md
+    - FastAPI:
+      - FastAPIs: cli/fastapis.md
     - Writer:
       - Csv: cli/csv.md
       - Jsonl: cli/jsonl.md
@@ -192,6 +203,12 @@ plugins:
             show_signature: True
             show_signature_annotations: True
             separate_signature: True
+            members_order: source
+            show_if_no_docstring: False
+            show_source: True
+            members: True
+            filters:
+              - "!^_"
 
 extra:
   social:

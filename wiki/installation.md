@@ -25,7 +25,7 @@ pip install "unitorch[all]"
 # DeepSpeed support
 pip install "unitorch[deepspeed]"
 
-# Image generation (Stable Diffusion, SDXL, ControlNet, Kolors)
+# Image generation (FLUX)
 pip install "unitorch[diffusers]"
 
 # Object detection (timm)

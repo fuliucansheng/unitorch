@@ -87,7 +87,7 @@ unitorch-infer examples/configs/generation/bart.ini --test_file path/to/test.tsv
 | **Language** | BERT, RoBERTa, DeBERTa/V2, T5, BART, PEGASUS, PEGASUS-X, mT5, MBart, BLOOM, LLaMA |
 | **Vision** | ViT, BEiT, Swin Transformer, CLIP |
 | **Multimodal** | BLIP, VisualBERT |
-| **Image Generation** | Stable Diffusion, SDXL, ControlNet |
+| **Image Generation** | FLUX |
 
 </details>
 

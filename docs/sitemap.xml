@@ -2,350 +2,378 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/configuration/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/installation/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/overview/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/ast/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/csv/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/datatypes/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/deepspeed/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
+    </url>
+    <url>
+         <loc>https://fuliucansheng.github.io/unitorch/cli/fastapis/</loc>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/jsonl/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
+    </url>
+    <url>
+         <loc>https://fuliucansheng.github.io/unitorch/cli/losses/</loc>
+         <lastmod>2026-05-04</lastmod>
+    </url>
+    <url>
+         <loc>https://fuliucansheng.github.io/unitorch/cli/optims/</loc>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/parquet/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/postprocess/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/preprocess/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
+    </url>
+    <url>
+         <loc>https://fuliucansheng.github.io/unitorch/cli/schedulers/</loc>
+         <lastmod>2026-05-04</lastmod>
+    </url>
+    <url>
+         <loc>https://fuliucansheng.github.io/unitorch/cli/scores/</loc>
+         <lastmod>2026-05-04</lastmod>
+    </url>
+    <url>
+         <loc>https://fuliucansheng.github.io/unitorch/cli/services/</loc>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/supervised/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
+    </url>
+    <url>
+         <loc>https://fuliucansheng.github.io/unitorch/cli/tasks/</loc>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/models/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/models/bart/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/models/beit/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/models/bert/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/models/blip/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/models/bria/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/models/chinese_clip/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/models/clip/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/models/detr/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/models/diffusers/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/models/dinov2/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/models/dpt/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/models/grounding_dino/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/models/kolors/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/models/llama/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/models/llava/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/models/mask2former/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/models/mbart/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/models/mistral/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/models/peft/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/models/pegasus/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/models/qwen/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/models/roberta/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/models/sam/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/models/segformer/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/models/siglip/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/models/swin/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/models/t5/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/models/visualbert/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/models/vit/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/models/xlm_roberta/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/cli/models/xpegasus/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/examples/caption/blip/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/examples/classification/clip/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/examples/classification/roberta/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/examples/classification/swin/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/examples/diffusion/controlnet/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/examples/generation/bart/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/examples/service/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/examples/service/zip_files/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/labs/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/models/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/models/bart/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/models/beit/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/models/bert/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/models/blip/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/models/bria/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/models/chinese_clip/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/models/clip/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/models/detr/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/models/diffusers/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/models/dinov2/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/models/dpt/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/models/grounding_dino/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/models/kolors/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/models/llama/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/models/llava/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/models/mask2former/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/models/mbart/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/models/mistral/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/models/peft/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/models/pegasus/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/models/qwen/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/models/roberta/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/models/sam/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/models/segformer/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/models/siglip/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/models/swin/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/models/t5/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/models/visualbert/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/models/vit/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/models/xlm_roberta/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/models/xpegasus/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
     <url>
          <loc>https://fuliucansheng.github.io/unitorch/coverage/</loc>
-         <lastmod>2026-05-02</lastmod>
+         <lastmod>2026-05-04</lastmod>
     </url>
 </urlset>
