@@ -222,7 +222,7 @@ Large language model training with Megatron-Core parallelism.
 
 ```bash
 # Step 1: Convert HF weights (TP=8, PP=2)
-python3.10 llms/deepseek-moe-16b/processing.py \
+python3 llms/deepseek-moe-16b/processing.py \
     --hf_dir /path/to/hf_model \
     --out_dir ./cache/deepseek-moe-16b \
     --tp_size 8 --pp_size 2 --ep_size 1

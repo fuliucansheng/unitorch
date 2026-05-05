@@ -45,7 +45,6 @@ pip install unitorch
 pip install "unitorch[all]"          # everything
 pip install "unitorch[deepspeed]"    # DeepSpeed support
 pip install "unitorch[diffusers]"    # image generation models
-pip install "unitorch[detection]"    # object detection (timm)
 ```
 
 Requires **Python >= 3.10** and **PyTorch 2.5+**.

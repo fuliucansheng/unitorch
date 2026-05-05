@@ -28,9 +28,6 @@ pip install "unitorch[deepspeed]"
 # Image generation (FLUX)
 pip install "unitorch[diffusers]"
 
-# Object detection (timm)
-pip install "unitorch[detection]"
-
 # Megatron-LM support
 pip install "unitorch[megatron]"
 

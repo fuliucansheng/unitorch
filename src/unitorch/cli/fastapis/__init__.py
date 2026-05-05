@@ -1,7 +1,7 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
-from unitorch.utils import is_diffusers_available, is_opencv_available
+from unitorch.utils import is_diffusers_available, is_opencv_available, is_vllm_available
 import unitorch.cli.fastapis.info
 import unitorch.cli.fastapis.blip
 import unitorch.cli.fastapis.bria
@@ -18,6 +18,10 @@ import unitorch.cli.fastapis.qwen_vl
 import unitorch.cli.fastapis.sam
 import unitorch.cli.fastapis.segformer
 import unitorch.cli.fastapis.siglip
+
+if is_vllm_available():
+    import unitorch.cli.fastapis.qwen_vllm
+    import unitorch.cli.fastapis.qwen_vl_vllm
 
 if is_diffusers_available():
     import unitorch.cli.fastapis.stable_flux

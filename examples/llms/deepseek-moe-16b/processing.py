@@ -1,9 +1,9 @@
-#!/usr/bin/env python3.10
+#!/usr/bin/env python3
 # processing.py — Convert deepseek-ai/deepseek-moe-16b-base HuggingFace weights
 # into per-(tp_rank, pp_rank) sharded files for MegatronGPTForGeneration.
 #
 # Usage:
-#   python3.10 processing.py \
+#   python3 processing.py \
 #       --hf_dir /path/to/hf_model \
 #       --out_dir ./cache/deepseek-moe-16b \
 #       --tp_size 8 \

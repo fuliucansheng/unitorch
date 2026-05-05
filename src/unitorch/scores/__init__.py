@@ -14,7 +14,7 @@ from sklearn.metrics import (
     roc_auc_score,
 )
 
-from unitorch.scores._utils import convert_tensor_to_strings, remove_strings_ignore_tokens
+from unitorch.scores.utils import convert_tensor_to_strings, remove_strings_ignore_tokens
 from unitorch.scores.bleu import bleu_score
 from unitorch.scores.map import map50_score, map_score
 from unitorch.scores.rouge import rouge1_score, rouge2_score, rougel_score

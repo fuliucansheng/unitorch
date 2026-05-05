@@ -133,6 +133,7 @@ from unitorch.utils import (
     is_diffusers_available,
     is_megatron_available,
     is_opencv_available,
+    is_vllm_available,
     is_wandb_available,
 )
 

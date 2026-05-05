@@ -16,7 +16,6 @@ pip install .
 pip install ".[all]"           # everything
 pip install ".[deepspeed]"     # DeepSpeed support
 pip install ".[diffusers]"     # image generation models
-pip install ".[detection]"     # object detection (timm)
 
 # With CUDA C++ extensions (ngram kernel)
 UNITORCH_EXTENSIONS=NGRAM pip install .
@@ -40,7 +39,7 @@ Tests use `absl.testing` (not plain pytest fixtures). Test files are in `tests/c
 
 ## CLI Entry Points
 
-Seven commands defined in `pyproject.toml` under `[project.scripts]`:
+Nine commands defined in `pyproject.toml` under `[project.scripts]`:
 
 | Command | Console module | Purpose |
 |---------|---------------|---------|
@@ -50,8 +49,34 @@ Seven commands defined in `pyproject.toml` under `[project.scripts]`:
 | `unitorch-launch` | `cli.consoles.launch` | Launch a quick script |
 | `unitorch-fastapi` | `cli.consoles.fastapi` | FastAPI model server |
 | `unitorch-service` | `cli.consoles.service` | Background non-model service |
+| `unitorch-copilot` | `cli.consoles.copilot:main` | Unitorch-native agent (similar to Claude / OpenCode) |
+| `unitorch-copilot-cli` | `cli.consoles.copilot:cli_main` | CLI tool for agent use — invokes registered copilot tools |
 
-All commands consume `.ini` config files. Examples in `examples/configs/`.
+All commands except `unitorch-copilot-cli` consume `.ini` config files. Examples in `examples/configs/`.
+
+### `unitorch-copilot-cli`
+
+Invokes a registered `copilot_tool` by name. Format:
+
+```bash
+unitorch-copilot-cli <name> [--key value ...]
+# e.g.
+unitorch-copilot-cli core/copilot/pkg_infos
+```
+
+Copilot tools live in `src/unitorch/cli/copilots/`. Each tool is a class that
+extends `GenericCopilotTool` and is registered with `@register_copilot_tool("core/copilot/<name>")`.
+It must implement `launch(**kwargs)`, `describe()`, and `usage()`.
+
+To list all registered components (models, processes, fastapis, services, etc.):
+
+```bash
+unitorch-copilot-cli core/copilot/pkg_infos                  # list all types
+unitorch-copilot-cli core/copilot/pkg_infos --name model      # list registered models only
+unitorch-copilot-cli core/copilot/pkg_infos --name process    # list registered processes only
+# available types: process, copilot_tool, model, fastapi, service, script,
+#                  score, dataset, loss, optimizer, scheduler, task, writer
+```
 
 ## Architecture
 

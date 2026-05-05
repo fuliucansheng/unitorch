@@ -43,6 +43,7 @@ nav:
       - T5: models/t5.md
       - VisualBert: models/visualbert.md
       - ViT: models/vit.md
+      - vLLM: models/vllm.md
       - XLMRoberta: models/xlm_roberta.md
       - XPegasus: models/xpegasus.md
   - Commands:
@@ -114,6 +115,7 @@ nav:
       - T5: cli/models/t5.md
       - VisualBert: cli/models/visualbert.md
       - ViT: cli/models/vit.md
+      - vLLM: cli/models/vllm.md
       - XLMRoberta: cli/models/xlm_roberta.md
       - XPegasus: cli/models/xpegasus.md
   # - Benchmarks: benchmarks/index.md

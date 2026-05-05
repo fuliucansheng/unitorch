@@ -4,7 +4,7 @@
 import numpy as np
 from typing import Dict
 
-from unitorch import is_diffusers_available, is_megatron_available, is_opencv_available
+from unitorch import is_diffusers_available, is_megatron_available, is_opencv_available, is_vllm_available
 from unitorch.cli.models.modeling_utils import (
     LossOutputs,
     ModelInputs,
@@ -71,6 +71,9 @@ if is_diffusers_available():
 
 if is_megatron_available():
     import unitorch.cli.models.megatron
+
+if is_vllm_available():
+    import unitorch.cli.models.vllm
 
 import unitorch.cli.models.bart
 import unitorch.cli.models.beit

@@ -6,7 +6,7 @@ from typing import Dict, List, Optional, Set, Tuple, Union
 
 import torch
 
-from unitorch.scores._utils import convert_tensor_to_strings, remove_strings_ignore_tokens
+from unitorch.scores.utils import convert_tensor_to_strings, remove_strings_ignore_tokens
 
 
 # ---------------------------------------------------------------------------

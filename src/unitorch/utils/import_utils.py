@@ -41,6 +41,7 @@ _opencv_available = importlib.util.find_spec("cv2") is not None
 _onnxruntime_available = _check_package("onnxruntime")
 _wandb_available = _check_package("wandb")
 _gradio_available = _check_package("gradio")
+_vllm_available = _check_package("vllm")
 
 if _megatron_available:
     logging.debug("Imported megatron.")
@@ -81,6 +82,10 @@ def is_wandb_available() -> bool:
 
 def is_gradio_available() -> bool:
     return _gradio_available
+
+
+def is_vllm_available() -> bool:
+    return _vllm_available
 
 
 def is_bfloat16_available() -> bool:

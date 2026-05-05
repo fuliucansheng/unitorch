@@ -6,26 +6,17 @@ import json
 import logging
 import os
 import re
-import shutil
-import tarfile
 import tempfile
-from contextlib import contextmanager
-from functools import partial
 from hashlib import sha256
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 from urllib.parse import urljoin, urlparse
-from zipfile import ZipFile, is_zipfile
 
 import requests
 import safetensors
 import torch
 from filelock import FileLock
-from huggingface_hub import get_token
-from huggingface_hub.file_download import http_get
-from huggingface_hub.utils import hf_raise_for_status
 from transformers import AddedToken
-from transformers.utils.hub import http_user_agent
 
 from unitorch import get_cache_dir
 from unitorch.utils.decorators import replace, retry
@@ -53,6 +44,7 @@ from unitorch.utils.import_utils import (
     is_onnxruntime_available,
     is_opencv_available,
     is_wandb_available,
+    is_vllm_available,
     reload_module,
 )
 from unitorch.utils.io import GENERATE_FINISHED, GenericWriter, IOProcess, PostProcess
@@ -87,9 +79,7 @@ def get_from_cache(
     proxies: Optional[Dict] = None,
     etag_timeout: int = 10,
     resume_download: bool = False,
-    user_agent: Union[Dict, str, None] = None,
     use_auth_token: Union[bool, str, None] = None,
-    local_files_only: bool = False,
 ) -> Optional[str]:
     """Download *url* to *cache_dir* (or the default cache) and return the local path."""
     if cache_dir is None:
@@ -97,11 +87,11 @@ def get_from_cache(
     cache_dir = str(cache_dir)
     os.makedirs(cache_dir, exist_ok=True)
 
-    headers = {"user-agent": http_user_agent(user_agent)}
+    headers = {"user-agent": "unitorch"}
     if isinstance(use_auth_token, str):
         headers["authorization"] = f"Bearer {use_auth_token}"
     elif use_auth_token:
-        token = get_token()
+        token = os.environ.get("HF_TOKEN") or os.environ.get("HUGGING_FACE_HUB_TOKEN")
         if token is None:
             raise EnvironmentError(
                 "use_auth_token=True but no HuggingFace token was found."
@@ -111,27 +101,26 @@ def get_from_cache(
     url_to_download = url
     etag = None
 
-    if not local_files_only:
-        try:
-            response = requests.head(
-                url,
-                headers=headers,
-                allow_redirects=False,
-                proxies=proxies,
-                timeout=etag_timeout,
+    try:
+        response = requests.head(
+            url,
+            headers=headers,
+            allow_redirects=False,
+            proxies=proxies,
+            timeout=etag_timeout,
+        )
+        response.raise_for_status()
+        etag = response.headers.get("X-Linked-Etag") or response.headers.get("ETag")
+        if etag is None:
+            raise OSError(
+                "Remote resource has no ETag; reproducibility cannot be guaranteed."
             )
-            hf_raise_for_status(response)
-            etag = response.headers.get("X-Linked-Etag") or response.headers.get("ETag")
-            if etag is None:
-                raise OSError(
-                    "Remote resource has no ETag; reproducibility cannot be guaranteed."
-                )
-            if 300 <= response.status_code <= 399:
-                url_to_download = urljoin(response.url, response.headers["Location"])
-        except (requests.exceptions.SSLError, requests.exceptions.ProxyError):
-            raise
-        except (requests.exceptions.ConnectionError, requests.exceptions.Timeout):
-            pass  # etag remains None; fall through to cached-file lookup
+        if 300 <= response.status_code <= 399:
+            url_to_download = urljoin(response.url, response.headers["Location"])
+    except (requests.exceptions.SSLError, requests.exceptions.ProxyError):
+        raise
+    except (requests.exceptions.ConnectionError, requests.exceptions.Timeout):
+        pass  # etag remains None; fall through to cached-file lookup
 
     filename = url_to_filename(url, etag)
     cache_path = os.path.join(cache_dir, filename)
@@ -146,11 +135,6 @@ def get_from_cache(
         ]
         if candidates:
             return os.path.join(cache_dir, candidates[-1])
-        if local_files_only:
-            raise FileNotFoundError(
-                "Requested files not found in cache and offline mode is enabled. "
-                "Set local_files_only=False to allow downloads."
-            )
         raise ValueError(
             "No internet connection and the requested files were not found in cache."
         )
@@ -165,32 +149,28 @@ def get_from_cache(
 
         if resume_download:
             incomplete_path = cache_path + ".incomplete"
-
-            @contextmanager
-            def _resumable_file_manager():
-                with open(incomplete_path, "ab") as f:
-                    yield f
-
-            temp_file_manager = _resumable_file_manager
             resume_size = os.stat(incomplete_path).st_size if os.path.exists(incomplete_path) else 0
+            dest = open(incomplete_path, "ab")
         else:
-            temp_file_manager = partial(
-                tempfile.NamedTemporaryFile, mode="wb", dir=cache_dir, delete=False
-            )
+            tmp_fd, incomplete_path = tempfile.mkstemp(dir=cache_dir)
+            dest = os.fdopen(tmp_fd, "wb")
             resume_size = 0
 
-        with temp_file_manager() as temp_file:
-            logging.debug(f"Downloading {url} to {temp_file.name}")
-            http_get(
-                url_to_download,
-                temp_file,
-                proxies=proxies,
-                resume_size=resume_size,
-                headers=headers,
-            )
+        try:
+            dl_headers = dict(headers)
+            if resume_size:
+                dl_headers["Range"] = f"bytes={resume_size}-"
+            logging.debug(f"Downloading {url} to {incomplete_path}")
+            with requests.get(url_to_download, headers=dl_headers, proxies=proxies, stream=True) as r:
+                r.raise_for_status()
+                for chunk in r.iter_content(chunk_size=1024 * 1024):
+                    if chunk:
+                        dest.write(chunk)
+        finally:
+            dest.close()
 
         logging.debug(f"Storing {url} in cache at {cache_path}")
-        os.replace(temp_file.name, cache_path)
+        os.replace(incomplete_path, cache_path)
 
         umask = os.umask(0o666)
         os.umask(umask)
@@ -209,16 +189,11 @@ def cached_path(
     force_download: bool = False,
     proxies: Optional[Dict] = None,
     resume_download: bool = False,
-    user_agent: Union[Dict, str, None] = None,
-    extract_compressed_file: bool = False,
-    force_extract: bool = False,
     use_auth_token: Union[bool, str, None] = None,
-    local_files_only: bool = False,
 ) -> Optional[str]:
     """Resolve a URL or local path to a cached local file.
 
     Downloads remote files on first access and returns the local cache path.
-    Optionally extracts zip/tar archives.
 
     Args:
         url_or_filename: URL or local filesystem path.
@@ -226,14 +201,10 @@ def cached_path(
         force_download: Re-download even if already cached.
         proxies: Proxy settings forwarded to ``requests``.
         resume_download: Continue an interrupted download.
-        user_agent: Extra user-agent metadata for the request headers.
-        extract_compressed_file: Unpack zip or tar archives after download.
-        force_extract: Re-extract even if the output directory already exists.
         use_auth_token: HuggingFace auth token (``True`` reads from the environment).
-        local_files_only: Disable network access; raise if the file is absent from cache.
 
     Returns:
-        Absolute path to the cached (and optionally extracted) file.
+        Absolute path to the cached file.
 
     Raises:
         EnvironmentError: File not found locally or remotely.
@@ -245,48 +216,20 @@ def cached_path(
     cache_dir = str(cache_dir)
 
     if is_remote_url(url_or_filename):
-        output_path = get_from_cache(
+        return get_from_cache(
             url_or_filename,
             cache_dir=cache_dir,
             force_download=force_download,
             proxies=proxies,
             resume_download=resume_download,
-            user_agent=user_agent,
             use_auth_token=use_auth_token,
-            local_files_only=local_files_only,
         )
     elif os.path.exists(url_or_filename):
-        output_path = url_or_filename
+        return url_or_filename
     elif urlparse(url_or_filename).scheme == "":
         raise EnvironmentError(f"File not found: {url_or_filename}")
     else:
         raise ValueError(f"Unable to parse as a URL or local path: {url_or_filename}")
-
-    if not extract_compressed_file:
-        return output_path
-
-    if not is_zipfile(output_path) and not tarfile.is_tarfile(output_path):
-        return output_path
-
-    output_dir, output_file = os.path.split(output_path)
-    extract_dir = os.path.join(output_dir, output_file.replace(".", "-") + "-extracted")
-
-    if os.path.isdir(extract_dir) and os.listdir(extract_dir) and not force_extract:
-        return extract_dir
-
-    with FileLock(output_path + ".lock"):
-        shutil.rmtree(extract_dir, ignore_errors=True)
-        os.makedirs(extract_dir, exist_ok=True)
-        if is_zipfile(output_path):
-            with ZipFile(output_path, "r") as zf:
-                zf.extractall(extract_dir)
-        elif tarfile.is_tarfile(output_path):
-            with tarfile.open(output_path) as tf:
-                tf.extractall(extract_dir)
-        else:
-            raise EnvironmentError(f"Unrecognised archive format: {output_path}")
-
-    return extract_dir
 
 
 def read_file(file: str, lines: bool = False) -> Union[str, List[str]]:

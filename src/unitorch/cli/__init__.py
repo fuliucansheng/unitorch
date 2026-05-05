@@ -57,13 +57,9 @@ def cached_path(
     url_or_filename: str,
     cache_dir: Optional[str] = None,
     force_download: bool = False,
-    proxies: Optional[str] = None,
+    proxies: Optional[Dict] = None,
     resume_download: bool = False,
-    user_agent: Union[Dict, str, None] = None,
-    extract_compressed_file: bool = False,
-    force_extract: bool = False,
     use_auth_token: Union[bool, str, None] = None,
-    local_files_only: bool = False,
 ) -> Optional[str]:
     if not is_remote_url(url_or_filename):
         for pkg in ["unitorch"] + get_pkg_extensions():
@@ -78,11 +74,7 @@ def cached_path(
         force_download=force_download,
         proxies=proxies,
         resume_download=resume_download,
-        user_agent=user_agent,
-        extract_compressed_file=extract_compressed_file,
-        force_extract=force_extract,
         use_auth_token=use_auth_token,
-        local_files_only=local_files_only,
     )
 
 
@@ -242,9 +234,13 @@ class GenericCopilotTool(abc.ABC):
     def describe(self):
         pass
 
+    @abc.abstractmethod
+    def usage(self):
+        pass
 
-registered_copilot_tools: Dict = {}
-register_copilot_tool = partial(registry_func, save_dict=registered_copilot_tools)
+
+registered_copilot_tool: Dict = {}
+register_copilot_tool = partial(registry_func, save_dict=registered_copilot_tool)
 
 
 from unitorch.cli.writers import WriterMixin, WriterOutputs

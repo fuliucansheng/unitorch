@@ -15,6 +15,7 @@ from unitorch import hf_cached_path
 from unitorch.utils import (
     is_diffusers_available,
     is_megatron_available,
+    is_vllm_available,
     load_weight,
     replace,
 )
@@ -204,3 +205,6 @@ if is_diffusers_available():
 
 if is_megatron_available():
     import unitorch.models.megatron
+
+if is_vllm_available():
+    import unitorch.models.vllm

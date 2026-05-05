@@ -98,18 +98,27 @@ def nested_dict_value(mapping: Dict, key: Any, *keys: Any) -> Any:
     return mapping[key]
 
 
-def update_nested_dict(mapping: Dict, key: Any, value: Any, *keys: Any) -> None:
+def update_nested_dict(mapping: Dict, *keys_and_value: Any) -> None:
     """Set a value inside an arbitrarily nested dictionary, creating sub-dicts as needed.
+
+    The last element of *keys_and_value* is treated as the value to assign;
+    all preceding elements are the key path.  Example::
+
+        update_nested_dict(d, "a", "b", 42)  # d["a"]["b"] = 42
 
     Args:
         mapping: The top-level dictionary to update (modified in-place).
-        key: Key at the current nesting level.
-        value: Value to assign, or the next-level key when *keys* is non-empty.
-        *keys: Additional ``(key, …, value)`` path components for deeper nesting.
+        *keys_and_value: One or more keys followed by the final value.
+
+    Raises:
+        ValueError: If fewer than two arguments are provided (need at least one
+                    key and a value).
     """
-    if key not in mapping:
-        mapping[key] = {}
-    if isinstance(mapping[key], dict) and keys:
-        update_nested_dict(mapping[key], value, *keys)
-    else:
-        mapping[key] = value
+    if len(keys_and_value) < 2:
+        raise ValueError("update_nested_dict requires at least one key and a value.")
+    *keys, value = keys_and_value
+    for key in keys[:-1]:
+        if not isinstance(mapping.get(key), dict):
+            mapping[key] = {}
+        mapping = mapping[key]
+    mapping[keys[-1]] = value

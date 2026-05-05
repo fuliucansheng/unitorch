@@ -209,3 +209,17 @@
     **`core/fastapi/qwen_image/editing`** is the section for configuration of QWenImageEditingFastAPI.
 
 ::: unitorch.cli.fastapis.qwen_image.image_editing.QWenImageEditingFastAPI
+
+## QWen3VLLMFastAPI
+
+!!! tip
+    **`core/fastapi/vllm/qwen3`** is the section for configuration of QWen3VLLMFastAPI.
+
+::: unitorch.cli.fastapis.qwen_vllm.QWen3VLLMFastAPI
+
+## QWen3VLVLLMFastAPI
+
+!!! tip
+    **`core/fastapi/vllm/qwen3_vl`** is the section for configuration of QWen3VLVLLMFastAPI.
+
+::: unitorch.cli.fastapis.qwen_vl_vllm.QWen3VLVLLMFastAPI
