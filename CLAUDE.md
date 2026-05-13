@@ -149,6 +149,42 @@ Defined in `src/unitorch/utils/decorators.py`. Process-global monkey-patcher: re
 
 > **Critical**: `cli/models/<name>/__init__.py` files only do side-effect imports (`import unitorch.cli.models.X.modeling`). They do **not** re-export classes. Wiki docstring references and any direct imports **must** use the full submodule path, e.g. `unitorch.cli.models.bart.processing.BartProcessor`.
 
+### Required Data Flow Contract for `unitorch-train` / `unitorch-infer`
+
+All CLI models that integrate with `unitorch-train` or `unitorch-infer` **must strictly follow** the data flow contracts below. Adherence is required for registered components (models, processors, writers) to be composable and reusable across the framework.
+
+#### Training Flow
+
+```
+raw data (text, PIL image, etc.)
+  → preprocess        → tensor(s)
+  → collate_fn        → batched tensor(s)   # stack or concat, depending on preprocess output type
+  → model forward     → tensor(s)
+  → loss compute      → scalar loss
+  → backward / optim update
+```
+
+- **preprocess**: takes raw data, returns tensor(s). Each output field's type determines how `collate_fn` handles it.
+- **collate_fn**: stacks or concatenates tensors depending on whether the preprocess output is a fixed-shape tensor (stack) or variable-length sequence (concat). The collation strategy must be consistent with the preprocess output contract: **stack** produces a single batched tensor (shape `[B, ...]`); **concat** produces a `list` of tensors (one per sample, shapes may differ).
+- **model forward**: receives batched tensors, returns tensor(s) fed into the loss.
+- **loss compute**: operates on model outputs and labels, returns a scalar.
+
+#### Inference Flow
+
+```
+raw data (text, PIL image, etc.)
+  → preprocess        → tensor(s)
+  → collate_fn        → batched tensor(s)   # stack or concat, depending on preprocess output type
+  → model forward     → tensor(s)
+  → postprocess       → raw data (pandas DataFrame format)
+  → writer            → output file (jsonl, tsv, parquet, etc.)
+```
+
+- **preprocess** and **collate_fn**: same contract as training.
+- **model forward**: receives batched tensors, returns tensor(s) passed to postprocess.
+- **postprocess**: converts model output tensors back to human-readable form; **must return a `pandas.DataFrame`**.
+- **writer**: consumes the DataFrame and writes to disk in the configured format (jsonl, tsv, parquet, etc.). Registered writers are reusable across models as long as the DataFrame schema is respected.
+
 ### Config Section Naming Convention
 
 | Category | Section pattern | Example |

@@ -100,6 +100,8 @@ unitorch-infer examples/configs/generation/bart.ini --test_file path/to/test.tsv
 | `unitorch-launch` | Launch a quick script defined in config (`core/cli` → `script_name`) |
 | `unitorch-fastapi` | Start a FastAPI model server |
 | `unitorch-service` | Run a background service |
+| `unitorch-copilot` | unitorch-native agent (similar to Claude / OpenCode) |
+| `unitorch-copilot-cli` | CLI tool for agent use — invokes registered copilot tools |
 
 ## License
 
