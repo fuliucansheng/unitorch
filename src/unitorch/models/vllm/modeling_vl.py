@@ -1,27 +1,12 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
+import atexit
 import torch
 import numpy as np
 from typing import Any, Dict, List, Optional, Union
 from PIL import Image
 from vllm import LLM, SamplingParams
-
-
-def _tensor_to_pil(t: torch.Tensor) -> Image.Image:
-    """Convert a float pixel-values tensor (C, H, W) or (H, W, C) to a PIL Image."""
-    if t.dim() == 3 and t.shape[0] in (1, 3, 4):
-        # (C, H, W) → (H, W, C)
-        t = t.permute(1, 2, 0)
-    arr = t.detach().float().cpu().numpy()
-    # Rescale from [-1, 1] or [0, 1] to [0, 255] uint8
-    if arr.min() < 0:
-        arr = (arr + 1.0) / 2.0
-    arr = (arr * 255).clip(0, 255).astype(np.uint8)
-    if arr.shape[-1] == 1:
-        arr = arr.squeeze(-1)
-    return Image.fromarray(arr)
-
 
 class VLLMVLForGeneration:
     """
@@ -75,6 +60,7 @@ class VLLMVLForGeneration:
             trust_remote_code=trust_remote_code,
             dtype=dtype,
             enforce_eager=enforce_eager,
+            enable_mm_embeds=True,
         )
         if max_model_len is not None:
             kwargs["max_model_len"] = max_model_len
@@ -82,6 +68,7 @@ class VLLMVLForGeneration:
             kwargs["quantization"] = quantization
 
         self.llm = LLM(model=hf_name_or_folder, **kwargs)
+        atexit.register(self.shutdown)
 
     def cuda(self, device=None):
         # vLLM manages GPU placement internally at engine init time.
@@ -101,6 +88,12 @@ class VLLMVLForGeneration:
         # Post-init checkpoint loading is not supported and is silently ignored.
         pass
 
+    def shutdown(self):
+        """Shutdown the vLLM engine and release GPU memory held by worker processes."""
+        try:
+            self.llm.llm_engine.engine_core.shutdown()
+        except Exception:
+            pass
 
     def _normalize_images(
         self,
@@ -124,10 +117,9 @@ class VLLMVLForGeneration:
         # torch.Tensor pixel_values batch (B, C, H, W) or single (C, H, W)
         if isinstance(images, torch.Tensor):
             if images.dim() == 4:
-                return [[_tensor_to_pil(images[i])] for i in range(images.shape[0])]
+                return [[images[i]] for i in range(images.shape[0])]
             elif images.dim() == 3:
-                pil = _tensor_to_pil(images)
-                return [[pil]] * batch_size
+                return [[images]] * batch_size
             else:
                 raise ValueError(f"Unexpected pixel_values shape: {images.shape}")
 
@@ -138,18 +130,10 @@ class VLLMVLForGeneration:
         if isinstance(images, list):
             result = []
             for item in images:
-                if isinstance(item, Image.Image):
+                if isinstance(item, (Image.Image, torch.Tensor)):
                     result.append([item])
-                elif isinstance(item, torch.Tensor):
-                    result.append([_tensor_to_pil(item)])
                 elif isinstance(item, list):
-                    row = []
-                    for img in item:
-                        if isinstance(img, torch.Tensor):
-                            row.append(_tensor_to_pil(img))
-                        else:
-                            row.append(img)
-                    result.append(row)
+                    result.append(item)
                 else:
                     raise ValueError(f"Unexpected image type: {type(item)}")
             return result
@@ -169,6 +153,7 @@ class VLLMVLForGeneration:
         top_p: Optional[float] = 1.0,
         repetition_penalty: Optional[float] = 1.0,
         stop: Optional[Union[str, List[str]]] = None,
+        pad_token_id: Optional[int] = 0,
     ) -> List[List[List[int]]]:
         """
         Generates token sequences for the given text and image inputs.
@@ -197,6 +182,10 @@ class VLLMVLForGeneration:
             List[List[List[int]]]: Generated token ID sequences,
             shape ``[batch][num_return_sequences][seq_len]``.
         """
+        # Always stop at <|im_end|> (151645) and <|endoftext|> (151643) so that
+        # vLLM does not generate past the model's answer turn into reasoning/thinking text.
+        stop_token_ids = [151643, 151645]
+
         sampling_params = SamplingParams(
             n=num_return_sequences,
             max_tokens=max_gen_seq_length,
@@ -206,6 +195,7 @@ class VLLMVLForGeneration:
             top_p=top_p if do_sample else 1.0,
             repetition_penalty=repetition_penalty,
             stop=stop,
+            stop_token_ids=stop_token_ids,
         )
 
         batch_size = input_ids.shape[0]
@@ -213,7 +203,7 @@ class VLLMVLForGeneration:
 
         inputs = []
         for i, row in enumerate(input_ids):
-            token_ids = [t for t in row.tolist() if t != 0]
+            token_ids = [t for t in row.tolist() if t != pad_token_id]
             entry: Dict[str, Any] = {"prompt_token_ids": token_ids}
             if normalized_images is not None and normalized_images[i]:
                 imgs = normalized_images[i]

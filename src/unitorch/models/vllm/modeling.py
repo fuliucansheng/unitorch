@@ -1,6 +1,7 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
+import atexit
 import torch
 from typing import Any, Dict, List, Optional, Union
 from vllm import LLM, SamplingParams
@@ -61,6 +62,7 @@ class VLLMForGeneration:
             kwargs["quantization"] = quantization
 
         self.llm = LLM(model=hf_name_or_folder, **kwargs)
+        atexit.register(self.shutdown)
 
     def cuda(self, device=None):
         # vLLM manages GPU placement internally at engine init time.
@@ -80,6 +82,13 @@ class VLLMForGeneration:
         # Post-init checkpoint loading is not supported and is silently ignored.
         pass
 
+    def shutdown(self):
+        """Shutdown the vLLM engine and release GPU memory held by worker processes."""
+        try:
+            self.llm.llm_engine.engine_core.shutdown()
+        except Exception:
+            pass
+
     def generate(
         self,
         input_ids: torch.Tensor,
@@ -92,6 +101,7 @@ class VLLMForGeneration:
         top_p: Optional[float] = 1.0,
         repetition_penalty: Optional[float] = 1.0,
         stop: Optional[Union[str, List[str]]] = None,
+        pad_token_id: Optional[int] = 0,
     ) -> List[List[List[int]]]:
         """
         Generates token sequences for the given input_ids.
@@ -115,6 +125,10 @@ class VLLMForGeneration:
             List[List[List[int]]]: Generated token ID sequences,
             shape ``[batch][num_return_sequences][seq_len]``.
         """
+        # Always stop at <|im_end|> (151645) and <|endoftext|> (151643) so that
+        # vLLM does not generate past the model's answer turn into reasoning/thinking text.
+        stop_token_ids = [151643, 151645]
+
         sampling_params = SamplingParams(
             n=num_return_sequences,
             max_tokens=max_gen_seq_length,
@@ -124,11 +138,12 @@ class VLLMForGeneration:
             top_p=top_p if do_sample else 1.0,
             repetition_penalty=repetition_penalty,
             stop=stop,
+            stop_token_ids=stop_token_ids,
         )
 
-        # Convert tensor rows to prompt_token_ids format (strips padding zeros)
+        # Convert tensor rows to prompt_token_ids format (strips padding tokens)
         prompts = [
-            {"prompt_token_ids": [t for t in row.tolist() if t != 0]}
+            {"prompt_token_ids": [t for t in row.tolist() if t != pad_token_id]}
             for row in input_ids
         ]
 

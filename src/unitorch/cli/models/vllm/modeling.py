@@ -113,7 +113,7 @@ class QWen3VLLMForGeneration(_VLLMForGeneration):
         top_p: Optional[float] = 1.0,
         repetition_penalty: Optional[float] = 1.0,
         stop: Optional[Union[str, List[str]]] = None,
-        pad_token_id: Optional[int] = 0,
+        pad_token_id: Optional[int] = 151643,
     ) -> GenerationOutputs:
         """
         Generates sequences for the given input token IDs.
@@ -146,6 +146,7 @@ class QWen3VLLMForGeneration(_VLLMForGeneration):
             top_p=top_p,
             repetition_penalty=repetition_penalty,
             stop=stop,
+            pad_token_id=pad_token_id,
         )
         sequences = _pad_token_ids(batch_token_ids, pad_token_id, max_gen_seq_length)
         return GenerationOutputs(sequences=sequences)

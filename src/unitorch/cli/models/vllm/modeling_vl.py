@@ -103,17 +103,22 @@ class QWen3VLVLLMForGeneration(_VLLMVLForGeneration):
         top_p: Optional[float] = 1.0,
         repetition_penalty: Optional[float] = 1.0,
         stop: Optional[Union[str, List[str]]] = None,
-        pad_token_id: Optional[int] = 0,
+        pad_token_id: Optional[int] = 151643,
     ) -> GenerationOutputs:
         """
         Generates sequences for the given text and image inputs.
 
+        Passes already-preprocessed ``pixel_values`` (shape ``(B, num_patches, channels)``)
+        and ``image_grid_thw`` directly to vLLM via ``mm_processor_kwargs``, bypassing
+        vLLM's own image pre-processing pipeline so that the unitorch processor output
+        is used as-is (matching the HuggingFace reference implementation).
+
         Args:
             input_ids (torch.Tensor): Input token ID tensor of shape ``(batch, seq_len)``.
-            pixel_values (torch.Tensor, optional): Pixel-values tensor ``(B, C, H, W)``
-                or ``(C, H, W)``. Passed to vLLM as PIL images after conversion.
-            image_grid_thw (torch.Tensor, optional): Unused; accepted for interface
-                compatibility with the standard QWen3-VL generate signature.
+            pixel_values (torch.Tensor, optional): Pre-processed patch tensor of shape
+                ``(B, num_patches, channels)`` produced by the unitorch QWenVL processor.
+            image_grid_thw (torch.Tensor, optional): Grid metadata tensor of shape
+                ``(B, 3)`` containing ``(temporal, height, width)`` patch counts per sample.
             max_gen_seq_length (int): Maximum tokens to generate. Defaults to 512.
             min_gen_seq_length (int): Minimum tokens to generate. Defaults to 0.
             num_return_sequences (int): Completions per prompt. Defaults to 1.
@@ -128,18 +133,46 @@ class QWen3VLVLLMForGeneration(_VLLMVLForGeneration):
         Returns:
             GenerationOutputs: Sequences tensor of shape ``(batch, num_return_sequences, max_gen_seq_length)``.
         """
-        batch_token_ids = super().generate(
-            input_ids=input_ids,
-            images=pixel_values,
-            max_gen_seq_length=max_gen_seq_length,
-            min_gen_seq_length=min_gen_seq_length,
-            num_return_sequences=num_return_sequences,
-            do_sample=do_sample,
-            temperature=temperature,
-            top_k=top_k,
-            top_p=top_p,
+        from vllm import SamplingParams
+
+        # Always stop at <|im_end|> (151645) and <|endoftext|> (151643) so vLLM
+        # does not generate past the model's answer turn into reasoning/thinking text.
+        stop_token_ids = [151643, 151645]
+
+        sampling_params = SamplingParams(
+            n=num_return_sequences,
+            max_tokens=max_gen_seq_length,
+            min_tokens=min_gen_seq_length,
+            temperature=temperature if do_sample else 0.0,
+            top_k=top_k if do_sample else -1,
+            top_p=top_p if do_sample else 1.0,
             repetition_penalty=repetition_penalty,
             stop=stop,
+            stop_token_ids=stop_token_ids,
         )
+
+        batch_size = input_ids.shape[0]
+        inputs = []
+        for i in range(batch_size):
+            token_ids = [t for t in input_ids[i].tolist() if t != pad_token_id]
+            entry: Dict[str, Any] = {"prompt_token_ids": token_ids}
+            if pixel_values is not None and image_grid_thw is not None:
+                # Pass pre-processed patch tensor directly to the vLLM model via
+                # multi_modal_data.  Qwen2VLMultiModalDataParserV2 (registered via
+                # @replace in unitorch.models.vllm.modeling_vl) extends vLLM's
+                # data parser to accept {"pixel_values", "image_grid_thw"} dicts,
+                # routing them to DictEmbeddingItems so the vision encoder receives
+                # the exact same patches that the unitorch Qwen2VLImageProcessor
+                # produced — bypassing vLLM's own image preprocessing pipeline.
+                entry["multi_modal_data"] = {
+                    "image": {
+                        "pixel_values": pixel_values[i].to(torch.bfloat16),
+                        "image_grid_thw": image_grid_thw[i],
+                    }
+                }
+            inputs.append(entry)
+
+        outputs = self.llm.generate(inputs, sampling_params=sampling_params)
+        batch_token_ids = [[o.token_ids for o in req.outputs] for req in outputs]
         sequences = _pad_token_ids(batch_token_ids, pad_token_id, max_gen_seq_length)
         return GenerationOutputs(sequences=sequences)

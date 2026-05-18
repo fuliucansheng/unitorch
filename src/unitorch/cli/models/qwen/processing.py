@@ -272,7 +272,13 @@ class QWenProcessor(_QWenProcessor):
         assert results.shape[0] == 0 or results.shape[0] == outputs.sequences.shape[0]
 
         decoded = super().detokenize(sequences=outputs.sequences)
-        cleanup_string = lambda text: re.sub(r"\n", " ", text)
+
+        def cleanup_string(text: str) -> str:
+            # Strip any thinking-mode CoT blocks emitted by Qwen3 reasoning models.
+            text = re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL)
+            # Collapse newlines into spaces for TSV/CSV output compatibility.
+            text = re.sub(r"\n", " ", text)
+            return text.strip()
         if isinstance(decoded[0], list):
             decoded = [list(map(cleanup_string, sequence)) for sequence in decoded]
         elif isinstance(decoded[0], str):
