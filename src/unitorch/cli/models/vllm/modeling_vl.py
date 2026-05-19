@@ -135,9 +135,10 @@ class QWen3VLVLLMForGeneration(_VLLMVLForGeneration):
         """
         from vllm import SamplingParams
 
-        # Always stop at <|im_end|> (151645) and <|endoftext|> (151643) so vLLM
-        # does not generate past the model's answer turn into reasoning/thinking text.
-        stop_token_ids = [151643, 151645]
+        # Qwen3-VL may emit <|im_end|> before the visible answer content, so
+        # treating it as a hard stop can collapse the response to an empty
+        # string. Use <|endoftext|> as the only stop token here.
+        stop_token_ids = [151643]
 
         sampling_params = SamplingParams(
             n=num_return_sequences,
@@ -155,8 +156,11 @@ class QWen3VLVLLMForGeneration(_VLLMVLForGeneration):
         inputs = []
         for i in range(batch_size):
             token_ids = [t for t in input_ids[i].tolist() if t != pad_token_id]
-            entry: Dict[str, Any] = {"prompt_token_ids": token_ids}
+            entry: Dict[str, Any] = {"prompt": self._decode_prompt(token_ids)}
             if pixel_values is not None and image_grid_thw is not None:
+                grid_thw = image_grid_thw[i]
+                if grid_thw.dim() == 1:
+                    grid_thw = grid_thw.unsqueeze(0)
                 # Pass pre-processed patch tensor directly to the vLLM model via
                 # multi_modal_data.  Qwen2VLMultiModalDataParserV2 (registered via
                 # @replace in unitorch.models.vllm.modeling_vl) extends vLLM's
@@ -167,7 +171,7 @@ class QWen3VLVLLMForGeneration(_VLLMVLForGeneration):
                 entry["multi_modal_data"] = {
                     "image": {
                         "pixel_values": pixel_values[i].to(torch.bfloat16),
-                        "image_grid_thw": image_grid_thw[i],
+                        "image_grid_thw": grid_thw,
                     }
                 }
             inputs.append(entry)

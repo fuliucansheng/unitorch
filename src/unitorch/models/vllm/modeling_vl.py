@@ -68,6 +68,7 @@ class VLLMVLForGeneration:
             kwargs["quantization"] = quantization
 
         self.llm = LLM(model=hf_name_or_folder, **kwargs)
+        self.tokenizer = self.llm.get_tokenizer()
         atexit.register(self.shutdown)
 
     def cuda(self, device=None):
@@ -94,6 +95,49 @@ class VLLMVLForGeneration:
             self.llm.llm_engine.engine_core.shutdown()
         except Exception:
             pass
+
+    def _decode_prompt(self, token_ids: List[int]) -> str:
+        """
+        Decode prompt token IDs back to the multimodal prompt string expected by vLLM.
+
+        The unitorch processor expands a single ``<|image_pad|>`` / ``<|video_pad|>``
+        placeholder into a long run of repeated special tokens based on the visual
+        grid size. vLLM expects the *unexpanded* chat-template string and performs
+        the multimodal expansion internally, so we collapse those runs before
+        decoding the prompt text.
+        """
+        image_token_id = getattr(self.tokenizer, "image_token_id", None)
+        if image_token_id is None and hasattr(self.tokenizer, "convert_tokens_to_ids"):
+            image_token_id = self.tokenizer.convert_tokens_to_ids("<|image_pad|>")
+
+        video_token_id = getattr(self.tokenizer, "video_token_id", None)
+        if video_token_id is None and hasattr(self.tokenizer, "convert_tokens_to_ids"):
+            video_token_id = self.tokenizer.convert_tokens_to_ids("<|video_pad|>")
+        mm_token_ids = {
+            token_id
+            for token_id in (image_token_id, video_token_id)
+            if token_id is not None
+        }
+        if mm_token_ids:
+            collapsed = []
+            for token_id in token_ids:
+                if (
+                    token_id in mm_token_ids
+                    and collapsed
+                    and collapsed[-1] == token_id
+                ):
+                    continue
+                collapsed.append(token_id)
+            token_ids = collapsed
+
+        try:
+            return self.tokenizer.batch_decode(
+                [token_ids],
+                skip_special_tokens=False,
+                clean_up_tokenization_spaces=False,
+            )[0]
+        except TypeError:
+            return self.tokenizer.decode(token_ids, skip_special_tokens=False)
 
     def _normalize_images(
         self,
@@ -182,9 +226,10 @@ class VLLMVLForGeneration:
             List[List[List[int]]]: Generated token ID sequences,
             shape ``[batch][num_return_sequences][seq_len]``.
         """
-        # Always stop at <|im_end|> (151645) and <|endoftext|> (151643) so that
-        # vLLM does not generate past the model's answer turn into reasoning/thinking text.
-        stop_token_ids = [151643, 151645]
+        # Qwen3-VL may legitimately emit <|im_end|> as part of the assistant turn
+        # boundary, so stopping on it can truncate the entire answer. Keep
+        # <|endoftext|> as the only hard stop token.
+        stop_token_ids = [151643]
 
         sampling_params = SamplingParams(
             n=num_return_sequences,
@@ -204,12 +249,15 @@ class VLLMVLForGeneration:
         inputs = []
         for i, row in enumerate(input_ids):
             token_ids = [t for t in row.tolist() if t != pad_token_id]
-            entry: Dict[str, Any] = {"prompt_token_ids": token_ids}
+            entry: Dict[str, Any]
             if normalized_images is not None and normalized_images[i]:
                 imgs = normalized_images[i]
+                entry = {"prompt": self._decode_prompt(token_ids)}
                 entry["multi_modal_data"] = {
                     "image": imgs[0] if len(imgs) == 1 else imgs
                 }
+            else:
+                entry = {"prompt_token_ids": token_ids}
             inputs.append(entry)
 
         outputs = self.llm.generate(inputs, sampling_params=sampling_params)

@@ -123,14 +123,15 @@ class QWen3VLVLLMFastAPI(GenericFastAPI):
             text=prompt,
             images=[pil_image] if pil_image is not None else [],
         )
-        import torch
         input_ids = inputs.input_ids.unsqueeze(0)
         pixel_values = inputs.pixel_values.unsqueeze(0) if pil_image is not None else None
+        image_grid_thw = inputs.image_grid_thw if pil_image is not None else None
 
         async with self._lock:
             outputs = self._pipe.generate(
                 input_ids=input_ids,
                 pixel_values=pixel_values,
+                image_grid_thw=image_grid_thw,
                 max_gen_seq_length=max_gen_seq_length,
                 min_gen_seq_length=min_gen_seq_length,
                 num_return_sequences=num_return_sequences,
