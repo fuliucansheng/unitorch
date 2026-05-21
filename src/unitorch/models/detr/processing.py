@@ -47,7 +47,9 @@ class DetrProcessor:
         scale = torch.tensor([org_w, org_h, org_w, org_h], dtype=torch.float)
         bboxes = bboxes / scale
         classes = torch.tensor(classes)
-        assert bboxes.size(-1) == 4 and classes.dim() == 1 and len(classes) == len(bboxes)
+        assert (
+            bboxes.size(-1) == 4 and classes.dim() == 1 and len(classes) == len(bboxes)
+        )
         return GenericOutputs(image=outputs.image, bboxes=bboxes, classes=classes)
 
     def segmentation(

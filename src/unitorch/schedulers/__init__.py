@@ -133,7 +133,9 @@ class SchedulerCheckpointMixin:
         for key in missed_keys:
             logging.debug(
                 "%s: key '%s' (shape %s) not found in pretrained weights.",
-                type(self).__name__, key, self_state_dict[key].shape,
+                type(self).__name__,
+                key,
+                self_state_dict[key].shape,
             )
 
         logging.info("%s loaded weights (%.0f%%)", type(self).__name__, load_percent)

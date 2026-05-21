@@ -54,9 +54,7 @@ class LlavaMistralClipLoraForClassification(_LlavaMistralClipLoraForClassificati
         )
 
     @classmethod
-    @config_defaults_init(
-        "core/model/classification/peft/lora/llava/mistral_clip"
-    )
+    @config_defaults_init("core/model/classification/peft/lora/llava/mistral_clip")
     def from_config(cls, config, **kwargs):
         config.set_default_section(
             "core/model/classification/peft/lora/llava/mistral_clip"
@@ -247,9 +245,7 @@ class LlavaMistralClipLoraForGeneration(_LlavaMistralClipLoraForGeneration):
         )
         return GenerationOutputs(sequences=outputs)
 
-    @config_defaults_method(
-        "core/model/generation/peft/lora/llava/mistral_clip"
-    )
+    @config_defaults_method("core/model/generation/peft/lora/llava/mistral_clip")
     @torch.no_grad()
     @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
     def generate(
@@ -408,9 +404,7 @@ class LlavaLlamaSiglipLoraForGeneration(_LlavaLlamaSiglipLoraForGeneration):
         )
         return GenerationOutputs(sequences=outputs)
 
-    @config_defaults_method(
-        "core/model/generation/peft/lora/llava/llama_siglip"
-    )
+    @config_defaults_method("core/model/generation/peft/lora/llava/llama_siglip")
     @torch.no_grad()
     @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
     def generate(

@@ -29,9 +29,7 @@ def make_grid(
     Raises:
         AssertionError: If ``len(images) != rows * cols``.
     """
-    assert len(images) == rows * cols, (
-        "Number of images must equal rows * cols."
-    )
+    assert len(images) == rows * cols, "Number of images must equal rows * cols."
     w, h = resize if resize is not None else images[0].size
     grid = Image.new("RGB", (w * cols, h * rows))
     for i, image in enumerate(images):

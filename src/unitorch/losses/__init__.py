@@ -42,7 +42,9 @@ class CELoss(nn.Module):
             smooth_label.scatter_(1, target.unsqueeze(1), 1.0 - self.smoothing_alpha)
             loss = -torch.sum(torch.log_softmax(input, dim=1) * smooth_label, dim=1)
         else:
-            loss = nn.CrossEntropyLoss(weight=self.weight, reduction="none")(input, target).squeeze()
+            loss = nn.CrossEntropyLoss(weight=self.weight, reduction="none")(
+                input, target
+            ).squeeze()
 
         if sample_weight is not None:
             loss = loss * sample_weight
@@ -72,7 +74,9 @@ class BCELoss(nn.Module):
         if target.dim() == 1:
             target = target.unsqueeze(1)
         assert input.dim() == 2 and target.dim() == 2
-        loss = nn.BCEWithLogitsLoss(weight=self.weight, reduction="none")(input, target.float())
+        loss = nn.BCEWithLogitsLoss(weight=self.weight, reduction="none")(
+            input, target.float()
+        )
         loss = loss.sum(dim=1)
         if sample_weight is not None:
             loss = loss * sample_weight
@@ -130,7 +134,9 @@ class MSELoss(nn.Module):
     ) -> torch.Tensor:
         assert input.size(0) == target.size(0) and input.numel() == target.numel()
         batch_size = input.size(0)
-        loss = nn.MSELoss(reduction="none")(input.view(batch_size, -1), target.view(batch_size, -1))
+        loss = nn.MSELoss(reduction="none")(
+            input.view(batch_size, -1), target.view(batch_size, -1)
+        )
         if loss.dim() > 1:
             loss = loss.sum(dim=1)
         if sample_weight is not None:

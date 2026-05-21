@@ -123,7 +123,9 @@ def infer(model, data_loader):
                 [o.loss for o in all_outputs], device=all_outputs[0].loss.device
             )
         )
-        combined = combined.cuda().sync().cpu() if dist.is_initialized() else combined.cpu()
+        combined = (
+            combined.cuda().sync().cpu() if dist.is_initialized() else combined.cpu()
+        )
         return GenericOutputs(outputs=combined, targets=None)
 
     outputs = type(all_outputs[0]).union(*all_outputs)
@@ -157,14 +159,14 @@ def save_snapshot(
     iter_dev,
     score_fn,
     monitor_fns,
-    optim=None,            # optimizer instance, saved when ``save_optimizer`` is True
-    scheduler=None,        # LR scheduler instance, saved when ``save_scheduler`` is True
+    optim=None,  # optimizer instance, saved when ``save_optimizer`` is True
+    scheduler=None,  # LR scheduler instance, saved when ``save_scheduler`` is True
     save_checkpoint="default",  # one of "default" | "best" | "latest" | "every" | "all"
-    ema_model=None,        # EMA shadow model; replaces ``model`` for scoring when provided
-    best_score=-np.inf,    # best validation score seen so far
-    info_path=None,        # path to ``info.json`` for persisting training state
-    local_rank=-1,         # only rank 0 (or -1 for single-GPU) writes checkpoints
-    **kwargs,              # extra fields forwarded to ``info.json`` (e.g. global_epoch)
+    ema_model=None,  # EMA shadow model; replaces ``model`` for scoring when provided
+    best_score=-np.inf,  # best validation score seen so far
+    info_path=None,  # path to ``info.json`` for persisting training state
+    local_rank=-1,  # only rank 0 (or -1 for single-GPU) writes checkpoints
+    **kwargs,  # extra fields forwarded to ``info.json`` (e.g. global_epoch)
 ):
     """Evaluate, update best score, and save checkpoints according to *save_checkpoint* policy.
 
@@ -188,22 +190,34 @@ def save_snapshot(
         if model:
             model.save_checkpoint(ckpt_dir=ckpt_dir, weight_name="pytorch_model.bin")
         if ema_model:
-            ema_model.save_checkpoint(ckpt_dir=ckpt_dir, weight_name="pytorch_ema_model.bin")
+            ema_model.save_checkpoint(
+                ckpt_dir=ckpt_dir, weight_name="pytorch_ema_model.bin"
+            )
         if optim:
             optim.save_checkpoint(ckpt_dir=ckpt_dir, weight_name="pytorch_optim.bin")
         if scheduler:
-            scheduler.save_checkpoint(ckpt_dir=ckpt_dir, weight_name="pytorch_scheduler.bin")
+            scheduler.save_checkpoint(
+                ckpt_dir=ckpt_dir, weight_name="pytorch_scheduler.bin"
+            )
 
     if save_checkpoint in ("all", "default", "latest"):
         if model:
-            model.save_checkpoint(ckpt_dir=ckpt_dir, weight_name="pytorch_model_latest.bin")
+            model.save_checkpoint(
+                ckpt_dir=ckpt_dir, weight_name="pytorch_model_latest.bin"
+            )
         if ema_model:
-            ema_model.save_checkpoint(ckpt_dir=ckpt_dir, weight_name="pytorch_ema_model_latest.bin")
+            ema_model.save_checkpoint(
+                ckpt_dir=ckpt_dir, weight_name="pytorch_ema_model_latest.bin"
+            )
             kwargs["num_ema_steps"] = ema_model.num_steps
         if optim:
-            optim.save_checkpoint(ckpt_dir=ckpt_dir, weight_name="pytorch_optim_latest.bin")
+            optim.save_checkpoint(
+                ckpt_dir=ckpt_dir, weight_name="pytorch_optim_latest.bin"
+            )
         if scheduler:
-            scheduler.save_checkpoint(ckpt_dir=ckpt_dir, weight_name="pytorch_scheduler_latest.bin")
+            scheduler.save_checkpoint(
+                ckpt_dir=ckpt_dir, weight_name="pytorch_scheduler_latest.bin"
+            )
 
     if save_checkpoint in ("all", "every"):
         if model:
@@ -231,9 +245,9 @@ class SupervisedTask:
         configure,
         model,
         datasets,
-        local_rank: int = -1,     # GPU index for distributed training; -1 for single-GPU
-        seed: int = 1123,          # global random seed for reproducibility
-        cpu_offload: bool = False, # keep model on CPU (e.g. for CPU-only environments)
+        local_rank: int = -1,  # GPU index for distributed training; -1 for single-GPU
+        seed: int = 1123,  # global random seed for reproducibility
+        cpu_offload: bool = False,  # keep model on CPU (e.g. for CPU-only environments)
     ):
         set_seed(seed)
         self.n_gpu = 1 if torch.cuda.is_available() else 0
@@ -282,30 +296,32 @@ class SupervisedTask:
     @config_defaults_method("core/task/supervised")
     def train(
         self,
-        optim: str,                                     # registered optimizer name
-        loss_fn: str,                                   # registered loss function name
-        score_fn: str,                                  # registered scoring function name
-        monitor_fns: Optional[Union[str, List[str]]] = None,  # extra metrics logged at checkpoints
-        scheduler: Optional[str] = None,               # registered LR scheduler name
-        from_ckpt_dir: str = "./from_ckpt",            # directory to load pretrained weights from
-        to_ckpt_dir: str = "./to_ckpt",                # directory to write checkpoints to
-        train_batch_size: int = 128,                   # per-GPU batch size for training
-        dev_batch_size: int = 128,                     # per-GPU batch size for validation
-        pin_memory: bool = True,                       # pin DataLoader memory for faster GPU transfer
-        num_workers: int = 4,                          # DataLoader worker processes
-        save_optimizer: bool = True,                   # include optimizer state in checkpoints
-        save_scheduler: bool = True,                   # include scheduler state in checkpoints
-        save_checkpoint: str = "default",              # checkpoint policy: default/best/latest/every/all
-        log_freq: int = 100,                           # log training loss every N steps
-        ckpt_freq: int = 10000,                        # save checkpoint every N steps
-        grad_acc_step: int = 1,                        # gradient accumulation steps before optimizer update
-        max_grad_norm: float = 1.0,                    # gradient clipping max norm
-        num_training_samples: int = 1_000_000_000,     # fallback total samples for iterable datasets
-        epochs: int = 5,                               # total training epochs
-        use_ema: bool = False,                         # maintain an EMA shadow model for evaluation
-        ema_decay: float = 0.9999,                     # EMA decay factor
-        ema_tau: int = 2000,                           # EMA warm-up steps
-        use_amp: bool = True,                          # enable automatic mixed precision (FP16)
+        optim: str,  # registered optimizer name
+        loss_fn: str,  # registered loss function name
+        score_fn: str,  # registered scoring function name
+        monitor_fns: Optional[
+            Union[str, List[str]]
+        ] = None,  # extra metrics logged at checkpoints
+        scheduler: Optional[str] = None,  # registered LR scheduler name
+        from_ckpt_dir: str = "./from_ckpt",  # directory to load pretrained weights from
+        to_ckpt_dir: str = "./to_ckpt",  # directory to write checkpoints to
+        train_batch_size: int = 128,  # per-GPU batch size for training
+        dev_batch_size: int = 128,  # per-GPU batch size for validation
+        pin_memory: bool = True,  # pin DataLoader memory for faster GPU transfer
+        num_workers: int = 4,  # DataLoader worker processes
+        save_optimizer: bool = True,  # include optimizer state in checkpoints
+        save_scheduler: bool = True,  # include scheduler state in checkpoints
+        save_checkpoint: str = "default",  # checkpoint policy: default/best/latest/every/all
+        log_freq: int = 100,  # log training loss every N steps
+        ckpt_freq: int = 10000,  # save checkpoint every N steps
+        grad_acc_step: int = 1,  # gradient accumulation steps before optimizer update
+        max_grad_norm: float = 1.0,  # gradient clipping max norm
+        num_training_samples: int = 1_000_000_000,  # fallback total samples for iterable datasets
+        epochs: int = 5,  # total training epochs
+        use_ema: bool = False,  # maintain an EMA shadow model for evaluation
+        ema_decay: float = 0.9999,  # EMA decay factor
+        ema_tau: int = 2000,  # EMA warm-up steps
+        use_amp: bool = True,  # enable automatic mixed precision (FP16)
     ):
         if self.local_rank in [-1, 0]:
             os.makedirs(to_ckpt_dir, exist_ok=True)
@@ -334,7 +350,9 @@ class SupervisedTask:
             self.model.from_checkpoint(from_ckpt_dir)
             optim.from_checkpoint(from_ckpt_dir, weight_name="pytorch_optim.bin")
         if os.path.exists(to_ckpt_dir):
-            self.model.from_checkpoint(to_ckpt_dir, weight_name="pytorch_model_latest.bin")
+            self.model.from_checkpoint(
+                to_ckpt_dir, weight_name="pytorch_model_latest.bin"
+            )
             optim.from_checkpoint(to_ckpt_dir, weight_name="pytorch_optim_latest.bin")
 
         info_path = os.path.join(to_ckpt_dir, "info.json")
@@ -358,14 +376,22 @@ class SupervisedTask:
                 num_steps=info.get("num_ema_steps", 0),
             )
             if os.path.exists(from_ckpt_dir):
-                self.ema_model.from_checkpoint(from_ckpt_dir, weight_name="pytorch_ema_model.bin")
+                self.ema_model.from_checkpoint(
+                    from_ckpt_dir, weight_name="pytorch_ema_model.bin"
+                )
             if os.path.exists(to_ckpt_dir):
-                self.ema_model.from_checkpoint(to_ckpt_dir, weight_name="pytorch_ema_model_latest.bin")
+                self.ema_model.from_checkpoint(
+                    to_ckpt_dir, weight_name="pytorch_ema_model_latest.bin"
+                )
 
         for name, param in self.model.named_parameters():
             logging.debug(
                 "%s: trainable=%s dtype=%s shape=%s device=%s",
-                name, param.requires_grad, param.dtype, param.shape, param.device,
+                name,
+                param.requires_grad,
+                param.dtype,
+                param.shape,
+                param.device,
             )
 
         global_rank = -1
@@ -387,7 +413,11 @@ class SupervisedTask:
 
         iter_train = DataLoader(
             dataset_train,
-            sampler=train_sampler(dataset_train) if not isinstance(dataset_train, Iterable) else None,
+            sampler=(
+                train_sampler(dataset_train)
+                if not isinstance(dataset_train, Iterable)
+                else None
+            ),
             batch_size=train_batch_size,
             shuffle=False,
             pin_memory=pin_memory,
@@ -396,7 +426,11 @@ class SupervisedTask:
         )
         iter_dev = DataLoader(
             dataset_dev,
-            sampler=dev_sampler(dataset_dev) if not isinstance(dataset_dev, Iterable) else None,
+            sampler=(
+                dev_sampler(dataset_dev)
+                if not isinstance(dataset_dev, Iterable)
+                else None
+            ),
             batch_size=dev_batch_size,
             shuffle=False,
             pin_memory=pin_memory,
@@ -407,13 +441,19 @@ class SupervisedTask:
         if scheduler is not None:
             if not isinstance(dataset_train, Iterable):
                 num_training_steps = int(
-                    epochs * len(dataset_train) // train_batch_size
-                    // max(1, self.n_gpu) // grad_acc_step
+                    epochs
+                    * len(dataset_train)
+                    // train_batch_size
+                    // max(1, self.n_gpu)
+                    // grad_acc_step
                 )
             else:
                 num_training_steps = int(
-                    epochs * num_training_samples // train_batch_size
-                    // max(1, self.n_gpu) // grad_acc_step
+                    epochs
+                    * num_training_samples
+                    // train_batch_size
+                    // max(1, self.n_gpu)
+                    // grad_acc_step
                 )
             scheduler = init_registered_module(
                 scheduler,
@@ -424,7 +464,9 @@ class SupervisedTask:
             )
 
         if scheduler is not None and os.path.exists(to_ckpt_dir):
-            scheduler.from_checkpoint(to_ckpt_dir, weight_name="pytorch_scheduler_latest.bin")
+            scheduler.from_checkpoint(
+                to_ckpt_dir, weight_name="pytorch_scheduler_latest.bin"
+            )
 
         # AMP gradient scaler; only created when use_amp=True
         scaler = torch.amp.GradScaler("cuda") if use_amp else None
@@ -498,7 +540,8 @@ class SupervisedTask:
                 ):
                     outputs = self.model(**inputs.dict())
                     loss = (
-                        outputs.loss if isinstance(outputs, LossOutputs)
+                        outputs.loss
+                        if isinstance(outputs, LossOutputs)
                         else loss_fn(outputs=outputs, targets=targets)
                     ) / grad_acc_step
 
@@ -547,9 +590,9 @@ class SupervisedTask:
     @config_defaults_method("core/task/supervised")
     def eval(
         self,
-        monitor_fns: Union[str, List[str]],     # list of registered scoring function names
-        from_ckpt_dir: str = "./from_ckpt",     # directory to load model weights from
-        dev_batch_size: int = 128,              # per-GPU batch size for evaluation
+        monitor_fns: Union[str, List[str]],  # list of registered scoring function names
+        from_ckpt_dir: str = "./from_ckpt",  # directory to load model weights from
+        dev_batch_size: int = 128,  # per-GPU batch size for evaluation
         pin_memory: bool = True,
         num_workers: int = 4,
     ):
@@ -577,7 +620,11 @@ class SupervisedTask:
         dataset_dev = self.datasets.get("dev")
         iter_dev = DataLoader(
             dataset_dev,
-            sampler=dev_sampler(dataset_dev) if not isinstance(dataset_dev, Iterable) else None,
+            sampler=(
+                dev_sampler(dataset_dev)
+                if not isinstance(dataset_dev, Iterable)
+                else None
+            ),
             batch_size=dev_batch_size,
             shuffle=False,
             pin_memory=pin_memory,
@@ -587,22 +634,28 @@ class SupervisedTask:
 
         results = infer(self.model.module if self.n_gpu > 1 else self.model, iter_dev)
         if global_rank in [-1, 0]:
-            monitor(outputs=results.outputs, targets=results.targets, monitor_fns=monitor_fns)
+            monitor(
+                outputs=results.outputs,
+                targets=results.targets,
+                monitor_fns=monitor_fns,
+            )
 
     @torch.no_grad()
     @config_defaults_method("core/task/supervised")
     def infer(
         self,
-        postprocess_fn: str,                     # registered postprocessing function name
-        writer: str,                             # registered writer name for output serialisation
-        test_batch_size: int = 128,             # per-GPU batch size for inference
+        postprocess_fn: str,  # registered postprocessing function name
+        writer: str,  # registered writer name for output serialisation
+        test_batch_size: int = 128,  # per-GPU batch size for inference
         pin_memory: bool = True,
         num_workers: int = 4,
-        max_size: int = 10000,                  # maximum queue depth for async postprocessing
-        from_ckpt_dir: str = "./from_ckpt",    # directory to load model weights from
-        output_header: Optional[List] = None,  # column names to copy from raw dataset into output
-        output_path: str = "./output.txt",     # file path for inference results
-        postprocess_workers: int = 2,          # number of parallel postprocessing workers
+        max_size: int = 10000,  # maximum queue depth for async postprocessing
+        from_ckpt_dir: str = "./from_ckpt",  # directory to load model weights from
+        output_header: Optional[
+            List
+        ] = None,  # column names to copy from raw dataset into output
+        output_path: str = "./output.txt",  # file path for inference results
+        postprocess_workers: int = 2,  # number of parallel postprocessing workers
     ):
         assert self.n_gpu <= 1, "inference only supports single-GPU mode"
         assert writer is not None
@@ -627,7 +680,11 @@ class SupervisedTask:
 
         iter_test = DataLoader(
             dataset_test,
-            sampler=sampler(dataset_test) if not isinstance(dataset_test, Iterable) else None,
+            sampler=(
+                sampler(dataset_test)
+                if not isinstance(dataset_test, Iterable)
+                else None
+            ),
             batch_size=test_batch_size,
             shuffle=False,
             pin_memory=pin_memory,
@@ -647,7 +704,11 @@ class SupervisedTask:
             data_info = DatasetFeature(dataset_test.dataset)
             iter_data = DataLoader(
                 deepcopy(data_info),
-                sampler=sampler(data_info) if not isinstance(dataset_test, Iterable) else None,
+                sampler=(
+                    sampler(data_info)
+                    if not isinstance(dataset_test, Iterable)
+                    else None
+                ),
                 batch_size=test_batch_size,
                 shuffle=False,
                 pin_memory=pin_memory,

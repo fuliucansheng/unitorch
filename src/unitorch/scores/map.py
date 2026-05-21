@@ -28,7 +28,9 @@ def _compute_average_precision(
     for i in range(mpre.size - 1, 0, -1):
         mpre[i - 1] = np.maximum(mpre[i - 1], mpre[i])
     change_pts = np.where(mrec[1:] != mrec[:-1])[0]
-    return float(np.sum((mrec[change_pts + 1] - mrec[change_pts]) * mpre[change_pts + 1]))
+    return float(
+        np.sum((mrec[change_pts + 1] - mrec[change_pts]) * mpre[change_pts + 1])
+    )
 
 
 def _compute_ap_score(
@@ -71,8 +73,7 @@ def _compute_ap_score(
         ]
 
     predicted_indexes = [
-        np.full(len(predicted_bboxes[i]), i)
-        for i in range(len(predicted_bboxes))
+        np.full(len(predicted_bboxes[i]), i) for i in range(len(predicted_bboxes))
     ]
 
     predicted_bboxes = np.concatenate(predicted_bboxes)
@@ -99,7 +100,8 @@ def _compute_ap_score(
             iy2 = np.minimum(gt_bboxes[:, 3], pred_bbox[3])
             inter = np.maximum(ix2 - ix1 + 1.0, 0.0) * np.maximum(iy2 - iy1 + 1.0, 0.0)
             union = (
-                (pred_bbox[2] - pred_bbox[0] + 1.0) * (pred_bbox[3] - pred_bbox[1] + 1.0)
+                (pred_bbox[2] - pred_bbox[0] + 1.0)
+                * (pred_bbox[3] - pred_bbox[1] + 1.0)
                 + (gt_bboxes[:, 2] - gt_bboxes[:, 0] + 1.0)
                 * (gt_bboxes[:, 3] - gt_bboxes[:, 1] + 1.0)
                 - inter
@@ -149,9 +151,13 @@ def map_score(
     per_threshold_ap = {
         iou: [
             _compute_ap_score(
-                predicted_bboxes, predicted_scores, predicted_classes,
-                ground_truth_bboxes, ground_truth_classes,
-                class_id=cls, threshold=iou / 100,
+                predicted_bboxes,
+                predicted_scores,
+                predicted_classes,
+                ground_truth_bboxes,
+                ground_truth_classes,
+                class_id=cls,
+                threshold=iou / 100,
             )
             for cls in unique_classes
         ]
@@ -182,9 +188,13 @@ def map50_score(
     unique_classes = set(np.concatenate(ground_truth_classes))
     ap_scores = [
         _compute_ap_score(
-            predicted_bboxes, predicted_scores, predicted_classes,
-            ground_truth_bboxes, ground_truth_classes,
-            class_id=cls, threshold=0.5,
+            predicted_bboxes,
+            predicted_scores,
+            predicted_classes,
+            ground_truth_bboxes,
+            ground_truth_classes,
+            class_id=cls,
+            threshold=0.5,
         )
         for cls in unique_classes
     ]

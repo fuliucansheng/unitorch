@@ -149,7 +149,7 @@ class VLLMForGeneration:
 
         outputs = self.llm.generate(prompts, sampling_params=sampling_params)
         return [[o.token_ids for o in req.outputs] for req in outputs]
-        
+
     async def async_generate(
         self,
         input_ids: torch.Tensor,

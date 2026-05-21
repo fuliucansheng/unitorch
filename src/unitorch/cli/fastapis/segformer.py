@@ -164,7 +164,9 @@ class SegformerForSegmentationFastAPI(GenericFastAPI):
     def router(self):
         return self._router
 
-    def start(self, pretrained_name: Optional[str] = "segformer-swin-tiny-ade-semantic"):
+    def start(
+        self, pretrained_name: Optional[str] = "segformer-swin-tiny-ade-semantic"
+    ):
         self._pipe = SegformerForSegmentationPipeline.from_config(
             self.config,
             pretrained_name=pretrained_name,

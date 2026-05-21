@@ -31,7 +31,9 @@ class CosineWarmupScheduler(optim.lr_scheduler.LambdaLR):
             progress = float(step - num_warmup_steps) / float(
                 max(1, num_training_steps - num_warmup_steps)
             )
-            return max(0.0, 0.5 * (1.0 + math.cos(math.pi * num_cycles * 2.0 * progress)))
+            return max(
+                0.0, 0.5 * (1.0 + math.cos(math.pi * num_cycles * 2.0 * progress))
+            )
 
         super().__init__(optimizer, lr_lambda, last_epoch)
 

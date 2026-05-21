@@ -128,7 +128,9 @@ class CheckpointMixin:
                 key,
                 self_state_dict[key].shape,
             )
-        load_percent = len(load_keys) / len(self_state_dict) * 100 if self_state_dict else 0
+        load_percent = (
+            len(load_keys) / len(self_state_dict) * 100 if self_state_dict else 0
+        )
         logging.info("%s loaded weights (%d%%)", type(self).__name__, int(load_percent))
 
 
@@ -174,7 +176,6 @@ from unitorch.models.onnx import GenericOnnxModel
 import unitorch.models.bart
 import unitorch.models.beit
 import unitorch.models.bert
-import unitorch.models.blip
 import unitorch.models.chinese_clip
 import unitorch.models.clip
 import unitorch.models.dinov2
@@ -187,18 +188,13 @@ import unitorch.models.mask2former
 import unitorch.models.mbart
 import unitorch.models.mistral
 import unitorch.models.onnx
-import unitorch.models.pegasus
 import unitorch.models.peft
 import unitorch.models.qwen
 import unitorch.models.roberta
 import unitorch.models.segformer
 import unitorch.models.siglip
 import unitorch.models.swin
-import unitorch.models.t5
-import unitorch.models.visualbert
-import unitorch.models.vit
 import unitorch.models.xlm_roberta
-import unitorch.models.xpegasus
 
 if is_diffusers_available():
     import unitorch.models.diffusers

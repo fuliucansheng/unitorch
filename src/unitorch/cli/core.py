@@ -96,7 +96,9 @@ class Config(configparser.ConfigParser):
         return save_path
 
     def hexsha(self, length: Optional[int] = None) -> str:
-        parts = sorted(f"{k}_{kk}_{vv}" for k, v in self.items() for kk, vv in v.items())
+        parts = sorted(
+            f"{k}_{kk}_{vv}" for k, v in self.items() for kk, vv in v.items()
+        )
         digest = hashlib.sha1("|".join(parts).encode()).hexdigest()
         return digest[:length] if length is not None else digest
 

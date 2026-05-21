@@ -7,7 +7,10 @@ from typing import List, Optional, Tuple, Union
 
 import torch
 
-from unitorch.scores.utils import convert_tensor_to_strings, remove_strings_ignore_tokens
+from unitorch.scores.utils import (
+    convert_tensor_to_strings,
+    remove_strings_ignore_tokens,
+)
 
 
 def _get_ngrams(segment: List, max_order: int) -> collections.Counter:
@@ -71,7 +74,9 @@ def _compute_bleu(
     precisions = [0.0] * max_order
     for i in range(max_order):
         if smooth:
-            precisions[i] = (matches_by_order[i] + 1.0) / (possible_matches_by_order[i] + 1.0)
+            precisions[i] = (matches_by_order[i] + 1.0) / (
+                possible_matches_by_order[i] + 1.0
+            )
         elif possible_matches_by_order[i] > 0:
             precisions[i] = float(matches_by_order[i]) / possible_matches_by_order[i]
 
@@ -84,7 +89,14 @@ def _compute_bleu(
     brevity_penalty = 1.0 if ratio > 1.0 else math.exp(1 - 1.0 / ratio)
     bleu = geo_mean * brevity_penalty
 
-    return bleu, precisions, brevity_penalty, ratio, translation_length, reference_length
+    return (
+        bleu,
+        precisions,
+        brevity_penalty,
+        ratio,
+        translation_length,
+        reference_length,
+    )
 
 
 def bleu_score(

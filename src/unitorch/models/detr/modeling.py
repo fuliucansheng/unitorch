@@ -5,7 +5,9 @@ from typing import List, Optional, Union
 
 import torch
 import torch.nn as nn
-from transformers.loss.loss_for_object_detection import HungarianMatcher as DetrHungarianMatcher
+from transformers.loss.loss_for_object_detection import (
+    HungarianMatcher as DetrHungarianMatcher,
+)
 from transformers.loss.loss_for_object_detection import ImageLoss as DetrLoss
 from transformers.models.detr import DetrConfig
 from transformers.models.detr.modeling_detr import DetrMLPPredictionHead, DetrModel
@@ -16,22 +18,28 @@ from unitorch.utils import image_list_to_tensor
 
 def _xyxy_to_xywh(boxes: torch.Tensor) -> torch.Tensor:
     """Convert [x1, y1, x2, y2] boxes to [cx, cy, w, h] format."""
-    return torch.stack([
-        (boxes[..., 0] + boxes[..., 2]) / 2,
-        (boxes[..., 1] + boxes[..., 3]) / 2,
-        boxes[..., 2] - boxes[..., 0],
-        boxes[..., 3] - boxes[..., 1],
-    ], dim=-1)
+    return torch.stack(
+        [
+            (boxes[..., 0] + boxes[..., 2]) / 2,
+            (boxes[..., 1] + boxes[..., 3]) / 2,
+            boxes[..., 2] - boxes[..., 0],
+            boxes[..., 3] - boxes[..., 1],
+        ],
+        dim=-1,
+    )
 
 
 def _xywh_to_xyxy(boxes: torch.Tensor) -> torch.Tensor:
     """Convert [cx, cy, w, h] boxes to [x1, y1, x2, y2] format."""
-    return torch.stack([
-        boxes[..., 0] - boxes[..., 2] / 2,
-        boxes[..., 1] - boxes[..., 3] / 2,
-        boxes[..., 0] + boxes[..., 2] / 2,
-        boxes[..., 1] + boxes[..., 3] / 2,
-    ], dim=-1)
+    return torch.stack(
+        [
+            boxes[..., 0] - boxes[..., 2] / 2,
+            boxes[..., 1] - boxes[..., 3] / 2,
+            boxes[..., 0] + boxes[..., 2] / 2,
+            boxes[..., 1] + boxes[..., 3] / 2,
+        ],
+        dim=-1,
+    )
 
 
 class DetrForDetection(GenericModel):
@@ -55,7 +63,9 @@ class DetrForDetection(GenericModel):
             self.config.num_labels = num_classes
 
         self.model = DetrModel(self.config)
-        self.class_labels_classifier = nn.Linear(self.config.d_model, self.config.num_labels + 1)
+        self.class_labels_classifier = nn.Linear(
+            self.config.d_model, self.config.num_labels + 1
+        )
         self.bbox_predictor = DetrMLPPredictionHead(
             input_dim=self.config.d_model,
             hidden_dim=self.config.d_model,
@@ -146,7 +156,9 @@ class DetrForDetection(GenericModel):
 
         outputs = self.model(images.to(self.dtype))
         logits = self.class_labels_classifier(outputs[0]).softmax(dim=-1)
-        pred_boxes = [_xywh_to_xyxy(b) for b in self.bbox_predictor(outputs[0]).sigmoid()]
+        pred_boxes = [
+            _xywh_to_xyxy(b) for b in self.bbox_predictor(outputs[0]).sigmoid()
+        ]
 
         scores, classes = zip(*[p.max(-1) for p in logits])
 

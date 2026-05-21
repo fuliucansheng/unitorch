@@ -111,7 +111,12 @@ class SamProcessor:
             binarize=False,
         )
 
-        output_masks, output_scores, output_rle_mask, output_bounding_boxes = [], [], [], []
+        output_masks, output_scores, output_rle_mask, output_bounding_boxes = (
+            [],
+            [],
+            [],
+            [],
+        )
         for _masks, _scores, _original_sizes, _input_boxes in zip(
             masks, scores, original_sizes, input_boxes
         ):

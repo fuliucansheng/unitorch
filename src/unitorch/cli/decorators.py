@@ -62,7 +62,9 @@ def config_defaults_method(section: str, default_params: Optional[Dict] = None):
     def decorator(func):
         def wrapped(*args, **kwargs):
             if args and hasattr(args[0], "__unitorch_setting__"):
-                kwargs = _resolve_kwargs(func, args[0].__unitorch_setting__, args, kwargs)
+                kwargs = _resolve_kwargs(
+                    func, args[0].__unitorch_setting__, args, kwargs
+                )
                 return func(args[0], **kwargs)
             logging.warning("__unitorch_setting__ not found; using default parameters.")
             return func(*args, **kwargs)

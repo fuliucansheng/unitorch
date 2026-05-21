@@ -1,9 +1,0 @@
-# Copyright (c) FULIUCANSHENG.
-# Licensed under the MIT License.
-
-from unitorch.cli import GenericService, registered_service, register_service
-
-import unitorch.cli.services.http_files
-import unitorch.cli.services.mirror
-import unitorch.cli.services.zip_files
-import unitorch.cli.services.zip_saver

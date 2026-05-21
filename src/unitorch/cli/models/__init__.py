@@ -4,7 +4,12 @@
 import numpy as np
 from typing import Dict
 
-from unitorch import is_diffusers_available, is_megatron_available, is_opencv_available, is_vllm_available
+from unitorch import (
+    is_diffusers_available,
+    is_megatron_available,
+    is_opencv_available,
+    is_vllm_available,
+)
 from unitorch.cli.models.modeling_utils import (
     LossOutputs,
     ModelInputs,
@@ -78,7 +83,6 @@ if is_vllm_available():
 import unitorch.cli.models.bart
 import unitorch.cli.models.beit
 import unitorch.cli.models.bert
-import unitorch.cli.models.blip
 import unitorch.cli.models.bria
 import unitorch.cli.models.chinese_clip
 import unitorch.cli.models.clip
@@ -92,7 +96,6 @@ import unitorch.cli.models.llava
 import unitorch.cli.models.mask2former
 import unitorch.cli.models.mbart
 import unitorch.cli.models.mistral
-import unitorch.cli.models.pegasus
 import unitorch.cli.models.peft
 import unitorch.cli.models.qwen
 import unitorch.cli.models.roberta
@@ -100,8 +103,4 @@ import unitorch.cli.models.sam
 import unitorch.cli.models.segformer
 import unitorch.cli.models.siglip
 import unitorch.cli.models.swin
-import unitorch.cli.models.t5
-import unitorch.cli.models.visualbert
-import unitorch.cli.models.vit
 import unitorch.cli.models.xlm_roberta
-import unitorch.cli.models.xpegasus

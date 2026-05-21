@@ -278,8 +278,7 @@ pretrained_stable_infos = {
     },
 }
 
-pretrained_stable_extensions_infos = {
-}
+pretrained_stable_extensions_infos = {}
 
 from unitorch.cli.models.diffusion_utils import load_weight
 

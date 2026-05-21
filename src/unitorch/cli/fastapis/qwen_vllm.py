@@ -51,7 +51,9 @@ class QWen3VLLMFastAPI(GenericFastAPI):
         )
         self.config.set_default_section("core/fastapi/vllm/qwen3")
         if pretrained_name_or_path is not None:
-            self.config.set("core/fastapi/vllm/qwen3", "pretrained_name", pretrained_name)
+            self.config.set(
+                "core/fastapi/vllm/qwen3", "pretrained_name", pretrained_name
+            )
         self._pipe = QWen3VLLMForGeneration.from_config(
             self.config,
             pretrained_name=pretrained_name,
@@ -66,6 +68,7 @@ class QWen3VLLMFastAPI(GenericFastAPI):
         gc.collect()
         try:
             import torch
+
             torch.cuda.empty_cache()
         except Exception:
             pass
@@ -113,9 +116,14 @@ class QWen3VLLMFastAPI(GenericFastAPI):
         """
         assert self._pipe is not None, "Service not started. Call /start first."
         processor = self._pipe.processor
-        prompt = processor.chat_template(messages=json.loads(text)) if use_chat_template else text
+        prompt = (
+            processor.chat_template(messages=json.loads(text))
+            if use_chat_template
+            else text
+        )
         inputs = processor.generation_inputs(text=prompt)
         import torch
+
         input_ids = inputs.input_ids.unsqueeze(0)
         async with self._lock:
             outputs = self._pipe.generate(

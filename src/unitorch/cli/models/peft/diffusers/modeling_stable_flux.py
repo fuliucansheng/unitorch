@@ -88,9 +88,7 @@ class StableFluxLoraForText2ImageGeneration(_StableFluxLoraForText2ImageGenerati
         )
 
     @classmethod
-    @config_defaults_init(
-        "core/model/diffusers/peft/lora/text2image/stable_flux"
-    )
+    @config_defaults_init("core/model/diffusers/peft/lora/text2image/stable_flux")
     def from_config(cls, config, **kwargs):
         config.set_default_section(
             "core/model/diffusers/peft/lora/text2image/stable_flux"
@@ -295,9 +293,7 @@ class StableFluxLoraForText2ImageGeneration(_StableFluxLoraForText2ImageGenerati
         )
         return LossOutputs(loss=loss)
 
-    @config_defaults_method(
-        "core/model/diffusers/peft/lora/text2image/stable_flux"
-    )
+    @config_defaults_method("core/model/diffusers/peft/lora/text2image/stable_flux")
     @autocast(
         device_type=("cuda" if torch.cuda.is_available() else "cpu"),
         dtype=(torch.bfloat16 if is_bfloat16_available() else torch.float32),
@@ -390,9 +386,7 @@ class StableFluxLoraForImageInpainting(_StableFluxLoraForImageInpainting):
         )
 
     @classmethod
-    @config_defaults_init(
-        "core/model/diffusers/peft/lora/inpainting/stable_flux"
-    )
+    @config_defaults_init("core/model/diffusers/peft/lora/inpainting/stable_flux")
     def from_config(cls, config, **kwargs):
         config.set_default_section(
             "core/model/diffusers/peft/lora/inpainting/stable_flux"
@@ -599,9 +593,7 @@ class StableFluxLoraForImageInpainting(_StableFluxLoraForImageInpainting):
         )
         return LossOutputs(loss=loss)
 
-    @config_defaults_method(
-        "core/model/diffusers/peft/lora/inpainting/stable_flux"
-    )
+    @config_defaults_method("core/model/diffusers/peft/lora/inpainting/stable_flux")
     @autocast(
         device_type=("cuda" if torch.cuda.is_available() else "cpu"),
         dtype=(torch.bfloat16 if is_bfloat16_available() else torch.float32),
@@ -699,9 +691,7 @@ class StableFluxLoraForKontext2ImageGeneration(
         )
 
     @classmethod
-    @config_defaults_init(
-        "core/model/diffusers/peft/lora/kontext2image/stable_flux"
-    )
+    @config_defaults_init("core/model/diffusers/peft/lora/kontext2image/stable_flux")
     def from_config(cls, config, **kwargs):
         config.set_default_section(
             "core/model/diffusers/peft/lora/kontext2image/stable_flux"
@@ -908,9 +898,7 @@ class StableFluxLoraForKontext2ImageGeneration(
         )
         return LossOutputs(loss=loss)
 
-    @config_defaults_method(
-        "core/model/diffusers/peft/lora/kontext2image/stable_flux"
-    )
+    @config_defaults_method("core/model/diffusers/peft/lora/kontext2image/stable_flux")
     @autocast(
         device_type=("cuda" if torch.cuda.is_available() else "cpu"),
         dtype=(torch.bfloat16 if is_bfloat16_available() else torch.float32),
@@ -1006,9 +994,7 @@ class StableFluxDPOLoraForText2ImageGeneration(
         )
 
     @classmethod
-    @config_defaults_init(
-        "core/model/diffusers/peft/dpo/lora/text2image/stable_flux"
-    )
+    @config_defaults_init("core/model/diffusers/peft/dpo/lora/text2image/stable_flux")
     def from_config(cls, config, **kwargs):
         config.set_default_section(
             "core/model/diffusers/peft/dpo/lora/text2image/stable_flux"
@@ -1208,9 +1194,7 @@ class StableFluxDPOLoraForText2ImageGeneration(
         )
         return LossOutputs(loss=loss)
 
-    @config_defaults_method(
-        "core/model/diffusers/peft/dpo/lora/text2image/stable_flux"
-    )
+    @config_defaults_method("core/model/diffusers/peft/dpo/lora/text2image/stable_flux")
     @autocast(
         device_type=("cuda" if torch.cuda.is_available() else "cpu"),
         dtype=(torch.bfloat16 if is_bfloat16_available() else torch.float32),
@@ -1302,9 +1286,7 @@ class StableFluxDPOLoraForImageInpainting(_StableFluxDPOLoraForImageInpainting):
         )
 
     @classmethod
-    @config_defaults_init(
-        "core/model/diffusers/peft/dpo/lora/inpainting/stable_flux"
-    )
+    @config_defaults_init("core/model/diffusers/peft/dpo/lora/inpainting/stable_flux")
     def from_config(cls, config, **kwargs):
         config.set_default_section(
             "core/model/diffusers/peft/dpo/lora/inpainting/stable_flux"
@@ -1506,9 +1488,7 @@ class StableFluxDPOLoraForImageInpainting(_StableFluxDPOLoraForImageInpainting):
         )
         return LossOutputs(loss=loss)
 
-    @config_defaults_method(
-        "core/model/diffusers/peft/dpo/lora/inpainting/stable_flux"
-    )
+    @config_defaults_method("core/model/diffusers/peft/dpo/lora/inpainting/stable_flux")
     @autocast(
         device_type=("cuda" if torch.cuda.is_available() else "cpu"),
         dtype=(torch.bfloat16 if is_bfloat16_available() else torch.float32),

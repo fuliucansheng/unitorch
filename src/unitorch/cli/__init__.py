@@ -100,7 +100,16 @@ def registry_func(
     return actual_func
 
 
-_CORE_MODULES = ["score", "dataset", "loss", "model", "optim", "writer", "scheduler", "task"]
+_CORE_MODULES = [
+    "score",
+    "dataset",
+    "loss",
+    "model",
+    "optim",
+    "writer",
+    "scheduler",
+    "task",
+]
 
 for _module in _CORE_MODULES:
     globals()[f"registered_{_module}"] = dict()
@@ -165,40 +174,6 @@ def init_registered_process(
     if v["decorators"]:
         return rpartial(v["decorators"](v["obj"]), inst)
     return rpartial(v["obj"], inst)
-
-
-class GenericScript(abc.ABC):
-    def __init__(self, config: Config):
-        pass
-
-    @abc.abstractmethod
-    def launch(self, **kwargs):
-        pass
-
-
-registered_script: Dict = {}
-register_script = partial(registry_func, save_dict=registered_script)
-
-
-class GenericService(abc.ABC):
-    def __init__(self, config: Config):
-        pass
-
-    @abc.abstractmethod
-    def start(self, **kwargs):
-        pass
-
-    @abc.abstractmethod
-    def stop(self, **kwargs):
-        pass
-
-    @abc.abstractmethod
-    def restart(self, **kwargs):
-        pass
-
-
-registered_service: Dict = {}
-register_service = partial(registry_func, save_dict=registered_service)
 
 
 class GenericFastAPI(abc.ABC):

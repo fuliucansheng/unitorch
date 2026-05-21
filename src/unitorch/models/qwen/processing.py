@@ -29,7 +29,9 @@ class QWenProcessor(HfLlmProcessor):
             max_gen_seq_length (int, optional): Maximum generated sequence length. Defaults to 512.
         """
         tokenizer_config = read_json_file(tokenizer_config) if tokenizer_config else {}
-        special_tokens_map = read_json_file(special_tokens_map) if special_tokens_map else {}
+        special_tokens_map = (
+            read_json_file(special_tokens_map) if special_tokens_map else {}
+        )
 
         added_tokens_decoder = tokenizer_config.pop("added_tokens_decoder", {})
         tokenizer_config = {
@@ -51,8 +53,7 @@ class QWenProcessor(HfLlmProcessor):
             tokenizer.added_tokens_encoder[token] = idx
 
         special_tokens = {
-            name: get_added_token(spec)
-            for name, spec in special_tokens_map.items()
+            name: get_added_token(spec) for name, spec in special_tokens_map.items()
         }
         tokenizer.add_special_tokens(special_tokens)
 

@@ -40,12 +40,16 @@ def get_random_mask_indexes(
             cand_indexes.append([i])
 
     random.shuffle(cand_indexes)
-    num_to_predict = min(max_predictions_per_seq, max(1, round(len(tokens) * masked_lm_prob)))
+    num_to_predict = min(
+        max_predictions_per_seq, max(1, round(len(tokens) * masked_lm_prob))
+    )
     covered: set = set()
     for index_set in cand_indexes:
         if len(covered) >= num_to_predict:
             break
-        if len(covered) + len(index_set) > num_to_predict or any(i in covered for i in index_set):
+        if len(covered) + len(index_set) > num_to_predict or any(
+            i in covered for i in index_set
+        ):
             continue
         covered.update(index_set)
     return list(covered)
@@ -58,7 +62,9 @@ def get_bert_tokenizer(
     special_input_ids: Optional[Dict] = None,
 ) -> BertTokenizer:
     assert os.path.exists(vocab_path)
-    tokenizer = BertTokenizer(vocab_path, do_lower_case=do_lower_case, do_basic_tokenize=do_basic_tokenize)
+    tokenizer = BertTokenizer(
+        vocab_path, do_lower_case=do_lower_case, do_basic_tokenize=do_basic_tokenize
+    )
     for token, token_id in (special_input_ids or {}).items():
         tokenizer.added_tokens_encoder[token] = token_id
         tokenizer.unique_no_split_tokens.append(token)
@@ -109,12 +115,16 @@ class BertProcessor(HfTextClassificationProcessor):
         max_seq_length = pop_value(max_seq_length, self.max_seq_length)
         masked_lm_prob = pop_value(masked_lm_prob, self.masked_lm_prob)
         do_whole_word_mask = pop_value(do_whole_word_mask, self.do_whole_word_mask)
-        max_predictions_per_seq = pop_value(max_predictions_per_seq, self.max_predictions_per_seq)
+        max_predictions_per_seq = pop_value(
+            max_predictions_per_seq, self.max_predictions_per_seq
+        )
 
         tokens_a = self.tokenizer.tokenize(str(text))
         tokens_b = self.tokenizer.tokenize(str(text_pair))
         truncate_sequence_pair(tokens_a, tokens_b, max_seq_length - 3)
-        tokens = [self.cls_token] + tokens_a + [self.sep_token] + tokens_b + [self.sep_token]
+        tokens = (
+            [self.cls_token] + tokens_a + [self.sep_token] + tokens_b + [self.sep_token]
+        )
 
         covered_indexes = get_random_mask_indexes(
             tokens,
@@ -128,7 +138,9 @@ class BertProcessor(HfTextClassificationProcessor):
             tokens[i] if i in covered_indexes else self.pad_token
             for i in range(max_seq_length)
         ]
-        mlm_label_mask = [1 if i in covered_indexes else 0 for i in range(max_seq_length)]
+        mlm_label_mask = [
+            1 if i in covered_indexes else 0 for i in range(max_seq_length)
+        ]
         mlm_label = self.tokenizer.convert_tokens_to_ids(mlm_label)
 
         for idx in covered_indexes:

@@ -31,7 +31,9 @@ class SiglipProcessor(HfTextClassificationProcessor):
         if vocab_path is not None:
             tokenizer = SiglipTokenizer(vocab_file=vocab_path)
         else:
-            tokenizer = SiglipTokenizer.from_pretrained("google/siglip-base-patch16-224")
+            tokenizer = SiglipTokenizer.from_pretrained(
+                "google/siglip-base-patch16-224"
+            )
         tokenizer.cls_token = tokenizer.bos_token
         tokenizer.sep_token = tokenizer.eos_token
 
@@ -44,7 +46,9 @@ class SiglipProcessor(HfTextClassificationProcessor):
         )
 
         if vision_config_path is not None:
-            self.vision_processor = SiglipImageProcessor.from_json_file(vision_config_path)
+            self.vision_processor = SiglipImageProcessor.from_json_file(
+                vision_config_path
+            )
         else:
             self.vision_processor = SiglipImageProcessor.from_pretrained(
                 "google/siglip-base-patch16-224"
@@ -111,7 +115,9 @@ class SiglipProcessor(HfTextClassificationProcessor):
         Returns:
             GenericOutputs: Processed text and image inputs.
         """
-        text_outputs = self.text_classification(text=text, max_seq_length=max_seq_length)
+        text_outputs = self.text_classification(
+            text=text, max_seq_length=max_seq_length
+        )
         pixel_values = self.vision_processor.preprocess(
             image, return_tensors="pt"
         ).pixel_values[0]

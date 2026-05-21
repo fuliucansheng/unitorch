@@ -64,14 +64,19 @@ class TensorBatchMixin:
             setattr(self, key, value)
 
     def cpu(self, inplace: bool = False):
-        updated = {k: (v.cpu() if v is not None else None) for k, v in self.__tensors__.items()}
+        updated = {
+            k: (v.cpu() if v is not None else None) for k, v in self.__tensors__.items()
+        }
         if inplace:
             self.__tensors__.update(updated)
             return
         return TensorBatchMixin(**updated)
 
     def cuda(self, inplace: bool = False):
-        updated = {k: (v.cuda() if v is not None else None) for k, v in self.__tensors__.items()}
+        updated = {
+            k: (v.cuda() if v is not None else None)
+            for k, v in self.__tensors__.items()
+        }
         if inplace:
             self.__tensors__.update(updated)
             return
@@ -116,7 +121,9 @@ class TensorSeqMixin:
             normalised[key] = value
         self.__list_tensors__ = normalised
         for key, lst in self.__list_tensors__.items():
-            assert isinstance(lst, list) and all(isinstance(t, torch.Tensor) for t in lst)
+            assert isinstance(lst, list) and all(
+                isinstance(t, torch.Tensor) for t in lst
+            )
             setattr(self, key, lst)
 
     @classmethod
@@ -129,7 +136,9 @@ class TensorSeqMixin:
         merged = {}
         for key in keys:
             parts = [item.__list_tensors__[key] for item in items]
-            merged[key] = list(chain.from_iterable(parts)) if parts[0] is not None else None
+            merged[key] = (
+                list(chain.from_iterable(parts)) if parts[0] is not None else None
+            )
         return cls(**merged)
 
     @classmethod
@@ -150,7 +159,11 @@ class TensorSeqMixin:
         return cls(**merged)
 
     def add(self, list_tensors: Union[Dict, "TensorSeqMixin"]):
-        src = list_tensors if isinstance(list_tensors, dict) else list_tensors.__list_tensors__
+        src = (
+            list_tensors
+            if isinstance(list_tensors, dict)
+            else list_tensors.__list_tensors__
+        )
         for key, value in src.items():
             if key in self.__list_tensors__:
                 raise ValueError(f"{key!r} already exists in list tensors.")
@@ -162,7 +175,11 @@ class TensorSeqMixin:
     def cpu(self, inplace: bool = False):
         updated = {}
         for key, value in self.__list_tensors__.items():
-            updated[key] = [v.cpu() for v in value] if value is not None and value[0] is not None else None
+            updated[key] = (
+                [v.cpu() for v in value]
+                if value is not None and value[0] is not None
+                else None
+            )
         if inplace:
             self.__list_tensors__.update(updated)
             return
@@ -171,7 +188,11 @@ class TensorSeqMixin:
     def cuda(self, inplace: bool = False):
         updated = {}
         for key, value in self.__list_tensors__.items():
-            updated[key] = [v.cuda() for v in value] if value is not None and value[0] is not None else None
+            updated[key] = (
+                [v.cuda() for v in value]
+                if value is not None and value[0] is not None
+                else None
+            )
         if inplace:
             self.__list_tensors__.update(updated)
             return
@@ -222,10 +243,22 @@ class TensorMixMixin(TensorBatchMixin, TensorSeqMixin):
                 raise ValueError("Tensor key mismatch in union.")
             if list(item.__list_tensors__.keys()) != l_keys:
                 raise ValueError("List-tensor key mismatch in union.")
-        new_t = {k: torch.cat([i.__tensors__[k] for i in items], dim=dim)
-                 if items[0].__tensors__[k] is not None else None for k in t_keys}
-        new_l = {k: list(chain.from_iterable(i.__list_tensors__[k] for i in items))
-                 if items[0].__list_tensors__[k] is not None else None for k in l_keys}
+        new_t = {
+            k: (
+                torch.cat([i.__tensors__[k] for i in items], dim=dim)
+                if items[0].__tensors__[k] is not None
+                else None
+            )
+            for k in t_keys
+        }
+        new_l = {
+            k: (
+                list(chain.from_iterable(i.__list_tensors__[k] for i in items))
+                if items[0].__list_tensors__[k] is not None
+                else None
+            )
+            for k in l_keys
+        }
         return cls(dict_of_tensors=new_t, dict_of_list_tensors=new_l)
 
     @classmethod
@@ -239,10 +272,22 @@ class TensorMixMixin(TensorBatchMixin, TensorSeqMixin):
                 raise ValueError("Tensor key mismatch in stack.")
             if list(item.__list_tensors__.keys()) != l_keys:
                 raise ValueError("List-tensor key mismatch in stack.")
-        new_t = {k: torch.stack([i.__tensors__[k] for i in items], dim=dim)
-                 if items[0].__tensors__[k] is not None else None for k in t_keys}
-        new_l = {k: [i.__list_tensors__[k] for i in items]
-                 if items[0].__list_tensors__[k] is not None else None for k in l_keys}
+        new_t = {
+            k: (
+                torch.stack([i.__tensors__[k] for i in items], dim=dim)
+                if items[0].__tensors__[k] is not None
+                else None
+            )
+            for k in t_keys
+        }
+        new_l = {
+            k: (
+                [i.__list_tensors__[k] for i in items]
+                if items[0].__list_tensors__[k] is not None
+                else None
+            )
+            for k in l_keys
+        }
         return cls(dict_of_tensors=new_t, dict_of_list_tensors=new_l)
 
     def add(self, other: Union[TensorBatchMixin, TensorSeqMixin]):
@@ -256,21 +301,27 @@ class TensorMixMixin(TensorBatchMixin, TensorSeqMixin):
         l = TensorSeqMixin.cpu(self, inplace=inplace)
         if inplace:
             return
-        return TensorMixMixin(dict_of_tensors=t.__tensors__, dict_of_list_tensors=l.__list_tensors__)
+        return TensorMixMixin(
+            dict_of_tensors=t.__tensors__, dict_of_list_tensors=l.__list_tensors__
+        )
 
     def cuda(self, inplace: bool = False):
         t = TensorBatchMixin.cuda(self, inplace=inplace)
         l = TensorSeqMixin.cuda(self, inplace=inplace)
         if inplace:
             return
-        return TensorMixMixin(dict_of_tensors=t.__tensors__, dict_of_list_tensors=l.__list_tensors__)
+        return TensorMixMixin(
+            dict_of_tensors=t.__tensors__, dict_of_list_tensors=l.__list_tensors__
+        )
 
     def sync(self, inplace: bool = False):
         t = TensorBatchMixin.sync(self, inplace=inplace)
         l = TensorSeqMixin.sync(self, inplace=inplace)
         if inplace:
             return
-        return TensorMixMixin(dict_of_tensors=t.__tensors__, dict_of_list_tensors=l.__list_tensors__)
+        return TensorMixMixin(
+            dict_of_tensors=t.__tensors__, dict_of_list_tensors=l.__list_tensors__
+        )
 
     def dict(self) -> Dict:
         return {**self.__tensors__, **self.__list_tensors__}
@@ -279,6 +330,7 @@ class TensorMixMixin(TensorBatchMixin, TensorSeqMixin):
 # ---------------------------------------------------------------------------
 # Abstract base markers
 # ---------------------------------------------------------------------------
+
 
 class ModelInputs(abc.ABC):
     pass
@@ -296,6 +348,7 @@ class ModelTargets(abc.ABC):
 # Concrete Input / Output / Target types
 # ---------------------------------------------------------------------------
 
+
 @dataclass(init=False)
 class TensorInputs(ModelInputs, TensorBatchMixin):
     def __init__(self, inputs: Optional[Dict] = None, **kwargs):
@@ -303,17 +356,20 @@ class TensorInputs(ModelInputs, TensorBatchMixin):
 
     def cpu(self, inplace=False):
         r = TensorBatchMixin.cpu(self, inplace=inplace)
-        if inplace: return
+        if inplace:
+            return
         return TensorInputs(**r.__tensors__)
 
     def cuda(self, inplace=False):
         r = TensorBatchMixin.cuda(self, inplace=inplace)
-        if inplace: return
+        if inplace:
+            return
         return TensorInputs(**r.__tensors__)
 
     def sync(self, inplace=False):
         r = TensorBatchMixin.sync(self, inplace=inplace)
-        if inplace: return
+        if inplace:
+            return
         return TensorInputs(**r.__tensors__)
 
 
@@ -325,17 +381,20 @@ class TensorOutputs(ModelOutputs, TensorBatchMixin):
 
     def cpu(self, inplace=False):
         r = TensorBatchMixin.cpu(self, inplace=inplace)
-        if inplace: return
+        if inplace:
+            return
         return type(self)(**r.__tensors__)
 
     def cuda(self, inplace=False):
         r = TensorBatchMixin.cuda(self, inplace=inplace)
-        if inplace: return
+        if inplace:
+            return
         return type(self)(**r.__tensors__)
 
     def sync(self, inplace=False):
         r = TensorBatchMixin.sync(self, inplace=inplace)
-        if inplace: return
+        if inplace:
+            return
         return type(self)(**r.__tensors__)
 
 
@@ -347,17 +406,20 @@ class TensorTargets(ModelTargets, TensorBatchMixin):
 
     def cpu(self, inplace=False):
         r = TensorBatchMixin.cpu(self, inplace=inplace)
-        if inplace: return
+        if inplace:
+            return
         return type(self)(**r.__tensors__)
 
     def cuda(self, inplace=False):
         r = TensorBatchMixin.cuda(self, inplace=inplace)
-        if inplace: return
+        if inplace:
+            return
         return type(self)(**r.__tensors__)
 
     def sync(self, inplace=False):
         r = TensorBatchMixin.sync(self, inplace=inplace)
-        if inplace: return
+        if inplace:
+            return
         return type(self)(**r.__tensors__)
 
 
@@ -368,17 +430,20 @@ class TensorSeqInputs(ModelInputs, TensorSeqMixin):
 
     def cpu(self, inplace=False):
         r = TensorSeqMixin.cpu(self, inplace=inplace)
-        if inplace: return
+        if inplace:
+            return
         return TensorSeqInputs(**r.__list_tensors__)
 
     def cuda(self, inplace=False):
         r = TensorSeqMixin.cuda(self, inplace=inplace)
-        if inplace: return
+        if inplace:
+            return
         return TensorSeqInputs(**r.__list_tensors__)
 
     def sync(self, inplace=False):
         r = TensorSeqMixin.sync(self, inplace=inplace)
-        if inplace: return
+        if inplace:
+            return
         return TensorSeqInputs(**r.__list_tensors__)
 
 
@@ -390,17 +455,20 @@ class TensorSeqOutputs(ModelOutputs, TensorSeqMixin):
 
     def cpu(self, inplace=False):
         r = TensorSeqMixin.cpu(self, inplace=inplace)
-        if inplace: return
+        if inplace:
+            return
         return type(self)(**r.__list_tensors__)
 
     def cuda(self, inplace=False):
         r = TensorSeqMixin.cuda(self, inplace=inplace)
-        if inplace: return
+        if inplace:
+            return
         return type(self)(**r.__list_tensors__)
 
     def sync(self, inplace=False):
         r = TensorSeqMixin.sync(self, inplace=inplace)
-        if inplace: return
+        if inplace:
+            return
         return type(self)(**r.__list_tensors__)
 
 
@@ -412,17 +480,20 @@ class TensorSeqTargets(ModelTargets, TensorSeqMixin):
 
     def cpu(self, inplace=False):
         r = TensorSeqMixin.cpu(self, inplace=inplace)
-        if inplace: return
+        if inplace:
+            return
         return type(self)(**r.__list_tensors__)
 
     def cuda(self, inplace=False):
         r = TensorSeqMixin.cuda(self, inplace=inplace)
-        if inplace: return
+        if inplace:
+            return
         return type(self)(**r.__list_tensors__)
 
     def sync(self, inplace=False):
         r = TensorSeqMixin.sync(self, inplace=inplace)
-        if inplace: return
+        if inplace:
+            return
         return type(self)(**r.__list_tensors__)
 
 
@@ -432,7 +503,11 @@ class TensorMixInputs(ModelInputs, TensorMixMixin):
         dict_of_tensors: Optional[Dict[str, torch.Tensor]] = None,
         dict_of_list_tensors: Optional[Dict[str, List[torch.Tensor]]] = None,
     ):
-        TensorMixMixin.__init__(self, dict_of_tensors=dict_of_tensors, dict_of_list_tensors=dict_of_list_tensors)
+        TensorMixMixin.__init__(
+            self,
+            dict_of_tensors=dict_of_tensors,
+            dict_of_list_tensors=dict_of_list_tensors,
+        )
 
 
 class TensorMixOutputs(ModelOutputs, TensorMixMixin):
@@ -441,7 +516,11 @@ class TensorMixOutputs(ModelOutputs, TensorMixMixin):
         dict_of_tensors: Optional[Dict[str, torch.Tensor]] = None,
         dict_of_list_tensors: Optional[Dict[str, List[torch.Tensor]]] = None,
     ):
-        TensorMixMixin.__init__(self, dict_of_tensors=dict_of_tensors, dict_of_list_tensors=dict_of_list_tensors)
+        TensorMixMixin.__init__(
+            self,
+            dict_of_tensors=dict_of_tensors,
+            dict_of_list_tensors=dict_of_list_tensors,
+        )
 
 
 class TensorMixTargets(ModelTargets, TensorMixMixin):
@@ -450,7 +529,11 @@ class TensorMixTargets(ModelTargets, TensorMixMixin):
         dict_of_tensors: Optional[Dict[str, torch.Tensor]] = None,
         dict_of_list_tensors: Optional[Dict[str, List[torch.Tensor]]] = None,
     ):
-        TensorMixMixin.__init__(self, dict_of_tensors=dict_of_tensors, dict_of_list_tensors=dict_of_list_tensors)
+        TensorMixMixin.__init__(
+            self,
+            dict_of_tensors=dict_of_tensors,
+            dict_of_list_tensors=dict_of_list_tensors,
+        )
 
 
 @dataclass

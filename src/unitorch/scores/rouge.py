@@ -6,12 +6,16 @@ from typing import Dict, List, Optional, Set, Tuple, Union
 
 import torch
 
-from unitorch.scores.utils import convert_tensor_to_strings, remove_strings_ignore_tokens
+from unitorch.scores.utils import (
+    convert_tensor_to_strings,
+    remove_strings_ignore_tokens,
+)
 
 
 # ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------
+
 
 def _get_ngrams(n: int, text: List) -> Set[Tuple]:
     """Return the set of all n-grams of order *n* from *text*."""
@@ -143,7 +147,7 @@ def _rouge_l_summary_level(
     r_lcs = llcs / m
     p_lcs = llcs / n
     beta = p_lcs / (r_lcs + 1e-12)
-    f_lcs = (1 + beta ** 2) * r_lcs * p_lcs / (r_lcs + beta ** 2 * p_lcs + 1e-12)
+    f_lcs = (1 + beta**2) * r_lcs * p_lcs / (r_lcs + beta**2 * p_lcs + 1e-12)
     return {"f": f_lcs, "p": p_lcs, "r": r_lcs}
 
 
@@ -179,6 +183,7 @@ def _multi_rouge_n(
 # ---------------------------------------------------------------------------
 # Shared pre-processing
 # ---------------------------------------------------------------------------
+
 
 def _prepare_inputs(
     y_true,
@@ -218,6 +223,7 @@ def _average_rouge(rouge_fn, y_true, y_pred) -> Dict[str, float]:
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
+
 
 def rouge1_score(
     y_true: List[Union[str, int, List[Union[str, int]]]],

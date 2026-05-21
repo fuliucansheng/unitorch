@@ -156,7 +156,9 @@ class Mask2FormerForSegmentationFastAPI(GenericFastAPI):
     def router(self):
         return self._router
 
-    def start(self, pretrained_name: Optional[str] = "mask2former-swin-tiny-ade-semantic"):
+    def start(
+        self, pretrained_name: Optional[str] = "mask2former-swin-tiny-ade-semantic"
+    ):
         self._pipe = Mask2FormerForSegmentationPipeline.from_config(
             self.config,
             pretrained_name=pretrained_name,

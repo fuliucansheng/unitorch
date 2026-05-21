@@ -279,6 +279,7 @@ class QWenProcessor(_QWenProcessor):
             # Collapse newlines into spaces for TSV/CSV output compatibility.
             text = re.sub(r"\n", " ", text)
             return text.strip()
+
         if isinstance(decoded[0], list):
             decoded = [list(map(cleanup_string, sequence)) for sequence in decoded]
         elif isinstance(decoded[0], str):

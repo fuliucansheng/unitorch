@@ -20,5 +20,9 @@ def tensor2vid(video: torch.Tensor) -> List[np.ndarray]:
     """
     batch, frames, channels, height, width = video.shape
     # Rearrange to (frames, height, batch * width, channels)
-    images = video.permute(1, 3, 0, 4, 2).reshape(frames, height, batch * width, channels)
-    return [(frame.cpu().numpy() * 255).astype("uint8") for frame in images.unbind(dim=0)]
+    images = video.permute(1, 3, 0, 4, 2).reshape(
+        frames, height, batch * width, channels
+    )
+    return [
+        (frame.cpu().numpy() * 255).astype("uint8") for frame in images.unbind(dim=0)
+    ]

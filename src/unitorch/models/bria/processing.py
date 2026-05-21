@@ -13,15 +13,19 @@ class BRIAProcessor:
 
     def __init__(self, image_size: int = 1024) -> None:
         self.image_size = image_size
-        self.transform_inputs = Compose([
-            Resize([image_size, image_size]),
-            ToTensor(),
-            Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
-        ])
-        self.transform_labels = Compose([
-            Resize([image_size, image_size]),
-            ToTensor(),
-        ])
+        self.transform_inputs = Compose(
+            [
+                Resize([image_size, image_size]),
+                ToTensor(),
+                Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+            ]
+        )
+        self.transform_labels = Compose(
+            [
+                Resize([image_size, image_size]),
+                ToTensor(),
+            ]
+        )
 
     def segmentation_inputs(self, image: Image.Image) -> GenericOutputs:
         """Preprocess an RGB image as model input."""

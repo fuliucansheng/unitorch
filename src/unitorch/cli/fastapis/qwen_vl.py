@@ -15,7 +15,10 @@ from unitorch.models.qwen import QWenVLProcessor
 from unitorch.cli import cached_path, config_defaults_init, config_defaults_method
 from unitorch.cli import register_fastapi
 from unitorch.cli import Config, GenericFastAPI
-from unitorch.cli.models.qwen import pretrained_qwen_infos, pretrained_qwen_extensions_infos
+from unitorch.cli.models.qwen import (
+    pretrained_qwen_infos,
+    pretrained_qwen_extensions_infos,
+)
 
 
 class QWen3VLForGenerationPipeline(_QWen3VLForGeneration):
@@ -94,7 +97,9 @@ class QWen3VLForGenerationPipeline(_QWen3VLForGeneration):
         tokenizer_config = config.getoption("tokenizer_config", None)
         tokenizer_config = pop_value(
             tokenizer_config,
-            nested_dict_value(pretrained_qwen_infos, pretrained_name, "tokenizer_config"),
+            nested_dict_value(
+                pretrained_qwen_infos, pretrained_name, "tokenizer_config"
+            ),
             check_none=False,
         )
         tokenizer_config = (
@@ -104,7 +109,9 @@ class QWen3VLForGenerationPipeline(_QWen3VLForGeneration):
         special_tokens_map = config.getoption("special_tokens_map", None)
         special_tokens_map = pop_value(
             special_tokens_map,
-            nested_dict_value(pretrained_qwen_infos, pretrained_name, "special_tokens_map"),
+            nested_dict_value(
+                pretrained_qwen_infos, pretrained_name, "special_tokens_map"
+            ),
             check_none=False,
         )
         special_tokens_map = (
@@ -190,7 +197,10 @@ class QWen3VLForGenerationPipeline(_QWen3VLForGeneration):
             images=images,
             max_seq_length=max_seq_length,
         )
-        inputs = {k: v.unsqueeze(0) if v is not None and v.dim() < 4 else v for k, v in inputs.items()}
+        inputs = {
+            k: v.unsqueeze(0) if v is not None and v.dim() < 4 else v
+            for k, v in inputs.items()
+        }
         inputs = {
             k: v.to(device=self._device) if v is not None else v
             for k, v in inputs.items()

@@ -35,7 +35,9 @@ def sort_by_scores(
     if shuffle_ties:
         shuffle_ind = torch.argsort(torch.rand_like(scores))
         scores = torch.gather(scores, dim=1, index=shuffle_ind)
-        features_list = [torch.gather(f, dim=1, index=shuffle_ind) for f in features_list]
+        features_list = [
+            torch.gather(f, dim=1, index=shuffle_ind) for f in features_list
+        ]
 
     _, indices = scores.topk(topn, sorted=True)
     return [torch.gather(f, dim=1, index=indices) for f in features_list]
@@ -79,7 +81,9 @@ def inverse_max_dcg(
     """
     (ideal_sorted_labels,) = sort_by_scores(labels, [labels], topn=topn)
     rank = (torch.arange(ideal_sorted_labels.size(1)) + 1).float().to(labels.device)
-    discounted_gain = (gain_fn(ideal_sorted_labels) * rank_discount_fn(rank)).sum(1, keepdim=True)
+    discounted_gain = (gain_fn(ideal_sorted_labels) * rank_discount_fn(rank)).sum(
+        1, keepdim=True
+    )
     return torch.where(
         discounted_gain > 0.0,
         1.0 / discounted_gain,
@@ -119,7 +123,9 @@ def ndcg(
     if perm_mat is not None:
         gains = torch.sum(perm_mat * gains.unsqueeze(1), dim=-1)
     dcg = torch.sum(gains * discounts, dim=-1, keepdim=True)
-    return dcg * inverse_max_dcg(labels, gain_fn=gain_fn, rank_discount_fn=rank_discount_fn)
+    return dcg * inverse_max_dcg(
+        labels, gain_fn=gain_fn, rank_discount_fn=rank_discount_fn
+    )
 
 
 class ListMLELoss(nn.Module):
@@ -143,7 +149,9 @@ class ListMLELoss(nn.Module):
             target,
             torch.min(target, dim=1, keepdim=True)[0] - 1e-6,
         )
-        sorted_labels, sorted_logits = sort_by_scores(scores, [target, input], shuffle_ties=True)
+        sorted_labels, sorted_logits = sort_by_scores(
+            scores, [target, input], shuffle_ties=True
+        )
         sorted_logits = sorted_logits - sorted_logits.max(dim=1, keepdim=True)[0]
         sums = torch.flip(
             torch.cumsum(torch.flip(sorted_logits.exp(), dims=[-1]), dim=1), dims=[-1]

@@ -85,7 +85,9 @@ class BartForGeneration(GenericModel):
             output_scores=True,
         )
 
-        sequences = outputs.sequences.reshape(-1, num_return_sequences, outputs.sequences.size(-1))
+        sequences = outputs.sequences.reshape(
+            -1, num_return_sequences, outputs.sequences.size(-1)
+        )
         padded = torch.full(
             (sequences.size(0), num_return_sequences, max_gen_seq_length),
             fill_value=decoder_start_token_id,
@@ -97,4 +99,6 @@ class BartForGeneration(GenericModel):
         if num_return_sequences == 1:
             padded = padded.reshape(-1, max_gen_seq_length)
 
-        return GenericOutputs(sequences=padded, sequences_scores=outputs.sequences_scores)
+        return GenericOutputs(
+            sequences=padded, sequences_scores=outputs.sequences_scores
+        )

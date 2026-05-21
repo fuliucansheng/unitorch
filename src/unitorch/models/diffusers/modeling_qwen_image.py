@@ -26,9 +26,13 @@ def _pack_latents(
     height: int,
     width: int,
 ) -> torch.Tensor:
-    latents = latents.view(batch_size, num_channels_latents, height // 2, 2, width // 2, 2)
+    latents = latents.view(
+        batch_size, num_channels_latents, height // 2, 2, width // 2, 2
+    )
     latents = latents.permute(0, 2, 4, 1, 3, 5)
-    return latents.reshape(batch_size, (height // 2) * (width // 2), num_channels_latents * 4)
+    return latents.reshape(
+        batch_size, (height // 2) * (width // 2), num_channels_latents * 4
+    )
 
 
 def _unpack_latents(
@@ -47,12 +51,12 @@ def _build_padded_embeds(hidden_states, start_index: int, device):
     trimmed = [e[start_index:] for e in hidden_states]
     masks = [torch.ones(e.size(0), dtype=torch.long, device=e.device) for e in trimmed]
     max_len = max(e.size(0) for e in trimmed)
-    embeds = torch.stack([
-        torch.cat([u, u.new_zeros(max_len - u.size(0), u.size(1))]) for u in trimmed
-    ])
-    mask = torch.stack([
-        torch.cat([m, m.new_zeros(max_len - m.size(0))]) for m in masks
-    ])
+    embeds = torch.stack(
+        [torch.cat([u, u.new_zeros(max_len - u.size(0), u.size(1))]) for u in trimmed]
+    )
+    mask = torch.stack(
+        [torch.cat([m, m.new_zeros(max_len - m.size(0))]) for m in masks]
+    )
     return embeds, mask
 
 
@@ -91,14 +95,18 @@ class GenericQWenImageModel(GenericModel, PeftWeightLoaderMixin):
         self.snr_gamma = snr_gamma
 
         with open(config_path) as f:
-            self.transformer = QwenImageTransformer2DModel.from_config(json.load(f)).to(torch.bfloat16)
+            self.transformer = QwenImageTransformer2DModel.from_config(json.load(f)).to(
+                torch.bfloat16
+            )
 
         self.text = Qwen2_5_VLForConditionalGeneration(
             Qwen2_5_VLConfig.from_json_file(text_config_path)
         ).to(torch.bfloat16)
 
         with open(vae_config_path) as f:
-            self.vae = AutoencoderKLQwenImage.from_config(json.load(f)).to(torch.bfloat16)
+            self.vae = AutoencoderKLQwenImage.from_config(json.load(f)).to(
+                torch.bfloat16
+            )
 
         with open(scheduler_config_path) as f:
             scheduler_config_dict = json.load(f)
@@ -121,7 +129,9 @@ class GenericQWenImageModel(GenericModel, PeftWeightLoaderMixin):
             for p in self.transformer.parameters():
                 p.requires_grad_(False)
 
-    def get_sigmas(self, timesteps: torch.Tensor, n_dim: int = 4, dtype=torch.float32) -> torch.Tensor:
+    def get_sigmas(
+        self, timesteps: torch.Tensor, n_dim: int = 4, dtype=torch.float32
+    ) -> torch.Tensor:
         sigmas = self.scheduler.sigmas.to(device=self.device, dtype=dtype)
         schedule_timesteps = self.scheduler.timesteps.to(self.device)
         timesteps = timesteps.to(self.device)
@@ -161,9 +171,11 @@ class GenericQWenImageModel(GenericModel, PeftWeightLoaderMixin):
         return _build_padded_embeds(split, prompt_start_index, input_ids.device)
 
     def _normalize_latents(self, latents: torch.Tensor, device) -> torch.Tensor:
-        latents_mean = torch.tensor(self.vae.config.latents_mean).view(
-            1, self.vae.config.z_dim, 1, 1, 1
-        ).to(device)
+        latents_mean = (
+            torch.tensor(self.vae.config.latents_mean)
+            .view(1, self.vae.config.z_dim, 1, 1, 1)
+            .to(device)
+        )
         latents_std = 1.0 / torch.tensor(self.vae.config.latents_std).view(
             1, self.vae.config.z_dim, 1, 1, 1
         ).to(device)
@@ -189,17 +201,23 @@ class GenericQWenImageModel(GenericModel, PeftWeightLoaderMixin):
         latents: torch.Tensor,
         sigmas: torch.Tensor,
     ) -> torch.Tensor:
-        weighting = compute_loss_weighting_for_sd3(weighting_scheme="none", sigmas=sigmas)
+        weighting = compute_loss_weighting_for_sd3(
+            weighting_scheme="none", sigmas=sigmas
+        )
         target = noise - latents
         loss = torch.mean(
-            (weighting.float() * (pred.float() - target.float()) ** 2).reshape(target.shape[0], -1),
+            (weighting.float() * (pred.float() - target.float()) ** 2).reshape(
+                target.shape[0], -1
+            ),
             dim=1,
         )
         return loss.mean()
 
     def _make_guidance(self, batch_size: int) -> Optional[torch.Tensor]:
         if self.transformer.config.guidance_embeds and self.guidance_scale is not None:
-            return torch.full([1], self.guidance_scale, device=self.device, dtype=torch.float32).expand(batch_size)
+            return torch.full(
+                [1], self.guidance_scale, device=self.device, dtype=torch.float32
+            ).expand(batch_size)
         return None
 
     def get_prompt_outputs(
@@ -228,11 +246,16 @@ class GenericQWenImageModel(GenericModel, PeftWeightLoaderMixin):
                 negative_attention_mask = negative_attention_mask.to(cpu_offload_device)
 
         prompt_embeds, prompt_embeds_mask = self._encode_prompt(
-            input_ids, attention_mask, prompt_start_index,
-            pixel_values=pixel_values, image_grid_thw=image_grid_thw,
+            input_ids,
+            attention_mask,
+            prompt_start_index,
+            pixel_values=pixel_values,
+            image_grid_thw=image_grid_thw,
         )
         negative_prompt_embeds, negative_prompt_embeds_mask = self._encode_prompt(
-            negative_input_ids, negative_attention_mask, prompt_start_index,
+            negative_input_ids,
+            negative_attention_mask,
+            prompt_start_index,
         )
 
         if enable_cpu_offload:
@@ -309,12 +332,19 @@ class QWenImageText2ImageGeneration(GenericQWenImageModel):
         timesteps, sigmas = self._sample_timesteps_and_sigmas(latents)
         noise_latents = (1.0 - sigmas) * latents + sigmas * noise
 
-        B, C, H, W = latents.shape[0], latents.shape[1], latents.shape[2], latents.shape[3]
+        B, C, H, W = (
+            latents.shape[0],
+            latents.shape[1],
+            latents.shape[2],
+            latents.shape[3],
+        )
         noise_latents = _pack_latents(noise_latents, B, C, H, W)
 
         vae_scale_factor = 2 ** len(self.vae.temperal_downsample)
         height, width = pixel_values.size(-2), pixel_values.size(-1)
-        img_shapes = [[(1, height // vae_scale_factor // 2, width // vae_scale_factor // 2)]] * B
+        img_shapes = [
+            [(1, height // vae_scale_factor // 2, width // vae_scale_factor // 2)]
+        ] * B
 
         pred = self.transformer(
             hidden_states=noise_latents,
@@ -326,7 +356,9 @@ class QWenImageText2ImageGeneration(GenericQWenImageModel):
             txt_seq_lens=prompt_embeds_mask.sum(dim=1).tolist(),
             return_dict=False,
         )[0]
-        pred = _unpack_latents(pred, H * vae_scale_factor, W * vae_scale_factor, vae_scale_factor)
+        pred = _unpack_latents(
+            pred, H * vae_scale_factor, W * vae_scale_factor, vae_scale_factor
+        )
         return self._compute_flow_loss(pred, noise, latents, sigmas)
 
     @torch.no_grad()
@@ -353,7 +385,9 @@ class QWenImageText2ImageGeneration(GenericQWenImageModel):
             negative_prompt_embeds=outputs.negative_prompt_embeds,
             prompt_embeds_mask=outputs.prompt_embeds_mask,
             negative_prompt_embeds_mask=outputs.negative_prompt_embeds_mask,
-            generator=torch.Generator(device=self.pipeline.device).manual_seed(self.seed),
+            generator=torch.Generator(device=self.pipeline.device).manual_seed(
+                self.seed
+            ),
             num_inference_steps=self.num_infer_timesteps,
             height=height,
             width=width,
@@ -418,7 +452,9 @@ class QWenImageEditingGeneration(GenericQWenImageModel):
         attention_mask: Optional[torch.Tensor] = None,
     ) -> torch.Tensor:
         prompt_embeds, prompt_embeds_mask = self._encode_prompt(
-            input_ids, attention_mask, self.prompt_start_index,
+            input_ids,
+            attention_mask,
+            self.prompt_start_index,
             pixel_values=refer_pixel_values,
             image_grid_thw=refer_image_grid_thw,
         )
@@ -432,26 +468,42 @@ class QWenImageEditingGeneration(GenericQWenImageModel):
             self.vae.encode(pixel_values).latent_dist.sample(), pixel_values.device
         )
         refer_latents = self._normalize_latents(
-            self.vae.encode(refer_vae_pixel_values).latent_dist.mode(), pixel_values.device
+            self.vae.encode(refer_vae_pixel_values).latent_dist.mode(),
+            pixel_values.device,
         )
 
         noise = torch.randn_like(latents)
         timesteps, sigmas = self._sample_timesteps_and_sigmas(latents)
         noise_latents = (1.0 - sigmas) * latents + sigmas * noise
 
-        B, C, H, W = latents.shape[0], latents.shape[1], latents.shape[2], latents.shape[3]
+        B, C, H, W = (
+            latents.shape[0],
+            latents.shape[1],
+            latents.shape[2],
+            latents.shape[3],
+        )
         noise_latents_packed = _pack_latents(noise_latents, B, C, H, W)
         rB, rC, rH, rW = refer_latents.shape
         refer_latents_packed = _pack_latents(refer_latents, rB, rC, rH, rW)
-        latent_model_input = torch.cat([noise_latents_packed, refer_latents_packed], dim=1)
+        latent_model_input = torch.cat(
+            [noise_latents_packed, refer_latents_packed], dim=1
+        )
 
         vae_scale_factor = 2 ** len(self.vae.temperal_downsample)
         height, width = pixel_values.size(-2), pixel_values.size(-1)
-        refer_height, refer_width = refer_vae_pixel_values.size(-2), refer_vae_pixel_values.size(-1)
-        img_shapes = [[
-            (1, height // vae_scale_factor // 2, width // vae_scale_factor // 2),
-            (1, refer_height // vae_scale_factor // 2, refer_width // vae_scale_factor // 2),
-        ]] * B
+        refer_height, refer_width = refer_vae_pixel_values.size(
+            -2
+        ), refer_vae_pixel_values.size(-1)
+        img_shapes = [
+            [
+                (1, height // vae_scale_factor // 2, width // vae_scale_factor // 2),
+                (
+                    1,
+                    refer_height // vae_scale_factor // 2,
+                    refer_width // vae_scale_factor // 2,
+                ),
+            ]
+        ] * B
 
         pred = self.transformer(
             hidden_states=latent_model_input,
@@ -464,7 +516,9 @@ class QWenImageEditingGeneration(GenericQWenImageModel):
             return_dict=False,
         )[0][:, : noise_latents_packed.shape[1]]
 
-        pred = _unpack_latents(pred, H * vae_scale_factor, W * vae_scale_factor, vae_scale_factor)
+        pred = _unpack_latents(
+            pred, H * vae_scale_factor, W * vae_scale_factor, vae_scale_factor
+        )
         return self._compute_flow_loss(pred, noise, latents, sigmas)
 
     @torch.no_grad()
@@ -497,7 +551,9 @@ class QWenImageEditingGeneration(GenericQWenImageModel):
             negative_prompt_embeds=outputs.negative_prompt_embeds,
             prompt_embeds_mask=outputs.prompt_embeds_mask,
             negative_prompt_embeds_mask=outputs.negative_prompt_embeds_mask,
-            generator=torch.Generator(device=self.pipeline.device).manual_seed(self.seed),
+            generator=torch.Generator(device=self.pipeline.device).manual_seed(
+                self.seed
+            ),
             num_inference_steps=self.num_infer_timesteps,
             height=height,
             width=width,

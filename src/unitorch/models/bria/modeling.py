@@ -2743,4 +2743,6 @@ class BRIAForSegmentation(GenericModel):
 
     def forward(self, x):
         scaled_preds, class_preds = self.forward_ori(x)
-        return GenericOutputs(logits=torch.sigmoid(scaled_preds[-1]), classes=class_preds)
+        return GenericOutputs(
+            logits=torch.sigmoid(scaled_preds[-1]), classes=class_preds
+        )

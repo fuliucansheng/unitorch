@@ -16,7 +16,10 @@ from unitorch.models.llava import (
 from unitorch.models.llava import LlavaMistralClipProcessor, LlavaLlamaSiglipProcessor
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.cli import cached_path, config_defaults_init, config_defaults_method
-from unitorch.cli.models.llava import pretrained_llava_infos, pretrained_llava_extensions_infos
+from unitorch.cli.models.llava import (
+    pretrained_llava_infos,
+    pretrained_llava_extensions_infos,
+)
 from unitorch.cli import register_fastapi
 from unitorch.cli import Config, GenericFastAPI
 

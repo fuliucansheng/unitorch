@@ -96,7 +96,9 @@ class GroundingDinoProcessor(
         if bboxes.dim() == 1:
             bboxes = bboxes.unsqueeze(0)
 
-        assert bboxes.size(-1) == 4 and classes.dim() == 1 and len(classes) == len(bboxes)
+        assert (
+            bboxes.size(-1) == 4 and classes.dim() == 1 and len(classes) == len(bboxes)
+        )
         return GenericOutputs(
             pixel_values=pixel_outputs.pixel_values,
             input_ids=text_outputs.input_ids,

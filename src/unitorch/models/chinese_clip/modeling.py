@@ -37,10 +37,16 @@ class ChineseClipForPretrain(GenericModel):
         config.vision_config.gradient_checkpointing = gradient_checkpointing
 
         self.use_all_gather = use_all_gather
-        self.text_model = ChineseCLIPTextModel(config.text_config, add_pooling_layer=False)
+        self.text_model = ChineseCLIPTextModel(
+            config.text_config, add_pooling_layer=False
+        )
         self.vision_model = ChineseCLIPVisionModel(config.vision_config)
-        self.text_projection = nn.Linear(config.text_config.hidden_size, projection_dim, bias=False)
-        self.visual_projection = nn.Linear(config.vision_config.hidden_size, projection_dim, bias=False)
+        self.text_projection = nn.Linear(
+            config.text_config.hidden_size, projection_dim, bias=False
+        )
+        self.visual_projection = nn.Linear(
+            config.vision_config.hidden_size, projection_dim, bias=False
+        )
         self.logit_scale = nn.Parameter(torch.ones([]) * config.logit_scale_init_value)
         self.init_weights()
 
@@ -81,7 +87,9 @@ class ChineseClipForPretrain(GenericModel):
             text_embeds = self._all_gather(text_embeds)
             image_embeds = self._all_gather(image_embeds)
 
-        logits_per_text = torch.matmul(text_embeds, image_embeds.t()) * self.logit_scale.exp()
+        logits_per_text = (
+            torch.matmul(text_embeds, image_embeds.t()) * self.logit_scale.exp()
+        )
         return _clip_loss(logits_per_text)
 
 
@@ -101,10 +109,16 @@ class ChineseClipForClassification(GenericModel):
         config.text_config.gradient_checkpointing = gradient_checkpointing
         config.vision_config.gradient_checkpointing = gradient_checkpointing
 
-        self.text_model = ChineseCLIPTextModel(config.text_config, add_pooling_layer=False)
+        self.text_model = ChineseCLIPTextModel(
+            config.text_config, add_pooling_layer=False
+        )
         self.vision_model = ChineseCLIPVisionModel(config.vision_config)
-        self.text_projection = nn.Linear(config.text_config.hidden_size, projection_dim, bias=False)
-        self.visual_projection = nn.Linear(config.vision_config.hidden_size, projection_dim, bias=False)
+        self.text_projection = nn.Linear(
+            config.text_config.hidden_size, projection_dim, bias=False
+        )
+        self.visual_projection = nn.Linear(
+            config.vision_config.hidden_size, projection_dim, bias=False
+        )
         self.classifier = nn.Linear(projection_dim * 2, num_classes)
         self.init_weights()
 
@@ -152,8 +166,12 @@ class ChineseClipForTextClassification(GenericModel):
         config = ChineseCLIPConfig.from_json_file(config_path)
         config.text_config.gradient_checkpointing = gradient_checkpointing
 
-        self.text_model = ChineseCLIPTextModel(config.text_config, add_pooling_layer=False)
-        self.text_projection = nn.Linear(config.text_config.hidden_size, projection_dim, bias=False)
+        self.text_model = ChineseCLIPTextModel(
+            config.text_config, add_pooling_layer=False
+        )
+        self.text_projection = nn.Linear(
+            config.text_config.hidden_size, projection_dim, bias=False
+        )
         self.classifier = nn.Linear(projection_dim, num_classes)
         self.init_weights()
 
@@ -196,7 +214,9 @@ class ChineseClipForImageClassification(GenericModel):
         config.vision_config.gradient_checkpointing = gradient_checkpointing
 
         self.vision_model = ChineseCLIPVisionModel(config.vision_config)
-        self.visual_projection = nn.Linear(config.vision_config.hidden_size, projection_dim, bias=False)
+        self.visual_projection = nn.Linear(
+            config.vision_config.hidden_size, projection_dim, bias=False
+        )
         self.classifier = nn.Linear(projection_dim, num_classes)
         self.init_weights()
 

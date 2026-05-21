@@ -46,7 +46,9 @@ class ExponentialMovingAverage(nn.Module):
         weight_path = os.path.join(ckpt_dir, weight_name)
         if not os.path.exists(weight_path):
             return
-        self.model.load_state_dict(torch.load(weight_path, map_location="cpu", weights_only=False))
+        self.model.load_state_dict(
+            torch.load(weight_path, map_location="cpu", weights_only=False)
+        )
         logging.info("%s loaded weights from %s", type(self).__name__, weight_path)
 
     def save_checkpoint(

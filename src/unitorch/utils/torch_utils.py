@@ -55,7 +55,9 @@ class DistributedSkipSampler(DistributedSampler):
             if padding_size <= len(indices):
                 indices += indices[:padding_size]
             else:
-                indices += (indices * math.ceil(padding_size / len(indices)))[:padding_size]
+                indices += (indices * math.ceil(padding_size / len(indices)))[
+                    :padding_size
+                ]
         else:
             indices = indices[: self.total_size]
 

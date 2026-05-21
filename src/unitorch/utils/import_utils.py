@@ -13,6 +13,7 @@ import torch
 # Internal helpers
 # ---------------------------------------------------------------------------
 
+
 def _check_package(package_name: str) -> bool:
     """Return ``True`` if *package_name* is installed and log its version.
 
@@ -53,6 +54,7 @@ if _opencv_available:
 # Public availability checks
 # ---------------------------------------------------------------------------
 
+
 def is_deepspeed_available() -> bool:
     return _deepspeed_available
 
@@ -71,6 +73,7 @@ def is_diffusers_available() -> bool:
 
 def is_opencv_available() -> bool:
     return _opencv_available
+
 
 def is_onnxruntime_available() -> bool:
     return _onnxruntime_available
@@ -101,10 +104,13 @@ def is_cuda_available() -> bool:
 # Module utilities
 # ---------------------------------------------------------------------------
 
+
 def reload_module(module: types.ModuleType) -> None:
     """Recursively reload *module* and all of its sub-modules."""
     for name in dir(module):
         attr = getattr(module, name)
-        if isinstance(attr, types.ModuleType) and attr.__name__.startswith(module.__name__):
+        if isinstance(attr, types.ModuleType) and attr.__name__.startswith(
+            module.__name__
+        ):
             reload_module(attr)
     importlib.reload(module)

@@ -6,9 +6,8 @@ import fire
 import unitorch.cli
 from unitorch.cli import registered_copilot_tool
 import unitorch.cli.fastapis
-import unitorch.cli.services
-import unitorch.cli.scripts
 import unitorch.cli.copilots
+
 
 @fire.decorators.SetParseFn(str)
 def copilot(**kwargs):

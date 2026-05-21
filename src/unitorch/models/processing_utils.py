@@ -117,12 +117,19 @@ class HfTextGenerationProcessor:
             _, num_return_sequences, seq_len = sequences.size()
             sequences = sequences.reshape(-1, seq_len).clamp(0, self.vocab_size)
             sequences[sequences == self.vocab_size] = self.pad_token_id
-            decoded = self.tokenizer.batch_decode(sequences, skip_special_tokens=skip_special_tokens)
-            return [decoded[i : i + num_return_sequences] for i in range(0, len(decoded), num_return_sequences)]
+            decoded = self.tokenizer.batch_decode(
+                sequences, skip_special_tokens=skip_special_tokens
+            )
+            return [
+                decoded[i : i + num_return_sequences]
+                for i in range(0, len(decoded), num_return_sequences)
+            ]
         elif sequences.dim() == 2:
             sequences = sequences.clamp(0, self.vocab_size)
             sequences[sequences == self.vocab_size] = self.pad_token_id
-            return self.tokenizer.batch_decode(sequences, skip_special_tokens=skip_special_tokens)
+            return self.tokenizer.batch_decode(
+                sequences, skip_special_tokens=skip_special_tokens
+            )
         else:
             raise ValueError(f"Cannot decode tensor with shape {sequences.shape}")
 
@@ -188,12 +195,14 @@ class HfLlmProcessor:
         max_seq_length = pop_value(max_seq_length, self.max_seq_length)
         raw = self.tokenizer.tokenize(str(text))
         if self.bos_token is not None:
-            tokens = [self.bos_token] + raw[-(max_seq_length - 1):]
+            tokens = [self.bos_token] + raw[-(max_seq_length - 1) :]
         else:
             tokens = raw[-max_seq_length:]
         pad_len = max_seq_length - len(tokens)
         attention_mask = [0] * pad_len + [1] * len(tokens)
-        input_ids = self.tokenizer.convert_tokens_to_ids([self.pad_token] * pad_len + tokens)
+        input_ids = self.tokenizer.convert_tokens_to_ids(
+            [self.pad_token] * pad_len + tokens
+        )
         assert len(input_ids) == max_seq_length
         return GenericOutputs(
             input_ids=torch.tensor(input_ids, dtype=torch.long),
@@ -207,7 +216,9 @@ class HfLlmProcessor:
     ) -> GenericOutputs:
         """Tokenise *text* as right-padded generation labels (with EOS)."""
         max_gen_seq_length = pop_value(max_gen_seq_length, self.max_gen_seq_length)
-        tokens = self.tokenizer.tokenize(str(text))[: max_gen_seq_length - 1] + [self.eos_token]
+        tokens = self.tokenizer.tokenize(str(text))[: max_gen_seq_length - 1] + [
+            self.eos_token
+        ]
         input_ids = self.tokenizer.convert_tokens_to_ids(tokens)
         attention_mask = [1] * len(input_ids)
         pad_len = max_gen_seq_length - len(input_ids)
@@ -234,18 +245,28 @@ class HfLlmProcessor:
 
         raw = self.tokenizer.tokenize(str(text))
         if self.bos_token is not None:
-            tokens = [self.bos_token] + raw[-(max_seq_length - 1):]
+            tokens = [self.bos_token] + raw[-(max_seq_length - 1) :]
         else:
             tokens = raw[-max_seq_length:]
-        tokens_pair = self.tokenizer.tokenize(str(text_pair))[: max_gen_seq_length - 1] + [self.eos_token]
+        tokens_pair = self.tokenizer.tokenize(str(text_pair))[
+            : max_gen_seq_length - 1
+        ] + [self.eos_token]
 
         pad_a = [self.pad_token] * (max_seq_length - len(tokens))
         pad_b = [self.pad_token] * (max_gen_seq_length - len(tokens_pair))
-        attention_mask = [0] * len(pad_a) + [1] * (len(tokens) + len(tokens_pair)) + [0] * len(pad_b)
-        input_ids = self.tokenizer.convert_tokens_to_ids(pad_a + tokens + tokens_pair + pad_b)
+        attention_mask = (
+            [0] * len(pad_a) + [1] * (len(tokens) + len(tokens_pair)) + [0] * len(pad_b)
+        )
+        input_ids = self.tokenizer.convert_tokens_to_ids(
+            pad_a + tokens + tokens_pair + pad_b
+        )
 
-        label_tokens = tokens_pair + [self.pad_token] * (max_gen_seq_length - len(tokens_pair) + 1)
-        input_ids_label = [0] * (max_seq_length - 1) + self.tokenizer.convert_tokens_to_ids(label_tokens)
+        label_tokens = tokens_pair + [self.pad_token] * (
+            max_gen_seq_length - len(tokens_pair) + 1
+        )
+        input_ids_label = [0] * (
+            max_seq_length - 1
+        ) + self.tokenizer.convert_tokens_to_ids(label_tokens)
         attention_mask_label = (
             [0] * (max_seq_length - 1)
             + [1] * len(tokens_pair)
@@ -283,12 +304,19 @@ class HfLlmProcessor:
             _, num_return_sequences, seq_len = sequences.size()
             sequences = sequences.reshape(-1, seq_len).clamp(0, self.vocab_size)
             sequences[sequences == self.vocab_size] = self.pad_token_id
-            decoded = self.tokenizer.batch_decode(sequences, skip_special_tokens=skip_special_tokens)
-            return [decoded[i : i + num_return_sequences] for i in range(0, len(decoded), num_return_sequences)]
+            decoded = self.tokenizer.batch_decode(
+                sequences, skip_special_tokens=skip_special_tokens
+            )
+            return [
+                decoded[i : i + num_return_sequences]
+                for i in range(0, len(decoded), num_return_sequences)
+            ]
         elif sequences.dim() == 2:
             sequences = sequences.clamp(0, self.vocab_size)
             sequences[sequences == self.vocab_size] = self.pad_token_id
-            return self.tokenizer.batch_decode(sequences, skip_special_tokens=skip_special_tokens)
+            return self.tokenizer.batch_decode(
+                sequences, skip_special_tokens=skip_special_tokens
+            )
         else:
             raise ValueError(f"Cannot decode tensor with shape {sequences.shape}")
 
@@ -327,7 +355,9 @@ class HfTextClassificationProcessor:
 
         if text_pair is None:
             if self.cls_token is not None:
-                tokens = [self.cls_token] + tokens[: max_seq_length - 2] + [self.sep_token]
+                tokens = (
+                    [self.cls_token] + tokens[: max_seq_length - 2] + [self.sep_token]
+                )
             else:
                 tokens = tokens[: max_seq_length - 1] + [self.sep_token]
             input_ids = self.tokenizer.convert_tokens_to_ids(tokens)
@@ -337,17 +367,21 @@ class HfTextClassificationProcessor:
             tokens_pair = self.tokenizer.tokenize(str(text_pair))
             if self.cls_token is not None:
                 truncate_sequence_pair(tokens, tokens_pair, max_seq_length - 3)
-                token_type_ids = (
-                    [self.source_type_id] * (len(tokens) + 2)
-                    + [self.target_type_id] * (len(tokens_pair) + 1)
+                token_type_ids = [self.source_type_id] * (len(tokens) + 2) + [
+                    self.target_type_id
+                ] * (len(tokens_pair) + 1)
+                tokens = (
+                    [self.cls_token]
+                    + tokens
+                    + [self.sep_token]
+                    + tokens_pair
+                    + [self.sep_token]
                 )
-                tokens = [self.cls_token] + tokens + [self.sep_token] + tokens_pair + [self.sep_token]
             else:
                 truncate_sequence_pair(tokens, tokens_pair, max_seq_length - 2)
-                token_type_ids = (
-                    [self.source_type_id] * len(tokens)
-                    + [self.target_type_id] * len(tokens_pair)
-                )
+                token_type_ids = [self.source_type_id] * len(tokens) + [
+                    self.target_type_id
+                ] * len(tokens_pair)
                 tokens = tokens + [self.sep_token] + tokens_pair + [self.sep_token]
             input_ids = self.tokenizer.convert_tokens_to_ids(tokens)
             attention_mask = [1] * len(input_ids)
@@ -382,5 +416,7 @@ class HfImageClassificationProcessor:
         """Preprocess *image* into pixel values ready for a vision model."""
         if isinstance(image, str):
             image = Image.open(image)
-        pixel_values = self.vision_processor.preprocess(image, return_tensors="pt").pixel_values[0]
+        pixel_values = self.vision_processor.preprocess(
+            image, return_tensors="pt"
+        ).pixel_values[0]
         return GenericOutputs(pixel_values=pixel_values)

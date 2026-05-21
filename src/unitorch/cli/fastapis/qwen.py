@@ -15,7 +15,10 @@ from unitorch.models.qwen import QWenProcessor
 from unitorch.cli import cached_path, config_defaults_init, config_defaults_method
 from unitorch.cli import register_fastapi
 from unitorch.cli import Config, GenericFastAPI
-from unitorch.cli.models.qwen import pretrained_qwen_infos, pretrained_qwen_extensions_infos
+from unitorch.cli.models.qwen import (
+    pretrained_qwen_infos,
+    pretrained_qwen_extensions_infos,
+)
 
 
 class QWen3ForGenerationPipeline(_QWen3ForGeneration):
@@ -85,7 +88,9 @@ class QWen3ForGenerationPipeline(_QWen3ForGeneration):
         tokenizer_config = config.getoption("tokenizer_config", None)
         tokenizer_config = pop_value(
             tokenizer_config,
-            nested_dict_value(pretrained_qwen_infos, pretrained_name, "tokenizer_config"),
+            nested_dict_value(
+                pretrained_qwen_infos, pretrained_name, "tokenizer_config"
+            ),
             check_none=False,
         )
         tokenizer_config = (
@@ -95,7 +100,9 @@ class QWen3ForGenerationPipeline(_QWen3ForGeneration):
         special_tokens_map = config.getoption("special_tokens_map", None)
         special_tokens_map = pop_value(
             special_tokens_map,
-            nested_dict_value(pretrained_qwen_infos, pretrained_name, "special_tokens_map"),
+            nested_dict_value(
+                pretrained_qwen_infos, pretrained_name, "special_tokens_map"
+            ),
             check_none=False,
         )
         special_tokens_map = (

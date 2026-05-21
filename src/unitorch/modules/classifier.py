@@ -17,7 +17,9 @@ class ResLayer(nn.Module):
         use_bn: bool = True,
     ) -> None:
         super().__init__()
-        assert input_dim == output_dim, "input_dim must equal output_dim for residual connection"
+        assert (
+            input_dim == output_dim
+        ), "input_dim must equal output_dim for residual connection"
         self.fc1 = nn.Linear(input_dim, hidden_dim)
         self.fc2 = nn.Linear(hidden_dim, output_dim)
         self.bn = nn.BatchNorm1d(hidden_dim) if use_bn else None
@@ -49,7 +51,9 @@ class MLPLayer(nn.Module):
         add_post_layer_norm: bool = False,
     ) -> None:
         super().__init__()
-        assert input_dim == output_dim, "input_dim must equal output_dim for residual connection"
+        assert (
+            input_dim == output_dim
+        ), "input_dim must equal output_dim for residual connection"
         self.fc1 = nn.Linear(input_dim, hidden_dim)
         self.fc2 = nn.Linear(hidden_dim, output_dim)
         self.pre_layer_norm = nn.LayerNorm(input_dim) if add_pre_layer_norm else None

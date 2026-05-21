@@ -114,9 +114,13 @@ class KolorsMPSProcessor(HfImageClassificationProcessor, HfTextClassificationPro
         Returns:
             GenericOutputs: Processed text, image, and condition inputs.
         """
-        text_outputs = self.text_classification(text=text, max_seq_length=max_seq_length)
+        text_outputs = self.text_classification(
+            text=text, max_seq_length=max_seq_length
+        )
         pixel_outputs = self.image_classification(image=image)
-        condition_outputs = self.text_classification(text=condition, max_seq_length=max_seq_length)
+        condition_outputs = self.text_classification(
+            text=condition, max_seq_length=max_seq_length
+        )
         return GenericOutputs(
             input_ids=text_outputs.input_ids,
             attention_mask=text_outputs.attention_mask,

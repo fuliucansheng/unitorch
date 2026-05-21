@@ -8,6 +8,7 @@ from typing import Any, Dict, List, Optional, Union
 from PIL import Image
 from vllm import LLM, SamplingParams
 
+
 class VLLMVLForGeneration:
     """
     Vision-language generation model backed by vLLM offline inference engine.
@@ -121,11 +122,7 @@ class VLLMVLForGeneration:
         if mm_token_ids:
             collapsed = []
             for token_id in token_ids:
-                if (
-                    token_id in mm_token_ids
-                    and collapsed
-                    and collapsed[-1] == token_id
-                ):
+                if token_id in mm_token_ids and collapsed and collapsed[-1] == token_id:
                     continue
                 collapsed.append(token_id)
             token_ids = collapsed
@@ -262,7 +259,7 @@ class VLLMVLForGeneration:
 
         outputs = self.llm.generate(inputs, sampling_params=sampling_params)
         return [[o.token_ids for o in req.outputs] for req in outputs]
-        
+
     async def async_generate(
         self,
         input_ids: torch.Tensor,

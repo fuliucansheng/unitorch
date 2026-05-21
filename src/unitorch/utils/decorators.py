@@ -54,7 +54,9 @@ def replace(target_obj):
                 setattr(module, target_obj.__name__, new_obj)
                 logging.debug(
                     "Module %s: replaced %s with %s.",
-                    module_name, target_obj, new_obj,
+                    module_name,
+                    target_obj,
+                    new_obj,
                 )
 
             # Replace target_obj where it appears as a base class.
@@ -70,7 +72,9 @@ def replace(target_obj):
                     attr.__bases__ = tuple(bases)
                     logging.debug(
                         "Module %s: base class of %s replaced with %s.",
-                        module_name, attr, new_obj,
+                        module_name,
+                        attr,
+                        new_obj,
                     )
 
         return new_obj
@@ -108,7 +112,7 @@ def retry(
                 except exceptions:
                     if attempt == times - 1:
                         raise
-                    delay = min(base_delay * (2 ** attempt), max_delay)
+                    delay = min(base_delay * (2**attempt), max_delay)
                     if jitter:
                         delay *= random.uniform(0.5, 1.5)
                     time.sleep(delay)

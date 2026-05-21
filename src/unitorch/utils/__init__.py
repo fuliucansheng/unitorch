@@ -130,7 +130,8 @@ def get_from_cache(
             return cache_path
         stem = filename.split(".")[0]
         candidates = [
-            f for f in fnmatch.filter(os.listdir(cache_dir), stem + ".*")
+            f
+            for f in fnmatch.filter(os.listdir(cache_dir), stem + ".*")
             if not f.endswith((".json", ".lock"))
         ]
         if candidates:
@@ -149,7 +150,11 @@ def get_from_cache(
 
         if resume_download:
             incomplete_path = cache_path + ".incomplete"
-            resume_size = os.stat(incomplete_path).st_size if os.path.exists(incomplete_path) else 0
+            resume_size = (
+                os.stat(incomplete_path).st_size
+                if os.path.exists(incomplete_path)
+                else 0
+            )
             dest = open(incomplete_path, "ab")
         else:
             tmp_fd, incomplete_path = tempfile.mkstemp(dir=cache_dir)
@@ -161,7 +166,9 @@ def get_from_cache(
             if resume_size:
                 dl_headers["Range"] = f"bytes={resume_size}-"
             logging.debug(f"Downloading {url} to {incomplete_path}")
-            with requests.get(url_to_download, headers=dl_headers, proxies=proxies, stream=True) as r:
+            with requests.get(
+                url_to_download, headers=dl_headers, proxies=proxies, stream=True
+            ) as r:
                 r.raise_for_status()
                 for chunk in r.iter_content(chunk_size=1024 * 1024):
                     if chunk:

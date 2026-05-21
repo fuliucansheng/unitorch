@@ -132,7 +132,9 @@ class T5ForGeneration(GenericModel):
             -1, num_return_sequences, outputs.sequences.size(-1)
         )
         padded = torch.zeros(
-            sequences.size(0), num_return_sequences, max_gen_seq_length,
+            sequences.size(0),
+            num_return_sequences,
+            max_gen_seq_length,
             device=sequences.device,
         )
         padded[:, :, : sequences.size(-1)].copy_(sequences)

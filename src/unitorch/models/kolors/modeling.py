@@ -58,7 +58,7 @@ class ParallelTransformerBlock(nn.Module):
         ff_inner_dim = dim * ff_mult
         self.fused_dims = (attn_inner_dim, dim_head, dim_head, ff_inner_dim * 2)
         self.heads = heads
-        self.scale = dim_head ** -0.5
+        self.scale = dim_head**-0.5
         self.rotary_emb = RotaryEmbedding(dim_head)
         self.fused_attn_ff_proj = nn.Linear(dim, sum(self.fused_dims), bias=False)
         self.attn_out = nn.Linear(attn_inner_dim, dim, bias=False)
@@ -72,7 +72,9 @@ class ParallelTransformerBlock(nn.Module):
         self.register_buffer("pos_emb", pos_emb, persistent=False)
         return pos_emb
 
-    def forward(self, x: torch.Tensor, attn_mask: Optional[torch.Tensor] = None) -> torch.Tensor:
+    def forward(
+        self, x: torch.Tensor, attn_mask: Optional[torch.Tensor] = None
+    ) -> torch.Tensor:
         n, device, h = x.shape[1], x.device, self.heads
         x = self.norm(x)
         q, k, v, ff = self.fused_attn_ff_proj(x).split(self.fused_dims, dim=-1)
@@ -113,7 +115,7 @@ class CrossAttention(nn.Module):
     ):
         super().__init__()
         self.heads = heads
-        self.scale = dim_head ** -0.5
+        self.scale = dim_head**-0.5
         inner_dim = heads * dim_head
         context_dim = context_dim if context_dim is not None else dim
 
@@ -166,14 +168,33 @@ class CrossAttention(nn.Module):
 
 
 class CrossModel(nn.Module):
-    def __init__(self, dim: int = 512, layer_num: int = 4, dim_head: int = 64, heads: int = 8, ff_mult: int = 4):
+    def __init__(
+        self,
+        dim: int = 512,
+        layer_num: int = 4,
+        dim_head: int = 64,
+        heads: int = 8,
+        ff_mult: int = 4,
+    ):
         super().__init__()
         self.layers = nn.ModuleList(
             [
                 nn.ModuleList(
                     [
-                        Residual(CrossAttention(dim=dim, dim_head=dim_head, heads=heads, parallel_ff=True, ff_mult=ff_mult)),
-                        Residual(ParallelTransformerBlock(dim=dim, dim_head=dim_head, heads=heads, ff_mult=ff_mult)),
+                        Residual(
+                            CrossAttention(
+                                dim=dim,
+                                dim_head=dim_head,
+                                heads=heads,
+                                parallel_ff=True,
+                                ff_mult=ff_mult,
+                            )
+                        ),
+                        Residual(
+                            ParallelTransformerBlock(
+                                dim=dim, dim_head=dim_head, heads=heads, ff_mult=ff_mult
+                            )
+                        ),
                     ]
                 )
                 for _ in range(layer_num)
@@ -250,14 +271,18 @@ class KolorsMPSModel(GenericModel):
         )
         condition_features = self.model.text_projection(condition_outputs[0])
 
-        sim_text_condition = torch.einsum("b i d, b j d -> b j i", text_features, condition_features)
+        sim_text_condition = torch.einsum(
+            "b i d, b j d -> b j i", text_features, condition_features
+        )
         sim_text_condition = torch.max(sim_text_condition, dim=1, keepdim=True)[0]
         sim_text_condition = sim_text_condition / sim_text_condition.max()
         mask = torch.where(sim_text_condition > 0.01, 0, float("-inf"))
         mask = mask.repeat(1, image_features.shape[1], 1)
 
         cross_features = self.cross_model(image_features, text_features, mask)[:, 0]
-        text_embeds = text_pooled_features / text_pooled_features.norm(dim=-1, keepdim=True)
+        text_embeds = text_pooled_features / text_pooled_features.norm(
+            dim=-1, keepdim=True
+        )
         cross_embeds = cross_features / cross_features.norm(dim=-1, keepdim=True)
 
         scores = torch.sum(text_embeds * cross_embeds, dim=-1, keepdim=True)

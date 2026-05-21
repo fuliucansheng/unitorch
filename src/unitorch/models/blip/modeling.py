@@ -52,8 +52,12 @@ class BlipForPretrain(GenericModel):
 
         self.text_model = BlipTextModel(config.text_config)
         self.vision_model = BlipVisionModel(config.vision_config)
-        self.text_projection = nn.Linear(config.text_config.hidden_size, projection_dim, bias=False)
-        self.visual_projection = nn.Linear(config.vision_config.hidden_size, projection_dim, bias=False)
+        self.text_projection = nn.Linear(
+            config.text_config.hidden_size, projection_dim, bias=False
+        )
+        self.visual_projection = nn.Linear(
+            config.vision_config.hidden_size, projection_dim, bias=False
+        )
         self.logit_scale = nn.Parameter(torch.ones([]) * config.logit_scale_init_value)
         self.init_weights()
 
@@ -79,7 +83,11 @@ class BlipForPretrain(GenericModel):
             self.vision_model(pixel_values=pixel_values).pooler_output
         )
         text_embeds = self.text_projection(
-            self.text_model(input_ids=input_ids, attention_mask=attention_mask, position_ids=position_ids).pooler_output
+            self.text_model(
+                input_ids=input_ids,
+                attention_mask=attention_mask,
+                position_ids=position_ids,
+            ).pooler_output
         )
         image_embeds = image_embeds / image_embeds.norm(dim=-1, keepdim=True)
         text_embeds = text_embeds / text_embeds.norm(dim=-1, keepdim=True)
@@ -88,7 +96,9 @@ class BlipForPretrain(GenericModel):
             text_embeds = self._all_gather(text_embeds)
             image_embeds = self._all_gather(image_embeds)
 
-        logits_per_text = torch.matmul(text_embeds, image_embeds.t()) * self.logit_scale.exp()
+        logits_per_text = (
+            torch.matmul(text_embeds, image_embeds.t()) * self.logit_scale.exp()
+        )
         return _blip_loss(logits_per_text)
 
 
@@ -110,8 +120,12 @@ class BlipForClassification(GenericModel):
 
         self.text_model = BlipTextModel(config.text_config)
         self.vision_model = BlipVisionModel(config.vision_config)
-        self.text_projection = nn.Linear(config.text_config.hidden_size, projection_dim, bias=False)
-        self.visual_projection = nn.Linear(config.vision_config.hidden_size, projection_dim, bias=False)
+        self.text_projection = nn.Linear(
+            config.text_config.hidden_size, projection_dim, bias=False
+        )
+        self.visual_projection = nn.Linear(
+            config.vision_config.hidden_size, projection_dim, bias=False
+        )
         self.classifier = nn.Linear(projection_dim * 2, num_classes)
         self.init_weights()
 
@@ -133,7 +147,11 @@ class BlipForClassification(GenericModel):
             self.vision_model(pixel_values=pixel_values).pooler_output
         )
         text_embeds = self.text_projection(
-            self.text_model(input_ids=input_ids, attention_mask=attention_mask, position_ids=position_ids).pooler_output
+            self.text_model(
+                input_ids=input_ids,
+                attention_mask=attention_mask,
+                position_ids=position_ids,
+            ).pooler_output
         )
         return self.classifier(F.relu(torch.cat([image_embeds, text_embeds], dim=1)))
 
@@ -154,7 +172,9 @@ class BlipForTextClassification(GenericModel):
         config.text_config.gradient_checkpointing = gradient_checkpointing
 
         self.text_model = BlipTextModel(config.text_config)
-        self.text_projection = nn.Linear(config.text_config.hidden_size, projection_dim, bias=False)
+        self.text_projection = nn.Linear(
+            config.text_config.hidden_size, projection_dim, bias=False
+        )
         self.classifier = nn.Linear(projection_dim, num_classes)
         self.init_weights()
 
@@ -170,7 +190,11 @@ class BlipForTextClassification(GenericModel):
         position_ids: torch.Tensor,
     ) -> torch.Tensor:
         text_embeds = self.text_projection(
-            self.text_model(input_ids=input_ids, attention_mask=attention_mask, position_ids=position_ids).pooler_output
+            self.text_model(
+                input_ids=input_ids,
+                attention_mask=attention_mask,
+                position_ids=position_ids,
+            ).pooler_output
         )
         return self.classifier(F.relu(text_embeds))
 
@@ -191,7 +215,9 @@ class BlipForImageClassification(GenericModel):
         config.vision_config.gradient_checkpointing = gradient_checkpointing
 
         self.vision_model = BlipVisionModel(config.vision_config)
-        self.visual_projection = nn.Linear(config.vision_config.hidden_size, projection_dim, bias=False)
+        self.visual_projection = nn.Linear(
+            config.vision_config.hidden_size, projection_dim, bias=False
+        )
         self.classifier = nn.Linear(projection_dim, num_classes)
         self.init_weights()
 
@@ -283,7 +309,9 @@ class BlipForImageCaption(GenericModel):
             output_scores=True,
         )
 
-        sequences = outputs.sequences.reshape(-1, num_return_sequences, outputs.sequences.size(-1))
+        sequences = outputs.sequences.reshape(
+            -1, num_return_sequences, outputs.sequences.size(-1)
+        )
         padded = torch.full(
             (sequences.size(0), num_return_sequences, max_gen_seq_length),
             fill_value=decoder_start_token_id,
@@ -295,4 +323,6 @@ class BlipForImageCaption(GenericModel):
         if num_return_sequences == 1:
             padded = padded.reshape(-1, max_gen_seq_length)
 
-        return GenericOutputs(sequences=padded, sequences_scores=outputs.sequences_scores)
+        return GenericOutputs(
+            sequences=padded, sequences_scores=outputs.sequences_scores
+        )

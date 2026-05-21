@@ -45,8 +45,15 @@ class BRIAForSegmentationPipeline(_BRIAForSegmentation):
         image_size = config.getoption("image_size", 1024)
         enable_cpu_offload = config.getoption("enable_cpu_offload", True)
         device = config.getoption("device", "cpu") if device is None else device
-        weight_path = pretrained_weight_path or config.getoption("pretrained_weight_path", None)
-        return cls(image_size=image_size, weight_path=weight_path, enable_cpu_offload=enable_cpu_offload, device=device)
+        weight_path = pretrained_weight_path or config.getoption(
+            "pretrained_weight_path", None
+        )
+        return cls(
+            image_size=image_size,
+            weight_path=weight_path,
+            enable_cpu_offload=enable_cpu_offload,
+            device=device,
+        )
 
     @torch.no_grad()
     @config_defaults_method("core/fastapi/pipeline/bria")
@@ -56,7 +63,10 @@ class BRIAForSegmentationPipeline(_BRIAForSegmentation):
         inputs = self.processor.segmentation_inputs(image)
         pixel_values = inputs.image.unsqueeze(0).to(self._device)
         outputs = self.forward(pixel_values).logits
-        masks = [(mask.squeeze(0).cpu().numpy() > threshold).astype(np.uint8) for mask in outputs][0]
+        masks = [
+            (mask.squeeze(0).cpu().numpy() > threshold).astype(np.uint8)
+            for mask in outputs
+        ][0]
         result_image = Image.fromarray(masks * 255)
         result_image = result_image.resize(image.size, resample=Image.LANCZOS)
         if self._enable_cpu_offload:

@@ -61,7 +61,9 @@ class QWen3VLVLLMForGeneration(_VLLMVLForGeneration):
         hf_name_or_folder = config.getoption("hf_name_or_folder", None)
         hf_name_or_folder = pop_value(
             hf_name_or_folder,
-            nested_dict_value(pretrained_vllm_infos, pretrained_name, "hf_pretrained_name"),
+            nested_dict_value(
+                pretrained_vllm_infos, pretrained_name, "hf_pretrained_name"
+            ),
         )
 
         tensor_parallel_size = config.getoption("tensor_parallel_size", 1)

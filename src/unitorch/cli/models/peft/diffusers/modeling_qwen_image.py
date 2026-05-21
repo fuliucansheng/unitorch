@@ -78,9 +78,7 @@ class QWenImageLoraForText2ImageGeneration(_QWenImageLoraForText2ImageGeneration
         )
 
     @classmethod
-    @config_defaults_init(
-        "core/model/diffusers/peft/lora/text2image/qwen_image"
-    )
+    @config_defaults_init("core/model/diffusers/peft/lora/text2image/qwen_image")
     def from_config(cls, config, **kwargs):
         config.set_default_section(
             "core/model/diffusers/peft/lora/text2image/qwen_image"
@@ -239,9 +237,7 @@ class QWenImageLoraForText2ImageGeneration(_QWenImageLoraForText2ImageGeneration
         )
         return LossOutputs(loss=loss)
 
-    @config_defaults_method(
-        "core/model/diffusers/peft/lora/text2image/qwen_image"
-    )
+    @config_defaults_method("core/model/diffusers/peft/lora/text2image/qwen_image")
     @autocast(
         device_type=("cuda" if torch.cuda.is_available() else "cpu"),
         dtype=(torch.bfloat16 if is_bfloat16_available() else torch.float32),
@@ -491,9 +487,7 @@ class QWenImageLoraForImageEditing(_QWenImageLoraForImageEditing):
         )
         return LossOutputs(loss=loss)
 
-    @config_defaults_method(
-        "core/model/diffusers/peft/lora/editing/qwen_image"
-    )
+    @config_defaults_method("core/model/diffusers/peft/lora/editing/qwen_image")
     @autocast(
         device_type=("cuda" if torch.cuda.is_available() else "cpu"),
         dtype=(torch.bfloat16 if is_bfloat16_available() else torch.float32),

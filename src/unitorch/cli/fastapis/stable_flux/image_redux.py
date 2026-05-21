@@ -435,14 +435,12 @@ class StableFluxImageReduxGenerationFastAPI(GenericFastAPI):
         pretrained_lora_weights: Optional[Union[float, List[float]]] = 1.0,
         pretrained_lora_alphas: Optional[Union[float, List[float]]] = 32.0,
     ):
-        self._pipe = (
-            StableFluxForImageReduxGenerationFastAPIPipeline.from_config(
-                self.config,
-                pretrained_name=pretrained_name,
-                pretrained_lora_names=pretrained_lora_names,
-                pretrained_lora_weights=pretrained_lora_weights,
-                pretrained_lora_alphas=pretrained_lora_alphas,
-            )
+        self._pipe = StableFluxForImageReduxGenerationFastAPIPipeline.from_config(
+            self.config,
+            pretrained_name=pretrained_name,
+            pretrained_lora_names=pretrained_lora_names,
+            pretrained_lora_weights=pretrained_lora_weights,
+            pretrained_lora_alphas=pretrained_lora_alphas,
         )
         return "start success"
 

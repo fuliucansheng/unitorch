@@ -58,7 +58,7 @@ def _get_batch_on_cp_rank(batch: Dict[str, Any]) -> Dict[str, Any]:
             *val.shape[:seq_dim],
             2 * cp_size,
             val.shape[seq_dim] // (2 * cp_size),
-            *val.shape[seq_dim + 1:],
+            *val.shape[seq_dim + 1 :],
         )
         index = torch.tensor(
             [cp_rank, 2 * cp_size - cp_rank - 1],
@@ -66,7 +66,7 @@ def _get_batch_on_cp_rank(batch: Dict[str, Any]) -> Dict[str, Any]:
             pin_memory=True,
         ).cuda(non_blocking=True)
         val = val.index_select(seq_dim, index)
-        batch[key] = val.view(*val.shape[:seq_dim], -1, *val.shape[seq_dim + 2:])
+        batch[key] = val.view(*val.shape[:seq_dim], -1, *val.shape[seq_dim + 2 :])
 
     return batch
 
@@ -96,7 +96,7 @@ class MegatronTask:
         model,
         datasets,
         local_rank: int = -1,  # GPU index for distributed training; -1 for single-GPU
-        seed: int = 1123,       # global random seed for reproducibility
+        seed: int = 1123,  # global random seed for reproducibility
     ):
         set_seed(seed)
         tensor_parallel.model_parallel_cuda_manual_seed(seed)
@@ -144,8 +144,12 @@ class MegatronTask:
         config.set_default_section("core/task/megatron/supervised")
 
         mpu.initialize_model_parallel(
-            tensor_model_parallel_size=config.getoption("tensor_model_parallel_size", 1),
-            pipeline_model_parallel_size=config.getoption("pipeline_model_parallel_size", 1),
+            tensor_model_parallel_size=config.getoption(
+                "tensor_model_parallel_size", 1
+            ),
+            pipeline_model_parallel_size=config.getoption(
+                "pipeline_model_parallel_size", 1
+            ),
             context_parallel_size=config.getoption("context_parallel_size", 1),
         )
 
@@ -167,25 +171,29 @@ class MegatronTask:
     @config_defaults_method("core/task/megatron/supervised")
     def train(
         self,
-        optim: str,                                     # registered optimizer name
-        loss_fn: str,                                   # registered loss function name
-        score_fn: str,                                  # registered scoring function name
-        monitor_fns: Optional[Union[str, List[str]]] = None,  # extra metrics logged at checkpoints
-        scheduler: Optional[str] = None,               # registered LR scheduler name
-        from_ckpt_dir: str = "./from_ckpt",            # directory to load pretrained weights from
-        to_ckpt_dir: str = "./to_ckpt",                # directory to write checkpoints to
-        train_batch_size: int = 128,                   # per-DP-rank micro-batch size for training
-        dev_batch_size: int = 128,                     # per-DP-rank batch size for validation
-        pin_memory: bool = True,                       # pin DataLoader memory for faster GPU transfer
-        num_workers: int = 4,                          # DataLoader worker processes
-        log_freq: int = 100,                           # log training loss every N steps
-        ckpt_freq: int = 10000,                        # save checkpoint every N steps
-        grad_acc_step: int = 1,                        # gradient accumulation microbatches
-        max_grad_norm: float = 1.0,                    # gradient clipping max norm
-        num_training_samples: int = 1_000_000_000,     # fallback total samples for iterable datasets
-        num_dev_samples: int = 10000,                  # number of samples used per validation pass
-        seq_length: Optional[int] = None,              # sequence length hint passed to pipeline schedules
-        epochs: int = 5,                               # total training epochs
+        optim: str,  # registered optimizer name
+        loss_fn: str,  # registered loss function name
+        score_fn: str,  # registered scoring function name
+        monitor_fns: Optional[
+            Union[str, List[str]]
+        ] = None,  # extra metrics logged at checkpoints
+        scheduler: Optional[str] = None,  # registered LR scheduler name
+        from_ckpt_dir: str = "./from_ckpt",  # directory to load pretrained weights from
+        to_ckpt_dir: str = "./to_ckpt",  # directory to write checkpoints to
+        train_batch_size: int = 128,  # per-DP-rank micro-batch size for training
+        dev_batch_size: int = 128,  # per-DP-rank batch size for validation
+        pin_memory: bool = True,  # pin DataLoader memory for faster GPU transfer
+        num_workers: int = 4,  # DataLoader worker processes
+        log_freq: int = 100,  # log training loss every N steps
+        ckpt_freq: int = 10000,  # save checkpoint every N steps
+        grad_acc_step: int = 1,  # gradient accumulation microbatches
+        max_grad_norm: float = 1.0,  # gradient clipping max norm
+        num_training_samples: int = 1_000_000_000,  # fallback total samples for iterable datasets
+        num_dev_samples: int = 10000,  # number of samples used per validation pass
+        seq_length: Optional[
+            int
+        ] = None,  # sequence length hint passed to pipeline schedules
+        epochs: int = 5,  # total training epochs
     ):
         if self.local_rank in [-1, 0]:
             os.makedirs(to_ckpt_dir, exist_ok=True)
@@ -212,7 +220,9 @@ class MegatronTask:
         if os.path.exists(from_ckpt_dir):
             self.model.from_checkpoint(from_ckpt_dir)
         if os.path.exists(os.path.join(to_ckpt_dir, "pytorch_model_latest")):
-            self.model.from_checkpoint(os.path.join(to_ckpt_dir, "pytorch_model_latest"))
+            self.model.from_checkpoint(
+                os.path.join(to_ckpt_dir, "pytorch_model_latest")
+            )
 
         info_path = os.path.join(to_ckpt_dir, "info.json")
         if os.path.exists(info_path):
@@ -229,7 +239,11 @@ class MegatronTask:
         for name, param in self.model.named_parameters():
             logging.debug(
                 "%s: trainable=%s dtype=%s shape=%s device=%s",
-                name, param.requires_grad, param.dtype, param.shape, param.device,
+                name,
+                param.requires_grad,
+                param.dtype,
+                param.shape,
+                param.device,
             )
 
         _ddp_config = DistributedDataParallelConfig(use_distributed_optimizer=False)
@@ -253,29 +267,36 @@ class MegatronTask:
         dataset_train = self.datasets.get("train")
         dataset_dev = self.datasets.get("dev")
 
-        iter_train = iter(DataLoader(
-            dataset_train,
-            sampler=None,
-            batch_size=train_batch_size,
-            shuffle=False,
-            pin_memory=pin_memory,
-            num_workers=num_workers,
-            collate_fn=collate_fn,
-        ))
-        iter_dev = iter(DataLoader(
-            dataset_dev,
-            sampler=None,
-            batch_size=dev_batch_size,
-            shuffle=False,
-            pin_memory=pin_memory,
-            num_workers=num_workers,
-            collate_fn=collate_fn,
-        ))
+        iter_train = iter(
+            DataLoader(
+                dataset_train,
+                sampler=None,
+                batch_size=train_batch_size,
+                shuffle=False,
+                pin_memory=pin_memory,
+                num_workers=num_workers,
+                collate_fn=collate_fn,
+            )
+        )
+        iter_dev = iter(
+            DataLoader(
+                dataset_dev,
+                sampler=None,
+                batch_size=dev_batch_size,
+                shuffle=False,
+                pin_memory=pin_memory,
+                num_workers=num_workers,
+                collate_fn=collate_fn,
+            )
+        )
 
         if scheduler is not None:
             num_training_steps = int(
-                epochs * num_training_samples // train_batch_size
-                // max(1, self.dp_size) // grad_acc_step
+                epochs
+                * num_training_samples
+                // train_batch_size
+                // max(1, self.dp_size)
+                // grad_acc_step
             )
             scheduler = init_registered_module(
                 scheduler,
@@ -355,7 +376,9 @@ class MegatronTask:
                 ckpt_dir=os.path.join(to_ckpt_dir, "pytorch_model_latest"),
                 weight_name="common.pt",
             )
-            info.update(best_score=self.best_score, global_epoch=epoch, global_step=step)
+            info.update(
+                best_score=self.best_score, global_epoch=epoch, global_step=step
+            )
             if self._is_primary_rank:
                 with open(info_path, "w") as f:
                     json.dump(info, f, indent=4)
@@ -396,7 +419,9 @@ class MegatronTask:
                 if self.is_pp_last_rank:
                     log_loss += loss_list[0].item()
 
-                nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=max_grad_norm)
+                nn.utils.clip_grad_norm_(
+                    self.model.parameters(), max_norm=max_grad_norm
+                )
                 optim.step()
                 if scheduler is not None:
                     scheduler.step()

@@ -50,7 +50,9 @@ class PegasusProcessor(HfTextGenerationProcessor):
             max_seq_length (int, optional): Maximum sequence length. Defaults to 128.
             max_gen_seq_length (int, optional): Maximum generated sequence length. Defaults to 48.
         """
-        tokenizer = get_pegasus_tokenizer(vocab_path, special_input_ids=special_input_ids)
+        tokenizer = get_pegasus_tokenizer(
+            vocab_path, special_input_ids=special_input_ids
+        )
         tokenizer.bos_token_id = 0
         tokenizer.bos_token = tokenizer.convert_ids_to_tokens(0)
         tokenizer.sep_token = tokenizer.eos_token

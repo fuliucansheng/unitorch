@@ -60,7 +60,9 @@ class BlipProcessor(
         max_seq_length: Optional[int] = None,
     ) -> GenericOutputs:
         """Tokenise *text* for text classification."""
-        outputs = HfTextClassificationProcessor.classification(self, text=text, max_seq_length=max_seq_length)
+        outputs = HfTextClassificationProcessor.classification(
+            self, text=text, max_seq_length=max_seq_length
+        )
         return GenericOutputs(
             input_ids=outputs.input_ids,
             attention_mask=outputs.attention_mask,
@@ -70,7 +72,9 @@ class BlipProcessor(
     def image_classification(self, image: Union[Image.Image, str]) -> GenericOutputs:
         """Preprocess *image* for image classification."""
         return GenericOutputs(
-            pixel_values=HfImageClassificationProcessor.classification(self, image=image).pixel_values,
+            pixel_values=HfImageClassificationProcessor.classification(
+                self, image=image
+            ).pixel_values,
         )
 
     def classification(
@@ -96,8 +100,12 @@ class BlipProcessor(
         max_seq_length: Optional[int] = None,
     ) -> GenericOutputs:
         """Tokenise *text* as encoder generation inputs."""
-        outputs = HfTextGenerationProcessor.generation_inputs(self, text=text, max_seq_length=max_seq_length)
-        return GenericOutputs(input_ids=outputs.input_ids, attention_mask=outputs.attention_mask)
+        outputs = HfTextGenerationProcessor.generation_inputs(
+            self, text=text, max_seq_length=max_seq_length
+        )
+        return GenericOutputs(
+            input_ids=outputs.input_ids, attention_mask=outputs.attention_mask
+        )
 
     def generation_labels(
         self,
@@ -105,8 +113,12 @@ class BlipProcessor(
         max_gen_seq_length: Optional[int] = None,
     ) -> GenericOutputs:
         """Tokenise *text* as generation labels."""
-        outputs = HfTextGenerationProcessor.generation_labels(self, text=text, max_gen_seq_length=max_gen_seq_length)
-        return GenericOutputs(input_ids=outputs.input_ids, attention_mask=outputs.attention_mask)
+        outputs = HfTextGenerationProcessor.generation_labels(
+            self, text=text, max_gen_seq_length=max_gen_seq_length
+        )
+        return GenericOutputs(
+            input_ids=outputs.input_ids, attention_mask=outputs.attention_mask
+        )
 
     def generation(
         self,

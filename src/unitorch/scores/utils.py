@@ -25,7 +25,9 @@ def remove_strings_ignore_tokens(inputs: Any, ignore_tokens: Optional[Set[str]])
     if isinstance(inputs, list):
         return [remove_strings_ignore_tokens(e, ignore_tokens) for e in inputs]
     if isinstance(inputs, dict):
-        return {k: remove_strings_ignore_tokens(v, ignore_tokens) for k, v in inputs.items()}
+        return {
+            k: remove_strings_ignore_tokens(v, ignore_tokens) for k, v in inputs.items()
+        }
     if isinstance(inputs, tuple):
         return tuple(remove_strings_ignore_tokens(e, ignore_tokens) for e in inputs)
     if isinstance(inputs, frozenset):

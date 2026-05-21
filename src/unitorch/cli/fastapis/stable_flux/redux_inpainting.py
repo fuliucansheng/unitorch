@@ -348,9 +348,7 @@ class StableFluxForReduxInpaintingFastAPIPipeline(GenericStableFluxModel):
         device_type=("cuda" if torch.cuda.is_available() else "cpu"),
         dtype=(torch.bfloat16 if is_bfloat16_available() else torch.float32),
     )
-    @config_defaults_method(
-        "core/fastapi/pipeline/stable_flux/redux_inpainting"
-    )
+    @config_defaults_method("core/fastapi/pipeline/stable_flux/redux_inpainting")
     def __call__(
         self,
         text: str,

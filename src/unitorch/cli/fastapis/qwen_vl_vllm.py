@@ -50,7 +50,9 @@ class QWen3VLVLLMFastAPI(GenericFastAPI):
             pretrained_name (str): Pretrained model name to load. Defaults to ``"qwen3-vl-2b-instruct"``.
         """
         self.config.set_default_section("core/fastapi/vllm/qwen3_vl")
-        self.config.set("core/fastapi/vllm/qwen3_vl", "pretrained_name", pretrained_name)
+        self.config.set(
+            "core/fastapi/vllm/qwen3_vl", "pretrained_name", pretrained_name
+        )
         self._pipe = QWen3VLVLLMForGeneration.from_config(
             self.config,
             pretrained_name=pretrained_name,
@@ -65,6 +67,7 @@ class QWen3VLVLLMFastAPI(GenericFastAPI):
         gc.collect()
         try:
             import torch
+
             torch.cuda.empty_cache()
         except Exception:
             pass
@@ -118,13 +121,19 @@ class QWen3VLVLLMFastAPI(GenericFastAPI):
             pil_image = Image.open(io.BytesIO(content)).convert("RGB")
 
         processor = self._pipe.processor
-        prompt = processor.chat_template(messages=json.loads(text)) if use_chat_template else text
+        prompt = (
+            processor.chat_template(messages=json.loads(text))
+            if use_chat_template
+            else text
+        )
         inputs = processor.generation_inputs(
             text=prompt,
             images=[pil_image] if pil_image is not None else [],
         )
         input_ids = inputs.input_ids.unsqueeze(0)
-        pixel_values = inputs.pixel_values.unsqueeze(0) if pil_image is not None else None
+        pixel_values = (
+            inputs.pixel_values.unsqueeze(0) if pil_image is not None else None
+        )
         image_grid_thw = inputs.image_grid_thw if pil_image is not None else None
 
         async with self._lock:

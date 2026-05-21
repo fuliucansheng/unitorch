@@ -137,7 +137,11 @@ class GroundingDinoForDetection(GenericModel):
         num_levels = hidden_states.shape[1]
 
         for level in range(num_levels):
-            reference = init_reference_points if level == 0 else inter_references_points[:, level - 1]
+            reference = (
+                init_reference_points
+                if level == 0
+                else inter_references_points[:, level - 1]
+            )
             reference = torch.special.logit(reference, eps=1e-5)
 
             outputs_class = self.class_embed[level](
@@ -212,7 +216,9 @@ class GroundingDinoForDetection(GenericModel):
 
         outputs_loss = {"logits": logits, "pred_boxes": pred_boxes}
         if self.enable_auxiliary_loss:
-            outputs_loss["auxiliary_outputs"] = self._set_aux_loss(outputs_class, outputs_coord)
+            outputs_loss["auxiliary_outputs"] = self._set_aux_loss(
+                outputs_class, outputs_coord
+            )
         if self.config.two_stage:
             outputs_loss["enc_outputs"] = {
                 "logits": outputs[-2],
@@ -232,9 +238,7 @@ class GroundingDinoForDetection(GenericModel):
             weight_dict.update(aux_weight_dict)
 
         return sum(
-            loss_dict[k] * weight_dict[k]
-            for k in loss_dict.keys()
-            if k in weight_dict
+            loss_dict[k] * weight_dict[k] for k in loss_dict.keys() if k in weight_dict
         )
 
     @torch.no_grad()

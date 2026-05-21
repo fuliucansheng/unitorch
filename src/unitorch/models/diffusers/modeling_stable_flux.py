@@ -39,15 +39,19 @@ from unitorch.models.peft import PeftWeightLoaderMixin
 def compute_snr(timesteps, noise_scheduler):
     """Computes SNR for min-SNR loss weighting."""
     alphas_cumprod = noise_scheduler.alphas_cumprod
-    sqrt_alphas_cumprod = alphas_cumprod ** 0.5
+    sqrt_alphas_cumprod = alphas_cumprod**0.5
     sqrt_one_minus_alphas_cumprod = (1.0 - alphas_cumprod) ** 0.5
 
-    sqrt_alphas_cumprod = sqrt_alphas_cumprod.to(device=timesteps.device)[timesteps].float()
+    sqrt_alphas_cumprod = sqrt_alphas_cumprod.to(device=timesteps.device)[
+        timesteps
+    ].float()
     while len(sqrt_alphas_cumprod.shape) < len(timesteps.shape):
         sqrt_alphas_cumprod = sqrt_alphas_cumprod[..., None]
     alpha = sqrt_alphas_cumprod.expand(timesteps.shape)
 
-    sqrt_one_minus_alphas_cumprod = sqrt_one_minus_alphas_cumprod.to(device=timesteps.device)[timesteps].float()
+    sqrt_one_minus_alphas_cumprod = sqrt_one_minus_alphas_cumprod.to(
+        device=timesteps.device
+    )[timesteps].float()
     while len(sqrt_one_minus_alphas_cumprod.shape) < len(timesteps.shape):
         sqrt_one_minus_alphas_cumprod = sqrt_one_minus_alphas_cumprod[..., None]
     sigma = sqrt_one_minus_alphas_cumprod.expand(timesteps.shape)
@@ -799,9 +803,7 @@ class StableFluxForImageInpainting(GenericStableFluxModel):
             pixel_masks = pixel_masks[:, 0, :, :].view(
                 batch_size, height, vae_scale_factor, width, vae_scale_factor
             )
-            pixel_masks = pixel_masks.permute(
-                0, 2, 4, 1, 3
-            )
+            pixel_masks = pixel_masks.permute(0, 2, 4, 1, 3)
             pixel_masks = pixel_masks.reshape(
                 batch_size, vae_scale_factor * vae_scale_factor, height, width
             )

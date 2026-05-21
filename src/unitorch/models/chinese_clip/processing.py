@@ -13,7 +13,9 @@ from unitorch.models import (
 )
 
 
-class ChineseClipProcessor(HfImageClassificationProcessor, HfTextClassificationProcessor):
+class ChineseClipProcessor(
+    HfImageClassificationProcessor, HfTextClassificationProcessor
+):
     """Multimodal processor for Chinese CLIP models."""
 
     def __init__(
@@ -25,7 +27,9 @@ class ChineseClipProcessor(HfImageClassificationProcessor, HfTextClassificationP
     ) -> None:
         HfImageClassificationProcessor.__init__(
             self,
-            vision_processor=ChineseCLIPImageProcessor.from_json_file(vision_config_path),
+            vision_processor=ChineseCLIPImageProcessor.from_json_file(
+                vision_config_path
+            ),
         )
 
         tokenizer = BertTokenizer(vocab_file=vocab_path)
@@ -46,7 +50,9 @@ class ChineseClipProcessor(HfImageClassificationProcessor, HfTextClassificationP
         max_seq_length: Optional[int] = None,
     ) -> GenericOutputs:
         """Tokenise *text* for text classification."""
-        outputs = HfTextClassificationProcessor.classification(self, text=text, max_seq_length=max_seq_length)
+        outputs = HfTextClassificationProcessor.classification(
+            self, text=text, max_seq_length=max_seq_length
+        )
         return GenericOutputs(
             input_ids=outputs.input_ids,
             attention_mask=outputs.attention_mask,
@@ -56,7 +62,9 @@ class ChineseClipProcessor(HfImageClassificationProcessor, HfTextClassificationP
     def image_classification(self, image: Union[Image.Image, str]) -> GenericOutputs:
         """Preprocess *image* for image classification."""
         return GenericOutputs(
-            pixel_values=HfImageClassificationProcessor.classification(self, image=image).pixel_values,
+            pixel_values=HfImageClassificationProcessor.classification(
+                self, image=image
+            ).pixel_values,
         )
 
     def classification(

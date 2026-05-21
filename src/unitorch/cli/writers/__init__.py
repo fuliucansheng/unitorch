@@ -123,7 +123,9 @@ class GeneralCsvWriter(GenericWriter):
         self.output_file.flush()
 
     def process_start(self, outputs: "WriterOutputs"):
-        self._write(outputs, include_header=bool(self.header) and self.skip_n_samples == 0)
+        self._write(
+            outputs, include_header=bool(self.header) and self.skip_n_samples == 0
+        )
 
     def process_chunk(self, outputs: "WriterOutputs"):
         self._write(outputs, include_header=False)

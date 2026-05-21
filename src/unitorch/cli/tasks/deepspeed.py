@@ -69,12 +69,12 @@ def save_snapshot_zero_3(
     score_fn,
     monitor_fns,
     save_checkpoint="default",  # checkpoint policy: default/best/latest/every/all
-    merge_checkpoint=False,     # merge ZeRO-3 shards into a single fp32 bin file
+    merge_checkpoint=False,  # merge ZeRO-3 shards into a single fp32 bin file
     exclude_freeze_parameters=True,  # skip frozen parameters when merging
-    best_score=-np.inf,         # best validation score seen so far
-    info_path=None,             # path to info.json for persisting training state
-    local_rank=-1,              # only rank 0 (or -1) writes files
-    **kwargs,                   # extra fields forwarded to info.json (e.g. global_epoch)
+    best_score=-np.inf,  # best validation score seen so far
+    info_path=None,  # path to info.json for persisting training state
+    local_rank=-1,  # only rank 0 (or -1) writes files
+    **kwargs,  # extra fields forwarded to info.json (e.g. global_epoch)
 ):
     """Evaluate a ZeRO stage-3 model and save checkpoints according to policy.
 
@@ -123,7 +123,9 @@ def save_snapshot_zero_3(
                     exclude_frozen_parameters=exclude_freeze_parameters,
                 )
             )
-            torch.save(state_dict, os.path.join(ckpt_dir, f"pytorch_model_{snapshot_time}.bin"))
+            torch.save(
+                state_dict, os.path.join(ckpt_dir, f"pytorch_model_{snapshot_time}.bin")
+            )
         else:
             model.save_checkpoint(ckpt_dir, f"pytorch_model_{snapshot_time}")
 
@@ -139,8 +141,8 @@ class DeepspeedTask:
         configure,
         model,
         datasets,
-        local_rank: int = -1,      # GPU index for distributed training; -1 for single-GPU
-        seed: int = 1123,           # global random seed for reproducibility
+        local_rank: int = -1,  # GPU index for distributed training; -1 for single-GPU
+        seed: int = 1123,  # global random seed for reproducibility
         cpu_offload: bool = False,  # keep model on CPU (e.g. for ZeRO-Infinity offload)
     ):
         set_seed(seed)
@@ -184,39 +186,49 @@ class DeepspeedTask:
             model=model,
             datasets=dataset,
             local_rank=config.getdefault("core/cli", "local_rank", get_local_rank()),
-            cpu_offload=config.getdefault("core/task/deepspeed/supervised", "cpu_offload", False),
+            cpu_offload=config.getdefault(
+                "core/task/deepspeed/supervised", "cpu_offload", False
+            ),
         )
 
     @config_defaults_method("core/task/deepspeed/supervised")
     def train(
         self,
-        config_path: str,                               # path to DeepSpeed JSON config file
-        optim: str,                                     # registered optimizer name
-        loss_fn: str,                                   # registered loss function name
-        score_fn: str,                                  # registered scoring function name
-        monitor_fns: Optional[Union[str, List[str]]] = None,  # extra metrics logged at checkpoints
-        from_ckpt_dir: str = "./from_ckpt",            # directory to load pretrained weights from
-        to_ckpt_dir: str = "./to_ckpt",                # directory to write checkpoints to
-        train_batch_size: int = 128,                   # per-GPU micro-batch size for training
-        dev_batch_size: int = 128,                     # per-GPU batch size for validation
-        pin_memory: bool = True,                       # pin DataLoader memory for faster GPU transfer
-        num_workers: int = 4,                          # DataLoader worker processes
-        save_optimizer: bool = False,                  # include optimizer state in non-ZeRO-3 checkpoints
-        save_scheduler: bool = False,                  # include scheduler state in non-ZeRO-3 checkpoints
-        save_checkpoint: str = "default",              # checkpoint policy: default/best/latest/every/all
-        log_freq: int = 100,                           # log training loss every N steps
-        ckpt_freq: int = 10000,                        # save checkpoint every N steps
-        grad_acc_step: int = 1,                        # gradient accumulation steps before optimizer update
-        learning_rate: Optional[float] = None,         # override optimizer lr in DeepSpeed config
-        max_warmup_learning_rate: Optional[float] = None,  # WarmupLR warmup_max_lr override
-        num_warmup_steps: Optional[int] = None,        # WarmupLR warmup_num_steps override
-        epochs: int = 5,                               # total training epochs
-        zero_stage: Optional[int] = None,              # ZeRO optimisation stage (1/2/3); inferred from config if None
-        merge_zero3_checkpoint: bool = True,           # merge ZeRO-3 shards into a single fp32 bin
-        exclude_freeze_parameters: bool = True,        # skip frozen parameters when merging ZeRO-3
-        use_ema: bool = False,                         # maintain an EMA shadow model for evaluation
-        ema_decay: float = 0.9999,                     # EMA decay factor
-        ema_tau: int = 2000,                           # EMA warm-up steps
+        config_path: str,  # path to DeepSpeed JSON config file
+        optim: str,  # registered optimizer name
+        loss_fn: str,  # registered loss function name
+        score_fn: str,  # registered scoring function name
+        monitor_fns: Optional[
+            Union[str, List[str]]
+        ] = None,  # extra metrics logged at checkpoints
+        from_ckpt_dir: str = "./from_ckpt",  # directory to load pretrained weights from
+        to_ckpt_dir: str = "./to_ckpt",  # directory to write checkpoints to
+        train_batch_size: int = 128,  # per-GPU micro-batch size for training
+        dev_batch_size: int = 128,  # per-GPU batch size for validation
+        pin_memory: bool = True,  # pin DataLoader memory for faster GPU transfer
+        num_workers: int = 4,  # DataLoader worker processes
+        save_optimizer: bool = False,  # include optimizer state in non-ZeRO-3 checkpoints
+        save_scheduler: bool = False,  # include scheduler state in non-ZeRO-3 checkpoints
+        save_checkpoint: str = "default",  # checkpoint policy: default/best/latest/every/all
+        log_freq: int = 100,  # log training loss every N steps
+        ckpt_freq: int = 10000,  # save checkpoint every N steps
+        grad_acc_step: int = 1,  # gradient accumulation steps before optimizer update
+        learning_rate: Optional[
+            float
+        ] = None,  # override optimizer lr in DeepSpeed config
+        max_warmup_learning_rate: Optional[
+            float
+        ] = None,  # WarmupLR warmup_max_lr override
+        num_warmup_steps: Optional[int] = None,  # WarmupLR warmup_num_steps override
+        epochs: int = 5,  # total training epochs
+        zero_stage: Optional[
+            int
+        ] = None,  # ZeRO optimisation stage (1/2/3); inferred from config if None
+        merge_zero3_checkpoint: bool = True,  # merge ZeRO-3 shards into a single fp32 bin
+        exclude_freeze_parameters: bool = True,  # skip frozen parameters when merging ZeRO-3
+        use_ema: bool = False,  # maintain an EMA shadow model for evaluation
+        ema_decay: float = 0.9999,  # EMA decay factor
+        ema_tau: int = 2000,  # EMA warm-up steps
     ):
         if self.local_rank in [-1, 0]:
             os.makedirs(to_ckpt_dir, exist_ok=True)
@@ -238,14 +250,18 @@ class DeepspeedTask:
         config_dict["train_micro_batch_size_per_gpu"] = train_batch_size
 
         if zero_stage is None:
-            zero_stage = nested_dict_value(config_dict, "zero_optimization", "stage") or 2
+            zero_stage = (
+                nested_dict_value(config_dict, "zero_optimization", "stage") or 2
+            )
 
         if os.path.exists(from_ckpt_dir):
             self.model.from_checkpoint(from_ckpt_dir)
 
         # Resume from latest checkpoint for non-ZeRO-3 (ZeRO-3 uses load_checkpoint below)
         if os.path.exists(to_ckpt_dir) and zero_stage != 3:
-            self.model.from_checkpoint(to_ckpt_dir, weight_name="pytorch_model_latest.bin")
+            self.model.from_checkpoint(
+                to_ckpt_dir, weight_name="pytorch_model_latest.bin"
+            )
 
         params = filter(lambda p: p.requires_grad, self.model.parameters())
 
@@ -258,11 +274,25 @@ class DeepspeedTask:
         scheduler_type = nested_dict_value(config_dict, "scheduler", "type")
         if scheduler_type == "WarmupLR":
             if learning_rate is not None:
-                update_nested_dict(config_dict, "scheduler", "params", "warmup_max_lr", learning_rate)
+                update_nested_dict(
+                    config_dict, "scheduler", "params", "warmup_max_lr", learning_rate
+                )
             if max_warmup_learning_rate is not None:
-                update_nested_dict(config_dict, "scheduler", "params", "warmup_max_lr", max_warmup_learning_rate)
+                update_nested_dict(
+                    config_dict,
+                    "scheduler",
+                    "params",
+                    "warmup_max_lr",
+                    max_warmup_learning_rate,
+                )
             if num_warmup_steps is not None:
-                update_nested_dict(config_dict, "scheduler", "params", "warmup_num_steps", num_warmup_steps)
+                update_nested_dict(
+                    config_dict,
+                    "scheduler",
+                    "params",
+                    "warmup_num_steps",
+                    num_warmup_steps,
+                )
 
         info_path = os.path.join(to_ckpt_dir, "info.json")
         if os.path.exists(info_path):
@@ -285,14 +315,22 @@ class DeepspeedTask:
                 num_steps=info.get("num_ema_steps", 0),
             )
             if os.path.exists(from_ckpt_dir):
-                self.ema_model.from_checkpoint(from_ckpt_dir, weight_name="pytorch_ema_model.bin")
+                self.ema_model.from_checkpoint(
+                    from_ckpt_dir, weight_name="pytorch_ema_model.bin"
+                )
             if os.path.exists(to_ckpt_dir):
-                self.ema_model.from_checkpoint(to_ckpt_dir, weight_name="pytorch_ema_model_latest.bin")
+                self.ema_model.from_checkpoint(
+                    to_ckpt_dir, weight_name="pytorch_ema_model_latest.bin"
+                )
 
         for name, param in self.model.named_parameters():
             logging.debug(
                 "%s: trainable=%s dtype=%s shape=%s device=%s",
-                name, param.requires_grad, param.dtype, param.shape, param.device,
+                name,
+                param.requires_grad,
+                param.dtype,
+                param.shape,
+                param.device,
             )
 
         self.model, optim, _, scheduler = deepspeed.initialize(
@@ -302,8 +340,13 @@ class DeepspeedTask:
         )
 
         # ZeRO-3 checkpoints must be loaded after deepspeed.initialize
-        if os.path.exists(os.path.join(to_ckpt_dir, "pytorch_model_latest")) and zero_stage == 3:
-            self.model.load_checkpoint(os.path.join(to_ckpt_dir, "pytorch_model_latest"))
+        if (
+            os.path.exists(os.path.join(to_ckpt_dir, "pytorch_model_latest"))
+            and zero_stage == 3
+        ):
+            self.model.load_checkpoint(
+                os.path.join(to_ckpt_dir, "pytorch_model_latest")
+            )
 
         global_rank = dist.get_rank() if self.n_gpu > 1 else -1
         train_sampler = DistributedSkipSampler if self.n_gpu > 1 else RandomSkipSampler
@@ -314,7 +357,11 @@ class DeepspeedTask:
 
         iter_train = DataLoader(
             dataset_train,
-            sampler=train_sampler(dataset_train) if not isinstance(dataset_train, Iterable) else None,
+            sampler=(
+                train_sampler(dataset_train)
+                if not isinstance(dataset_train, Iterable)
+                else None
+            ),
             batch_size=train_batch_size,
             shuffle=False,
             pin_memory=pin_memory,
@@ -323,7 +370,11 @@ class DeepspeedTask:
         )
         iter_dev = DataLoader(
             dataset_dev,
-            sampler=dev_sampler(dataset_dev) if not isinstance(dataset_dev, Iterable) else None,
+            sampler=(
+                dev_sampler(dataset_dev)
+                if not isinstance(dataset_dev, Iterable)
+                else None
+            ),
             batch_size=dev_batch_size,
             shuffle=False,
             pin_memory=pin_memory,
@@ -397,7 +448,8 @@ class DeepspeedTask:
 
                 outputs = self.model(**inputs.dict())
                 loss = (
-                    outputs.loss if isinstance(outputs, LossOutputs)
+                    outputs.loss
+                    if isinstance(outputs, LossOutputs)
                     else loss_fn(outputs=outputs, targets=targets)
                 ) / grad_acc_step
 
@@ -448,7 +500,7 @@ class DeepspeedTask:
         self,
         monitor_fns: Union[str, List[str]],  # list of registered scoring function names
         from_ckpt_dir: str = "./from_ckpt",  # directory to load model weights from
-        dev_batch_size: int = 128,           # per-GPU batch size for evaluation
+        dev_batch_size: int = 128,  # per-GPU batch size for evaluation
         pin_memory: bool = True,
         num_workers: int = 4,
     ):
@@ -476,7 +528,11 @@ class DeepspeedTask:
         dataset_dev = self.datasets.get("dev")
         iter_dev = DataLoader(
             dataset_dev,
-            sampler=dev_sampler(dataset_dev) if not isinstance(dataset_dev, Iterable) else None,
+            sampler=(
+                dev_sampler(dataset_dev)
+                if not isinstance(dataset_dev, Iterable)
+                else None
+            ),
             batch_size=dev_batch_size,
             shuffle=False,
             pin_memory=pin_memory,
@@ -486,22 +542,28 @@ class DeepspeedTask:
 
         results = infer(self.model.module, iter_dev)
         if global_rank in [-1, 0]:
-            monitor(outputs=results.outputs, targets=results.targets, monitor_fns=monitor_fns)
+            monitor(
+                outputs=results.outputs,
+                targets=results.targets,
+                monitor_fns=monitor_fns,
+            )
 
     @torch.no_grad()
     @config_defaults_method("core/task/deepspeed/supervised")
     def infer(
         self,
-        postprocess_fn: str,                    # registered postprocessing function name
-        writer: str,                            # registered writer name for output serialisation
-        test_batch_size: int = 128,            # per-GPU batch size for inference
+        postprocess_fn: str,  # registered postprocessing function name
+        writer: str,  # registered writer name for output serialisation
+        test_batch_size: int = 128,  # per-GPU batch size for inference
         pin_memory: bool = True,
         num_workers: int = 4,
-        max_size: int = 10000,                 # maximum queue depth for async postprocessing
-        from_ckpt_dir: str = "./from_ckpt",   # directory to load model weights from
-        output_header: Optional[List] = None, # column names to copy from raw dataset into output
-        output_path: str = "./output.txt",    # file path for inference results
-        postprocess_workers: int = 2,         # number of parallel postprocessing workers
+        max_size: int = 10000,  # maximum queue depth for async postprocessing
+        from_ckpt_dir: str = "./from_ckpt",  # directory to load model weights from
+        output_header: Optional[
+            List
+        ] = None,  # column names to copy from raw dataset into output
+        output_path: str = "./output.txt",  # file path for inference results
+        postprocess_workers: int = 2,  # number of parallel postprocessing workers
     ):
         assert self.n_gpu <= 1, "inference only supports single-GPU mode"
         assert writer is not None
@@ -526,7 +588,11 @@ class DeepspeedTask:
 
         iter_test = DataLoader(
             dataset_test,
-            sampler=sampler(dataset_test) if not isinstance(dataset_test, Iterable) else None,
+            sampler=(
+                sampler(dataset_test)
+                if not isinstance(dataset_test, Iterable)
+                else None
+            ),
             batch_size=test_batch_size,
             shuffle=False,
             pin_memory=pin_memory,
@@ -546,7 +612,11 @@ class DeepspeedTask:
             data_info = DatasetFeature(dataset_test.dataset)
             iter_data = DataLoader(
                 deepcopy(data_info),
-                sampler=sampler(data_info) if not isinstance(dataset_test, Iterable) else None,
+                sampler=(
+                    sampler(data_info)
+                    if not isinstance(dataset_test, Iterable)
+                    else None
+                ),
                 batch_size=test_batch_size,
                 shuffle=False,
                 pin_memory=pin_memory,
