@@ -17,7 +17,7 @@
 
 ## Introduction
 
-🔥 **unitorch** is a PyTorch-based library that unifies training, inference, and serving of state-of-the-art models across NLP, computer vision, multimodal learning, and more. It wraps 38+ model architectures with a configuration-driven CLI, integrating seamlessly with [transformers](https://github.com/huggingface/transformers), [peft](https://github.com/huggingface/peft), and [diffusers](https://github.com/huggingface/diffusers).
+🔥 **unitorch** is a PyTorch-based library that unifies training, inference, and serving of state-of-the-art models across NLP, computer vision, multimodal learning, and more. It wraps 20+ model architectures with a configuration-driven CLI, integrating seamlessly with [transformers](https://github.com/huggingface/transformers), [peft](https://github.com/huggingface/peft), and [diffusers](https://github.com/huggingface/diffusers).
 
 Get started with a single import or a one-line CLI command — no boilerplate required.
 
@@ -25,7 +25,7 @@ Get started with a single import or a one-line CLI command — no boilerplate re
 
 | | |
 |---|---|
-| **Unified Model Support** | 38+ architectures: LLMs, diffusion models, vision transformers, multimodal models |
+| **Unified Model Support** | 20+ architectures: LLMs, diffusion models, vision transformers, multimodal models |
 | **Configuration-Driven CLI** | Train, evaluate, infer, and serve via `.ini` config files |
 | **Multi-GPU & Distributed** | Native `torchrun` support + DeepSpeed integration for large-scale models |
 | **CUDA Optimized** | Optional CUDA C++ extensions for accelerated kernels |
@@ -83,10 +83,15 @@ unitorch-infer examples/configs/generation/bart.ini --test_file path/to/test.tsv
 
 | Domain | Models |
 |--------|--------|
-| **Language** | BERT, RoBERTa, DeBERTa/V2, T5, BART, PEGASUS, PEGASUS-X, mT5, MBart, BLOOM, LLaMA |
-| **Vision** | ViT, BEiT, Swin Transformer, CLIP |
-| **Multimodal** | BLIP, VisualBERT |
-| **Image Generation** | FLUX |
+| **Language** | BERT, RoBERTa, XLM-RoBERTa, BART, MBart, LLaMA, Mistral, QWen3 |
+| **Vision** | BEiT, Swin Transformer, DINOv2, CLIP, SigLIP |
+| **Multimodal** | LLaVA, QWen3-VL, Chinese CLIP |
+| **Image Generation** | FLUX (StableFlux), QWenImage |
+| **Video Generation** | Wan |
+| **Detection** | DETR, Grounding DINO |
+| **Segmentation** | SAM, Mask2Former, SegFormer, BRIA |
+| **Depth Estimation** | DPT |
+| **PEFT** | LoRA, DPO, GRPO (via peft wrappers) |
 
 </details>
 
@@ -97,9 +102,7 @@ unitorch-infer examples/configs/generation/bart.ini --test_file path/to/test.tsv
 | `unitorch-train` | Train models (supports `torchrun`) |
 | `unitorch-eval` | Evaluate models |
 | `unitorch-infer` | Run batch inference |
-| `unitorch-launch` | Launch a quick script defined in config (`core/cli` → `script_name`) |
 | `unitorch-fastapi` | Start a FastAPI model server |
-| `unitorch-service` | Run a background service |
 | `unitorch-copilot` | unitorch-native agent (similar to Claude / OpenCode) |
 | `unitorch-copilot-cli` | CLI tool for agent use — invokes registered copilot tools |
 

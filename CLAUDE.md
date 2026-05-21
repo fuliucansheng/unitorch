@@ -39,20 +39,24 @@ Tests use `absl.testing` (not plain pytest fixtures). Test files are in `tests/c
 
 ## CLI Entry Points
 
-Nine commands defined in `pyproject.toml` under `[project.scripts]`:
+Six commands defined in `pyproject.toml` under `[project.scripts]`:
 
 | Command | Console module | Purpose |
 |---------|---------------|---------|
 | `unitorch-train` | `cli.consoles.train` | Train models (supports torchrun) |
 | `unitorch-eval` | `cli.consoles.eval` | Evaluate models |
 | `unitorch-infer` | `cli.consoles.infer` | Run inference |
-| `unitorch-launch` | `cli.consoles.launch` | Launch a quick script |
 | `unitorch-fastapi` | `cli.consoles.fastapi` | FastAPI model server |
-| `unitorch-service` | `cli.consoles.service` | Background non-model service |
 | `unitorch-copilot` | `cli.consoles.copilot:main` | Unitorch-native agent (similar to Claude / OpenCode) |
 | `unitorch-copilot-cli` | `cli.consoles.copilot:cli_main` | CLI tool for agent use — invokes registered copilot tools |
 
 All commands except `unitorch-copilot-cli` consume `.ini` config files. Examples in `examples/configs/`.
+
+One-off scripts (previously `unitorch-launch`) are now run directly with:
+
+```bash
+python3 -m unitorch.cli.<module>
+```
 
 ### `unitorch-copilot-cli`
 
@@ -68,13 +72,13 @@ Copilot tools live in `src/unitorch/cli/copilots/`. Each tool is a class that
 extends `GenericCopilotTool` and is registered with `@register_copilot_tool("core/copilot/<name>")`.
 It must implement `launch(**kwargs)`, `describe()`, and `usage()`.
 
-To list all registered components (models, processes, fastapis, services, etc.):
+To list all registered components (models, processes, fastapis, etc.):
 
 ```bash
 unitorch-copilot-cli core/copilot/pkg_infos                  # list all types
 unitorch-copilot-cli core/copilot/pkg_infos --name model      # list registered models only
 unitorch-copilot-cli core/copilot/pkg_infos --name process    # list registered processes only
-# available types: process, copilot_tool, model, fastapi, service, script,
+# available types: process, copilot_tool, model, fastapi,
 #                  score, dataset, loss, optimizer, scheduler, task, writer
 ```
 
@@ -131,7 +135,15 @@ Defined in `src/unitorch/utils/decorators.py`. Process-global monkey-patcher: re
 
 ## INI Config Generation Conventions
 
-- When generating `.ini` config files, always set `device = cpu` as the default value in `[core/cli]`.
+- When generating `.ini` config files for `unitorch-fastapi`, always set `device = cpu` in `[core/cli]`. Train / eval / infer configs do not need this key.
+
+## Sync Requirements After Code Changes
+
+After **any** code change (adding/removing models, CLI commands, processors, etc.), always keep the following in sync:
+
+1. **`examples/configs/`** — add, update, or remove `.ini` config files to match the current set of supported models and pipelines.
+2. **`mkdocs.yml`** — update the docs navigation and any auto-generated API references to reflect the change.
+3. **`README.md`** — update the Supported Models table and CLI Commands table.
 
 ## Code Constraints
 
@@ -206,7 +218,6 @@ raw data (text, PIL image, etc.)
 | **bart** | BartProcessor, BartForGeneration | `core/process/bart`, `core/model/generation/bart` |
 | **beit** | BeitProcessor, BeitForImageClassification | `core/process/beit`, `core/model/classification/beit` |
 | **bert** | BertProcessor, BertForClassification | `core/process/bert`, `core/model/classification/bert` |
-| **blip** | BlipProcessor, BlipForPretrain/Classification/TextClassification/ImageClassification/ImageCaption | `core/process/blip`, `core/model/pretrain\|classification\|caption/blip` |
 | **bria** | BRIAProcessor, BRIAForSegmentation | `core/process/bria`, `core/model/segmentation/bria` |
 | **chinese_clip** | ChineseClipProcessor, ChineseClipForPretrain/Classification/TextClassification/ImageClassification | `core/process/chinese_clip`, `core/model/pretrain\|classification/chinese_clip` |
 | **clip** | ClipProcessor, ClipForPretrain/Classification/TextClassification/ImageClassification | `core/process/clip`, `core/model/pretrain\|classification/clip` |
@@ -222,15 +233,10 @@ raw data (text, PIL image, etc.)
 | **mbart** | MBartProcessor, MBartForGeneration | `core/process/mbart`, `core/model/generation/mbart` |
 | **mistral** | MistralProcessor, MistralForClassification/Generation | `core/process/mistral`, `core/model/classification\|generation/mistral` |
 | **peft** | ClipLoraForMatching/TextMatching, LlamaLoraFor{Classification,Generation}, LlavaMistralClipLoraFor{Classification,Generation}, LlavaLlamaSiglipLoraForGeneration, MistralLoraFor{Classification,Generation}, QWen3LoraForGeneration, QWen3DPOLoraForGeneration, QWen3GRPOLoraForGeneration, QWen3VLLoraForGeneration, QWen3VLDPOLoraForGeneration | `core/model/{matching,classification,generation}/peft/lora/...` |
-| **pegasus** | PegasusProcessor, PegasusForGeneration | `core/process/pegasus`, `core/model/generation/pegasus` |
 | **qwen** | QWenProcessor, QWenVLProcessor, QWen3ForGeneration, QWen3VLForGeneration | `core/process/qwen`, `core/process/qwen_vl`, `core/model/generation/qwen3`, `core/model/generation/qwen3_vl` |
 | **roberta** | RobertaProcessor, RobertaForClassification/MaskLM | `core/process/roberta`, `core/model/classification/roberta` |
 | **sam** | SamProcessor, SamForSegmentation | `core/process/sam`, `core/model/segmentation/sam` |
 | **segformer** | SegformerProcessor, SegformerForSegmentation | `core/process/segformer`, `core/model/segmentation/segformer` |
 | **siglip** | SiglipProcessor, SiglipForPretrain/Classification/TextClassification/ImageClassification/Matching | `core/process/siglip`, `core/model/pretrain\|classification\|matching/siglip` |
 | **swin** | SwinProcessor, SwinForImageClassification | `core/process/swin`, `core/model/classification/swin` |
-| **t5** | T5Processor, T5ForGeneration | `core/process/t5`, `core/model/generation/t5` |
-| **visualbert** | VisualBertProcessor, VisualBertForClassification/Pretrain | `core/process/visualbert`, `core/model/classification\|pretrain/visualbert` |
-| **vit** | ViTProcessor, ViTForImageClassification | `core/process/vit`, `core/model/classification/vit` |
 | **xlm_roberta** | XLMRobertaProcessor, XLMRobertaForClassification/MaskLM, XLMRobertaXLForClassification | `core/process/xlm_roberta`, `core/model/classification/xlm_roberta` |
-| **xpegasus** | XPegasusProcessor, XPegasusForGeneration | `core/process/xpegasus`, `core/model/generation/xpegasus` |

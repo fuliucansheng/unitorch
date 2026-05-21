@@ -42,16 +42,13 @@ output_path = ${core/cli:cache_dir}/output.txt   # resolves to ./cache/output.tx
 |-----|---------|-------------|
 | `task_name` | train / eval / infer | Registered task name (required) |
 | `enabled_services` | fastapi | List of registered FastAPI service names (required) |
-| `service_name` | service | Registered service name (required) |
-| `script_name` | launch | Registered script name (required) |
-| `device` | all | `cpu` — **always default to `cpu`** |
+| `device` | fastapi | `cpu` — **always default to `cpu`**; train/eval/infer do not use this key |
 | `from_ckpt_dir` | train / eval / infer | Checkpoint input directory |
 | `cache_dir` | train / eval / infer | Output / cache directory |
 | `train_file` / `dev_file` / `test_file` | train / eval / infer | Data file paths |
 | `local_rank` | train (DDP) | Set automatically by torchrun; rarely hardcoded |
 | `depends_libraries` | all | Extra Python libraries to import before task init |
 | `host` / `port` | fastapi | Server bind address (default `0.0.0.0` / `5000`) |
-| `daemon_mode` | service | Run service as background daemon (default `True`) |
 | `wandb/team` `wandb/project` `wandb/token` | train | W&B integration (optional) |
 
 ---
@@ -67,12 +64,20 @@ calls as arguments — exactly like Python function calls.
 - Each string calls one registered process function:
   `'core/process/registered/name(arg1, arg2)'`
 - Arguments are **column names** from `names`, or **nested calls** to other
-  registered process functions.
+  registered process functions, or **inline Python literals** (lists, dicts,
+  f-string-style `.format()` expressions). Column names are treated as **local
+  variables** within the call expression and can be used directly or embedded
+  inside string literals via `"{0}".format(col)`.
 - Nesting is arbitrary: the inner call's return value is passed as an argument
   to the outer call.
 - Multiple functions in the list are applied independently and their outputs
   are merged into the batch dict.
 - Multi-line list syntax (with a trailing comma) is valid INI.
+- For complex structured arguments (e.g. message arrays), use a **triple-quoted
+  string** (`'''...'''`) as the list element so the call expression can span
+  multiple lines without escaping. Column names are available as **local
+  variables** inside the expression — use them directly (e.g. `encode`,
+  `decode`) or embed them in string literals via `"{0}".format(encode)`.
 
 ### Examples
 
@@ -94,6 +99,30 @@ preprocess_functions = [
     'core/process/clip/image_classification(core/process/image/read(image))',
     'core/process/label(label)',
   ]
+
+# Structured message array (e.g. GRPO/chat): triple-quoted string, column refs via .format()
+preprocess_functions = [
+    '''
+    core/process/qwen/messages/grpo/generation(
+        [
+            {
+                "role": "system",
+                "content": [{"type": "text", "text": "You are a helpful assistant."}]
+            },
+            {
+                "role": "user",
+                "content": [{"type": "text", "text": "Question: {0}".format(encode)}]
+            }
+        ],
+        [
+            {
+                "role": "assistant",
+                "content": [{"type": "text", "text": "{0}".format(decode)}]
+            }
+        ]
+    )
+    '''
+  ]
 ```
 
 ### Typical split patterns
@@ -114,8 +143,6 @@ preprocess_functions = [
 | `unitorch-eval` | `task_name` | same as train |
 | `unitorch-infer` | `task_name` | same as train (calls `.infer()`) |
 | `unitorch-fastapi` | `enabled_services` | list of registered `core/fastapi/*` names |
-| `unitorch-service` | `service_name` | registered `core/service/*` name |
-| `unitorch-launch` | `script_name` | registered `core/script/*` name |
 
 ---
 
@@ -212,8 +239,8 @@ test_batch_size = 8
   `[core/cli]` is correct — vLLM manages its own GPU allocation.
 - `from_ckpt_dir` under `[core/task/supervised]` controls which checkpoint is
   loaded at infer time; if the directory doesn't exist it is silently skipped.
-- `postprocess_fn`, `preprocess_functions`, `model`, `enabled_services`,
-  `service_name`, `script_name` must all be **registered** names. The registry
+- `postprocess_fn`, `preprocess_functions`, `model`, `enabled_services`
+  must all be **registered** names. The registry
   is dynamic (grows as new models are added). Query the current list:
 
 ```bash
@@ -221,8 +248,8 @@ unitorch-copilot-cli core/copilot/pkg_infos                  # list all types
 unitorch-copilot-cli core/copilot/pkg_infos --name model      # models only
 unitorch-copilot-cli core/copilot/pkg_infos --name process    # preprocess/postprocess only
 unitorch-copilot-cli core/copilot/pkg_infos --name fastapi    # fastapi services only
-# available --name values: process, copilot_tool, model, fastapi, service,
-#                          script, score, dataset, loss, optimizer, scheduler, task, writer
+# available --name values: process, copilot_tool, model, fastapi,
+#                          score, dataset, loss, optimizer, scheduler, task, writer
 ```
 
 ---
@@ -248,44 +275,6 @@ pretrained_name = <model-id>
 - `enabled_services` is a Python list of registered `core/fastapi/*` names.
 - Each service gets its own `[core/fastapi/<name>]` section.
 - `host` and `port` live directly in `[core/cli]`.
-
----
-
-## `unitorch-service`
-
-```bash
-unitorch-service start  config.ini
-unitorch-service stop   config.ini
-unitorch-service restart config.ini
-```
-
-```ini
-[core/cli]
-service_name = core/service/http_files   # use a registered core/service/* name
-daemon_mode  = True                      # False = foreground
-
-[core/service/http_files]
-port     = 11220
-html_dir = /path/to/static
-```
-
----
-
-## `unitorch-launch`
-
-```ini
-[core/cli]
-script_name = core/script/interrogator/clip
-device      = cpu
-data_file   = ./data.tsv
-
-[core/script/interrogator/clip]
-data_file  = ${core/cli:data_file}
-names      = image,label
-image_col  = image
-label_col  = label
-do_reverse = False
-```
 
 ---
 
