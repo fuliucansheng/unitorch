@@ -115,12 +115,6 @@ http_url = http://0.0.0.0:11230/?file={0}
 
 ## Step 3: Run Training Command
 
-Start local image service first:
-
-```bash
-unitorch-service start path/to/zip/image/service.ini --zip_folder path/to/zip/folder
-```
-
 Use the following command to run the training:
 
 ```bash

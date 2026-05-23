@@ -7,13 +7,6 @@
 
 ::: unitorch.cli.fastapis.info.InfoFastAPI
 
-## BlipForImageCaptionFastAPI
-
-!!! tip
-    **`core/fastapi/blip`** is the section for configuration of BlipForImageCaptionFastAPI.
-
-::: unitorch.cli.fastapis.blip.BlipForImageCaptionFastAPI
-
 ## BRIAFastAPI
 
 !!! tip

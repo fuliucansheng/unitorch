@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://fuliucansheng.github.io/unitorch/models/mbart/">
+        <link rel="canonical" href="https://fuliucansheng.github.io/unitorch/cli/copilot_tools/">
       
       
-        <link rel="prev" href="../mask2former/">
+        <link rel="prev" href="../scripts/">
       
       
-        <link rel="next" href="../mistral/">
+        <link rel="next" href="../fastapis/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>MBart - unitorch</title>
+        <title>Copilot Tools - unitorch</title>
       
     
     
@@ -82,7 +82,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#unitorchmodelsmbart" class="md-skip">
+        <a href="#copilot-tools-unitorch-copilot-cli" class="md-skip">
           Skip to content
         </a>
       
@@ -115,7 +115,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              MBart
+              Copilot Tools
             
           </span>
         </div>
@@ -219,12 +219,10 @@
   
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
+      <li class="md-tabs__item">
         <a href="../../overview/" class="md-tabs__link">
           
   
@@ -243,10 +241,12 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
+      <li class="md-tabs__item md-tabs__item--active">
         <a href="../../configuration/" class="md-tabs__link">
           
   
@@ -336,10 +336,8 @@
       
   
   
-    
   
   
-  
     
     
       
@@ -353,22 +351,19 @@
     
     
       
-        
-        
-      
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
         
           
-          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
             
   
   
@@ -386,7 +381,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
             
@@ -457,8 +452,6 @@
                 
   
   
-    
-  
   
   
     
@@ -489,975 +482,6 @@
         
       
         
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-    
-    
-    
-      
-      
-        
-          
-          
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_3" checked>
-        
-          
-          <div class="md-nav__link md-nav__container">
-            <a href="../" class="md-nav__link ">
-              
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    References
-  
-
-    
-  </span>
-  
-  
-
-            </a>
-            
-              
-              <label class="md-nav__link " for="__nav_2_3" id="__nav_2_3_label" tabindex="">
-                <span class="md-nav__icon md-icon"></span>
-              </label>
-            
-          </div>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_3_label" aria-expanded="true">
-          <label class="md-nav__title" for="__nav_2_3">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    References
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../bart/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Bart
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../beit/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Beit
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../bert/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Bert
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../bria/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    BRIA
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../chinese_clip/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ChineseClip
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../clip/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Clip
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../detr/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    DETR
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../dinov2/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    DinoV2
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../dpt/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    DPT
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../diffusers/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Diffusers
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../grounding_dino/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    GroundingDino
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../kolors/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Kolors
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../llama/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Llama
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../llava/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    LLaVA
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../mask2former/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Mask2Former
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-    
-  
-  
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    MBart
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    MBart
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#mbartprocessor" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        MBartProcessor
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#mbartforgeneration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        MBartForGeneration
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="MBartForGeneration">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#unitorch.models.mbart.MBartForGeneration.prefix_keys_in_state_dict" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        prefix_keys_in_state_dict
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#unitorch.models.mbart.MBartForGeneration.config" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        config
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#unitorch.models.mbart.MBartForGeneration.model" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        model
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#unitorch.models.mbart.MBartForGeneration.forward" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        forward
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#unitorch.models.mbart.MBartForGeneration.generate" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        generate
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../mistral/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Mistral
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../peft/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Peft
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../qwen/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    QWen
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../roberta/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Roberta
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../sam/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    SAM
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../segformer/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Segformer
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../siglip/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    SigLIP
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../swin/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Swin
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../vllm/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    vLLM
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../xlm_roberta/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    XLMRoberta
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    
-    
       
         
       
@@ -1502,10 +526,851 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_3" >
         
           
-          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+          <div class="md-nav__link md-nav__container">
+            <a href="../../models/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    References
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2_3" id="__nav_2_3_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    References
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../models/bart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bart
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../models/beit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Beit
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../models/bert/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bert
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../models/bria/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    BRIA
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../models/chinese_clip/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ChineseClip
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../models/clip/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Clip
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../models/detr/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DETR
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../models/dinov2/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DinoV2
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../models/dpt/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DPT
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../models/diffusers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Diffusers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../models/grounding_dino/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GroundingDino
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../models/kolors/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Kolors
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../models/llama/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Llama
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../models/llava/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LLaVA
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../models/mask2former/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mask2Former
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../models/mbart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MBart
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../models/mistral/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mistral
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../models/peft/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Peft
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../models/qwen/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    QWen
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../models/roberta/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roberta
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../models/sam/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SAM
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../models/segformer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Segformer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../models/siglip/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SigLIP
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../models/swin/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Swin
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../models/vllm/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    vLLM
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../models/xlm_roberta/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    XLMRoberta
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
             
   
   
@@ -1523,7 +1388,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_3">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1581,17 +1446,20 @@
       
       
         
+          
+          
+        
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
         
         
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2" >
         
           
-          <label class="md-nav__link" for="__nav_3_2" id="__nav_3_2_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3_2" id="__nav_3_2_label" tabindex="">
             
   
   
@@ -1893,17 +1761,20 @@
       
       
         
+          
+          
+        
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
         
         
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_3" >
         
           
-          <label class="md-nav__link" for="__nav_3_3" id="__nav_3_3_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3_3" id="__nav_3_3_label" tabindex="">
             
   
   
@@ -1939,7 +1810,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cli/supervised/" class="md-nav__link">
+      <a href="../supervised/" class="md-nav__link">
         
   
   
@@ -1967,7 +1838,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cli/deepspeed/" class="md-nav__link">
+      <a href="../deepspeed/" class="md-nav__link">
         
   
   
@@ -1995,7 +1866,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cli/tasks/" class="md-nav__link">
+      <a href="../tasks/" class="md-nav__link">
         
   
   
@@ -2041,17 +1912,20 @@
       
       
         
+          
+          
+        
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
         
         
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_4" >
         
           
-          <label class="md-nav__link" for="__nav_3_4" id="__nav_3_4_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3_4" id="__nav_3_4_label" tabindex="">
             
   
   
@@ -2087,7 +1961,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cli/ast/" class="md-nav__link">
+      <a href="../ast/" class="md-nav__link">
         
   
   
@@ -2123,7 +1997,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cli/datatypes/" class="md-nav__link">
+      <a href="../datatypes/" class="md-nav__link">
         
   
   
@@ -2163,17 +2037,20 @@
       
       
         
+          
+          
+        
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
         
         
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_6" >
         
           
-          <label class="md-nav__link" for="__nav_3_6" id="__nav_3_6_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3_6" id="__nav_3_6_label" tabindex="">
             
   
   
@@ -2209,7 +2086,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cli/preprocess/" class="md-nav__link">
+      <a href="../preprocess/" class="md-nav__link">
         
   
   
@@ -2237,7 +2114,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cli/postprocess/" class="md-nav__link">
+      <a href="../postprocess/" class="md-nav__link">
         
   
   
@@ -2283,17 +2160,20 @@
       
       
         
+          
+          
+        
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
         
         
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_7" >
         
           
-          <label class="md-nav__link" for="__nav_3_7" id="__nav_3_7_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3_7" id="__nav_3_7_label" tabindex="">
             
   
   
@@ -2329,7 +2209,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cli/losses/" class="md-nav__link">
+      <a href="../losses/" class="md-nav__link">
         
   
   
@@ -2375,17 +2255,20 @@
       
       
         
+          
+          
+        
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
         
         
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_8" >
         
           
-          <label class="md-nav__link" for="__nav_3_8" id="__nav_3_8_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3_8" id="__nav_3_8_label" tabindex="">
             
   
   
@@ -2421,7 +2304,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cli/scores/" class="md-nav__link">
+      <a href="../scores/" class="md-nav__link">
         
   
   
@@ -2467,17 +2350,20 @@
       
       
         
+          
+          
+        
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
         
         
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_9" >
         
           
-          <label class="md-nav__link" for="__nav_3_9" id="__nav_3_9_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3_9" id="__nav_3_9_label" tabindex="">
             
   
   
@@ -2513,7 +2399,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cli/optims/" class="md-nav__link">
+      <a href="../optims/" class="md-nav__link">
         
   
   
@@ -2559,17 +2445,20 @@
       
       
         
+          
+          
+        
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
         
         
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_10" >
         
           
-          <label class="md-nav__link" for="__nav_3_10" id="__nav_3_10_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3_10" id="__nav_3_10_label" tabindex="">
             
   
   
@@ -2605,7 +2494,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cli/schedulers/" class="md-nav__link">
+      <a href="../schedulers/" class="md-nav__link">
         
   
   
@@ -2651,17 +2540,20 @@
       
       
         
+          
+          
+        
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
         
         
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_11" >
         
           
-          <label class="md-nav__link" for="__nav_3_11" id="__nav_3_11_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3_11" id="__nav_3_11_label" tabindex="">
             
   
   
@@ -2697,7 +2589,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cli/scripts/" class="md-nav__link">
+      <a href="../scripts/" class="md-nav__link">
         
   
   
@@ -2730,8 +2622,10 @@
                 
   
   
+    
   
   
+  
     
     
       
@@ -2742,18 +2636,21 @@
     
       
       
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_12" >
         
           
-          <label class="md-nav__link" for="__nav_3_12" id="__nav_3_12_label" tabindex="0">
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_12" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3_12" id="__nav_3_12_label" tabindex="">
             
   
   
@@ -2771,7 +2668,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_12_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_12_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_3_12">
             <span class="md-nav__icon md-icon"></span>
             
@@ -2786,10 +2683,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../cli/copilot_tools/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Copilot Tools
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -2805,6 +2729,37 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#corecopilotpkg_infos" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        core/copilot/pkg_infos
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -2835,17 +2790,20 @@
       
       
         
+          
+          
+        
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
         
         
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_13" >
         
           
-          <label class="md-nav__link" for="__nav_3_13" id="__nav_3_13_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3_13" id="__nav_3_13_label" tabindex="">
             
   
   
@@ -2881,7 +2839,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cli/fastapis/" class="md-nav__link">
+      <a href="../fastapis/" class="md-nav__link">
         
   
   
@@ -2931,17 +2889,20 @@
       
       
         
+          
+          
+        
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
         
         
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_14" >
         
           
-          <label class="md-nav__link" for="__nav_3_14" id="__nav_3_14_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3_14" id="__nav_3_14_label" tabindex="">
             
   
   
@@ -2977,7 +2938,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cli/csv/" class="md-nav__link">
+      <a href="../csv/" class="md-nav__link">
         
   
   
@@ -3005,7 +2966,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cli/jsonl/" class="md-nav__link">
+      <a href="../jsonl/" class="md-nav__link">
         
   
   
@@ -3033,7 +2994,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cli/parquet/" class="md-nav__link">
+      <a href="../parquet/" class="md-nav__link">
         
   
   
@@ -3129,17 +3090,20 @@
       
       
         
+          
+          
+        
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
         
         
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_15" >
         
           
-          <label class="md-nav__link" for="__nav_3_15" id="__nav_3_15_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3_15" id="__nav_3_15_label" tabindex="">
             
   
   
@@ -3175,7 +3139,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cli/models/bart/" class="md-nav__link">
+      <a href="../models/bart/" class="md-nav__link">
         
   
   
@@ -3203,7 +3167,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cli/models/beit/" class="md-nav__link">
+      <a href="../models/beit/" class="md-nav__link">
         
   
   
@@ -3231,7 +3195,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cli/models/bert/" class="md-nav__link">
+      <a href="../models/bert/" class="md-nav__link">
         
   
   
@@ -3259,7 +3223,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cli/models/bria/" class="md-nav__link">
+      <a href="../models/bria/" class="md-nav__link">
         
   
   
@@ -3287,7 +3251,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cli/models/chinese_clip/" class="md-nav__link">
+      <a href="../models/chinese_clip/" class="md-nav__link">
         
   
   
@@ -3315,7 +3279,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cli/models/clip/" class="md-nav__link">
+      <a href="../models/clip/" class="md-nav__link">
         
   
   
@@ -3343,7 +3307,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cli/models/detr/" class="md-nav__link">
+      <a href="../models/detr/" class="md-nav__link">
         
   
   
@@ -3371,7 +3335,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cli/models/dinov2/" class="md-nav__link">
+      <a href="../models/dinov2/" class="md-nav__link">
         
   
   
@@ -3399,7 +3363,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cli/models/dpt/" class="md-nav__link">
+      <a href="../models/dpt/" class="md-nav__link">
         
   
   
@@ -3427,7 +3391,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cli/models/diffusers/" class="md-nav__link">
+      <a href="../models/diffusers/" class="md-nav__link">
         
   
   
@@ -3455,7 +3419,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cli/models/grounding_dino/" class="md-nav__link">
+      <a href="../models/grounding_dino/" class="md-nav__link">
         
   
   
@@ -3483,7 +3447,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cli/models/kolors/" class="md-nav__link">
+      <a href="../models/kolors/" class="md-nav__link">
         
   
   
@@ -3511,7 +3475,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cli/models/llama/" class="md-nav__link">
+      <a href="../models/llama/" class="md-nav__link">
         
   
   
@@ -3539,7 +3503,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cli/models/llava/" class="md-nav__link">
+      <a href="../models/llava/" class="md-nav__link">
         
   
   
@@ -3567,7 +3531,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cli/models/mask2former/" class="md-nav__link">
+      <a href="../models/mask2former/" class="md-nav__link">
         
   
   
@@ -3595,7 +3559,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cli/models/mbart/" class="md-nav__link">
+      <a href="../models/mbart/" class="md-nav__link">
         
   
   
@@ -3623,7 +3587,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cli/models/mistral/" class="md-nav__link">
+      <a href="../models/mistral/" class="md-nav__link">
         
   
   
@@ -3651,7 +3615,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cli/models/peft/" class="md-nav__link">
+      <a href="../models/peft/" class="md-nav__link">
         
   
   
@@ -3679,7 +3643,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cli/models/qwen/" class="md-nav__link">
+      <a href="../models/qwen/" class="md-nav__link">
         
   
   
@@ -3707,7 +3671,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cli/models/roberta/" class="md-nav__link">
+      <a href="../models/roberta/" class="md-nav__link">
         
   
   
@@ -3735,7 +3699,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cli/models/sam/" class="md-nav__link">
+      <a href="../models/sam/" class="md-nav__link">
         
   
   
@@ -3763,7 +3727,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cli/models/segformer/" class="md-nav__link">
+      <a href="../models/segformer/" class="md-nav__link">
         
   
   
@@ -3791,7 +3755,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cli/models/siglip/" class="md-nav__link">
+      <a href="../models/siglip/" class="md-nav__link">
         
   
   
@@ -3819,7 +3783,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cli/models/swin/" class="md-nav__link">
+      <a href="../models/swin/" class="md-nav__link">
         
   
   
@@ -3847,7 +3811,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cli/models/vllm/" class="md-nav__link">
+      <a href="../models/vllm/" class="md-nav__link">
         
   
   
@@ -3875,7 +3839,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cli/models/xlm_roberta/" class="md-nav__link">
+      <a href="../models/xlm_roberta/" class="md-nav__link">
         
   
   
@@ -3938,85 +3902,13 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#mbartprocessor" class="md-nav__link">
+  <a href="#corecopilotpkg_infos" class="md-nav__link">
     <span class="md-ellipsis">
       
-        MBartProcessor
+        core/copilot/pkg_infos
       
     </span>
   </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#mbartforgeneration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        MBartForGeneration
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="MBartForGeneration">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#unitorch.models.mbart.MBartForGeneration.prefix_keys_in_state_dict" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        prefix_keys_in_state_dict
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#unitorch.models.mbart.MBartForGeneration.config" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        config
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#unitorch.models.mbart.MBartForGeneration.model" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        model
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#unitorch.models.mbart.MBartForGeneration.forward" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        forward
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#unitorch.models.mbart.MBartForGeneration.generate" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        generate
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -4063,10 +3955,10 @@
     
     
       <li class="md-path__item">
-        <a href="../../overview/" class="md-path__link">
+        <a href="../../configuration/" class="md-path__link">
           
   <span class="md-ellipsis">
-    Documentation
+    Commands
   </span>
 
         </a>
@@ -4081,10 +3973,10 @@
     
     
       <li class="md-path__item">
-        <a href="../" class="md-path__link">
+        <a href="./" class="md-path__link">
           
   <span class="md-ellipsis">
-    References
+    Copilot Tools
   </span>
 
         </a>
@@ -4106,451 +3998,24 @@
   
 
 
-<h1 id="unitorchmodelsmbart">unitorch.models.mbart<a class="headerlink" href="#unitorchmodelsmbart" title="Permanent link">¤</a></h1>
-<h2 id="mbartprocessor">MBartProcessor<a class="headerlink" href="#mbartprocessor" title="Permanent link">¤</a></h2>
-
-
-<div class="doc doc-object doc-class">
-
-
-
-
-    <div class="doc doc-contents first">
-            <p class="doc doc-class-bases">
-              Bases: <code><span title="unitorch.models.HfTextGenerationProcessor">HfTextGenerationProcessor</span></code></p>
-
-
-
-
-
-
-
-
-
-
-                  <details class="mkdocstrings-source">
-                    <summary>Source code in <code>src/unitorch/models/mbart/processing.py</code></summary>
-                    <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">29</span>
-<span class="normal">30</span>
-<span class="normal">31</span>
-<span class="normal">32</span>
-<span class="normal">33</span>
-<span class="normal">34</span>
-<span class="normal">35</span>
-<span class="normal">36</span>
-<span class="normal">37</span>
-<span class="normal">38</span>
-<span class="normal">39</span>
-<span class="normal">40</span>
-<span class="normal">41</span>
-<span class="normal">42</span>
-<span class="normal">43</span>
-<span class="normal">44</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
-    <span class="bp">self</span><span class="p">,</span>
-    <span class="n">vocab_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">max_seq_length</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">128</span><span class="p">,</span>
-    <span class="n">max_gen_seq_length</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">48</span><span class="p">,</span>
-    <span class="n">special_input_ids</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">]</span> <span class="o">=</span> <span class="p">{},</span>
-<span class="p">):</span>
-    <span class="n">tokenizer</span> <span class="o">=</span> <span class="n">get_mbart_tokenizer</span><span class="p">(</span>
-        <span class="n">vocab_path</span><span class="p">,</span>
-        <span class="n">special_input_ids</span><span class="o">=</span><span class="n">special_input_ids</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
-        <span class="n">tokenizer</span><span class="o">=</span><span class="n">tokenizer</span><span class="p">,</span>
-        <span class="n">max_seq_length</span><span class="o">=</span><span class="n">max_seq_length</span><span class="p">,</span>
-        <span class="n">max_gen_seq_length</span><span class="o">=</span><span class="n">max_gen_seq_length</span><span class="p">,</span>
-    <span class="p">)</span>
-</code></pre></div></td></tr></table></div>
-                  </details>
-
-
-
-<div class="doc doc-children">
-
-
-
-
-
-
-
-
-
-
-
-
-  </div>
-
-    </div>
-
-</div><h2 id="mbartforgeneration">MBartForGeneration<a class="headerlink" href="#mbartforgeneration" title="Permanent link">¤</a></h2>
-
-
-<div class="doc doc-object doc-class">
-
-
-
-
-    <div class="doc doc-contents first">
-            <p class="doc doc-class-bases">
-              Bases: <code><span title="unitorch.models.GenericModel">GenericModel</span></code></p>
-
-
-
-
-
-
-
-
-
-
-                  <details class="mkdocstrings-source">
-                    <summary>Source code in <code>src/unitorch/models/mbart/modeling.py</code></summary>
-                    <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">17</span>
-<span class="normal">18</span>
-<span class="normal">19</span>
-<span class="normal">20</span>
-<span class="normal">21</span>
-<span class="normal">22</span>
-<span class="normal">23</span>
-<span class="normal">24</span>
-<span class="normal">25</span>
-<span class="normal">26</span>
-<span class="normal">27</span>
-<span class="normal">28</span>
-<span class="normal">29</span>
-<span class="normal">30</span>
-<span class="normal">31</span>
-<span class="normal">32</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
-    <span class="bp">self</span><span class="p">,</span>
-    <span class="n">config_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">freeze_input_embedding</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-    <span class="n">gradient_checkpointing</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-<span class="p">):</span>
-    <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">MBartConfig</span><span class="o">.</span><span class="n">from_json_file</span><span class="p">(</span><span class="n">config_path</span><span class="p">)</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">gradient_checkpointing</span> <span class="o">=</span> <span class="n">gradient_checkpointing</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">MBartForConditionalGeneration</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">)</span>
-
-    <span class="k">if</span> <span class="n">freeze_input_embedding</span><span class="p">:</span>
-        <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">get_input_embeddings</span><span class="p">()</span><span class="o">.</span><span class="n">parameters</span><span class="p">():</span>
-            <span class="n">param</span><span class="o">.</span><span class="n">requires_grad</span> <span class="o">=</span> <span class="kc">False</span>
-
-    <span class="bp">self</span><span class="o">.</span><span class="n">init_weights</span><span class="p">()</span>
-</code></pre></div></td></tr></table></div>
-                  </details>
-
-
-
-<div class="doc doc-children">
-
-
-
-
-
-
-
-<div class="doc doc-object doc-attribute">
-
-
-
-<h3 id="unitorch.models.mbart.MBartForGeneration.prefix_keys_in_state_dict" class="doc doc-heading">
-            <span class="doc doc-object-name doc-attribute-name">prefix_keys_in_state_dict</span>
-
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
-  </span>
-
-<a href="#unitorch.models.mbart.MBartForGeneration.prefix_keys_in_state_dict" class="headerlink" title="Permanent link">¤</a></h3>
-<div class="doc-signature codehilite"><pre><span></span><code><span class="n">prefix_keys_in_state_dict</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;^(?!model</span><span class="se">\\</span><span class="s2">.model</span><span class="se">\\</span><span class="s2">.|model</span><span class="se">\\</span><span class="s2">.lm_head</span><span class="se">\\</span><span class="s2">.)model</span><span class="se">\\</span><span class="s2">.&quot;</span><span class="p">:</span> <span class="s2">&quot;model.&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;^lm_head.&quot;</span><span class="p">:</span> <span class="s2">&quot;model.&quot;</span><span class="p">,</span>
-<span class="p">}</span>
+<h1 id="copilot-tools-unitorch-copilot-cli">Copilot Tools (<code>unitorch-copilot-cli</code>)<a class="headerlink" href="#copilot-tools-unitorch-copilot-cli" title="Permanent link">¤</a></h1>
+<p>Copilot tools are designed for agent use. <code>unitorch-copilot-cli</code> invokes a
+registered tool by name and exits — making it composable in agent pipelines.</p>
+<div class="highlight"><pre><span></span><code>unitorch-copilot-cli<span class="w"> </span>&lt;name&gt;<span class="w"> </span><span class="o">[</span>--key<span class="w"> </span>value<span class="w"> </span>...<span class="o">]</span>
 </code></pre></div>
+<hr />
+<h2 id="corecopilotpkg_infos">core/copilot/pkg_infos<a class="headerlink" href="#corecopilotpkg_infos" title="Permanent link">¤</a></h2>
+<p>Lists all registered components in the current unitorch installation.</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># List every registered type</span>
+unitorch-copilot-cli<span class="w"> </span>core/copilot/pkg_infos
 
-    <div class="doc doc-contents ">
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-attribute">
-
-
-
-<h3 id="unitorch.models.mbart.MBartForGeneration.config" class="doc doc-heading">
-            <span class="doc doc-object-name doc-attribute-name">config</span>
-
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
-  </span>
-
-<a href="#unitorch.models.mbart.MBartForGeneration.config" class="headerlink" title="Permanent link">¤</a></h3>
-<div class="doc-signature codehilite"><pre><span></span><code><span class="n">config</span> <span class="o">=</span> <span class="n"><span title="transformers.MBartConfig.from_json_file">from_json_file</span></span><span class="p">(</span><span class="n"><span title="unitorch.models.mbart.modeling.MBartForGeneration(config_path)">config_path</span></span><span class="p">)</span>
+<span class="c1"># Filter by type</span>
+unitorch-copilot-cli<span class="w"> </span>core/copilot/pkg_infos<span class="w"> </span>--name<span class="w"> </span>model
+unitorch-copilot-cli<span class="w"> </span>core/copilot/pkg_infos<span class="w"> </span>--name<span class="w"> </span>process
+unitorch-copilot-cli<span class="w"> </span>core/copilot/pkg_infos<span class="w"> </span>--name<span class="w"> </span>fastapi
 </code></pre></div>
-
-    <div class="doc doc-contents ">
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-attribute">
-
-
-
-<h3 id="unitorch.models.mbart.MBartForGeneration.model" class="doc doc-heading">
-            <span class="doc doc-object-name doc-attribute-name">model</span>
-
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
-  </span>
-
-<a href="#unitorch.models.mbart.MBartForGeneration.model" class="headerlink" title="Permanent link">¤</a></h3>
-<div class="doc-signature codehilite"><pre><span></span><code><span class="n">model</span> <span class="o">=</span> <span class="n"><span title="transformers.MBartForConditionalGeneration">MBartForConditionalGeneration</span></span><span class="p">(</span><span class="n"><span title="unitorch.models.mbart.modeling.MBartForGeneration(self).config">config</span></span><span class="p">)</span>
-</code></pre></div>
-
-    <div class="doc doc-contents ">
-
-    </div>
-
-</div>
-
-
-
-
-<div class="doc doc-object doc-function">
-
-
-<h3 id="unitorch.models.mbart.MBartForGeneration.forward" class="doc doc-heading">
-            <span class="doc doc-object-name doc-function-name">forward</span>
-
-
-<a href="#unitorch.models.mbart.MBartForGeneration.forward" class="headerlink" title="Permanent link">¤</a></h3>
-<div class="doc-signature codehilite"><pre><span></span><code><span class="nf">forward</span><span class="p">(</span>
-    <span class="n">input_ids</span><span class="p">:</span> <span class="n"><span title="torch.Tensor">Tensor</span></span><span class="p">,</span>
-    <span class="n">attention_mask</span><span class="p">:</span> <span class="n"><span title="torch.Tensor">Tensor</span></span><span class="p">,</span>
-    <span class="n">decoder_input_ids</span><span class="p">:</span> <span class="n"><span title="torch.Tensor">Tensor</span></span><span class="p">,</span>
-    <span class="n">decoder_attention_mask</span><span class="p">:</span> <span class="n"><span title="torch.Tensor">Tensor</span></span><span class="p">,</span>
-<span class="p">)</span>
-</code></pre></div>
-
-    <div class="doc doc-contents ">
-
-
-            <details class="mkdocstrings-source">
-              <summary>Source code in <code>src/unitorch/models/mbart/modeling.py</code></summary>
-              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">34</span>
-<span class="normal">35</span>
-<span class="normal">36</span>
-<span class="normal">37</span>
-<span class="normal">38</span>
-<span class="normal">39</span>
-<span class="normal">40</span>
-<span class="normal">41</span>
-<span class="normal">42</span>
-<span class="normal">43</span>
-<span class="normal">44</span>
-<span class="normal">45</span>
-<span class="normal">46</span>
-<span class="normal">47</span>
-<span class="normal">48</span>
-<span class="normal">49</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span>
-    <span class="bp">self</span><span class="p">,</span>
-    <span class="n">input_ids</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
-    <span class="n">attention_mask</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
-    <span class="n">decoder_input_ids</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
-    <span class="n">decoder_attention_mask</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
-<span class="p">):</span>
-    <span class="n">outputs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span>
-        <span class="n">input_ids</span><span class="o">=</span><span class="n">input_ids</span><span class="p">,</span>
-        <span class="n">attention_mask</span><span class="o">=</span><span class="n">attention_mask</span><span class="p">,</span>
-        <span class="n">decoder_input_ids</span><span class="o">=</span><span class="n">decoder_input_ids</span><span class="p">,</span>
-        <span class="n">decoder_attention_mask</span><span class="o">=</span><span class="n">decoder_attention_mask</span><span class="p">,</span>
-        <span class="n">return_dict</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="n">logits</span> <span class="o">=</span> <span class="n">outputs</span><span class="o">.</span><span class="n">logits</span>
-    <span class="k">return</span> <span class="n">logits</span>
-</code></pre></div></td></tr></table></div>
-            </details>
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
-<h3 id="unitorch.models.mbart.MBartForGeneration.generate" class="doc doc-heading">
-            <span class="doc doc-object-name doc-function-name">generate</span>
-
-
-<a href="#unitorch.models.mbart.MBartForGeneration.generate" class="headerlink" title="Permanent link">¤</a></h3>
-<div class="doc-signature codehilite"><pre><span></span><code><span class="nf">generate</span><span class="p">(</span>
-    <span class="n">input_ids</span><span class="p">:</span> <span class="n"><span title="torch.Tensor">Tensor</span></span><span class="p">,</span>
-    <span class="n">num_beams</span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="int">int</span></span><span class="p">]</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
-    <span class="n">decoder_start_token_id</span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="int">int</span></span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
-    <span class="n">decoder_end_token_id</span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span>
-        <span class="n"><span title="typing.Union">Union</span></span><span class="p">[</span><span class="n"><span title="int">int</span></span><span class="p">,</span> <span class="n"><span title="typing.List">List</span></span><span class="p">[</span><span class="n"><span title="int">int</span></span><span class="p">]]</span>
-    <span class="p">]</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
-    <span class="n">num_return_sequences</span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="int">int</span></span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
-    <span class="n">min_gen_seq_length</span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="int">int</span></span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
-    <span class="n">max_gen_seq_length</span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="int">int</span></span><span class="p">]</span> <span class="o">=</span> <span class="mi">48</span><span class="p">,</span>
-    <span class="n">repetition_penalty</span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
-    <span class="n">no_repeat_ngram_size</span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="int">int</span></span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
-    <span class="n">early_stopping</span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="bool">bool</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-    <span class="n">length_penalty</span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
-    <span class="n">num_beam_groups</span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="int">int</span></span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
-    <span class="n">diversity_penalty</span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
-    <span class="n">do_sample</span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="bool">bool</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-    <span class="n">temperature</span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
-    <span class="n">top_k</span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="int">int</span></span><span class="p">]</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span>
-    <span class="n">top_p</span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
-<span class="p">)</span>
-</code></pre></div>
-
-    <div class="doc doc-contents ">
-
-
-            <details class="mkdocstrings-source">
-              <summary>Source code in <code>src/unitorch/models/mbart/modeling.py</code></summary>
-              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 51</span>
-<span class="normal"> 52</span>
-<span class="normal"> 53</span>
-<span class="normal"> 54</span>
-<span class="normal"> 55</span>
-<span class="normal"> 56</span>
-<span class="normal"> 57</span>
-<span class="normal"> 58</span>
-<span class="normal"> 59</span>
-<span class="normal"> 60</span>
-<span class="normal"> 61</span>
-<span class="normal"> 62</span>
-<span class="normal"> 63</span>
-<span class="normal"> 64</span>
-<span class="normal"> 65</span>
-<span class="normal"> 66</span>
-<span class="normal"> 67</span>
-<span class="normal"> 68</span>
-<span class="normal"> 69</span>
-<span class="normal"> 70</span>
-<span class="normal"> 71</span>
-<span class="normal"> 72</span>
-<span class="normal"> 73</span>
-<span class="normal"> 74</span>
-<span class="normal"> 75</span>
-<span class="normal"> 76</span>
-<span class="normal"> 77</span>
-<span class="normal"> 78</span>
-<span class="normal"> 79</span>
-<span class="normal"> 80</span>
-<span class="normal"> 81</span>
-<span class="normal"> 82</span>
-<span class="normal"> 83</span>
-<span class="normal"> 84</span>
-<span class="normal"> 85</span>
-<span class="normal"> 86</span>
-<span class="normal"> 87</span>
-<span class="normal"> 88</span>
-<span class="normal"> 89</span>
-<span class="normal"> 90</span>
-<span class="normal"> 91</span>
-<span class="normal"> 92</span>
-<span class="normal"> 93</span>
-<span class="normal"> 94</span>
-<span class="normal"> 95</span>
-<span class="normal"> 96</span>
-<span class="normal"> 97</span>
-<span class="normal"> 98</span>
-<span class="normal"> 99</span>
-<span class="normal">100</span>
-<span class="normal">101</span>
-<span class="normal">102</span>
-<span class="normal">103</span>
-<span class="normal">104</span>
-<span class="normal">105</span>
-<span class="normal">106</span>
-<span class="normal">107</span>
-<span class="normal">108</span>
-<span class="normal">109</span>
-<span class="normal">110</span>
-<span class="normal">111</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">generate</span><span class="p">(</span>
-    <span class="bp">self</span><span class="p">,</span>
-    <span class="n">input_ids</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
-    <span class="n">num_beams</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
-    <span class="n">decoder_start_token_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
-    <span class="n">decoder_end_token_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
-    <span class="n">num_return_sequences</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
-    <span class="n">min_gen_seq_length</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
-    <span class="n">max_gen_seq_length</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">48</span><span class="p">,</span>
-    <span class="n">repetition_penalty</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
-    <span class="n">no_repeat_ngram_size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
-    <span class="n">early_stopping</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-    <span class="n">length_penalty</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
-    <span class="n">num_beam_groups</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
-    <span class="n">diversity_penalty</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
-    <span class="n">do_sample</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-    <span class="n">temperature</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
-    <span class="n">top_k</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span>
-    <span class="n">top_p</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
-<span class="p">):</span>
-    <span class="n">outputs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span>
-        <span class="n">input_ids</span><span class="p">,</span>
-        <span class="n">max_length</span><span class="o">=</span><span class="n">max_gen_seq_length</span><span class="p">,</span>
-        <span class="n">min_length</span><span class="o">=</span><span class="n">min_gen_seq_length</span><span class="p">,</span>
-        <span class="n">num_beams</span><span class="o">=</span><span class="n">num_beams</span><span class="p">,</span>
-        <span class="n">do_sample</span><span class="o">=</span><span class="n">do_sample</span><span class="p">,</span>
-        <span class="n">no_repeat_ngram_size</span><span class="o">=</span><span class="n">no_repeat_ngram_size</span><span class="p">,</span>
-        <span class="n">early_stopping</span><span class="o">=</span><span class="n">early_stopping</span><span class="p">,</span>
-        <span class="n">length_penalty</span><span class="o">=</span><span class="n">length_penalty</span><span class="p">,</span>
-        <span class="n">repetition_penalty</span><span class="o">=</span><span class="n">repetition_penalty</span><span class="p">,</span>
-        <span class="n">num_return_sequences</span><span class="o">=</span><span class="n">num_return_sequences</span><span class="p">,</span>
-        <span class="n">bos_token_id</span><span class="o">=</span><span class="n">decoder_start_token_id</span><span class="p">,</span>
-        <span class="n">eos_token_id</span><span class="o">=</span><span class="n">decoder_end_token_id</span><span class="p">,</span>
-        <span class="n">num_beam_groups</span><span class="o">=</span><span class="n">num_beam_groups</span><span class="p">,</span>
-        <span class="n">diversity_penalty</span><span class="o">=</span><span class="n">diversity_penalty</span><span class="p">,</span>
-        <span class="n">temperature</span><span class="o">=</span><span class="n">temperature</span><span class="p">,</span>
-        <span class="n">top_k</span><span class="o">=</span><span class="n">top_k</span><span class="p">,</span>
-        <span class="n">top_p</span><span class="o">=</span><span class="n">top_p</span><span class="p">,</span>
-        <span class="n">return_dict_in_generate</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">output_scores</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-    <span class="p">)</span>
-
-    <span class="n">sequences</span> <span class="o">=</span> <span class="n">outputs</span><span class="o">.</span><span class="n">sequences</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span>
-        <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">num_return_sequences</span><span class="p">,</span> <span class="n">outputs</span><span class="o">.</span><span class="n">sequences</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-    <span class="p">)</span>
-    <span class="n">outputs</span><span class="o">.</span><span class="n">sequences</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">sequences</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">num_return_sequences</span><span class="p">,</span> <span class="n">max_gen_seq_length</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span>
-            <span class="n">device</span><span class="o">=</span><span class="n">sequences</span><span class="o">.</span><span class="n">device</span>
-        <span class="p">)</span>
-        <span class="o">+</span> <span class="n">decoder_start_token_id</span>
-    <span class="p">)</span>
-    <span class="n">outputs</span><span class="o">.</span><span class="n">sequences</span><span class="p">[:,</span> <span class="p">:,</span> <span class="p">:</span> <span class="n">sequences</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)]</span><span class="o">.</span><span class="n">copy_</span><span class="p">(</span><span class="n">sequences</span><span class="p">)</span>
-
-    <span class="k">if</span> <span class="n">num_return_sequences</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="n">outputs</span><span class="o">.</span><span class="n">sequences</span> <span class="o">=</span> <span class="n">outputs</span><span class="o">.</span><span class="n">sequences</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_gen_seq_length</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">GenericOutputs</span><span class="p">(</span>
-        <span class="n">sequences</span><span class="o">=</span><span class="n">outputs</span><span class="o">.</span><span class="n">sequences</span><span class="p">,</span>
-        <span class="n">sequences_scores</span><span class="o">=</span><span class="n">outputs</span><span class="o">.</span><span class="n">sequences_scores</span><span class="p">,</span>
-    <span class="p">)</span>
-</code></pre></div></td></tr></table></div>
-            </details>
-    </div>
-
-</div>
-
-
-
-  </div>
-
-    </div>
-
-</div>
+<p>Available <code>--name</code> values: <code>process</code>, <code>copilot_tool</code>, <code>model</code>, <code>fastapi</code>,
+<code>score</code>, <code>dataset</code>, <code>loss</code>, <code>optimizer</code>, <code>scheduler</code>, <code>task</code>, <code>writer</code>.</p>
 
 
 
@@ -4586,7 +4051,7 @@
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../mask2former/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Mask2Former">
+          <a href="../scripts/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Scripts">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
@@ -4596,20 +4061,20 @@
                 Previous
               </span>
               <div class="md-ellipsis">
-                Mask2Former
+                Scripts
               </div>
             </div>
           </a>
         
         
           
-          <a href="../mistral/" class="md-footer__link md-footer__link--next" aria-label="Next: Mistral">
+          <a href="../fastapis/" class="md-footer__link md-footer__link--next" aria-label="Next: FastAPIs">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                Mistral
+                FastAPIs
               </div>
             </div>
             <div class="md-footer__button md-icon">
