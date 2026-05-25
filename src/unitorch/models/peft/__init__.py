@@ -344,14 +344,10 @@ from unitorch.models.peft.modeling_qwen_vl import (
 
 if is_diffusers_available():
     from unitorch.models.peft.diffusers import (
-        StableFluxLoraForText2ImageGeneration,
-        StableFluxLoraForImageInpainting,
-        StableFluxLoraForKontext2ImageGeneration,
-        StableFluxDPOLoraForText2ImageGeneration,
-        StableFluxDPOLoraForImageInpainting,
-        StableFluxDPOLoraForKontext2ImageGeneration,
         QWenImageLoraForText2ImageGeneration,
         QWenImageLoraForImageEditing,
         WanLoraForText2VideoGeneration,
         WanLoraForImage2VideoGeneration,
+        Flux2LoraForText2ImageGeneration,
+        Flux2LoraForImageEditingGeneration,
     )

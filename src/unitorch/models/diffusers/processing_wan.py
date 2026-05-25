@@ -29,7 +29,7 @@ class WanProcessor(HfTextClassificationProcessor):
         self,
         vocab_path: str,
         vae_config_path: Optional[str] = None,
-        max_seq_length: Optional[int] = 77,
+        max_seq_length: Optional[int] = 512,
         position_start_id: Optional[int] = 0,
         video_size: Optional[Tuple[int, int]] = None,
     ):
@@ -173,7 +173,7 @@ class WanProcessor(HfTextClassificationProcessor):
             width, height = image.size
             scale = max(self.video_size[0] / width, self.video_size[1] / height)
             image = image.resize(
-                (round(height * scale), round(width * scale)), resample=Image.LANCZOS
+                (round(width * scale), round(height * scale)), resample=Image.LANCZOS
             )
             image = self.center_crop_processor(image)
         else:
@@ -224,7 +224,7 @@ class WanProcessor(HfTextClassificationProcessor):
             width, height = image.size
             scale = max(self.video_size[0] / width, self.video_size[1] / height)
             image = image.resize(
-                (round(height * scale), round(width * scale)), resample=Image.LANCZOS
+                (round(width * scale), round(height * scale)), resample=Image.LANCZOS
             )
             image = self.center_crop_processor(image)
         else:

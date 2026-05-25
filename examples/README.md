@@ -113,19 +113,17 @@ TSV columns: `encode` (input), `decode` (target); DPO adds `win_decode`, `lose_d
 
 ### diffusion/
 
-Image and video generation/editing with Stable Flux and Wan models.
+Image and video generation/editing with QWen Image, Flux2, and Wan models.
 
 | Subdirectory | Task | Files |
 |---|---|---|
-| `text2image/` | Text → image | `stable-flux.ini`, `stable-flux.lora.ini`, `stable-flux.dpo.lora.ini`, `qwen-image.ini`, `qwen-image.lora.ini` |
-| `image2image/` | Image → image | `stable-flux-redux.ini` |
-| `inpainting/` | Image inpainting | `stable-flux.ini`, `stable-flux.lora.ini`, `stable-flux.dpo.lora.ini` |
-| `editing/` | Image editing | `stable-flux.ini`, `stable-flux.lora.ini`, `qwen-image.ini`, `qwen-image.lora.ini` |
+| `text2image/` | Text → image | `flux2.ini`, `qwen-image.ini`, `qwen-image.lora.ini` |
+| `editing/` | Image editing | `flux2.ini`, `qwen-image.ini`, `qwen-image.lora.ini` |
 | `text2video/` | Text → video | `wan.ini`, `wan.lora.ini` |
 | `image2video/` | Image → video | `wan.ini`, `wan.lora.ini` |
 
 ```bash
-unitorch-train configs/diffusion/text2image/stable-flux.lora.ini \
+unitorch-train configs/diffusion/text2image/qwen-image.lora.ini \
     --train_file train.tsv --dev_file dev.tsv --output_folder ./images
 ```
 
@@ -158,30 +156,6 @@ TSV columns: `text` (prompt), `image` (path)
 |------|-------|------|
 | `clip.ini` | CLIP | Contrastive image-text pretraining |
 | `vae.ini` | VAE | Variational autoencoder pretraining |
-
----
-
-### services/
-
-Background HTTP microservices launched with `unitorch-service`.
-
-| File | Service | Description |
-|------|---------|-------------|
-| `zip_files/config.ini` | `core/service/zip_files` | Serve files from `.zip` archives over HTTP |
-| `zip_files/config_v2.ini` | `core/service/zip_files` | Multi-folder variant |
-| `zip_saver.ini` | `core/service/zip_saver` | Save incoming files into a `.zip` archive |
-| `http_files.ini` | `core/service/http_files` | Proxy a local file directory over HTTP |
-| `mirror_files.ini` | `core/service/mirror` | Mirror a remote HTTP file server |
-| `mirror_folders.ini` | `core/service/mirror` | Mirror multiple remote folders |
-
-```bash
-# Start zip file server (serves files from ./ on port 11230)
-unitorch-service start configs/services/zip_files/config.ini \
-    --zip_folder /data/archives --daemon_mode True
-
-# Stop
-unitorch-service stop configs/services/zip_files/config.ini
-```
 
 ---
 
@@ -247,15 +221,8 @@ unitorch-eval   <config.ini> [--key value ...]
 # Inference
 unitorch-infer  <config.ini> [--key value ...]
 
-# Run a script (clip-interrogator, etc.)
-unitorch-launch <config.ini> [--key value ...]
-
 # FastAPI server
 unitorch-fastapi <config.ini> --port 8000
-
-# Background service
-unitorch-service start <config.ini> [--daemon_mode True]
-unitorch-service stop  <config.ini>
 
 # Multi-GPU (torchrun)
 torchrun --nproc_per_node <N> $(which unitorch-train) <config.ini>

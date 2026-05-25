@@ -28,8 +28,8 @@ if is_vllm_available():
     import unitorch.cli.fastapis.qwen_vl_vllm
 
 if is_diffusers_available():
-    import unitorch.cli.fastapis.stable_flux
     import unitorch.cli.fastapis.qwen_image
+    import unitorch.cli.fastapis.flux2
 
     if is_opencv_available():
         import unitorch.cli.fastapis.wan

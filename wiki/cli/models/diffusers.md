@@ -1,47 +1,5 @@
 # unitorch.cli.models.diffusers
 
-## StableFluxProcessor
-
-!!! tip
-    **`core/process/diffusion/stable_flux`** is the section for configuration of StableFluxProcessor.
-
-::: unitorch.cli.models.diffusers.processing_stable_flux.StableFluxProcessor
-
-## StableFluxForText2ImageGeneration
-
-!!! tip
-    **`core/model/diffusers/text2image/stable_flux`** is the section for configuration of StableFluxForText2ImageGeneration.
-
-::: unitorch.cli.models.diffusers.modeling_stable_flux.StableFluxForText2ImageGeneration
-
-## StableFluxForImage2ImageGeneration
-
-!!! tip
-    **`core/model/diffusers/image2image/stable_flux`** is the section for configuration of StableFluxForImage2ImageGeneration.
-
-::: unitorch.cli.models.diffusers.modeling_stable_flux.StableFluxForImage2ImageGeneration
-
-## StableFluxForImageReduxGeneration
-
-!!! tip
-    **`core/model/diffusers/image_redux/stable_flux`** is the section for configuration of StableFluxForImageReduxGeneration.
-
-::: unitorch.cli.models.diffusers.modeling_stable_flux.StableFluxForImageReduxGeneration
-
-## StableFluxForImageInpainting
-
-!!! tip
-    **`core/model/diffusers/inpainting/stable_flux`** is the section for configuration of StableFluxForImageInpainting.
-
-::: unitorch.cli.models.diffusers.modeling_stable_flux.StableFluxForImageInpainting
-
-## StableFluxForKontext2ImageGeneration
-
-!!! tip
-    **`core/model/diffusers/kontext2image/stable_flux`** is the section for configuration of StableFluxForKontext2ImageGeneration.
-
-::: unitorch.cli.models.diffusers.modeling_stable_flux.StableFluxForKontext2ImageGeneration
-
 ## WanProcessor
 
 !!! tip

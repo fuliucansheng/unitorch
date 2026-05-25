@@ -22,7 +22,7 @@ class WanProcessor(_WanProcessor):
         self,
         vocab_path: str,
         vae_config_path: Optional[str] = None,
-        max_seq_length: Optional[int] = 77,
+        max_seq_length: Optional[int] = 512,
         position_start_id: Optional[int] = 0,
         video_size: Optional[Tuple[int, int]] = None,
     ):

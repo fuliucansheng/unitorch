@@ -133,48 +133,6 @@
 
 ::: unitorch.cli.fastapis.siglip.Siglip2ForMatchingFastAPI
 
-## StableFluxText2ImageFastAPI
-
-!!! tip
-    **`core/fastapi/stable_flux/text2image`** is the section for configuration of StableFluxText2ImageFastAPI.
-
-::: unitorch.cli.fastapis.stable_flux.text2image.StableFluxText2ImageFastAPI
-
-## StableFluxImage2ImageFastAPI
-
-!!! tip
-    **`core/fastapi/stable_flux/image2image`** is the section for configuration of StableFluxImage2ImageFastAPI.
-
-::: unitorch.cli.fastapis.stable_flux.image2image.StableFluxImage2ImageFastAPI
-
-## StableFluxImageReduxGenerationFastAPI
-
-!!! tip
-    **`core/fastapi/stable_flux/image_redux`** is the section for configuration of StableFluxImageReduxGenerationFastAPI.
-
-::: unitorch.cli.fastapis.stable_flux.image_redux.StableFluxImageReduxGenerationFastAPI
-
-## StableFluxImageInpaintingFastAPI
-
-!!! tip
-    **`core/fastapi/stable_flux/inpainting`** is the section for configuration of StableFluxImageInpaintingFastAPI.
-
-::: unitorch.cli.fastapis.stable_flux.inpainting.StableFluxImageInpaintingFastAPI
-
-## StableFluxKontext2ImageFastAPI
-
-!!! tip
-    **`core/fastapi/stable_flux/kontext2image`** is the section for configuration of StableFluxKontext2ImageFastAPI (alias: StableFluxText2ImageFastAPI).
-
-::: unitorch.cli.fastapis.stable_flux.kontext2image.StableFluxText2ImageFastAPI
-
-## StableFluxReduxInpaintingFastAPI
-
-!!! tip
-    **`core/fastapi/stable_flux/redux_inpainting`** is the section for configuration of StableFluxReduxInpaintingFastAPI.
-
-::: unitorch.cli.fastapis.stable_flux.redux_inpainting.StableFluxReduxInpaintingFastAPI
-
 ## WanForText2VideoFastAPI
 
 !!! tip

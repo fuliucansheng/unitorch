@@ -43,6 +43,7 @@ class WanForText2VideoGeneration(_WanForText2VideoGeneration):
         freeze_vae_encoder: Optional[bool] = True,
         freeze_text_encoder: Optional[bool] = True,
         snr_gamma: Optional[float] = 5.0,
+        boundary_ratio: Optional[float] = 0.9,
         seed: Optional[int] = 1123,
         gradient_checkpointing: Optional[bool] = True,
     ):
@@ -57,6 +58,7 @@ class WanForText2VideoGeneration(_WanForText2VideoGeneration):
             freeze_vae_encoder=freeze_vae_encoder,
             freeze_text_encoder=freeze_text_encoder,
             snr_gamma=snr_gamma,
+            boundary_ratio=boundary_ratio,
             seed=seed,
             gradient_checkpointing=gradient_checkpointing,
         )
@@ -110,6 +112,10 @@ class WanForText2VideoGeneration(_WanForText2VideoGeneration):
         freeze_vae_encoder = config.getoption("freeze_vae_encoder", True)
         freeze_text_encoder = config.getoption("freeze_text_encoder", True)
         snr_gamma = config.getoption("snr_gamma", 5.0)
+        boundary_ratio = config.getoption(
+            "boundary_ratio",
+            nested_dict_value(pretrained_infos, "boundary_ratio") or 0.9,
+        )
         seed = config.getoption("seed", 1123)
         gradient_checkpointing = config.getoption("gradient_checkpointing", True)
 
@@ -124,6 +130,7 @@ class WanForText2VideoGeneration(_WanForText2VideoGeneration):
             freeze_vae_encoder=freeze_vae_encoder,
             freeze_text_encoder=freeze_text_encoder,
             snr_gamma=snr_gamma,
+            boundary_ratio=boundary_ratio,
             seed=seed,
             gradient_checkpointing=gradient_checkpointing,
         )
@@ -248,6 +255,7 @@ class WanForImage2VideoGeneration(_WanForImage2VideoGeneration):
         freeze_vae_encoder: Optional[bool] = True,
         freeze_text_encoder: Optional[bool] = True,
         snr_gamma: Optional[float] = 5.0,
+        boundary_ratio: Optional[float] = 0.9,
         seed: Optional[int] = 1123,
         gradient_checkpointing: Optional[bool] = True,
     ):
@@ -262,6 +270,7 @@ class WanForImage2VideoGeneration(_WanForImage2VideoGeneration):
             freeze_vae_encoder=freeze_vae_encoder,
             freeze_text_encoder=freeze_text_encoder,
             snr_gamma=snr_gamma,
+            boundary_ratio=boundary_ratio,
             seed=seed,
             gradient_checkpointing=gradient_checkpointing,
         )
@@ -315,6 +324,10 @@ class WanForImage2VideoGeneration(_WanForImage2VideoGeneration):
         freeze_vae_encoder = config.getoption("freeze_vae_encoder", True)
         freeze_text_encoder = config.getoption("freeze_text_encoder", True)
         snr_gamma = config.getoption("snr_gamma", 5.0)
+        boundary_ratio = config.getoption(
+            "boundary_ratio",
+            nested_dict_value(pretrained_infos, "boundary_ratio") or 0.9,
+        )
         seed = config.getoption("seed", 1123)
         gradient_checkpointing = config.getoption("gradient_checkpointing", True)
 
@@ -329,6 +342,7 @@ class WanForImage2VideoGeneration(_WanForImage2VideoGeneration):
             freeze_vae_encoder=freeze_vae_encoder,
             freeze_text_encoder=freeze_text_encoder,
             snr_gamma=snr_gamma,
+            boundary_ratio=boundary_ratio,
             seed=seed,
             gradient_checkpointing=gradient_checkpointing,
         )

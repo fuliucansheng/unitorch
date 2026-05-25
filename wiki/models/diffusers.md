@@ -1,29 +1,5 @@
 # unitorch.models.diffusers
 
-## StableFluxProcessor
-
-::: unitorch.models.diffusers.StableFluxProcessor
-
-## StableFluxForText2ImageGeneration
-
-::: unitorch.models.diffusers.StableFluxForText2ImageGeneration
-
-## StableFluxForImage2ImageGeneration
-
-::: unitorch.models.diffusers.StableFluxForImage2ImageGeneration
-
-## StableFluxForImageReduxGeneration
-
-::: unitorch.models.diffusers.StableFluxForImageReduxGeneration
-
-## StableFluxForImageInpainting
-
-::: unitorch.models.diffusers.StableFluxForImageInpainting
-
-## StableFluxForKontext2ImageGeneration
-
-::: unitorch.models.diffusers.StableFluxForKontext2ImageGeneration
-
 ## WanForText2VideoGeneration
 
 ::: unitorch.models.diffusers.WanForText2VideoGeneration

@@ -256,6 +256,7 @@ def load_weight(
     path: Optional[Union[str, List[str]]],
     replace_keys: Optional[Dict[str, str]] = None,
     prefix_keys: Optional[Dict[str, str]] = None,
+    use_auth_token: Union[bool, str, None] = None,
 ) -> Dict[str, Any]:
     """Load model weights from one or more checkpoint files.
 
@@ -263,6 +264,8 @@ def load_weight(
         path: Single path or list of paths to ``.safetensors`` or PyTorch checkpoint files.
         replace_keys: Mapping of regex patterns to replacement strings applied to state-dict keys.
         prefix_keys: Mapping of regex patterns to prefix strings prepended to matching keys.
+        use_auth_token: HuggingFace auth token, or ``True`` to read it from
+            ``HF_TOKEN`` / ``HUGGING_FACE_HUB_TOKEN``.
 
     Returns:
         Merged state dictionary with keys transformed according to *replace_keys* and *prefix_keys*.
@@ -278,7 +281,7 @@ def load_weight(
 
     state_dict: Dict[str, Any] = {}
     for p in path:
-        local = cached_path(p)
+        local = cached_path(p, use_auth_token=use_auth_token)
         if p.endswith(".safetensors"):
             state_dict.update(safetensors.torch.load_file(local))
         else:

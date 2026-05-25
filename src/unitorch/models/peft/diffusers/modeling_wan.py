@@ -36,8 +36,6 @@ from unitorch.models import (
     GenericOutputs,
 )
 from unitorch.models.peft import GenericPeftModel
-from unitorch.models.diffusers import compute_snr
-
 
 class GenericWanLoraModel(GenericPeftModel):
     prefix_keys_in_state_dict = {
@@ -122,6 +120,10 @@ class GenericWanLoraModel(GenericPeftModel):
         for param in self.transformer.parameters():
             param.requires_grad = False
 
+        if hasattr(self, "transformer2"):
+            for param in self.transformer2.parameters():
+                param.requires_grad = False
+
         lora_config = LoraConfig(
             r=lora_r,
             lora_alpha=lora_alpha,
@@ -134,6 +136,8 @@ class GenericWanLoraModel(GenericPeftModel):
             self.text.add_adapter(lora_config)
         if enable_transformer_adapter:
             self.transformer.add_adapter(lora_config)
+            if hasattr(self, "transformer2"):
+                self.transformer2.add_adapter(lora_config)
 
     def get_sigmas(self, timesteps, n_dim=4, dtype=torch.float32):
         sigmas = self.scheduler.sigmas.to(device=self.device, dtype=dtype)
@@ -153,6 +157,11 @@ class GenericWanLoraModel(GenericPeftModel):
         attention_mask: Optional[torch.Tensor] = None,
         negative_attention_mask: Optional[torch.Tensor] = None,
     ):
+        if attention_mask is None:
+            attention_mask = torch.ones_like(input_ids)
+        if negative_attention_mask is None:
+            negative_attention_mask = torch.ones_like(negative_input_ids)
+
         prompt_embeds = self.text(
             input_ids,
             attention_mask,
@@ -389,7 +398,7 @@ class WanLoraForImage2VideoGeneration(GenericWanLoraModel):
         self.pipeline = WanImageToVideoPipeline(
             vae=self.vae,
             text_encoder=self.text,
-            image_encoder=self.image,
+            image_encoder=None,
             transformer=self.transformer,
             transformer_2=getattr(self, "transformer2", None),
             scheduler=self.scheduler,
@@ -463,7 +472,13 @@ class WanLoraForImage2VideoGeneration(GenericWanLoraModel):
         latent_condition = (latent_condition - latents_mean) * latents_std
 
         mask_lat_size = torch.ones(
-            latents.shape[0], 1, num_frames, latents.shape[-2], latents.shape[-1]
+            latents.shape[0],
+            1,
+            num_frames,
+            latents.shape[-2],
+            latents.shape[-1],
+            device=latents.device,
+            dtype=latents.dtype,
         )
         mask_lat_size[:, :, list(range(1, num_frames))] = 0
         first_frame_mask = mask_lat_size[:, :, 0:1]
@@ -493,7 +508,7 @@ class WanLoraForImage2VideoGeneration(GenericWanLoraModel):
                 encoder_hidden_states=encoder_hidden_states,
             ).sample
         else:
-            outputs = self.transformer_2(
+            outputs = self.transformer2(
                 latent_model_input,
                 timesteps,
                 encoder_hidden_states=encoder_hidden_states,

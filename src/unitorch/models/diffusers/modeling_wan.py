@@ -124,6 +124,11 @@ class GenericWanModel(GenericModel, PeftWeightLoaderMixin):
         enable_cpu_offload: Optional[bool] = False,
         cpu_offload_device: Optional[str] = "cpu",
     ):
+        if attention_mask is None:
+            attention_mask = torch.ones_like(input_ids)
+        if negative_attention_mask is None:
+            negative_attention_mask = torch.ones_like(negative_input_ids)
+
         if enable_cpu_offload:
             self.text.to(cpu_offload_device)
             input_ids = input_ids.to(cpu_offload_device)
@@ -418,7 +423,13 @@ class WanForImage2VideoGeneration(GenericWanModel):
         latent_condition = (latent_condition - latents_mean) * latents_std
 
         mask_lat_size = torch.ones(
-            latents.shape[0], 1, num_frames, latents.shape[-2], latents.shape[-1]
+            latents.shape[0],
+            1,
+            num_frames,
+            latents.shape[-2],
+            latents.shape[-1],
+            device=latents.device,
+            dtype=latents.dtype,
         )
         mask_lat_size[:, :, list(range(1, num_frames))] = 0
         first_frame_mask = mask_lat_size[:, :, 0:1]
