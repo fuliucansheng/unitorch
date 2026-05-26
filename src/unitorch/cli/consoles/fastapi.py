@@ -341,8 +341,11 @@ def restart(name, config, daemon_mode):
 
 @fire.decorators.SetParseFn(str)
 def fastapi(fastapi_action_or_config: str, config_path: str = None, **kwargs):
+
+    daemon_mode = True
     if config_path is None:
         fastapi_action = "start"
+        daemon_mode = False
         config_path = fastapi_action_or_config
     else:
         fastapi_action = fastapi_action_or_config
@@ -368,7 +371,6 @@ def fastapi(fastapi_action_or_config: str, config_path: str = None, **kwargs):
     config._source_path = config_path
     config._source_params = params
 
-    daemon_mode = config.getdefault("core/cli", "daemon_mode", True)
     qualified_name = _qualified_name(config)
 
     if fastapi_action == "start":
