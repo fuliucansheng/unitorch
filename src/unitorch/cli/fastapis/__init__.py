@@ -33,3 +33,4 @@ if is_diffusers_available():
 
     if is_opencv_available():
         import unitorch.cli.fastapis.wan
+        import unitorch.cli.fastapis.lucy

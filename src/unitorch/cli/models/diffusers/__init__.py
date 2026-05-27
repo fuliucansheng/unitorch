@@ -38,6 +38,29 @@ __hf_hub_wan_v2_2_safetensors_dict__ = lambda name, n1=12, n2=12, n3=3: {
     ),
 }
 
+__hf_hub_lucy_edit_safetensors_dict__ = lambda name, n1=3: {
+    "transformer": {
+        "config": hf_endpoint_url(f"/{name}/resolve/main/transformer/config.json"),
+        "weight": hf_endpoint_url(
+            f"/{name}/resolve/main/transformer/diffusion_pytorch_model.safetensors"
+        ),
+    },
+    "text": {
+        "config": hf_endpoint_url(f"/{name}/resolve/main/text_encoder/config.json"),
+        "vocab": hf_endpoint_url(f"/{name}/resolve/main/tokenizer/spiece.model"),
+        "weight": [
+            hf_endpoint_url(
+                f"/{name}/resolve/main/text_encoder/model-{str(i).rjust(5, '0')}-of-{str(n1).rjust(5, '0')}.safetensors"
+            )
+            for i in range(1, n1 + 1)
+        ],
+    },
+    "scheduler": hf_endpoint_url(
+        f"/{name}/resolve/main/scheduler/scheduler_config.json"
+    ),
+    "expand_timesteps": True,
+}
+
 __hf_hub_qwen_image_safetensors_dict__ = lambda name, n1=9, n2=4: {
     "transformer": {
         "config": hf_endpoint_url(f"/{name}/resolve/main/transformer/config.json"),
@@ -193,6 +216,10 @@ pretrained_stable_infos = {
         **__hf_hub_flux2_safetensors_dict__("black-forest-labs/FLUX.2-dev"),
         **__hf_hub_vae_safetensors_dict__("black-forest-labs/FLUX.2-dev"),
     },
+    "lucy-edit-v1.1-dev": {
+        **__hf_hub_lucy_edit_safetensors_dict__("decart-ai/Lucy-Edit-1.1-Dev"),
+        **__hf_hub_vae_safetensors_dict__("decart-ai/Lucy-Edit-1.1-Dev"),
+    },
 }
 
 pretrained_stable_extensions_infos = {}
@@ -202,9 +229,11 @@ from unitorch.cli.models.diffusion_utils import load_weight
 import unitorch.cli.models.diffusers.modeling_qwen_image
 import unitorch.cli.models.diffusers.modeling_flux2
 import unitorch.cli.models.diffusers.modeling_wan
+import unitorch.cli.models.diffusers.modeling_lucy
 import unitorch.cli.models.diffusers.modeling_vae
 import unitorch.cli.models.diffusers.processing_qwen_image
 import unitorch.cli.models.diffusers.processing_flux2
 
 if is_opencv_available():
     import unitorch.cli.models.diffusers.processing_wan
+    import unitorch.cli.models.diffusers.processing_lucy
