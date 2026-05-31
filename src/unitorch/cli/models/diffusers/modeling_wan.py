@@ -2,7 +2,7 @@
 # Licensed under the MIT License.
 
 import torch
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import Optional
 from torch import autocast
 
 from unitorch.models.diffusers import (
@@ -13,12 +13,11 @@ from unitorch.utils import (
     pop_value,
     nested_dict_value,
     is_bfloat16_available,
-    is_cuda_available,
 )
 from unitorch.cli import (
     cached_path,
-    add_default_section_for_init,
-    add_default_section_for_function,
+    config_defaults_init,
+    config_defaults_method,
     register_model,
 )
 from unitorch.cli.models import DiffusionOutputs, LossOutputs
@@ -44,6 +43,7 @@ class WanForText2VideoGeneration(_WanForText2VideoGeneration):
         freeze_vae_encoder: Optional[bool] = True,
         freeze_text_encoder: Optional[bool] = True,
         snr_gamma: Optional[float] = 5.0,
+        boundary_ratio: Optional[float] = 0.9,
         seed: Optional[int] = 1123,
         gradient_checkpointing: Optional[bool] = True,
     ):
@@ -58,13 +58,14 @@ class WanForText2VideoGeneration(_WanForText2VideoGeneration):
             freeze_vae_encoder=freeze_vae_encoder,
             freeze_text_encoder=freeze_text_encoder,
             snr_gamma=snr_gamma,
+            boundary_ratio=boundary_ratio,
             seed=seed,
             gradient_checkpointing=gradient_checkpointing,
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/diffusers/text2video/wan")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/model/diffusers/text2video/wan")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/diffusers/text2video/wan")
         pretrained_name = config.getoption("pretrained_name", "wan-v2.2-t2v-14b")
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
@@ -111,6 +112,10 @@ class WanForText2VideoGeneration(_WanForText2VideoGeneration):
         freeze_vae_encoder = config.getoption("freeze_vae_encoder", True)
         freeze_text_encoder = config.getoption("freeze_text_encoder", True)
         snr_gamma = config.getoption("snr_gamma", 5.0)
+        boundary_ratio = config.getoption(
+            "boundary_ratio",
+            nested_dict_value(pretrained_infos, "boundary_ratio") or 0.9,
+        )
         seed = config.getoption("seed", 1123)
         gradient_checkpointing = config.getoption("gradient_checkpointing", True)
 
@@ -125,6 +130,7 @@ class WanForText2VideoGeneration(_WanForText2VideoGeneration):
             freeze_vae_encoder=freeze_vae_encoder,
             freeze_text_encoder=freeze_text_encoder,
             snr_gamma=snr_gamma,
+            boundary_ratio=boundary_ratio,
             seed=seed,
             gradient_checkpointing=gradient_checkpointing,
         )
@@ -205,7 +211,7 @@ class WanForText2VideoGeneration(_WanForText2VideoGeneration):
         )
         return LossOutputs(loss=loss)
 
-    @add_default_section_for_function("core/model/diffusers/text2video/wan")
+    @config_defaults_method("core/model/diffusers/text2video/wan")
     @autocast(
         device_type=("cuda" if torch.cuda.is_available() else "cpu"),
         dtype=(torch.bfloat16 if is_bfloat16_available() else torch.float32),
@@ -249,6 +255,7 @@ class WanForImage2VideoGeneration(_WanForImage2VideoGeneration):
         freeze_vae_encoder: Optional[bool] = True,
         freeze_text_encoder: Optional[bool] = True,
         snr_gamma: Optional[float] = 5.0,
+        boundary_ratio: Optional[float] = 0.9,
         seed: Optional[int] = 1123,
         gradient_checkpointing: Optional[bool] = True,
     ):
@@ -263,13 +270,14 @@ class WanForImage2VideoGeneration(_WanForImage2VideoGeneration):
             freeze_vae_encoder=freeze_vae_encoder,
             freeze_text_encoder=freeze_text_encoder,
             snr_gamma=snr_gamma,
+            boundary_ratio=boundary_ratio,
             seed=seed,
             gradient_checkpointing=gradient_checkpointing,
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/diffusers/image2video/wan")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/model/diffusers/image2video/wan")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/diffusers/image2video/wan")
         pretrained_name = config.getoption("pretrained_name", "wan-v2.2-i2v-14b")
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
@@ -316,6 +324,10 @@ class WanForImage2VideoGeneration(_WanForImage2VideoGeneration):
         freeze_vae_encoder = config.getoption("freeze_vae_encoder", True)
         freeze_text_encoder = config.getoption("freeze_text_encoder", True)
         snr_gamma = config.getoption("snr_gamma", 5.0)
+        boundary_ratio = config.getoption(
+            "boundary_ratio",
+            nested_dict_value(pretrained_infos, "boundary_ratio") or 0.9,
+        )
         seed = config.getoption("seed", 1123)
         gradient_checkpointing = config.getoption("gradient_checkpointing", True)
 
@@ -330,6 +342,7 @@ class WanForImage2VideoGeneration(_WanForImage2VideoGeneration):
             freeze_vae_encoder=freeze_vae_encoder,
             freeze_text_encoder=freeze_text_encoder,
             snr_gamma=snr_gamma,
+            boundary_ratio=boundary_ratio,
             seed=seed,
             gradient_checkpointing=gradient_checkpointing,
         )
@@ -416,7 +429,7 @@ class WanForImage2VideoGeneration(_WanForImage2VideoGeneration):
         )
         return LossOutputs(loss=loss)
 
-    @add_default_section_for_function("core/model/diffusers/image2video/wan")
+    @config_defaults_method("core/model/diffusers/image2video/wan")
     @autocast(
         device_type=("cuda" if torch.cuda.is_available() else "cpu"),
         dtype=(torch.bfloat16 if is_bfloat16_available() else torch.float32),

@@ -2,24 +2,28 @@
 # Licensed under the MIT License.
 
 import os
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
-from functools import partial
-
-import torch
+from typing import Optional
 from transformers import XLMRobertaTokenizer
-from unitorch.utils import pop_value, truncate_sequence_pair
 from unitorch.models import GenericOutputs, HfTextClassificationProcessor
 
 
-def get_xlm_roberta_tokenizer(vocab_path):
+def get_xlm_roberta_tokenizer(vocab_path: str) -> XLMRobertaTokenizer:
+    """
+    Creates an XLMRobertaTokenizer from a vocabulary file.
+
+    Args:
+        vocab_path (str): Path to the vocabulary file.
+
+    Returns:
+        XLMRobertaTokenizer: Configured tokenizer.
+    """
     assert os.path.exists(vocab_path)
-    tokenizer = XLMRobertaTokenizer(vocab_path)
-    return tokenizer
+    return XLMRobertaTokenizer(vocab_path)
 
 
 class XLMRobertaProcessor(HfTextClassificationProcessor):
     """
-    Processor for XLM-RoBERTa model for text classification tasks.
+    Processor for XLM-RoBERTa text classification models.
     """
 
     def __init__(
@@ -34,13 +38,11 @@ class XLMRobertaProcessor(HfTextClassificationProcessor):
 
         Args:
             vocab_path (str): Path to the vocabulary file.
-            max_seq_length (Optional[int]): Maximum sequence length. Defaults to 128.
-            source_type_id (Optional[int]): Source type ID. Defaults to 0.
-            target_type_id (Optional[int]): Target type ID. Defaults to 0.
+            max_seq_length (int, optional): Maximum sequence length. Defaults to 128.
+            source_type_id (int, optional): Source type ID. Defaults to 0.
+            target_type_id (int, optional): Target type ID. Defaults to 0.
         """
-        tokenizer = get_xlm_roberta_tokenizer(
-            vocab_path,
-        )
+        tokenizer = get_xlm_roberta_tokenizer(vocab_path)
         super().__init__(
             tokenizer=tokenizer,
             max_seq_length=max_seq_length,

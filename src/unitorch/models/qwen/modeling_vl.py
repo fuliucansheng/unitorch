@@ -1,28 +1,21 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
-import os
-import logging
-import math
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import List, Optional, Union
 from transformers.models.qwen3_vl import (
     Qwen3VLConfig,
-    Qwen3VLModel,
     Qwen3VLForConditionalGeneration,
 )
-from unitorch.utils.decorators import replace
-from unitorch.models import (
-    GenericModel,
-    GenericOutputs,
-)
-
+from unitorch.models import GenericModel, GenericOutputs
 from unitorch.models.peft import PeftWeightLoaderMixin
 
 
 class QWen3VLForGeneration(GenericModel, PeftWeightLoaderMixin):
+    """
+    Qwen3-VL model for vision-language text generation tasks.
+    """
+
     prefix_keys_in_state_dict = {
         "^model.visual.": "model.",
         "^model(?!\.model).": "model.",
@@ -34,10 +27,10 @@ class QWen3VLForGeneration(GenericModel, PeftWeightLoaderMixin):
         gradient_checkpointing: Optional[bool] = False,
     ):
         """
-        Llama model for text generation tasks.
+        Initializes the QWen3VLForGeneration model.
 
         Args:
-            config_path (str): Path to the model configuration file.
+            config_path (str): Path to the Qwen3-VL configuration file.
             gradient_checkpointing (bool, optional): Whether to use gradient checkpointing. Defaults to False.
         """
         super().__init__()
@@ -53,6 +46,18 @@ class QWen3VLForGeneration(GenericModel, PeftWeightLoaderMixin):
         image_grid_thw: torch.Tensor,
         attention_mask: Optional[torch.Tensor] = None,
     ):
+        """
+        Forward pass of the QWen3VLForGeneration model.
+
+        Args:
+            input_ids (torch.Tensor): Input token IDs.
+            pixel_values (torch.Tensor): Image pixel values.
+            image_grid_thw (torch.Tensor): Image grid temporal/height/width info.
+            attention_mask (torch.Tensor, optional): Attention mask. Defaults to None.
+
+        Returns:
+            torch.Tensor: Output logits.
+        """
         image_grid_thw = image_grid_thw.view(-1, image_grid_thw.size(-1))
         pixel_values = pixel_values.view(-1, pixel_values.size(-1))
         outputs = self.model(
@@ -61,9 +66,7 @@ class QWen3VLForGeneration(GenericModel, PeftWeightLoaderMixin):
             image_grid_thw=image_grid_thw,
             attention_mask=attention_mask,
         )
-
-        logits = outputs.logits
-        return logits
+        return outputs.logits
 
     @torch.no_grad()
     def generate(
@@ -90,26 +93,29 @@ class QWen3VLForGeneration(GenericModel, PeftWeightLoaderMixin):
         top_p: Optional[float] = 1.0,
     ):
         """
-        Generate text using the generation model.
+        Generates sequences using the QWen3VLForGeneration model.
 
         Args:
-            input_ids: Input tensor of shape (batch_size, sequence_length).
+            input_ids (torch.Tensor): Input token IDs.
+            pixel_values (torch.Tensor): Image pixel values.
+            image_grid_thw (torch.Tensor): Image grid temporal/height/width info.
             num_beams (int, optional): Number of beams for beam search. Defaults to 5.
-            decoder_start_token_id (int, optional): The ID of the decoder start token. Defaults to 2.
-            decoder_end_token_id (int or List[int], optional): The ID(s) of the decoder end token(s). Defaults to 2.
-            num_return_sequences (int, optional): Number of generated sequences to return. Defaults to 1.
-            min_gen_seq_length (int, optional): Minimum length of generated sequences. Defaults to 0.
-            max_gen_seq_length (int, optional): Maximum length of generated sequences. Defaults to 48.
-            repetition_penalty (float, optional): Penalty for repeated tokens. Defaults to 1.0.
-            no_repeat_ngram_size (int, optional): Size of n-grams to avoid repeating. Defaults to 0.
-            early_stopping (bool, optional): Whether to stop generation early. Defaults to True.
-            length_penalty (float, optional): Penalty for longer sequences. Defaults to 1.0.
-            num_beam_groups (int, optional): Number of beam groups for diverse beam search. Defaults to 1.
-            diversity_penalty (float, optional): Penalty for diverse sequences in diverse beam search. Defaults to 0.0.
-            do_sample (bool, optional): Whether to use sampling for generation. Defaults to False.
+            decoder_start_token_id (int, optional): Start token ID. Defaults to 151643.
+            decoder_end_token_id (int or List[int], optional): End token ID. Defaults to 151645.
+            decoder_pad_token_id (int, optional): Pad token ID. Defaults to 151643.
+            num_return_sequences (int, optional): Number of sequences to return. Defaults to 1.
+            min_gen_seq_length (int, optional): Minimum generated sequence length. Defaults to 0.
+            max_gen_seq_length (int, optional): Maximum generated sequence length. Defaults to 512.
+            repetition_penalty (float, optional): Repetition penalty. Defaults to 1.0.
+            no_repeat_ngram_size (int, optional): N-gram size to avoid repeating. Defaults to 0.
+            early_stopping (bool, optional): Whether to stop early. Defaults to True.
+            length_penalty (float, optional): Length penalty. Defaults to 1.0.
+            num_beam_groups (int, optional): Number of beam groups. Defaults to 1.
+            diversity_penalty (float, optional): Diversity penalty. Defaults to 0.0.
+            do_sample (bool, optional): Whether to use sampling. Defaults to False.
             temperature (float, optional): Sampling temperature. Defaults to 1.0.
-            top_k (int, optional): Top-k value for sampling. Defaults to 50.
-            top_p (float, optional): Top-p value for sampling. Defaults to 1.0.
+            top_k (int, optional): Top-k sampling. Defaults to 50.
+            top_p (float, optional): Top-p (nucleus) sampling. Defaults to 1.0.
 
         Returns:
             GenericOutputs: Generated sequences and their scores.
@@ -146,20 +152,19 @@ class QWen3VLForGeneration(GenericModel, PeftWeightLoaderMixin):
         sequences = outputs.sequences.reshape(
             -1, num_return_sequences, outputs.sequences.size(-1)
         )
-        outputs.sequences = (
-            torch.zeros(sequences.size(0), num_return_sequences, max_gen_seq_length).to(
-                device=sequences.device
-            )
-            + decoder_start_token_id
+        padded = torch.full(
+            (sequences.size(0), num_return_sequences, max_gen_seq_length),
+            fill_value=decoder_start_token_id,
+            device=sequences.device,
         )
-        outputs.sequences[:, :, : sequences.size(-1) - input_seq_length].copy_(
+        padded[:, :, : sequences.size(-1) - input_seq_length].copy_(
             sequences[:, :, input_seq_length : sequences.size(-1)]
         )
 
         if num_return_sequences == 1:
-            outputs.sequences = outputs.sequences.reshape(-1, max_gen_seq_length)
+            padded = padded.reshape(-1, max_gen_seq_length)
 
         return GenericOutputs(
-            sequences=outputs.sequences.long(),
+            sequences=padded.long(),
             sequences_scores=outputs.sequences_scores,
         )

@@ -21,9 +21,9 @@ hide:
 <div style="text-align: center; width: 70%; margin: auto; margin-top: 5%">
   🔥 <b>unitorch</b> is a library that simplifies and accelerates the
   development of unified models for <b>NLP</b>, <b>NLG</b>, <b>CV</b>,
-  <b>CTR</b>, <b>MM</b> and <b>RL</b>. It is built on top of PyTorch and
-  integrates seamlessly with popular frameworks such as transformers, peft,
-  diffusers and fastseq.
+  <b>MM</b> and more. It is built on top of PyTorch and
+  integrates seamlessly with popular frameworks such as transformers, peft
+  and diffusers.
 </div>
 
 <div style="text-align: center; width: 60%; margin: auto; margin-top: 5%">

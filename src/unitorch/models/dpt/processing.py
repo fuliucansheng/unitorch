@@ -1,21 +1,14 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
-import os
-import torch
-import numpy as np
-from PIL import Image
-from torchvision.transforms import Resize, CenterCrop, ToTensor, Normalize, Compose
+from typing import Optional
 from transformers import DPTImageProcessor
-from transformers.image_utils import to_numpy_array, ChannelDimension
-from transformers.image_transforms import to_channel_dimension_format
-from unitorch.utils import pop_value
-from unitorch.models import HfImageClassificationProcessor, GenericOutputs
+from unitorch.models import HfImageClassificationProcessor
 
 
 class DPTProcessor(HfImageClassificationProcessor):
     """
-    Processor for ViT-based image classification models.
+    Processor for DPT-based depth estimation models.
     """
 
     def __init__(
@@ -23,12 +16,10 @@ class DPTProcessor(HfImageClassificationProcessor):
         vision_config_path: str,
     ):
         """
-        Initializes the ViTProcessor.
+        Initializes the DPTProcessor.
 
         Args:
-            vision_config_path (str): Path to the vision configuration file.
+            vision_config_path (str): Path to the DPT image processor configuration file.
         """
         vision_processor = DPTImageProcessor.from_json_file(vision_config_path)
-        super().__init__(
-            vision_processor=vision_processor,
-        )
+        super().__init__(vision_processor=vision_processor)

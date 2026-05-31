@@ -5,11 +5,11 @@
 !!! tip
     **`core/process/xpegasus`** is the section for configuration of XPegasusProcessor.
 
-::: unitorch.cli.models.xpegasus.XPegasusProcessor
+::: unitorch.cli.models.xpegasus.processing.XPegasusProcessor
 
 ## XPegasusForGeneration
 
 !!! tip
     **`core/model/generation/xpegasus`** is the section for configuration of XPegasusForGeneration.
 
-::: unitorch.cli.models.xpegasus.XPegasusForGeneration
+::: unitorch.cli.models.xpegasus.modeling.XPegasusForGeneration

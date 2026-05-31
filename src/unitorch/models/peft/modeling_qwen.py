@@ -1,13 +1,11 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
-import re
-import json
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
-from peft import LoraConfig, PeftModelForCausalLM
+from typing import List, Optional, Union
+from peft import LoraConfig
 from transformers.models.qwen3 import Qwen3Config, Qwen3ForCausalLM
 from unitorch.models import GenericModel, GenericOutputs
 from unitorch.models.peft import PeftModelForSequenceClassification, GenericPeftModel
@@ -33,7 +31,7 @@ class QWen3LoraForGeneration(GenericPeftModel):
         gradient_checkpointing: Optional[bool] = False,
     ):
         """
-        Bloom Lora model for text generation tasks.
+        QWen3 LoRA model for text generation.
 
         Args:
             config_path (str): Path to the model configuration file.
@@ -62,12 +60,11 @@ class QWen3LoraForGeneration(GenericPeftModel):
         Forward pass of the generation model.
 
         Args:
-            input_ids (torch.Tensor, optional): Input tensor of shape (batch_size, sequence_length). Defaults to None.
-            attention_mask (torch.Tensor, optional): Attention mask tensor of shape (batch_size, sequence_length). Defaults to None.
-            position_ids (torch.Tensor, optional): Position IDs tensor of shape (batch_size, sequence_length). Defaults to None.
+            input_ids (torch.Tensor): Input tensor of shape (batch_size, sequence_length).
+            attention_mask (torch.Tensor, optional): Attention mask tensor. Defaults to None.
 
         Returns:
-            torch Output logits.Tensor: tensor of shape (batch_size, sequence_length, vocab_size).
+            torch.Tensor: Output logits of shape (batch_size, sequence_length, vocab_size).
         """
         outputs = self.model(
             input_ids=input_ids,
@@ -191,11 +188,12 @@ class QWen3DPOLoraForGeneration(GenericPeftModel):
         dpo_beta: Optional[float] = 0.1,
     ):
         """
-        Bloom Lora model for text generation tasks.
+        QWen3 DPO LoRA model for preference optimization.
 
         Args:
             config_path (str): Path to the model configuration file.
             gradient_checkpointing (bool, optional): Whether to use gradient checkpointing. Defaults to False.
+            dpo_beta (float, optional): DPO beta coefficient. Defaults to 0.1.
         """
         super().__init__()
         self.config = Qwen3Config.from_json_file(config_path)
@@ -222,15 +220,18 @@ class QWen3DPOLoraForGeneration(GenericPeftModel):
         lose_attention_mask: Optional[torch.Tensor] = None,
     ):
         """
-        Forward pass of the generation model.
+        Forward pass computing DPO loss.
 
         Args:
-            input_ids (torch.Tensor, optional): Input tensor of shape (batch_size, sequence_length). Defaults to None.
-            attention_mask (torch.Tensor, optional): Attention mask tensor of shape (batch_size, sequence_length). Defaults to None.
-            position_ids (torch.Tensor, optional): Position IDs tensor of shape (batch_size, sequence_length). Defaults to None.
+            input_ids (torch.Tensor): Prompt input IDs.
+            win_input_ids (torch.Tensor): Winning response IDs.
+            lose_input_ids (torch.Tensor): Losing response IDs.
+            attention_mask (torch.Tensor, optional): Prompt attention mask. Defaults to None.
+            win_attention_mask (torch.Tensor, optional): Win response attention mask. Defaults to None.
+            lose_attention_mask (torch.Tensor, optional): Lose response attention mask. Defaults to None.
 
         Returns:
-            torch Output logits.Tensor: tensor of shape (batch_size, sequence_length, vocab_size).
+            torch.Tensor: DPO loss scalar.
         """
         win_input_ids = torch.cat([input_ids, win_input_ids], dim=1)
         lose_input_ids = torch.cat([input_ids, lose_input_ids], dim=1)
@@ -417,7 +418,7 @@ class QWen3GRPOLoraForGeneration(GenericPeftModel):
         gradient_checkpointing: Optional[bool] = False,
     ):
         """
-        Bloom Lora model for text generation tasks.
+        QWen3 GRPO LoRA model for group relative policy optimization.
 
         Args:
             config_path (str): Path to the model configuration file.
@@ -454,7 +455,7 @@ class QWen3GRPOLoraForGeneration(GenericPeftModel):
             position_ids (torch.Tensor, optional): Position IDs tensor of shape (batch_size, sequence_length). Defaults to None.
 
         Returns:
-            torch Output logits.Tensor: tensor of shape (batch_size, sequence_length, vocab_size).
+            torch.Tensor: Output logits of shape (batch_size, sequence_length, vocab_size).
         """
         mean_rewards = sampled_rewards.mean(dim=-1)
         std_rewards = sampled_rewards.std(dim=-1)

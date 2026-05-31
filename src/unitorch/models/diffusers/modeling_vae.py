@@ -3,11 +3,8 @@
 
 import json
 import torch
-import torchvision
-import torch.nn as nn
 import torch.nn.functional as F
-from PIL import Image
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import Optional
 from diffusers import AutoencoderKL
 from unitorch.models import (
     GenericModel,

@@ -2,8 +2,7 @@
 # Licensed under the MIT License.
 
 import torch
-from PIL import Image
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import Optional
 from torch import autocast
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.dpt import (
@@ -11,8 +10,8 @@ from unitorch.models.dpt import (
 )
 from unitorch.cli import (
     cached_path,
-    add_default_section_for_init,
-    add_default_section_for_function,
+    config_defaults_init,
+    config_defaults_method,
     register_model,
 )
 from unitorch.cli.models import SegmentationOutputs, LossOutputs
@@ -31,8 +30,8 @@ class DPTForDepthEstimation(_DPTForDepthEstimation):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/dpt")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/model/dpt")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/dpt")
         pretrained_name = config.getoption("pretrained_name", "dpt-large")
         config_path = config.getoption("config_path", None)
@@ -61,7 +60,7 @@ class DPTForDepthEstimation(_DPTForDepthEstimation):
     ):
         raise NotImplementedError
 
-    @add_default_section_for_function("core/model/dpt")
+    @config_defaults_method("core/model/dpt")
     @torch.no_grad()
     def segment(
         self,

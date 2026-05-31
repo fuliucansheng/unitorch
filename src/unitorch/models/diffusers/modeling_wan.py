@@ -4,21 +4,13 @@
 import json
 import random
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import Optional
 import diffusers.schedulers as schedulers
 from transformers import (
-    PretrainedConfig,
     UMT5Config,
     UMT5EncoderModel,
-    CLIPVisionConfig,
-    CLIPVisionModel,
-    CLIPVisionModelWithProjection,
 )
-from transformers.models.t5.configuration_t5 import T5Config
-from transformers.models.t5.modeling_t5 import T5EncoderModel
-from diffusers.schedulers import SchedulerMixin, FlowMatchEulerDiscreteScheduler
+from diffusers.schedulers import SchedulerMixin
 from diffusers.training_utils import (
     compute_loss_weighting_for_sd3,
     compute_density_for_timestep_sampling,
@@ -31,17 +23,12 @@ from diffusers.pipelines import (
     WanPipeline,
     WanImageToVideoPipeline,
 )
-from unitorch.models import (
-    GenericModel,
-    GenericOutputs,
-)
+from unitorch.models import GenericModel, GenericOutputs
 from unitorch.models.peft import PeftWeightLoaderMixin
-from unitorch.models.diffusers import compute_snr
 
 
 class GenericWanModel(GenericModel, PeftWeightLoaderMixin):
     prefix_keys_in_state_dict = {
-        # vae weights
         "^encoder.*": "vae.",
         "^decoder.*": "vae.",
         "^post_quant_conv.*": "vae.",
@@ -49,10 +36,10 @@ class GenericWanModel(GenericModel, PeftWeightLoaderMixin):
     }
 
     replace_keys_in_state_dict = {
-        "\.query\.": ".to_q.",
-        "\.key\.": ".to_k.",
-        "\.value\.": ".to_v.",
-        "\.proj_attn\.": ".to_out.0.",
+        r"\.query\.": ".to_q.",
+        r"\.key\.": ".to_k.",
+        r"\.value\.": ".to_v.",
+        r"\.proj_attn\.": ".to_out.0.",
     }
 
     def __init__(
@@ -137,6 +124,11 @@ class GenericWanModel(GenericModel, PeftWeightLoaderMixin):
         enable_cpu_offload: Optional[bool] = False,
         cpu_offload_device: Optional[str] = "cpu",
     ):
+        if attention_mask is None:
+            attention_mask = torch.ones_like(input_ids)
+        if negative_attention_mask is None:
+            negative_attention_mask = torch.ones_like(negative_input_ids)
+
         if enable_cpu_offload:
             self.text.to(cpu_offload_device)
             input_ids = input_ids.to(cpu_offload_device)
@@ -431,7 +423,13 @@ class WanForImage2VideoGeneration(GenericWanModel):
         latent_condition = (latent_condition - latents_mean) * latents_std
 
         mask_lat_size = torch.ones(
-            latents.shape[0], 1, num_frames, latents.shape[-2], latents.shape[-1]
+            latents.shape[0],
+            1,
+            num_frames,
+            latents.shape[-2],
+            latents.shape[-1],
+            device=latents.device,
+            dtype=latents.dtype,
         )
         mask_lat_size[:, :, list(range(1, num_frames))] = 0
         first_frame_mask = mask_lat_size[:, :, 0:1]

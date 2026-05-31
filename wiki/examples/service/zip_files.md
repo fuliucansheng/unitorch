@@ -10,7 +10,7 @@
 
 ### Configuration files
 
-#### [Single zip folder](https://github.com/fuliucansheng/unitorch/blob/master/examples/configs/services/zip_files/config.ini)
+#### [Single zip folder](https://github.com/fuliucansheng/unitorch/blob/master/examples/configs/servers/zip_files.ini)
 ```ini
 [core/cli]
 zip_folder = zip_folder/
@@ -21,7 +21,7 @@ zip_folder = ${core/cli:zip_folder}
 zip_extension = .zip
 ```
 
-#### [Multiple zip folders](https://github.com/fuliucansheng/unitorch/blob/master/examples/configs/services/zip_files/config_v2.ini)
+#### [Multiple zip folders](https://github.com/fuliucansheng/unitorch/blob/master/examples/configs/servers/zip_files.v2.ini)
 ```ini
 [core/cli]
 zip_folder1 = zip_folder1/
@@ -41,20 +41,20 @@ zip_extension = .zip
 ### Start Service
 
 ```bash
-unitorch-service start path/to/zip/files/service.ini \
+unitorch-fastapi start path/to/zip/files.ini \
     --zip_folder path/to/zip/folder
 ```
 
 ### Stop Service
 
 ```bash
-unitorch-service stop path/to/zip/files/service.ini \
+unitorch-fastapi stop path/to/zip/files.ini \
     --zip_folder path/to/zip/folder
 ```
 
 ### Restart Service
 
 ```bash
-unitorch-service restart path/to/zip/files/service.ini \
+unitorch-fastapi restart path/to/zip/files.ini \
     --zip_folder path/to/zip/folder
 ```

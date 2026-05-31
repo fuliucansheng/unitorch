@@ -2,47 +2,35 @@
 # Licensed under the MIT License.
 
 import io
-import re
 import gc
-import json
-import logging
 import torch
-import hashlib
 import asyncio
-import pandas as pd
 from PIL import Image
 from torch import autocast
-from fastapi import APIRouter, UploadFile, File
+from fastapi import APIRouter, UploadFile
 from fastapi.responses import StreamingResponse
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
-from diffusers.utils import numpy_to_pil
-
-from diffusers.pipelines import (
-    WanPipeline,
-)
-
-from unitorch.utils import is_remote_url, tensor2vid
+from typing import Any, Dict, List, Optional, Union
+from diffusers.pipelines import WanPipeline
+from unitorch.utils import tensor2vid
 from unitorch.models.diffusers import WanForText2VideoGeneration
 from unitorch.models.diffusers import WanProcessor
 from unitorch.utils import (
     pop_value,
     nested_dict_value,
     is_bfloat16_available,
-    is_cuda_available,
 )
 from unitorch.cli import (
     cached_path,
     register_fastapi,
-    add_default_section_for_init,
-    add_default_section_for_function,
+    config_defaults_init,
+    config_defaults_method,
 )
-from unitorch.cli import CoreConfigureParser, GenericFastAPI
+from unitorch.cli import Config, GenericFastAPI
 from unitorch.cli.models.diffusers import (
     pretrained_stable_infos,
     pretrained_stable_extensions_infos,
     load_weight,
 )
-from unitorch.cli.pipelines import Schedulers
 from unitorch.cli.models.diffusion_utils import export_to_video
 
 
@@ -54,8 +42,12 @@ class WanForText2VideoFastAPIPipeline(WanForText2VideoGeneration):
         vae_config_path: str,
         scheduler_config_path: str,
         vocab_path: str,
+        config2_path: Optional[str] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
+        boundary_ratio: Optional[float] = 0.9,
+        seed: Optional[int] = 1123,
+        gradient_checkpointing: Optional[bool] = False,
         weight_path: Optional[Union[str, List[str]]] = None,
         state_dict: Optional[Dict[str, Any]] = None,
         lora_checkpoints: Optional[Union[str, List[str]]] = None,
@@ -69,8 +61,12 @@ class WanForText2VideoFastAPIPipeline(WanForText2VideoGeneration):
             text_config_path=text_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
+            config2_path=config2_path,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
+            boundary_ratio=boundary_ratio,
+            seed=seed,
+            gradient_checkpointing=gradient_checkpointing,
         )
         self.processor = WanProcessor(
             vocab_path=vocab_path,
@@ -97,8 +93,8 @@ class WanForText2VideoFastAPIPipeline(WanForText2VideoGeneration):
             self.to(device=self._device)
 
     @classmethod
-    @add_default_section_for_init("core/fastapi/pipeline/wan/text2video")
-    def from_core_configure(
+    @config_defaults_init("core/fastapi/pipeline/wan/text2video")
+    def from_config(
         cls,
         config,
         pretrained_name: Optional[str] = None,
@@ -129,7 +125,7 @@ class WanForText2VideoFastAPIPipeline(WanForText2VideoGeneration):
         )
         config_path = cached_path(config_path)
 
-        config2_path = config_path or config.getoption("config2_path", None)
+        config2_path = config2_path or config.getoption("config2_path", None)
         config2_path = pop_value(
             config2_path,
             nested_dict_value(pretrained_infos, "transformer2", "config"),
@@ -173,6 +169,14 @@ class WanForText2VideoFastAPIPipeline(WanForText2VideoGeneration):
         weight_path = pretrained_weight_path or config.getoption(
             "pretrained_weight_path", None
         )
+        num_train_timesteps = config.getoption("num_train_timesteps", 1000)
+        num_infer_timesteps = config.getoption("num_infer_timesteps", 50)
+        boundary_ratio = config.getoption(
+            "boundary_ratio",
+            nested_dict_value(pretrained_infos, "boundary_ratio") or 0.9,
+        )
+        seed = config.getoption("seed", 1123)
+        gradient_checkpointing = config.getoption("gradient_checkpointing", False)
         device = config.getoption("device", "cpu") if device is None else device
         enable_cpu_offload = config.getoption("enable_cpu_offload", True)
 
@@ -241,6 +245,11 @@ class WanForText2VideoFastAPIPipeline(WanForText2VideoGeneration):
             scheduler_config_path=scheduler_config_path,
             config2_path=config2_path,
             vocab_path=vocab_path,
+            num_train_timesteps=num_train_timesteps,
+            num_infer_timesteps=num_infer_timesteps,
+            boundary_ratio=boundary_ratio,
+            seed=seed,
+            gradient_checkpointing=gradient_checkpointing,
             weight_path=weight_path,
             state_dict=state_dict,
             lora_checkpoints=lora_weights_path,
@@ -256,7 +265,7 @@ class WanForText2VideoFastAPIPipeline(WanForText2VideoGeneration):
         device_type=("cuda" if torch.cuda.is_available() else "cpu"),
         dtype=(torch.bfloat16 if is_bfloat16_available() else torch.float32),
     )
-    @add_default_section_for_function("core/fastapi/pipeline/wan/text2video")
+    @config_defaults_method("core/fastapi/pipeline/wan/text2video")
     def __call__(
         self,
         text: str,
@@ -272,7 +281,7 @@ class WanForText2VideoFastAPIPipeline(WanForText2VideoGeneration):
         inputs = self.processor.text2video_inputs(
             text,
             negative_prompt=neg_text,
-            max_seq_length=77,
+            max_seq_length=512,
         )
         self.seed = seed
 
@@ -310,7 +319,7 @@ class WanForText2VideoFastAPIPipeline(WanForText2VideoGeneration):
 
 @register_fastapi("core/fastapi/wan/text2video")
 class WanForText2VideoFastAPI(GenericFastAPI):
-    def __init__(self, config: CoreConfigureParser):
+    def __init__(self, config: Config):
         self.config = config
         config.set_default_section(f"core/fastapi/wan/text2video")
         router = config.getoption("router", "/core/fastapi/wan/text2video")
@@ -333,7 +342,7 @@ class WanForText2VideoFastAPI(GenericFastAPI):
         pretrained_lora_weights: Optional[Union[float, List[float]]] = 1.0,
         pretrained_lora_alphas: Optional[Union[float, List[float]]] = 32.0,
     ):
-        self._pipe = WanForText2VideoFastAPIPipeline.from_core_configure(
+        self._pipe = WanForText2VideoFastAPIPipeline.from_config(
             self.config,
             pretrained_name=pretrained_name,
             pretrained_lora_names=pretrained_lora_names,

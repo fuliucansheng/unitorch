@@ -2,8 +2,7 @@
 # Licensed under the MIT License.
 
 import torch
-from PIL import Image
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import Optional
 from torch import autocast
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.sam import (
@@ -12,8 +11,8 @@ from unitorch.models.sam import (
 )
 from unitorch.cli import (
     cached_path,
-    add_default_section_for_init,
-    add_default_section_for_function,
+    config_defaults_init,
+    config_defaults_method,
     register_model,
 )
 from unitorch.cli.models import SegmentationOutputs, LossOutputs
@@ -44,8 +43,8 @@ class SamForSegmentation(_SamForSegmentation):
         self.crops_nms_thresh = crops_nms_thresh
 
     @classmethod
-    @add_default_section_for_init("core/model/segmentation/sam")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/model/segmentation/sam")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/segmentation/sam")
         pretrained_name = config.getoption("pretrained_name", "sam-vit-base")
         config_path = config.getoption("config_path", None)
@@ -98,7 +97,7 @@ class SamForSegmentation(_SamForSegmentation):
     ):
         raise NotImplementedError
 
-    @add_default_section_for_function("core/model/segmentation/sam")
+    @config_defaults_method("core/model/segmentation/sam")
     @torch.no_grad()
     def segment(
         self,

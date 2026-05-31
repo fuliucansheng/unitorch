@@ -2,14 +2,14 @@
 # Licensed under the MIT License.
 
 import torch
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import Optional, Union
 from unitorch.losses import (
     CELoss as _CELoss,
     BCELoss as _BCELoss,
     LMLoss as _LMLoss,
     MSELoss as _MSELoss,
 )
-from unitorch.cli import add_default_section_for_init, register_loss
+from unitorch.cli import config_defaults_init, register_loss
 from unitorch.cli.models import (
     ClassificationOutputs,
     ClassificationTargets,
@@ -32,8 +32,8 @@ class CELoss(_CELoss):
         )
 
     @classmethod
-    @add_default_section_for_init("core/loss/ce")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/loss/ce")
+    def from_config(cls, config, **kwargs):
         pass
 
     def forward(
@@ -68,8 +68,8 @@ class BCELoss(_BCELoss):
         super().__init__()
 
     @classmethod
-    @add_default_section_for_init("core/loss/bce")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/loss/bce")
+    def from_config(cls, config, **kwargs):
         pass
 
     def forward(
@@ -104,8 +104,8 @@ class LMLoss(_LMLoss):
         super().__init__()
 
     @classmethod
-    @add_default_section_for_init("core/loss/lm")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/loss/lm")
+    def from_config(cls, config, **kwargs):
         pass
 
     def forward(
@@ -134,8 +134,8 @@ class MSELoss(_MSELoss):
         super().__init__()
 
     @classmethod
-    @add_default_section_for_init("core/loss/mse")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/loss/mse")
+    def from_config(cls, config, **kwargs):
         pass
 
     def forward(

@@ -2,12 +2,9 @@
 # Licensed under the MIT License.
 
 import os
-import sys
 import fire
-import logging
-import importlib
 import unitorch.cli
-from unitorch.cli import CoreConfigureParser
+from unitorch.cli import Config
 from unitorch.cli import (
     import_library,
     cached_path,
@@ -31,7 +28,7 @@ def infer(config_path: str, **kwargs):
             k1 = k
         params.append((k0, k1, v))
 
-    config = CoreConfigureParser(config_path, params=params)
+    config = Config(config_path, params=params)
 
     depends_libraries = config.getdefault("core/cli", "depends_libraries", None)
 

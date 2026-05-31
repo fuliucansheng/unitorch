@@ -29,7 +29,6 @@ from unitorch.models import (
     GenericOutputs,
 )
 from unitorch.models.peft import GenericPeftModel
-from unitorch.models.diffusers import compute_snr
 from unitorch.models.diffusers.modeling_qwen_image import (
     _pack_latents,
     _unpack_latents,

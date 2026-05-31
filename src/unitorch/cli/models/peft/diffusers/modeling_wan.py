@@ -2,32 +2,23 @@
 # Licensed under the MIT License.
 
 import torch
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import List, Optional, Union
 from torch import autocast
 
 from unitorch.models.peft.diffusers import (
     WanLoraForText2VideoGeneration as _WanLoraForText2VideoGeneration,
     WanLoraForImage2VideoGeneration as _WanLoraForImage2VideoGeneration,
 )
-from unitorch.utils import (
-    pop_value,
-    nested_dict_value,
-    is_bfloat16_available,
-    is_cuda_available,
-)
+from unitorch.utils import pop_value, nested_dict_value, is_bfloat16_available
 from unitorch.cli import (
     cached_path,
-    add_default_section_for_init,
-    add_default_section_for_function,
+    config_defaults_init,
+    config_defaults_method,
     register_model,
 )
 from unitorch.cli.models import DiffusionOutputs, LossOutputs
 from unitorch.cli.models import diffusion_model_decorator
-from unitorch.cli.models.diffusers import (
-    pretrained_stable_infos,
-    pretrained_stable_extensions_infos,
-    load_weight,
-)
+from unitorch.cli.models.diffusers import pretrained_stable_infos, load_weight
 
 
 @register_model(
@@ -40,9 +31,11 @@ class WanLoraForText2VideoGeneration(_WanLoraForText2VideoGeneration):
         text_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
+        config2_path: Optional[str] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         snr_gamma: Optional[float] = 5.0,
+        boundary_ratio: Optional[float] = 0.9,
         lora_r: Optional[int] = 16,
         lora_alpha: Optional[int] = 32,
         lora_dropout: Optional[float] = 0.05,
@@ -62,9 +55,11 @@ class WanLoraForText2VideoGeneration(_WanLoraForText2VideoGeneration):
             text_config_path=text_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
+            config2_path=config2_path,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             snr_gamma=snr_gamma,
+            boundary_ratio=boundary_ratio,
             lora_r=lora_r,
             lora_alpha=lora_alpha,
             lora_dropout=lora_dropout,
@@ -77,8 +72,8 @@ class WanLoraForText2VideoGeneration(_WanLoraForText2VideoGeneration):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/diffusers/peft/lora/text2video/wan")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/model/diffusers/peft/lora/text2video/wan")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/diffusers/peft/lora/text2video/wan")
         pretrained_name = config.getoption("pretrained_name", "wan-v2.2-t2v-14b")
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
@@ -89,6 +84,15 @@ class WanLoraForText2VideoGeneration(_WanLoraForText2VideoGeneration):
             nested_dict_value(pretrained_infos, "transformer", "config"),
         )
         config_path = cached_path(config_path)
+
+        config2_path = config.getoption("config2_path", None)
+        config2_path = pop_value(
+            config2_path,
+            nested_dict_value(pretrained_infos, "transformer2", "config"),
+        )
+
+        if config2_path is not None:
+            config2_path = cached_path(config2_path)
 
         text_config_path = config.getoption("text_config_path", None)
         text_config_path = pop_value(
@@ -114,6 +118,10 @@ class WanLoraForText2VideoGeneration(_WanLoraForText2VideoGeneration):
         num_train_timesteps = config.getoption("num_train_timesteps", 1000)
         num_infer_timesteps = config.getoption("num_infer_timesteps", 50)
         snr_gamma = config.getoption("snr_gamma", 5.0)
+        boundary_ratio = config.getoption(
+            "boundary_ratio",
+            nested_dict_value(pretrained_infos, "boundary_ratio") or 0.9,
+        )
         lora_r = config.getoption("lora_r", 16)
         lora_alpha = config.getoption("lora_alpha", 32)
         lora_dropout = config.getoption("lora_dropout", 0.05)
@@ -146,9 +154,11 @@ class WanLoraForText2VideoGeneration(_WanLoraForText2VideoGeneration):
             text_config_path=text_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
+            config2_path=config2_path,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             snr_gamma=snr_gamma,
+            boundary_ratio=boundary_ratio,
             lora_r=lora_r,
             lora_alpha=lora_alpha,
             lora_dropout=lora_dropout,
@@ -168,6 +178,11 @@ class WanLoraForText2VideoGeneration(_WanLoraForText2VideoGeneration):
                 load_weight(
                     nested_dict_value(pretrained_infos, "transformer", "weight"),
                     prefix_keys={"": "transformer."},
+                    replace_keys=replace_keys if enable_transformer_adapter else {},
+                ),
+                load_weight(
+                    nested_dict_value(pretrained_infos, "transformer2", "weight"),
+                    prefix_keys={"": "transformer2."},
                     replace_keys=replace_keys if enable_transformer_adapter else {},
                 ),
                 load_weight(
@@ -214,7 +229,7 @@ class WanLoraForText2VideoGeneration(_WanLoraForText2VideoGeneration):
         )
         return LossOutputs(loss=loss)
 
-    @add_default_section_for_function("core/model/diffusers/peft/lora/text2video/wan")
+    @config_defaults_method("core/model/diffusers/peft/lora/text2video/wan")
     @autocast(
         device_type=("cuda" if torch.cuda.is_available() else "cpu"),
         dtype=(torch.bfloat16 if is_bfloat16_available() else torch.float32),
@@ -252,12 +267,13 @@ class WanLoraForImage2VideoGeneration(_WanLoraForImage2VideoGeneration):
         self,
         config_path: str,
         text_config_path: str,
-        image_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
+        config2_path: Optional[str] = None,
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         snr_gamma: Optional[float] = 5.0,
+        boundary_ratio: Optional[float] = 0.9,
         lora_r: Optional[int] = 16,
         lora_alpha: Optional[int] = 32,
         lora_dropout: Optional[float] = 0.05,
@@ -275,12 +291,13 @@ class WanLoraForImage2VideoGeneration(_WanLoraForImage2VideoGeneration):
         super().__init__(
             config_path=config_path,
             text_config_path=text_config_path,
-            image_config_path=image_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
+            config2_path=config2_path,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             snr_gamma=snr_gamma,
+            boundary_ratio=boundary_ratio,
             lora_r=lora_r,
             lora_alpha=lora_alpha,
             lora_dropout=lora_dropout,
@@ -293,8 +310,8 @@ class WanLoraForImage2VideoGeneration(_WanLoraForImage2VideoGeneration):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/diffusers/peft/lora/image2video/wan")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/model/diffusers/peft/lora/image2video/wan")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/diffusers/peft/lora/image2video/wan")
         pretrained_name = config.getoption("pretrained_name", "wan-v2.2-i2v-14b")
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
@@ -306,19 +323,21 @@ class WanLoraForImage2VideoGeneration(_WanLoraForImage2VideoGeneration):
         )
         config_path = cached_path(config_path)
 
+        config2_path = config.getoption("config2_path", None)
+        config2_path = pop_value(
+            config2_path,
+            nested_dict_value(pretrained_infos, "transformer2", "config"),
+        )
+
+        if config2_path is not None:
+            config2_path = cached_path(config2_path)
+
         text_config_path = config.getoption("text_config_path", None)
         text_config_path = pop_value(
             text_config_path,
             nested_dict_value(pretrained_infos, "text", "config"),
         )
         text_config_path = cached_path(text_config_path)
-
-        image_config_path = config.getoption("image_config_path", None)
-        image_config_path = pop_value(
-            image_config_path,
-            nested_dict_value(pretrained_infos, "image", "config"),
-        )
-        image_config_path = cached_path(image_config_path)
 
         vae_config_path = config.getoption("vae_config_path", None)
         vae_config_path = pop_value(
@@ -337,6 +356,10 @@ class WanLoraForImage2VideoGeneration(_WanLoraForImage2VideoGeneration):
         num_train_timesteps = config.getoption("num_train_timesteps", 1000)
         num_infer_timesteps = config.getoption("num_infer_timesteps", 50)
         snr_gamma = config.getoption("snr_gamma", 5.0)
+        boundary_ratio = config.getoption(
+            "boundary_ratio",
+            nested_dict_value(pretrained_infos, "boundary_ratio") or 0.9,
+        )
         lora_r = config.getoption("lora_r", 16)
         lora_alpha = config.getoption("lora_alpha", 32)
         lora_dropout = config.getoption("lora_dropout", 0.05)
@@ -367,12 +390,13 @@ class WanLoraForImage2VideoGeneration(_WanLoraForImage2VideoGeneration):
         inst = cls(
             config_path=config_path,
             text_config_path=text_config_path,
-            image_config_path=image_config_path,
             vae_config_path=vae_config_path,
             scheduler_config_path=scheduler_config_path,
+            config2_path=config2_path,
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             snr_gamma=snr_gamma,
+            boundary_ratio=boundary_ratio,
             lora_r=lora_r,
             lora_alpha=lora_alpha,
             lora_dropout=lora_dropout,
@@ -395,13 +419,13 @@ class WanLoraForImage2VideoGeneration(_WanLoraForImage2VideoGeneration):
                     replace_keys=replace_keys if enable_transformer_adapter else {},
                 ),
                 load_weight(
-                    nested_dict_value(pretrained_infos, "text", "weight"),
-                    prefix_keys={"": "text."},
-                    replace_keys=replace_keys if enable_text_adapter else {},
+                    nested_dict_value(pretrained_infos, "transformer2", "weight"),
+                    prefix_keys={"": "transformer2."},
+                    replace_keys=replace_keys if enable_transformer_adapter else {},
                 ),
                 load_weight(
-                    nested_dict_value(pretrained_infos, "image", "weight"),
-                    prefix_keys={"": "image."},
+                    nested_dict_value(pretrained_infos, "text", "weight"),
+                    prefix_keys={"": "text."},
                     replace_keys=replace_keys if enable_text_adapter else {},
                 ),
                 load_weight(
@@ -433,7 +457,6 @@ class WanLoraForImage2VideoGeneration(_WanLoraForImage2VideoGeneration):
     def forward(
         self,
         pixel_values: torch.Tensor,
-        condition_pixel_values: torch.Tensor,
         vae_pixel_values: torch.Tensor,
         input_ids: torch.Tensor,
         attention_mask: Optional[torch.Tensor] = None,
@@ -442,12 +465,11 @@ class WanLoraForImage2VideoGeneration(_WanLoraForImage2VideoGeneration):
             input_ids=input_ids,
             pixel_values=pixel_values,
             attention_mask=attention_mask,
-            condition_pixel_values=condition_pixel_values,
             vae_pixel_values=vae_pixel_values,
         )
         return LossOutputs(loss=loss)
 
-    @add_default_section_for_function("core/model/diffusers/peft/lora/image2video/wan")
+    @config_defaults_method("core/model/diffusers/peft/lora/image2video/wan")
     @autocast(
         device_type=("cuda" if torch.cuda.is_available() else "cpu"),
         dtype=(torch.bfloat16 if is_bfloat16_available() else torch.float32),
@@ -456,7 +478,6 @@ class WanLoraForImage2VideoGeneration(_WanLoraForImage2VideoGeneration):
         self,
         input_ids: torch.Tensor,
         negative_input_ids: torch.Tensor,
-        condition_pixel_values: torch.Tensor,
         vae_pixel_values: torch.Tensor,
         attention_mask: Optional[torch.Tensor] = None,
         negative_attention_mask: Optional[torch.Tensor] = None,
@@ -466,7 +487,6 @@ class WanLoraForImage2VideoGeneration(_WanLoraForImage2VideoGeneration):
         outputs = super().generate(
             input_ids=input_ids,
             negative_input_ids=negative_input_ids,
-            condition_pixel_values=condition_pixel_values,
             vae_pixel_values=vae_pixel_values,
             attention_mask=attention_mask,
             negative_attention_mask=negative_attention_mask,

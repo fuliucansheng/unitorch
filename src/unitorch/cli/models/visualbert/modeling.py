@@ -2,7 +2,7 @@
 # Licensed under the MIT License.
 
 import torch
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import Optional
 from torch import autocast
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.visualbert import (
@@ -11,8 +11,7 @@ from unitorch.models.visualbert import (
 from unitorch.models.visualbert import VisualBertForPretrain as _VisualBertForPretrain
 from unitorch.cli import (
     cached_path,
-    add_default_section_for_init,
-    add_default_section_for_function,
+    config_defaults_init,
     register_model,
 )
 from unitorch.cli.models import ClassificationOutputs, LossOutputs
@@ -29,16 +28,6 @@ class VisualBertForClassification(_VisualBertForClassification):
         num_classes: Optional[int] = 1,
         gradient_checkpointing: Optional[bool] = False,
     ):
-        """
-        Initialize VisualBertForClassification.
-
-        Args:
-            config_path (str): The path to the model's configuration file.
-            num_classes (Optional[int]): The number of classes for classification.
-                Defaults to 1.
-            gradient_checkpointing (Optional[bool]): Whether to use gradient checkpointing
-                to save memory during training. Defaults to False.
-        """
         super().__init__(
             config_path=config_path,
             num_classes=num_classes,
@@ -46,18 +35,8 @@ class VisualBertForClassification(_VisualBertForClassification):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/classification/visualbert")
-    def from_core_configure(cls, config, **kwargs):
-        """
-        Create an instance of VisualBertForClassification from a core configuration.
-
-        Args:
-            config: The core configuration.
-            **kwargs: Additional keyword arguments.
-
-        Returns:
-            VisualBertForClassification: The initialized VisualBertForClassification instance.
-        """
+    @config_defaults_init("core/model/classification/visualbert")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/classification/visualbert")
         pretrained_name = config.getoption("pretrained_name", "visualbert-vqa-coco-pre")
         config_path = config.getoption("config_path", None)
@@ -94,21 +73,6 @@ class VisualBertForClassification(_VisualBertForClassification):
         visual_attention_mask: torch.Tensor,
         visual_token_type_ids: torch.Tensor,
     ):
-        """
-        Forward pass of the VisualBertForClassification model.
-
-        Args:
-            input_ids (torch.Tensor): The input token IDs.
-            attention_mask (torch.Tensor): The attention mask.
-            token_type_ids (torch.Tensor): The token type IDs.
-            position_ids (torch.Tensor): The position IDs.
-            visual_embeds (torch.Tensor): The visual embeddings.
-            visual_attention_mask (torch.Tensor): The visual attention mask.
-            visual_token_type_ids (torch.Tensor): The visual token type IDs.
-
-        Returns:
-            ClassificationOutputs: The output logits of the model.
-        """
         outputs = super().forward(
             input_ids=input_ids,
             attention_mask=attention_mask,
@@ -130,32 +94,14 @@ class VisualBertForPretrain(_VisualBertForPretrain):
         config_path: str,
         gradient_checkpointing: Optional[bool] = False,
     ):
-        """
-        Initialize VisualBertForPretrain.
-
-        Args:
-            config_path (str): The path to the model's configuration file.
-            gradient_checkpointing (Optional[bool]): Whether to use gradient checkpointing
-                to save memory during training. Defaults to False.
-        """
         super().__init__(
             config_path=config_path,
             gradient_checkpointing=gradient_checkpointing,
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/pretrain/visualbert")
-    def from_core_configure(cls, config, **kwargs):
-        """
-        Create an instance of VisualBertForPretrain from a core configuration.
-
-        Args:
-            config: The core configuration.
-            **kwargs: Additional keyword arguments.
-
-        Returns:
-            VisualBertForPretrain: The initialized VisualBertForPretrain instance.
-        """
+    @config_defaults_init("core/model/pretrain/visualbert")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/pretrain/visualbert")
         pretrained_name = config.getoption("pretrained_name", "visualbert-vqa-coco-pre")
         config_path = config.getoption("config_path", None)
@@ -194,24 +140,6 @@ class VisualBertForPretrain(_VisualBertForPretrain):
         mlm_label: torch.Tensor,
         mlm_label_mask: torch.Tensor,
     ):
-        """
-        Forward pass of the VisualBertForPretrain model.
-
-        Args:
-            input_ids (torch.Tensor): The input token IDs.
-            attention_mask (torch.Tensor): The attention mask.
-            token_type_ids (torch.Tensor): The token type IDs.
-            position_ids (torch.Tensor): The position IDs.
-            visual_embeds (torch.Tensor): The visual embeddings.
-            visual_attention_mask (torch.Tensor): The visual attention mask.
-            visual_token_type_ids (torch.Tensor): The visual token type IDs.
-            nsp_label (torch.Tensor): The next sentence prediction label.
-            mlm_label (torch.Tensor): The masked language model label.
-            mlm_label_mask (torch.Tensor): The masked language model label mask.
-
-        Returns:
-            LossOutputs: The output loss of the model.
-        """
         outputs = super().forward(
             input_ids=input_ids,
             attention_mask=attention_mask,

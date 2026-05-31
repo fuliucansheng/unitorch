@@ -2,48 +2,35 @@
 # Licensed under the MIT License.
 
 import io
-import re
 import gc
-import json
-import logging
 import torch
-import hashlib
 import asyncio
-import pandas as pd
 from PIL import Image
 from torch import autocast
-from fastapi import APIRouter, UploadFile, File
+from fastapi import APIRouter, UploadFile
 from fastapi.responses import StreamingResponse
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Dict, List, Optional, Union
 from diffusers.utils import numpy_to_pil
-from diffusers.pipelines import (
-    QwenImagePipeline,
-    QwenImageEditPipeline,
-)
-
-from unitorch.utils import is_remote_url
+from diffusers.pipelines import QwenImageEditPipeline
 from unitorch.models.diffusers import GenericQWenImageModel
 from unitorch.models.diffusers import QWenImageProcessor
-
 from unitorch.utils import (
     pop_value,
     nested_dict_value,
     is_bfloat16_available,
-    is_cuda_available,
 )
 from unitorch.cli import (
     cached_path,
     register_fastapi,
-    add_default_section_for_init,
-    add_default_section_for_function,
+    config_defaults_init,
+    config_defaults_method,
 )
-from unitorch.cli import CoreConfigureParser, GenericFastAPI
+from unitorch.cli import Config, GenericFastAPI
 from unitorch.cli.models.diffusers import (
     pretrained_stable_infos,
     pretrained_stable_extensions_infos,
     load_weight,
 )
-from unitorch.cli.pipelines import Schedulers
 
 
 class QWenImageForImageEditingFastAPIPipeline(GenericQWenImageModel):
@@ -114,8 +101,8 @@ class QWenImageForImageEditingFastAPIPipeline(GenericQWenImageModel):
             self.to(device=self._device)
 
     @classmethod
-    @add_default_section_for_init("core/fastapi/pipeline/qwen_image/editing")
-    def from_core_configure(
+    @config_defaults_init("core/fastapi/pipeline/qwen_image/editing")
+    def from_config(
         cls,
         config,
         pretrained_name: Optional[str] = None,
@@ -312,7 +299,7 @@ class QWenImageForImageEditingFastAPIPipeline(GenericQWenImageModel):
         device_type=("cuda" if torch.cuda.is_available() else "cpu"),
         dtype=(torch.bfloat16 if is_bfloat16_available() else torch.float32),
     )
-    @add_default_section_for_function("core/fastapi/pipeline/qwen_image/editing")
+    @config_defaults_method("core/fastapi/pipeline/qwen_image/editing")
     def __call__(
         self,
         text: str,
@@ -377,7 +364,7 @@ class QWenImageForImageEditingFastAPIPipeline(GenericQWenImageModel):
 
 @register_fastapi("core/fastapi/qwen_image/editing")
 class QWenImageEditingFastAPI(GenericFastAPI):
-    def __init__(self, config: CoreConfigureParser):
+    def __init__(self, config: Config):
         self.config = config
         config.set_default_section(f"core/fastapi/qwen_image/editing")
         router = config.getoption("router", "/core/fastapi/qwen_image/editing")
@@ -400,7 +387,7 @@ class QWenImageEditingFastAPI(GenericFastAPI):
         pretrained_lora_weights: Optional[Union[float, List[float]]] = 1.0,
         pretrained_lora_alphas: Optional[Union[float, List[float]]] = 32.0,
     ):
-        self._pipe = QWenImageForImageEditingFastAPIPipeline.from_core_configure(
+        self._pipe = QWenImageForImageEditingFastAPIPipeline.from_config(
             self.config,
             pretrained_name=pretrained_name,
             pretrained_lora_names=pretrained_lora_names,

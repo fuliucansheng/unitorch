@@ -1,10 +1,8 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
-import os
-import logging
 import torch
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import List, Optional, Union
 from torch import autocast
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.peft import (
@@ -13,12 +11,12 @@ from unitorch.models.peft import (
 )
 from unitorch.cli import (
     cached_path,
-    add_default_section_for_init,
-    add_default_section_for_function,
+    config_defaults_init,
+    config_defaults_method,
     register_model,
 )
 from unitorch.cli.models import generation_model_decorator
-from unitorch.cli.models import ClassificationOutputs, GenerationOutputs, LossOutputs
+from unitorch.cli.models import ClassificationOutputs, GenerationOutputs
 from unitorch.cli.models.llama import pretrained_llama_infos
 
 
@@ -37,19 +35,6 @@ class LlamaLoraForClassification(_LlamaLoraForClassification):
         num_classes: Optional[int] = 1,
         gradient_checkpointing: Optional[bool] = False,
     ):
-        """
-        Initialize the LlamaLoraForClassification model.
-
-        Args:
-            config_path (str): The path to the model configuration file.
-            lora_r (int, optional): The number of Lora ranks. Defaults to 16.
-            lora_alpha (int, optional): The Lora alpha value. Defaults to 32.
-            lora_dropout (float, optional): The Lora dropout rate. Defaults to 0.05.
-            fan_in_fan_out (bool, optional): Whether to use fan-in/fan-out weight initialization. Defaults to True.
-            target_modules (Union[List[str], str], optional): The target modules for Lora regularization. Defaults to ["q_proj", "v_proj"].
-            num_classes (int, optional): The number of classes. Defaults to 1.
-            gradient_checkpointing (bool, optional): Whether to use gradient checkpointing during training. Defaults to False.
-        """
         super().__init__(
             config_path=config_path,
             lora_r=lora_r,
@@ -62,18 +47,8 @@ class LlamaLoraForClassification(_LlamaLoraForClassification):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/classification/peft/lora/llama")
-    def from_core_configure(cls, config, **kwargs):
-        """
-        Create an instance of LlamaLoraForClassification from a core configuration.
-
-        Args:
-            config: The core configuration.
-            **kwargs: Additional keyword arguments.
-
-        Returns:
-            LlamaLoraForClassification: The initialized LlamaLoraForClassification instance.
-        """
+    @config_defaults_init("core/model/classification/peft/lora/llama")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/classification/peft/lora/llama")
         pretrained_name = config.getoption("pretrained_name", "llama-7b")
         config_path = config.getoption("config_path", None)
@@ -136,17 +111,6 @@ class LlamaLoraForClassification(_LlamaLoraForClassification):
         attention_mask: Optional[torch.Tensor] = None,
         position_ids: Optional[torch.Tensor] = None,
     ):
-        """
-        Perform forward pass of the LlamaLoraForClassification model.
-
-        Args:
-            input_ids (torch.Tensor): The input IDs.
-            attention_mask (torch.Tensor, optional): The attention mask.
-            position_ids (torch.Tensor, optional): The position IDs.
-
-        Returns:
-            ClassificationOutputs: The output of the classification task.
-        """
         outputs = super().forward(
             input_ids=input_ids,
             attention_mask=attention_mask,
@@ -169,18 +133,6 @@ class LlamaLoraForGeneration(_LlamaLoraForGeneration):
         target_modules: Optional[Union[List[str], str]] = ["q_proj", "v_proj"],
         gradient_checkpointing: Optional[bool] = False,
     ):
-        """
-        Initialize the LlamaLoraForGeneration model.
-
-        Args:
-            config_path (str): The path to the model configuration file.
-            lora_r (int, optional): The number of Lora ranks. Defaults to 16.
-            lora_alpha (int, optional): The Lora alpha value. Defaults to 32.
-            lora_dropout (float, optional): The Lora dropout rate. Defaults to 0.05.
-            fan_in_fan_out (bool, optional): Whether to use fan-in/fan-out weight initialization. Defaults to True.
-            target_modules (Union[List[str], str], optional): The target modules for Lora regularization. Defaults to ["q_proj", "v_proj"].
-            gradient_checkpointing (bool, optional): Whether to use gradient checkpointing during training. Defaults to False.
-        """
         super().__init__(
             config_path=config_path,
             lora_r=lora_r,
@@ -192,18 +144,8 @@ class LlamaLoraForGeneration(_LlamaLoraForGeneration):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/generation/peft/lora/llama")
-    def from_core_configure(cls, config, **kwargs):
-        """
-        Create an instance of LlamaLoraForGeneration from a core configuration.
-
-        Args:
-            config: The core configuration.
-            **kwargs: Additional keyword arguments.
-
-        Returns:
-            LlamaLoraForGeneration: The initialized LlamaLoraForGeneration instance.
-        """
+    @config_defaults_init("core/model/generation/peft/lora/llama")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/generation/peft/lora/llama")
         pretrained_name = config.getoption("pretrained_name", "llama-7b")
         config_path = config.getoption("config_path", None)
@@ -264,17 +206,6 @@ class LlamaLoraForGeneration(_LlamaLoraForGeneration):
         attention_mask: Optional[torch.Tensor] = None,
         position_ids: Optional[torch.Tensor] = None,
     ):
-        """
-        Perform forward pass of the LlamaLoraForGeneration model.
-
-        Args:
-            input_ids (torch.Tensor, optional): The input IDs.
-            attention_mask (torch.Tensor, optional): The attention mask.
-            position_ids (torch.Tensor, optional): The position IDs.
-
-        Returns:
-            GenerationOutputs: The output of the generation task.
-        """
         outputs = super().forward(
             input_ids=input_ids,
             attention_mask=attention_mask,
@@ -282,7 +213,7 @@ class LlamaLoraForGeneration(_LlamaLoraForGeneration):
         )
         return GenerationOutputs(sequences=outputs)
 
-    @add_default_section_for_function("core/model/generation/peft/lora/llama")
+    @config_defaults_method("core/model/generation/peft/lora/llama")
     @torch.no_grad()
     @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
     def generate(
@@ -305,31 +236,6 @@ class LlamaLoraForGeneration(_LlamaLoraForGeneration):
         top_k: Optional[int] = 50,
         top_p: Optional[float] = 1.0,
     ):
-        """
-        Generate sequences using the Llama model.
-
-        Args:
-            input_ids (torch.Tensor): Input token IDs.
-            num_beams (int, optional): Number of beams for beam search. Defaults to 5.
-            decoder_start_token_id (int, optional): Decoder start token ID. Defaults to 0.
-            decoder_end_token_id (int or List[int], optional): The ID(s) of the decoder end token(s). Defaults to 1.
-            num_return_sequences (int, optional): Number of generated sequences to return. Defaults to 1.
-            min_gen_seq_length (int, optional): Minimum generation sequence length. Defaults to 0.
-            max_gen_seq_length (int, optional): Maximum generation sequence length. Defaults to 48.
-            repetition_penalty (float, optional): Repetition penalty. Defaults to 1.0.
-            no_repeat_ngram_size (int, optional): Size of n-grams to prevent repetition. Defaults to 0.
-            early_stopping (bool, optional): Whether to perform early stopping. Defaults to True.
-            length_penalty (float, optional): Length penalty. Defaults to 1.0.
-            num_beam_groups (int, optional): Number of beam groups for diverse beam search. Defaults to 1.
-            diversity_penalty (float, optional): Diversity penalty for diverse beam search. Defaults to 0.0.
-            do_sample (bool, optional): Whether to use sampling for generation. Defaults to False.
-            temperature (float, optional): Sampling temperature. Defaults to 1.0.
-            top_k (int, optional): Top-k sampling parameter. Defaults to 50.
-            top_p (float, optional): Top-p sampling parameter. Defaults to 1.0.
-
-        Returns:
-            GenerationOutputs: The generation outputs.
-        """
         outputs = super().generate(
             input_ids,
             num_beams=num_beams,

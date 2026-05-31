@@ -4,18 +4,17 @@
 import torch
 import torch.nn as nn
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import List, Optional, Union
 from unitorch.cli import (
-    add_default_section_for_init,
-    add_default_section_for_function,
+    config_defaults_init,
     register_process,
 )
 from unitorch.cli import WriterMixin, WriterOutputs
-from unitorch.cli.models.modeling_utils import ListTensorsOutputs, ListTensorsTargets
+from unitorch.cli.models.modeling_utils import TensorSeqOutputs, TensorSeqTargets
 
 
 @dataclass
-class DetectionOutputs(ListTensorsOutputs, WriterMixin):
+class DetectionOutputs(TensorSeqOutputs, WriterMixin):
     bboxes: Union[torch.Tensor, List[torch.Tensor]]
     scores: Union[torch.Tensor, List[torch.Tensor]]
     classes: Union[torch.Tensor, List[torch.Tensor]]
@@ -23,7 +22,7 @@ class DetectionOutputs(ListTensorsOutputs, WriterMixin):
 
 
 @dataclass
-class DetectionTargets(ListTensorsTargets):
+class DetectionTargets(TensorSeqTargets):
     bboxes: Union[torch.Tensor, List[torch.Tensor]]
     classes: Union[torch.Tensor, List[torch.Tensor]]
     sample_weight: Optional[torch.Tensor] = torch.empty(0)
@@ -36,8 +35,8 @@ class DetectionProcessor:
         pass
 
     @classmethod
-    @add_default_section_for_init("core/process/detection")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/process/detection")
+    def from_config(cls, config, **kwargs):
         pass
 
     @register_process("core/postprocess/detection")
@@ -79,8 +78,8 @@ def detection_model_decorator(cls):
             return self.model.detect(*args, **kwargs)
 
         @classmethod
-        def from_core_configure(_cls, cfg, **kwargs):
-            model = cls.from_core_configure(cfg, **kwargs)
+        def from_config(_cls, cfg, **kwargs):
+            model = cls.from_config(cfg, **kwargs)
             return _cls(__detection_model__=model)
 
     return DetectionModel

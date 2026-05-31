@@ -5,10 +5,10 @@ import torch
 import unitorch
 import importlib_resources
 from absl.testing import absltest, parameterized
-from unitorch.cli import CoreConfigureParser
+from unitorch.cli import Config
 from unitorch.cli import (
-    add_default_section_for_init,
-    add_default_section_for_function,
+    config_defaults_init,
+    config_defaults_method,
 )
 
 
@@ -32,13 +32,13 @@ class SimpleClass:
         self.param3 = param3
 
     @classmethod
-    @add_default_section_for_init("simple_class")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("simple_class")
+    def from_config(cls, config, **kwargs):
         """
         Create an instance of SimpleClass using configuration.
 
         Args:
-            config (CoreConfigureParser): Configuration parser object.
+            config (Config): Configuration parser object.
             **kwargs: Additional keyword arguments.
 
         Returns:
@@ -46,7 +46,7 @@ class SimpleClass:
         """
         pass
 
-    @add_default_section_for_function("simple_class")
+    @config_defaults_method("simple_class")
     def inst_function(
         self,
         param4=4,
@@ -65,7 +65,7 @@ class SimpleClass:
 
 class DecoratorsTest(parameterized.TestCase):
     def setUp(self):
-        self.config = CoreConfigureParser(
+        self.config = Config(
             params=[
                 ["simple_class", "param1", 2],
                 ["simple_class", "param2", 3],
@@ -77,7 +77,7 @@ class DecoratorsTest(parameterized.TestCase):
         """
         Test if default values are correctly set during initialization.
         """
-        inst = SimpleClass.from_core_configure(self.config)
+        inst = SimpleClass.from_config(self.config)
 
         assert inst.param1 == 2 and inst.param2 == 3 and inst.param3 == 3
 
@@ -85,7 +85,7 @@ class DecoratorsTest(parameterized.TestCase):
         """
         Test if default values are correctly set during function call.
         """
-        inst = SimpleClass.from_core_configure(self.config)
+        inst = SimpleClass.from_config(self.config)
         inst.inst_function()
 
         assert inst.param4 == 4 and inst.param5 == "param6"

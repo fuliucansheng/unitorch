@@ -2,8 +2,7 @@
 # Licensed under the MIT License.
 
 import torch
-from PIL import Image
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import Optional
 from torch import autocast
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.segformer import (
@@ -12,8 +11,8 @@ from unitorch.models.segformer import (
 )
 from unitorch.cli import (
     cached_path,
-    add_default_section_for_init,
-    add_default_section_for_function,
+    config_defaults_init,
+    config_defaults_method,
     register_model,
 )
 from unitorch.cli.models import SegmentationOutputs, LossOutputs
@@ -32,8 +31,8 @@ class SegformerForSegmentation(_SegformerForSegmentation):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/segmentation/segformer")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/model/segmentation/segformer")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/segmentation/segformer")
         pretrained_name = config.getoption(
             "pretrained_name", "segformer-b2-human-parse-24"
@@ -65,7 +64,7 @@ class SegformerForSegmentation(_SegformerForSegmentation):
     ):
         raise NotImplementedError
 
-    @add_default_section_for_function("core/model/segmentation/segformer")
+    @config_defaults_method("core/model/segmentation/segformer")
     @torch.no_grad()
     def segment(
         self,
@@ -74,12 +73,10 @@ class SegformerForSegmentation(_SegformerForSegmentation):
         outputs = super().forward(
             pixel_values=pixel_values,
         )
-        # batch, width, height, num_classes -> batch, num_classes, width, height + batch, num_classes
         batch = outputs.logits.shape[0]
         num_classes = outputs.logits.shape[-1]
 
         masks = torch.softmax(outputs.logits, dim=1)
-        # set the logit of not the highest class to 0
         masks = masks * (masks == masks.max(dim=1, keepdim=True).values).float()
         classes = (
             torch.arange(num_classes, device=masks.device)

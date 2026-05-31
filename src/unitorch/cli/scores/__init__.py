@@ -3,7 +3,7 @@
 
 import torch
 import torch.nn as nn
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import List, Optional, Union
 from unitorch.scores import (
     accuracy_score,
     recall_score,
@@ -21,7 +21,7 @@ from unitorch.scores import (
     auc,
     precision_recall_curve,
 )
-from unitorch.cli import add_default_section_for_init, register_score
+from unitorch.cli import config_defaults_init, register_score
 from unitorch.cli.models import (
     ModelOutputs,
     ModelTargets,
@@ -50,8 +50,8 @@ class AccuracyScore(Score):
         self.gate = gate
 
     @classmethod
-    @add_default_section_for_init("core/score/acc")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/score/acc")
+    def from_config(cls, config, **kwargs):
         pass
 
     def forward(
@@ -103,8 +103,8 @@ class RecallScore(Score):
         self.gate = gate
 
     @classmethod
-    @add_default_section_for_init("core/score/rec")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/score/rec")
+    def from_config(cls, config, **kwargs):
         pass
 
     def forward(
@@ -139,8 +139,8 @@ class F1Score(Score):
         self.gate = gate
 
     @classmethod
-    @add_default_section_for_init("core/score/f1")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/score/f1")
+    def from_config(cls, config, **kwargs):
         pass
 
     def forward(
@@ -176,8 +176,8 @@ class AUCScore(Score):
         super().__init__()
 
     @classmethod
-    @add_default_section_for_init("core/score/auc")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/score/auc")
+    def from_config(cls, config, **kwargs):
         pass
 
     def forward(
@@ -209,8 +209,8 @@ class PRAUCScore(Score):
         super().__init__()
 
     @classmethod
-    @add_default_section_for_init("core/score/pr_auc")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/score/pr_auc")
+    def from_config(cls, config, **kwargs):
         pass
 
     def forward(
@@ -243,8 +243,8 @@ class NDCGScore(Score):
         super().__init__()
 
     @classmethod
-    @add_default_section_for_init("core/score/ndcg")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/score/ndcg")
+    def from_config(cls, config, **kwargs):
         pass
 
     def forward(
@@ -273,8 +273,8 @@ class MattCorrScore(Score):
         super().__init__()
 
     @classmethod
-    @add_default_section_for_init("core/score/mattcorr")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/score/mattcorr")
+    def from_config(cls, config, **kwargs):
         pass
 
     def forward(
@@ -310,8 +310,8 @@ class PearsonrCorrScore(Score):
         super().__init__()
 
     @classmethod
-    @add_default_section_for_init("core/score/pearsonr_corr")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/score/pearsonr_corr")
+    def from_config(cls, config, **kwargs):
         pass
 
     def forward(
@@ -340,8 +340,8 @@ class MAEScore(Score):
         super().__init__()
 
     @classmethod
-    @add_default_section_for_init("core/score/mae")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/score/mae")
+    def from_config(cls, config, **kwargs):
         pass
 
     def forward(
@@ -376,8 +376,8 @@ class MSEScore(Score):
         super().__init__()
 
     @classmethod
-    @add_default_section_for_init("core/score/mse")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/score/mse")
+    def from_config(cls, config, **kwargs):
         pass
 
     def forward(
@@ -414,8 +414,8 @@ class BleuScore(Score):
         self.ignore_tokens = ignore_tokens
 
     @classmethod
-    @add_default_section_for_init("core/score/bleu")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/score/bleu")
+    def from_config(cls, config, **kwargs):
         pass
 
     def forward(
@@ -444,8 +444,8 @@ class Rouge1Score(Score):
         self.ignore_tokens = ignore_tokens
 
     @classmethod
-    @add_default_section_for_init("core/score/rouge1")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/score/rouge1")
+    def from_config(cls, config, **kwargs):
         pass
 
     def forward(
@@ -475,8 +475,8 @@ class Rouge2Score(Score):
         self.ignore_tokens = ignore_tokens
 
     @classmethod
-    @add_default_section_for_init("core/score/rouge2")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/score/rouge2")
+    def from_config(cls, config, **kwargs):
         pass
 
     def forward(
@@ -506,8 +506,8 @@ class RougelScore(Score):
         self.ignore_tokens = ignore_tokens
 
     @classmethod
-    @add_default_section_for_init("core/score/rougel")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/score/rougel")
+    def from_config(cls, config, **kwargs):
         pass
 
     def forward(
@@ -535,8 +535,8 @@ class LossScore(Score):
         super().__init__()
 
     @classmethod
-    @add_default_section_for_init("core/score/loss")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/score/loss")
+    def from_config(cls, config, **kwargs):
         pass
 
     def forward(
@@ -558,8 +558,8 @@ class MAPScore(Score):
         super().__init__()
 
     @classmethod
-    @add_default_section_for_init("core/score/mAP")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/score/mAP")
+    def from_config(cls, config, **kwargs):
         pass
 
     def forward(
@@ -591,8 +591,8 @@ class MAP50Score(Score):
         super().__init__()
 
     @classmethod
-    @add_default_section_for_init("core/score/mAP50")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/score/mAP50")
+    def from_config(cls, config, **kwargs):
         pass
 
     def forward(

@@ -1,15 +1,9 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
-import os
-import json
-import random
-import logging
 import torch
-import torch.nn.functional as F
 import torch.nn as nn
-from torch import autocast
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import Dict, Optional
 from transformers.models.mask2former.modeling_mask2former import (
     Mask2FormerConfig,
     Mask2FormerModel,
@@ -23,12 +17,6 @@ class Mask2FormerForSegmentation(GenericModel):
         self,
         config_path: str,
     ):
-        """
-        Initializes a SamForSegmentation model for segmentation tasks.
-
-        Args:
-            config_path (str): The path to the Sam Transformer configuration file.
-        """
         super().__init__()
         config = Mask2FormerConfig.from_json_file(config_path)
 
@@ -44,9 +32,6 @@ class Mask2FormerForSegmentation(GenericModel):
         self.init_weights()
 
     def forward(self):
-        """
-        Performs a forward pass of the SamForSegmentation model.
-        """
         raise NotImplementedError
 
     def segment(
@@ -54,9 +39,6 @@ class Mask2FormerForSegmentation(GenericModel):
         pixel_values: torch.Tensor,
         pixel_mask: Optional[torch.Tensor] = None,
     ):
-        """
-        Performs a forward pass of the SamForSegmentation model.
-        """
         outputs = self.model(
             pixel_values=pixel_values,
             pixel_mask=pixel_mask,

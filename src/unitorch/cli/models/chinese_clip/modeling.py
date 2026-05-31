@@ -2,7 +2,7 @@
 # Licensed under the MIT License.
 
 import torch
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import Dict, List, Optional, Union
 from torch import autocast
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.chinese_clip import (
@@ -13,8 +13,7 @@ from unitorch.models.chinese_clip import (
 )
 from unitorch.cli import (
     cached_path,
-    add_default_section_for_init,
-    add_default_section_for_function,
+    config_defaults_init,
     register_model,
 )
 from unitorch.cli.models import ClassificationOutputs, LossOutputs
@@ -23,7 +22,7 @@ from unitorch.cli.models.chinese_clip import pretrained_chinese_clip_infos
 
 @register_model("core/model/pretrain/chinese_clip")
 class ChineseClipForPretrain(_ChineseClipForPretrain):
-    """CLIP model for pretraining."""
+    """Chinese CLIP model for pretraining."""
 
     def __init__(
         self,
@@ -33,16 +32,6 @@ class ChineseClipForPretrain(_ChineseClipForPretrain):
         gradient_checkpointing: Optional[bool] = False,
         use_all_gather: Optional[bool] = True,
     ):
-        """
-        Initialize the ClipForPretrain model.
-
-        Args:
-            config_path (str): The path to the model configuration file.
-            projection_dim (int, optional): The dimension of the projection head. Defaults to 512.
-            freeze_base_model (bool, optional): Whether to freeze the base model. Defaults to True.
-            gradient_checkpointing (bool, optional): Whether to use gradient checkpointing. Defaults to False.
-            use_all_gather (bool, optional): Whether to use all_gather operation. Defaults to True.
-        """
         super().__init__(
             config_path=config_path,
             projection_dim=projection_dim,
@@ -52,18 +41,8 @@ class ChineseClipForPretrain(_ChineseClipForPretrain):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/pretrain/chinese_clip")
-    def from_core_configure(cls, config, **kwargs):
-        """
-        Create an instance of ClipForPretrain from a core configuration.
-
-        Args:
-            config: The core configuration.
-            **kwargs: Additional keyword arguments.
-
-        Returns:
-            ClipForPretrain: An instance of the ClipForPretrain model.
-        """
+    @config_defaults_init("core/model/pretrain/chinese_clip")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/pretrain/chinese_clip")
         pretrained_name = config.getoption(
             "pretrained_name", "chinese-clip-vit-base-patch16"
@@ -108,18 +87,6 @@ class ChineseClipForPretrain(_ChineseClipForPretrain):
         token_type_ids: Optional[torch.Tensor] = None,
         position_ids: Optional[torch.Tensor] = None,
     ):
-        """
-        Perform a forward pass through the model.
-
-        Args:
-            input_ids (torch.Tensor): Input token IDs.
-            pixel_values (torch.Tensor): Input pixel values.
-            attention_mask (torch.Tensor, optional): Attention mask. Defaults to None.
-            position_ids (torch.Tensor, optional): Position IDs. Defaults to None.
-
-        Returns:
-            LossOutputs: The loss outputs.
-        """
         outputs = super().forward(
             input_ids=input_ids,
             pixel_values=pixel_values,
@@ -132,7 +99,7 @@ class ChineseClipForPretrain(_ChineseClipForPretrain):
 
 @register_model("core/model/classification/chinese_clip")
 class ChineseClipForClassification(_ChineseClipForClassification):
-    """CLIP model for classification."""
+    """Chinese CLIP model for classification."""
 
     def __init__(
         self,
@@ -142,16 +109,6 @@ class ChineseClipForClassification(_ChineseClipForClassification):
         freeze_base_model: Optional[bool] = True,
         gradient_checkpointing: Optional[bool] = False,
     ):
-        """
-        Initialize the ClipForClassification model.
-
-        Args:
-            config_path (str): The path to the model configuration file.
-            projection_dim (int, optional): The dimension of the projection head. Defaults to 512.
-            num_classes (int, optional): The number of output classes. Defaults to 1.
-            freeze_base_model (bool, optional): Whether to freeze the base model. Defaults to True.
-            gradient_checkpointing (bool, optional): Whether to use gradient checkpointing. Defaults to False.
-        """
         super().__init__(
             config_path=config_path,
             projection_dim=projection_dim,
@@ -161,18 +118,8 @@ class ChineseClipForClassification(_ChineseClipForClassification):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/classification/chinese_clip")
-    def from_core_configure(cls, config, **kwargs):
-        """
-        Create an instance of ClipForClassification from a core configuration.
-
-        Args:
-            config: The core configuration.
-            **kwargs: Additional keyword arguments.
-
-        Returns:
-            ClipForClassification: An instance of the ClipForClassification model.
-        """
+    @config_defaults_init("core/model/classification/chinese_clip")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/classification/chinese_clip")
         pretrained_name = config.getoption(
             "pretrained_name", "chinese-clip-vit-base-patch16"
@@ -217,18 +164,6 @@ class ChineseClipForClassification(_ChineseClipForClassification):
         token_type_ids: Optional[torch.Tensor] = None,
         position_ids: Optional[torch.Tensor] = None,
     ):
-        """
-        Perform a forward pass through the model.
-
-        Args:
-            input_ids (torch.Tensor): Input token IDs.
-            pixel_values (torch.Tensor): Input pixel values.
-            attention_mask (torch.Tensor, optional): Attention mask. Defaults to None.
-            position_ids (torch.Tensor, optional): Position IDs. Defaults to None.
-
-        Returns:
-            ClassificationOutputs: The classification outputs.
-        """
         outputs = super().forward(
             input_ids=input_ids,
             pixel_values=pixel_values,
@@ -241,7 +176,7 @@ class ChineseClipForClassification(_ChineseClipForClassification):
 
 @register_model("core/model/classification/chinese_clip/text")
 class ChineseClipForTextClassification(_ChineseClipForTextClassification):
-    """CLIP model for text classification."""
+    """Chinese CLIP model for text classification."""
 
     def __init__(
         self,
@@ -251,16 +186,6 @@ class ChineseClipForTextClassification(_ChineseClipForTextClassification):
         freeze_base_model: Optional[bool] = True,
         gradient_checkpointing: Optional[bool] = False,
     ):
-        """
-        Initialize the ClipForTextClassification model.
-
-        Args:
-            config_path (str): The path to the model configuration file.
-            projection_dim (int, optional): The dimension of the projection head. Defaults to 512.
-            num_classes (int, optional): The number of output classes. Defaults to 1.
-            freeze_base_model (bool, optional): Whether to freeze the base model. Defaults to True.
-            gradient_checkpointing (bool, optional): Whether to use gradient checkpointing. Defaults to False.
-        """
         super().__init__(
             config_path=config_path,
             projection_dim=projection_dim,
@@ -270,18 +195,8 @@ class ChineseClipForTextClassification(_ChineseClipForTextClassification):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/classification/chinese_clip/text")
-    def from_core_configure(cls, config, **kwargs):
-        """
-        Create an instance of ClipForTextClassification from a core configuration.
-
-        Args:
-            config: The core configuration.
-            **kwargs: Additional keyword arguments.
-
-        Returns:
-            ClipForTextClassification: An instance of the ClipForTextClassification model.
-        """
+    @config_defaults_init("core/model/classification/chinese_clip/text")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/classification/chinese_clip/text")
         pretrained_name = config.getoption(
             "pretrained_name", "chinese-clip-vit-base-patch16"
@@ -325,17 +240,6 @@ class ChineseClipForTextClassification(_ChineseClipForTextClassification):
         token_type_ids: Optional[torch.Tensor] = None,
         position_ids: Optional[torch.Tensor] = None,
     ):
-        """
-        Perform a forward pass through the model.
-
-        Args:
-            input_ids (torch.Tensor, optional): Input token IDs. Defaults to None.
-            attention_mask (torch.Tensor, optional): Attention mask. Defaults to None.
-            position_ids (torch.Tensor, optional): Position IDs. Defaults to None.
-
-        Returns:
-            ClassificationOutputs: The classification outputs.
-        """
         outputs = super().forward(
             input_ids=input_ids,
             attention_mask=attention_mask,
@@ -347,7 +251,7 @@ class ChineseClipForTextClassification(_ChineseClipForTextClassification):
 
 @register_model("core/model/classification/chinese_clip/image")
 class ChineseClipForImageClassification(_ChineseClipForImageClassification):
-    """CLIP model for image classification."""
+    """Chinese CLIP model for image classification."""
 
     def __init__(
         self,
@@ -357,16 +261,6 @@ class ChineseClipForImageClassification(_ChineseClipForImageClassification):
         freeze_base_model: Optional[bool] = True,
         gradient_checkpointing: Optional[bool] = False,
     ):
-        """
-        Initialize the ClipForImageClassification model.
-
-        Args:
-            config_path (str): The path to the model configuration file.
-            projection_dim (int, optional): The dimension of the projection head. Defaults to 512.
-            num_classes (int, optional): The number of output classes. Defaults to 1.
-            freeze_base_model (bool, optional): Whether to freeze the base model. Defaults to True.
-            gradient_checkpointing (bool, optional): Whether to use gradient checkpointing. Defaults to False.
-        """
         super().__init__(
             config_path=config_path,
             projection_dim=projection_dim,
@@ -376,18 +270,8 @@ class ChineseClipForImageClassification(_ChineseClipForImageClassification):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/classification/chinese_clip/image")
-    def from_core_configure(cls, config, **kwargs):
-        """
-        Create an instance of ClipForImageClassification from a core configuration.
-
-        Args:
-            config: The core configuration.
-            **kwargs: Additional keyword arguments.
-
-        Returns:
-            ClipForImageClassification: An instance of the ClipForImageClassification model.
-        """
+    @config_defaults_init("core/model/classification/chinese_clip/image")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/classification/chinese_clip/image")
         pretrained_name = config.getoption(
             "pretrained_name", "chinese-clip-vit-base-patch16"
@@ -428,14 +312,5 @@ class ChineseClipForImageClassification(_ChineseClipForImageClassification):
         self,
         pixel_values: torch.Tensor,
     ):
-        """
-        Perform a forward pass through the model.
-
-        Args:
-            pixel_values (torch.Tensor): Input pixel values.
-
-        Returns:
-            ClassificationOutputs: The classification outputs.
-        """
         outputs = super().forward(pixel_values=pixel_values)
         return ClassificationOutputs(outputs=outputs)

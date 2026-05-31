@@ -2,7 +2,7 @@
 # Licensed under the MIT License.
 
 import torch
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import List, Optional, Union
 from torch import autocast
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.grounding_dino import (
@@ -10,15 +10,13 @@ from unitorch.models.grounding_dino import (
 )
 from unitorch.cli import (
     cached_path,
-    add_default_section_for_init,
-    add_default_section_for_function,
+    config_defaults_init,
+    config_defaults_method,
     register_model,
 )
 from unitorch.cli.models import (
     detection_model_decorator,
-    segmentation_model_decorator,
     DetectionOutputs,
-    SegmentationOutputs,
     LossOutputs,
 )
 from unitorch.cli.models.grounding_dino import pretrained_grounding_dino_infos
@@ -35,8 +33,8 @@ class GroundingDinoForDetection(_GroundingDinoForDetection):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/detection/grounding_dino")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/model/detection/grounding_dino")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/detection/grounding_dino")
         pretrained_name = config.getoption("pretrained_name", "grounding-dino-tiny")
         config_path = config.getoption("config_path", None)
@@ -79,7 +77,7 @@ class GroundingDinoForDetection(_GroundingDinoForDetection):
         )
         return LossOutputs(loss=outputs)
 
-    @add_default_section_for_function("core/model/detection/grounding_dino")
+    @config_defaults_method("core/model/detection/grounding_dino")
     def detect(
         self,
         pixel_values,

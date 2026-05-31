@@ -1,12 +1,11 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
-import json
 import math
 import torch
 import torch.nn as nn
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
-from peft import LoraConfig, PeftModelForCausalLM
+from typing import List, Optional, Union
+from peft import LoraConfig
 from transformers.models.llava_next.modeling_llava_next import (
     LlavaNextConfig,
     LlavaNextMultiModalProjector,
@@ -106,7 +105,7 @@ class LlavaMistralClipLoraForClassification(GenericPeftModel):
             position_ids (torch.Tensor, optional): Position IDs tensor of shape (batch_size, sequence_length). Defaults to None.
 
         Returns:
-            torch Output logits.Tensor: tensor of shape (batch_size, num_classes).
+            torch.Tensor: Output logits of shape (batch_size, num_classes).
         """
         vision_outputs = self.vision_tower(pixel_values, output_hidden_states=True)
         image_embeds = vision_outputs.hidden_states[-2][:, 1:]
@@ -240,7 +239,7 @@ class LlavaMistralClipLoraForGeneration(GenericPeftModel):
             position_ids (torch.Tensor, optional): Position IDs tensor of shape (batch_size, sequence_length). Defaults to None.
 
         Returns:
-            torch Output logits.Tensor: tensor of shape (batch_size, sequence_length, vocab_size).
+            torch.Tensor: Output logits of shape (batch_size, sequence_length, vocab_size).
         """
         vision_outputs = self.vision_tower(pixel_values, output_hidden_states=True)
         image_embeds = vision_outputs.hidden_states[-2][:, 1:]
@@ -518,7 +517,7 @@ class LlavaLlamaSiglipLoraForGeneration(GenericPeftModel):
             position_ids (torch.Tensor, optional): Position IDs tensor of shape (batch_size, sequence_length). Defaults to None.
 
         Returns:
-            torch Output logits.Tensor: tensor of shape (batch_size, sequence_length, vocab_size).
+            torch.Tensor: Output logits of shape (batch_size, sequence_length, vocab_size).
         """
         vision_outputs = self.vision_tower(pixel_values, output_hidden_states=True)
         image_embeds = vision_outputs.hidden_states[-2]
@@ -584,11 +583,7 @@ class LlavaLlamaSiglipLoraForGeneration(GenericPeftModel):
         attention_mask: Optional[torch.Tensor] = None,
         num_beams: Optional[int] = 5,
         decoder_start_token_id: Optional[int] = 128000,
-        decoder_end_token_id: Optional[Union[int, List[int]]] = [
-            128001,
-            128008,
-            128009,
-        ],
+        decoder_end_token_id: Optional[Union[int, List[int]]] = None,
         num_return_sequences: Optional[int] = 1,
         min_gen_seq_length: Optional[int] = 0,
         max_gen_seq_length: Optional[int] = 48,

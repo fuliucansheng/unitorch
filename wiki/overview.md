@@ -5,7 +5,7 @@ hide:
 
 # Overview
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**unitorch** is a powerful package designed with a Foundation-Adapter architecture, providing a streamlined development process for unified models in various domains such as natural language understanding, natural language generation, computer vision, click-through rate prediction, multimodal learning, and reinforcement learning. The package is built on top of PyTorch, a popular deep learning framework, and seamlessly integrates with other well-known frameworks like transformers, peft, diffusers, and fastseq.
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**unitorch** is a powerful package designed with a Foundation-Adapter architecture, providing a streamlined development process for unified models in various domains such as natural language understanding, natural language generation, computer vision, multimodal learning, and more. The package is built on top of PyTorch, a popular deep learning framework, and seamlessly integrates with other well-known frameworks like transformers, peft and diffusers.
 
 <hr/>
 
@@ -24,8 +24,8 @@ hide:
 * `unitorch-train` command is used to train models using the unitorch package. It enables you to specify the training data, model architecture, hyperparameters, and other configuration options. By Running this command, the package will utilize the specified data and parameters to train the model and optimize its performance based on the defined objective.
 * `unitorch-infer` command is used for inference or prediction using trained models. Once a model has been trained using unitorch-train, you can employ this command to make predictions or generate outputs for new or unseen data. It takes the trained model and the input data as inputs and produces the predicted results using the learned patterns and knowledge captured during training.
 * `unitorch-eval` command is used to evaluate the performance of trained models. It allows you to assess the quality and effectiveness of the model by comparing its predictions against the ground truth or reference data. This command typically computes various metrics, such as accuracy, precision, recall, F1 score, or other domain-specific metrics, to provide insights into the model's performance.
-* `unitorch-script` command provides a convenient way to execute custom scripts or workflows using the unitorch package. It enables you to define and execute complex operations or experiments by writing scripts that leverage the functionalities of the unitorch library. This command allows for more flexibility and customization in using the package for specific research or development tasks.
-* `unitorch-service` command is used to deploy a service for data serving, including hosting an HTTP server, serving models, or exposing APIs. This command allows you to define the endpoints and routes for your service, configure the behavior and responses, and integrate the necessary functionalities from the unitorch package.
+* `unitorch-fastapi` command is used to launch a FastAPI model serving server. It exposes REST API endpoints backed by unitorch models and pipelines, making it easy to integrate model inference into applications.
+* `unitorch-copilot-cli` command invokes registered copilot tools by name, designed for agent use.
 
 <hr/>
 

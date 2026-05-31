@@ -1,11 +1,10 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
-import json
 import torch
 import torch.nn as nn
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
-from peft import LoraConfig, PeftModelForCausalLM
+from typing import List, Optional, Union
+from peft import LoraConfig
 from transformers import MistralModel, MistralConfig, MistralForCausalLM
 from unitorch.models import (
     GenericModel,
@@ -69,7 +68,7 @@ class MistralLoraForClassification(GenericPeftModel):
             position_ids (torch.Tensor, optional): Position IDs tensor of shape (batch_size, sequence_length). Defaults to None.
 
         Returns:
-            torch Output logits.Tensor: tensor of shape (batch_size, num_classes).
+            torch.Tensor: Output logits of shape (batch_size, num_classes).
         """
         outputs = self.model(
             input_ids,
@@ -133,7 +132,7 @@ class MistralLoraForGeneration(GenericPeftModel):
             position_ids (torch.Tensor, optional): Position IDs tensor of shape (batch_size, sequence_length). Defaults to None.
 
         Returns:
-            torch Output logits.Tensor: tensor of shape (batch_size, sequence_length, vocab_size).
+            torch.Tensor: Output logits of shape (batch_size, sequence_length, vocab_size).
         """
         outputs = self.base_model(
             input_ids=input_ids,

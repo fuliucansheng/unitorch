@@ -1,21 +1,15 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import Dict, Optional
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.visualbert import VisualBertProcessor as _VisualBertProcessor
 from unitorch.cli import (
     cached_path,
-    add_default_section_for_init,
-    add_default_section_for_function,
+    config_defaults_init,
     register_process,
 )
-from unitorch.cli import WriterOutputs
-from unitorch.cli.models import (
-    TensorsInputs,
-    GenerationOutputs,
-    GenerationTargets,
-)
+from unitorch.cli.models import TensorInputs
 from unitorch.cli.models.visualbert import pretrained_visualbert_infos
 
 
@@ -33,19 +27,6 @@ class VisualBertProcessor(_VisualBertProcessor):
         masked_lm_prob: Optional[float] = 0.15,
         max_predictions_per_seq: Optional[int] = 20,
     ):
-        """
-        Initialize the VisualBertProcessor.
-
-        Args:
-            vocab_path (str): The path to the vocabulary file.
-            max_seq_length (Optional[int]): The maximum sequence length. Defaults to 128.
-            special_input_ids (Optional[Dict]): A dictionary containing special input IDs. Defaults to an empty dictionary.
-            do_lower_case (Optional[bool]): Whether to convert the text to lowercase. Defaults to True.
-            do_basic_tokenize (Optional[bool]): Whether to perform basic tokenization. Defaults to True.
-            do_whole_word_mask (Optional[bool]): Whether to use whole-word masking. Defaults to True.
-            masked_lm_prob (Optional[float]): The probability of masked language model masking. Defaults to 0.15.
-            max_predictions_per_seq (Optional[int]): The maximum number of masked language model predictions per sequence. Defaults to 20.
-        """
         super().__init__(
             vocab_path=vocab_path,
             max_seq_length=max_seq_length,
@@ -58,18 +39,8 @@ class VisualBertProcessor(_VisualBertProcessor):
         )
 
     @classmethod
-    @add_default_section_for_init("core/process/visualbert")
-    def from_core_configure(cls, config, **kwargs):
-        """
-        Create an instance of VisualBertProcessor from a core configuration.
-
-        Args:
-            config: The core configuration.
-            **kwargs: Additional keyword arguments.
-
-        Returns:
-            dict: A dictionary containing the processor's configuration.
-        """
+    @config_defaults_init("core/process/visualbert")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/process/visualbert")
         pretrained_name = config.getoption("pretrained_name", "visualbert-vqa-coco-pre")
         vocab_path = config.getoption("vocab_path", None)
@@ -90,23 +61,12 @@ class VisualBertProcessor(_VisualBertProcessor):
         text_pair: Optional[str] = None,
         max_seq_length: Optional[int] = None,
     ):
-        """
-        Perform classification processing on the input text.
-
-        Args:
-            text (str): The input text.
-            text_pair (Optional[str]): The second input text for sentence pair classification. Defaults to None.
-            max_seq_length (Optional[int]): The maximum sequence length. Defaults to None.
-
-        Returns:
-            TensorsInputs: The processed tensors as inputs to the model.
-        """
         outputs = super().classification(
             text=text,
             text_pair=text_pair,
             max_seq_length=max_seq_length,
         )
-        return TensorsInputs(
+        return TensorInputs(
             input_ids=outputs.input_ids,
             attention_mask=outputs.attention_mask,
             token_type_ids=outputs.token_type_ids,
@@ -124,21 +84,6 @@ class VisualBertProcessor(_VisualBertProcessor):
         do_whole_word_mask: Optional[bool] = None,
         max_predictions_per_seq: Optional[int] = None,
     ):
-        """
-        Perform pretraining processing on the input text and labels.
-
-        Args:
-            text (str): The input text.
-            text_pair (str): The second input text for sentence pair pretraining.
-            nsp_label (int): The next sentence prediction label.
-            max_seq_length (Optional[int]): The maximum sequence length. Defaults to None.
-            masked_lm_prob (Optional[float]): The probability of masked language model masking. Defaults to None.
-            do_whole_word_mask (Optional[bool]): Whether to use whole-word masking. Defaults to None.
-            max_predictions_per_seq (Optional[int]): The maximum number of masked language model predictions per sequence. Defaults to None.
-
-        Returns:
-            TensorsInputs: The processed tensors as inputs to the model.
-        """
         outputs = super().pretrain(
             text=text,
             text_pair=text_pair,
@@ -148,7 +93,7 @@ class VisualBertProcessor(_VisualBertProcessor):
             do_whole_word_mask=do_whole_word_mask,
             max_predictions_per_seq=max_predictions_per_seq,
         )
-        return TensorsInputs(
+        return TensorInputs(
             input_ids=outputs.input_ids,
             attention_mask=outputs.attention_mask,
             token_type_ids=outputs.token_type_ids,

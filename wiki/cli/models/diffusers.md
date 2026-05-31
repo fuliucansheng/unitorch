@@ -1,93 +1,43 @@
 # unitorch.cli.models.diffusers
 
-## StableProcessor
+## WanProcessor
 
 !!! tip
-    **`core/process/diffusion/stable`** is the section for configuration of BartProcessor.
+    **`core/process/diffusion/wan`** is the section for configuration of WanProcessor.
 
-::: unitorch.cli.models.diffusers.StableProcessor
+::: unitorch.cli.models.diffusers.processing_wan.WanProcessor
 
-## StableForText2ImageGeneration
-
-!!! tip
-    **`core/model/diffusers/text2image/stable`** is the section for configuration of StableForText2ImageGeneration.
-
-::: unitorch.cli.models.diffusers.StableForText2ImageGeneration
-
-## StableForImage2ImageGeneration
+## WanForText2VideoGeneration
 
 !!! tip
-    **`core/model/diffusers/image2image/stable`** is the section for configuration of StableForImage2ImageGeneration.
+    **`core/model/diffusers/text2video/wan`** is the section for configuration of WanForText2VideoGeneration.
 
-::: unitorch.cli.models.diffusers.StableForImage2ImageGeneration
+::: unitorch.cli.models.diffusers.modeling_wan.WanForText2VideoGeneration
 
-## StableForImageInpainting
-
-!!! tip
-    **`core/model/diffusers/inpainting/stable`** is the section for configuration of StableForImageInpainting.
-
-::: unitorch.cli.models.diffusers.StableForImageInpainting
-
-## StableForImageResolution
+## WanForImage2VideoGeneration
 
 !!! tip
-    **`core/model/diffusers/resolution/stable`** is the section for configuration of StableForImageResolution.
+    **`core/model/diffusers/image2video/wan`** is the section for configuration of WanForImage2VideoGeneration.
 
-::: unitorch.cli.models.diffusers.StableForImageResolution
+::: unitorch.cli.models.diffusers.modeling_wan.WanForImage2VideoGeneration
 
-## StableXLProcessor
-
-!!! tip
-    **`core/process/diffusion/stable_xl`** is the section for configuration of StableXLProcessor.
-
-::: unitorch.cli.models.diffusers.StableXLProcessor
-
-## StableXLForText2ImageGeneration
+## QWenImageProcessor
 
 !!! tip
-    **`core/model/diffusers/text2image/stable_xl`** is the section for configuration of StableXLForText2ImageGeneration.
+    **`core/process/diffusion/qwen_image`** is the section for configuration of QWenImageProcessor.
 
-::: unitorch.cli.models.diffusers.StableXLForText2ImageGeneration
+::: unitorch.cli.models.diffusers.processing_qwen_image.QWenImageProcessor
 
-## StableXLForImage2ImageGeneration
-
-!!! tip
-    **`core/model/diffusers/image2image/stable_xl`** is the section for configuration of StableXLForImage2ImageGeneration.
-
-::: unitorch.cli.models.diffusers.StableXLForImage2ImageGeneration
-
-## StableXLForImageInpainting
+## QWenImageText2ImageGeneration
 
 !!! tip
-    **`core/model/diffusers/inpainting/stable_xl`** is the section for configuration of StableXLForImageInpainting.
+    **`core/model/diffusers/text2image/qwen_image`** is the section for configuration of QWenImageText2ImageGeneration.
 
-::: unitorch.cli.models.diffusers.StableXLForImageInpainting
+::: unitorch.cli.models.diffusers.modeling_qwen_image.QWenImageText2ImageGeneration
 
-## ControlNetProcessor
-
-!!! tip
-    **`core/process/diffusion/controlnet`** is the section for configuration of ControlNetProcessor.
-
-::: unitorch.cli.models.diffusers.ControlNetProcessor
-
-## ControlNetForText2ImageGeneration
+## QWenImageEditingGeneration
 
 !!! tip
-    **`core/model/diffusers/text2image/controlnet`** is the section for configuration of ControlNetForText2ImageGeneration.
+    **`core/model/diffusers/editing/qwen_image`** is the section for configuration of QWenImageEditingGeneration.
 
-::: unitorch.cli.models.diffusers.ControlNetForText2ImageGeneration
-
-## ControlNetForImage2ImageGeneration
-
-!!! tip
-    **`core/model/diffusers/image2image/controlnet`** is the section for configuration of ControlNetForImage2ImageGeneration.
-
-::: unitorch.cli.models.diffusers.ControlNetForImage2ImageGeneration
-
-## ControlNetForImageInpainting
-
-!!! tip
-    **`core/model/diffusers/inpainting/controlnet`** is the section for configuration of ControlNetForImageInpainting.
-
-::: unitorch.cli.models.diffusers.ControlNetForImageInpainting
-
+::: unitorch.cli.models.diffusers.modeling_qwen_image.QWenImageEditingGeneration

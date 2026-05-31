@@ -2,7 +2,7 @@
 # Licensed under the MIT License.
 
 import torch
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import Optional
 from torch import autocast
 
 from unitorch.models.diffusers import (
@@ -13,12 +13,11 @@ from unitorch.utils import (
     pop_value,
     nested_dict_value,
     is_bfloat16_available,
-    is_cuda_available,
 )
 from unitorch.cli import (
     cached_path,
-    add_default_section_for_init,
-    add_default_section_for_function,
+    config_defaults_init,
+    config_defaults_method,
     register_model,
 )
 from unitorch.cli.models import DiffusionOutputs, LossOutputs
@@ -65,8 +64,8 @@ class QWenImageText2ImageGeneration(_QWenImageText2ImageGeneration):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/diffusers/text2image/qwen_image")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/model/diffusers/text2image/qwen_image")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/diffusers/text2image/qwen_image")
         pretrained_name = config.getoption("pretrained_name", "qwen-image")
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
@@ -201,7 +200,7 @@ class QWenImageText2ImageGeneration(_QWenImageText2ImageGeneration):
         )
         return LossOutputs(loss=loss)
 
-    @add_default_section_for_function("core/model/diffusers/text2image/qwen_image")
+    @config_defaults_method("core/model/diffusers/text2image/qwen_image")
     @autocast(
         device_type=("cuda" if torch.cuda.is_available() else "cpu"),
         dtype=(torch.bfloat16 if is_bfloat16_available() else torch.float32),
@@ -264,8 +263,8 @@ class QWenImageEditingGeneration(_QWenImageEditingGeneration):
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/diffusers/editing/qwen_image")
-    def from_core_configure(cls, config, **kwargs):
+    @config_defaults_init("core/model/diffusers/editing/qwen_image")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/diffusers/editing/qwen_image")
         pretrained_name = config.getoption("pretrained_name", "qwen-image-editing")
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
@@ -410,7 +409,7 @@ class QWenImageEditingGeneration(_QWenImageEditingGeneration):
         )
         return LossOutputs(loss=loss)
 
-    @add_default_section_for_function("core/model/diffusers/editing/qwen_image")
+    @config_defaults_method("core/model/diffusers/editing/qwen_image")
     @autocast(
         device_type=("cuda" if torch.cuda.is_available() else "cpu"),
         dtype=(torch.bfloat16 if is_bfloat16_available() else torch.float32),

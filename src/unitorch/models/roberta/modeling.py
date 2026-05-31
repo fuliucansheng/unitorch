@@ -3,7 +3,7 @@
 
 import torch
 import torch.nn as nn
-from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
+from typing import Optional
 from transformers.models.roberta.modeling_roberta import (
     RobertaConfig,
     RobertaModel,
@@ -20,11 +20,11 @@ class RobertaForClassification(GenericModel):
         gradient_checkpointing: Optional[bool] = False,
     ):
         """
-        Initializes a RobertaForClassification model.
+        Initializes the RobertaForClassification model.
 
         Args:
-            config_path (str): The path to the model configuration file.
-            num_classes (int, optional): The number of classes for classification. Defaults to 1.
+            config_path (str): Path to the Roberta configuration file.
+            num_classes (int, optional): Number of output classes. Defaults to 1.
             gradient_checkpointing (bool, optional): Whether to use gradient checkpointing. Defaults to False.
         """
         super().__init__()
@@ -43,16 +43,16 @@ class RobertaForClassification(GenericModel):
         position_ids: Optional[torch.Tensor] = None,
     ):
         """
-        Performs forward pass of the RobertaForClassification model.
+        Forward pass of the RobertaForClassification model.
 
         Args:
-            input_ids (torch.Tensor): Tensor of input token IDs.
-            attention_mask (torch.Tensor, optional): Tensor of attention mask. Defaults to None.
-            token_type_ids (torch.Tensor, optional): Tensor of token type IDs. Defaults to None.
-            position_ids (torch.Tensor, optional): Tensor of position IDs. Defaults to None.
+            input_ids (torch.Tensor): Input token IDs.
+            attention_mask (torch.Tensor, optional): Attention mask. Defaults to None.
+            token_type_ids (torch.Tensor, optional): Token type IDs. Defaults to None.
+            position_ids (torch.Tensor, optional): Position IDs. Defaults to None.
 
         Returns:
-            (torch.Tensor):The model's logits.
+            torch.Tensor: Classification logits.
         """
         outputs = self.roberta(
             input_ids,
@@ -60,11 +60,8 @@ class RobertaForClassification(GenericModel):
             token_type_ids=token_type_ids,
             position_ids=position_ids,
         )
-        pooled_output = outputs[1]
-
-        pooled_output = self.dropout(pooled_output)
-        logits = self.classifier(pooled_output)
-        return logits
+        pooled_output = self.dropout(outputs[1])
+        return self.classifier(pooled_output)
 
 
 class RobertaForMaskLM(GenericModel):
@@ -74,10 +71,10 @@ class RobertaForMaskLM(GenericModel):
         gradient_checkpointing: Optional[bool] = False,
     ):
         """
-        Initializes a RobertaForMaskLM model.
+        Initializes the RobertaForMaskLM model.
 
         Args:
-            config_path (str): The path to the model configuration file.
+            config_path (str): Path to the Roberta configuration file.
             gradient_checkpointing (bool, optional): Whether to use gradient checkpointing. Defaults to False.
         """
         super().__init__()
@@ -96,16 +93,16 @@ class RobertaForMaskLM(GenericModel):
         position_ids: Optional[torch.Tensor] = None,
     ):
         """
-        Performs forward pass of the RobertaForMaskLM model.
+        Forward pass of the RobertaForMaskLM model.
 
         Args:
-            input_ids (torch.Tensor): Tensor of input token IDs.
-            attention_mask (torch.Tensor, optional): Tensor of attention mask. Defaults to None.
-            token_type_ids (torch.Tensor, optional): Tensor of token type IDs. Defaults to None.
-            position_ids (torch.Tensor, optional): Tensor of position IDs. Defaults to None.
+            input_ids (torch.Tensor): Input token IDs.
+            attention_mask (torch.Tensor, optional): Attention mask. Defaults to None.
+            token_type_ids (torch.Tensor, optional): Token type IDs. Defaults to None.
+            position_ids (torch.Tensor, optional): Position IDs. Defaults to None.
 
         Returns:
-            (torch.Tensor):The model's logits.
+            torch.Tensor: MLM logits of shape [batch_size, seq_len, vocab_size].
         """
         outputs = self.roberta(
             input_ids,
@@ -113,6 +110,4 @@ class RobertaForMaskLM(GenericModel):
             token_type_ids=token_type_ids,
             position_ids=position_ids,
         )
-        sequence_output = outputs[0]
-        logits = self.lm_head(sequence_output)
-        return logits
+        return self.lm_head(outputs[0])

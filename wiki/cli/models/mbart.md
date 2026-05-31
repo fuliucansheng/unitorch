@@ -5,11 +5,11 @@
 !!! tip
     **`core/process/mbart`** is the section for configuration of MBartProcessor.
 
-::: unitorch.cli.models.mbart.MBartProcessor
+::: unitorch.cli.models.mbart.processing.MBartProcessor
 
 ## MBartForGeneration
 
 !!! tip
     **`core/model/generation/mbart`** is the section for configuration of MBartForGeneration.
 
-::: unitorch.cli.models.mbart.MBartForGeneration
+::: unitorch.cli.models.mbart.modeling.MBartForGeneration

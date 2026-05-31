@@ -1,11 +1,9 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
-import os
 import json
 import random
-from functools import partial
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import Optional, Tuple, Union
 from PIL import Image
 import numpy as np
 import torch
@@ -21,9 +19,7 @@ from torchvision.transforms import (
 )
 from transformers import (
     Qwen2VLImageProcessor,
-    Qwen2Tokenizer,
     Qwen2TokenizerFast,
-    Qwen2_5_VLProcessor,
 )
 from diffusers.image_processor import VaeImageProcessor
 
@@ -35,8 +31,6 @@ from unitorch.utils import (
 )
 from unitorch.models import (
     HfTextClassificationProcessor,
-    HfTextGenerationProcessor,
-    HfImageClassificationProcessor,
     GenericOutputs,
 )
 
@@ -56,12 +50,12 @@ class QWenImageProcessor(HfTextClassificationProcessor):
         random_flip: Optional[bool] = False,
     ):
         """
-        Initializes the ClipProcessor.
+        Initializes the QWenImageProcessor.
 
         Args:
             vocab_path (str): The path to the vocabulary file.
             merge_path (str): The path to the merge file.
-            max_seq_length (int, optional): The maximum sequence length for text inputs. Defaults to 262144.
+            max_seq_length (int, optional): The maximum sequence length for text inputs. Defaults to 12800.
         """
         tokenizer_config = read_json_file(tokenizer_config) if tokenizer_config else {}
         special_tokens_map = (
@@ -182,13 +176,13 @@ class QWenImageProcessor(HfTextClassificationProcessor):
         image: Union[Image.Image, str],
     ):
         """
-        Process images for classification.
+        Process a reference image through the vision encoder.
 
         Args:
-            images (Image.Image, str, List[Image.Image], List[str]): Input image or list of images.
+            image (Image.Image, str): Input image or path.
 
         Returns:
-            GenericOutputs: Processed outputs.
+            dict: Vision processor outputs including pixel_values and image_grid_thw.
         """
         if isinstance(image, str):
             image = Image.open(image)

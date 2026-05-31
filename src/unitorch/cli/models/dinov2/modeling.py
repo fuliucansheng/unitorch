@@ -2,7 +2,7 @@
 # Licensed under the MIT License.
 
 import torch
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import Optional
 from torch import autocast
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.dinov2 import (
@@ -10,49 +10,30 @@ from unitorch.models.dinov2 import (
 )
 from unitorch.cli import (
     cached_path,
-    add_default_section_for_init,
-    add_default_section_for_function,
+    config_defaults_init,
     register_model,
 )
-from unitorch.cli.models import ClassificationOutputs, LossOutputs
+from unitorch.cli.models import ClassificationOutputs
 from unitorch.cli.models.dinov2 import pretrained_dinov2_infos
 
 
 @register_model("core/model/classification/dinov2")
 class DinoV2ForImageClassification(_DinoV2ForImageClassification):
-    """Vision Transformer (DinoV2) for Image Classification model."""
+    """DINOv2 model for image classification."""
 
     def __init__(
         self,
         config_path: str,
         num_classes: Optional[int] = 1,
     ):
-        """
-        Initialize DinoV2ForImageClassification.
-
-        Args:
-            config_path (str): The path to the model's configuration file.
-            num_classes (Optional[int]): The number of classes for image classification.
-                Defaults to 1.
-        """
         super().__init__(
             config_path=config_path,
             num_classes=num_classes,
         )
 
     @classmethod
-    @add_default_section_for_init("core/model/classification/dinov2")
-    def from_core_configure(cls, config, **kwargs):
-        """
-        Create an instance of DinoV2ForImageClassification from a core configuration.
-
-        Args:
-            config: The core configuration.
-            **kwargs: Additional keyword arguments.
-
-        Returns:
-            DinoV2ForImageClassification: The initialized DinoV2ForImageClassification instance.
-        """
+    @config_defaults_init("core/model/classification/dinov2")
+    def from_config(cls, config, **kwargs):
         config.set_default_section("core/model/classification/dinov2")
         pretrained_name = config.getoption("pretrained_name", "dinov2-base")
         config_path = config.getoption("config_path", None)
@@ -84,14 +65,5 @@ class DinoV2ForImageClassification(_DinoV2ForImageClassification):
         self,
         pixel_values: torch.Tensor,
     ):
-        """
-        Forward pass of the DinoV2ForImageClassification model.
-
-        Args:
-            pixel_values (torch.Tensor): The input pixel values of the image.
-
-        Returns:
-            ClassificationOutputs: The output logits of the model.
-        """
         outputs = super().forward(pixel_values=pixel_values)
         return ClassificationOutputs(outputs=outputs)
