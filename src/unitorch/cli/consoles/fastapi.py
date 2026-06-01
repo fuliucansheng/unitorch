@@ -16,6 +16,7 @@ import time
 import urllib.error
 import urllib.request
 import uvicorn
+import hashlib
 import unitorch.cli
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
@@ -47,8 +48,9 @@ def _log_file(name):
 
 def _qualified_name(config):
     enabled_services = _get_enabled_services(config)
-    service_name = "_".join(enabled_services)
     hexsha = config.hexsha(6)
+    digest = hashlib.sha1("_".join(enabled_services).encode()).hexdigest()[:8]
+    service_name = f"services{len(enabled_services)}_{digest}"
     return f"{service_name}@{hexsha}"
 
 
