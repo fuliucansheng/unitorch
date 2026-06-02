@@ -16,20 +16,135 @@ from torchvision.transforms import (
     Resize,
     ToTensor,
 )
-from transformers import AutoProcessor
+from transformers import LlamaTokenizerFast, Qwen2Tokenizer
 
-from diffusers.pipelines.flux2.pipeline_flux2 import SYSTEM_MESSAGE, format_input
+from diffusers.pipelines.flux2.pipeline_flux2 import SYSTEM_MESSAGE
 from diffusers.pipelines.flux2.image_processor import Flux2ImageProcessor
 
 from unitorch.models import GenericOutputs
-from unitorch.utils import pop_value
+from unitorch.utils import get_added_token, pop_value, read_file, read_json_file
+
+
+def _load_chat_template(chat_template: Optional[str]) -> Optional[str]:
+    if chat_template is None:
+        return None
+    if chat_template.endswith(".json"):
+        data = read_json_file(chat_template)
+        if isinstance(data, dict) and "chat_template" in data:
+            return data["chat_template"]
+        if isinstance(data, str):
+            return data
+    return read_file(chat_template)
+
+
+def _get_special_token(spec):
+    if isinstance(spec, list):
+        return [get_added_token(v) if isinstance(v, (str, dict)) else v for v in spec]
+    if isinstance(spec, (str, dict)):
+        return get_added_token(spec)
+    return spec
+
+
+def _build_flux2_tokenizer(
+    tokenizer_class: Optional[str] = None,
+    tokenizer_path: Optional[str] = None,
+    vocab_path: Optional[str] = None,
+    merge_path: Optional[str] = None,
+    tokenizer_config: Optional[str] = None,
+    special_tokens_map: Optional[str] = None,
+    chat_template: Optional[str] = None,
+    added_tokens: Optional[str] = None,
+):
+    tokenizer_config = read_json_file(tokenizer_config) if tokenizer_config else {}
+    special_tokens_map = (
+        read_json_file(special_tokens_map) if special_tokens_map else {}
+    )
+    added_tokens = read_json_file(added_tokens) if added_tokens else {}
+
+    added_tokens_decoder = tokenizer_config.pop("added_tokens_decoder", {})
+    tokenizer_config = {
+        k: (
+            get_added_token(v)
+            if isinstance(v, dict) and v.get("__type") == "AddedToken"
+            else v
+        )
+        for k, v in tokenizer_config.items()
+    }
+    tokenizer_class = tokenizer_class or tokenizer_config.get("tokenizer_class")
+
+    if tokenizer_class in (None, "LlamaTokenizerFast"):
+        if tokenizer_path is None:
+            raise ValueError("Flux2Processor requires tokenizer_path for LlamaTokenizerFast.")
+        tokenizer = LlamaTokenizerFast(
+            tokenizer_file=tokenizer_path,
+            **tokenizer_config,
+        )
+    elif tokenizer_class in ("Qwen2Tokenizer", "Qwen2TokenizerFast"):
+        if vocab_path is None or merge_path is None:
+            raise ValueError(
+                "Flux2Processor requires vocab_path and merge_path for Qwen2Tokenizer."
+            )
+        tokenizer = Qwen2Tokenizer(
+            vocab=vocab_path,
+            merges=merge_path,
+            **tokenizer_config,
+        )
+    else:
+        raise ValueError(f"Unsupported FLUX.2 tokenizer class: {tokenizer_class}")
+
+    for idx, spec in added_tokens_decoder.items():
+        idx = int(idx)
+        token = spec["content"]
+        tokenizer.added_tokens_decoder[idx] = get_added_token(spec)
+        tokenizer.added_tokens_encoder[token] = idx
+
+    for token, idx in added_tokens.items():
+        idx = int(idx)
+        if idx in tokenizer.added_tokens_decoder:
+            continue
+        tokenizer.added_tokens_decoder[idx] = get_added_token(token)
+        tokenizer.added_tokens_encoder[token] = idx
+
+    special_tokens = {}
+    for name, spec in special_tokens_map.items():
+        special_tokens[name] = _get_special_token(spec)
+    if special_tokens:
+        tokenizer.add_special_tokens(special_tokens)
+
+    template = _load_chat_template(chat_template)
+    if template:
+        tokenizer.chat_template = template
+
+    if tokenizer.cls_token is None and tokenizer.bos_token is not None:
+        tokenizer.cls_token = tokenizer.bos_token
+    if tokenizer.sep_token is None and tokenizer.eos_token is not None:
+        tokenizer.sep_token = tokenizer.eos_token
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token or tokenizer.unk_token
+    if tokenizer.cls_token_id is None and tokenizer.bos_token_id is not None:
+        tokenizer.cls_token_id = tokenizer.bos_token_id
+    if tokenizer.sep_token_id is None and tokenizer.eos_token_id is not None:
+        tokenizer.sep_token_id = tokenizer.eos_token_id
+    if tokenizer.pad_token_id is None:
+        tokenizer.pad_token_id = (
+            tokenizer.eos_token_id
+            if tokenizer.eos_token_id is not None
+            else tokenizer.unk_token_id
+        )
+    return tokenizer
 
 
 class Flux2Processor:
     def __init__(
         self,
-        processor_name_or_path: str,
-        processor_subfolder: Optional[str] = "tokenizer",
+        tokenizer_path: Optional[str] = None,
+        vocab_path: Optional[str] = None,
+        merge_path: Optional[str] = None,
+        tokenizer_config: Optional[str] = None,
+        special_tokens_map: Optional[str] = None,
+        chat_template: Optional[str] = None,
+        added_tokens: Optional[str] = None,
+        tokenizer_class: Optional[str] = None,
         vae_config_path: Optional[str] = None,
         max_seq_length: Optional[int] = 512,
         image_size: Optional[Tuple[int, int]] = None,
@@ -37,11 +152,17 @@ class Flux2Processor:
         random_flip: Optional[bool] = False,
         use_auth_token: Optional[Union[bool, str]] = None,
     ):
-        self.processor = AutoProcessor.from_pretrained(
-            processor_name_or_path,
-            subfolder=processor_subfolder,
-            token=(use_auth_token if use_auth_token else None),
+        self.tokenizer = _build_flux2_tokenizer(
+            tokenizer_class=tokenizer_class,
+            tokenizer_path=tokenizer_path,
+            vocab_path=vocab_path,
+            merge_path=merge_path,
+            tokenizer_config=tokenizer_config,
+            special_tokens_map=special_tokens_map,
+            chat_template=chat_template,
+            added_tokens=added_tokens,
         )
+        self.processor = self.tokenizer
         self.max_seq_length = max_seq_length
 
         if image_size is not None:
@@ -100,11 +221,11 @@ class Flux2Processor:
         max_seq_length: Optional[int] = None,
     ):
         max_seq_length = pop_value(max_seq_length, self.max_seq_length)
-        messages = format_input(
-            prompts=[str(prompt)],
-            system_message=SYSTEM_MESSAGE,
-        )
-        outputs = self.processor.apply_chat_template(
+        messages = [
+            {"role": "system", "content": str(SYSTEM_MESSAGE)},
+            {"role": "user", "content": str(prompt).replace("[IMG]", "")},
+        ]
+        outputs = self.tokenizer.apply_chat_template(
             messages,
             add_generation_prompt=False,
             tokenize=True,

@@ -13,12 +13,14 @@ from PIL import Image
 from torch import autocast
 
 from diffusers import Flux2Pipeline
+from diffusers.utils import numpy_to_pil
 
 from unitorch.models.diffusers import Flux2Processor, GenericFlux2Model
 from unitorch.utils import is_bfloat16_available, nested_dict_value, pop_value
 from unitorch.cli import (
     Config,
     GenericFastAPI,
+    cached_path,
     config_defaults_init,
     config_defaults_method,
     register_fastapi,
@@ -41,8 +43,14 @@ class Flux2FastAPIPipeline(GenericFlux2Model):
         text_config_path: str,
         vae_config_path: str,
         scheduler_config_path: str,
-        processor_name_or_path: str,
-        processor_subfolder: Optional[str] = "tokenizer",
+        tokenizer_path: Optional[str] = None,
+        vocab_path: Optional[str] = None,
+        merge_path: Optional[str] = None,
+        tokenizer_config: Optional[str] = None,
+        special_tokens_map: Optional[str] = None,
+        chat_template: Optional[str] = None,
+        added_tokens: Optional[str] = None,
+        tokenizer_class: Optional[str] = None,
         max_sequence_length: Optional[int] = 512,
         weight_path: Optional[Union[str, List[str]]] = None,
         state_dict: Optional[Union[Dict[str, Any], List[Dict[str, Any]]]] = None,
@@ -62,8 +70,14 @@ class Flux2FastAPIPipeline(GenericFlux2Model):
             text_encoder_out_layers=text_encoder_out_layers,
         )
         self.processor = Flux2Processor(
-            processor_name_or_path=processor_name_or_path,
-            processor_subfolder=processor_subfolder,
+            tokenizer_path=tokenizer_path,
+            vocab_path=vocab_path,
+            merge_path=merge_path,
+            tokenizer_config=tokenizer_config,
+            special_tokens_map=special_tokens_map,
+            chat_template=chat_template,
+            added_tokens=added_tokens,
+            tokenizer_class=tokenizer_class,
             vae_config_path=vae_config_path,
             max_seq_length=max_sequence_length,
             use_auth_token=use_auth_token,
@@ -107,8 +121,14 @@ class Flux2FastAPIPipeline(GenericFlux2Model):
         section: str,
         pretrained_name: Optional[str] = None,
         pretrained_weight_path: Optional[str] = None,
-        processor_name_or_path: Optional[str] = None,
-        processor_subfolder: Optional[str] = None,
+        tokenizer_path: Optional[str] = None,
+        vocab_path: Optional[str] = None,
+        merge_path: Optional[str] = None,
+        tokenizer_config: Optional[str] = None,
+        special_tokens_map: Optional[str] = None,
+        chat_template: Optional[str] = None,
+        added_tokens: Optional[str] = None,
+        tokenizer_class: Optional[str] = None,
         device: Optional[str] = None,
         pretrained_lora_names: Optional[Union[str, List[str]]] = None,
         pretrained_lora_weights_path: Optional[Union[str, List[str]]] = None,
@@ -124,21 +144,101 @@ class Flux2FastAPIPipeline(GenericFlux2Model):
         pretrained_infos = model_kwargs.pop("pretrained_infos")
         use_auth_token = model_kwargs.pop("use_auth_token")
 
-        processor_name_or_path = processor_name_or_path or config.getoption(
-            "processor_name_or_path", None
+        tokenizer_class = tokenizer_class or config.getoption(
+            "tokenizer_class", None
         )
-        processor_name_or_path = pop_value(
-            processor_name_or_path,
-            nested_dict_value(pretrained_infos, "processor", "name"),
+        tokenizer_class = pop_value(
+            tokenizer_class,
+            nested_dict_value(pretrained_infos, "text", "tokenizer_class"),
+            check_none=False,
         )
 
-        processor_subfolder = processor_subfolder or config.getoption(
-            "processor_subfolder", None
-        )
-        processor_subfolder = pop_value(
-            processor_subfolder,
-            nested_dict_value(pretrained_infos, "processor", "subfolder"),
+        tokenizer_path = tokenizer_path or config.getoption("tokenizer_path", None)
+        tokenizer_path = pop_value(
+            tokenizer_path,
+            nested_dict_value(pretrained_infos, "text", "tokenizer"),
             check_none=False,
+        )
+        tokenizer_path = (
+            cached_path(tokenizer_path, use_auth_token=use_auth_token)
+            if tokenizer_path is not None
+            else None
+        )
+
+        vocab_path = vocab_path or config.getoption("vocab_path", None)
+        vocab_path = pop_value(
+            vocab_path,
+            nested_dict_value(pretrained_infos, "text", "vocab"),
+            check_none=False,
+        )
+        vocab_path = (
+            cached_path(vocab_path, use_auth_token=use_auth_token)
+            if vocab_path is not None
+            else None
+        )
+
+        merge_path = merge_path or config.getoption("merge_path", None)
+        merge_path = pop_value(
+            merge_path,
+            nested_dict_value(pretrained_infos, "text", "merge"),
+            check_none=False,
+        )
+        merge_path = (
+            cached_path(merge_path, use_auth_token=use_auth_token)
+            if merge_path is not None
+            else None
+        )
+
+        tokenizer_config = tokenizer_config or config.getoption(
+            "tokenizer_config", None
+        )
+        tokenizer_config = pop_value(
+            tokenizer_config,
+            nested_dict_value(pretrained_infos, "text", "tokenizer_config"),
+            check_none=False,
+        )
+        tokenizer_config = (
+            cached_path(tokenizer_config, use_auth_token=use_auth_token)
+            if tokenizer_config is not None
+            else None
+        )
+
+        special_tokens_map = special_tokens_map or config.getoption(
+            "special_tokens_map", None
+        )
+        special_tokens_map = pop_value(
+            special_tokens_map,
+            nested_dict_value(pretrained_infos, "text", "special_tokens_map"),
+            check_none=False,
+        )
+        special_tokens_map = (
+            cached_path(special_tokens_map, use_auth_token=use_auth_token)
+            if special_tokens_map is not None
+            else None
+        )
+
+        chat_template = chat_template or config.getoption("chat_template", None)
+        chat_template = pop_value(
+            chat_template,
+            nested_dict_value(pretrained_infos, "text", "chat_template"),
+            check_none=False,
+        )
+        chat_template = (
+            cached_path(chat_template, use_auth_token=use_auth_token)
+            if chat_template is not None
+            else None
+        )
+
+        added_tokens = added_tokens or config.getoption("added_tokens", None)
+        added_tokens = pop_value(
+            added_tokens,
+            nested_dict_value(pretrained_infos, "text", "added_tokens"),
+            check_none=False,
+        )
+        added_tokens = (
+            cached_path(added_tokens, use_auth_token=use_auth_token)
+            if added_tokens is not None
+            else None
         )
 
         max_sequence_length = config.getoption("max_sequence_length", 512)
@@ -197,8 +297,14 @@ class Flux2FastAPIPipeline(GenericFlux2Model):
             text_config_path=model_kwargs["text_config_path"],
             vae_config_path=model_kwargs["vae_config_path"],
             scheduler_config_path=model_kwargs["scheduler_config_path"],
-            processor_name_or_path=processor_name_or_path,
-            processor_subfolder=processor_subfolder,
+            tokenizer_path=tokenizer_path,
+            vocab_path=vocab_path,
+            merge_path=merge_path,
+            tokenizer_config=tokenizer_config,
+            special_tokens_map=special_tokens_map,
+            chat_template=chat_template,
+            added_tokens=added_tokens,
+            tokenizer_class=tokenizer_class,
             max_sequence_length=max_sequence_length,
             weight_path=weight_path,
             state_dict=state_dict,
@@ -218,8 +324,14 @@ class Flux2FastAPIPipeline(GenericFlux2Model):
         config,
         pretrained_name: Optional[str] = None,
         pretrained_weight_path: Optional[str] = None,
-        processor_name_or_path: Optional[str] = None,
-        processor_subfolder: Optional[str] = None,
+        tokenizer_path: Optional[str] = None,
+        vocab_path: Optional[str] = None,
+        merge_path: Optional[str] = None,
+        tokenizer_config: Optional[str] = None,
+        special_tokens_map: Optional[str] = None,
+        chat_template: Optional[str] = None,
+        added_tokens: Optional[str] = None,
+        tokenizer_class: Optional[str] = None,
         device: Optional[str] = None,
         pretrained_lora_names: Optional[Union[str, List[str]]] = None,
         pretrained_lora_weights_path: Optional[Union[str, List[str]]] = None,
@@ -232,8 +344,14 @@ class Flux2FastAPIPipeline(GenericFlux2Model):
             "core/fastapi/pipeline/flux2/text2image",
             pretrained_name=pretrained_name,
             pretrained_weight_path=pretrained_weight_path,
-            processor_name_or_path=processor_name_or_path,
-            processor_subfolder=processor_subfolder,
+            tokenizer_path=tokenizer_path,
+            vocab_path=vocab_path,
+            merge_path=merge_path,
+            tokenizer_config=tokenizer_config,
+            special_tokens_map=special_tokens_map,
+            chat_template=chat_template,
+            added_tokens=added_tokens,
+            tokenizer_class=tokenizer_class,
             device=device,
             pretrained_lora_names=pretrained_lora_names,
             pretrained_lora_weights_path=pretrained_lora_weights_path,
@@ -259,20 +377,31 @@ class Flux2FastAPIPipeline(GenericFlux2Model):
         seed: Optional[int] = 1123,
         caption_upsample_temperature: Optional[float] = None,
     ):
-        generator = torch.Generator(device=self.pipeline.device).manual_seed(seed)
-        outputs = self.pipeline(
-            image=image,
+        if self._enable_cpu_offload:
+            raise NotImplementedError(
+                "FLUX.2 FastAPI CPU offload is not supported with explicit tokenizer generation."
+            )
+
+        inputs = self.processor.text2image_inputs(
             prompt=text,
+            max_seq_length=self.max_sequence_length,
+        )
+        input_ids = inputs.input_ids.unsqueeze(0).to(self.device)
+        attention_mask = inputs.attention_mask.unsqueeze(0).to(self.device)
+        prompt_embeds, text_ids = self._encode_prompt(
+            input_ids=input_ids,
+            attention_mask=attention_mask,
+        )
+        self.seed = seed
+        outputs = self._generate_from_embeds(
+            prompt_embeds=prompt_embeds,
+            text_ids=text_ids,
             height=height,
             width=width,
-            generator=generator,
-            num_inference_steps=num_timesteps,
             guidance_scale=guidance_scale,
-            output_type="pil",
-            max_sequence_length=self.max_sequence_length,
-            caption_upsample_temperature=caption_upsample_temperature,
+            num_infer_timesteps=num_timesteps,
         )
-        return outputs.images[0]
+        return numpy_to_pil(outputs.images.cpu().numpy())[0]
 
 
 @register_fastapi("core/fastapi/flux2/text2image")
@@ -295,7 +424,7 @@ class Flux2Text2ImageFastAPI(GenericFastAPI):
 
     def start(
         self,
-        pretrained_name: Optional[str] = "flux2-dev",
+        pretrained_name: Optional[str] = None,
         pretrained_lora_names: Optional[Union[str, List[str]]] = None,
         pretrained_lora_weights: Optional[Union[float, List[float]]] = 1.0,
         pretrained_lora_alphas: Optional[Union[float, List[float]]] = 32.0,

@@ -167,6 +167,10 @@ def _health_check_url(config):
     return f"http://{host}:{port}/health-check"
 
 
+def _health_check_timeout(config):
+    return float(config.getdefault("core/cli", "health_check_timeout", 30))
+
+
 def _terminate_process(process):
     if process.poll() is not None:
         return
@@ -179,7 +183,8 @@ def _terminate_process(process):
             pass
 
 
-def _wait_for_health_check(config, process, log_file, timeout=30):
+def _wait_for_health_check(config, process, log_file, timeout=None):
+    timeout = _health_check_timeout(config) if timeout is None else timeout
     url = _health_check_url(config)
     deadline = time.time() + timeout
     while time.time() < deadline:
