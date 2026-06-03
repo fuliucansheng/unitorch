@@ -80,10 +80,9 @@ class Flux2ImageEditingFastAPIPipeline(Flux2FastAPIPipeline):
         image: Optional[Image.Image] = None,
         height: Optional[int] = 1024,
         width: Optional[int] = 1024,
-        guidance_scale: Optional[float] = 4.0,
-        num_timesteps: Optional[int] = 50,
+        guidance_scale: Optional[float] = 1.0,
+        num_timesteps: Optional[int] = 4,
         seed: Optional[int] = 1123,
-        caption_upsample_temperature: Optional[float] = None,
     ):
         if self._enable_cpu_offload:
             raise NotImplementedError(
@@ -166,10 +165,9 @@ class Flux2ImageEditingFastAPI(GenericFastAPI):
         image: UploadFile,
         height: Optional[int] = 1024,
         width: Optional[int] = 1024,
-        guidance_scale: Optional[float] = 4.0,
-        num_timesteps: Optional[int] = 50,
+        guidance_scale: Optional[float] = 1.0,
+        num_timesteps: Optional[int] = 4,
         seed: Optional[int] = 1123,
-        caption_upsample_temperature: Optional[float] = None,
     ):
         assert self._pipe is not None
         image_bytes = await image.read()
@@ -184,7 +182,6 @@ class Flux2ImageEditingFastAPI(GenericFastAPI):
                 guidance_scale=guidance_scale,
                 num_timesteps=num_timesteps,
                 seed=seed,
-                caption_upsample_temperature=caption_upsample_temperature,
             )
 
         buffer = io.BytesIO()

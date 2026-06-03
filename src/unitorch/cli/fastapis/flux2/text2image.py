@@ -369,13 +369,11 @@ class Flux2FastAPIPipeline(GenericFlux2Model):
     def __call__(
         self,
         text: str,
-        image: Optional[Image.Image] = None,
         height: Optional[int] = 1024,
         width: Optional[int] = 1024,
-        guidance_scale: Optional[float] = 4.0,
-        num_timesteps: Optional[int] = 50,
+        guidance_scale: Optional[float] = 1.0,
+        num_timesteps: Optional[int] = 4,
         seed: Optional[int] = 1123,
-        caption_upsample_temperature: Optional[float] = None,
     ):
         if self._enable_cpu_offload:
             raise NotImplementedError(
@@ -454,10 +452,9 @@ class Flux2Text2ImageFastAPI(GenericFastAPI):
         text: str,
         height: Optional[int] = 1024,
         width: Optional[int] = 1024,
-        guidance_scale: Optional[float] = 4.0,
-        num_timesteps: Optional[int] = 50,
+        guidance_scale: Optional[float] = 1.0,
+        num_timesteps: Optional[int] = 4,
         seed: Optional[int] = 1123,
-        caption_upsample_temperature: Optional[float] = None,
     ):
         assert self._pipe is not None
         async with self._lock:
@@ -468,7 +465,6 @@ class Flux2Text2ImageFastAPI(GenericFastAPI):
                 guidance_scale=guidance_scale,
                 num_timesteps=num_timesteps,
                 seed=seed,
-                caption_upsample_temperature=caption_upsample_temperature,
             )
 
         buffer = io.BytesIO()
