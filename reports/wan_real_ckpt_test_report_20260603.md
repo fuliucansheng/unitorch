@@ -57,6 +57,19 @@ export PYTHONPATH=/home/decu/my/unitorch/src
 export CUDA_VISIBLE_DEVICES=1
 ```
 
+## Key Answers
+
+- Verified `e2e/full training was T2V`, not I2V.
+- Evidence: both e2e training commands used `examples/configs/diffusion/text2video/wan.ini` with `wan_t2v_train.noheader.tsv` and `wan_t2v_dev.noheader.tsv`.
+- Evidence: `/data/decu/wan_real_ckpt/runs/20260603/logs/train_e2e_t2v.log` and `/data/decu/wan_real_ckpt/runs/20260603/logs/train_e2e_t2v_2l_z3.log` show `WanForText2VideoGeneration loaded weights (100%)`; the fallback log also reached `epoch 0 step 0`.
+
+| Output | Path | Size |
+|---|---|---:|
+| T2V inference video path | `/data/decu/wan_real_ckpt/runs/20260603/infer_t2v/videos/0a85d18f8e9baa891f0be4ca350b8de6.mp4` | 44813 bytes |
+| I2V inference video path | `/data/decu/wan_real_ckpt/runs/20260603/infer_i2v/videos/250c7591f36d2a309483be1015cb2af3.mp4` | 90018 bytes |
+| FastAPI T2V output path | `/data/decu/wan_real_ckpt/runs/20260603/fastapi/t2v_generate.mp4` | 31973 bytes |
+| FastAPI I2V output path | `/data/decu/wan_real_ckpt/runs/20260603/fastapi/i2v_generate.mp4` | 23489 bytes |
+
 ## Summary Matrix
 
 | Area | Result | Notes |
@@ -65,11 +78,12 @@ export CUDA_VISIBLE_DEVICES=1
 | Wan image-to-video inference | PASS | Fixed `expand_timesteps` and image path handling |
 | FastAPI text-to-video generate | PASS | `/core/fastapi/wan/text2video/generate` returned MP4 |
 | FastAPI image-to-video generate | PASS | `/core/fastapi/wan/image2video/generate` returned MP4 |
-| e2e/full training default config | FAIL | OOM during optimizer init with full 5B train path |
-| e2e/full training fallback | PASS | 2-layer config + ZeRO-3 CPU offload + 1 train step + checkpoint |
-| LoRA training initial attempt | FAIL | `transformers` PEFT version gate blocked `add_adapter()` |
-| LoRA training second attempt | FAIL | UMT5 text target modules were wrong for fallback injection |
-| LoRA training final attempt | PASS | 2-layer config + correct UMT5 targets + 1 train step + LoRA checkpoint |
+| e2e/full training default config (T2V) | FAIL | OOM during optimizer init with full 5B T2V train path |
+| e2e/full training fallback (T2V) | PASS | 2-layer config + ZeRO-3 CPU offload + 1 train step + checkpoint |
+| LoRA I2V initial attempt | FAIL | `transformers` PEFT version gate blocked `add_adapter()` |
+| LoRA I2V second attempt | FAIL | UMT5 text target modules were wrong for fallback injection |
+| LoRA I2V final attempt | PASS | 2-layer config + correct UMT5 targets + 1 train step + LoRA checkpoint |
+| LoRA T2V follow-up smoke | PASS | 2-layer config + real TI2V 5B ckpt + `epoch 0 step 0` + LoRA checkpoint |
 
 ## Checkpoint Load Verification
 
@@ -86,11 +100,14 @@ Key log confirmations with `UNITORCH_DEBUG=DETAIL`:
   - `WanForText2VideoGeneration loaded weights (100%)`
 - `/data/decu/wan_real_ckpt/runs/20260603/logs/train_lora_i2v_2l_after_fix2.log`
   - `WanLoraForImage2VideoGeneration loaded weights (56%)`
+- `/data/decu/wan_real_ckpt/runs/20260603/logs/train_lora_t2v_2l_followup.log`
+  - `WanLoraForText2VideoGeneration loaded weights (56%)`
+  - `epoch 0 step 0: train/loss=5.662803`
 
 Notes:
 
 - `100%` load is expected for inference/FastAPI and the reduced-layer e2e fallback because all parameters present in the reduced 2-layer model were found in the real 5B checkpoint.
-- `56%` load for LoRA training is expected after the fallback fix because:
+- `56%` load for LoRA training is expected for both I2V and T2V reduced-layer smoke runs because:
   - the base Wan model was reduced to 2 transformer layers for the training smoke
   - LoRA adapter parameters are newly initialized and therefore are not present in the base checkpoint
 
@@ -274,6 +291,39 @@ env UNITORCH_CACHE=/data/decu/.cache UNITORCH_DEBUG=DETAIL \
   --core/task/deepspeed/supervised@dev_batch_size 1
 ```
 
+Successful Wan T2V LoRA follow-up smoke using the repo's T2V LoRA config:
+
+```bash
+env UNITORCH_CACHE=/data/decu/.cache UNITORCH_DEBUG=DETAIL \
+  PYTHONPATH=/home/decu/my/unitorch/src CUDA_VISIBLE_DEVICES=1 \
+  unitorch-train examples/configs/diffusion/text2video/wan.lora.ini \
+  --train_file /data/decu/wan_real_ckpt/data/wan_t2v_train.noheader.tsv \
+  --dev_file /data/decu/wan_real_ckpt/data/wan_t2v_dev.noheader.tsv \
+  --core/cli@from_ckpt_dir /data/decu/wan_real_ckpt/runs/20260603/empty_ckpt \
+  --core/cli@cache_dir /data/decu/wan_real_ckpt/runs/20260603/train_lora_t2v_2l_followup/ckpts \
+  --core/cli@output_folder /data/decu/wan_real_ckpt/runs/20260603/train_lora_t2v_2l_followup/videos \
+  --core/process/diffusion/wan@video_size '(160, 96)' \
+  --core/process/diffusion/wan@max_seq_length 64 \
+  --core/model/diffusers/peft/lora/text2video/wan@config_path /data/decu/wan_real_ckpt/configs/wan_ti2v_5b_transformer_num_layers_2.json \
+  --core/model/diffusers/peft/lora/text2video/wan@pretrained_name wan-v2.2-ti2v-5b \
+  --core/task/deepspeed/supervised@config_path examples/configs/deepspeed/adamw.bf16.json \
+  --core/task/deepspeed/supervised@epochs 1 \
+  --core/task/deepspeed/supervised@ckpt_freq 1 \
+  --core/task/deepspeed/supervised@log_freq 1 \
+  --core/task/deepspeed/supervised@num_workers 0 \
+  --core/task/deepspeed/supervised@train_batch_size 1 \
+  --core/task/deepspeed/supervised@dev_batch_size 1
+```
+
+Result:
+
+- log: `/data/decu/wan_real_ckpt/runs/20260603/logs/train_lora_t2v_2l_followup.log`
+- checkpoint: `/data/decu/wan_real_ckpt/runs/20260603/train_lora_t2v_2l_followup/ckpts/pytorch_model.bin` (`6917011` bytes)
+- load snippet: `WanLoraForText2VideoGeneration loaded weights (56%)`
+- train-step snippet: `epoch 0 step 0: train/loss=5.662803`
+- save snippet: `WanLoraForText2VideoGeneration model save checkpoint to /data/decu/wan_real_ckpt/runs/20260603/train_lora_t2v_2l_followup/ckpts/pytorch_model.bin`
+- fixes required for this follow-up run: none beyond the already-landed PEFT compatibility fallback and UMT5 target-module fixes
+
 ## Issues Found and Fixed
 
 ### 1. Wan 5B TI2V I2V path was misconfigured
@@ -338,7 +388,8 @@ Fix:
 | FastAPI T2V output | `/data/decu/wan_real_ckpt/runs/20260603/fastapi/t2v_generate.mp4` | 31973 bytes |
 | FastAPI I2V output | `/data/decu/wan_real_ckpt/runs/20260603/fastapi/i2v_generate.mp4` | 23489 bytes |
 | e2e fallback ZeRO-3 model shard | `/data/decu/wan_real_ckpt/runs/20260603/train_e2e_t2v_2l_z3/ckpts/pytorch_model/global_step1/zero_pp_rank_0_mp_rank_00_model_states.pt` | 12771624490 bytes |
-| LoRA checkpoint | `/data/decu/wan_real_ckpt/runs/20260603/train_lora_i2v_2l_after_fix2/ckpts/pytorch_model.bin` | 6917011 bytes |
+| LoRA I2V checkpoint | `/data/decu/wan_real_ckpt/runs/20260603/train_lora_i2v_2l_after_fix2/ckpts/pytorch_model.bin` | 6917011 bytes |
+| LoRA T2V checkpoint | `/data/decu/wan_real_ckpt/runs/20260603/train_lora_t2v_2l_followup/ckpts/pytorch_model.bin` | 6917011 bytes |
 
 Key logs:
 
@@ -350,6 +401,7 @@ Key logs:
 - `/data/decu/wan_real_ckpt/runs/20260603/logs/train_lora_i2v_2l.log`
 - `/data/decu/wan_real_ckpt/runs/20260603/logs/train_lora_i2v_2l_after_fix.log`
 - `/data/decu/wan_real_ckpt/runs/20260603/logs/train_lora_i2v_2l_after_fix2.log`
+- `/data/decu/wan_real_ckpt/runs/20260603/logs/train_lora_t2v_2l_followup.log`
 - `/data/decu/wan_real_ckpt/runs/20260603/logs/infer_i2v_before_fix.log`
 - `/data/decu/wan_real_ckpt/runs/20260603/logs/infer_i2v_typeerror.log`
 
@@ -365,7 +417,8 @@ Key logs:
   - batch size 1
   - single-sample train/dev sets
   - ZeRO-3 with CPU offload
-- LoRA training used the same reduced 2-layer TI2V config and minimal data settings for a real train-step smoke.
+- LoRA I2V and T2V training used the same reduced 2-layer TI2V config and minimal data settings for a real train-step smoke.
+- No additional code changes were required for the follow-up T2V LoRA smoke; the previously fixed PEFT compatibility path and UMT5 target-module split already covered it.
 - Large generated artifacts and checkpoints were kept under `/data/decu/wan_real_ckpt` and were not committed.
 - Raw session logs in `reports/*.log` were intentionally excluded from commit via `.gitignore`.
 
@@ -427,6 +480,21 @@ python3 -m py_compile \
 
 ```text
 95e59a8 fix wan ti2v 5b
+```
+
+Follow-up validation for the T2V LoRA smoke and report update:
+
+```text
+git status --short
+M reports/wan_real_ckpt_test_report_20260603.md
+
+git diff --check
+<no output>
+```
+
+```bash
+python3 -m pytest tests/cli/test_wan_registration.py -q
+# 18 passed in 9.72s
 ```
 
 ## PR Status
