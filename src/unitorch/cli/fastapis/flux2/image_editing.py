@@ -10,6 +10,7 @@ import torch
 from fastapi import APIRouter, UploadFile
 from fastapi.responses import StreamingResponse
 from PIL import Image
+from diffusers.utils import numpy_to_pil
 from torch import autocast
 
 from unitorch.utils import is_bfloat16_available
@@ -31,8 +32,14 @@ class Flux2ImageEditingFastAPIPipeline(Flux2FastAPIPipeline):
         config,
         pretrained_name: Optional[str] = None,
         pretrained_weight_path: Optional[str] = None,
-        processor_name_or_path: Optional[str] = None,
-        processor_subfolder: Optional[str] = None,
+        tokenizer_path: Optional[str] = None,
+        vocab_path: Optional[str] = None,
+        merge_path: Optional[str] = None,
+        tokenizer_config: Optional[str] = None,
+        special_tokens_map: Optional[str] = None,
+        chat_template: Optional[str] = None,
+        added_tokens: Optional[str] = None,
+        tokenizer_class: Optional[str] = None,
         device: Optional[str] = None,
         pretrained_lora_names: Optional[Union[str, List[str]]] = None,
         pretrained_lora_weights_path: Optional[Union[str, List[str]]] = None,
@@ -45,8 +52,14 @@ class Flux2ImageEditingFastAPIPipeline(Flux2FastAPIPipeline):
             "core/fastapi/pipeline/flux2/editing",
             pretrained_name=pretrained_name,
             pretrained_weight_path=pretrained_weight_path,
-            processor_name_or_path=processor_name_or_path,
-            processor_subfolder=processor_subfolder,
+            tokenizer_path=tokenizer_path,
+            vocab_path=vocab_path,
+            merge_path=merge_path,
+            tokenizer_config=tokenizer_config,
+            special_tokens_map=special_tokens_map,
+            chat_template=chat_template,
+            added_tokens=added_tokens,
+            tokenizer_class=tokenizer_class,
             device=device,
             pretrained_lora_names=pretrained_lora_names,
             pretrained_lora_weights_path=pretrained_lora_weights_path,
@@ -67,21 +80,38 @@ class Flux2ImageEditingFastAPIPipeline(Flux2FastAPIPipeline):
         image: Optional[Image.Image] = None,
         height: Optional[int] = 1024,
         width: Optional[int] = 1024,
-        guidance_scale: Optional[float] = 4.0,
-        num_timesteps: Optional[int] = 50,
+        guidance_scale: Optional[float] = 1.0,
+        num_timesteps: Optional[int] = 4,
         seed: Optional[int] = 1123,
-        caption_upsample_temperature: Optional[float] = None,
     ):
-        return super().__call__(
-            text=text,
-            image=image,
+        if self._enable_cpu_offload:
+            raise NotImplementedError(
+                "FLUX.2 FastAPI CPU offload is not supported with explicit tokenizer generation."
+            )
+
+        inputs = self.processor.editing_inputs(
+            prompt=text,
+            refer_image=image,
+            max_seq_length=self.max_sequence_length,
+        )
+        input_ids = inputs.input_ids.unsqueeze(0).to(self.device)
+        attention_mask = inputs.attention_mask.unsqueeze(0).to(self.device)
+        refer_pixel_values = inputs.refer_pixel_values.unsqueeze(0).to(self.device)
+        prompt_embeds, text_ids = self._encode_prompt(
+            input_ids=input_ids,
+            attention_mask=attention_mask,
+        )
+        self.seed = seed
+        outputs = self._generate_from_embeds(
+            prompt_embeds=prompt_embeds,
+            text_ids=text_ids,
+            refer_pixel_values=refer_pixel_values,
             height=height,
             width=width,
             guidance_scale=guidance_scale,
-            num_timesteps=num_timesteps,
-            seed=seed,
-            caption_upsample_temperature=caption_upsample_temperature,
+            num_infer_timesteps=num_timesteps,
         )
+        return numpy_to_pil(outputs.images.cpu().numpy())[0]
 
 
 @register_fastapi("core/fastapi/flux2/editing")
@@ -104,7 +134,7 @@ class Flux2ImageEditingFastAPI(GenericFastAPI):
 
     def start(
         self,
-        pretrained_name: Optional[str] = "flux2-dev",
+        pretrained_name: Optional[str] = None,
         pretrained_lora_names: Optional[Union[str, List[str]]] = None,
         pretrained_lora_weights: Optional[Union[float, List[float]]] = 1.0,
         pretrained_lora_alphas: Optional[Union[float, List[float]]] = 32.0,
@@ -135,10 +165,9 @@ class Flux2ImageEditingFastAPI(GenericFastAPI):
         image: UploadFile,
         height: Optional[int] = 1024,
         width: Optional[int] = 1024,
-        guidance_scale: Optional[float] = 4.0,
-        num_timesteps: Optional[int] = 50,
+        guidance_scale: Optional[float] = 1.0,
+        num_timesteps: Optional[int] = 4,
         seed: Optional[int] = 1123,
-        caption_upsample_temperature: Optional[float] = None,
     ):
         assert self._pipe is not None
         image_bytes = await image.read()
@@ -153,7 +182,6 @@ class Flux2ImageEditingFastAPI(GenericFastAPI):
                 guidance_scale=guidance_scale,
                 num_timesteps=num_timesteps,
                 seed=seed,
-                caption_upsample_temperature=caption_upsample_temperature,
             )
 
         buffer = io.BytesIO()

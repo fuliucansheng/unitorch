@@ -19,7 +19,12 @@ from diffusers.training_utils import (
     compute_loss_weighting_for_sd3,
 )
 from diffusers.utils.torch_utils import randn_tensor
-from transformers import Mistral3Config, Mistral3ForConditionalGeneration
+from transformers import (
+    Mistral3Config,
+    Mistral3ForConditionalGeneration,
+    Qwen3Config,
+    Qwen3ForCausalLM,
+)
 
 from unitorch.models import GenericModel, GenericOutputs
 from unitorch.models.peft import PeftWeightLoaderMixin
@@ -33,6 +38,22 @@ class GenericFlux2Model(GenericModel, PeftWeightLoaderMixin):
         "^quant_conv.*": "vae.",
         "^bn.*": "vae.",
     }
+
+    @staticmethod
+    def _build_text_encoder(text_config_path: str):
+        with open(text_config_path) as f:
+            text_config_dict = json.load(f)
+        model_type = text_config_dict.get("model_type")
+
+        if model_type == "mistral3":
+            text_config = Mistral3Config.from_dict(text_config_dict)
+            return Mistral3ForConditionalGeneration(text_config)
+
+        if model_type == "qwen3":
+            text_config = Qwen3Config.from_dict(text_config_dict)
+            return Qwen3ForCausalLM(text_config)
+
+        raise ValueError(f"Unsupported FLUX.2 text encoder model_type: {model_type}")
 
     def __init__(
         self,
@@ -61,9 +82,7 @@ class GenericFlux2Model(GenericModel, PeftWeightLoaderMixin):
                 torch.bfloat16
             )
 
-        self.text = Mistral3ForConditionalGeneration(
-            Mistral3Config.from_json_file(text_config_path)
-        ).to(torch.bfloat16)
+        self.text = self._build_text_encoder(text_config_path).to(torch.bfloat16)
 
         with open(vae_config_path) as f:
             self.vae = AutoencoderKLFlux2.from_config(json.load(f)).to(torch.bfloat16)

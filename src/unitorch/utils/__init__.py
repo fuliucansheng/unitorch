@@ -281,11 +281,15 @@ def load_weight(
 
     state_dict: Dict[str, Any] = {}
     for p in path:
+        logging.debug("Resolving weight source %s", p)
         local = cached_path(p, use_auth_token=use_auth_token)
+        logging.debug("Loading weight file %s", local)
         if p.endswith(".safetensors"):
-            state_dict.update(safetensors.torch.load_file(local))
+            chunk = safetensors.torch.load_file(local)
         else:
-            state_dict.update(torch.load(local, map_location="cpu"))
+            chunk = torch.load(local, map_location="cpu")
+        logging.debug("Loaded %d tensors from %s", len(chunk), local)
+        state_dict.update(chunk)
 
     results: Dict[str, Any] = {}
     for key, value in state_dict.items():

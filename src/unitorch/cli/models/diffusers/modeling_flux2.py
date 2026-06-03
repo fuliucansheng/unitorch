@@ -87,7 +87,7 @@ def _flux2_model_kwargs(
         "snr_gamma": config.getoption("snr_gamma", 5.0),
         "seed": config.getoption("seed", 1123),
         "gradient_checkpointing": config.getoption("gradient_checkpointing", True),
-        "guidance_scale": config.getoption("guidance_scale", 4.0),
+        "guidance_scale": config.getoption("guidance_scale", 1.0),
         "text_encoder_out_layers": tuple(
             config.getoption("text_encoder_out_layers", (10, 20, 30))
         ),
@@ -170,7 +170,7 @@ class Flux2ForText2ImageGeneration(_Flux2ForText2ImageGeneration):
         snr_gamma: Optional[float] = 5.0,
         seed: Optional[int] = 1123,
         gradient_checkpointing: Optional[bool] = True,
-        guidance_scale: Optional[float] = 4.0,
+        guidance_scale: Optional[float] = 1.0,
         text_encoder_out_layers: Optional[Tuple[int, ...]] = (10, 20, 30),
     ):
         super().__init__(
@@ -239,7 +239,7 @@ class Flux2ForText2ImageGeneration(_Flux2ForText2ImageGeneration):
         attention_mask: Optional[torch.Tensor] = None,
         height: Optional[int] = 1024,
         width: Optional[int] = 1024,
-        guidance_scale: Optional[float] = 4.0,
+        guidance_scale: Optional[float] = 1.0,
     ):
         outputs = super().generate(
             input_ids=input_ids,
@@ -266,7 +266,7 @@ class Flux2ForImageEditingGeneration(_Flux2ForImageEditingGeneration):
         snr_gamma: Optional[float] = 5.0,
         seed: Optional[int] = 1123,
         gradient_checkpointing: Optional[bool] = True,
-        guidance_scale: Optional[float] = 4.0,
+        guidance_scale: Optional[float] = 1.0,
         text_encoder_out_layers: Optional[Tuple[int, ...]] = (10, 20, 30),
     ):
         super().__init__(
@@ -338,7 +338,7 @@ class Flux2ForImageEditingGeneration(_Flux2ForImageEditingGeneration):
         attention_mask: Optional[torch.Tensor] = None,
         height: Optional[int] = 1024,
         width: Optional[int] = 1024,
-        guidance_scale: Optional[float] = 4.0,
+        guidance_scale: Optional[float] = 1.0,
     ):
         outputs = super().generate(
             input_ids=input_ids,

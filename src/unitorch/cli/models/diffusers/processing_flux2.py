@@ -18,8 +18,14 @@ from unitorch.cli.models.diffusers import pretrained_stable_infos
 class Flux2Processor(_Flux2Processor):
     def __init__(
         self,
-        processor_name_or_path: str,
-        processor_subfolder: Optional[str] = "tokenizer",
+        tokenizer_path: Optional[str] = None,
+        vocab_path: Optional[str] = None,
+        merge_path: Optional[str] = None,
+        tokenizer_config: Optional[str] = None,
+        special_tokens_map: Optional[str] = None,
+        chat_template: Optional[str] = None,
+        added_tokens: Optional[str] = None,
+        tokenizer_class: Optional[str] = None,
         vae_config_path: Optional[str] = None,
         max_seq_length: Optional[int] = 512,
         image_size: Optional[Tuple[int, int]] = None,
@@ -28,8 +34,14 @@ class Flux2Processor(_Flux2Processor):
         use_auth_token: Optional[Union[bool, str]] = None,
     ):
         super().__init__(
-            processor_name_or_path=processor_name_or_path,
-            processor_subfolder=processor_subfolder,
+            tokenizer_path=tokenizer_path,
+            vocab_path=vocab_path,
+            merge_path=merge_path,
+            tokenizer_config=tokenizer_config,
+            special_tokens_map=special_tokens_map,
+            chat_template=chat_template,
+            added_tokens=added_tokens,
+            tokenizer_class=tokenizer_class,
             vae_config_path=vae_config_path,
             max_seq_length=max_seq_length,
             image_size=image_size,
@@ -46,17 +58,95 @@ class Flux2Processor(_Flux2Processor):
         pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
         use_auth_token = config.getoption("use_auth_token", False)
 
-        processor_name_or_path = config.getoption("processor_name_or_path", None)
-        processor_name_or_path = pop_value(
-            processor_name_or_path,
-            nested_dict_value(pretrained_infos, "processor", "name"),
+        tokenizer_class = config.getoption("tokenizer_class", None)
+        tokenizer_class = pop_value(
+            tokenizer_class,
+            nested_dict_value(pretrained_infos, "text", "tokenizer_class"),
+            check_none=False,
         )
 
-        processor_subfolder = config.getoption("processor_subfolder", None)
-        processor_subfolder = pop_value(
-            processor_subfolder,
-            nested_dict_value(pretrained_infos, "processor", "subfolder"),
+        tokenizer_path = config.getoption("tokenizer_path", None)
+        tokenizer_path = pop_value(
+            tokenizer_path,
+            nested_dict_value(pretrained_infos, "text", "tokenizer"),
             check_none=False,
+        )
+        tokenizer_path = (
+            cached_path(tokenizer_path, use_auth_token=use_auth_token)
+            if tokenizer_path is not None
+            else None
+        )
+
+        vocab_path = config.getoption("vocab_path", None)
+        vocab_path = pop_value(
+            vocab_path,
+            nested_dict_value(pretrained_infos, "text", "vocab"),
+            check_none=False,
+        )
+        vocab_path = (
+            cached_path(vocab_path, use_auth_token=use_auth_token)
+            if vocab_path is not None
+            else None
+        )
+
+        merge_path = config.getoption("merge_path", None)
+        merge_path = pop_value(
+            merge_path,
+            nested_dict_value(pretrained_infos, "text", "merge"),
+            check_none=False,
+        )
+        merge_path = (
+            cached_path(merge_path, use_auth_token=use_auth_token)
+            if merge_path is not None
+            else None
+        )
+
+        tokenizer_config = config.getoption("tokenizer_config", None)
+        tokenizer_config = pop_value(
+            tokenizer_config,
+            nested_dict_value(pretrained_infos, "text", "tokenizer_config"),
+            check_none=False,
+        )
+        tokenizer_config = (
+            cached_path(tokenizer_config, use_auth_token=use_auth_token)
+            if tokenizer_config is not None
+            else None
+        )
+
+        special_tokens_map = config.getoption("special_tokens_map", None)
+        special_tokens_map = pop_value(
+            special_tokens_map,
+            nested_dict_value(pretrained_infos, "text", "special_tokens_map"),
+            check_none=False,
+        )
+        special_tokens_map = (
+            cached_path(special_tokens_map, use_auth_token=use_auth_token)
+            if special_tokens_map is not None
+            else None
+        )
+
+        chat_template = config.getoption("chat_template", None)
+        chat_template = pop_value(
+            chat_template,
+            nested_dict_value(pretrained_infos, "text", "chat_template"),
+            check_none=False,
+        )
+        chat_template = (
+            cached_path(chat_template, use_auth_token=use_auth_token)
+            if chat_template is not None
+            else None
+        )
+
+        added_tokens = config.getoption("added_tokens", None)
+        added_tokens = pop_value(
+            added_tokens,
+            nested_dict_value(pretrained_infos, "text", "added_tokens"),
+            check_none=False,
+        )
+        added_tokens = (
+            cached_path(added_tokens, use_auth_token=use_auth_token)
+            if added_tokens is not None
+            else None
         )
 
         vae_config_path = config.getoption("vae_config_path", None)
@@ -72,8 +162,14 @@ class Flux2Processor(_Flux2Processor):
         random_flip = config.getoption("random_flip", False)
 
         return {
-            "processor_name_or_path": processor_name_or_path,
-            "processor_subfolder": processor_subfolder,
+            "tokenizer_path": tokenizer_path,
+            "vocab_path": vocab_path,
+            "merge_path": merge_path,
+            "tokenizer_config": tokenizer_config,
+            "special_tokens_map": special_tokens_map,
+            "chat_template": chat_template,
+            "added_tokens": added_tokens,
+            "tokenizer_class": tokenizer_class,
             "vae_config_path": vae_config_path,
             "max_seq_length": max_seq_length,
             "image_size": image_size,

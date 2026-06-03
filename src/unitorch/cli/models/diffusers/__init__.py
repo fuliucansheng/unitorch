@@ -93,34 +93,79 @@ __hf_hub_qwen_image_safetensors_dict__ = lambda name, n1=9, n2=4: {
     ),
 }
 
-__hf_hub_flux2_safetensors_dict__ = lambda name, n1=7, n2=10: {
-    "repo_id": name,
-    "processor": {
-        "name": name,
-        "subfolder": "tokenizer",
-    },
-    "transformer": {
-        "config": hf_endpoint_url(f"/{name}/resolve/main/transformer/config.json"),
-        "weight": [
+def __hf_hub_flux2_safetensors_dict__(
+    name,
+    transformer_shards: int = 7,
+    text_shards: int = 10,
+    transformer_weight: str = None,
+    text_weight: str = None,
+    tokenizer_class: str = None,
+    has_vocab: bool = False,
+    has_merge: bool = False,
+    has_added_tokens: bool = False,
+):
+    if transformer_weight is None:
+        transformer_weight = [
             hf_endpoint_url(
-                f"/{name}/resolve/main/transformer/diffusion_pytorch_model-{str(i).rjust(5, '0')}-of-{str(n1).rjust(5, '0')}.safetensors"
+                f"/{name}/resolve/main/transformer/diffusion_pytorch_model-{str(i).rjust(5, '0')}-of-{str(transformer_shards).rjust(5, '0')}.safetensors"
             )
-            for i in range(1, n1 + 1)
-        ],
-    },
-    "text": {
+            for i in range(1, transformer_shards + 1)
+        ]
+    else:
+        transformer_weight = hf_endpoint_url(f"/{name}/resolve/main/{transformer_weight}")
+
+    if text_weight is None:
+        text_weight = [
+            hf_endpoint_url(
+                f"/{name}/resolve/main/text_encoder/model-{str(i).rjust(5, '0')}-of-{str(text_shards).rjust(5, '0')}.safetensors"
+            )
+            for i in range(1, text_shards + 1)
+        ]
+    else:
+        text_weight = hf_endpoint_url(f"/{name}/resolve/main/{text_weight}")
+
+    text_info = {
         "config": hf_endpoint_url(f"/{name}/resolve/main/text_encoder/config.json"),
-        "weight": [
-            hf_endpoint_url(
-                f"/{name}/resolve/main/text_encoder/model-{str(i).rjust(5, '0')}-of-{str(n2).rjust(5, '0')}.safetensors"
-            )
-            for i in range(1, n2 + 1)
-        ],
-    },
-    "scheduler": hf_endpoint_url(
-        f"/{name}/resolve/main/scheduler/scheduler_config.json"
-    ),
-}
+        "tokenizer": hf_endpoint_url(
+            f"/{name}/resolve/main/tokenizer/tokenizer.json"
+        ),
+        "tokenizer_config": hf_endpoint_url(
+            f"/{name}/resolve/main/tokenizer/tokenizer_config.json"
+        ),
+        "special_tokens_map": hf_endpoint_url(
+            f"/{name}/resolve/main/tokenizer/special_tokens_map.json"
+        ),
+        "chat_template": hf_endpoint_url(
+            f"/{name}/resolve/main/tokenizer/chat_template.jinja"
+        ),
+        "weight": text_weight,
+    }
+    if tokenizer_class is not None:
+        text_info["tokenizer_class"] = tokenizer_class
+    if has_vocab:
+        text_info["vocab"] = hf_endpoint_url(
+            f"/{name}/resolve/main/tokenizer/vocab.json"
+        )
+    if has_merge:
+        text_info["merge"] = hf_endpoint_url(
+            f"/{name}/resolve/main/tokenizer/merges.txt"
+        )
+    if has_added_tokens:
+        text_info["added_tokens"] = hf_endpoint_url(
+            f"/{name}/resolve/main/tokenizer/added_tokens.json"
+        )
+
+    return {
+        "repo_id": name,
+        "transformer": {
+            "config": hf_endpoint_url(f"/{name}/resolve/main/transformer/config.json"),
+            "weight": transformer_weight,
+        },
+        "text": text_info,
+        "scheduler": hf_endpoint_url(
+            f"/{name}/resolve/main/scheduler/scheduler_config.json"
+        ),
+    }
 
 __hf_hub_vae_dict = lambda name: {
     "vae": {
@@ -213,8 +258,23 @@ pretrained_stable_infos = {
         },
     },
     "flux2-dev": {
-        **__hf_hub_flux2_safetensors_dict__("black-forest-labs/FLUX.2-dev"),
+        **__hf_hub_flux2_safetensors_dict__(
+            "black-forest-labs/FLUX.2-dev",
+            tokenizer_class="LlamaTokenizerFast",
+        ),
         **__hf_hub_vae_safetensors_dict__("black-forest-labs/FLUX.2-dev"),
+    },
+    "flux2-klein-4b": {
+        **__hf_hub_flux2_safetensors_dict__(
+            "black-forest-labs/FLUX.2-klein-4B",
+            transformer_weight="transformer/diffusion_pytorch_model.safetensors",
+            text_shards=2,
+            tokenizer_class="Qwen2Tokenizer",
+            has_vocab=True,
+            has_merge=True,
+            has_added_tokens=True,
+        ),
+        **__hf_hub_vae_safetensors_dict__("black-forest-labs/FLUX.2-klein-4B"),
     },
     "lucy-edit-v1.1-dev": {
         **__hf_hub_lucy_edit_safetensors_dict__("decart-ai/Lucy-Edit-1.1-Dev"),
