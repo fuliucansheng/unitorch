@@ -18,7 +18,11 @@ from unitorch.cli import (
 )
 from unitorch.cli.models import DiffusionOutputs, LossOutputs
 from unitorch.cli.models import diffusion_model_decorator
-from unitorch.cli.models.diffusers import pretrained_stable_infos, load_weight
+from unitorch.cli.models.diffusers import (
+    pretrained_stable_infos,
+    load_weight,
+    load_wan_text_weight,
+)
 
 
 @register_model(
@@ -36,6 +40,7 @@ class WanLoraForText2VideoGeneration(_WanLoraForText2VideoGeneration):
         num_infer_timesteps: Optional[int] = 50,
         snr_gamma: Optional[float] = 5.0,
         boundary_ratio: Optional[float] = 0.9,
+        expand_timesteps: Optional[bool] = False,
         lora_r: Optional[int] = 16,
         lora_alpha: Optional[int] = 32,
         lora_dropout: Optional[float] = 0.05,
@@ -60,6 +65,7 @@ class WanLoraForText2VideoGeneration(_WanLoraForText2VideoGeneration):
             num_infer_timesteps=num_infer_timesteps,
             snr_gamma=snr_gamma,
             boundary_ratio=boundary_ratio,
+            expand_timesteps=expand_timesteps,
             lora_r=lora_r,
             lora_alpha=lora_alpha,
             lora_dropout=lora_dropout,
@@ -86,10 +92,8 @@ class WanLoraForText2VideoGeneration(_WanLoraForText2VideoGeneration):
         config_path = cached_path(config_path)
 
         config2_path = config.getoption("config2_path", None)
-        config2_path = pop_value(
-            config2_path,
-            nested_dict_value(pretrained_infos, "transformer2", "config"),
-        )
+        if config2_path is None:
+            config2_path = nested_dict_value(pretrained_infos, "transformer2", "config")
 
         if config2_path is not None:
             config2_path = cached_path(config2_path)
@@ -121,6 +125,10 @@ class WanLoraForText2VideoGeneration(_WanLoraForText2VideoGeneration):
         boundary_ratio = config.getoption(
             "boundary_ratio",
             nested_dict_value(pretrained_infos, "boundary_ratio") or 0.9,
+        )
+        expand_timesteps = config.getoption(
+            "expand_timesteps",
+            nested_dict_value(pretrained_infos, "expand_timesteps") or False,
         )
         lora_r = config.getoption("lora_r", 16)
         lora_alpha = config.getoption("lora_alpha", 32)
@@ -159,6 +167,7 @@ class WanLoraForText2VideoGeneration(_WanLoraForText2VideoGeneration):
             num_infer_timesteps=num_infer_timesteps,
             snr_gamma=snr_gamma,
             boundary_ratio=boundary_ratio,
+            expand_timesteps=expand_timesteps,
             lora_r=lora_r,
             lora_alpha=lora_alpha,
             lora_dropout=lora_dropout,
@@ -185,9 +194,8 @@ class WanLoraForText2VideoGeneration(_WanLoraForText2VideoGeneration):
                     prefix_keys={"": "transformer2."},
                     replace_keys=replace_keys if enable_transformer_adapter else {},
                 ),
-                load_weight(
+                load_wan_text_weight(
                     nested_dict_value(pretrained_infos, "text", "weight"),
-                    prefix_keys={"": "text."},
                     replace_keys=replace_keys if enable_text_adapter else {},
                 ),
                 load_weight(
@@ -274,6 +282,7 @@ class WanLoraForImage2VideoGeneration(_WanLoraForImage2VideoGeneration):
         num_infer_timesteps: Optional[int] = 50,
         snr_gamma: Optional[float] = 5.0,
         boundary_ratio: Optional[float] = 0.9,
+        expand_timesteps: Optional[bool] = False,
         lora_r: Optional[int] = 16,
         lora_alpha: Optional[int] = 32,
         lora_dropout: Optional[float] = 0.05,
@@ -298,6 +307,7 @@ class WanLoraForImage2VideoGeneration(_WanLoraForImage2VideoGeneration):
             num_infer_timesteps=num_infer_timesteps,
             snr_gamma=snr_gamma,
             boundary_ratio=boundary_ratio,
+            expand_timesteps=expand_timesteps,
             lora_r=lora_r,
             lora_alpha=lora_alpha,
             lora_dropout=lora_dropout,
@@ -324,10 +334,8 @@ class WanLoraForImage2VideoGeneration(_WanLoraForImage2VideoGeneration):
         config_path = cached_path(config_path)
 
         config2_path = config.getoption("config2_path", None)
-        config2_path = pop_value(
-            config2_path,
-            nested_dict_value(pretrained_infos, "transformer2", "config"),
-        )
+        if config2_path is None:
+            config2_path = nested_dict_value(pretrained_infos, "transformer2", "config")
 
         if config2_path is not None:
             config2_path = cached_path(config2_path)
@@ -359,6 +367,10 @@ class WanLoraForImage2VideoGeneration(_WanLoraForImage2VideoGeneration):
         boundary_ratio = config.getoption(
             "boundary_ratio",
             nested_dict_value(pretrained_infos, "boundary_ratio") or 0.9,
+        )
+        expand_timesteps = config.getoption(
+            "expand_timesteps",
+            nested_dict_value(pretrained_infos, "expand_timesteps") or False,
         )
         lora_r = config.getoption("lora_r", 16)
         lora_alpha = config.getoption("lora_alpha", 32)
@@ -397,6 +409,7 @@ class WanLoraForImage2VideoGeneration(_WanLoraForImage2VideoGeneration):
             num_infer_timesteps=num_infer_timesteps,
             snr_gamma=snr_gamma,
             boundary_ratio=boundary_ratio,
+            expand_timesteps=expand_timesteps,
             lora_r=lora_r,
             lora_alpha=lora_alpha,
             lora_dropout=lora_dropout,
@@ -423,9 +436,8 @@ class WanLoraForImage2VideoGeneration(_WanLoraForImage2VideoGeneration):
                     prefix_keys={"": "transformer2."},
                     replace_keys=replace_keys if enable_transformer_adapter else {},
                 ),
-                load_weight(
+                load_wan_text_weight(
                     nested_dict_value(pretrained_infos, "text", "weight"),
-                    prefix_keys={"": "text."},
                     replace_keys=replace_keys if enable_text_adapter else {},
                 ),
                 load_weight(
@@ -478,6 +490,7 @@ class WanLoraForImage2VideoGeneration(_WanLoraForImage2VideoGeneration):
         self,
         input_ids: torch.Tensor,
         negative_input_ids: torch.Tensor,
+        image_pixel_values: torch.Tensor,
         vae_pixel_values: torch.Tensor,
         attention_mask: Optional[torch.Tensor] = None,
         negative_attention_mask: Optional[torch.Tensor] = None,
@@ -487,6 +500,7 @@ class WanLoraForImage2VideoGeneration(_WanLoraForImage2VideoGeneration):
         outputs = super().generate(
             input_ids=input_ids,
             negative_input_ids=negative_input_ids,
+            image_pixel_values=image_pixel_values,
             vae_pixel_values=vae_pixel_values,
             attention_mask=attention_mask,
             negative_attention_mask=negative_attention_mask,

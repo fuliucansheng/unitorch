@@ -43,12 +43,10 @@ class ASTFunction:
         self.__ast_func__ = compile(self.__ast_func__, "", "eval")
 
     def process(self, row: Dict):
-        for key in self.__ast_keys__:
-            if key not in row:
-                continue
-            locals()[key] = row.get(key, None)
-
-        return eval(deepcopy(self.__ast_func__))
+        local_vars = {
+            key: row.get(key, None) for key in self.__ast_keys__ if key in row
+        }
+        return eval(deepcopy(self.__ast_func__), globals(), local_vars)
 
 
 class ASTHFDatasets(TorchDataset):

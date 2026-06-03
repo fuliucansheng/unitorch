@@ -75,6 +75,7 @@ class WanProcessor(HfTextClassificationProcessor):
                 Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
             ]
         )
+        self.image_processor = ToTensor()
 
         if vae_config_path is not None:
             vae_config_dict = json.load(open(vae_config_path))
@@ -234,6 +235,7 @@ class WanProcessor(HfTextClassificationProcessor):
             image = image.resize((new_width, new_height), resample=Image.LANCZOS)
 
         vae_pixel_values = self.vae_image_processor.preprocess(image)[0]
+        image_pixel_values = self.image_processor(image)
         text_outputs = self.text2video_inputs(
             prompt=prompt,
             negative_prompt=negative_prompt,
@@ -245,5 +247,6 @@ class WanProcessor(HfTextClassificationProcessor):
             attention_mask=text_outputs.attention_mask,
             negative_input_ids=text_outputs.negative_input_ids,
             negative_attention_mask=text_outputs.negative_attention_mask,
+            image_pixel_values=image_pixel_values,
             vae_pixel_values=vae_pixel_values,
         )

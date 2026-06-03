@@ -133,6 +133,7 @@ class WanProcessor(_WanProcessor):
             max_seq_length=max_seq_length,
         )
         return TensorInputs(
+            image_pixel_values=outputs.image_pixel_values,
             vae_pixel_values=outputs.vae_pixel_values,
             input_ids=outputs.input_ids,
             attention_mask=outputs.attention_mask,

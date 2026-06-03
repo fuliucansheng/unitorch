@@ -114,6 +114,7 @@ TSV columns: `encode` (input), `decode` (target); DPO adds `win_decode`, `lose_d
 ### diffusion/
 
 Image and video generation/editing with QWen Image, Flux2, and Wan models.
+Wan example configs default to the unified `wan-v2.2-ti2v-5b` checkpoint for both text-to-video and image-to-video paths.
 
 | Subdirectory | Task | Files |
 |---|---|---|
@@ -179,6 +180,8 @@ FastAPI model server configs launched with `unitorch-fastapi`.
 ```bash
 unitorch-fastapi fastapis.ini --port 8000 --device cpu
 ```
+
+Focused Wan-only FastAPI example: `examples/configs/fastapis/wan.ini`
 
 ---
 

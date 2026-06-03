@@ -2,6 +2,7 @@
 # Licensed under the MIT License.
 
 import io
+import os
 import requests
 import time
 import base64
@@ -61,6 +62,12 @@ class ImageProcessor:
 
             if image_type == "hex":
                 image = io.BytesIO(bytes.fromhex(image))
+                return Image.open(image).convert("RGB")
+
+            if isinstance(image, Image.Image):
+                return image.convert("RGB")
+
+            if isinstance(image, str) and os.path.exists(image):
                 return Image.open(image).convert("RGB")
 
             if self.http_url is None:
