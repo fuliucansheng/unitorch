@@ -7,6 +7,13 @@
 
 ::: unitorch.cli.models.peft.modeling_clip.ClipLoraForMatching
 
+## GemmaLoraForGeneration
+
+!!! tip
+    **`core/model/generation/peft/lora/gemma`** is the section for configuration of GemmaLoraForGeneration.
+
+::: unitorch.cli.models.peft.modeling_gemma.GemmaLoraForGeneration
+
 ## LlamaLoraForClassification
 
 !!! tip

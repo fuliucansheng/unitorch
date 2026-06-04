@@ -8,6 +8,10 @@
 
 ::: unitorch.models.peft.ClipLoraForTextMatching
 
+## GemmaLoraForGeneration
+
+::: unitorch.models.peft.GemmaLoraForGeneration
+
 ## LlamaLoraForClassification
 
 ::: unitorch.models.peft.LlamaLoraForClassification

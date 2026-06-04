@@ -220,7 +220,8 @@ class GenericPeftModel(nn.Module, PeftCheckpointMixin):
             module.weight.data.normal_(mean=0.0, std=0.02)
 
         if isinstance(module, nn.LayerNorm):
-            module.bias.data.zero_()
+            if module.bias is not None:
+                module.bias.data.zero_()
             module.weight.data.fill_(1.0)
 
         if isinstance(module, nn.Linear) and module.bias is not None:
@@ -359,6 +360,9 @@ class PeftWeightLoaderMixin(nn.Module):
 from unitorch.models.peft.modeling_clip import (
     ClipLoraForMatching,
     ClipLoraForTextMatching,
+)
+from unitorch.models.peft.modeling_gemma import (
+    GemmaLoraForGeneration,
 )
 from unitorch.models.peft.modeling_llama import (
     LlamaLoraForClassification,

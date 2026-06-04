@@ -24,6 +24,7 @@ nav:
       - DinoV2: models/dinov2.md
       - DPT: models/dpt.md
       - Diffusers: models/diffusers.md
+      - Gemma: models/gemma.md
       - GroundingDino: models/grounding_dino.md
       - Kolors: models/kolors.md
       - Llama: models/llama.md
@@ -88,6 +89,7 @@ nav:
       - DinoV2: cli/models/dinov2.md
       - DPT: cli/models/dpt.md
       - Diffusers: cli/models/diffusers.md
+      - Gemma: cli/models/gemma.md
       - GroundingDino: cli/models/grounding_dino.md
       - Kolors: cli/models/kolors.md
       - Llama: cli/models/llama.md
