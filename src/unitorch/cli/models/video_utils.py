@@ -2,6 +2,7 @@
 # Licensed under the MIT License.
 
 import io
+import os
 import cv2
 import imageio
 import requests
@@ -78,6 +79,9 @@ class VideoProcessor:
                         img = Image.fromarray(frame)
                         frames.append(img)
                 return frames
+
+            if isinstance(video, str) and os.path.exists(video):
+                return cv2.VideoCapture(video)
 
             if self.http_url is None:
                 video = cv2.VideoCapture(video)

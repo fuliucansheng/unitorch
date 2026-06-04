@@ -4,39 +4,48 @@
 from unitorch.utils import is_opencv_available
 from unitorch.cli import hf_endpoint_url
 
-__hf_hub_wan_v2_2_safetensors_dict__ = lambda name, n1=12, n2=12, n3=3: {
-    "transformer": {
-        "config": hf_endpoint_url(f"/{name}/resolve/main/transformer/config.json"),
-        "weight": [
-            hf_endpoint_url(
-                f"/{name}/resolve/main/transformer/diffusion_pytorch_model-{str(i).rjust(5, '0')}-of-{str(n1).rjust(5, '0')}.safetensors"
-            )
-            for i in range(1, n1 + 1)
-        ],
-    },
-    "transformer2": {
-        "config": hf_endpoint_url(f"/{name}/resolve/main/transformer/config.json"),
-        "weight": [
-            hf_endpoint_url(
-                f"/{name}/resolve/main/transformer_2/diffusion_pytorch_model-{str(i).rjust(5, '0')}-of-{str(n2).rjust(5, '0')}.safetensors"
-            )
-            for i in range(1, n2 + 1)
-        ],
-    },
-    "text": {
-        "config": hf_endpoint_url(f"/{name}/resolve/main/text_encoder/config.json"),
-        "vocab": hf_endpoint_url(f"/{name}/resolve/main/tokenizer/spiece.model"),
-        "weight": [
-            hf_endpoint_url(
-                f"/{name}/resolve/main/text_encoder/model-{str(i).rjust(5, '0')}-of-{str(n3).rjust(5, '0')}.safetensors"
-            )
-            for i in range(1, n3 + 1)
-        ],
-    },
-    "scheduler": hf_endpoint_url(
-        f"/{name}/resolve/main/scheduler/scheduler_config.json"
-    ),
-}
+
+def __hf_hub_wan_v2_2_safetensors_dict__(
+    name: str,
+    transformer_shards: int = 12,
+    text_shards: int = 3,
+    transformer2_shards: int = 12,
+):
+    info = {
+        "transformer": {
+            "config": hf_endpoint_url(f"/{name}/resolve/main/transformer/config.json"),
+            "weight": [
+                hf_endpoint_url(
+                    f"/{name}/resolve/main/transformer/diffusion_pytorch_model-{str(i).rjust(5, '0')}-of-{str(transformer_shards).rjust(5, '0')}.safetensors"
+                )
+                for i in range(1, transformer_shards + 1)
+            ],
+        },
+        "text": {
+            "config": hf_endpoint_url(f"/{name}/resolve/main/text_encoder/config.json"),
+            "vocab": hf_endpoint_url(f"/{name}/resolve/main/tokenizer/spiece.model"),
+            "weight": [
+                hf_endpoint_url(
+                    f"/{name}/resolve/main/text_encoder/model-{str(i).rjust(5, '0')}-of-{str(text_shards).rjust(5, '0')}.safetensors"
+                )
+                for i in range(1, text_shards + 1)
+            ],
+        },
+        "scheduler": hf_endpoint_url(
+            f"/{name}/resolve/main/scheduler/scheduler_config.json"
+        ),
+    }
+    if transformer2_shards is not None:
+        info["transformer2"] = {
+            "config": hf_endpoint_url(f"/{name}/resolve/main/transformer/config.json"),
+            "weight": [
+                hf_endpoint_url(
+                    f"/{name}/resolve/main/transformer_2/diffusion_pytorch_model-{str(i).rjust(5, '0')}-of-{str(transformer2_shards).rjust(5, '0')}.safetensors"
+                )
+                for i in range(1, transformer2_shards + 1)
+            ],
+        }
+    return info
 
 __hf_hub_lucy_edit_safetensors_dict__ = lambda name, n1=3: {
     "transformer": {
@@ -232,17 +241,34 @@ pretrained_stable_infos = {
     },
     "wan-v2.2-t2v-14b": {
         **__hf_hub_wan_v2_2_safetensors_dict__(
-            "Wan-AI/Wan2.2-T2V-A14B-Diffusers", n1=12, n2=12, n3=3
+            "Wan-AI/Wan2.2-T2V-A14B-Diffusers",
+            transformer_shards=12,
+            text_shards=3,
+            transformer2_shards=12,
         ),
         **__hf_hub_vae_safetensors_dict__("Wan-AI/Wan2.2-T2V-A14B-Diffusers"),
         "boundary_ratio": 0.875,
     },
     "wan-v2.2-i2v-14b": {
         **__hf_hub_wan_v2_2_safetensors_dict__(
-            "Wan-AI/Wan2.2-I2V-A14B-Diffusers", n1=12, n2=12, n3=3
+            "Wan-AI/Wan2.2-I2V-A14B-Diffusers",
+            transformer_shards=12,
+            text_shards=3,
+            transformer2_shards=12,
         ),
         **__hf_hub_vae_safetensors_dict__("Wan-AI/Wan2.2-I2V-A14B-Diffusers"),
         "boundary_ratio": 0.9,
+    },
+    "wan-v2.2-ti2v-5b": {
+        **__hf_hub_wan_v2_2_safetensors_dict__(
+            "Wan-AI/Wan2.2-TI2V-5B-Diffusers",
+            transformer_shards=5,
+            text_shards=3,
+            transformer2_shards=None,
+        ),
+        **__hf_hub_vae_safetensors_dict__("Wan-AI/Wan2.2-TI2V-5B-Diffusers"),
+        "boundary_ratio": 1.0,
+        "expand_timesteps": True,
     },
     "qwen-image": {
         **__hf_hub_qwen_image_safetensors_dict__("Qwen/Qwen-Image"),
@@ -285,6 +311,20 @@ pretrained_stable_infos = {
 pretrained_stable_extensions_infos = {}
 
 from unitorch.cli.models.diffusion_utils import load_weight
+
+
+def load_wan_text_weight(weight_path, replace_keys=None):
+    state_dict = load_weight(
+        weight_path,
+        prefix_keys={"": "text."},
+        replace_keys=replace_keys,
+    )
+    shared_key = "text.shared.weight"
+    embed_key = "text.encoder.embed_tokens.weight"
+    if shared_key in state_dict and embed_key not in state_dict:
+        state_dict[embed_key] = state_dict[shared_key]
+    return state_dict
+
 
 import unitorch.cli.models.diffusers.modeling_qwen_image
 import unitorch.cli.models.diffusers.modeling_flux2

@@ -12,6 +12,7 @@ from peft import (
     PeftType,
     PromptLearningConfig,
     PeftModelForSequenceClassification,
+    inject_adapter_in_model,
 )
 from unitorch.utils import (
     replace,
@@ -91,6 +92,46 @@ class PeftModelForSequenceClassification(PeftModelForSequenceClassification):
             prompts = prompts.to(inputs_embeds.dtype)
             inputs_embeds = torch.cat((prompts, inputs_embeds), dim=1)
             return self.base_model(inputs_embeds=inputs_embeds, **kwargs)
+
+
+def _is_peft_version_error(exc: Exception) -> bool:
+    return "version of PEFT you are using is not compatible" in str(exc)
+
+
+def add_adapter_compat(
+    module: nn.Module,
+    peft_config: PeftConfig,
+    adapter_name: str = "default",
+) -> nn.Module:
+    add_adapter = getattr(module, "add_adapter", None)
+    if callable(add_adapter):
+        try:
+            add_adapter(peft_config, adapter_name=adapter_name)
+            return module
+        except TypeError:
+            try:
+                add_adapter(peft_config)
+                return module
+            except TypeError:
+                pass
+            except ValueError as exc:
+                if not _is_peft_version_error(exc):
+                    raise
+        except ValueError as exc:
+            if not _is_peft_version_error(exc):
+                raise
+
+        logging.warning(
+            "%s.add_adapter is incompatible with the installed PEFT version; "
+            "falling back to inject_adapter_in_model().",
+            type(module).__name__,
+        )
+
+    return inject_adapter_in_model(
+        peft_config,
+        module,
+        adapter_name=adapter_name,
+    )
 
 
 class PeftCheckpointMixin(CheckpointMixin):

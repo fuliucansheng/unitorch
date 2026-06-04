@@ -31,6 +31,7 @@ from unitorch.cli.models.diffusers import (
     pretrained_stable_infos,
     pretrained_stable_extensions_infos,
     load_weight,
+    load_wan_text_weight,
 )
 from unitorch.cli.models.diffusion_utils import export_to_video
 
@@ -47,6 +48,7 @@ class WanForImage2VideoFastAPIPipeline(WanForImage2VideoGeneration):
         num_train_timesteps: Optional[int] = 1000,
         num_infer_timesteps: Optional[int] = 50,
         boundary_ratio: Optional[float] = 0.9,
+        expand_timesteps: Optional[bool] = False,
         seed: Optional[int] = 1123,
         gradient_checkpointing: Optional[bool] = False,
         weight_path: Optional[Union[str, List[str]]] = None,
@@ -66,6 +68,7 @@ class WanForImage2VideoFastAPIPipeline(WanForImage2VideoGeneration):
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             boundary_ratio=boundary_ratio,
+            expand_timesteps=expand_timesteps,
             seed=seed,
             gradient_checkpointing=gradient_checkpointing,
         )
@@ -127,10 +130,8 @@ class WanForImage2VideoFastAPIPipeline(WanForImage2VideoGeneration):
         config_path = cached_path(config_path)
 
         config2_path = config2_path or config.getoption("config2_path", None)
-        config2_path = pop_value(
-            config2_path,
-            nested_dict_value(pretrained_infos, "transformer2", "config"),
-        )
+        if config2_path is None:
+            config2_path = nested_dict_value(pretrained_infos, "transformer2", "config")
 
         if config2_path is not None:
             config2_path = cached_path(config2_path)
@@ -176,6 +177,10 @@ class WanForImage2VideoFastAPIPipeline(WanForImage2VideoGeneration):
             "boundary_ratio",
             nested_dict_value(pretrained_infos, "boundary_ratio") or 0.9,
         )
+        expand_timesteps = config.getoption(
+            "expand_timesteps",
+            nested_dict_value(pretrained_infos, "expand_timesteps") or False,
+        )
         seed = config.getoption("seed", 1123)
         gradient_checkpointing = config.getoption("gradient_checkpointing", False)
         device = config.getoption("device", "cpu") if device is None else device
@@ -192,9 +197,8 @@ class WanForImage2VideoFastAPIPipeline(WanForImage2VideoGeneration):
                     nested_dict_value(pretrained_infos, "transformer2", "weight"),
                     prefix_keys={"": "transformer2."},
                 ),
-                load_weight(
-                    nested_dict_value(pretrained_infos, "text", "weight"),
-                    prefix_keys={"": "text."},
+                load_wan_text_weight(
+                    nested_dict_value(pretrained_infos, "text", "weight")
                 ),
                 load_weight(
                     nested_dict_value(pretrained_infos, "vae", "weight"),
@@ -249,6 +253,7 @@ class WanForImage2VideoFastAPIPipeline(WanForImage2VideoGeneration):
             num_train_timesteps=num_train_timesteps,
             num_infer_timesteps=num_infer_timesteps,
             boundary_ratio=boundary_ratio,
+            expand_timesteps=expand_timesteps,
             seed=seed,
             gradient_checkpointing=gradient_checkpointing,
             weight_path=weight_path,
@@ -304,13 +309,13 @@ class WanForImage2VideoFastAPIPipeline(WanForImage2VideoGeneration):
         )
 
         outputs = self.pipeline(
-            image=inputs["vae_pixel_values"],
+            image=inputs["image_pixel_values"],
             prompt_embeds=prompt_outputs.prompt_embeds,
             negative_prompt_embeds=prompt_outputs.negative_prompt_embeds,
             generator=torch.Generator(device=self.pipeline.device).manual_seed(seed),
             num_inference_steps=num_timesteps,
-            height=inputs["vae_pixel_values"].size(-2),
-            width=inputs["vae_pixel_values"].size(-1),
+            height=inputs["image_pixel_values"].size(-2),
+            width=inputs["image_pixel_values"].size(-1),
             num_frames=num_frames,
             guidance_scale=guidance_scale,
             output_type="pt",
@@ -341,7 +346,7 @@ class WanForImage2VideoFastAPI(GenericFastAPI):
 
     def start(
         self,
-        pretrained_name: Optional[str] = "wan-v2.2-i2v-14b",
+        pretrained_name: Optional[str] = None,
         pretrained_lora_names: Optional[Union[str, List[str]]] = None,
         pretrained_lora_weights: Optional[Union[float, List[float]]] = 1.0,
         pretrained_lora_alphas: Optional[Union[float, List[float]]] = 32.0,

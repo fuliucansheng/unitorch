@@ -87,7 +87,7 @@ unitorch-infer examples/configs/generation/bart.ini --test_file path/to/test.tsv
 | **Vision** | BEiT, Swin Transformer, DINOv2, CLIP, SigLIP |
 | **Multimodal** | LLaVA, QWen3-VL, Chinese CLIP |
 | **Image Generation** | FLUX (StableFlux), QWenImage |
-| **Video Generation** | Wan |
+| **Video Generation** | Wan (Wan2.2 TI2V-5B) |
 | **Detection** | DETR, Grounding DINO |
 | **Segmentation** | SAM, Mask2Former, SegFormer, BRIA |
 | **Depth Estimation** | DPT |

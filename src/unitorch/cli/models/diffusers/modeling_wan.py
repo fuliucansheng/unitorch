@@ -26,6 +26,7 @@ from unitorch.cli.models.diffusers import (
     pretrained_stable_infos,
     pretrained_stable_extensions_infos,
     load_weight,
+    load_wan_text_weight,
 )
 
 
@@ -44,6 +45,7 @@ class WanForText2VideoGeneration(_WanForText2VideoGeneration):
         freeze_text_encoder: Optional[bool] = True,
         snr_gamma: Optional[float] = 5.0,
         boundary_ratio: Optional[float] = 0.9,
+        expand_timesteps: Optional[bool] = False,
         seed: Optional[int] = 1123,
         gradient_checkpointing: Optional[bool] = True,
     ):
@@ -59,6 +61,7 @@ class WanForText2VideoGeneration(_WanForText2VideoGeneration):
             freeze_text_encoder=freeze_text_encoder,
             snr_gamma=snr_gamma,
             boundary_ratio=boundary_ratio,
+            expand_timesteps=expand_timesteps,
             seed=seed,
             gradient_checkpointing=gradient_checkpointing,
         )
@@ -78,10 +81,8 @@ class WanForText2VideoGeneration(_WanForText2VideoGeneration):
         config_path = cached_path(config_path)
 
         config2_path = config.getoption("config2_path", None)
-        config2_path = pop_value(
-            config2_path,
-            nested_dict_value(pretrained_infos, "transformer2", "config"),
-        )
+        if config2_path is None:
+            config2_path = nested_dict_value(pretrained_infos, "transformer2", "config")
 
         if config2_path is not None:
             config2_path = cached_path(config2_path)
@@ -116,6 +117,10 @@ class WanForText2VideoGeneration(_WanForText2VideoGeneration):
             "boundary_ratio",
             nested_dict_value(pretrained_infos, "boundary_ratio") or 0.9,
         )
+        expand_timesteps = config.getoption(
+            "expand_timesteps",
+            nested_dict_value(pretrained_infos, "expand_timesteps") or False,
+        )
         seed = config.getoption("seed", 1123)
         gradient_checkpointing = config.getoption("gradient_checkpointing", True)
 
@@ -131,6 +136,7 @@ class WanForText2VideoGeneration(_WanForText2VideoGeneration):
             freeze_text_encoder=freeze_text_encoder,
             snr_gamma=snr_gamma,
             boundary_ratio=boundary_ratio,
+            expand_timesteps=expand_timesteps,
             seed=seed,
             gradient_checkpointing=gradient_checkpointing,
         )
@@ -148,9 +154,8 @@ class WanForText2VideoGeneration(_WanForText2VideoGeneration):
                     nested_dict_value(pretrained_infos, "transformer2", "weight"),
                     prefix_keys={"": "transformer2."},
                 ),
-                load_weight(
-                    nested_dict_value(pretrained_infos, "text", "weight"),
-                    prefix_keys={"": "text."},
+                load_wan_text_weight(
+                    nested_dict_value(pretrained_infos, "text", "weight")
                 ),
                 load_weight(
                     nested_dict_value(pretrained_infos, "vae", "weight"),
@@ -256,6 +261,7 @@ class WanForImage2VideoGeneration(_WanForImage2VideoGeneration):
         freeze_text_encoder: Optional[bool] = True,
         snr_gamma: Optional[float] = 5.0,
         boundary_ratio: Optional[float] = 0.9,
+        expand_timesteps: Optional[bool] = False,
         seed: Optional[int] = 1123,
         gradient_checkpointing: Optional[bool] = True,
     ):
@@ -271,6 +277,7 @@ class WanForImage2VideoGeneration(_WanForImage2VideoGeneration):
             freeze_text_encoder=freeze_text_encoder,
             snr_gamma=snr_gamma,
             boundary_ratio=boundary_ratio,
+            expand_timesteps=expand_timesteps,
             seed=seed,
             gradient_checkpointing=gradient_checkpointing,
         )
@@ -290,10 +297,8 @@ class WanForImage2VideoGeneration(_WanForImage2VideoGeneration):
         config_path = cached_path(config_path)
 
         config2_path = config.getoption("config2_path", None)
-        config2_path = pop_value(
-            config2_path,
-            nested_dict_value(pretrained_infos, "transformer2", "config"),
-        )
+        if config2_path is None:
+            config2_path = nested_dict_value(pretrained_infos, "transformer2", "config")
 
         if config2_path is not None:
             config2_path = cached_path(config2_path)
@@ -328,6 +333,10 @@ class WanForImage2VideoGeneration(_WanForImage2VideoGeneration):
             "boundary_ratio",
             nested_dict_value(pretrained_infos, "boundary_ratio") or 0.9,
         )
+        expand_timesteps = config.getoption(
+            "expand_timesteps",
+            nested_dict_value(pretrained_infos, "expand_timesteps") or False,
+        )
         seed = config.getoption("seed", 1123)
         gradient_checkpointing = config.getoption("gradient_checkpointing", True)
 
@@ -343,6 +352,7 @@ class WanForImage2VideoGeneration(_WanForImage2VideoGeneration):
             freeze_text_encoder=freeze_text_encoder,
             snr_gamma=snr_gamma,
             boundary_ratio=boundary_ratio,
+            expand_timesteps=expand_timesteps,
             seed=seed,
             gradient_checkpointing=gradient_checkpointing,
         )
@@ -360,9 +370,8 @@ class WanForImage2VideoGeneration(_WanForImage2VideoGeneration):
                     nested_dict_value(pretrained_infos, "transformer2", "weight"),
                     prefix_keys={"": "transformer2."},
                 ),
-                load_weight(
-                    nested_dict_value(pretrained_infos, "text", "weight"),
-                    prefix_keys={"": "text."},
+                load_wan_text_weight(
+                    nested_dict_value(pretrained_infos, "text", "weight")
                 ),
                 load_weight(
                     nested_dict_value(pretrained_infos, "vae", "weight"),
@@ -438,6 +447,7 @@ class WanForImage2VideoGeneration(_WanForImage2VideoGeneration):
         self,
         input_ids: torch.Tensor,
         negative_input_ids: torch.Tensor,
+        image_pixel_values: torch.Tensor,
         vae_pixel_values: torch.Tensor,
         attention_mask: Optional[torch.Tensor] = None,
         negative_attention_mask: Optional[torch.Tensor] = None,
@@ -447,6 +457,7 @@ class WanForImage2VideoGeneration(_WanForImage2VideoGeneration):
         outputs = super().generate(
             input_ids=input_ids,
             negative_input_ids=negative_input_ids,
+            image_pixel_values=image_pixel_values,
             vae_pixel_values=vae_pixel_values,
             attention_mask=attention_mask,
             negative_attention_mask=negative_attention_mask,

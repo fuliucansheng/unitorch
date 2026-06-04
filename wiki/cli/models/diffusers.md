@@ -12,6 +12,8 @@
 !!! tip
     **`core/model/diffusers/text2video/wan`** is the section for configuration of WanForText2VideoGeneration.
 
+The Wan example configs in this repository default to the unified `wan-v2.2-ti2v-5b` checkpoint for real text-to-video and image-to-video runs.
+
 ::: unitorch.cli.models.diffusers.modeling_wan.WanForText2VideoGeneration
 
 ## WanForImage2VideoGeneration

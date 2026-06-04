@@ -35,9 +35,11 @@ from unitorch.models import (
     GenericModel,
     GenericOutputs,
 )
-from unitorch.models.peft import GenericPeftModel
+from unitorch.models.peft import GenericPeftModel, add_adapter_compat
 
 class GenericWanLoraModel(GenericPeftModel):
+    text_target_modules = ["q", "k", "v", "o"]
+
     prefix_keys_in_state_dict = {
         # vae weights
         "^encoder.*": "vae.",
@@ -64,6 +66,7 @@ class GenericWanLoraModel(GenericPeftModel):
         num_infer_timesteps: Optional[int] = 50,
         snr_gamma: Optional[float] = 5.0,
         boundary_ratio: Optional[float] = 0.9,
+        expand_timesteps: Optional[bool] = False,
         lora_r: Optional[int] = 16,
         lora_alpha: Optional[int] = 32,
         lora_dropout: Optional[float] = 0.05,
@@ -82,6 +85,7 @@ class GenericWanLoraModel(GenericPeftModel):
         self.num_train_timesteps = num_train_timesteps
         self.num_infer_timesteps = num_infer_timesteps
         self.snr_gamma = snr_gamma
+        self.expand_timesteps = expand_timesteps
 
         config_dict = json.load(open(config_path))
         self.transformer = WanTransformer3DModel.from_config(config_dict).to(
@@ -124,7 +128,7 @@ class GenericWanLoraModel(GenericPeftModel):
             for param in self.transformer2.parameters():
                 param.requires_grad = False
 
-        lora_config = LoraConfig(
+        transformer_lora_config = LoraConfig(
             r=lora_r,
             lora_alpha=lora_alpha,
             init_lora_weights="gaussian",
@@ -133,11 +137,23 @@ class GenericWanLoraModel(GenericPeftModel):
             target_modules=target_modules,
         )
         if enable_text_adapter:
-            self.text.add_adapter(lora_config)
+            text_lora_config = LoraConfig(
+                r=lora_r,
+                lora_alpha=lora_alpha,
+                init_lora_weights="gaussian",
+                lora_dropout=lora_dropout,
+                fan_in_fan_out=False,
+                target_modules=self.text_target_modules,
+            )
+            self.text = add_adapter_compat(self.text, text_lora_config)
         if enable_transformer_adapter:
-            self.transformer.add_adapter(lora_config)
+            self.transformer = add_adapter_compat(
+                self.transformer, transformer_lora_config
+            )
             if hasattr(self, "transformer2"):
-                self.transformer2.add_adapter(lora_config)
+                self.transformer2 = add_adapter_compat(
+                    self.transformer2, transformer_lora_config
+                )
 
     def get_sigmas(self, timesteps, n_dim=4, dtype=torch.float32):
         sigmas = self.scheduler.sigmas.to(device=self.device, dtype=dtype)
@@ -192,6 +208,7 @@ class WanLoraForText2VideoGeneration(GenericWanLoraModel):
         num_infer_timesteps: Optional[int] = 50,
         snr_gamma: Optional[float] = 5.0,
         boundary_ratio: Optional[float] = 0.9,
+        expand_timesteps: Optional[bool] = False,
         lora_r: Optional[int] = 16,
         lora_alpha: Optional[int] = 32,
         lora_dropout: Optional[float] = 0.05,
@@ -216,6 +233,7 @@ class WanLoraForText2VideoGeneration(GenericWanLoraModel):
             num_infer_timesteps=num_infer_timesteps,
             snr_gamma=snr_gamma,
             boundary_ratio=boundary_ratio,
+            expand_timesteps=expand_timesteps,
             lora_r=lora_r,
             lora_alpha=lora_alpha,
             lora_dropout=lora_dropout,
@@ -231,6 +249,7 @@ class WanLoraForText2VideoGeneration(GenericWanLoraModel):
             if hasattr(self, "transformer2"):
                 self.transformer2.enable_gradient_checkpointing()
 
+        pipeline_boundary_ratio = self.boundary_ratio if hasattr(self, "transformer2") else None
         self.pipeline = WanPipeline(
             vae=self.vae,
             text_encoder=self.text,
@@ -238,7 +257,7 @@ class WanLoraForText2VideoGeneration(GenericWanLoraModel):
             transformer_2=getattr(self, "transformer2", None),
             scheduler=self.scheduler,
             tokenizer=None,
-            boundary_ratio=self.boundary_ratio,
+            boundary_ratio=pipeline_boundary_ratio,
         )
         self.pipeline.set_progress_bar_config(disable=True)
 
@@ -357,6 +376,7 @@ class WanLoraForImage2VideoGeneration(GenericWanLoraModel):
         num_infer_timesteps: Optional[int] = 50,
         snr_gamma: Optional[float] = 5.0,
         boundary_ratio: Optional[float] = 0.9,
+        expand_timesteps: Optional[bool] = False,
         lora_r: Optional[int] = 16,
         lora_alpha: Optional[int] = 32,
         lora_dropout: Optional[float] = 0.05,
@@ -381,6 +401,7 @@ class WanLoraForImage2VideoGeneration(GenericWanLoraModel):
             num_infer_timesteps=num_infer_timesteps,
             snr_gamma=snr_gamma,
             boundary_ratio=boundary_ratio,
+            expand_timesteps=expand_timesteps,
             lora_r=lora_r,
             lora_alpha=lora_alpha,
             lora_dropout=lora_dropout,
@@ -395,6 +416,8 @@ class WanLoraForImage2VideoGeneration(GenericWanLoraModel):
             if hasattr(self, "transformer2"):
                 self.transformer2.enable_gradient_checkpointing()
 
+        expand_timesteps = getattr(self, "expand_timesteps", False)
+        pipeline_boundary_ratio = self.boundary_ratio if hasattr(self, "transformer2") else None
         self.pipeline = WanImageToVideoPipeline(
             vae=self.vae,
             text_encoder=self.text,
@@ -404,7 +427,8 @@ class WanLoraForImage2VideoGeneration(GenericWanLoraModel):
             scheduler=self.scheduler,
             tokenizer=None,
             image_processor=None,
-            boundary_ratio=self.boundary_ratio,
+            boundary_ratio=pipeline_boundary_ratio,
+            expand_timesteps=expand_timesteps,
         )
         self.pipeline.set_progress_bar_config(disable=True)
 
@@ -452,55 +476,89 @@ class WanLoraForImage2VideoGeneration(GenericWanLoraModel):
         noise_latents = (1.0 - sigmas) * latents + sigmas * noise
 
         num_frames = pixel_values.shape[-3]
-
-        video_condition = torch.cat(
-            [
-                vae_pixel_values.unsqueeze(2),
-                vae_pixel_values.new_zeros(
-                    vae_pixel_values.shape[0],
-                    vae_pixel_values.shape[1],
-                    num_frames - 1,
-                    vae_pixel_values.shape[-2],
-                    vae_pixel_values.shape[-1],
-                    device=vae_pixel_values.device,
-                ),
-            ],
-            dim=2,
-        )
+        expand_timesteps = getattr(self, "expand_timesteps", False)
+        if expand_timesteps:
+            video_condition = vae_pixel_values.unsqueeze(2)
+        else:
+            video_condition = torch.cat(
+                [
+                    vae_pixel_values.unsqueeze(2),
+                    vae_pixel_values.new_zeros(
+                        vae_pixel_values.shape[0],
+                        vae_pixel_values.shape[1],
+                        num_frames - 1,
+                        vae_pixel_values.shape[-2],
+                        vae_pixel_values.shape[-1],
+                        device=vae_pixel_values.device,
+                    ),
+                ],
+                dim=2,
+            )
         latent_condition = self.vae.encode(video_condition).latent_dist.mode()
         latent_condition = latent_condition.to(latents.dtype)
         latent_condition = (latent_condition - latents_mean) * latents_std
 
-        mask_lat_size = torch.ones(
-            latents.shape[0],
-            1,
-            num_frames,
-            latents.shape[-2],
-            latents.shape[-1],
-            device=latents.device,
-            dtype=latents.dtype,
-        )
-        mask_lat_size[:, :, list(range(1, num_frames))] = 0
-        first_frame_mask = mask_lat_size[:, :, 0:1]
-        first_frame_mask = torch.repeat_interleave(
-            first_frame_mask, dim=2, repeats=self.pipeline.vae_scale_factor_temporal
-        )
-        mask_lat_size = torch.concat(
-            [first_frame_mask, mask_lat_size[:, :, 1:, :]], dim=2
-        )
-        mask_lat_size = mask_lat_size.view(
-            latents.shape[0],
-            -1,
-            self.pipeline.vae_scale_factor_temporal,
-            latents.shape[-2],
-            latents.shape[-1],
-        )
-        mask_lat_size = mask_lat_size.transpose(1, 2)
-        mask_lat_size = mask_lat_size.to(latent_condition.device)
-        condition_latents = torch.concat([mask_lat_size, latent_condition], dim=1)
-        latent_model_input = torch.cat([noise_latents, condition_latents], dim=1)
-
         encoder_hidden_states = self.text(input_ids, attention_mask)[0]
+        current_transformer = (
+            self.transformer
+            if use_transformer
+            else getattr(self, "transformer2", self.transformer)
+        )
+        if expand_timesteps:
+            first_frame_mask = torch.ones(
+                latents.shape[0],
+                1,
+                latents.shape[2],
+                latents.shape[-2],
+                latents.shape[-1],
+                device=latents.device,
+                dtype=latents.dtype,
+            )
+            first_frame_mask[:, :, 0] = 0
+            latent_model_input = (
+                (1.0 - first_frame_mask) * latent_condition
+                + first_frame_mask * noise_latents
+            )
+            patch_size = current_transformer.config.patch_size
+            timesteps = (
+                first_frame_mask[
+                    :,
+                    0,
+                    :: patch_size[0],
+                    :: patch_size[1],
+                    :: patch_size[2],
+                ]
+                * timesteps.view(-1, 1, 1, 1)
+            ).reshape(latents.shape[0], -1)
+        else:
+            mask_lat_size = torch.ones(
+                latents.shape[0],
+                1,
+                num_frames,
+                latents.shape[-2],
+                latents.shape[-1],
+                device=latents.device,
+                dtype=latents.dtype,
+            )
+            mask_lat_size[:, :, list(range(1, num_frames))] = 0
+            first_frame_mask = mask_lat_size[:, :, 0:1]
+            first_frame_mask = torch.repeat_interleave(
+                first_frame_mask, dim=2, repeats=self.pipeline.vae_scale_factor_temporal
+            )
+            mask_lat_size = torch.concat(
+                [first_frame_mask, mask_lat_size[:, :, 1:, :]], dim=2
+            )
+            mask_lat_size = mask_lat_size.view(
+                latents.shape[0],
+                -1,
+                self.pipeline.vae_scale_factor_temporal,
+                latents.shape[-2],
+                latents.shape[-1],
+            )
+            mask_lat_size = mask_lat_size.transpose(1, 2)
+            mask_lat_size = mask_lat_size.to(latent_condition.device)
+            condition_latents = torch.concat([mask_lat_size, latent_condition], dim=1)
+            latent_model_input = torch.cat([noise_latents, condition_latents], dim=1)
         if use_transformer:
             outputs = self.transformer(
                 latent_model_input,
@@ -530,6 +588,7 @@ class WanLoraForImage2VideoGeneration(GenericWanLoraModel):
         self,
         input_ids: torch.Tensor,
         negative_input_ids: torch.Tensor,
+        image_pixel_values: torch.Tensor,
         vae_pixel_values: torch.Tensor,
         attention_mask: Optional[torch.Tensor] = None,
         negative_attention_mask: Optional[torch.Tensor] = None,
@@ -544,15 +603,15 @@ class WanLoraForImage2VideoGeneration(GenericWanLoraModel):
         )
 
         frames = self.pipeline(
-            image=vae_pixel_values,
+            image=image_pixel_values,
             prompt_embeds=outputs.prompt_embeds,
             negative_prompt_embeds=outputs.negative_prompt_embeds,
             generator=torch.Generator(device=self.pipeline.device).manual_seed(
                 self.seed
             ),
             num_inference_steps=self.num_infer_timesteps,
-            height=vae_pixel_values.size(-2),
-            width=vae_pixel_values.size(-1),
+            height=image_pixel_values.size(-2),
+            width=image_pixel_values.size(-1),
             num_frames=num_frames,
             guidance_scale=guidance_scale,
             output_type="pt",

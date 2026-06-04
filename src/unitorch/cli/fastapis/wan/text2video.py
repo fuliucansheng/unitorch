@@ -30,6 +30,7 @@ from unitorch.cli.models.diffusers import (
     pretrained_stable_infos,
     pretrained_stable_extensions_infos,
     load_weight,
+    load_wan_text_weight,
 )
 from unitorch.cli.models.diffusion_utils import export_to_video
 
@@ -126,10 +127,8 @@ class WanForText2VideoFastAPIPipeline(WanForText2VideoGeneration):
         config_path = cached_path(config_path)
 
         config2_path = config2_path or config.getoption("config2_path", None)
-        config2_path = pop_value(
-            config2_path,
-            nested_dict_value(pretrained_infos, "transformer2", "config"),
-        )
+        if config2_path is None:
+            config2_path = nested_dict_value(pretrained_infos, "transformer2", "config")
 
         if config2_path is not None:
             config2_path = cached_path(config2_path)
@@ -191,9 +190,8 @@ class WanForText2VideoFastAPIPipeline(WanForText2VideoGeneration):
                     nested_dict_value(pretrained_infos, "transformer2", "weight"),
                     prefix_keys={"": "transformer2."},
                 ),
-                load_weight(
-                    nested_dict_value(pretrained_infos, "text", "weight"),
-                    prefix_keys={"": "text."},
+                load_wan_text_weight(
+                    nested_dict_value(pretrained_infos, "text", "weight")
                 ),
                 load_weight(
                     nested_dict_value(pretrained_infos, "vae", "weight"),
@@ -337,7 +335,7 @@ class WanForText2VideoFastAPI(GenericFastAPI):
 
     def start(
         self,
-        pretrained_name: Optional[str] = "wan-v2.2-t2v-14b",
+        pretrained_name: Optional[str] = None,
         pretrained_lora_names: Optional[Union[str, List[str]]] = None,
         pretrained_lora_weights: Optional[Union[float, List[float]]] = 1.0,
         pretrained_lora_alphas: Optional[Union[float, List[float]]] = 32.0,

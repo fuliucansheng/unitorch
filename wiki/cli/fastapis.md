@@ -138,6 +138,8 @@
 !!! tip
     **`core/fastapi/wan/text2video`** is the section for configuration of WanForText2VideoFastAPI.
 
+Use `examples/configs/fastapis/wan.ini` for a Wan-only FastAPI setup backed by the unified `wan-v2.2-ti2v-5b` checkpoint.
+
 ::: unitorch.cli.fastapis.wan.text2video.WanForText2VideoFastAPI
 
 ## WanForImage2VideoFastAPI
