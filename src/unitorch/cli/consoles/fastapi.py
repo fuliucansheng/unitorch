@@ -15,12 +15,8 @@ import logging
 import time
 import urllib.error
 import urllib.request
-import uvicorn
 import hashlib
 import unitorch.cli
-from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles
-from fastapi.middleware.cors import CORSMiddleware
 from unitorch.cli import Config
 from unitorch.cli import (
     import_library,
@@ -209,6 +205,11 @@ def _wait_for_health_check(config, process, log_file, timeout=None):
 
 
 def _run_foreground(config, pid_file):
+    import uvicorn
+    from fastapi import FastAPI
+    from fastapi.staticfiles import StaticFiles
+    from fastapi.middleware.cors import CORSMiddleware
+
     with open(pid_file, "w") as f:
         f.write(str(os.getpid()))
     atexit.register(lambda: os.path.exists(pid_file) and os.remove(pid_file))
