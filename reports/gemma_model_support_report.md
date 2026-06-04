@@ -16,8 +16,8 @@ This report covers the Gemma integration work completed on branch `feat/gemma-mo
 - Date: 2026-06-04
 - Repo: `/home/decu/my/unitorch`
 - Branch: `feat/gemma-model-support`
-- Final commit: `TBD_AFTER_COMMIT`
-- PR: `TBD_AFTER_PR`
+- Feature commit: `1b979fe61e9203e3e8f6a6e04d513c1ddd35bef0`
+- PR: `https://github.com/fuliucansheng/unitorch/pull/35`
 - Python: `3.10.18`
 - PyTorch: `2.10.0+cu128`
 - Transformers: `5.7.0`
