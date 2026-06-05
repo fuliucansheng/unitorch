@@ -93,6 +93,8 @@ def test_flux2_editing_fastapi_start_uses_config_pretrained(monkeypatch):
 
 
 def test_flux2_fastapi_health_check_timeout():
+    pytest.importorskip("fastapi")
+
     from unitorch.cli.consoles.fastapi import _health_check_timeout
 
     config = Config("examples/configs/fastapis/flux2.ini")
