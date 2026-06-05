@@ -97,3 +97,10 @@
     **`core/model/generation/peft/dpo/lora/qwen3_vl`** is the section for configuration of QWen3VLDPOLoraForGeneration.
 
 ::: unitorch.cli.models.peft.modeling_qwen_vl.QWen3VLDPOLoraForGeneration
+
+## LucyLoraForVideoEditingGeneration
+
+!!! tip
+    **`core/model/diffusers/peft/lora/video_editing/lucy`** is the section for configuration of LucyLoraForVideoEditingGeneration.
+
+::: unitorch.cli.models.peft.diffusers.modeling_lucy.LucyLoraForVideoEditingGeneration

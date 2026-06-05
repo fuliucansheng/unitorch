@@ -395,4 +395,5 @@ if is_diffusers_available():
         WanLoraForImage2VideoGeneration,
         Flux2LoraForText2ImageGeneration,
         Flux2LoraForImageEditingGeneration,
+        LucyLoraForVideoEditingGeneration,
     )

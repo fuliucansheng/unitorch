@@ -25,6 +25,7 @@ from unitorch.cli.models.diffusers import (
     pretrained_stable_infos,
     pretrained_stable_extensions_infos,
     load_weight,
+    load_wan_text_weight,
 )
 
 
@@ -102,9 +103,8 @@ def _lucy_state_dict(pretrained_infos, use_auth_token):
             prefix_keys={"": "transformer."},
             use_auth_token=use_auth_token,
         ),
-        load_weight(
+        load_wan_text_weight(
             nested_dict_value(pretrained_infos, "text", "weight"),
-            prefix_keys={"": "text."},
             use_auth_token=use_auth_token,
         ),
         load_weight(

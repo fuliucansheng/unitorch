@@ -8,6 +8,10 @@
 
 ::: unitorch.models.diffusers.WanForImage2VideoGeneration
 
+## LucyForVideoEditingGeneration
+
+::: unitorch.models.diffusers.LucyForVideoEditingGeneration
+
 ## QWenImageProcessor
 
 ::: unitorch.models.diffusers.QWenImageProcessor

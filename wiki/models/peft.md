@@ -59,3 +59,7 @@
 ## QWen3VLDPOLoraForGeneration
 
 ::: unitorch.models.peft.QWen3VLDPOLoraForGeneration
+
+## LucyLoraForVideoEditingGeneration
+
+::: unitorch.models.peft.LucyLoraForVideoEditingGeneration
