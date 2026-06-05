@@ -11,6 +11,8 @@ import unitorch.cli.fastapis.bria
 import unitorch.cli.fastapis.clip
 import unitorch.cli.fastapis.detr
 import unitorch.cli.fastapis.dpt
+import unitorch.cli.fastapis.gemma
+import unitorch.cli.fastapis.gemma_vl
 import unitorch.cli.fastapis.grounding_dino
 import unitorch.cli.fastapis.llama
 import unitorch.cli.fastapis.llava

@@ -83,9 +83,9 @@ unitorch-infer examples/configs/generation/bart.ini --test_file path/to/test.tsv
 
 | Domain | Models |
 |--------|--------|
-| **Language** | BERT, RoBERTa, XLM-RoBERTa, BART, MBart, LLaMA, Mistral, QWen3 |
+| **Language** | BERT, RoBERTa, XLM-RoBERTa, BART, MBart, LLaMA, Mistral, QWen3, Gemma 4 |
 | **Vision** | BEiT, Swin Transformer, DINOv2, CLIP, SigLIP |
-| **Multimodal** | LLaVA, QWen3-VL, Chinese CLIP |
+| **Multimodal** | LLaVA, QWen3-VL, Gemma 4-VL, Chinese CLIP |
 | **Image Generation** | FLUX (StableFlux), QWenImage |
 | **Video Generation** | Wan (Wan2.2 TI2V-5B) |
 | **Detection** | DETR, Grounding DINO |

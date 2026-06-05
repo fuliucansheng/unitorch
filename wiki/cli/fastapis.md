@@ -56,6 +56,20 @@
 
 ::: unitorch.cli.fastapis.dpt.DPTForDepthEstimationFastAPI
 
+## GemmaFastAPI
+
+!!! tip
+    **`core/fastapi/gemma`** is the section for configuration of GemmaFastAPI.
+
+::: unitorch.cli.fastapis.gemma.GemmaFastAPI
+
+## GemmaVLFastAPI
+
+!!! tip
+    **`core/fastapi/gemma_vl`** is the section for configuration of GemmaVLFastAPI.
+
+::: unitorch.cli.fastapis.gemma_vl.GemmaVLFastAPI
+
 ## GroundingDinoForDetectionFastAPI
 
 !!! tip

@@ -144,7 +144,8 @@ class GenericModel(nn.Module, CheckpointMixin):
         if isinstance(module, (nn.Linear, nn.Embedding)):
             module.weight.data.normal_(mean=0.0, std=0.02)
         if isinstance(module, nn.LayerNorm):
-            module.bias.data.zero_()
+            if module.bias is not None:
+                module.bias.data.zero_()
             module.weight.data.fill_(1.0)
         if isinstance(module, nn.Linear) and module.bias is not None:
             module.bias.data.zero_()
@@ -180,6 +181,7 @@ import unitorch.models.chinese_clip
 import unitorch.models.clip
 import unitorch.models.dinov2
 import unitorch.models.dpt
+import unitorch.models.gemma
 import unitorch.models.grounding_dino
 import unitorch.models.kolors
 import unitorch.models.llama
