@@ -10,7 +10,8 @@ from transformers.models.clip.modeling_clip import (
     CLIPTextModel,
     CLIPVisionModel,
 )
-from unitorch.models import GenericModel, GenericOutputs
+from unitorch.models import GenericModel
+from unitorch.models.clip.processing import ClipProcessor
 from unitorch.models.peft import (
     PeftModelForSequenceClassification,
     GenericPeftModel,
@@ -60,6 +61,25 @@ class ClipForMatching(GenericModel):
 
         self.init_weights()
 
+    def get_image_features(self, pixel_values: torch.Tensor) -> torch.Tensor:
+        vision_outputs = self.vision_model(
+            pixel_values=pixel_values,
+        )
+        return self.visual_projection(vision_outputs[1])
+
+    def get_text_features(
+        self,
+        input_ids: torch.Tensor,
+        attention_mask: torch.Tensor,
+        position_ids: torch.Tensor,
+    ) -> torch.Tensor:
+        text_outputs = self.text_model(
+            input_ids=input_ids,
+            attention_mask=attention_mask,
+            position_ids=position_ids,
+        )
+        return self.text_projection(text_outputs[1])
+
     def forward(
         self,
         input_ids: torch.Tensor,
@@ -83,21 +103,14 @@ class ClipForMatching(GenericModel):
         Returns:
             tuple[torch.Tensor, torch.Tensor]: (text_embeds, image_embeds).
         """
-        vision_outputs = self.vision_model(
+        image_embeds = self.get_image_features(
             pixel_values=pixel_values,
         )
-
-        text_outputs = self.text_model(
+        text_embeds = self.get_text_features(
             input_ids=input_ids,
             attention_mask=attention_mask,
             position_ids=position_ids,
         )
-
-        image_embeds = vision_outputs[1]
-        image_embeds = self.visual_projection(image_embeds)
-
-        text_embeds = text_outputs[1]
-        text_embeds = self.text_projection(text_embeds)
 
         return (text_embeds, image_embeds)
 
@@ -253,6 +266,122 @@ class ClipLoraForMatching(GenericPeftModel, PeftWeightLoaderMixin):
         scores = torch.sum(text_embeds * image_embeds, dim=-1, keepdim=True)
 
         outputs = self.classifier(scores)
+        return outputs
+
+
+class ClipLoraForImageClassificationV2(GenericPeftModel, PeftWeightLoaderMixin):
+    prefix_keys_in_state_dict = {
+        "^(?!peft_model\.base_model\.model\.).*": "peft_model.base_model.model."
+    }
+    replace_keys_in_state_dict = {
+        "q_proj.weight": "q_proj.base_layer.weight",
+        "q_proj.bias": "q_proj.base_layer.bias",
+        "v_proj.weight": "v_proj.base_layer.weight",
+        "v_proj.bias": "v_proj.base_layer.bias",
+    }
+    modules_to_save_checkpoints = ["lora", "output_projection", "classifier"]
+    replace_keys_in_peft_state_dict = {
+        ".weight": ".base_layer.weight",
+        ".bias": ".base_layer.bias",
+        "output_projection.base_layer.": "output_projection.",
+        "classifier.base_layer.": "classifier.",
+    }
+
+    def __init__(
+        self,
+        config_path: str,
+        labels: List[str],
+        vocab_path: Optional[str] = None,
+        merge_path: Optional[str] = None,
+        vision_config_path: Optional[str] = None,
+        projection_dim: Optional[int] = None,
+        lora_r: Optional[int] = 16,
+        lora_alpha: Optional[int] = 32,
+        lora_dropout: Optional[float] = 0.05,
+        fan_in_fan_out: Optional[bool] = True,
+        target_modules: Optional[Union[List[str], str]] = ["q_proj", "v_proj"],
+        output_embed_dim: Optional[int] = None,
+        max_seq_length: Optional[int] = 128,
+    ):
+        super().__init__()
+
+        if projection_dim is None:
+            projection_dim = CLIPConfig.from_json_file(
+                config_path
+            ).projection_dim
+
+        self.peft_config = LoraConfig(
+            r=lora_r,
+            lora_alpha=lora_alpha,
+            lora_dropout=lora_dropout,
+            fan_in_fan_out=fan_in_fan_out,
+            target_modules=target_modules,
+        )
+        base_model = ClipForMatching(
+            config_path=config_path,
+            projection_dim=projection_dim,
+        )
+        self.peft_model = PeftModelForSequenceClassification(
+            base_model,
+            self.peft_config,
+        )
+
+        self.output_embed_dim = output_embed_dim
+        if output_embed_dim is not None:
+            self.output_projection = nn.Linear(
+                projection_dim,
+                output_embed_dim,
+            )
+        else:
+            self.output_projection = None
+        self.classifier = nn.Linear(1, 1)
+
+        self.processor = ClipProcessor(
+            vocab_path=vocab_path,
+            merge_path=merge_path,
+            vision_config_path=vision_config_path,
+            max_seq_length=max_seq_length,
+        )
+        if labels is None or len(labels) == 0:
+            raise ValueError("labels must be provided for ClipLoraForClassification")
+        self.labels_inputs = self.get_label_inputs(labels)
+        self.labels_embeds = None
+
+        self.init_weights()
+        self.classifier.weight.data.fill_(5.0)
+
+    def get_label_inputs(self, texts: List[str]):
+        input_ids, attention_mask, position_ids = [], [], []
+        for text in texts:
+            inputs = self.processor.text_classification(text)
+            input_ids.append(inputs.input_ids)
+            attention_mask.append(inputs.attention_mask)
+            position_ids.append(inputs.position_ids)
+
+        return {
+            "input_ids": torch.stack(input_ids, dim=0),
+            "attention_mask": torch.stack(attention_mask, dim=0),
+            "position_ids": torch.stack(position_ids, dim=0),
+        }
+
+    def forward(
+        self,
+        pixel_values: torch.Tensor,
+    ):
+        label_inputs = self.labels_inputs
+        input_ids = label_inputs["input_ids"].to(pixel_values.device)
+        attention_mask = label_inputs["attention_mask"].to(pixel_values.device)
+        position_ids = label_inputs["position_ids"].to(pixel_values.device)
+        text_embeds, image_embeds = self.peft_model(
+            input_ids=input_ids,
+            pixel_values=pixel_values,
+            attention_mask=attention_mask,
+            position_ids=position_ids,
+        )
+        text_embeds = text_embeds / text_embeds.norm(dim=-1, keepdim=True)
+        image_embeds = image_embeds / image_embeds.norm(dim=-1, keepdim=True)
+        scores = torch.einsum("ij,kj->ik", image_embeds, text_embeds)
+        outputs = self.classifier(scores.view(-1, 1)).view(-1, text_embeds.size(0))
         return outputs
 
 

@@ -1,5 +1,12 @@
 # unitorch.cli.models.peft
 
+## ClipLoraForClassification
+
+!!! tip
+    **`core/model/classification/peft/lora/clip`** is the section for configuration of ClipLoraForClassification.
+
+::: unitorch.cli.models.peft.modeling_clip.ClipLoraForClassification
+
 ## ClipLoraForMatching
 
 !!! tip

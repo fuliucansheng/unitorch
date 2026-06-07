@@ -1,6 +1,7 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
+import inspect
 from typing import Optional, Union
 
 from PIL import Image
@@ -15,6 +16,13 @@ from unitorch.models import (
 
 class ClipProcessor(HfImageClassificationProcessor, HfTextClassificationProcessor):
     """Multimodal processor for CLIP models."""
+
+    @staticmethod
+    def _build_tokenizer(vocab_path: str, merge_path: str) -> CLIPTokenizer:
+        init_params = inspect.signature(CLIPTokenizer.__init__).parameters
+        if "vocab_file" in init_params and "merges_file" in init_params:
+            return CLIPTokenizer(vocab_file=vocab_path, merges_file=merge_path)
+        return CLIPTokenizer(vocab=vocab_path, merges=merge_path)
 
     def __init__(
         self,
@@ -32,7 +40,7 @@ class ClipProcessor(HfImageClassificationProcessor, HfTextClassificationProcesso
         HfImageClassificationProcessor.__init__(self, vision_processor=vision_processor)
 
         tokenizer = (
-            CLIPTokenizer(vocab_file=vocab_path, merges_file=merge_path)
+            self._build_tokenizer(vocab_path=vocab_path, merge_path=merge_path)
             if vocab_path is not None and merge_path is not None
             else CLIPTokenizer.from_pretrained("openai/clip-vit-base-patch32")
         )

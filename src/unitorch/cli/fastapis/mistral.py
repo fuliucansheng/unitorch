@@ -177,11 +177,6 @@ class MistralForGenerationPipeline(_MistralForGeneration):
         temperature: Optional[float] = 1.0,
         top_k: Optional[int] = 50,
         top_p: Optional[float] = 1.0,
-        lora_checkpoints: Optional[Union[str, List[str]]] = [],
-        lora_weights: Optional[Union[float, List[float]]] = [],
-        lora_alphas: Optional[Union[float, List[float]]] = [],
-        lora_urls: Optional[Union[str, List[str]]] = [],
-        lora_files: Optional[Union[str, List[str]]] = [],
     ):
         if self._enable_cpu_offload:
             self.to(self._device)
@@ -194,50 +189,6 @@ class MistralForGenerationPipeline(_MistralForGeneration):
             k: v.to(device=self._device) if v is not None else v
             for k, v in inputs.items()
         }
-        if isinstance(lora_checkpoints, str):
-            lora_checkpoints = [lora_checkpoints]
-        if isinstance(lora_weights, float):
-            lora_weights = [lora_weights]
-        if isinstance(lora_alphas, float):
-            lora_alphas = [lora_alphas]
-        if isinstance(lora_urls, str):
-            lora_urls = [lora_urls]
-        if isinstance(lora_files, str):
-            lora_files = [lora_files]
-
-        assert (
-            len(lora_checkpoints) == len(lora_weights)
-            and len(lora_checkpoints) == len(lora_alphas)
-            and len(lora_checkpoints) == len(lora_urls)
-            and len(lora_checkpoints) == len(lora_files)
-        )
-        processed_lora_files, processed_lora_weights, processed_lora_alphas = [], [], []
-        for ckpt, url, file, weight, alpha in zip(
-            lora_checkpoints, lora_urls, lora_files, lora_weights, lora_alphas
-        ):
-            if ckpt is not None:
-                lora_file = nested_dict_value(
-                    pretrained_mistral_extensions_infos, ckpt, "weight"
-                )
-                processed_lora_files.append(lora_file)
-                processed_lora_weights.append(weight)
-                processed_lora_alphas.append(alpha)
-            elif url is not None and is_remote_url(url):
-                processed_lora_files.append(url)
-                processed_lora_weights.append(weight)
-                processed_lora_alphas.append(alpha)
-            elif file is not None:
-                processed_lora_files.append(file)
-                processed_lora_weights.append(weight)
-                processed_lora_alphas.append(alpha)
-
-        if len(processed_lora_files) > 0:
-            self.load_lora_weights(
-                processed_lora_files,
-                lora_weights=processed_lora_weights,
-                lora_alphas=processed_lora_alphas,
-            )
-
         outputs = super().generate(
             input_ids=inputs["input_ids"],
             num_beams=num_beams,
@@ -257,7 +208,6 @@ class MistralForGenerationPipeline(_MistralForGeneration):
             top_k=top_k,
             top_p=top_p,
         )
-        self.unload_lora_weights()
         decoded = self.processor.detokenize(outputs.sequences)
         if self._enable_cpu_offload:
             self.to("cpu")
@@ -321,11 +271,6 @@ class MistralForGenerationFastAPI(GenericFastAPI):
         temperature: Optional[float] = 1.0,
         top_k: Optional[int] = 50,
         top_p: Optional[float] = 1.0,
-        lora_checkpoints: Optional[Union[str, List[str]]] = [],
-        lora_weights: Optional[Union[float, List[float]]] = [],
-        lora_alphas: Optional[Union[float, List[float]]] = [],
-        lora_urls: Optional[Union[str, List[str]]] = [],
-        lora_files: Optional[Union[str, List[str]]] = [],
     ):
         assert self._pipe is not None
         async with self._lock:
@@ -348,11 +293,7 @@ class MistralForGenerationFastAPI(GenericFastAPI):
                 temperature=temperature,
                 top_k=top_k,
                 top_p=top_p,
-                lora_checkpoints=lora_checkpoints,
-                lora_weights=lora_weights,
-                lora_alphas=lora_alphas,
-                lora_urls=lora_urls,
-                lora_files=lora_files,
+                
             )
 
         return result

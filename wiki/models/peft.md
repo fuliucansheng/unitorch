@@ -1,5 +1,9 @@
 # unitorch.models.peft
 
+## ClipLoraForClassification
+
+::: unitorch.models.peft.ClipLoraForClassification
+
 ## ClipLoraForMatching
 
 ::: unitorch.models.peft.ClipLoraForMatching

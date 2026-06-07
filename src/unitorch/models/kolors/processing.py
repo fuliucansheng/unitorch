@@ -1,6 +1,7 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
+import inspect
 from PIL import Image
 from typing import Optional, Union
 from transformers import CLIPImageProcessor, CLIPTokenizer
@@ -12,6 +13,13 @@ from unitorch.models import (
 
 
 class KolorsMPSProcessor(HfImageClassificationProcessor, HfTextClassificationProcessor):
+    @staticmethod
+    def _build_tokenizer(vocab_path: str, merge_path: str) -> CLIPTokenizer:
+        init_params = inspect.signature(CLIPTokenizer.__init__).parameters
+        if "vocab_file" in init_params and "merges_file" in init_params:
+            return CLIPTokenizer(vocab_file=vocab_path, merges_file=merge_path)
+        return CLIPTokenizer(vocab=vocab_path, merges=merge_path)
+
     def __init__(
         self,
         vocab_path: Optional[str] = None,
@@ -39,7 +47,10 @@ class KolorsMPSProcessor(HfImageClassificationProcessor, HfTextClassificationPro
         HfImageClassificationProcessor.__init__(self, vision_processor=vision_processor)
 
         if vocab_path is not None and merge_path is not None:
-            tokenizer = CLIPTokenizer(vocab_file=vocab_path, merges_file=merge_path)
+            tokenizer = self._build_tokenizer(
+                vocab_path=vocab_path,
+                merge_path=merge_path,
+            )
         else:
             tokenizer = CLIPTokenizer.from_pretrained(
                 "laion/CLIP-ViT-H-14-laion2B-s32B-b79K"

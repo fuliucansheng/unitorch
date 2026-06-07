@@ -358,6 +358,7 @@ class PeftWeightLoaderMixin(nn.Module):
 
 
 from unitorch.models.peft.modeling_clip import (
+    ClipLoraForImageClassificationV2,
     ClipLoraForMatching,
     ClipLoraForTextMatching,
 )
