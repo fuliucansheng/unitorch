@@ -116,11 +116,6 @@ class SamForSegmentationPipeline(_SamForSegmentation):
         points: Optional[List[Tuple[int, int]]] = None,
         boxes: Optional[List[Tuple[int, int, int, int]]] = None,
         mask_threshold: Optional[float] = 0.1,
-        lora_checkpoints: Optional[Union[str, List[str]]] = [],
-        lora_weights: Optional[Union[float, List[float]]] = [],
-        lora_alphas: Optional[Union[float, List[float]]] = [],
-        lora_urls: Optional[Union[str, List[str]]] = [],
-        lora_files: Optional[Union[str, List[str]]] = [],
     ):
         if self._enable_cpu_offload:
             self.to(self._device)
@@ -170,49 +165,6 @@ class SamForSegmentationPipeline(_SamForSegmentation):
                 / original_sizes[0][0]
                 * reshaped_input_sizes[0][0]
             )
-        if isinstance(lora_checkpoints, str):
-            lora_checkpoints = [lora_checkpoints]
-        if isinstance(lora_weights, float):
-            lora_weights = [lora_weights]
-        if isinstance(lora_alphas, float):
-            lora_alphas = [lora_alphas]
-        if isinstance(lora_urls, str):
-            lora_urls = [lora_urls]
-        if isinstance(lora_files, str):
-            lora_files = [lora_files]
-
-        assert (
-            len(lora_checkpoints) == len(lora_weights)
-            and len(lora_checkpoints) == len(lora_alphas)
-            and len(lora_checkpoints) == len(lora_urls)
-            and len(lora_checkpoints) == len(lora_files)
-        )
-        processed_lora_files, processed_lora_weights, processed_lora_alphas = [], [], []
-        for ckpt, url, file, weight, alpha in zip(
-            lora_checkpoints, lora_urls, lora_files, lora_weights, lora_alphas
-        ):
-            if ckpt is not None:
-                processed_lora_files.append(
-                    nested_dict_value(pretrained_sam_extensions_infos, ckpt, "weight")
-                )
-                processed_lora_weights.append(weight)
-                processed_lora_alphas.append(alpha)
-            elif url is not None and is_remote_url(url):
-                processed_lora_files.append(url)
-                processed_lora_weights.append(weight)
-                processed_lora_alphas.append(alpha)
-            elif file is not None:
-                processed_lora_files.append(file)
-                processed_lora_weights.append(weight)
-                processed_lora_alphas.append(alpha)
-
-        if len(processed_lora_files) > 0:
-            self.load_lora_weights(
-                processed_lora_files,
-                lora_weights=processed_lora_weights,
-                lora_alphas=processed_lora_alphas,
-            )
-
         outputs = self.segment(
             pixel_values,
             input_points=input_points,
@@ -225,7 +177,6 @@ class SamForSegmentationPipeline(_SamForSegmentation):
             mask_threshold=mask_threshold,
             binarize=True,
         )[0]
-        self.unload_lora_weights()
         if len(processed_masks) == 0:
             return None
         first_mask = processed_masks[0, 0].permute(0, 1)
@@ -279,11 +230,6 @@ class SamForSegmentationFastAPI(GenericFastAPI):
         points: Optional[List] = None,
         boxes: Optional[List] = None,
         mask_threshold: float = 0.1,
-        lora_checkpoints: Optional[Union[str, List[str]]] = [],
-        lora_weights: Optional[Union[float, List[float]]] = [],
-        lora_alphas: Optional[Union[float, List[float]]] = [],
-        lora_urls: Optional[Union[str, List[str]]] = [],
-        lora_files: Optional[Union[str, List[str]]] = [],
     ):
         assert self._pipe is not None
         image_bytes = await image.read()
@@ -294,11 +240,7 @@ class SamForSegmentationFastAPI(GenericFastAPI):
                 points=points,
                 boxes=boxes,
                 mask_threshold=mask_threshold,
-                lora_checkpoints=lora_checkpoints,
-                lora_weights=lora_weights,
-                lora_alphas=lora_alphas,
-                lora_urls=lora_urls,
-                lora_files=lora_files,
+                
             )
 
         if mask_image is None:

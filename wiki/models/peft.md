@@ -1,5 +1,9 @@
 # unitorch.models.peft
 
+## ClipLoraForClassification
+
+::: unitorch.models.peft.ClipLoraForClassification
+
 ## ClipLoraForMatching
 
 ::: unitorch.models.peft.ClipLoraForMatching
@@ -59,3 +63,7 @@
 ## QWen3VLDPOLoraForGeneration
 
 ::: unitorch.models.peft.QWen3VLDPOLoraForGeneration
+
+## LucyLoraForVideoEditingGeneration
+
+::: unitorch.models.peft.LucyLoraForVideoEditingGeneration

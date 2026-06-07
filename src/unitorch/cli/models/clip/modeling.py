@@ -10,6 +10,7 @@ from unitorch.models.clip import (
     ClipForClassification as _ClipForClassification,
     ClipForTextClassification as _ClipForTextClassification,
     ClipForImageClassification as _ClipForImageClassification,
+    ClipForImageClassificationV2 as _ClipForImageClassificationV2,
     ClipForMatching as _ClipForMatching,
 )
 from unitorch.cli import (
@@ -280,6 +281,109 @@ class ClipForImageClassification(_ClipForImageClassification):
             config_path=config_path,
             projection_dim=projection_dim,
             num_classes=num_classes,
+            freeze_base_model=freeze_base_model,
+            gradient_checkpointing=gradient_checkpointing,
+        )
+        pretrained_weight_path = config.getoption("pretrained_weight_path", None)
+        weight_path = pop_value(
+            pretrained_weight_path,
+            nested_dict_value(pretrained_clip_infos, pretrained_name, "weight"),
+            check_none=False,
+        )
+        if weight_path is not None:
+            inst.from_pretrained(weight_path)
+
+        return inst
+
+    @autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"))
+    def forward(
+        self,
+        pixel_values: torch.Tensor,
+    ):
+        outputs = super().forward(pixel_values=pixel_values)
+        return ClassificationOutputs(outputs=outputs)
+
+
+@register_model("core/model/classification/clip/image/v2")
+class ClipForImageClassificationV2(_ClipForImageClassificationV2):
+    """CLIP model for prompt-based image classification with end-to-end finetuning."""
+
+    def __init__(
+        self,
+        config_path: str,
+        labels: List[str],
+        vocab_path: Optional[str] = None,
+        merge_path: Optional[str] = None,
+        vision_config_path: Optional[str] = None,
+        projection_dim: Optional[int] = None,
+        output_embed_dim: Optional[int] = None,
+        max_seq_length: Optional[int] = 128,
+        freeze_base_model: Optional[bool] = False,
+        gradient_checkpointing: Optional[bool] = False,
+    ):
+        super().__init__(
+            config_path=config_path,
+            labels=labels,
+            vocab_path=vocab_path,
+            merge_path=merge_path,
+            vision_config_path=vision_config_path,
+            projection_dim=projection_dim,
+            output_embed_dim=output_embed_dim,
+            max_seq_length=max_seq_length,
+            freeze_base_model=freeze_base_model,
+            gradient_checkpointing=gradient_checkpointing,
+        )
+
+    @classmethod
+    @config_defaults_init("core/model/classification/clip/image/v2")
+    def from_config(cls, config, **kwargs):
+        config.set_default_section("core/model/classification/clip/image/v2")
+        pretrained_name = config.getoption("pretrained_name", "clip-vit-base-patch16")
+
+        config_path = config.getoption("config_path", None)
+        config_path = pop_value(
+            config_path,
+            nested_dict_value(pretrained_clip_infos, pretrained_name, "config"),
+        )
+        config_path = cached_path(config_path)
+
+        vocab_path = config.getoption("vocab_path", None)
+        vocab_path = pop_value(
+            vocab_path,
+            nested_dict_value(pretrained_clip_infos, pretrained_name, "vocab"),
+        )
+        vocab_path = cached_path(vocab_path)
+
+        merge_path = config.getoption("merge_path", None)
+        merge_path = pop_value(
+            merge_path,
+            nested_dict_value(pretrained_clip_infos, pretrained_name, "merge"),
+        )
+        merge_path = cached_path(merge_path)
+
+        vision_config_path = config.getoption("vision_config_path", None)
+        vision_config_path = pop_value(
+            vision_config_path,
+            nested_dict_value(pretrained_clip_infos, pretrained_name, "vision_config"),
+        )
+        vision_config_path = cached_path(vision_config_path)
+
+        projection_dim = config.getoption("projection_dim", None)
+        output_embed_dim = config.getoption("output_embed_dim", None)
+        labels = config.getoption("labels", None)
+        max_seq_length = config.getoption("max_seq_length", 128)
+        freeze_base_model = config.getoption("freeze_base_model", False)
+        gradient_checkpointing = config.getoption("gradient_checkpointing", False)
+
+        inst = cls(
+            config_path=config_path,
+            labels=labels,
+            vocab_path=vocab_path,
+            merge_path=merge_path,
+            vision_config_path=vision_config_path,
+            projection_dim=projection_dim,
+            output_embed_dim=output_embed_dim,
+            max_seq_length=max_seq_length,
             freeze_base_model=freeze_base_model,
             gradient_checkpointing=gradient_checkpointing,
         )

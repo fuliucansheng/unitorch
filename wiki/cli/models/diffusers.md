@@ -23,6 +23,20 @@ The Wan example configs in this repository default to the unified `wan-v2.2-ti2v
 
 ::: unitorch.cli.models.diffusers.modeling_wan.WanForImage2VideoGeneration
 
+## LucyProcessor
+
+!!! tip
+    **`core/process/diffusion/lucy`** is the section for configuration of LucyProcessor.
+
+::: unitorch.cli.models.diffusers.processing_lucy.LucyProcessor
+
+## LucyForVideoEditingGeneration
+
+!!! tip
+    **`core/model/diffusers/video_editing/lucy`** is the section for configuration of LucyForVideoEditingGeneration.
+
+::: unitorch.cli.models.diffusers.modeling_lucy.LucyForVideoEditingGeneration
+
 ## QWenImageProcessor
 
 !!! tip

@@ -13,3 +13,6 @@ from unitorch.models.peft.diffusers.modeling_flux2 import (
     Flux2LoraForText2ImageGeneration,
     Flux2LoraForImageEditingGeneration,
 )
+from unitorch.models.peft.diffusers.modeling_lucy import (
+    LucyLoraForVideoEditingGeneration,
+)

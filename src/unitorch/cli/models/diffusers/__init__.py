@@ -313,11 +313,16 @@ pretrained_stable_extensions_infos = {}
 from unitorch.cli.models.diffusion_utils import load_weight
 
 
-def load_wan_text_weight(weight_path, replace_keys=None):
+def load_wan_text_weight(
+    weight_path,
+    replace_keys=None,
+    use_auth_token=None,
+):
     state_dict = load_weight(
         weight_path,
         prefix_keys={"": "text."},
         replace_keys=replace_keys,
+        use_auth_token=use_auth_token,
     )
     shared_key = "text.shared.weight"
     embed_key = "text.encoder.embed_tokens.weight"
