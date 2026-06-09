@@ -39,7 +39,7 @@ unitorch-train = "unitorch.cli.consoles.train:cli_main"
 unitorch-eval = "unitorch.cli.consoles.eval:cli_main"
 unitorch-infer = "unitorch.cli.consoles.infer:cli_main"
 unitorch-fastapi= "unitorch.cli.consoles.fastapi:cli_main"
-unitorch-fastapi-gateway= "unitorch.cli.consoles.fastapi:cli_gateway"
+unitorch-gateway= "unitorch.cli.consoles.gateway:cli_main"
 unitorch-copilot = "unitorch.cli.consoles.copilot:main"
 unitorch-copilot-cli = "unitorch.cli.consoles.copilot:cli_main"
 
