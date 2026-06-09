@@ -2,11 +2,84 @@
 # Licensed under the MIT License.
 
 import atexit
+import gc
 import torch
 import numpy as np
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Mapping, Optional, Union
 from PIL import Image
 from vllm import LLM, SamplingParams
+from vllm.inputs import ModalityData
+from vllm.model_executor.models.qwen2_vl import (
+    Qwen2VLMultiModalDataParser as _Qwen2VLMultiModalDataParser,
+    _create_qwen2vl_field_factory,
+)
+from vllm.multimodal.inputs import ImageItem, VideoItem
+from vllm.multimodal.parse import DictEmbeddingItems, ModalityDataItems
+
+from unitorch.utils.decorators import replace
+
+
+@replace(_Qwen2VLMultiModalDataParser)
+class Qwen2VLMultiModalDataParserV2(_Qwen2VLMultiModalDataParser):
+    """Allow dict-form Qwen2/Qwen3-VL inputs to carry pixel tensors directly."""
+
+    @staticmethod
+    def _get_required_vision_fields(
+        data: Mapping[str, torch.Tensor],
+        *,
+        pixel_key: str,
+        embed_key: str,
+        grid_key: str,
+    ) -> set[str]:
+        if pixel_key in data:
+            return {pixel_key, grid_key}
+        if embed_key in data:
+            return {embed_key, grid_key}
+
+        data_keys = set(data.keys())
+        raise ValueError(
+            f"The data should contain one of {{{pixel_key!r}, {embed_key!r}}} "
+            f"together with {grid_key!r}, but only found the following keys: "
+            f"{data_keys}"
+        )
+
+    def _parse_image_data(
+        self,
+        data: dict[str, torch.Tensor] | ModalityData[ImageItem],
+    ) -> ModalityDataItems[Any, Any] | None:
+        if isinstance(data, dict):
+            return DictEmbeddingItems(
+                data,
+                modality="image",
+                required_fields=self._get_required_vision_fields(
+                    data,
+                    pixel_key="pixel_values",
+                    embed_key="image_embeds",
+                    grid_key="image_grid_thw",
+                ),
+                fields_factory=_create_qwen2vl_field_factory(self._spatial_merge_size),
+            )
+
+        return super()._parse_image_data(data)
+
+    def _parse_video_data(
+        self,
+        data: dict[str, torch.Tensor] | ModalityData[VideoItem],
+    ) -> ModalityDataItems[Any, Any] | None:
+        if isinstance(data, dict):
+            return DictEmbeddingItems(
+                data,
+                modality="video",
+                required_fields=self._get_required_vision_fields(
+                    data,
+                    pixel_key="pixel_values_videos",
+                    embed_key="video_embeds",
+                    grid_key="video_grid_thw",
+                ),
+                fields_factory=_create_qwen2vl_field_factory(self._spatial_merge_size),
+            )
+
+        return super()._parse_video_data(data)
 
 
 class VLLMVLForGeneration:
@@ -91,11 +164,34 @@ class VLLMVLForGeneration:
         pass
 
     def shutdown(self):
-        """Shutdown the vLLM engine and release GPU memory held by worker processes."""
-        try:
-            self.llm.llm_engine.engine_core.shutdown()
-        except Exception:
-            pass
+        """Shutdown the vLLM engine and release GPU/IPC resources held by worker processes."""
+        llm = getattr(self, "llm", None)
+        if llm is None:
+            return
+        engine = getattr(llm, "llm_engine", None)
+        if engine is None:
+            return
+        # Try shutdown from outermost layer inward so the highest-level
+        # teardown (which joins worker processes) runs first.
+        for target in (
+            engine,
+            getattr(engine, "engine_core", None),
+        ):
+            if target is not None and hasattr(target, "shutdown"):
+                try:
+                    target.shutdown()
+                    break
+                except Exception:
+                    pass
+        # Drop the strong reference so Python's GC can reclaim vLLM's internal
+        # shared-memory / semaphore objects before the resource_tracker checks.
+        self.llm = None
+        gc.collect()
+
+    def __del__(self):
+        # Belt-and-suspenders: catches cases where atexit never fires
+        # (e.g. SIGKILL, early GC before interpreter teardown).
+        self.shutdown()
 
     def _decode_prompt(self, token_ids: List[int]) -> str:
         """

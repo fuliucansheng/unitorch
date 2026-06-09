@@ -134,6 +134,22 @@ class ImageProcessor:
         """Resize the image using Lanczos resampling."""
         return image.resize(size, resample=Image.LANCZOS)
 
+    @register_process("core/process/image/resize_longest_edge")
+    def _resize_longest_edge(
+        self,
+        image: Image.Image,
+        size: Optional[int] = 512,
+    ):
+        """Resize the image so its longest edge equals `size`, preserving aspect ratio."""
+        width, height = image.size
+        if width >= height:
+            new_width = size
+            new_height = round(height * size / width)
+        else:
+            new_height = size
+            new_width = round(width * size / height)
+        return image.resize((new_width, new_height), resample=Image.LANCZOS)
+
     @register_process("core/process/image/canny")
     def _canny(
         self,

@@ -2,6 +2,7 @@
 # Licensed under the MIT License.
 
 import atexit
+import gc
 import torch
 from typing import Any, Dict, List, Optional, Union
 from vllm import LLM, SamplingParams
@@ -83,11 +84,34 @@ class VLLMForGeneration:
         pass
 
     def shutdown(self):
-        """Shutdown the vLLM engine and release GPU memory held by worker processes."""
-        try:
-            self.llm.llm_engine.engine_core.shutdown()
-        except Exception:
-            pass
+        """Shutdown the vLLM engine and release GPU/IPC resources held by worker processes."""
+        llm = getattr(self, "llm", None)
+        if llm is None:
+            return
+        engine = getattr(llm, "llm_engine", None)
+        if engine is None:
+            return
+        # Try shutdown from outermost layer inward so the highest-level
+        # teardown (which joins worker processes) runs first.
+        for target in (
+            engine,
+            getattr(engine, "engine_core", None),
+        ):
+            if target is not None and hasattr(target, "shutdown"):
+                try:
+                    target.shutdown()
+                    break
+                except Exception:
+                    pass
+        # Drop the strong reference so Python's GC can reclaim vLLM's internal
+        # shared-memory / semaphore objects before the resource_tracker checks.
+        self.llm = None
+        gc.collect()
+
+    def __del__(self):
+        # Belt-and-suspenders: catches cases where atexit never fires
+        # (e.g. SIGKILL, early GC before interpreter teardown).
+        self.shutdown()
 
     def generate(
         self,
