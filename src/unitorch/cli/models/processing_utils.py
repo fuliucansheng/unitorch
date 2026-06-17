@@ -2,7 +2,7 @@
 # Licensed under the MIT License.
 
 import torch
-from typing import Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from unitorch.utils import pop_value
 from unitorch.cli import (
@@ -15,6 +15,7 @@ from unitorch.cli.models import (
     ModelInputs,
     ModelOutputs,
     ModelTargets,
+    ObjectInputs,
     TensorInputs,
     TensorSeqInputs,
     EmbeddingOutputs,
@@ -99,6 +100,14 @@ class PreProcessor:
         if shape is not None:
             features = features.reshape(shape)
         return _process_returns({key: features}, dtype=returns)
+
+    @register_process("core/process/object/inputs")
+    def _object_inputs(
+        self,
+        objects: Optional[Dict[str, Any]] = None,
+        **kwargs,
+    ):
+        return ObjectInputs(inputs=objects, **kwargs)
 
 
 class PostProcessor:

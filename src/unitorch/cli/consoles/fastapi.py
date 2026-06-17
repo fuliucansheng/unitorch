@@ -393,9 +393,6 @@ def fastapi(fastapi_action_or_config: str, config_path: str = None, **kwargs):
     else:
         raise ValueError(f"unknown fastapi action: {fastapi_action!r}")
 
-def gateway():
-    pass
-
 def cli_main():
     import traceback
 
@@ -404,6 +401,3 @@ def cli_main():
     except Exception:
         traceback.print_exc()
         raise
-
-def cli_gateway():
-    pass

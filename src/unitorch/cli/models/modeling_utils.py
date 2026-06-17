@@ -4,10 +4,18 @@
 import abc
 from dataclasses import dataclass, fields
 from itertools import chain
-from typing import Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 import torch
 import torch.distributed as dist
+
+
+def _merge_object_batches(values: List[Any]) -> Any:
+    if values[0] is None:
+        return None
+    if all(isinstance(value, list) for value in values):
+        return list(chain.from_iterable(values))
+    return values
 
 
 class TensorBatchMixin:
@@ -216,21 +224,103 @@ class TensorSeqMixin:
         return self.__list_tensors__
 
 
-class TensorMixMixin(TensorBatchMixin, TensorSeqMixin):
-    """Combines a batch tensor dict and a sequence tensor dict."""
+class ObjectBatchMixin:
+    """Holds a flat dict of arbitrary Python objects."""
+
+    def __init__(self, objects: Optional[Dict] = None, **kwargs):
+        self.__objects__: Dict = {}
+        for k, v in {**(objects or {}), **kwargs}.items():
+            if not hasattr(self, k):
+                setattr(self, k, v)
+            self.__objects__[k] = v
+        self.__post_init__()
+
+    def __post_init__(self):
+        if not hasattr(self, "__objects__"):
+            self.__objects__ = {}
+        for key, value in self.__objects__.items():
+            setattr(self, key, value)
+
+    @classmethod
+    def union(cls, *items, dim: int = 0):
+        if not items:
+            return cls()
+        keys = list(items[0].__objects__.keys())
+        for item in items:
+            assert list(item.__objects__.keys()) == keys
+        merged = {}
+        for key in keys:
+            parts = [item.__objects__[key] for item in items]
+            merged[key] = _merge_object_batches(parts)
+        return cls(**merged)
+
+    @classmethod
+    def stack(cls, *items, dim: int = 0):
+        if not items:
+            return cls()
+        keys = list(items[0].__objects__.keys())
+        for item in items:
+            assert list(item.__objects__.keys()) == keys
+        merged = {}
+        for key in keys:
+            parts = [item.__objects__[key] for item in items]
+            merged[key] = parts if parts[0] is not None else None
+        return cls(**merged)
+
+    def add(self, objects: Union[Dict, "ObjectBatchMixin"]):
+        src = objects if isinstance(objects, dict) else objects.__objects__
+        for key, value in src.items():
+            if key in self.__objects__:
+                raise ValueError(f"{key!r} already exists in objects.")
+            self.__objects__[key] = value
+            setattr(self, key, value)
+
+    def cpu(self, inplace: bool = False):
+        if inplace:
+            return
+        return ObjectBatchMixin(**self.__objects__)
+
+    def cuda(self, inplace: bool = False):
+        if inplace:
+            return
+        return ObjectBatchMixin(**self.__objects__)
+
+    def sync(self, inplace: bool = False):
+        updated = {}
+        for key, value in self.__objects__.items():
+            if value is not None:
+                buckets = [None for _ in range(dist.get_world_size())]
+                dist.all_gather_object(buckets, value)
+                updated[key] = _merge_object_batches(buckets)
+            else:
+                updated[key] = None
+        if inplace:
+            self.__objects__.update(updated)
+            return
+        return ObjectBatchMixin(**updated)
+
+    def dict(self) -> Dict:
+        return self.__objects__
+
+
+class TensorMixMixin(TensorBatchMixin, TensorSeqMixin, ObjectBatchMixin):
+    """Combines tensor, tensor-sequence, and object batch dictionaries."""
 
     def __init__(
         self,
         dict_of_tensors: Optional[Dict[str, torch.Tensor]] = None,
         dict_of_list_tensors: Optional[Dict[str, List[torch.Tensor]]] = None,
+        dict_of_objects: Optional[Dict[str, Any]] = None,
     ):
         self.__tensors__ = dict_of_tensors or {}
         self.__list_tensors__ = dict_of_list_tensors or {}
+        self.__objects__ = dict_of_objects or {}
         self.__post_init__()
 
     def __post_init__(self):
         TensorBatchMixin.__post_init__(self)
         TensorSeqMixin.__post_init__(self)
+        ObjectBatchMixin.__post_init__(self)
 
     @classmethod
     def union(cls, *items, dim: int = 0):
@@ -238,11 +328,14 @@ class TensorMixMixin(TensorBatchMixin, TensorSeqMixin):
             return cls()
         t_keys = list(items[0].__tensors__.keys())
         l_keys = list(items[0].__list_tensors__.keys())
+        o_keys = list(items[0].__objects__.keys())
         for item in items:
             if list(item.__tensors__.keys()) != t_keys:
                 raise ValueError("Tensor key mismatch in union.")
             if list(item.__list_tensors__.keys()) != l_keys:
                 raise ValueError("List-tensor key mismatch in union.")
+            if list(item.__objects__.keys()) != o_keys:
+                raise ValueError("Object key mismatch in union.")
         new_t = {
             k: (
                 torch.cat([i.__tensors__[k] for i in items], dim=dim)
@@ -259,7 +352,15 @@ class TensorMixMixin(TensorBatchMixin, TensorSeqMixin):
             )
             for k in l_keys
         }
-        return cls(dict_of_tensors=new_t, dict_of_list_tensors=new_l)
+        new_o = {
+            k: _merge_object_batches([i.__objects__[k] for i in items])
+            for k in o_keys
+        }
+        return cls(
+            dict_of_tensors=new_t,
+            dict_of_list_tensors=new_l,
+            dict_of_objects=new_o,
+        )
 
     @classmethod
     def stack(cls, *items, dim: int = 0):
@@ -267,11 +368,14 @@ class TensorMixMixin(TensorBatchMixin, TensorSeqMixin):
             return cls()
         t_keys = list(items[0].__tensors__.keys())
         l_keys = list(items[0].__list_tensors__.keys())
+        o_keys = list(items[0].__objects__.keys())
         for item in items:
             if list(item.__tensors__.keys()) != t_keys:
                 raise ValueError("Tensor key mismatch in stack.")
             if list(item.__list_tensors__.keys()) != l_keys:
                 raise ValueError("List-tensor key mismatch in stack.")
+            if list(item.__objects__.keys()) != o_keys:
+                raise ValueError("Object key mismatch in stack.")
         new_t = {
             k: (
                 torch.stack([i.__tensors__[k] for i in items], dim=dim)
@@ -288,43 +392,66 @@ class TensorMixMixin(TensorBatchMixin, TensorSeqMixin):
             )
             for k in l_keys
         }
-        return cls(dict_of_tensors=new_t, dict_of_list_tensors=new_l)
+        new_o = {
+            k: (
+                [i.__objects__[k] for i in items]
+                if items[0].__objects__[k] is not None
+                else None
+            )
+            for k in o_keys
+        }
+        return cls(
+            dict_of_tensors=new_t,
+            dict_of_list_tensors=new_l,
+            dict_of_objects=new_o,
+        )
 
-    def add(self, other: Union[TensorBatchMixin, TensorSeqMixin]):
+    def add(self, other: Union[TensorBatchMixin, TensorSeqMixin, ObjectBatchMixin]):
         if isinstance(other, TensorBatchMixin):
             TensorBatchMixin.add(self, other.__tensors__)
         if isinstance(other, TensorSeqMixin):
             TensorSeqMixin.add(self, other.__list_tensors__)
+        if isinstance(other, ObjectBatchMixin):
+            ObjectBatchMixin.add(self, other.__objects__)
 
     def cpu(self, inplace: bool = False):
         t = TensorBatchMixin.cpu(self, inplace=inplace)
         l = TensorSeqMixin.cpu(self, inplace=inplace)
+        o = ObjectBatchMixin.cpu(self, inplace=inplace)
         if inplace:
             return
         return TensorMixMixin(
-            dict_of_tensors=t.__tensors__, dict_of_list_tensors=l.__list_tensors__
+            dict_of_tensors=t.__tensors__,
+            dict_of_list_tensors=l.__list_tensors__,
+            dict_of_objects=o.__objects__,
         )
 
     def cuda(self, inplace: bool = False):
         t = TensorBatchMixin.cuda(self, inplace=inplace)
         l = TensorSeqMixin.cuda(self, inplace=inplace)
+        o = ObjectBatchMixin.cuda(self, inplace=inplace)
         if inplace:
             return
         return TensorMixMixin(
-            dict_of_tensors=t.__tensors__, dict_of_list_tensors=l.__list_tensors__
+            dict_of_tensors=t.__tensors__,
+            dict_of_list_tensors=l.__list_tensors__,
+            dict_of_objects=o.__objects__,
         )
 
     def sync(self, inplace: bool = False):
         t = TensorBatchMixin.sync(self, inplace=inplace)
         l = TensorSeqMixin.sync(self, inplace=inplace)
+        o = ObjectBatchMixin.sync(self, inplace=inplace)
         if inplace:
             return
         return TensorMixMixin(
-            dict_of_tensors=t.__tensors__, dict_of_list_tensors=l.__list_tensors__
+            dict_of_tensors=t.__tensors__,
+            dict_of_list_tensors=l.__list_tensors__,
+            dict_of_objects=o.__objects__,
         )
 
     def dict(self) -> Dict:
-        return {**self.__tensors__, **self.__list_tensors__}
+        return {**self.__tensors__, **self.__list_tensors__, **self.__objects__}
 
 
 # ---------------------------------------------------------------------------
@@ -424,6 +551,80 @@ class TensorTargets(ModelTargets, TensorBatchMixin):
 
 
 @dataclass(init=False)
+class ObjectInputs(ModelInputs, ObjectBatchMixin):
+    def __init__(self, inputs: Optional[Dict] = None, **kwargs):
+        ObjectBatchMixin.__init__(self, objects=inputs, **kwargs)
+
+    def cpu(self, inplace=False):
+        r = ObjectBatchMixin.cpu(self, inplace=inplace)
+        if inplace:
+            return
+        return ObjectInputs(**r.__objects__)
+
+    def cuda(self, inplace=False):
+        r = ObjectBatchMixin.cuda(self, inplace=inplace)
+        if inplace:
+            return
+        return ObjectInputs(**r.__objects__)
+
+    def sync(self, inplace=False):
+        r = ObjectBatchMixin.sync(self, inplace=inplace)
+        if inplace:
+            return
+        return ObjectInputs(**r.__objects__)
+
+
+@dataclass
+class ObjectOutputs(ModelOutputs, ObjectBatchMixin):
+    def __post_init__(self):
+        self.__objects__ = {f.name: getattr(self, f.name) for f in fields(self)}
+        ObjectBatchMixin.__post_init__(self)
+
+    def cpu(self, inplace=False):
+        r = ObjectBatchMixin.cpu(self, inplace=inplace)
+        if inplace:
+            return
+        return type(self)(**r.__objects__)
+
+    def cuda(self, inplace=False):
+        r = ObjectBatchMixin.cuda(self, inplace=inplace)
+        if inplace:
+            return
+        return type(self)(**r.__objects__)
+
+    def sync(self, inplace=False):
+        r = ObjectBatchMixin.sync(self, inplace=inplace)
+        if inplace:
+            return
+        return type(self)(**r.__objects__)
+
+
+@dataclass
+class ObjectTargets(ModelTargets, ObjectBatchMixin):
+    def __post_init__(self):
+        self.__objects__ = {f.name: getattr(self, f.name) for f in fields(self)}
+        ObjectBatchMixin.__post_init__(self)
+
+    def cpu(self, inplace=False):
+        r = ObjectBatchMixin.cpu(self, inplace=inplace)
+        if inplace:
+            return
+        return type(self)(**r.__objects__)
+
+    def cuda(self, inplace=False):
+        r = ObjectBatchMixin.cuda(self, inplace=inplace)
+        if inplace:
+            return
+        return type(self)(**r.__objects__)
+
+    def sync(self, inplace=False):
+        r = ObjectBatchMixin.sync(self, inplace=inplace)
+        if inplace:
+            return
+        return type(self)(**r.__objects__)
+
+
+@dataclass(init=False)
 class TensorSeqInputs(ModelInputs, TensorSeqMixin):
     def __init__(self, inputs: Optional[Dict] = None, **kwargs):
         TensorSeqMixin.__init__(self, list_tensors=inputs, **kwargs)
@@ -502,11 +703,13 @@ class TensorMixInputs(ModelInputs, TensorMixMixin):
         self,
         dict_of_tensors: Optional[Dict[str, torch.Tensor]] = None,
         dict_of_list_tensors: Optional[Dict[str, List[torch.Tensor]]] = None,
+        dict_of_objects: Optional[Dict[str, Any]] = None,
     ):
         TensorMixMixin.__init__(
             self,
             dict_of_tensors=dict_of_tensors,
             dict_of_list_tensors=dict_of_list_tensors,
+            dict_of_objects=dict_of_objects,
         )
 
 
@@ -515,11 +718,13 @@ class TensorMixOutputs(ModelOutputs, TensorMixMixin):
         self,
         dict_of_tensors: Optional[Dict[str, torch.Tensor]] = None,
         dict_of_list_tensors: Optional[Dict[str, List[torch.Tensor]]] = None,
+        dict_of_objects: Optional[Dict[str, Any]] = None,
     ):
         TensorMixMixin.__init__(
             self,
             dict_of_tensors=dict_of_tensors,
             dict_of_list_tensors=dict_of_list_tensors,
+            dict_of_objects=dict_of_objects,
         )
 
 
@@ -528,11 +733,13 @@ class TensorMixTargets(ModelTargets, TensorMixMixin):
         self,
         dict_of_tensors: Optional[Dict[str, torch.Tensor]] = None,
         dict_of_list_tensors: Optional[Dict[str, List[torch.Tensor]]] = None,
+        dict_of_objects: Optional[Dict[str, Any]] = None,
     ):
         TensorMixMixin.__init__(
             self,
             dict_of_tensors=dict_of_tensors,
             dict_of_list_tensors=dict_of_list_tensors,
+            dict_of_objects=dict_of_objects,
         )
 
 

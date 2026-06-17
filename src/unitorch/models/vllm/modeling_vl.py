@@ -7,7 +7,7 @@ import torch
 import numpy as np
 from typing import Any, Dict, List, Mapping, Optional, Union
 from PIL import Image
-from vllm import LLM, SamplingParams
+from vllm import LLM
 from vllm.inputs import ModalityData
 from vllm.model_executor.models.qwen2_vl import (
     Qwen2VLMultiModalDataParser as _Qwen2VLMultiModalDataParser,
@@ -17,6 +17,10 @@ from vllm.multimodal.inputs import ImageItem, VideoItem
 from vllm.multimodal.parse import DictEmbeddingItems, ModalityDataItems
 
 from unitorch.utils.decorators import replace
+from unitorch.models.vllm.modeling import (
+    _build_sampling_params,
+    _normalize_prompts,
+)
 
 
 @replace(_Qwen2VLMultiModalDataParser)
@@ -234,7 +238,7 @@ class VLLMVLForGeneration:
 
     def _normalize_images(
         self,
-        images: Optional[Union[torch.Tensor, Image.Image, List]],
+        images: Optional[Union[torch.Tensor, Image.Image, str, List]],
         batch_size: int,
     ) -> Optional[List[Optional[List[Image.Image]]]]:
         """
@@ -244,9 +248,11 @@ class VLLMVLForGeneration:
         - ``None``: no images for any prompt.
         - ``torch.Tensor``: shape ``(B, C, H, W)`` or ``(C, H, W)`` pixel-values tensor.
         - ``PIL.Image``: single image shared across all prompts.
+        - ``str``: single image path shared across all prompts.
         - ``List[PIL.Image]``: one image per prompt.
+        - ``List[str]``: one image path per prompt.
         - ``List[torch.Tensor]``: one pixel-values tensor per prompt.
-        - ``List[List[PIL.Image or torch.Tensor]]``: multiple images per prompt.
+        - ``List[List[PIL.Image or str or torch.Tensor]]``: multiple images per prompt.
         """
         if images is None:
             return None
@@ -263,14 +269,28 @@ class VLLMVLForGeneration:
         if isinstance(images, Image.Image):
             return [[images]] * batch_size
 
+        if isinstance(images, str):
+            return [[Image.open(images).convert("RGB")]] * batch_size
+
         # List input
         if isinstance(images, list):
             result = []
             for item in images:
-                if isinstance(item, (Image.Image, torch.Tensor)):
+                if item is None:
+                    result.append(None)
+                elif isinstance(item, str):
+                    result.append([Image.open(item).convert("RGB")])
+                elif isinstance(item, (Image.Image, torch.Tensor)):
                     result.append([item])
                 elif isinstance(item, list):
-                    result.append(item)
+                    result.append(
+                        [
+                            Image.open(image).convert("RGB")
+                            if isinstance(image, str)
+                            else image
+                            for image in item
+                        ]
+                    )
                 else:
                     raise ValueError(f"Unexpected image type: {type(item)}")
             return result
@@ -279,8 +299,9 @@ class VLLMVLForGeneration:
 
     def generate(
         self,
-        input_ids: torch.Tensor,
-        images: Optional[Union[torch.Tensor, Image.Image, List]] = None,
+        input_ids: Optional[torch.Tensor] = None,
+        prompt: Optional[Union[str, List[str]]] = None,
+        images: Optional[Union[torch.Tensor, Image.Image, str, List]] = None,
         max_gen_seq_length: Optional[int] = 512,
         min_gen_seq_length: Optional[int] = 0,
         num_return_sequences: Optional[int] = 1,
@@ -296,15 +317,18 @@ class VLLMVLForGeneration:
         Generates token sequences for the given text and image inputs.
 
         Args:
-            input_ids (torch.Tensor): Input token ID tensor of shape ``(batch, seq_len)``.
+            input_ids (torch.Tensor, optional): Input token ID tensor of shape ``(batch, seq_len)``.
+            prompt (str or List[str], optional): Raw prompt text passed directly to vLLM.
             images: Input image(s). Accepts:
 
                 - ``None`` — text-only generation.
                 - ``torch.Tensor`` — pixel-values tensor ``(B, C, H, W)`` or ``(C, H, W)``.
                 - ``PIL.Image`` — single image shared across all prompts.
+                - ``str`` — single image path shared across all prompts.
                 - ``List[PIL.Image]`` — one image per prompt.
+                - ``List[str]`` — one image path per prompt.
                 - ``List[torch.Tensor]`` — one pixel-values tensor per prompt.
-                - ``List[List[PIL.Image or torch.Tensor]]`` — multiple images per prompt.
+                - ``List[List[PIL.Image or str or torch.Tensor]]`` — multiple images per prompt.
             max_gen_seq_length (int): Maximum new tokens. Defaults to 512.
             min_gen_seq_length (int): Minimum new tokens. Defaults to 0.
             num_return_sequences (int): Completions per prompt. Defaults to 1.
@@ -324,18 +348,41 @@ class VLLMVLForGeneration:
         # <|endoftext|> as the only hard stop token.
         stop_token_ids = [151643]
 
-        sampling_params = SamplingParams(
-            n=num_return_sequences,
-            max_tokens=max_gen_seq_length,
-            min_tokens=min_gen_seq_length,
-            temperature=temperature if do_sample else 0.0,
-            top_k=top_k if do_sample else -1,
-            top_p=top_p if do_sample else 1.0,
+        sampling_params = _build_sampling_params(
+            max_gen_seq_length=max_gen_seq_length,
+            min_gen_seq_length=min_gen_seq_length,
+            num_return_sequences=num_return_sequences,
+            do_sample=do_sample,
+            temperature=temperature,
+            top_k=top_k,
+            top_p=top_p,
             repetition_penalty=repetition_penalty,
             stop=stop,
             stop_token_ids=stop_token_ids,
         )
 
+        if prompt is not None:
+            prompts = _normalize_prompts(prompt)
+            normalized_images = self._normalize_images(images, len(prompts))
+
+            inputs = []
+            for i, text in enumerate(prompts):
+                entry: Dict[str, Any] = {"prompt": text}
+                if normalized_images is not None and normalized_images[i]:
+                    imgs = normalized_images[i]
+                    entry["multi_modal_data"] = {
+                        "image": imgs[0] if len(imgs) == 1 else imgs
+                    }
+                inputs.append(entry)
+
+            outputs = self.llm.generate(
+                inputs,
+                sampling_params=sampling_params,
+                use_tqdm=False,
+            )
+            return [[o.token_ids for o in req.outputs] for req in outputs]
+
+        assert input_ids is not None
         batch_size = input_ids.shape[0]
         normalized_images = self._normalize_images(images, batch_size)
 
@@ -353,13 +400,17 @@ class VLLMVLForGeneration:
                 entry = {"prompt_token_ids": token_ids}
             inputs.append(entry)
 
-        outputs = self.llm.generate(inputs, sampling_params=sampling_params)
+        outputs = self.llm.generate(
+            inputs,
+            sampling_params=sampling_params,
+        )
         return [[o.token_ids for o in req.outputs] for req in outputs]
 
     async def async_generate(
         self,
-        input_ids: torch.Tensor,
-        images: Optional[Union[torch.Tensor, Image.Image, List]] = None,
+        input_ids: Optional[torch.Tensor] = None,
+        prompt: Optional[Union[str, List[str]]] = None,
+        images: Optional[Union[torch.Tensor, Image.Image, str, List]] = None,
         max_gen_seq_length: Optional[int] = 512,
         min_gen_seq_length: Optional[int] = 0,
         num_return_sequences: Optional[int] = 1,
@@ -374,7 +425,8 @@ class VLLMVLForGeneration:
         Asynchronously generates token sequences for a single-row input.
 
         Args:
-            input_ids (torch.Tensor): Token ID tensor of shape ``(1, seq_len)`` or ``(seq_len,)``.
+            input_ids (torch.Tensor, optional): Token ID tensor of shape ``(1, seq_len)`` or ``(seq_len,)``.
+            prompt (str or List[str], optional): Raw prompt text passed directly to vLLM.
             images: Optional image(s) for the single prompt (same formats as ``generate``).
             max_gen_seq_length (int): Maximum tokens to generate. Defaults to 512.
             min_gen_seq_length (int): Minimum tokens to generate. Defaults to 0.
@@ -389,10 +441,11 @@ class VLLMVLForGeneration:
         Returns:
             List[List[int]]: Generated token ID sequences for the single prompt.
         """
-        if input_ids.dim() == 1:
+        if input_ids is not None and input_ids.dim() == 1:
             input_ids = input_ids.unsqueeze(0)
         results = self.generate(
             input_ids=input_ids,
+            prompt=prompt,
             images=images,
             max_gen_seq_length=max_gen_seq_length,
             min_gen_seq_length=min_gen_seq_length,

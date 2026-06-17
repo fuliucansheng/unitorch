@@ -18,6 +18,7 @@ from unitorch.cli import (
     config_defaults_init,
     register_model,
 )
+from unitorch.models.peft import PeftWeightLoaderMixin
 from unitorch.cli.models import ClassificationOutputs, LossOutputs
 from unitorch.cli.models.clip import pretrained_clip_infos
 
@@ -395,6 +396,19 @@ class ClipForImageClassificationV2(_ClipForImageClassificationV2):
         )
         if weight_path is not None:
             inst.from_pretrained(weight_path)
+
+        pretrained_lora_weight_path = config.getoption(
+            "pretrained_lora_weight_path", None
+        )
+        pretrained_lora_weight = config.getoption("pretrained_lora_weight", 1.0)
+        pretrained_lora_alpha = config.getoption("pretrained_lora_alpha", 32.0)
+        if pretrained_lora_weight_path is not None:
+            inst.load_lora_weights(
+                pretrained_lora_weight_path,
+                lora_weights=pretrained_lora_weight,
+                lora_alphas=pretrained_lora_alpha,
+                save_base_state=False,
+            )
 
         return inst
 

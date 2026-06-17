@@ -2,7 +2,7 @@
 # Licensed under the MIT License.
 
 import torch
-from typing import Any, Dict, List, Optional, Union
+from typing import List, Optional, Union
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.models.vllm import VLLMForGeneration as _VLLMForGeneration
 from unitorch.cli import config_defaults_init, register_model
@@ -104,7 +104,8 @@ class QWen3VLLMForGeneration(_VLLMForGeneration):
 
     def __call__(
         self,
-        input_ids: torch.Tensor,
+        input_ids: Optional[torch.Tensor] = None,
+        prompt: Optional[Union[str, List[str]]] = None,
         max_gen_seq_length: Optional[int] = 512,
         min_gen_seq_length: Optional[int] = 0,
         num_return_sequences: Optional[int] = 1,
@@ -139,6 +140,7 @@ class QWen3VLLMForGeneration(_VLLMForGeneration):
         """
         batch_token_ids = super().generate(
             input_ids=input_ids,
+            prompt=prompt,
             max_gen_seq_length=max_gen_seq_length,
             min_gen_seq_length=min_gen_seq_length,
             num_return_sequences=num_return_sequences,

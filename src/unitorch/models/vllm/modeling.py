@@ -4,8 +4,37 @@
 import atexit
 import gc
 import torch
-from typing import Any, Dict, List, Optional, Union
+from typing import List, Optional, Union
 from vllm import LLM, SamplingParams
+
+
+def _normalize_prompts(prompt: Union[str, List[str]]) -> List[str]:
+    return [prompt] if isinstance(prompt, str) else list(prompt)
+
+
+def _build_sampling_params(
+    max_gen_seq_length: int,
+    min_gen_seq_length: int,
+    num_return_sequences: int,
+    do_sample: bool,
+    temperature: float,
+    top_k: int,
+    top_p: float,
+    repetition_penalty: float,
+    stop: Optional[Union[str, List[str]]],
+    stop_token_ids: List[int],
+) -> SamplingParams:
+    return SamplingParams(
+        n=num_return_sequences,
+        max_tokens=max_gen_seq_length,
+        min_tokens=min_gen_seq_length,
+        temperature=temperature if do_sample else 0.0,
+        top_k=top_k if do_sample else -1,
+        top_p=top_p if do_sample else 1.0,
+        repetition_penalty=repetition_penalty,
+        stop=stop,
+        stop_token_ids=stop_token_ids,
+    )
 
 
 class VLLMForGeneration:
@@ -115,7 +144,8 @@ class VLLMForGeneration:
 
     def generate(
         self,
-        input_ids: torch.Tensor,
+        input_ids: Optional[torch.Tensor] = None,
+        prompt: Optional[Union[str, List[str]]] = None,
         max_gen_seq_length: Optional[int] = 512,
         min_gen_seq_length: Optional[int] = 0,
         num_return_sequences: Optional[int] = 1,
@@ -128,10 +158,11 @@ class VLLMForGeneration:
         pad_token_id: Optional[int] = 0,
     ) -> List[List[List[int]]]:
         """
-        Generates token sequences for the given input_ids.
+        Generates token sequences for the given prompt text or input_ids.
 
         Args:
-            input_ids (torch.Tensor): Input token ID tensor of shape ``(batch, seq_len)``.
+            input_ids (torch.Tensor, optional): Input token ID tensor of shape ``(batch, seq_len)``.
+            prompt (str or List[str], optional): Raw prompt text passed directly to vLLM.
             max_gen_seq_length (int): Maximum number of new tokens to generate. Defaults to 512.
             min_gen_seq_length (int): Minimum number of new tokens to generate. Defaults to 0.
             num_return_sequences (int): Number of completions per prompt. Defaults to 1.
@@ -153,30 +184,40 @@ class VLLMForGeneration:
         # vLLM does not generate past the model's answer turn into reasoning/thinking text.
         stop_token_ids = [151643, 151645]
 
-        sampling_params = SamplingParams(
-            n=num_return_sequences,
-            max_tokens=max_gen_seq_length,
-            min_tokens=min_gen_seq_length,
-            temperature=temperature if do_sample else 0.0,
-            top_k=top_k if do_sample else -1,
-            top_p=top_p if do_sample else 1.0,
+        sampling_params = _build_sampling_params(
+            max_gen_seq_length=max_gen_seq_length,
+            min_gen_seq_length=min_gen_seq_length,
+            num_return_sequences=num_return_sequences,
+            do_sample=do_sample,
+            temperature=temperature,
+            top_k=top_k,
+            top_p=top_p,
             repetition_penalty=repetition_penalty,
             stop=stop,
             stop_token_ids=stop_token_ids,
         )
 
-        # Convert tensor rows to prompt_token_ids format (strips padding tokens)
-        prompts = [
-            {"prompt_token_ids": [t for t in row.tolist() if t != pad_token_id]}
-            for row in input_ids
-        ]
+        if prompt is not None:
+            prompts = [{"prompt": text} for text in _normalize_prompts(prompt)]
+        else:
+            assert input_ids is not None
+            # Convert tensor rows to prompt_token_ids format (strips padding tokens)
+            prompts = [
+                {"prompt_token_ids": [t for t in row.tolist() if t != pad_token_id]}
+                for row in input_ids
+            ]
 
-        outputs = self.llm.generate(prompts, sampling_params=sampling_params)
+        outputs = self.llm.generate(
+            prompts,
+            sampling_params=sampling_params,
+            use_tqdm=False,
+        )
         return [[o.token_ids for o in req.outputs] for req in outputs]
 
     async def async_generate(
         self,
-        input_ids: torch.Tensor,
+        input_ids: Optional[torch.Tensor] = None,
+        prompt: Optional[Union[str, List[str]]] = None,
         max_gen_seq_length: Optional[int] = 512,
         min_gen_seq_length: Optional[int] = 0,
         num_return_sequences: Optional[int] = 1,
@@ -188,10 +229,11 @@ class VLLMForGeneration:
         stop: Optional[Union[str, List[str]]] = None,
     ) -> List[List[int]]:
         """
-        Asynchronously generates token sequences for a single-row input_ids tensor.
+        Asynchronously generates token sequences for a single prompt or input_ids row.
 
         Args:
-            input_ids (torch.Tensor): Input token ID tensor of shape ``(1, seq_len)`` or ``(seq_len,)``.
+            input_ids (torch.Tensor, optional): Input token ID tensor of shape ``(1, seq_len)`` or ``(seq_len,)``.
+            prompt (str or List[str], optional): Raw prompt text passed directly to vLLM.
             max_gen_seq_length (int): Maximum tokens to generate. Defaults to 512.
             min_gen_seq_length (int): Minimum tokens to generate. Defaults to 0.
             num_return_sequences (int): Number of completions. Defaults to 1.
@@ -205,10 +247,11 @@ class VLLMForGeneration:
         Returns:
             List[List[int]]: Generated token ID sequences for the single prompt.
         """
-        if input_ids.dim() == 1:
+        if input_ids is not None and input_ids.dim() == 1:
             input_ids = input_ids.unsqueeze(0)
         results = self.generate(
             input_ids=input_ids,
+            prompt=prompt,
             max_gen_seq_length=max_gen_seq_length,
             min_gen_seq_length=min_gen_seq_length,
             num_return_sequences=num_return_sequences,

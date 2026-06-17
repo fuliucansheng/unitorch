@@ -11,6 +11,7 @@ from unitorch.cli.models import generation_model_decorator
 from unitorch.cli.models import GenerationOutputs
 from unitorch.cli.models.vllm import pretrained_vllm_infos
 from unitorch.cli.models.vllm.modeling import _pad_token_ids
+from unitorch.models.vllm.modeling import _build_sampling_params
 
 
 @register_model("core/model/vllm/generation/qwen3_vl")
@@ -93,7 +94,9 @@ class QWen3VLVLLMForGeneration(_VLLMVLForGeneration):
 
     def __call__(
         self,
-        input_ids: torch.Tensor,
+        input_ids: Optional[torch.Tensor] = None,
+        prompt: Optional[Union[str, List[str]]] = None,
+        images: Optional[Union[Image.Image, str, List]] = None,
         pixel_values: Optional[torch.Tensor] = None,
         image_grid_thw: Optional[torch.Tensor] = None,
         max_gen_seq_length: Optional[int] = 512,
@@ -135,25 +138,45 @@ class QWen3VLVLLMForGeneration(_VLLMVLForGeneration):
         Returns:
             GenerationOutputs: Sequences tensor of shape ``(batch, num_return_sequences, max_gen_seq_length)``.
         """
-        from vllm import SamplingParams
-
         # Qwen3-VL may emit <|im_end|> before the visible answer content, so
         # treating it as a hard stop can collapse the response to an empty
         # string. Use <|endoftext|> as the only stop token here.
         stop_token_ids = [151643]
 
-        sampling_params = SamplingParams(
-            n=num_return_sequences,
-            max_tokens=max_gen_seq_length,
-            min_tokens=min_gen_seq_length,
-            temperature=temperature if do_sample else 0.0,
-            top_k=top_k if do_sample else -1,
-            top_p=top_p if do_sample else 1.0,
+        sampling_params = _build_sampling_params(
+            max_gen_seq_length=max_gen_seq_length,
+            min_gen_seq_length=min_gen_seq_length,
+            num_return_sequences=num_return_sequences,
+            do_sample=do_sample,
+            temperature=temperature,
+            top_k=top_k,
+            top_p=top_p,
             repetition_penalty=repetition_penalty,
             stop=stop,
             stop_token_ids=stop_token_ids,
         )
 
+        if prompt is not None:
+            batch_token_ids = super().generate(
+                prompt=prompt,
+                images=images,
+                max_gen_seq_length=max_gen_seq_length,
+                min_gen_seq_length=min_gen_seq_length,
+                num_return_sequences=num_return_sequences,
+                do_sample=do_sample,
+                temperature=temperature,
+                top_k=top_k,
+                top_p=top_p,
+                repetition_penalty=repetition_penalty,
+                stop=stop,
+                pad_token_id=pad_token_id,
+            )
+            sequences = _pad_token_ids(
+                batch_token_ids, pad_token_id, max_gen_seq_length
+            )
+            return GenerationOutputs(sequences=sequences)
+
+        assert input_ids is not None
         batch_size = input_ids.shape[0]
         inputs = []
         for i in range(batch_size):
@@ -178,7 +201,11 @@ class QWen3VLVLLMForGeneration(_VLLMVLForGeneration):
                 }
             inputs.append(entry)
 
-        outputs = self.llm.generate(inputs, sampling_params=sampling_params)
+        outputs = self.llm.generate(
+            inputs,
+            sampling_params=sampling_params,
+            use_tqdm=False,
+        )
         batch_token_ids = [[o.token_ids for o in req.outputs] for req in outputs]
         sequences = _pad_token_ids(batch_token_ids, pad_token_id, max_gen_seq_length)
         return GenerationOutputs(sequences=sequences)
