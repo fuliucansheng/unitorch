@@ -6,6 +6,45 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 unitorch is a unified modeling framework built on PyTorch that supports NLU, NLG, CV, multimodal learning, and reinforcement learning. It wraps 38+ model architectures (BERT, LLaMA, CLIP, Diffusers, etc.) with a configuration-driven CLI system for training, evaluation, inference, and serving.
 
+## Architecture Boundary: Package vs CLI
+
+Always preserve unitorch's package/CLI separation.
+
+- The package layer (`src/unitorch/`) is the source of truth for reusable ML
+  capabilities: model wrappers, processors, datasets, losses, scores,
+  optimizers, schedulers, task abstractions, and utilities.
+- The CLI layer (`src/unitorch/cli/`) is an adapter layer built on top of package
+  modules. It adapts package capabilities to config-driven command flows such
+  as train, eval, infer, serving, and agent-facing tools.
+- Do not put core model, data, optimization, or metric behavior in the CLI layer
+  when it belongs in the package layer. CLI modules should compose, register,
+  configure, and orchestrate package modules.
+- `src/unitorch/cli/models/`, `src/unitorch/cli/tasks/`,
+  `src/unitorch/cli/fastapis/`, and `src/unitorch/cli/consoles/` should be
+  treated as adapters for specific command flows, not as the canonical
+  implementation of model behavior.
+- Copilot tools and generated skills must follow the same boundary: reusable ML
+  logic belongs in package modules; copilot/CLI code should expose, describe,
+  plan, invoke, or orchestrate that logic for agents and command workflows.
+
+## Project Skills
+
+Project skills live in `.skills/<skill-name>/SKILL.md`. This is the canonical
+location for Claude, Codex, OpenCode, Studio, and other coding agents working in
+this repository.
+
+Before starting a task, inspect the frontmatter of each `.skills/*/SKILL.md`.
+If a skill's `description` matches the task, read that whole `SKILL.md` before
+acting and follow its instructions. Do not use `.claude/skills` as the canonical
+source; the project skills were migrated to `.skills`.
+
+Current skills:
+
+- `config-ini`: use when writing, reviewing, or debugging unitorch `.ini`
+  configs.
+- `replace-decorator`: use when working with the process-global `@replace`
+  decorator or replacement modules.
+
 ## Build & Install
 
 ```bash
@@ -127,7 +166,7 @@ Every model/pipeline class follows this pattern: `__init__` takes explicit args,
 
 ## `@replace` Decorator
 
-Defined in `src/unitorch/utils/decorators.py`. Process-global monkey-patcher: replaces a target class across all loaded modules at import time, including rewriting subclass `__bases__`. Used to override upstream library behaviour (e.g. `diffusers`, `datasets`) without forking. Replacement classes inherit from the target and are named `<Original>V2` by convention. See `.claude/skills/replace-decorator.md` for full details.
+Defined in `src/unitorch/utils/decorators.py`. Process-global monkey-patcher: replaces a target class across all loaded modules at import time, including rewriting subclass `__bases__`. Used to override upstream library behaviour (e.g. `diffusers`, `datasets`) without forking. Replacement classes inherit from the target and are named `<Original>V2` by convention. See `.skills/replace-decorator/SKILL.md` for full details.
 
 ## CLI Argument Conventions
 
