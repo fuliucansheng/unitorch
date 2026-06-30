@@ -5,13 +5,28 @@ import os
 import re
 import sys
 import abc
+import base64
+import dataclasses
 import logging
 import traceback
+import inspect
 import importlib
 import importlib_resources
 import importlib.metadata as importlib_metadata
+from dataclasses import dataclass, field
 from functools import partial
-from typing import Any, Callable, Dict, List, Optional, Union
+from pathlib import Path
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Tuple,
+    Union,
+    get_type_hints,
+)
 
 from unitorch.utils import cached_path as hf_cached_path
 from unitorch.utils import rpartial, is_remote_url
@@ -197,25 +212,134 @@ registered_fastapi: Dict = {}
 register_fastapi = partial(registry_func, save_dict=registered_fastapi)
 
 
-class GenericCopilotTool(abc.ABC):
-    def __init__(self):
-        pass
+@dataclass(frozen=True)
+class GenericCopilotRemoteSpec:
+    route: str
+    method: str = "POST"
+    param_fields: Dict[str, str] = field(default_factory=dict)
+    file_fields: Dict[str, str] = field(default_factory=dict)
+    binary: bool = False
+    image_fields: Dict[str, str] = field(default_factory=dict)
+    video_fields: Dict[str, str] = field(default_factory=dict)
+    req_type: Optional[str] = None
+    resp_type: str = "json"
 
-    @abc.abstractmethod
-    def launch(self, **kwargs):
-        pass
-
-    @abc.abstractmethod
-    def describe(self):
-        pass
-
-    @abc.abstractmethod
-    def usage(self):
-        pass
+    def __post_init__(self):
+        method = self.req_type or self.method
+        method = method.upper()
+        resp_type = self.resp_type.lower()
+        if resp_type not in {"json", "image", "video"}:
+            raise ValueError(f"Unsupported copilot response type: {self.resp_type}")
+        object.__setattr__(self, "method", method)
+        object.__setattr__(self, "req_type", method)
+        object.__setattr__(self, "resp_type", resp_type)
 
 
-registered_copilot_tool: Dict = {}
-register_copilot_tool = partial(registry_func, save_dict=registered_copilot_tool)
+def serialize_copilot_output(value: Any) -> Any:
+    if dataclasses.is_dataclass(value):
+        return serialize_copilot_output(dataclasses.asdict(value))
+
+    if isinstance(value, Path):
+        return str(value)
+
+    if isinstance(value, bytes):
+        return {
+            "type": "bytes",
+            "encoding": "base64",
+            "data": base64.b64encode(value).decode("ascii"),
+        }
+
+    if isinstance(value, dict):
+        return {str(k): serialize_copilot_output(v) for k, v in value.items()}
+
+    if isinstance(value, (list, tuple, set)):
+        return [serialize_copilot_output(v) for v in value]
+
+    if hasattr(value, "detach") and hasattr(value, "cpu") and hasattr(value, "tolist"):
+        return value.detach().cpu().tolist()
+
+    if hasattr(value, "tolist"):
+        return value.tolist()
+
+    if (
+        hasattr(value, "mode")
+        and hasattr(value, "size")
+        and value.__class__.__name__ == "Image"
+    ):
+        return {
+            "type": "image",
+            "mode": value.mode,
+            "size": list(value.size),
+        }
+
+    return value
+
+
+@dataclass(frozen=True)
+class GenericCopilotTool:
+    name: str
+    func: Callable
+    description: str = ""
+    tags: Tuple[str, ...] = tuple()
+    remote: Optional[GenericCopilotRemoteSpec] = None
+    python_module: str = "unitorch.cli.copilots"
+    python_function: Optional[str] = None
+
+    def __post_init__(self):
+        if self.python_function is None:
+            object.__setattr__(self, "python_function", self.func.__name__)
+
+    @property
+    def signature(self):
+        return inspect.signature(self.func)
+
+    @property
+    def type_hints(self):
+        try:
+            return get_type_hints(self.func)
+        except Exception:
+            return {}
+
+    def invoke(self, **kwargs):
+        return serialize_copilot_output(self.func(**kwargs))
+
+
+def _copilot_remote_spec(
+    remote: Optional[Union[GenericCopilotRemoteSpec, Dict]],
+) -> Optional[GenericCopilotRemoteSpec]:
+    if remote is None or isinstance(remote, GenericCopilotRemoteSpec):
+        return remote
+    return GenericCopilotRemoteSpec(**remote)
+
+
+registered_copilot_tool: Dict[str, GenericCopilotTool] = {}
+
+
+def register_copilot_tool(
+    name: Optional[str] = None,
+    description: Optional[str] = None,
+    tags: Optional[Iterable[str]] = None,
+    remote: Optional[Union[GenericCopilotRemoteSpec, Dict]] = None,
+    python_function: Optional[str] = None,
+    decorators: Union[Callable, List[Callable], None] = None,
+) -> Callable:
+    def actual_func(obj: Callable) -> Callable:
+        copilot_name = name or obj.__name__
+        func = obj
+        obj_description = description or inspect.getdoc(obj) or ""
+        obj_python_function = python_function or obj.__name__
+
+        registered_copilot_tool[copilot_name] = GenericCopilotTool(
+            name=copilot_name,
+            func=func,
+            description=obj_description,
+            tags=tuple(tags or ()),
+            remote=_copilot_remote_spec(remote),
+            python_function=obj_python_function,
+        )
+        return obj
+
+    return actual_func
 
 
 from unitorch.cli.writers import WriterMixin, WriterOutputs

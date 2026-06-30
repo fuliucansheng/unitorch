@@ -11,10 +11,10 @@ unitorch is a unified modeling framework built on PyTorch that supports NLU, NLG
 Always preserve unitorch's package/CLI separation.
 
 - The package layer (`src/unitorch/`) is the source of truth for reusable ML
-  capabilities: model wrappers, processors, datasets, losses, scores,
+  modules: model wrappers, processors, datasets, losses, scores,
   optimizers, schedulers, task abstractions, and utilities.
 - The CLI layer (`src/unitorch/cli/`) is an adapter layer built on top of package
-  modules. It adapts package capabilities to config-driven command flows such
+  modules. It adapts package modules to config-driven command flows such
   as train, eval, infer, serving, and agent-facing tools.
 - Do not put core model, data, optimization, or metric behavior in the CLI layer
   when it belongs in the package layer. CLI modules should compose, register,
