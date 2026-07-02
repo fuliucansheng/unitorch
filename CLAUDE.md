@@ -29,14 +29,14 @@ Always preserve unitorch's package/CLI separation.
 
 ## Project Skills
 
-Project skills live in `.skills/<skill-name>/SKILL.md`. This is the canonical
+Project skills live in `skills/<skill-name>/SKILL.md`. This is the canonical
 location for Claude, Codex, OpenCode, Studio, and other coding agents working in
 this repository.
 
-Before starting a task, inspect the frontmatter of each `.skills/*/SKILL.md`.
+Before starting a task, inspect the frontmatter of each `skills/*/SKILL.md`.
 If a skill's `description` matches the task, read that whole `SKILL.md` before
 acting and follow its instructions. Do not use `.claude/skills` as the canonical
-source; the project skills were migrated to `.skills`.
+source; the project skills were migrated to `skills`.
 
 Current skills:
 
@@ -166,7 +166,7 @@ Every model/pipeline class follows this pattern: `__init__` takes explicit args,
 
 ## `@replace` Decorator
 
-Defined in `src/unitorch/utils/decorators.py`. Process-global monkey-patcher: replaces a target class across all loaded modules at import time, including rewriting subclass `__bases__`. Used to override upstream library behaviour (e.g. `diffusers`, `datasets`) without forking. Replacement classes inherit from the target and are named `<Original>V2` by convention. See `.skills/replace-decorator/SKILL.md` for full details.
+Defined in `src/unitorch/utils/decorators.py`. Process-global monkey-patcher: replaces a target class across all loaded modules at import time, including rewriting subclass `__bases__`. Used to override upstream library behaviour (e.g. `diffusers`, `datasets`) without forking. Replacement classes inherit from the target and are named `<Original>V2` by convention. See `skills/replace-decorator/SKILL.md` for full details.
 
 ## CLI Argument Conventions
 

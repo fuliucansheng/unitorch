@@ -1,15 +1,14 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
-import gc
 import json
-import asyncio
 from typing import Any, Dict, List, Optional, Union
 from fastapi import APIRouter
 from unitorch.utils import pop_value, nested_dict_value
 from unitorch.cli import cached_path, config_defaults_init
 from unitorch.cli import register_fastapi
 from unitorch.cli import Config, GenericFastAPI
+from unitorch.cli import PipelineReplicaPool
 from unitorch.cli.models.vllm import pretrained_vllm_infos
 from unitorch.cli.models.vllm.modeling import QWen3VLLMForGeneration
 
@@ -26,14 +25,14 @@ class QWen3VLLMFastAPI(GenericFastAPI):
     def __init__(self, config: Config):
         self.config = config
         config.set_default_section("core/fastapi/vllm/qwen3")
+        self._section = "core/fastapi/vllm/qwen3"
         router = config.getoption("router", "/core/fastapi/vllm/qwen3")
-        self._pipe = None
+        self._pipes = None
         self._router = APIRouter(prefix=router)
         self._router.add_api_route("/generate", self.generate, methods=["POST"])
         self._router.add_api_route("/status", self.status, methods=["GET"])
         self._router.add_api_route("/start", self.start, methods=["GET"])
         self._router.add_api_route("/stop", self.stop, methods=["GET"])
-        self._lock = asyncio.Lock()
 
     @property
     def router(self):
@@ -49,35 +48,49 @@ class QWen3VLLMFastAPI(GenericFastAPI):
         pretrained_name_or_path = nested_dict_value(
             pretrained_vllm_infos, pretrained_name, "pretrained_name_or_path"
         )
-        self.config.set_default_section("core/fastapi/vllm/qwen3")
+        self.config.set_default_section(self._section)
         if pretrained_name_or_path is not None:
             self.config.set(
-                "core/fastapi/vllm/qwen3", "pretrained_name", pretrained_name
+                self._section, "pretrained_name", pretrained_name
             )
-        self._pipe = QWen3VLLMForGeneration.from_config(
-            self.config,
-            pretrained_name=pretrained_name,
+        num_replicas = int(
+            self.config.getdefault(self._section, "pipeline_num_replicas", 1)
         )
+        devices = self.config.getdefault(
+            self._section, "pipeline_replica_devices", "cpu"
+        )
+        lock = self.config.getdefault(
+            self._section, "pipeline_replica_lock", True
+        )
+        if devices is None:
+            devices = []
+        if isinstance(devices, str):
+            devices = [devices] * num_replicas
+        pipelines = [
+            QWen3VLLMForGeneration.from_config(
+                self.config,
+                pretrained_name=pretrained_name,
+            )
+            for _ in range(num_replicas)
+        ]
+        for pipe, device in zip(pipelines, devices):
+            if device is not None and hasattr(pipe, "to"):
+                pipe.to(device)
+        self._pipes = PipelineReplicaPool(pipelines, lock=lock)
         return "start success"
 
     def stop(self):
         """
         Stops and unloads the vLLM engine, releasing GPU memory.
         """
-        del self._pipe
-        gc.collect()
-        try:
-            import torch
-
-            torch.cuda.empty_cache()
-        except Exception:
-            pass
-        self._pipe = None
+        if self._pipes is not None:
+            self._pipes.close()
+        self._pipes = None
         return "stop success"
 
     def status(self):
         """Returns ``"running"`` if the engine is loaded, otherwise ``"stopped"``."""
-        return "running" if self._pipe is not None else "stopped"
+        return "running" if self._pipes is not None else "stopped"
 
     async def generate(
         self,
@@ -114,19 +127,18 @@ class QWen3VLLMFastAPI(GenericFastAPI):
         Returns:
             str or List[str]: Generated text. Single string when ``num_return_sequences=1``.
         """
-        assert self._pipe is not None, "Service not started. Call /start first."
-        processor = self._pipe.processor
-        prompt = (
-            processor.chat_template(messages=json.loads(text))
-            if use_chat_template
-            else text
-        )
-        inputs = processor.generation_inputs(text=prompt)
-        import torch
-
-        input_ids = inputs.input_ids.unsqueeze(0)
-        async with self._lock:
-            outputs = self._pipe.generate(
+        assert self._pipes is not None, "Service not started. Call /start first."
+        pipe = self._pipes.acquire()
+        try:
+            processor = pipe.processor
+            prompt = (
+                processor.chat_template(messages=json.loads(text))
+                if use_chat_template
+                else text
+            )
+            inputs = processor.generation_inputs(text=prompt)
+            input_ids = inputs.input_ids.unsqueeze(0)
+            outputs = pipe.generate(
                 input_ids=input_ids,
                 max_gen_seq_length=max_gen_seq_length,
                 min_gen_seq_length=min_gen_seq_length,
@@ -139,6 +151,8 @@ class QWen3VLLMFastAPI(GenericFastAPI):
                 repetition_penalty=repetition_penalty,
                 stop=stop,
             )
+        finally:
+            pipe.release()
         decoded = processor.detokenize(sequences=outputs.sequences)
         sequences = decoded[0]
         return sequences[0] if num_return_sequences == 1 else sequences

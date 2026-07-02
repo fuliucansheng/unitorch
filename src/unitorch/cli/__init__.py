@@ -97,6 +97,7 @@ from unitorch.cli.decorators import (
     config_defaults_init,
     config_defaults_method,
 )
+from unitorch.cli.replicas import PipelineReplicaLease, PipelineReplicaPool
 
 
 def registry_func(
@@ -194,6 +195,23 @@ def init_registered_process(
 class GenericFastAPI(abc.ABC):
     def __init__(self, config: Config):
         pass
+
+    def pipeline_pool(
+        self,
+        pipelines: Any = None,
+        section: Optional[str] = None,
+        lock: Optional[bool] = None,
+    ) -> PipelineReplicaPool:
+        config = getattr(self, "config", None)
+        if config is None:
+            raise ValueError("FastAPI service must define self.config")
+        section = section or getattr(self, "_section", "core/cli")
+        return PipelineReplicaPool.from_config(
+            config=config,
+            pipelines=pipelines,
+            section=section,
+            lock=lock,
+        )
 
     @property
     def router(self):

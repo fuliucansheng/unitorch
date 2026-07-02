@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import inspect
 import json
-import pkgutil
 import re
 import shutil
 from pathlib import Path
@@ -20,15 +19,37 @@ from unitorch.cli.copilots import (
 )
 
 
+_COPILOT_TOOLS_SKILL_NAME = "unitorch-copilot-tools"
+_COPILOT_TOOLS_DESCRIPTION = (
+    "Use when an agent needs UniTorch-provided tools for model, algorithm, "
+    "package info, and registered component workflows."
+)
+_COPILOT_TOOLS_OVERVIEW = (
+    "`unitorch-copilot-tools` is a collection of UniTorch-provided tools for "
+    "model and algorithm related workflows. It also includes UniTorch "
+    "introspection helpers such as package info and registered component "
+    "metadata. Each child directory documents one registered copilot tool, "
+    "including CLI usage through `unitorch-copilot-cli`, Python invocation, "
+    "parameters, and any remote FastAPI adapter."
+)
+_COPILOT_TOOLS_SUBSKILL_NOTE = (
+    "This is a subskill of `unitorch-copilot-tools`. Use the parent skill "
+    "index to discover other UniTorch model, algorithm, and package info "
+    "tools."
+)
 _SKIP_PARAMETERS = {"pipeline", "kwargs"}
 
 
-def _skill_name(name: str) -> str:
-    normalized = re.sub(r"[^A-Za-z0-9_-]+", "-", name).strip("-").lower()
-    normalized = normalized or "copilot-tool"
-    if normalized.startswith("unitorch-"):
-        return normalized
-    return f"unitorch-{normalized}"
+def _slug(name: str, default: str = "copilot-tool") -> str:
+    return re.sub(r"[^A-Za-z0-9_-]+", "-", name).strip("-").lower() or default
+
+
+def _copilot_tool_dir_name(name: str) -> str:
+    return _slug(name)
+
+
+def _copilot_tool_skill_name(name: str) -> str:
+    return f"{_COPILOT_TOOLS_SKILL_NAME}-{_copilot_tool_dir_name(name)}"
 
 
 def _yaml_string(value: str) -> str:
@@ -119,7 +140,7 @@ def render_copilot_skill_markdown(name: str) -> str:
     metadata = copilot_tool_metadata(name)
     parameters = _parameters(copilot_tool)
     description = copilot_tool.description or f"Invoke the {name} copilot tool."
-    skill_name = _skill_name(name)
+    skill_name = _copilot_tool_skill_name(name)
 
     lines = [
         "---",
@@ -133,6 +154,8 @@ def render_copilot_skill_markdown(name: str) -> str:
         f"# {name}",
         "",
         description,
+        "",
+        _COPILOT_TOOLS_SUBSKILL_NOTE,
         "",
         "## When To Use",
         "",
@@ -179,16 +202,79 @@ def render_copilot_skill_markdown(name: str) -> str:
     return "\n".join(lines)
 
 
+def render_copilot_skill_index_markdown(name: Optional[str] = None) -> str:
+    return _render_copilot_skill_index_markdown(_copilot_tool_names(name))
+
+
+def _render_copilot_skill_index_markdown(names: list[str]) -> str:
+    lines = [
+        "---",
+        f"name: {_yaml_string(_COPILOT_TOOLS_SKILL_NAME)}",
+        "description: " + _yaml_string(_COPILOT_TOOLS_DESCRIPTION),
+        "---",
+        "",
+        f"# {_COPILOT_TOOLS_SKILL_NAME}",
+        "",
+        _COPILOT_TOOLS_OVERVIEW,
+        "",
+        "## Usage",
+        "",
+        "```bash",
+        "unitorch-copilot-cli",
+        "unitorch-copilot-cli <tool-name> --arg=value",
+        "```",
+        "",
+        "## Registered Tools",
+        "",
+    ]
+
+    if not names:
+        lines.append("No copilot tools are currently registered.")
+        lines.append("")
+        return "\n".join(lines)
+
+    lines.extend(
+        [
+            "| Tool | Skill | Description |",
+            "|------|-------|-------------|",
+        ]
+    )
+    for tool_name in names:
+        metadata = copilot_tool_metadata(tool_name)
+        description = metadata["description"] or f"Invoke the `{tool_name}` copilot tool."
+        skill_path = f"{_copilot_tool_dir_name(tool_name)}/SKILL.md"
+        skill_link = f"[{_copilot_tool_dir_name(tool_name)}]({skill_path})"
+        lines.append(
+            f"| `{tool_name}` | {skill_link} | {description} |"
+        )
+    lines.append("")
+    return "\n".join(lines)
+
+
 def export_copilot_skill_documents(
     name: Optional[str] = None,
     folder: str = "./skills",
 ) -> Dict[str, str]:
     folder_path = Path(folder)
     names = _copilot_tool_names(name)
-    generated = {}
+    index_names = _indexed_copilot_tool_names(
+        folder_path,
+        names,
+        include_all=_include_all(name),
+    )
+    generated = {
+        _COPILOT_TOOLS_SKILL_NAME: str(_copilot_skill_document_path(folder_path)),
+    }
+
+    skill_dir = _copilot_skill_dir(folder_path)
+    skill_dir.mkdir(parents=True, exist_ok=True)
+    _copilot_skill_document_path(folder_path).write_text(
+        _render_copilot_skill_index_markdown(index_names),
+        encoding="utf-8",
+    )
 
     for copilot_tool_name in names:
-        skill_path = _skill_document_path(folder_path, copilot_tool_name)
+        skill_path = _copilot_tool_skill_document_path(folder_path, copilot_tool_name)
         skill_path.parent.mkdir(parents=True, exist_ok=True)
         skill_path.write_text(
             render_copilot_skill_markdown(copilot_tool_name),
@@ -202,16 +288,12 @@ def export_copilot_skill_documents(
 def install_copilot_skill_documents(
     name: Optional[str] = None,
     folder: str = "./skills",
+    force: bool = False,
 ) -> Dict[str, str]:
-    installed = {}
-    if _include_all(name):
-        installed.update(_install_manual_skill_documents(folder=folder))
-        installed.update(export_copilot_skill_documents(name=name, folder=folder))
-        return installed
-
-    manual_name = _manual_skill_name(name)
-    if manual_name is not None:
-        return _install_manual_skill_documents(name=manual_name, folder=folder)
+    folder_path = Path(folder)
+    skill_dir = _copilot_skill_dir(folder_path)
+    if force and skill_dir.exists():
+        shutil.rmtree(skill_dir)
     return export_copilot_skill_documents(name=name, folder=folder)
 
 
@@ -220,25 +302,37 @@ def uninstall_copilot_skill_documents(
     folder: str = "./skills",
 ) -> Dict[str, str]:
     folder_path = Path(folder)
+    skill_dir = _copilot_skill_dir(folder_path)
     removed = {}
 
-    for manual_name in _manual_skill_names(name):
-        skill_path = _skill_document_path(folder_path, manual_name)
+    if _include_all(name):
+        skill_path = _copilot_skill_document_path(folder_path)
+        if skill_dir.exists():
+            shutil.rmtree(skill_dir)
+            removed[_COPILOT_TOOLS_SKILL_NAME] = str(skill_path)
+        return removed
+
+    for copilot_tool_name in _copilot_tool_names(name):
+        skill_path = _copilot_tool_skill_document_path(folder_path, copilot_tool_name)
         if not skill_path.exists():
             continue
         shutil.rmtree(skill_path.parent)
-        removed[manual_name] = str(skill_path)
-
-    for copilot_tool_name in _copilot_tool_names(name):
-        skill_path = _skill_document_path(folder_path, copilot_tool_name)
-        if not skill_path.exists():
-            continue
-        skill_path.unlink()
         removed[copilot_tool_name] = str(skill_path)
-        try:
-            skill_path.parent.rmdir()
-        except OSError:
-            pass
+
+    if not removed:
+        return removed
+
+    remaining_names = _installed_copilot_tool_names(folder_path)
+    if remaining_names:
+        _copilot_skill_document_path(folder_path).write_text(
+            _render_copilot_skill_index_markdown(remaining_names),
+            encoding="utf-8",
+        )
+    elif skill_dir.exists():
+        shutil.rmtree(skill_dir)
+        removed[_COPILOT_TOOLS_SKILL_NAME] = str(
+            _copilot_skill_document_path(folder_path)
+        )
 
     return removed
 
@@ -253,94 +347,58 @@ def _copilot_tool_names(name: Optional[str]) -> list[str]:
     return [name]
 
 
-def _manual_skill_sources() -> Dict[str, Path]:
-    sources = {}
-    for skills_dir in _manual_skill_dirs():
-        if not skills_dir.exists() or not skills_dir.is_dir():
-            continue
-        for skill_dir in sorted(skills_dir.iterdir()):
-            if (skill_dir / "SKILL.md").is_file():
-                sources[skill_dir.name] = skill_dir
-    return sources
+def _installed_copilot_tool_names(folder: Path) -> list[str]:
+    skill_dir = _copilot_skill_dir(folder)
+    if not skill_dir.exists():
+        return []
+
+    names = []
+    for copilot_tool_name in list_copilot_tools():
+        if _copilot_tool_skill_document_path(folder, copilot_tool_name).is_file():
+            names.append(copilot_tool_name)
+    return names
 
 
-def _manual_skill_dirs() -> list[Path]:
-    import unitorch.cli.skills as skills
+def _indexed_copilot_tool_names(
+    folder: Path,
+    names: list[str],
+    include_all: bool,
+) -> list[str]:
+    if include_all:
+        return names
 
-    return [Path(path) for path in pkgutil.extend_path(skills.__path__, skills.__name__)]
-
-
-def _manual_skill_name(name: Optional[str]) -> Optional[str]:
-    if name is None:
-        return None
-    sources = _manual_skill_sources()
-    if name in sources:
-        return name
-    for manual_name in sources:
-        if name == _skill_name(manual_name):
-            return manual_name
-    return None
+    indexed = set(_installed_copilot_tool_names(folder))
+    indexed.update(names)
+    ordered = [name for name in list_copilot_tools() if name in indexed]
+    ordered.extend(name for name in names if name not in ordered)
+    return ordered
 
 
-def _manual_skill_names(name: Optional[str]) -> list[str]:
-    if _include_all(name):
-        return list(_manual_skill_sources().keys())
-    manual_name = _manual_skill_name(name)
-    return [manual_name] if manual_name is not None else []
+def _copilot_skill_dir(folder: Path) -> Path:
+    return folder / _COPILOT_TOOLS_SKILL_NAME
 
 
-def _install_manual_skill_documents(
-    name: Optional[str] = None,
-    folder: str = "./skills",
-) -> Dict[str, str]:
-    folder_path = Path(folder)
-    installed = {}
-    sources = _manual_skill_sources()
-    names = _manual_skill_names(name)
-
-    for manual_name in names:
-        source_dir = sources[manual_name]
-        target_dir = folder_path / _skill_name(manual_name)
-        if target_dir.exists():
-            shutil.rmtree(target_dir)
-        shutil.copytree(source_dir, target_dir)
-        skill_path = target_dir / "SKILL.md"
-        skill_path.write_text(
-            _prefix_skill_frontmatter_name(skill_path.read_text(encoding="utf-8")),
-            encoding="utf-8",
-        )
-        installed[manual_name] = str(skill_path)
-
-    return installed
+def _copilot_skill_document_path(folder: Path) -> Path:
+    return _copilot_skill_dir(folder) / "SKILL.md"
 
 
-def _prefix_skill_frontmatter_name(content: str) -> str:
-    match = re.match(r"(?s)\A---\n(.*?)\n---\n", content)
-    if match is None:
-        return content
-
-    frontmatter = match.group(1)
-    if not re.search(r"(?m)^name:\s*", frontmatter):
-        return content
-
-    frontmatter = re.sub(
-        r"(?m)^name:\s*(.+?)\s*$",
-        lambda m: f"name: {_yaml_string(_skill_name(_strip_yaml_quotes(m.group(1))))}",
-        frontmatter,
-        count=1,
-    )
-    return f"---\n{frontmatter}\n---\n{content[match.end():]}"
+def _copilot_tool_skill_document_path(folder: Path, name: str) -> Path:
+    return _copilot_skill_dir(folder) / _copilot_tool_dir_name(name) / "SKILL.md"
 
 
-def _strip_yaml_quotes(value: str) -> str:
-    value = value.strip()
-    if len(value) >= 2 and value[0] == value[-1] and value[0] in {"'", '"'}:
-        return value[1:-1]
-    return value
-
-
-def _skill_document_path(folder: Path, name: str) -> Path:
-    return folder / _skill_name(name) / "SKILL.md"
+def _parse_bool(value: Any) -> bool:
+    if isinstance(value, bool):
+        return value
+    if value is None:
+        return False
+    if isinstance(value, str):
+        normalized = value.strip().lower()
+        if normalized in {"1", "true", "t", "yes", "y", "on"}:
+            return True
+        if normalized in {"0", "false", "f", "no", "n", "off", ""}:
+            return False
+        raise ValueError(f"Unsupported boolean value: {value!r}.")
+    return bool(value)
 
 
 @fire.decorators.SetParseFn(str)
@@ -348,11 +406,13 @@ def main(
     command: Optional[str] = None,
     name: Optional[str] = None,
     folder: Optional[str] = None,
+    force: bool = False,
 ) -> None:
     if command == "install":
         outputs = install_copilot_skill_documents(
             name=name,
             folder=folder or "./skills",
+            force=_parse_bool(force),
         )
     elif command == "uninstall":
         outputs = uninstall_copilot_skill_documents(

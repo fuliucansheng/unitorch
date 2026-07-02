@@ -301,13 +301,28 @@ def test_export_copilot_skill_documents_writes_skill_markdown(tmp_path):
     finally:
         registered_copilot_tool.pop(tool_name, None)
 
-    skill_path = tmp_path / "unitorch-tests-copilot-skill_writer" / "SKILL.md"
-    assert outputs == {tool_name: str(skill_path)}
+    index_path = tmp_path / "unitorch-copilot-tools" / "SKILL.md"
+    skill_path = (
+        tmp_path
+        / "unitorch-copilot-tools"
+        / "tests-copilot-skill_writer"
+        / "SKILL.md"
+    )
+    assert outputs == {
+        "unitorch-copilot-tools": str(index_path),
+        tool_name: str(skill_path),
+    }
+    assert index_path.exists()
+    index_content = index_path.read_text(encoding="utf-8")
+    assert 'name: "unitorch-copilot-tools"' in index_content
+    assert "model and algorithm related workflows" in index_content
+    assert "package info" in index_content
+    assert "| `tests/copilot/skill_writer` | [tests-copilot-skill_writer]" in index_content
     assert skill_path.exists()
     content = skill_path.read_text(encoding="utf-8")
     assert content == markdown
     assert content.startswith("---\n")
-    assert 'name: "unitorch-tests-copilot-skill_writer"' in content
+    assert 'name: "unitorch-copilot-tools-tests-copilot-skill_writer"' in content
     assert "# tests/copilot/skill_writer" in content
     assert "unitorch-copilot-cli tests/copilot/skill_writer" in content
     assert "| `prompt` | `str` | yes |  |" in content
@@ -326,26 +341,61 @@ def test_install_and_uninstall_copilot_skill_documents(tmp_path):
 
     try:
         installed = install_copilot_skill_documents(tool_name, folder=str(tmp_path))
-        skill_path = tmp_path / "unitorch-tests-copilot-skill_installer" / "SKILL.md"
-        assert installed == {tool_name: str(skill_path)}
+        index_path = tmp_path / "unitorch-copilot-tools" / "SKILL.md"
+        skill_path = (
+            tmp_path
+            / "unitorch-copilot-tools"
+            / "tests-copilot-skill_installer"
+            / "SKILL.md"
+        )
+        assert installed == {
+            "unitorch-copilot-tools": str(index_path),
+            tool_name: str(skill_path),
+        }
+        assert index_path.exists()
         assert skill_path.exists()
 
         removed = uninstall_copilot_skill_documents(tool_name, folder=str(tmp_path))
-        assert removed == {tool_name: str(skill_path)}
+        assert removed == {
+            tool_name: str(skill_path),
+            "unitorch-copilot-tools": str(index_path),
+        }
         assert not skill_path.exists()
-        assert not skill_path.parent.exists()
+        assert not index_path.parent.exists()
     finally:
         registered_copilot_tool.pop(tool_name, None)
 
 
-def test_install_and_uninstall_all_includes_manual_skills(tmp_path):
-    installed = install_copilot_skill_documents("all", folder=str(tmp_path))
+def test_install_all_excludes_manual_skills_and_force_replaces_package(tmp_path):
+    stale_path = (
+        tmp_path
+        / "unitorch-copilot-tools"
+        / "stale-tool"
+        / "SKILL.md"
+    )
+    stale_path.parent.mkdir(parents=True)
+    stale_path.write_text("stale", encoding="utf-8")
 
-    skill_path = tmp_path / "unitorch-config-ini" / "SKILL.md"
-    assert installed["config-ini"] == str(skill_path)
-    assert skill_path.exists()
-    assert 'name: "unitorch-config-ini"' in skill_path.read_text(encoding="utf-8")
+    installed = install_copilot_skill_documents(
+        "all",
+        folder=str(tmp_path),
+        force=True,
+    )
+
+    index_path = tmp_path / "unitorch-copilot-tools" / "SKILL.md"
+    pkg_infos_path = (
+        tmp_path
+        / "unitorch-copilot-tools"
+        / "core-copilot-pkg_infos"
+        / "SKILL.md"
+    )
+    assert installed["unitorch-copilot-tools"] == str(index_path)
+    assert installed["core/copilot/pkg_infos"] == str(pkg_infos_path)
+    assert index_path.exists()
+    assert pkg_infos_path.exists()
+    assert not stale_path.exists()
+    assert not (tmp_path / "unitorch-config-ini").exists()
 
     removed = uninstall_copilot_skill_documents("all", folder=str(tmp_path))
-    assert removed["config-ini"] == str(skill_path)
-    assert not skill_path.exists()
+    assert removed["unitorch-copilot-tools"] == str(index_path)
+    assert not index_path.parent.exists()

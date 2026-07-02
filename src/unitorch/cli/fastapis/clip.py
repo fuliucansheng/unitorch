@@ -2,9 +2,7 @@
 # Licensed under the MIT License.
 
 import io
-import gc
 import torch
-import asyncio
 from PIL import Image
 from typing import Any, Dict, List, Optional, Union
 from fastapi import APIRouter, UploadFile
@@ -25,6 +23,7 @@ from unitorch.cli import (
     register_fastapi,
 )
 from unitorch.cli import Config, GenericFastAPI
+from unitorch.cli import PipelineReplicaPool
 from unitorch.cli.models import ACT2FN
 from unitorch.cli.models.clip import (
     pretrained_clip_infos,
@@ -861,36 +860,54 @@ class ClipForClassificationFastAPI(GenericFastAPI):
     def __init__(self, config: Config):
         self.config = config
         config.set_default_section("core/fastapi/clip")
+        self._section = "core/fastapi/clip"
         router = config.getoption("router", "/core/fastapi/clip")
-        self._pipe = None
+        self._pipes = None
         self._router = APIRouter(prefix=router)
         self._router.add_api_route("/generate", self.generate, methods=["POST"])
         self._router.add_api_route("/status", self.status, methods=["GET"])
         self._router.add_api_route("/start", self.start, methods=["GET"])
         self._router.add_api_route("/stop", self.stop, methods=["GET"])
-        self._lock = asyncio.Lock()
 
     @property
     def router(self):
         return self._router
 
     def start(self, pretrained_name: str = "clip-vit-base-patch16"):
-        self._pipe = ClipForClassificationPipeline.from_config(
-            self.config,
-            pretrained_name=pretrained_name,
+        num_replicas = int(
+            self.config.getdefault(self._section, "pipeline_num_replicas", 1)
         )
+        devices = self.config.getdefault(
+            self._section, "pipeline_replica_devices", "cpu"
+        )
+        lock = self.config.getdefault(
+            self._section, "pipeline_replica_lock", True
+        )
+        if devices is None:
+            devices = []
+        if isinstance(devices, str):
+            devices = [devices] * num_replicas
+        pipelines = [
+            ClipForClassificationPipeline.from_config(
+                self.config,
+                pretrained_name=pretrained_name,
+            )
+            for _ in range(num_replicas)
+        ]
+        for pipe, device in zip(pipelines, devices):
+            if device is not None and hasattr(pipe, "to"):
+                pipe.to(device)
+        self._pipes = PipelineReplicaPool(pipelines, lock=lock)
         return "start success"
 
     def stop(self):
-        self._pipe.to("cpu")
-        del self._pipe
-        gc.collect()
-        torch.cuda.empty_cache()
-        self._pipe = None
+        if self._pipes is not None:
+            self._pipes.close()
+        self._pipes = None
         return "stop success"
 
     def status(self):
-        return "running" if self._pipe is not None else "stopped"
+        return "running" if self._pipes is not None else "stopped"
 
     async def generate(
         self,
@@ -898,16 +915,18 @@ class ClipForClassificationFastAPI(GenericFastAPI):
         image: UploadFile,
         max_seq_length: Optional[int] = 512,
     ):
-        assert self._pipe is not None
+        assert self._pipes is not None
         image_bytes = await image.read()
         image = Image.open(io.BytesIO(image_bytes))
-        async with self._lock:
-            result = self._pipe(
+        pipe = self._pipes.acquire()
+        try:
+            result = pipe(
                 text,
                 image,
                 max_seq_length=max_seq_length,
             )
-
+        finally:
+            pipe.release()
         return result
 
 
@@ -916,49 +935,69 @@ class ClipForTextClassificationFastAPI(GenericFastAPI):
     def __init__(self, config: Config):
         self.config = config
         config.set_default_section("core/fastapi/clip/text")
+        self._section = "core/fastapi/clip/text"
         router = config.getoption("router", "/core/fastapi/clip/text")
-        self._pipe = None
+        self._pipes = None
         self._router = APIRouter(prefix=router)
         self._router.add_api_route("/generate", self.generate, methods=["POST"])
         self._router.add_api_route("/status", self.status, methods=["GET"])
         self._router.add_api_route("/start", self.start, methods=["GET"])
         self._router.add_api_route("/stop", self.stop, methods=["GET"])
-        self._lock = asyncio.Lock()
 
     @property
     def router(self):
         return self._router
 
     def start(self, pretrained_name: str = "clip-vit-base-patch16"):
-        self._pipe = ClipForTextClassificationPipeline.from_config(
-            self.config,
-            pretrained_name=pretrained_name,
+        num_replicas = int(
+            self.config.getdefault(self._section, "pipeline_num_replicas", 1)
         )
+        devices = self.config.getdefault(
+            self._section, "pipeline_replica_devices", "cpu"
+        )
+        lock = self.config.getdefault(
+            self._section, "pipeline_replica_lock", True
+        )
+        if devices is None:
+            devices = []
+        if isinstance(devices, str):
+            devices = [devices] * num_replicas
+        pipelines = [
+            ClipForTextClassificationPipeline.from_config(
+                self.config,
+                pretrained_name=pretrained_name,
+            )
+            for _ in range(num_replicas)
+        ]
+        for pipe, device in zip(pipelines, devices):
+            if device is not None and hasattr(pipe, "to"):
+                pipe.to(device)
+        self._pipes = PipelineReplicaPool(pipelines, lock=lock)
         return "start success"
 
     def stop(self):
-        self._pipe.to("cpu")
-        del self._pipe
-        gc.collect()
-        torch.cuda.empty_cache()
-        self._pipe = None
+        if self._pipes is not None:
+            self._pipes.close()
+        self._pipes = None
         return "stop success"
 
     def status(self):
-        return "running" if self._pipe is not None else "stopped"
+        return "running" if self._pipes is not None else "stopped"
 
     async def generate(
         self,
         text: str,
         max_seq_length: Optional[int] = 512,
     ):
-        assert self._pipe is not None
-        async with self._lock:
-            result = self._pipe(
+        assert self._pipes is not None
+        pipe = self._pipes.acquire()
+        try:
+            result = pipe(
                 text,
                 max_seq_length=max_seq_length,
             )
-
+        finally:
+            pipe.release()
         return result
 
 
@@ -967,47 +1006,67 @@ class ClipForImageClassificationFastAPI(GenericFastAPI):
     def __init__(self, config: Config):
         self.config = config
         config.set_default_section("core/fastapi/clip/image")
+        self._section = "core/fastapi/clip/image"
         router = config.getoption("router", "/core/fastapi/clip/image")
-        self._pipe = None
+        self._pipes = None
         self._router = APIRouter(prefix=router)
         self._router.add_api_route("/generate", self.generate, methods=["POST"])
         self._router.add_api_route("/status", self.status, methods=["GET"])
         self._router.add_api_route("/start", self.start, methods=["GET"])
         self._router.add_api_route("/stop", self.stop, methods=["GET"])
-        self._lock = asyncio.Lock()
 
     @property
     def router(self):
         return self._router
 
     def start(self, pretrained_name: str = "clip-vit-base-patch16"):
-        self._pipe = ClipForImageClassificationPipeline.from_config(
-            self.config,
-            pretrained_name=pretrained_name,
+        num_replicas = int(
+            self.config.getdefault(self._section, "pipeline_num_replicas", 1)
         )
+        devices = self.config.getdefault(
+            self._section, "pipeline_replica_devices", "cpu"
+        )
+        lock = self.config.getdefault(
+            self._section, "pipeline_replica_lock", True
+        )
+        if devices is None:
+            devices = []
+        if isinstance(devices, str):
+            devices = [devices] * num_replicas
+        pipelines = [
+            ClipForImageClassificationPipeline.from_config(
+                self.config,
+                pretrained_name=pretrained_name,
+            )
+            for _ in range(num_replicas)
+        ]
+        for pipe, device in zip(pipelines, devices):
+            if device is not None and hasattr(pipe, "to"):
+                pipe.to(device)
+        self._pipes = PipelineReplicaPool(pipelines, lock=lock)
         return "start success"
 
     def stop(self):
-        self._pipe.to("cpu")
-        del self._pipe
-        gc.collect()
-        torch.cuda.empty_cache()
-        self._pipe = None
+        if self._pipes is not None:
+            self._pipes.close()
+        self._pipes = None
         return "stop success"
 
     def status(self):
-        return "running" if self._pipe is not None else "stopped"
+        return "running" if self._pipes is not None else "stopped"
 
     async def generate(
         self,
         image: UploadFile,
     ):
-        assert self._pipe is not None
+        assert self._pipes is not None
         image_bytes = await image.read()
         image = Image.open(io.BytesIO(image_bytes))
-        async with self._lock:
-            result = self._pipe(image)
-
+        pipe = self._pipes.acquire()
+        try:
+            result = pipe(image)
+        finally:
+            pipe.release()
         return result
 
 @register_fastapi("core/fastapi/clip/image/v2")
@@ -1015,47 +1074,67 @@ class ClipForImageClassificationV2FastAPI(GenericFastAPI):
     def __init__(self, config: Config):
         self.config = config
         config.set_default_section("core/fastapi/clip/image/v2")
+        self._section = "core/fastapi/clip/image/v2"
         router = config.getoption("router", "/core/fastapi/clip/image/v2")
-        self._pipe = None
+        self._pipes = None
         self._router = APIRouter(prefix=router)
         self._router.add_api_route("/generate", self.generate, methods=["POST"])
         self._router.add_api_route("/status", self.status, methods=["GET"])
         self._router.add_api_route("/start", self.start, methods=["GET"])
         self._router.add_api_route("/stop", self.stop, methods=["GET"])
-        self._lock = asyncio.Lock()
 
     @property
     def router(self):
         return self._router
 
     def start(self, pretrained_name: Optional[str] = None):
-        self._pipe = ClipForImageClassificationV2Pipeline.from_config(
-            self.config,
-            pretrained_name=pretrained_name,
+        num_replicas = int(
+            self.config.getdefault(self._section, "pipeline_num_replicas", 1)
         )
+        devices = self.config.getdefault(
+            self._section, "pipeline_replica_devices", "cpu"
+        )
+        lock = self.config.getdefault(
+            self._section, "pipeline_replica_lock", True
+        )
+        if devices is None:
+            devices = []
+        if isinstance(devices, str):
+            devices = [devices] * num_replicas
+        pipelines = [
+            ClipForImageClassificationV2Pipeline.from_config(
+                self.config,
+                pretrained_name=pretrained_name,
+            )
+            for _ in range(num_replicas)
+        ]
+        for pipe, device in zip(pipelines, devices):
+            if device is not None and hasattr(pipe, "to"):
+                pipe.to(device)
+        self._pipes = PipelineReplicaPool(pipelines, lock=lock)
         return "start success"
 
     def stop(self):
-        self._pipe.to("cpu")
-        del self._pipe
-        gc.collect()
-        torch.cuda.empty_cache()
-        self._pipe = None
+        if self._pipes is not None:
+            self._pipes.close()
+        self._pipes = None
         return "stop success"
 
     def status(self):
-        return "running" if self._pipe is not None else "stopped"
+        return "running" if self._pipes is not None else "stopped"
 
     async def generate(
         self,
         image: UploadFile,
     ):
-        assert self._pipe is not None
+        assert self._pipes is not None
         image_bytes = await image.read()
         image = Image.open(io.BytesIO(image_bytes))
-        async with self._lock:
-            result = self._pipe(image)
-
+        pipe = self._pipes.acquire()
+        try:
+            result = pipe(image)
+        finally:
+            pipe.release()
         return result
 
 
@@ -1064,36 +1143,54 @@ class ClipForMatchingFastAPI(GenericFastAPI):
     def __init__(self, config: Config):
         self.config = config
         config.set_default_section("core/fastapi/clip/matching")
+        self._section = "core/fastapi/clip/matching"
         router = config.getoption("router", "/core/fastapi/clip/matching")
-        self._pipe = None
+        self._pipes = None
         self._router = APIRouter(prefix=router)
         self._router.add_api_route("/generate", self.generate, methods=["POST"])
         self._router.add_api_route("/status", self.status, methods=["GET"])
         self._router.add_api_route("/start", self.start, methods=["GET"])
         self._router.add_api_route("/stop", self.stop, methods=["GET"])
-        self._lock = asyncio.Lock()
 
     @property
     def router(self):
         return self._router
 
     def start(self, pretrained_name: str = "clip-vit-base-patch16"):
-        self._pipe = ClipForMatchingPipeline.from_config(
-            self.config,
-            pretrained_name=pretrained_name,
+        num_replicas = int(
+            self.config.getdefault(self._section, "pipeline_num_replicas", 1)
         )
+        devices = self.config.getdefault(
+            self._section, "pipeline_replica_devices", "cpu"
+        )
+        lock = self.config.getdefault(
+            self._section, "pipeline_replica_lock", True
+        )
+        if devices is None:
+            devices = []
+        if isinstance(devices, str):
+            devices = [devices] * num_replicas
+        pipelines = [
+            ClipForMatchingPipeline.from_config(
+                self.config,
+                pretrained_name=pretrained_name,
+            )
+            for _ in range(num_replicas)
+        ]
+        for pipe, device in zip(pipelines, devices):
+            if device is not None and hasattr(pipe, "to"):
+                pipe.to(device)
+        self._pipes = PipelineReplicaPool(pipelines, lock=lock)
         return "start success"
 
     def stop(self):
-        self._pipe.to("cpu")
-        del self._pipe
-        gc.collect()
-        torch.cuda.empty_cache()
-        self._pipe = None
+        if self._pipes is not None:
+            self._pipes.close()
+        self._pipes = None
         return "stop success"
 
     def status(self):
-        return "running" if self._pipe is not None else "stopped"
+        return "running" if self._pipes is not None else "stopped"
 
     async def generate(
         self,
@@ -1101,14 +1198,16 @@ class ClipForMatchingFastAPI(GenericFastAPI):
         image: UploadFile,
         max_seq_length: Optional[int] = 77,
     ):
-        assert self._pipe is not None
+        assert self._pipes is not None
         image_bytes = await image.read()
         image = Image.open(io.BytesIO(image_bytes))
-        async with self._lock:
-            result = self._pipe(
+        pipe = self._pipes.acquire()
+        try:
+            result = pipe(
                 text,
                 image,
                 max_seq_length=max_seq_length,
             )
-
+        finally:
+            pipe.release()
         return result

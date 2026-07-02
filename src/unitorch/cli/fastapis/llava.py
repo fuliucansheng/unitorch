@@ -2,9 +2,7 @@
 # Licensed under the MIT License.
 
 import io
-import gc
 import torch
-import asyncio
 from PIL import Image
 from typing import Any, Dict, List, Optional, Union
 from fastapi import APIRouter, UploadFile
@@ -22,6 +20,7 @@ from unitorch.cli.models.llava import (
 )
 from unitorch.cli import register_fastapi
 from unitorch.cli import Config, GenericFastAPI
+from unitorch.cli import PipelineReplicaPool
 
 
 class LlavaMistralClipForGenerationPipeline(_LlavaMistralClipForGeneration):
@@ -445,53 +444,73 @@ class LlavaMistralClipFastAPI(GenericFastAPI):
     def __init__(self, config: Config):
         self.config = config
         config.set_default_section(f"core/fastapi/llava/mistral_clip")
+        self._section = f"core/fastapi/llava/mistral_clip"
         router = config.getoption("router", "/core/fastapi/llava/mistral_clip")
-        self._pipe = None
+        self._pipes = None
         self._router = APIRouter(prefix=router)
         self._router.add_api_route("/generate", self.generate, methods=["POST"])
         self._router.add_api_route("/status", self.status, methods=["GET"])
         self._router.add_api_route("/start", self.start, methods=["GET"])
         self._router.add_api_route("/stop", self.stop, methods=["GET"])
-        self._lock = asyncio.Lock()
 
     @property
     def router(self):
         return self._router
 
     def start(self):
-        self._pipe = LlavaMistralClipForGenerationPipeline.from_config(
-            self.config,
-            pretrained_name="llava-v1.6-mistral-7b-hf",
+        num_replicas = int(
+            self.config.getdefault(self._section, "pipeline_num_replicas", 1)
         )
+        devices = self.config.getdefault(
+            self._section, "pipeline_replica_devices", "cpu"
+        )
+        lock = self.config.getdefault(
+            self._section, "pipeline_replica_lock", True
+        )
+        if devices is None:
+            devices = []
+        if isinstance(devices, str):
+            devices = [devices] * num_replicas
+        pipelines = [
+            LlavaMistralClipForGenerationPipeline.from_config(
+                self.config,
+                pretrained_name="llava-v1.6-mistral-7b-hf",
+            )
+            for _ in range(num_replicas)
+        ]
+        for pipe, device in zip(pipelines, devices):
+            if device is not None and hasattr(pipe, "to"):
+                pipe.to(device)
+        self._pipes = PipelineReplicaPool(pipelines, lock=lock)
         return "start success"
 
     def stop(self):
-        self._pipe.to("cpu")
-        del self._pipe
-        gc.collect()
-        torch.cuda.empty_cache()
-        self._pipe = None
+        if self._pipes is not None:
+            self._pipes.close()
+        self._pipes = None
         return "stop success"
 
     def status(self):
-        return "running" if self._pipe is not None else "stopped"
+        return "running" if self._pipes is not None else "stopped"
 
     async def generate(
         self,
         text: str,
         image: UploadFile,
     ):
-        assert self._pipe is not None
+        assert self._pipes is not None
         image_bytes = await image.read()
         image = Image.open(io.BytesIO(image_bytes))
         text = f"[INST] <image>\n {text} [/INST]"
-        async with self._lock:
-            caption = self._pipe(
+        pipe = self._pipes.acquire()
+        try:
+            caption = pipe(
                 text,
                 image,
                 
             )
-
+        finally:
+            pipe.release()
         return caption
 
 
@@ -500,51 +519,71 @@ class LlavaLlamaSiglipFastAPI(GenericFastAPI):
     def __init__(self, config: Config):
         self.config = config
         config.set_default_section(f"core/fastapi/llava/joycaption2")
+        self._section = f"core/fastapi/llava/joycaption2"
         router = config.getoption("router", "/core/fastapi/llava/joycaption2")
-        self._pipe = None
+        self._pipes = None
         self._router = APIRouter(prefix=router)
         self._router.add_api_route("/generate", self.generate, methods=["POST"])
         self._router.add_api_route("/status", self.status, methods=["GET"])
         self._router.add_api_route("/start", self.start, methods=["GET"])
         self._router.add_api_route("/stop", self.stop, methods=["GET"])
-        self._lock = asyncio.Lock()
 
     @property
     def router(self):
         return self._router
 
     def start(self):
-        self._pipe = LlavaLlamaSiglipForGenerationPipeline.from_config(
-            self.config,
-            pretrained_name="llava-v1.6-joycaption-2",
+        num_replicas = int(
+            self.config.getdefault(self._section, "pipeline_num_replicas", 1)
         )
+        devices = self.config.getdefault(
+            self._section, "pipeline_replica_devices", "cpu"
+        )
+        lock = self.config.getdefault(
+            self._section, "pipeline_replica_lock", True
+        )
+        if devices is None:
+            devices = []
+        if isinstance(devices, str):
+            devices = [devices] * num_replicas
+        pipelines = [
+            LlavaLlamaSiglipForGenerationPipeline.from_config(
+                self.config,
+                pretrained_name="llava-v1.6-joycaption-2",
+            )
+            for _ in range(num_replicas)
+        ]
+        for pipe, device in zip(pipelines, devices):
+            if device is not None and hasattr(pipe, "to"):
+                pipe.to(device)
+        self._pipes = PipelineReplicaPool(pipelines, lock=lock)
         return "start success"
 
     def stop(self):
-        self._pipe.to("cpu")
-        del self._pipe
-        gc.collect()
-        torch.cuda.empty_cache()
-        self._pipe = None
+        if self._pipes is not None:
+            self._pipes.close()
+        self._pipes = None
         return "stop success"
 
     def status(self):
-        return "running" if self._pipe is not None else "stopped"
+        return "running" if self._pipes is not None else "stopped"
 
     async def generate(
         self,
         text: str,
         image: UploadFile,
     ):
-        assert self._pipe is not None
+        assert self._pipes is not None
         image_bytes = await image.read()
         image = Image.open(io.BytesIO(image_bytes))
         text = f"<|start_header_id|>system<|end_header_id|>\\n\\nCutting Knowledge Date: December 2023\\nToday Date: 26 July 2024\\n\\nYou are a helpful image captioner.<|eot_id|><|start_header_id|>user<|end_header_id|>\\n\\n<|reserved_special_token_70|><|reserved_special_token_69|><|reserved_special_token_71|>{text}|eot_id|><|start_header_id|>assistant<|end_header_id|>\\n\\n"
-        async with self._lock:
-            caption = self._pipe(
+        pipe = self._pipes.acquire()
+        try:
+            caption = pipe(
                 text,
                 image,
                 
             )
-
+        finally:
+            pipe.release()
         return caption
