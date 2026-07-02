@@ -31,7 +31,7 @@ class ImageProcessor:
     ):
         self.image_type = image_type
         self.image_size = image_size
-        self.http_url = http_url
+        self.http_url = str(http_url) if http_url is not None else None
 
     @classmethod
     @config_defaults_init("core/process/image")

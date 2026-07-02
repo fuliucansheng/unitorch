@@ -1,9 +1,7 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
-import gc
 import torch
-import asyncio
 from typing import Any, Dict, List, Optional, Union
 from unitorch.utils import is_remote_url
 from unitorch.models.mistral import (
@@ -19,6 +17,7 @@ from unitorch.cli import (
 from fastapi import APIRouter
 from unitorch.cli import register_fastapi
 from unitorch.cli import Config, GenericFastAPI
+from unitorch.cli import PipelineReplicaPool
 from unitorch.cli.models.mistral import (
     pretrained_mistral_infos,
     pretrained_mistral_extensions_infos,
@@ -220,36 +219,54 @@ class MistralForGenerationFastAPI(GenericFastAPI):
     def __init__(self, config: Config):
         self.config = config
         config.set_default_section("core/fastapi/mistral")
+        self._section = "core/fastapi/mistral"
         router = config.getoption("router", "/core/fastapi/mistral")
-        self._pipe = None
+        self._pipes = None
         self._router = APIRouter(prefix=router)
         self._router.add_api_route("/generate", self.generate, methods=["POST"])
         self._router.add_api_route("/status", self.status, methods=["GET"])
         self._router.add_api_route("/start", self.start, methods=["GET"])
         self._router.add_api_route("/stop", self.stop, methods=["GET"])
-        self._lock = asyncio.Lock()
 
     @property
     def router(self):
         return self._router
 
     def start(self, pretrained_name: str = "mistral-7b-instruct-v0.1"):
-        self._pipe = MistralForGenerationPipeline.from_config(
-            self.config,
-            pretrained_name=pretrained_name,
+        num_replicas = int(
+            self.config.getdefault(self._section, "pipeline_num_replicas", 1)
         )
+        devices = self.config.getdefault(
+            self._section, "pipeline_replica_devices", "cpu"
+        )
+        lock = self.config.getdefault(
+            self._section, "pipeline_replica_lock", True
+        )
+        if devices is None:
+            devices = []
+        if isinstance(devices, str):
+            devices = [devices] * num_replicas
+        pipelines = [
+            MistralForGenerationPipeline.from_config(
+                self.config,
+                pretrained_name=pretrained_name,
+            )
+            for _ in range(num_replicas)
+        ]
+        for pipe, device in zip(pipelines, devices):
+            if device is not None and hasattr(pipe, "to"):
+                pipe.to(device)
+        self._pipes = PipelineReplicaPool(pipelines, lock=lock)
         return "start success"
 
     def stop(self):
-        self._pipe.to("cpu")
-        del self._pipe
-        gc.collect()
-        torch.cuda.empty_cache()
-        self._pipe = None
+        if self._pipes is not None:
+            self._pipes.close()
+        self._pipes = None
         return "stop success"
 
     def status(self):
-        return "running" if self._pipe is not None else "stopped"
+        return "running" if self._pipes is not None else "stopped"
 
     async def generate(
         self,
@@ -272,9 +289,10 @@ class MistralForGenerationFastAPI(GenericFastAPI):
         top_k: Optional[int] = 50,
         top_p: Optional[float] = 1.0,
     ):
-        assert self._pipe is not None
-        async with self._lock:
-            result = self._pipe(
+        assert self._pipes is not None
+        pipe = self._pipes.acquire()
+        try:
+            result = pipe(
                 prompt,
                 max_seq_length=max_seq_length,
                 num_beams=num_beams,
@@ -295,5 +313,6 @@ class MistralForGenerationFastAPI(GenericFastAPI):
                 top_p=top_p,
                 
             )
-
+        finally:
+            pipe.release()
         return result

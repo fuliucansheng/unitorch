@@ -2,9 +2,7 @@
 # Licensed under the MIT License.
 
 import io
-import gc
 import torch
-import asyncio
 import numpy as np
 from PIL import Image, ImageDraw
 from typing import Any, Dict, List, Optional, Union
@@ -24,6 +22,7 @@ from unitorch.cli import (
     GenericFastAPI,
 )
 from unitorch.cli.models.grounding_dino import pretrained_grounding_dino_infos
+from unitorch.cli import PipelineReplicaPool
 
 
 class GroundingDinoForDetectionPipeline(_GroundingDinoForDetection):
@@ -181,36 +180,54 @@ class GroundingDinoForDetectionFastAPI(GenericFastAPI):
     def __init__(self, config: Config):
         self.config = config
         config.set_default_section("core/fastapi/grounding_dino")
+        self._section = "core/fastapi/grounding_dino"
         router = config.getoption("router", "/core/fastapi/grounding_dino")
-        self._pipe = None
+        self._pipes = None
         self._router = APIRouter(prefix=router)
         self._router.add_api_route("/generate", self.generate, methods=["POST"])
         self._router.add_api_route("/status", self.status, methods=["GET"])
         self._router.add_api_route("/start", self.start, methods=["GET"])
         self._router.add_api_route("/stop", self.stop, methods=["GET"])
-        self._lock = asyncio.Lock()
 
     @property
     def router(self):
         return self._router
 
     def start(self, pretrained_name: Optional[str] = "grounding-dino-tiny"):
-        self._pipe = GroundingDinoForDetectionPipeline.from_config(
-            self.config,
-            pretrained_name=pretrained_name,
+        num_replicas = int(
+            self.config.getdefault(self._section, "pipeline_num_replicas", 1)
         )
+        devices = self.config.getdefault(
+            self._section, "pipeline_replica_devices", "cpu"
+        )
+        lock = self.config.getdefault(
+            self._section, "pipeline_replica_lock", True
+        )
+        if devices is None:
+            devices = []
+        if isinstance(devices, str):
+            devices = [devices] * num_replicas
+        pipelines = [
+            GroundingDinoForDetectionPipeline.from_config(
+                self.config,
+                pretrained_name=pretrained_name,
+            )
+            for _ in range(num_replicas)
+        ]
+        for pipe, device in zip(pipelines, devices):
+            if device is not None and hasattr(pipe, "to"):
+                pipe.to(device)
+        self._pipes = PipelineReplicaPool(pipelines, lock=lock)
         return "start success"
 
     def stop(self):
-        self._pipe.to("cpu")
-        del self._pipe
-        gc.collect()
-        torch.cuda.empty_cache()
-        self._pipe = None
+        if self._pipes is not None:
+            self._pipes.close()
+        self._pipes = None
         return "stop success"
 
     def status(self):
-        return "running" if self._pipe is not None else "stopped"
+        return "running" if self._pipes is not None else "stopped"
 
     async def generate(
         self,
@@ -219,17 +236,19 @@ class GroundingDinoForDetectionFastAPI(GenericFastAPI):
         text_threshold: float = 0.25,
         box_threshold: float = 0.25,
     ):
-        assert self._pipe is not None
+        assert self._pipes is not None
         image_bytes = await image.read()
         image = Image.open(io.BytesIO(image_bytes))
-        async with self._lock:
-            result_image = self._pipe(
+        pipe = self._pipes.acquire()
+        try:
+            result_image = pipe(
                 text,
                 image,
                 text_threshold=text_threshold,
                 box_threshold=box_threshold,
             )
-
+        finally:
+            pipe.release()
         buffer = io.BytesIO()
         result_image.save(buffer, format="PNG")
 

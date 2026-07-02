@@ -8,6 +8,45 @@ This file provides guidance to coding agents when working with code in this repo
 
 Python `>=3.10` and PyTorch `>=2.5` are required.
 
+## Architecture Boundary: Package vs CLI
+
+Always preserve unitorch's package/CLI separation.
+
+- The package layer (`src/unitorch/`) is the source of truth for reusable ML
+  modules: model wrappers, processors, datasets, losses, scores,
+  optimizers, schedulers, task abstractions, and utilities.
+- The CLI layer (`src/unitorch/cli/`) is an adapter layer built on top of package
+  modules. It adapts package modules to config-driven command flows such
+  as train, eval, infer, serving, and agent-facing tools.
+- Do not put core model, data, optimization, or metric behavior in the CLI layer
+  when it belongs in the package layer. CLI modules should compose, register,
+  configure, and orchestrate package modules.
+- `src/unitorch/cli/models/`, `src/unitorch/cli/tasks/`,
+  `src/unitorch/cli/fastapis/`, and `src/unitorch/cli/consoles/` should be
+  treated as adapters for specific command flows, not as the canonical
+  implementation of model behavior.
+- Copilot tools and generated skills must follow the same boundary: reusable ML
+  logic belongs in package modules; copilot/CLI code should expose, describe,
+  plan, invoke, or orchestrate that logic for agents and command workflows.
+
+## Project Skills
+
+Project skills live in `.skills/<skill-name>/SKILL.md`. This is the canonical
+location for Claude, Codex, OpenCode, Studio, and other coding agents working in
+this repository.
+
+Before starting a task, inspect the frontmatter of each `.skills/*/SKILL.md`.
+If a skill's `description` matches the task, read that whole `SKILL.md` before
+acting and follow its instructions. Do not use `.claude/skills` as the canonical
+source; the project skills were migrated to `.skills`.
+
+Current skills:
+
+- `config-ini`: use when writing, reviewing, or debugging unitorch `.ini`
+  configs.
+- `replace-decorator`: use when working with the process-global `@replace`
+  decorator or replacement modules.
+
 ## Build And Install
 
 ```bash

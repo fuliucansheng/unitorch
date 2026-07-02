@@ -8,15 +8,26 @@ python3 -m unitorch.cli.<module> [args...]
 
 ---
 
-## generate_skills
+## Copilot Skill Document Exporter
 
-Generates per-tool `SKILL.md` files for all registered copilot tools into a
-target folder. Useful for bootstrapping Claude skill documentation.
+Installs generated copilot-tool skills and hand-written skills from
+`src/unitorch/cli/skills` into a target folder. Useful for bootstrapping agent
+skill documentation.
 
 ```bash
-python3 -m unitorch.cli.copilots.tools.generate_skills --folder ./skills
+python3 -m unitorch.cli.copilots.skills install --folder ./skills
+python3 -m unitorch.cli.copilots.skills uninstall --folder ./skills
 ```
 
 Each tool's output is written to
-`<folder>/<tool_name_with_slashes_replaced_by_underscores>/SKILL.md`,
-containing the tool's `describe()` text and `usage()` snippet.
+`<folder>/unitorch-<skill-safe-tool-name>/SKILL.md`,
+containing skill frontmatter, CLI/Python usage, parameter metadata, and any
+remote `unitorch-fastapi` route metadata declared by the copilot tool.
+`install` defaults to `./skills`, and `uninstall` removes the matching
+`SKILL.md` files from that folder. Use `--name all` or omit `--name` to include
+all generated and hand-written skills.
+
+Extension packages can expose additional hand-written skills by shipping a
+`unitorch.cli.skills` namespace package that contains skill subfolders in
+`<skill-name>/SKILL.md` format. Installed extension package skill directories
+are discovered automatically.

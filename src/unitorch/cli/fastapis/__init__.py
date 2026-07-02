@@ -6,6 +6,7 @@ from unitorch.utils import (
     is_opencv_available,
     is_vllm_available,
 )
+from unitorch.cli import PipelineReplicaLease, PipelineReplicaPool
 import unitorch.cli.fastapis.info
 import unitorch.cli.fastapis.bria
 import unitorch.cli.fastapis.clip

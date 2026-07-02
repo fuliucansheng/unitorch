@@ -1,9 +1,7 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
-import gc
 import io
-import asyncio
 from typing import List, Optional, Union
 
 import torch
@@ -22,6 +20,7 @@ from unitorch.cli import (
     register_fastapi,
 )
 from unitorch.cli.fastapis.flux2.text2image import Flux2FastAPIPipeline
+from unitorch.cli import PipelineReplicaPool
 
 
 class Flux2ImageEditingFastAPIPipeline(Flux2FastAPIPipeline):
@@ -119,14 +118,14 @@ class Flux2ImageEditingFastAPI(GenericFastAPI):
     def __init__(self, config: Config):
         self.config = config
         config.set_default_section("core/fastapi/flux2/editing")
+        self._section = "core/fastapi/flux2/editing"
         router = config.getoption("router", "/core/fastapi/flux2/editing")
-        self._pipe = None
+        self._pipes = None
         self._router = APIRouter(prefix=router)
         self._router.add_api_route("/generate", self.generate, methods=["POST"])
         self._router.add_api_route("/status", self.status, methods=["GET"])
         self._router.add_api_route("/start", self.start, methods=["POST"])
         self._router.add_api_route("/stop", self.stop, methods=["GET"])
-        self._lock = asyncio.Lock()
 
     @property
     def router(self):
@@ -139,25 +138,43 @@ class Flux2ImageEditingFastAPI(GenericFastAPI):
         pretrained_lora_weights: Optional[Union[float, List[float]]] = 1.0,
         pretrained_lora_alphas: Optional[Union[float, List[float]]] = 32.0,
     ):
-        self._pipe = Flux2ImageEditingFastAPIPipeline.from_config(
-            self.config,
-            pretrained_name=pretrained_name,
-            pretrained_lora_names=pretrained_lora_names,
-            pretrained_lora_weights=pretrained_lora_weights,
-            pretrained_lora_alphas=pretrained_lora_alphas,
+        num_replicas = int(
+            self.config.getdefault(self._section, "pipeline_num_replicas", 1)
         )
+        devices = self.config.getdefault(
+            self._section, "pipeline_replica_devices", "cpu"
+        )
+        lock = self.config.getdefault(
+            self._section, "pipeline_replica_lock", True
+        )
+        if devices is None:
+            devices = []
+        if isinstance(devices, str):
+            devices = [devices] * num_replicas
+        pipelines = [
+            Flux2ImageEditingFastAPIPipeline.from_config(
+                self.config,
+                pretrained_name=pretrained_name,
+                pretrained_lora_names=pretrained_lora_names,
+                pretrained_lora_weights=pretrained_lora_weights,
+                pretrained_lora_alphas=pretrained_lora_alphas,
+            )
+            for _ in range(num_replicas)
+        ]
+        for pipe, device in zip(pipelines, devices):
+            if device is not None and hasattr(pipe, "to"):
+                pipe.to(device)
+        self._pipes = PipelineReplicaPool(pipelines, lock=lock)
         return "start success"
 
     def stop(self):
-        self._pipe.to("cpu")
-        del self._pipe
-        gc.collect()
-        torch.cuda.empty_cache()
-        self._pipe = None
+        if self._pipes is not None:
+            self._pipes.close()
+        self._pipes = None
         return "stop success"
 
     def status(self):
-        return "running" if self._pipe is not None else "stopped"
+        return "running" if self._pipes is not None else "stopped"
 
     async def generate(
         self,
@@ -169,12 +186,13 @@ class Flux2ImageEditingFastAPI(GenericFastAPI):
         num_timesteps: Optional[int] = 4,
         seed: Optional[int] = 1123,
     ):
-        assert self._pipe is not None
+        assert self._pipes is not None
         image_bytes = await image.read()
         image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
 
-        async with self._lock:
-            image = self._pipe(
+        pipe = self._pipes.acquire()
+        try:
+            image = pipe(
                 text=text,
                 image=image,
                 height=height,
@@ -183,7 +201,8 @@ class Flux2ImageEditingFastAPI(GenericFastAPI):
                 num_timesteps=num_timesteps,
                 seed=seed,
             )
-
+        finally:
+            pipe.release()
         buffer = io.BytesIO()
         image.save(buffer, format="PNG")
 

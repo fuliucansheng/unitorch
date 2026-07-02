@@ -1,53 +1,46 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
-import logging
-from unitorch.cli import GenericCopilotTool
-from unitorch.cli import (
-    register_copilot_tool,
-    registered_process,
-    registered_copilot_tool,
-    registered_model,
-    registered_fastapi,
-    registered_score,
-    registered_dataset,
-    registered_loss,
-    registered_optim,
-    registered_scheduler,
-    registered_task,
-    registered_writer,
+from typing import Optional
+
+from unitorch.cli import register_copilot_tool, registered_copilot_tool
+
+
+def _safe_import(module_name: str) -> None:
+    try:
+        __import__(module_name)
+    except Exception:
+        return
+
+
+@register_copilot_tool(
+    name="core/copilot/pkg_infos",
+    description="List registered unitorch packages and copilot tools.",
+    tags=("metadata",),
 )
+def pkg_infos(name: Optional[str] = None):
+    import unitorch.cli as cli
 
-
-@register_copilot_tool("core/copilot/pkg_infos")
-class PkgInfosCopilotTool(GenericCopilotTool):
-    def launch(self, name=None, **kwargs):
-        pkg_infos = {
-            "process": registered_process,
-            "copilot_tool": registered_copilot_tool,
-            "model": registered_model,
-            "fastapi": registered_fastapi,
-            "score": registered_score,
-            "dataset": registered_dataset,
-            "loss": registered_loss,
-            "optimizer": registered_optim,
-            "scheduler": registered_scheduler,
-            "task": registered_task,
-            "writer": registered_writer,
-        }
-        if name is not None:
-            if name in pkg_infos:
-                logging.info(f"Registered {name}s: {list(pkg_infos[name].keys())}")
-            else:
-                logging.warning(
-                    f"Package type '{name}' not found. Available types: {list(pkg_infos.keys())}"
-                )
-        else:
-            for pkg_type, pkg_dict in pkg_infos.items():
-                logging.info(f"Registered {pkg_type}s: {list(pkg_dict.keys())}")
-
-    def describe(self):
-        return "Provides information about registered packages in the unitorch package, including process, copilot_tool, model, fastapi, score, dataset, loss, optimizer, scheduler, task, and writer."
-
-    def usage(self):
-        return "unitorch-copilot-cli core/copilot/pkg_infos [--name <package_type>]"
+    pkg_infos = {
+        "process": cli.registered_process,
+        "copilot_tool": getattr(cli, "registered_copilot_tool", {}),
+        "model": cli.registered_model,
+        "fastapi": cli.registered_fastapi,
+        "score": cli.registered_score,
+        "dataset": cli.registered_dataset,
+        "loss": cli.registered_loss,
+        "optimizer": cli.registered_optim,
+        "scheduler": cli.registered_scheduler,
+        "task": cli.registered_task,
+        "writer": cli.registered_writer,
+    }
+    normalized = {
+        pkg_type: sorted(pkg_dict.keys()) for pkg_type, pkg_dict in pkg_infos.items()
+    }
+    if name is not None:
+        if name not in normalized:
+            raise KeyError(
+                f"Package type {name!r} not found. Available types: {sorted(normalized.keys())}"
+            )
+        return {name: normalized[name]}
+    return normalized

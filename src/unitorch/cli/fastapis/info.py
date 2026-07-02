@@ -14,6 +14,7 @@ class InfoFastAPI(GenericFastAPI):
     def __init__(self, config: Config):
         self.config = config
         config.set_default_section(f"core/fastapi/info")
+        self._section = f"core/fastapi/info"
         router = config.getoption("router", "/core/fastapi/info")
         self._device = config.getoption("device", "cpu")
         self._router = APIRouter(prefix=router)

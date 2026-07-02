@@ -1,0 +1,10 @@
+{
+  "name": "unitorch",
+  "version": "1.0.0",
+  "scripts": {
+    "generate-skills": "python3 -m unitorch.cli.copilots.skills install all"
+  },
+  "dependencies": {
+    "pm2": "^6.0.8"
+  }
+}

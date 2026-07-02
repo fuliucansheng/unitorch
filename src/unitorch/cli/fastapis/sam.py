@@ -2,9 +2,7 @@
 # Licensed under the MIT License.
 
 import io
-import gc
 import torch
-import asyncio
 import numpy as np
 from PIL import Image
 from typing import Any, Dict, List, Optional, Tuple, Union
@@ -28,6 +26,7 @@ from unitorch.cli.models.sam import (
     pretrained_sam_infos,
     pretrained_sam_extensions_infos,
 )
+from unitorch.cli import PipelineReplicaPool
 
 
 class SamForSegmentationPipeline(_SamForSegmentation):
@@ -193,36 +192,54 @@ class SamForSegmentationFastAPI(GenericFastAPI):
     def __init__(self, config: Config):
         self.config = config
         config.set_default_section("core/fastapi/sam")
+        self._section = "core/fastapi/sam"
         router = config.getoption("router", "/core/fastapi/sam")
-        self._pipe = None
+        self._pipes = None
         self._router = APIRouter(prefix=router)
         self._router.add_api_route("/generate", self.generate, methods=["POST"])
         self._router.add_api_route("/status", self.status, methods=["GET"])
         self._router.add_api_route("/start", self.start, methods=["GET"])
         self._router.add_api_route("/stop", self.stop, methods=["GET"])
-        self._lock = asyncio.Lock()
 
     @property
     def router(self):
         return self._router
 
     def start(self, pretrained_name: Optional[str] = "sam-vit-base"):
-        self._pipe = SamForSegmentationPipeline.from_config(
-            self.config,
-            pretrained_name=pretrained_name,
+        num_replicas = int(
+            self.config.getdefault(self._section, "pipeline_num_replicas", 1)
         )
+        devices = self.config.getdefault(
+            self._section, "pipeline_replica_devices", "cpu"
+        )
+        lock = self.config.getdefault(
+            self._section, "pipeline_replica_lock", True
+        )
+        if devices is None:
+            devices = []
+        if isinstance(devices, str):
+            devices = [devices] * num_replicas
+        pipelines = [
+            SamForSegmentationPipeline.from_config(
+                self.config,
+                pretrained_name=pretrained_name,
+            )
+            for _ in range(num_replicas)
+        ]
+        for pipe, device in zip(pipelines, devices):
+            if device is not None and hasattr(pipe, "to"):
+                pipe.to(device)
+        self._pipes = PipelineReplicaPool(pipelines, lock=lock)
         return "start success"
 
     def stop(self):
-        self._pipe.to("cpu")
-        del self._pipe
-        gc.collect()
-        torch.cuda.empty_cache()
-        self._pipe = None
+        if self._pipes is not None:
+            self._pipes.close()
+        self._pipes = None
         return "stop success"
 
     def status(self):
-        return "running" if self._pipe is not None else "stopped"
+        return "running" if self._pipes is not None else "stopped"
 
     async def generate(
         self,
@@ -231,18 +248,20 @@ class SamForSegmentationFastAPI(GenericFastAPI):
         boxes: Optional[List] = None,
         mask_threshold: float = 0.1,
     ):
-        assert self._pipe is not None
+        assert self._pipes is not None
         image_bytes = await image.read()
         image = Image.open(io.BytesIO(image_bytes))
-        async with self._lock:
-            mask_image = self._pipe(
+        pipe = self._pipes.acquire()
+        try:
+            mask_image = pipe(
                 image,
                 points=points,
                 boxes=boxes,
                 mask_threshold=mask_threshold,
                 
             )
-
+        finally:
+            pipe.release()
         if mask_image is None:
             return StreamingResponse(
                 io.BytesIO(),
