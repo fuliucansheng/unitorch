@@ -17,20 +17,46 @@
 
 ## Introduction
 
-🔥 **unitorch** is a PyTorch-based library that unifies training, inference, and serving of state-of-the-art models across NLP, computer vision, multimodal learning, and more. It wraps 20+ model architectures with a configuration-driven CLI, integrating seamlessly with [transformers](https://github.com/huggingface/transformers), [peft](https://github.com/huggingface/peft), and [diffusers](https://github.com/huggingface/diffusers).
+🔥 **unitorch** is an agent-oriented, future-facing unified ML solution built on top of PyTorch. It combines a reusable modeling foundation with configuration-driven CLIs, FastAPI serving, copilot tools, and exportable skills so human users and coding agents can operate the full ML lifecycle: discover components, prepare configs, train, evaluate, run inference, serve models, and automate workflows.
 
-Get started with a single import or a one-line CLI command — no boilerplate required.
+unitorch still wraps state-of-the-art models across NLP, computer vision, multimodal learning, diffusion, and generation, with seamless integrations for [transformers](https://github.com/huggingface/transformers), [peft](https://github.com/huggingface/peft), and [diffusers](https://github.com/huggingface/diffusers). The goal is broader than unified modeling: unitorch provides an inspectable operational layer that agents can invoke, extend, and compose.
+
+Get started with a single import, a one-line CLI command, or an agent-readable skill - no boilerplate required.
 
 ## Features
 
 | | |
 |---|---|
-| **Unified Model Support** | 20+ architectures: LLMs, diffusion models, vision transformers, multimodal models |
+| **Agent-Oriented ML Lifecycle** | Discover, configure, train, evaluate, infer, serve, and automate ML workflows |
+| **CLI and Skills Layer** | Agent-readable commands, copilot tools, and generated skills for repeatable execution |
+| **Unified Model Foundation** | 20+ architectures: LLMs, diffusion models, vision transformers, multimodal models |
 | **Configuration-Driven CLI** | Train, evaluate, infer, and serve via `.ini` config files |
 | **Multi-GPU & Distributed** | Native `torchrun` support + DeepSpeed integration for large-scale models |
 | **CUDA Optimized** | Optional CUDA C++ extensions for accelerated kernels |
 | **PEFT / LoRA** | Built-in parameter-efficient fine-tuning support |
-| **Model Serving** | FastAPI-based serving with `unitorch-fastapi` |
+| **Agent-Ready Serving** | FastAPI serving and remote copilot clients for model-backed tools |
+
+## Overall Design
+
+![unitorch roadmap](roadmap.png)
+
+unitorch is designed as a bridge between open-source state-of-the-art models,
+agent systems, and practical ML workflows.
+
+1. **Agent-assisted model integration**: coding agents such as Claude, Codex,
+   and other agent systems can help integrate open-source SOTA models into
+   unitorch. Once integrated, these models reuse the same modular components,
+   unified APIs, configuration system, pipelines, and serving interfaces for
+   pretraining, finetuning, inference, evaluation, and deployment.
+2. **ML capabilities for agents**: unitorch exposes model and workflow
+   capabilities through CLI commands, FastAPI services, copilot tools, and
+   generated skills. This gives agents a practical ML execution layer they can
+   discover, invoke, and compose inside user scenarios.
+3. **Foundation for Agentic ML Studio**: unitorch can serve as the base of an
+   agentic ML studio: a chat-first platform where users interact with datasets,
+   labeling tasks, jobs, reports, prompt optimization, model training,
+   inference, evaluation, real-time tracking, and collaboration workflows
+   through natural language or internal commands.
 
 ## Installation
 
@@ -74,6 +100,12 @@ torchrun --no_python --nproc_per_node 4 \
 unitorch-infer examples/configs/generation/bart.ini --test_file path/to/test.tsv
 ```
 
+**Agent and Skill Tools**
+```bash
+unitorch-copilot-cli core/copilot/pkg_infos --name model
+python3 -m unitorch.cli.copilots.skills install --folder ./skills
+```
+
 > See the [documentation](https://fuliucansheng.github.io/unitorch) for full tutorials and examples.
 
 ## Supported Models
@@ -103,8 +135,8 @@ unitorch-infer examples/configs/generation/bart.ini --test_file path/to/test.tsv
 | `unitorch-eval` | Evaluate models |
 | `unitorch-infer` | Run batch inference |
 | `unitorch-fastapi` | Start a FastAPI model server |
-| `unitorch-copilot` | unitorch-native agent (similar to Claude / OpenCode) |
-| `unitorch-copilot-cli` | CLI tool for agent use — invokes registered copilot tools |
+| `unitorch-copilot` | unitorch-native agent for ML workflows |
+| `unitorch-copilot-cli` | Agent-facing CLI that invokes registered copilot tools and exposes component metadata |
 
 ## License
 

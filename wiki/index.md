@@ -19,11 +19,12 @@ hide:
 </div>
 
 <div style="text-align: center; width: 70%; margin: auto; margin-top: 5%">
-  🔥 <b>unitorch</b> is a library that simplifies and accelerates the
-  development of unified models for <b>NLP</b>, <b>NLG</b>, <b>CV</b>,
-  <b>MM</b> and more. It is built on top of PyTorch and
-  integrates seamlessly with popular frameworks such as transformers, peft
-  and diffusers.
+  🔥 <b>unitorch</b> is an agent-oriented, future-facing unified ML solution.
+  It combines reusable PyTorch model foundations with configuration-driven
+  CLIs, FastAPI serving, copilot tools, and exportable skills so agents can
+  discover components, prepare configs, train, evaluate, infer, serve, and
+  automate ML workflows across <b>NLP</b>, <b>NLG</b>, <b>CV</b>,
+  <b>MM</b> and more.
 </div>
 
 <div style="text-align: center; width: 60%; margin: auto; margin-top: 5%">

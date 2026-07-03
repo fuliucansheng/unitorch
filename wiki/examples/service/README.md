@@ -19,7 +19,7 @@
 
 # Introduction
  
-🔥 unitorch is a library that simplifies and accelerates the development of unified models for natural language understanding, natural language generation, computer vision, click-through rate prediction, multimodal learning and reinforcement learning. It is built on top of PyTorch and integrates seamlessly with popular frameworks such as transformers, peft, diffusers, and fastseq. With unitorch, you can use a single command line tool or a one-line code ` import unitorch` import to leverage the state-of-the-art models and datasets without sacrificing performance or accuracy.
+🔥 unitorch is an agent-oriented, future-facing unified ML solution built on top of PyTorch. It combines reusable model foundations with configuration-driven CLIs, FastAPI serving, copilot tools, and exportable skills so agents can discover components, prepare configs, train, evaluate, infer, serve, and automate workflows across natural language understanding, natural language generation, computer vision, click-through rate prediction, multimodal learning, reinforcement learning, and more. It integrates with popular frameworks such as transformers, peft, diffusers, and fastseq while keeping state-of-the-art models accessible through both Python APIs and command workflows.
 
 ------------------------------------
 
@@ -51,8 +51,10 @@
 
 # Features
 
+* Agent-Oriented ML Lifecycle
 * User-Friendly Python Package
-* Faster & Streamlined Train/Inference
+* Faster & Streamlined Train/Inference/Serving
+* CLI, FastAPI, Copilot Tool, and Skill Interfaces
 * Deepspeed Integration for Large-Scale Models
 * CUDA Optimization
 * Extensive STOA Model & Task Supports

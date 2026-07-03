@@ -4,7 +4,7 @@ hide:
 ---
 # Configuration
 
-&nbsp;&nbsp;&nbsp;&nbsp;unitorch command workflow for modeling training/inference is using a unified configuration system. In this example, we'll explore the configuration of the BartForGeneration class in unitorch.
+&nbsp;&nbsp;&nbsp;&nbsp;unitorch command workflows use a unified configuration system for the ML lifecycle, including training, inference, evaluation, serving, and agent-driven automation. In this example, we'll explore the configuration of the BartForGeneration class in unitorch.
 
 &nbsp;&nbsp;&nbsp;&nbsp; Here is a training command example for bart generation with local files.
 
