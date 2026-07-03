@@ -1,8 +1,8 @@
 # unitorch.models.peft
 
-## ClipLoraForClassification
+## ClipLoraForImageClassificationV2
 
-::: unitorch.models.peft.ClipLoraForClassification
+::: unitorch.models.peft.ClipLoraForImageClassificationV2
 
 ## ClipLoraForMatching
 
