@@ -1,12 +1,17 @@
 # Copilot Tools (`unitorch-copilot-cli`)
 
-Copilot is an agent compatibility layer. It adapts existing unitorch
-copilot tools into Python functions, CLI commands, remote clients, and skill
-metadata. It does not wrap workflow runtimes such as training, inference, or
-FastAPI serving.
+Copilot is the agent-facing integration layer for unitorch. It adapts
+registered copilot tools into Python functions, CLI commands, remote clients,
+and skill metadata so agents can discover and invoke ML capabilities with
+stable parameter contracts.
+
+Copilot tools work alongside the lifecycle CLIs. Use the workflow commands
+directly for training, inference, evaluation, and FastAPI serving, and use
+`unitorch-copilot-cli` for component discovery, tool invocation, remote client
+access, and skill-oriented automation.
 
 ```bash
-unitorch-copilot-cli <tool> [--key value ...]
+unitorch-copilot-cli <tool-name> [--key value ...]
 ```
 
 Use workflow commands directly:
@@ -57,7 +62,7 @@ unitorch components:
 ```python
 from unitorch.cli import register_copilot_tool
 
-@register_copilot_tool(name="classify_image")
+@register_copilot_tool(name="core/copilot/classify_image")
 def classify_image(...):
     ...
 ```
@@ -94,18 +99,18 @@ bytes.
 
 ---
 
-## pkg_infos
+## core/copilot/pkg_infos
 
 Lists all registered components in the current unitorch installation.
 
 ```bash
 # List every registered type
-unitorch-copilot-cli pkg_infos
+unitorch-copilot-cli core/copilot/pkg_infos
 
 # Filter by type
-unitorch-copilot-cli pkg_infos --name model
-unitorch-copilot-cli pkg_infos --name process
-unitorch-copilot-cli pkg_infos --name fastapi
+unitorch-copilot-cli core/copilot/pkg_infos --name model
+unitorch-copilot-cli core/copilot/pkg_infos --name process
+unitorch-copilot-cli core/copilot/pkg_infos --name fastapi
 ```
 
 Available `--name` values: `process`, `copilot_tool`, `model`, `fastapi`,

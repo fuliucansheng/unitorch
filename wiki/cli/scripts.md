@@ -11,8 +11,9 @@ python3 -m unitorch.cli.<module> [args...]
 ## Copilot Skill Document Exporter
 
 Installs generated copilot-tool skills and hand-written skills from
-`src/unitorch/cli/skills` into a target folder. Useful for bootstrapping agent
-skill documentation.
+`src/unitorch/cli/skills` into a target folder. These skill documents make
+unitorch's ML lifecycle capabilities easier for agents to discover, plan, and
+reuse.
 
 ```bash
 python3 -m unitorch.cli.copilots.skills install --folder ./skills
