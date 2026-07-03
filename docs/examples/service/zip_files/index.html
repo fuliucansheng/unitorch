@@ -507,6 +507,8 @@
       
         
       
+        
+      
     
     
     
@@ -828,6 +830,34 @@
     
   
     Diffusers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../models/gemma/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Gemma
   
 
     
@@ -2977,6 +3007,8 @@
       
         
       
+        
+      
     
     
     
@@ -3289,6 +3321,34 @@
     
   
     Diffusers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../cli/models/gemma/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Gemma
   
 
     
@@ -3899,7 +3959,7 @@
 <hr/>
 
 <h3 id="configuration-files">Configuration files<a class="headerlink" href="#configuration-files" title="Permanent link">¤</a></h3>
-<h4 id="single-zip-folder"><a href="https://github.com/fuliucansheng/unitorch/blob/master/examples/configs/services/zip_files/config.ini">Single zip folder</a><a class="headerlink" href="#single-zip-folder" title="Permanent link">¤</a></h4>
+<h4 id="single-zip-folder"><a href="https://github.com/fuliucansheng/unitorch/blob/master/examples/configs/servers/zip_files.ini">Single zip folder</a><a class="headerlink" href="#single-zip-folder" title="Permanent link">¤</a></h4>
 <div class="highlight"><pre><span></span><code><span class="k">[core/cli]</span>
 <span class="na">zip_folder</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">zip_folder/</span>
 <span class="na">service_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">core/service/zip_files</span>
@@ -3908,7 +3968,7 @@
 <span class="na">zip_folder</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">${core/cli:zip_folder}</span>
 <span class="na">zip_extension</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">.zip</span>
 </code></pre></div>
-<h4 id="multiple-zip-folders"><a href="https://github.com/fuliucansheng/unitorch/blob/master/examples/configs/services/zip_files/config_v2.ini">Multiple zip folders</a><a class="headerlink" href="#multiple-zip-folders" title="Permanent link">¤</a></h4>
+<h4 id="multiple-zip-folders"><a href="https://github.com/fuliucansheng/unitorch/blob/master/examples/configs/servers/zip_files.v2.ini">Multiple zip folders</a><a class="headerlink" href="#multiple-zip-folders" title="Permanent link">¤</a></h4>
 <div class="highlight"><pre><span></span><code><span class="k">[core/cli]</span>
 <span class="na">zip_folder1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">zip_folder1/</span>
 <span class="na">zip_folder2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">zip_folder2/</span>
@@ -3924,15 +3984,15 @@
 <span class="na">zip_extension</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">.zip</span>
 </code></pre></div>
 <h3 id="start-service">Start Service<a class="headerlink" href="#start-service" title="Permanent link">¤</a></h3>
-<div class="highlight"><pre><span></span><code>unitorch-service<span class="w"> </span>start<span class="w"> </span>path/to/zip/files/service.ini<span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code>unitorch-fastapi<span class="w"> </span>start<span class="w"> </span>path/to/zip/files.ini<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--zip_folder<span class="w"> </span>path/to/zip/folder
 </code></pre></div>
 <h3 id="stop-service">Stop Service<a class="headerlink" href="#stop-service" title="Permanent link">¤</a></h3>
-<div class="highlight"><pre><span></span><code>unitorch-service<span class="w"> </span>stop<span class="w"> </span>path/to/zip/files/service.ini<span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code>unitorch-fastapi<span class="w"> </span>stop<span class="w"> </span>path/to/zip/files.ini<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--zip_folder<span class="w"> </span>path/to/zip/folder
 </code></pre></div>
 <h3 id="restart-service">Restart Service<a class="headerlink" href="#restart-service" title="Permanent link">¤</a></h3>
-<div class="highlight"><pre><span></span><code>unitorch-service<span class="w"> </span>restart<span class="w"> </span>path/to/zip/files/service.ini<span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code>unitorch-fastapi<span class="w"> </span>restart<span class="w"> </span>path/to/zip/files.ini<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--zip_folder<span class="w"> </span>path/to/zip/folder
 </code></pre></div>
 

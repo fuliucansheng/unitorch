@@ -530,6 +530,8 @@
       
         
       
+        
+      
     
     
     
@@ -854,6 +856,34 @@
     
   
     Diffusers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models/gemma/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Gemma
   
 
     
@@ -3003,6 +3033,8 @@
       
         
       
+        
+      
     
     
     
@@ -3315,6 +3347,34 @@
     
   
     Diffusers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cli/models/gemma/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Gemma
   
 
     
@@ -3884,27 +3944,30 @@
 
 
 <h1 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">¤</a></h1>
-<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<strong>unitorch</strong> is a powerful package designed with a Foundation-Adapter architecture, providing a streamlined development process for unified models in various domains such as natural language understanding, natural language generation, computer vision, multimodal learning, and more. The package is built on top of PyTorch, a popular deep learning framework, and seamlessly integrates with other well-known frameworks like transformers, peft and diffusers.</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<strong>unitorch</strong> is an agent-oriented, future-facing unified ML solution built around a Foundation-Adapter architecture. It provides reusable PyTorch model foundations, workflow adapters, configuration-driven CLIs, FastAPI serving, copilot tools, and exportable skills so humans and coding agents can operate the full ML lifecycle across natural language understanding, natural language generation, computer vision, multimodal learning, diffusion, generation, and more.</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The goal of unitorch is broader than unified modeling. Model wrappers remain a core foundation, but the project also exposes an inspectable operational layer for agents: components can be listed, configured, invoked locally, served remotely, and documented as skills for repeated use.</p>
 <hr/>
 
 <p><img alt="Overview" src="../overview.png" /></p>
 <hr/>
 
-<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The architecture of unitorch consists of two main components: <strong>Foundation Modules</strong>, <strong>Adapter Modules</strong> and <strong>Command Line Interface (CLI)</strong>. </p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The architecture of unitorch consists of four connected layers: <strong>Foundation Modules</strong>, <strong>Adapter Modules</strong>, <strong>Command Line Interface (CLI)</strong>, and <strong>Copilot and Skills Interfaces</strong>.</p>
 <p><strong>Foundation Modules</strong>: focus on implementing the core functionality of the package and provide the basic functions required by the models. These modules serve as the building blocks for different workflows and are designed to be modular, efficient, and flexible.</p>
 <p><strong>Adapter Modules</strong>: act as adapters for the Foundation Modules, enabling them to support different workflows. Since different tasks or applications may have unique requirements, Adapter Modules provide the necessary interfaces and configurations to adapt the Foundation Modules to specific use cases. This modular approach allows for easy customization and extensibility of the package.</p>
-<p><strong>Command Line Interface (CLI)</strong>: defines the Running workflow to streamline the usage of unitorch. The CLI orchestrates the execution of the pipeline by calling the required Adapter Modules based on the pipeline design. This command line tool simplifies the process of training, evaluating, and deploying models, making it convenient for researchers and developers to experiment with different configurations and workflows.</p>
+<p><strong>Command Line Interface (CLI)</strong>: defines repeatable workflows for unitorch. The CLI orchestrates pipelines by calling the required Adapter Modules based on the configuration design. These commands simplify training, evaluation, inference, serving, and deployment, while also giving agents stable command surfaces they can inspect and execute.</p>
+<p><strong>Copilot and Skills Interfaces</strong>: expose unitorch functionality as agent-facing tools, Python adapters, remote clients, and generated skill documents. This layer makes unitorch workflows easier for agents to discover, parameterize, invoke, and reuse across projects.</p>
 <ul>
 <li><code>unitorch-train</code> command is used to train models using the unitorch package. It enables you to specify the training data, model architecture, hyperparameters, and other configuration options. By Running this command, the package will utilize the specified data and parameters to train the model and optimize its performance based on the defined objective.</li>
 <li><code>unitorch-infer</code> command is used for inference or prediction using trained models. Once a model has been trained using unitorch-train, you can employ this command to make predictions or generate outputs for new or unseen data. It takes the trained model and the input data as inputs and produces the predicted results using the learned patterns and knowledge captured during training.</li>
 <li><code>unitorch-eval</code> command is used to evaluate the performance of trained models. It allows you to assess the quality and effectiveness of the model by comparing its predictions against the ground truth or reference data. This command typically computes various metrics, such as accuracy, precision, recall, F1 score, or other domain-specific metrics, to provide insights into the model's performance.</li>
 <li><code>unitorch-fastapi</code> command is used to launch a FastAPI model serving server. It exposes REST API endpoints backed by unitorch models and pipelines, making it easy to integrate model inference into applications.</li>
-<li><code>unitorch-copilot-cli</code> command invokes registered copilot tools by name, designed for agent use.</li>
+<li><code>unitorch-copilot</code> command launches the unitorch-native agent for ML workflows.</li>
+<li><code>unitorch-copilot-cli</code> command invokes registered copilot tools by name, lists component metadata, and provides an agent-friendly entry point for automation.</li>
 </ul>
 <hr/>
 
-<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In addition to the CLI, unitorch also offers a simple import statement (import unitorch) that allows users to leverage the functionality of the package with just a single line of code. This import statement provides access to the state-of-the-art models and datasets supported by unitorch, without compromising performance or accuracy.</p>
-<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Overall, unitorch empowers developers and researchers to build unified models across different domains quickly and efficiently. By leveraging the Foundation-Adapter architecture and integrating seamlessly with popular frameworks, unitorch simplifies the development process and accelerates the deployment of advanced models in various applications.</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In addition to the CLI, unitorch also offers a simple import statement (<code>import unitorch</code>) that allows users to leverage the functionality of the package with just a single line of code. This import statement provides access to the state-of-the-art models, datasets, processors, and utilities supported by unitorch, while the CLI and skills layers turn those capabilities into repeatable lifecycle operations.</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Overall, unitorch empowers developers, researchers, and agents to build, evaluate, deploy, and automate ML systems across domains. By combining a transparent modeling foundation with adapter modules, CLI workflows, FastAPI services, copilot tools, and generated skills, unitorch is designed to be a unified solution for the next generation of ML operations, not only a unified modeling package.</p>
 
 
 

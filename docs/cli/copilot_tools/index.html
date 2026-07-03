@@ -513,6 +513,8 @@
       
         
       
+        
+      
     
     
     
@@ -834,6 +836,34 @@
     
   
     Diffusers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../models/gemma/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Gemma
   
 
     
@@ -2746,6 +2776,39 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#discovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Discovery
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#python-adapter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Python Adapter
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#remote-client-adapter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Remote Client Adapter
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#corecopilotpkg_infos" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3031,6 +3094,8 @@
   
     
     
+      
+        
       
         
       
@@ -3399,6 +3464,34 @@
     
   
     Diffusers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models/gemma/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Gemma
   
 
     
@@ -3902,6 +3995,39 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#discovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Discovery
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#python-adapter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Python Adapter
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#remote-client-adapter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Remote Client Adapter
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#corecopilotpkg_infos" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3999,10 +4125,75 @@
 
 
 <h1 id="copilot-tools-unitorch-copilot-cli">Copilot Tools (<code>unitorch-copilot-cli</code>)<a class="headerlink" href="#copilot-tools-unitorch-copilot-cli" title="Permanent link">¤</a></h1>
-<p>Copilot tools are designed for agent use. <code>unitorch-copilot-cli</code> invokes a
-registered tool by name and exits — making it composable in agent pipelines.</p>
-<div class="highlight"><pre><span></span><code>unitorch-copilot-cli<span class="w"> </span>&lt;name&gt;<span class="w"> </span><span class="o">[</span>--key<span class="w"> </span>value<span class="w"> </span>...<span class="o">]</span>
+<p>Copilot is the agent-facing integration layer for unitorch. It adapts
+registered copilot tools into Python functions, CLI commands, remote clients,
+and skill metadata so agents can discover and invoke ML capabilities with
+stable parameter contracts.</p>
+<p>Copilot tools work alongside the lifecycle CLIs. Use the workflow commands
+directly for training, inference, evaluation, and FastAPI serving, and use
+<code>unitorch-copilot-cli</code> for component discovery, tool invocation, remote client
+access, and skill-oriented automation.</p>
+<div class="highlight"><pre><span></span><code>unitorch-copilot-cli<span class="w"> </span>&lt;tool-name&gt;<span class="w"> </span><span class="o">[</span>--key<span class="w"> </span>value<span class="w"> </span>...<span class="o">]</span>
 </code></pre></div>
+<p>Use workflow commands directly:</p>
+<div class="highlight"><pre><span></span><code>unitorch-train
+unitorch-infer
+unitorch-eval
+unitorch-fastapi
+</code></pre></div>
+<hr />
+<h2 id="discovery">Discovery<a class="headerlink" href="#discovery" title="Permanent link">¤</a></h2>
+<div class="highlight"><pre><span></span><code><span class="c1"># List copilot tool names</span>
+unitorch-copilot-cli
+
+<span class="c1"># Show tool metadata</span>
+unitorch-copilot<span class="w"> </span>describe<span class="w"> </span>classify_image
+
+<span class="c1"># Install or uninstall skill markdown files</span>
+python3<span class="w"> </span>-m<span class="w"> </span>unitorch.cli.copilots.skills<span class="w"> </span>install<span class="w"> </span>--folder<span class="w"> </span>./skills
+python3<span class="w"> </span>-m<span class="w"> </span>unitorch.cli.copilots.skills<span class="w"> </span>uninstall<span class="w"> </span>--folder<span class="w"> </span>./skills
+</code></pre></div>
+<hr />
+<h2 id="python-adapter">Python Adapter<a class="headerlink" href="#python-adapter" title="Permanent link">¤</a></h2>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">unitorch.cli.copilots</span><span class="w"> </span><span class="kn">import</span> <span class="n">classify_image</span>
+
+<span class="n">result</span> <span class="o">=</span> <span class="n">classify_image</span><span class="p">(</span>
+    <span class="n">image_path</span><span class="o">=</span><span class="s2">&quot;a.jpg&quot;</span><span class="p">,</span>
+    <span class="n">config</span><span class="o">=</span><span class="s2">&quot;config.ini&quot;</span><span class="p">,</span>
+    <span class="n">top_k</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+<span class="p">)</span>
+</code></pre></div>
+<p>For local execution, pass either an existing pipeline instance or a config path
+that can build the underlying unitorch pipeline.</p>
+<p>Copilot adapters register with the same CLI registry style used by other
+unitorch components:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">unitorch.cli</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_copilot_tool</span>
+
+<span class="nd">@register_copilot_tool</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;core/copilot/classify_image&quot;</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">classify_image</span><span class="p">(</span><span class="o">...</span><span class="p">):</span>
+    <span class="o">...</span>
+</code></pre></div>
+<hr />
+<h2 id="remote-client-adapter">Remote Client Adapter<a class="headerlink" href="#remote-client-adapter" title="Permanent link">¤</a></h2>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">unitorch.cli.copilots</span><span class="w"> </span><span class="kn">import</span> <span class="n">CopilotClient</span>
+
+<span class="n">client</span> <span class="o">=</span> <span class="n">CopilotClient</span><span class="p">(</span><span class="n">endpoint</span><span class="o">=</span><span class="s2">&quot;http://127.0.0.1:5000&quot;</span><span class="p">)</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">classify_image</span><span class="p">(</span><span class="n">image_path</span><span class="o">=</span><span class="s2">&quot;a.jpg&quot;</span><span class="p">)</span>
+</code></pre></div>
+<p><code>CopilotClient</code> can also start a local <code>unitorch-fastapi</code> subprocess from a
+FastAPI config file:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">unitorch.cli.copilots</span><span class="w"> </span><span class="kn">import</span> <span class="n">CopilotClient</span>
+
+<span class="k">with</span> <span class="n">CopilotClient</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="s2">&quot;fastapi.ini&quot;</span><span class="p">,</span> <span class="n">host</span><span class="o">=</span><span class="s2">&quot;127.0.0.1&quot;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">5000</span><span class="p">)</span> <span class="k">as</span> <span class="n">client</span><span class="p">:</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">classify_image</span><span class="p">(</span><span class="n">image_path</span><span class="o">=</span><span class="s2">&quot;a.jpg&quot;</span><span class="p">)</span>
+</code></pre></div>
+<p>If <code>port</code> is omitted, the client chooses an available local port and passes it
+to the subprocess.</p>
+<p>The remote client talks to services started with <code>unitorch-fastapi</code>.
+Remote calls use the same media contract as <code>unitorch-fastapi</code>: parameters are
+sent as query params, images are uploaded as JPEG multipart files, videos are
+uploaded as video multipart files, and responses can be JSON, image, or video
+bytes.</p>
 <hr />
 <h2 id="corecopilotpkg_infos">core/copilot/pkg_infos<a class="headerlink" href="#corecopilotpkg_infos" title="Permanent link">¤</a></h2>
 <p>Lists all registered components in the current unitorch installation.</p>

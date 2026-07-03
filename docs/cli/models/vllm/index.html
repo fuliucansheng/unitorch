@@ -513,6 +513,8 @@
       
         
       
+        
+      
     
     
     
@@ -834,6 +836,34 @@
     
   
     Diffusers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../models/gemma/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Gemma
   
 
     
@@ -3026,6 +3056,8 @@
       
         
       
+        
+      
     
     
     
@@ -3341,6 +3373,34 @@
     
   
     Diffusers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../gemma/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Gemma
   
 
     
@@ -4336,7 +4396,8 @@ compatible with <code>unitorch-infer</code>.</p>
 
 <a href="#unitorch.cli.models.vllm.modeling.QWen3VLLMForGeneration.__call__" class="headerlink" title="Permanent link">¤</a></h3>
 <div class="doc-signature codehilite"><pre><span></span><code><span class="nf">__call__</span><span class="p">(</span>
-    <span class="n">input_ids</span><span class="p">:</span> <span class="n"><span title="torch.Tensor">Tensor</span></span><span class="p">,</span>
+    <span class="n">input_ids</span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="torch.Tensor">Tensor</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">prompt</span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="typing.Union">Union</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><span title="typing.List">List</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">max_gen_seq_length</span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="int">int</span></span><span class="p">]</span> <span class="o">=</span> <span class="mi">512</span><span class="p">,</span>
     <span class="n">min_gen_seq_length</span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="int">int</span></span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
     <span class="n">num_return_sequences</span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="int">int</span></span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
@@ -4380,7 +4441,7 @@ compatible with <code>unitorch-infer</code>.</p>
               </div>
             </td>
             <td>
-                <em>required</em>
+                  <code>None</code>
             </td>
           </tr>
           <tr class="doc-section-item">
@@ -4637,9 +4698,12 @@ compatible with <code>unitorch-infer</code>.</p>
 <span class="normal">151</span>
 <span class="normal">152</span>
 <span class="normal">153</span>
-<span class="normal">154</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span>
+<span class="normal">154</span>
+<span class="normal">155</span>
+<span class="normal">156</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
-    <span class="n">input_ids</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">input_ids</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">prompt</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">max_gen_seq_length</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">512</span><span class="p">,</span>
     <span class="n">min_gen_seq_length</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
     <span class="n">num_return_sequences</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
@@ -4674,6 +4738,7 @@ compatible with <code>unitorch-infer</code>.</p>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">batch_token_ids</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span>
         <span class="n">input_ids</span><span class="o">=</span><span class="n">input_ids</span><span class="p">,</span>
+        <span class="n">prompt</span><span class="o">=</span><span class="n">prompt</span><span class="p">,</span>
         <span class="n">max_gen_seq_length</span><span class="o">=</span><span class="n">max_gen_seq_length</span><span class="p">,</span>
         <span class="n">min_gen_seq_length</span><span class="o">=</span><span class="n">min_gen_seq_length</span><span class="p">,</span>
         <span class="n">num_return_sequences</span><span class="o">=</span><span class="n">num_return_sequences</span><span class="p">,</span>
@@ -4732,8 +4797,7 @@ compatible with <code>unitorch-infer</code>.</p>
 
                   <details class="mkdocstrings-source">
                     <summary>Source code in <code>src/unitorch/cli/models/vllm/modeling_vl.py</code></summary>
-                    <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">27</span>
-<span class="normal">28</span>
+                    <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">28</span>
 <span class="normal">29</span>
 <span class="normal">30</span>
 <span class="normal">31</span>
@@ -4758,7 +4822,8 @@ compatible with <code>unitorch-infer</code>.</p>
 <span class="normal">50</span>
 <span class="normal">51</span>
 <span class="normal">52</span>
-<span class="normal">53</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+<span class="normal">53</span>
+<span class="normal">54</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">hf_name_or_folder</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">tensor_parallel_size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
@@ -4821,8 +4886,7 @@ compatible with <code>unitorch-infer</code>.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/unitorch/cli/models/vllm/modeling_vl.py</code></summary>
-              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">55</span>
-<span class="normal">56</span>
+              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">56</span>
 <span class="normal">57</span>
 <span class="normal">58</span>
 <span class="normal">59</span>
@@ -4858,7 +4922,8 @@ compatible with <code>unitorch-infer</code>.</p>
 <span class="normal">89</span>
 <span class="normal">90</span>
 <span class="normal">91</span>
-<span class="normal">92</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
+<span class="normal">92</span>
+<span class="normal">93</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
 <span class="nd">@config_defaults_init</span><span class="p">(</span><span class="s2">&quot;core/model/vllm/generation/qwen3_vl&quot;</span><span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">from_config</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="n">config</span><span class="o">.</span><span class="n">set_default_section</span><span class="p">(</span><span class="s2">&quot;core/model/vllm/generation/qwen3_vl&quot;</span><span class="p">)</span>
@@ -4911,7 +4976,9 @@ compatible with <code>unitorch-infer</code>.</p>
 
 <a href="#unitorch.cli.models.vllm.modeling_vl.QWen3VLVLLMForGeneration.__call__" class="headerlink" title="Permanent link">¤</a></h3>
 <div class="doc-signature codehilite"><pre><span></span><code><span class="nf">__call__</span><span class="p">(</span>
-    <span class="n">input_ids</span><span class="p">:</span> <span class="n"><span title="torch.Tensor">Tensor</span></span><span class="p">,</span>
+    <span class="n">input_ids</span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="torch.Tensor">Tensor</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">prompt</span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="typing.Union">Union</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><span title="typing.List">List</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">images</span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="typing.Union">Union</span></span><span class="p">[</span><span class="n"><span title="PIL.Image.Image">Image</span></span><span class="p">,</span> <span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><span title="typing.List">List</span></span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">pixel_values</span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="torch.Tensor">Tensor</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">image_grid_thw</span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="torch.Tensor">Tensor</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">max_gen_seq_length</span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="int">int</span></span><span class="p">]</span> <span class="o">=</span> <span class="mi">512</span><span class="p">,</span>
@@ -4960,7 +5027,7 @@ is used as-is (matching the HuggingFace reference implementation).</p>
               </div>
             </td>
             <td>
-                <em>required</em>
+                  <code>None</code>
             </td>
           </tr>
           <tr class="doc-section-item">
@@ -5186,8 +5253,7 @@ is used as-is (matching the HuggingFace reference implementation).</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/unitorch/cli/models/vllm/modeling_vl.py</code></summary>
-              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 94</span>
-<span class="normal"> 95</span>
+              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 95</span>
 <span class="normal"> 96</span>
 <span class="normal"> 97</span>
 <span class="normal"> 98</span>
@@ -5276,9 +5342,38 @@ is used as-is (matching the HuggingFace reference implementation).</p>
 <span class="normal">181</span>
 <span class="normal">182</span>
 <span class="normal">183</span>
-<span class="normal">184</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span>
+<span class="normal">184</span>
+<span class="normal">185</span>
+<span class="normal">186</span>
+<span class="normal">187</span>
+<span class="normal">188</span>
+<span class="normal">189</span>
+<span class="normal">190</span>
+<span class="normal">191</span>
+<span class="normal">192</span>
+<span class="normal">193</span>
+<span class="normal">194</span>
+<span class="normal">195</span>
+<span class="normal">196</span>
+<span class="normal">197</span>
+<span class="normal">198</span>
+<span class="normal">199</span>
+<span class="normal">200</span>
+<span class="normal">201</span>
+<span class="normal">202</span>
+<span class="normal">203</span>
+<span class="normal">204</span>
+<span class="normal">205</span>
+<span class="normal">206</span>
+<span class="normal">207</span>
+<span class="normal">208</span>
+<span class="normal">209</span>
+<span class="normal">210</span>
+<span class="normal">211</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
-    <span class="n">input_ids</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">input_ids</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">prompt</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">images</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">pixel_values</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">image_grid_thw</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">max_gen_seq_length</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">512</span><span class="p">,</span>
@@ -5320,25 +5415,45 @@ is used as-is (matching the HuggingFace reference implementation).</p>
 <span class="sd">    Returns:</span>
 <span class="sd">        GenerationOutputs: Sequences tensor of shape ``(batch, num_return_sequences, max_gen_seq_length)``.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">vllm</span><span class="w"> </span><span class="kn">import</span> <span class="n">SamplingParams</span>
-
     <span class="c1"># Qwen3-VL may emit &lt;|im_end|&gt; before the visible answer content, so</span>
     <span class="c1"># treating it as a hard stop can collapse the response to an empty</span>
     <span class="c1"># string. Use &lt;|endoftext|&gt; as the only stop token here.</span>
     <span class="n">stop_token_ids</span> <span class="o">=</span> <span class="p">[</span><span class="mi">151643</span><span class="p">]</span>
 
-    <span class="n">sampling_params</span> <span class="o">=</span> <span class="n">SamplingParams</span><span class="p">(</span>
-        <span class="n">n</span><span class="o">=</span><span class="n">num_return_sequences</span><span class="p">,</span>
-        <span class="n">max_tokens</span><span class="o">=</span><span class="n">max_gen_seq_length</span><span class="p">,</span>
-        <span class="n">min_tokens</span><span class="o">=</span><span class="n">min_gen_seq_length</span><span class="p">,</span>
-        <span class="n">temperature</span><span class="o">=</span><span class="n">temperature</span> <span class="k">if</span> <span class="n">do_sample</span> <span class="k">else</span> <span class="mf">0.0</span><span class="p">,</span>
-        <span class="n">top_k</span><span class="o">=</span><span class="n">top_k</span> <span class="k">if</span> <span class="n">do_sample</span> <span class="k">else</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
-        <span class="n">top_p</span><span class="o">=</span><span class="n">top_p</span> <span class="k">if</span> <span class="n">do_sample</span> <span class="k">else</span> <span class="mf">1.0</span><span class="p">,</span>
+    <span class="n">sampling_params</span> <span class="o">=</span> <span class="n">_build_sampling_params</span><span class="p">(</span>
+        <span class="n">max_gen_seq_length</span><span class="o">=</span><span class="n">max_gen_seq_length</span><span class="p">,</span>
+        <span class="n">min_gen_seq_length</span><span class="o">=</span><span class="n">min_gen_seq_length</span><span class="p">,</span>
+        <span class="n">num_return_sequences</span><span class="o">=</span><span class="n">num_return_sequences</span><span class="p">,</span>
+        <span class="n">do_sample</span><span class="o">=</span><span class="n">do_sample</span><span class="p">,</span>
+        <span class="n">temperature</span><span class="o">=</span><span class="n">temperature</span><span class="p">,</span>
+        <span class="n">top_k</span><span class="o">=</span><span class="n">top_k</span><span class="p">,</span>
+        <span class="n">top_p</span><span class="o">=</span><span class="n">top_p</span><span class="p">,</span>
         <span class="n">repetition_penalty</span><span class="o">=</span><span class="n">repetition_penalty</span><span class="p">,</span>
         <span class="n">stop</span><span class="o">=</span><span class="n">stop</span><span class="p">,</span>
         <span class="n">stop_token_ids</span><span class="o">=</span><span class="n">stop_token_ids</span><span class="p">,</span>
     <span class="p">)</span>
 
+    <span class="k">if</span> <span class="n">prompt</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">batch_token_ids</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span>
+            <span class="n">prompt</span><span class="o">=</span><span class="n">prompt</span><span class="p">,</span>
+            <span class="n">images</span><span class="o">=</span><span class="n">images</span><span class="p">,</span>
+            <span class="n">max_gen_seq_length</span><span class="o">=</span><span class="n">max_gen_seq_length</span><span class="p">,</span>
+            <span class="n">min_gen_seq_length</span><span class="o">=</span><span class="n">min_gen_seq_length</span><span class="p">,</span>
+            <span class="n">num_return_sequences</span><span class="o">=</span><span class="n">num_return_sequences</span><span class="p">,</span>
+            <span class="n">do_sample</span><span class="o">=</span><span class="n">do_sample</span><span class="p">,</span>
+            <span class="n">temperature</span><span class="o">=</span><span class="n">temperature</span><span class="p">,</span>
+            <span class="n">top_k</span><span class="o">=</span><span class="n">top_k</span><span class="p">,</span>
+            <span class="n">top_p</span><span class="o">=</span><span class="n">top_p</span><span class="p">,</span>
+            <span class="n">repetition_penalty</span><span class="o">=</span><span class="n">repetition_penalty</span><span class="p">,</span>
+            <span class="n">stop</span><span class="o">=</span><span class="n">stop</span><span class="p">,</span>
+            <span class="n">pad_token_id</span><span class="o">=</span><span class="n">pad_token_id</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">sequences</span> <span class="o">=</span> <span class="n">_pad_token_ids</span><span class="p">(</span>
+            <span class="n">batch_token_ids</span><span class="p">,</span> <span class="n">pad_token_id</span><span class="p">,</span> <span class="n">max_gen_seq_length</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">GenerationOutputs</span><span class="p">(</span><span class="n">sequences</span><span class="o">=</span><span class="n">sequences</span><span class="p">)</span>
+
+    <span class="k">assert</span> <span class="n">input_ids</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
     <span class="n">batch_size</span> <span class="o">=</span> <span class="n">input_ids</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="n">inputs</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">batch_size</span><span class="p">):</span>
@@ -5363,7 +5478,11 @@ is used as-is (matching the HuggingFace reference implementation).</p>
             <span class="p">}</span>
         <span class="n">inputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span>
 
-    <span class="n">outputs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">llm</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="n">sampling_params</span><span class="o">=</span><span class="n">sampling_params</span><span class="p">)</span>
+    <span class="n">outputs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">llm</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span>
+        <span class="n">inputs</span><span class="p">,</span>
+        <span class="n">sampling_params</span><span class="o">=</span><span class="n">sampling_params</span><span class="p">,</span>
+        <span class="n">use_tqdm</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
     <span class="n">batch_token_ids</span> <span class="o">=</span> <span class="p">[[</span><span class="n">o</span><span class="o">.</span><span class="n">token_ids</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">req</span><span class="o">.</span><span class="n">outputs</span><span class="p">]</span> <span class="k">for</span> <span class="n">req</span> <span class="ow">in</span> <span class="n">outputs</span><span class="p">]</span>
     <span class="n">sequences</span> <span class="o">=</span> <span class="n">_pad_token_ids</span><span class="p">(</span><span class="n">batch_token_ids</span><span class="p">,</span> <span class="n">pad_token_id</span><span class="p">,</span> <span class="n">max_gen_seq_length</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">GenerationOutputs</span><span class="p">(</span><span class="n">sequences</span><span class="o">=</span><span class="n">sequences</span><span class="p">)</span>

@@ -1,11 +1,11 @@
 # unitorch.cli.models.peft
 
-## ClipLoraForClassification
+## ClipLoraForImageClassificationV2
 
 !!! tip
-    **`core/model/classification/peft/lora/clip`** is the section for configuration of ClipLoraForClassification.
+    **`core/model/classification/peft/lora/clip/image/v2`** is the section for configuration of ClipLoraForImageClassificationV2.
 
-::: unitorch.cli.models.peft.modeling_clip.ClipLoraForClassification
+::: unitorch.cli.models.peft.modeling_clip.ClipLoraForImageClassificationV2
 
 ## ClipLoraForMatching
 

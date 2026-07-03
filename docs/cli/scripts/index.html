@@ -513,6 +513,8 @@
       
         
       
+        
+      
     
     
     
@@ -834,6 +836,34 @@
     
   
     Diffusers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../models/gemma/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Gemma
   
 
     
@@ -2651,10 +2681,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#generate_skills" class="md-nav__link">
+  <a href="#copilot-skill-document-exporter" class="md-nav__link">
     <span class="md-ellipsis">
       
-        generate_skills
+        Copilot Skill Document Exporter
       
     </span>
   </a>
@@ -3084,6 +3114,8 @@
       
         
       
+        
+      
     
     
     
@@ -3399,6 +3431,34 @@
     
   
     Diffusers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models/gemma/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Gemma
   
 
     
@@ -3902,10 +3962,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#generate_skills" class="md-nav__link">
+  <a href="#copilot-skill-document-exporter" class="md-nav__link">
     <span class="md-ellipsis">
       
-        generate_skills
+        Copilot Skill Document Exporter
       
     </span>
   </a>
@@ -4003,14 +4063,25 @@
 <div class="highlight"><pre><span></span><code>python3<span class="w"> </span>-m<span class="w"> </span>unitorch.cli.&lt;module&gt;<span class="w"> </span><span class="o">[</span>args...<span class="o">]</span>
 </code></pre></div>
 <hr />
-<h2 id="generate_skills">generate_skills<a class="headerlink" href="#generate_skills" title="Permanent link">¤</a></h2>
-<p>Generates per-tool <code>SKILL.md</code> files for all registered copilot tools into a
-target folder. Useful for bootstrapping Claude skill documentation.</p>
-<div class="highlight"><pre><span></span><code>python3<span class="w"> </span>-m<span class="w"> </span>unitorch.cli.copilots.tools.generate_skills<span class="w"> </span>--folder<span class="w"> </span>./skills
+<h2 id="copilot-skill-document-exporter">Copilot Skill Document Exporter<a class="headerlink" href="#copilot-skill-document-exporter" title="Permanent link">¤</a></h2>
+<p>Installs generated copilot-tool skills and hand-written skills from
+<code>src/unitorch/cli/skills</code> into a target folder. These skill documents make
+unitorch's ML lifecycle capabilities easier for agents to discover, plan, and
+reuse.</p>
+<div class="highlight"><pre><span></span><code>python3<span class="w"> </span>-m<span class="w"> </span>unitorch.cli.copilots.skills<span class="w"> </span>install<span class="w"> </span>--folder<span class="w"> </span>./skills
+python3<span class="w"> </span>-m<span class="w"> </span>unitorch.cli.copilots.skills<span class="w"> </span>uninstall<span class="w"> </span>--folder<span class="w"> </span>./skills
 </code></pre></div>
 <p>Each tool's output is written to
-<code>&lt;folder&gt;/&lt;tool_name_with_slashes_replaced_by_underscores&gt;/SKILL.md</code>,
-containing the tool's <code>describe()</code> text and <code>usage()</code> snippet.</p>
+<code>&lt;folder&gt;/unitorch-&lt;skill-safe-tool-name&gt;/SKILL.md</code>,
+containing skill frontmatter, CLI/Python usage, parameter metadata, and any
+remote <code>unitorch-fastapi</code> route metadata declared by the copilot tool.
+<code>install</code> defaults to <code>./skills</code>, and <code>uninstall</code> removes the matching
+<code>SKILL.md</code> files from that folder. Use <code>--name all</code> or omit <code>--name</code> to include
+all generated and hand-written skills.</p>
+<p>Extension packages can expose additional hand-written skills by shipping a
+<code>unitorch.cli.skills</code> namespace package that contains skill subfolders in
+<code>&lt;skill-name&gt;/SKILL.md</code> format. Installed extension package skill directories
+are discovered automatically.</p>
 
 
 

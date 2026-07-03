@@ -35,10 +35,10 @@ class QWen3VLLMFastAPI(GenericFastAPI):
         self._router.add_api_route("/stop", self.stop, methods=["GET"])
 
     @property
-    def router(self):
+    def router(self) -> APIRouter:
         return self._router
 
-    def start(self, pretrained_name: str = "qwen3-4b-thinking"):
+    def start(self, pretrained_name: str = "qwen3-4b-thinking") -> str:
         """
         Loads and starts the vLLM QWen3 engine.
 
@@ -79,7 +79,7 @@ class QWen3VLLMFastAPI(GenericFastAPI):
         self._pipes = PipelineReplicaPool(pipelines, lock=lock)
         return "start success"
 
-    def stop(self):
+    def stop(self) -> str:
         """
         Stops and unloads the vLLM engine, releasing GPU memory.
         """
@@ -88,7 +88,7 @@ class QWen3VLLMFastAPI(GenericFastAPI):
         self._pipes = None
         return "stop success"
 
-    def status(self):
+    def status(self) -> str:
         """Returns ``"running"`` if the engine is loaded, otherwise ``"stopped"``."""
         return "running" if self._pipes is not None else "stopped"
 
@@ -106,7 +106,7 @@ class QWen3VLLMFastAPI(GenericFastAPI):
         top_p: Optional[float] = 1.0,
         repetition_penalty: Optional[float] = 1.0,
         stop: Optional[Union[str, List[str]]] = None,
-    ):
+    ) -> Union[str, List[str]]:
         """
         Generates a text completion for the given prompt.
 
