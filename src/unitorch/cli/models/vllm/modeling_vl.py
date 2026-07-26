@@ -11,7 +11,10 @@ from unitorch.cli.models import generation_model_decorator
 from unitorch.cli.models import GenerationOutputs
 from unitorch.cli.models.vllm import pretrained_vllm_infos
 from unitorch.cli.models.vllm.modeling import _pad_token_ids
-from unitorch.models.vllm.modeling import _build_sampling_params
+from unitorch.models.vllm.modeling import (
+    _build_sampling_params,
+    _generate_with_optional_tqdm,
+)
 
 
 @register_model("core/model/vllm/generation/qwen3_vl")
@@ -201,11 +204,7 @@ class QWen3VLVLLMForGeneration(_VLLMVLForGeneration):
                 }
             inputs.append(entry)
 
-        outputs = self.llm.generate(
-            inputs,
-            sampling_params=sampling_params,
-            use_tqdm=False,
-        )
+        outputs = _generate_with_optional_tqdm(self.llm, inputs, sampling_params)
         batch_token_ids = [[o.token_ids for o in req.outputs] for req in outputs]
         sequences = _pad_token_ids(batch_token_ids, pad_token_id, max_gen_seq_length)
         return GenerationOutputs(sequences=sequences)

@@ -17,7 +17,7 @@ related_skills: ["unitorch-config-ini", "unitorch-train-model", "unitorch-infer-
 
 ## Overview
 
-`unitorch-copilot-tools` is the generated skill index for UniTorch copilot tools. Use it to discover registered components, invoke tools through `unitorch-copilot-cli`, call the same tools from Python, and bridge to remote services exposed by `unitorch-fastapi` when a tool declares a FastAPI adapter.
+`unitorch-copilot-tools` is the generated skill index for UniTorch copilot tools. Use it to discover registered components, invoke tools through `unitorch-copilot-cli`, call the same tools from Python, and bridge to remote services exposed by `unitorch-fastapi` when a tool declares a FastAPI adapter. It also preserves access to model and algorithm related workflows, including package info discovery for registered UniTorch components.
 
 ## Install
 

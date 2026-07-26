@@ -33,7 +33,9 @@ _COPILOT_TOOLS_OVERVIEW = (
     "copilot tools. Use it to discover registered components, invoke tools "
     "through `unitorch-copilot-cli`, call the same tools from Python, and "
     "bridge to remote services exposed by `unitorch-fastapi` when a tool "
-    "declares a FastAPI adapter."
+    "declares a FastAPI adapter. It also preserves access to model and "
+    "algorithm related workflows, including package info discovery for "
+    "registered UniTorch components."
 )
 _COPILOT_TOOLS_SUBSKILL_NOTE = (
     "This is a subskill of `unitorch-copilot-tools`. Use the parent skill "
@@ -378,6 +380,8 @@ def render_copilot_skill_markdown(name: str) -> str:
         "```",
         "",
         "## Python",
+        "",
+        "For tools without required parameters, the minimal call is `result = tool.invoke()`.",
         "",
         "```python",
         "from unitorch.cli.copilots import get_copilot_tool",

@@ -37,6 +37,8 @@ unitorch-copilot-cli core/copilot/pkg_infos --name "model"
 
 ## Python
 
+For tools without required parameters, the minimal call is `result = tool.invoke()`.
+
 ```python
 from unitorch.cli.copilots import get_copilot_tool
 
