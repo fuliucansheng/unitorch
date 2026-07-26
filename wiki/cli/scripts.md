@@ -6,6 +6,10 @@ One-off utility scripts are run directly as Python modules:
 python3 -m unitorch.cli.<module> [args...]
 ```
 
+Install UniTorch before running module commands. For local development, use an
+editable install such as `python3 -m pip install -e .`, then run commands
+without `PYTHONPATH=src`.
+
 ---
 
 ## Copilot Skill Document Exporter

@@ -51,6 +51,9 @@ Current skills:
 # Standard install
 pip install .
 
+# Editable development install
+python -m pip install -e .
+
 # With optional extras
 pip install ".[all]"           # everything
 pip install ".[deepspeed]"     # DeepSpeed support
@@ -61,6 +64,12 @@ UNITORCH_EXTENSIONS=NGRAM pip install .
 ```
 
 **Requires Python >= 3.10** and PyTorch 2.5+.
+
+For development commands that run `python3 -m unitorch...`, npm skill scripts,
+and unit tests, install the package first, normally with
+`python3 -m pip install -e .` for local development. Run those commands from
+the installed package environment without `PYTHONPATH=src`; do not document
+`PYTHONPATH=src` as the normal path.
 
 ## Testing
 

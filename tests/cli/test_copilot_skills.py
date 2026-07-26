@@ -111,16 +111,17 @@ def test_package_json_uses_python_scripts_without_local_skills_bin():
 
     assert "bin" not in package
     assert package["scripts"]["generate-skills"] == (
-        "PYTHONPATH=src python3 -m unitorch.cli.copilots.skills install all "
+        "python3 -m unitorch.cli.copilots.skills install all "
         "--folder ./skills --force true"
     )
     assert package["scripts"]["export-skills"] == (
-        "PYTHONPATH=src python3 -m unitorch.cli.copilots.skills export all --folder ./skills"
+        "python3 -m unitorch.cli.copilots.skills export all --folder ./skills"
     )
     assert package["scripts"]["validate-skills"] == (
-        "PYTHONPATH=src python3 -m unitorch.cli.copilots.skills validate --folder ./skills"
+        "python3 -m unitorch.cli.copilots.skills validate --folder ./skills"
     )
     assert all("python3 -m unitorch.cli.copilots.skills" in script for script in package["scripts"].values())
+    assert all("PYTHONPATH=src" not in script for script in package["scripts"].values())
     assert all("node " not in script for script in package["scripts"].values())
     assert not Path("bin/skills.js").exists()
     assert not Path("bin/unitorch-skills.js").exists()

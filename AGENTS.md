@@ -69,6 +69,12 @@ UNITORCH_EXTENSIONS=NGRAM pip install .
 
 Use `".[all]"` only when every optional backend is needed.
 
+For development commands that run `python3 -m unitorch...`, npm skill scripts,
+and unit tests, install the package first, normally with
+`python3 -m pip install -e .` for local development. Run those commands from
+the installed package environment without `PYTHONPATH=src`; do not document
+`PYTHONPATH=src` as the normal path.
+
 ## Testing
 
 ```bash

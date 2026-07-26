@@ -114,7 +114,9 @@ npx skills add fuliucansheng/unitorch --folder ./agent-skills
 Generated UniTorch copilot skills are written under
 `skills/unitorch-copilot-tools/` beside the hand-written root skills. The npm
 generation scripts call the Python module directly, so run them from an
-environment where UniTorch can be imported.
+environment where UniTorch has been installed. For local development, install
+the package first with `python3 -m pip install -e .`; do not use `PYTHONPATH=src`
+as the normal path.
 
 ```bash
 # Generate and validate the project skills folder.

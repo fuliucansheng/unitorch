@@ -456,6 +456,9 @@ def _render_copilot_skill_index_markdown(names: list[str]) -> str:
         "",
         "Generate the canonical project skills under the root `skills/` directory:",
         "",
+        "Install UniTorch first; for local development, use an editable install "
+        "such as `python3 -m pip install -e .` and run without `PYTHONPATH=src`:",
+        "",
         "```bash",
         "npm run generate-skills",
         "```",
@@ -551,7 +554,7 @@ def _render_copilot_skill_index_markdown(names: list[str]) -> str:
             "- Generate into `skills/` so the generated copilot skill sits beside the hand-written root skills.",
             "- Use `npx skills add fuliucansheng/unitorch` only through the external open-agent skills ecosystem; this repository does not publish or alias that installer.",
             "- The external installer copies published skills into an agent-local folder; it does not regenerate this repository's skill markdown.",
-            "- Run generation from an environment where UniTorch and any extension packages are importable.",
+            "- Install UniTorch and any extension packages before generation; do not rely on `PYTHONPATH=src` as the normal path.",
             "- Do not publish on normal pushes unless ClawHub/HermesHub credentials are intentionally configured.",
             "",
         ]

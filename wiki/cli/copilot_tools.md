@@ -10,6 +10,10 @@ directly for training, inference, evaluation, and FastAPI serving, and use
 `unitorch-copilot-cli` for component discovery, tool invocation, remote client
 access, and skill-oriented automation.
 
+Install UniTorch before running `python3 -m` commands or npm skill scripts. For
+local development, use `python3 -m pip install -e .`, then run commands without
+`PYTHONPATH=src`.
+
 ```bash
 unitorch-copilot-cli <tool-name> [--key value ...]
 ```
