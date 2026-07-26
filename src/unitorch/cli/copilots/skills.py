@@ -59,9 +59,11 @@ _COPILOT_TOOLS_RELATED_SKILLS = (
 )
 _SERVE_FASTAPI_SKILL_NAME = "unitorch-serve-fastapi"
 _SKIP_PARAMETERS = {"pipeline", "kwargs"}
-_FRONTMATTER_REQUIRED_KEYS = (
+_FRONTMATTER_BASE_REQUIRED_KEYS = (
     "name",
     "description",
+)
+_FRONTMATTER_GENERATED_REQUIRED_KEYS = (
     "version",
     "author",
     "license",
@@ -452,24 +454,42 @@ def _render_copilot_skill_index_markdown(names: list[str]) -> str:
         "",
         "## Install",
         "",
-        "Generate the skills into the project-standard `.skills` directory:",
+        "Generate the canonical project skills under the root `skills/` directory:",
         "",
         "```bash",
         "npm run generate-skills",
         "```",
         "",
-        "Install or export into another folder with the npx wrapper:",
+        "Install the published root skills into an agent skill folder with the "
+        "external `skills` npm package:",
         "",
         "```bash",
-        "npx unitorch install all --folder .skills --force true",
-        "npx unitorch export all --folder ./agent-skills",
+        "npx skills add fuliucansheng/unitorch",
+        "npx skills add fuliucansheng/unitorch --folder ./agent-skills",
         "```",
         "",
-        "The Python entrypoint remains available for environments without Node:",
+        "That external installer copies the root `skills/` package and can report:",
+        "",
+        "```json",
+        "{",
+        '  "repo": "fuliucansheng/unitorch",',
+        '  "folder": "/home/decu/.hermes/skills",',
+        '  "copied": [',
+        '    "unitorch-config-ini",',
+        '    "unitorch-copilot-tools",',
+        '    "unitorch-infer-model",',
+        '    "unitorch-replace-decorator",',
+        '    "unitorch-serve-fastapi",',
+        '    "unitorch-train-model"',
+        "  ]",
+        "}",
+        "```",
+        "",
+        "Generate, export, and validate from Python when updating this repository:",
         "",
         "```bash",
-        "python3 -m unitorch.cli.copilots.skills install all --folder .skills --force true",
-        "python3 -m unitorch.cli.copilots.skills validate --folder .skills",
+        "python3 -m unitorch.cli.copilots.skills install all --folder ./skills --force true",
+        "python3 -m unitorch.cli.copilots.skills validate --folder ./skills",
         "```",
         "",
         "## When To Use",
@@ -522,13 +542,15 @@ def _render_copilot_skill_index_markdown(names: list[str]) -> str:
         [
             "## Verification Checklist",
             "",
-            "- Run `python3 -m unitorch.cli.copilots.skills validate --folder .skills` after generation.",
+            "- Run `python3 -m unitorch.cli.copilots.skills validate --folder ./skills` after generation.",
             "- Confirm the parent index lists every generated child skill.",
-            "- For publishing, confirm the CI artifact contains `.skills/unitorch-copilot-tools/SKILL.md` and child `SKILL.md` files.",
+            "- For publishing, confirm the CI artifact contains `skills/unitorch-copilot-tools/SKILL.md` and child `SKILL.md` files.",
             "",
             "## Common Pitfalls",
             "",
-            "- Generate into `.skills` for project skills; `skills/` is only the legacy folder used by older installs.",
+            "- Generate into `skills/` so the generated copilot skill sits beside the hand-written root skills.",
+            "- Use `npx skills add fuliucansheng/unitorch` only through the external open-agent skills ecosystem; this repository does not publish or alias that installer.",
+            "- The external installer copies published skills into an agent-local folder; it does not regenerate this repository's skill markdown.",
             "- Run generation from an environment where UniTorch and any extension packages are importable.",
             "- Do not publish on normal pushes unless ClawHub/HermesHub credentials are intentionally configured.",
             "",
@@ -724,7 +746,7 @@ def _load_frontmatter(frontmatter: str) -> Dict[str, Any]:
 
 def _load_frontmatter_without_yaml(frontmatter: str) -> Dict[str, Any]:
     metadata: Dict[str, Any] = {}
-    for key in _FRONTMATTER_REQUIRED_KEYS:
+    for key in (*_FRONTMATTER_BASE_REQUIRED_KEYS, *_FRONTMATTER_GENERATED_REQUIRED_KEYS):
         match = re.search(rf"^{key}:\s*(.+)$", frontmatter, re.MULTILINE)
         if match is None:
             continue
@@ -767,7 +789,12 @@ def _validate_frontmatter(
     metadata: Dict[str, Any],
     markdown: str,
 ) -> None:
-    missing = [key for key in _FRONTMATTER_REQUIRED_KEYS if key not in metadata]
+    required_keys = list(_FRONTMATTER_BASE_REQUIRED_KEYS)
+    strict_generated_metadata = _is_generated_copilot_skill_path(skill_path)
+    if strict_generated_metadata:
+        required_keys.extend(_FRONTMATTER_GENERATED_REQUIRED_KEYS)
+
+    missing = [key for key in required_keys if key not in metadata]
     if missing:
         raise ValueError(f"{skill_path}: missing frontmatter keys {missing}.")
 
@@ -778,6 +805,9 @@ def _validate_frontmatter(
         raise ValueError(
             f"{skill_path}: description exceeds {_MAX_DESCRIPTION_LENGTH} chars."
         )
+
+    if not strict_generated_metadata:
+        return
 
     hermes = (metadata.get("metadata") or {}).get("hermes") or {}
     tags = hermes.get("tags")
@@ -807,6 +837,10 @@ def _validate_frontmatter(
 
     if "## Overview" not in markdown:
         raise ValueError(f"{skill_path}: missing Overview section.")
+
+
+def _is_generated_copilot_skill_path(skill_path: Path) -> bool:
+    return _COPILOT_TOOLS_SKILL_NAME in skill_path.parts
 
 
 def _parse_bool(value: Any) -> bool:

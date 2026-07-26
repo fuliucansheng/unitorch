@@ -67,7 +67,7 @@ def test_render_copilot_skill_frontmatter_metadata_and_sections():
 
 
 def test_export_and_validate_copilot_skill_documents(tmp_path):
-    folder = tmp_path / ".skills"
+    folder = tmp_path / "skills"
 
     generated = export_copilot_skill_documents(
         name="core/copilot/pkg_infos",
@@ -95,22 +95,66 @@ def test_export_and_validate_copilot_skill_documents(tmp_path):
     assert "unitorch-serve-fastapi" in parent_related_skills
     assert "config-ini" not in parent_related_skills
     assert "npm run generate-skills" in parent_markdown
-    assert "npx unitorch install all --folder .skills --force true" in parent_markdown
+    assert "external `skills` npm package" in parent_markdown
+    assert "npx skills add fuliucansheng/unitorch" in parent_markdown
+    assert '"repo": "fuliucansheng/unitorch"' in parent_markdown
+    assert '"folder": "/home/decu/.hermes/skills"' in parent_markdown
+    assert '"unitorch-replace-decorator"' in parent_markdown
+    assert "npx unitorch" not in parent_markdown
+    assert "--folder .skills" not in parent_markdown
+    assert "`.skills" not in parent_markdown
     assert "## Registered Tools" in parent_markdown
 
 
-def test_package_json_exposes_npx_skill_wrapper():
+def test_package_json_uses_python_scripts_without_local_skills_bin():
     package = json.loads(Path("package.json").read_text(encoding="utf-8"))
-    wrapper = Path("bin/unitorch-skills.js").read_text(encoding="utf-8")
 
-    assert package["bin"]["unitorch"] == "bin/unitorch-skills.js"
-    assert package["bin"]["unitorch-skills"] == "bin/unitorch-skills.js"
-    assert "--folder .skills" in package["scripts"]["generate-skills"]
-    assert package["scripts"]["validate-skills"] == (
-        "node ./bin/unitorch-skills.js validate --folder .skills"
+    assert "bin" not in package
+    assert package["scripts"]["generate-skills"] == (
+        "PYTHONPATH=src python3 -m unitorch.cli.copilots.skills install all "
+        "--folder ./skills --force true"
     )
-    assert "unitorch.cli.copilots.skills" in wrapper
-    assert "PYTHONPATH" in wrapper
+    assert package["scripts"]["export-skills"] == (
+        "PYTHONPATH=src python3 -m unitorch.cli.copilots.skills export all --folder ./skills"
+    )
+    assert package["scripts"]["validate-skills"] == (
+        "PYTHONPATH=src python3 -m unitorch.cli.copilots.skills validate --folder ./skills"
+    )
+    assert all("python3 -m unitorch.cli.copilots.skills" in script for script in package["scripts"].values())
+    assert all("node " not in script for script in package["scripts"].values())
+    assert not Path("bin/skills.js").exists()
+    assert not Path("bin/unitorch-skills.js").exists()
+
+
+def _assert_external_skills_install_payload(text: str) -> None:
+    text = text.replace('\\"', '"')
+    assert '"repo": "fuliucansheng/unitorch"' in text
+    assert '"folder": "/home/decu/.hermes/skills"' in text
+    for skill_name in (
+        "unitorch-config-ini",
+        "unitorch-copilot-tools",
+        "unitorch-infer-model",
+        "unitorch-replace-decorator",
+        "unitorch-serve-fastapi",
+        "unitorch-train-model",
+    ):
+        assert f'"{skill_name}"' in text
+
+
+def test_docs_describe_external_skills_installer():
+    for doc_path in (
+        Path("README.md"),
+        Path("wiki/cli/copilot_tools.md"),
+        Path("wiki/cli/scripts.md"),
+    ):
+        text = doc_path.read_text(encoding="utf-8")
+        normalized = " ".join(text.split())
+        assert "external open-agent `skills` npm package" in normalized
+        assert "npx skills add fuliucansheng/unitorch" in text
+        assert "repository exposes a `skills` bin" not in text
+        assert "npx unitorch" not in text
+        assert "bin/skills.js" not in text
+        _assert_external_skills_install_payload(text)
 
 
 def test_clawhub_hermeshub_workflow_sanity():
@@ -121,6 +165,15 @@ def test_clawhub_hermeshub_workflow_sanity():
     assert "workflow_dispatch" in workflow
     assert "npm run generate-skills" in workflow
     assert "npm run validate-skills" in workflow
+    assert "actions/setup-node" not in workflow
+    assert "bin/skills.js" not in workflow
+    assert "npx skills add fuliucansheng/unitorch" in workflow
+    assert "find skills -name SKILL.md" in workflow
+    assert "test -f skills/unitorch-copilot-tools/SKILL.md" in workflow
+    assert "test -f skills/unitorch-config-ini/SKILL.md" in workflow
+    assert "tar -czf dist/unitorch-skills.tar.gz skills" in workflow
+    assert ".skills" not in workflow
+    _assert_external_skills_install_payload(workflow)
     assert "CLAWHUB_TOKEN" in workflow
     assert "CLAWHUB_PUBLISH_URL" in workflow
     assert "HERMESHUB_TOKEN" in workflow

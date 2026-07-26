@@ -4,10 +4,10 @@ on:
   pull_request:
     paths:
       - "src/unitorch/cli/copilots/**"
-      - "bin/unitorch-skills.js"
       - "package.json"
       - ".github/workflows/publish-skills.yml"
       - "README.md"
+      - "skills/**"
       - "wiki/**"
       - "tests/cli/test_copilot_skills.py"
   push:
@@ -52,11 +52,6 @@ jobs:
         with:
           python-version: "3.10"
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-
       - name: Install lightweight generation dependencies
         run: |
           python3 -m pip install --upgrade pip
@@ -64,17 +59,23 @@ jobs:
           python3 -m pip install fire pillow imageio matplotlib sentencepiece importlib_resources scikit-learn transformers datasets peft safetensors
           python3 -m pip install -e . --no-deps
 
-      - name: Generate ClawHub/HermesHub skills into .skills
+      - name: Generate ClawHub/HermesHub skills into root skills
         run: npm run generate-skills
 
-      - name: Validate generated SKILL.md metadata
+      - name: Validate root SKILL.md metadata
         run: npm run validate-skills
 
-      - name: Package generated skills artifact
+      - name: Package all root skills artifact
         run: |
           mkdir -p dist
-          find .skills -name SKILL.md | sort > dist/unitorch-skill-files.txt
-          tar -czf dist/unitorch-skills.tar.gz .skills dist/unitorch-skill-files.txt
+          find skills -name SKILL.md | sort > dist/unitorch-skill-files.txt
+          test -f skills/unitorch-copilot-tools/SKILL.md
+          test -f skills/unitorch-config-ini/SKILL.md
+          test -f skills/unitorch-train-model/SKILL.md
+          test -f skills/unitorch-infer-model/SKILL.md
+          test -f skills/unitorch-serve-fastapi/SKILL.md
+          test -f skills/unitorch-replace-decorator/SKILL.md
+          tar -czf dist/unitorch-skills.tar.gz skills dist/unitorch-skill-files.txt
 
       - name: Upload generated skills artifact
         uses: actions/upload-artifact@v4
@@ -116,8 +117,11 @@ jobs:
           {
             echo "## ClawHub/HermesHub UniTorch skills"
             echo ""
-            echo "- Generated folder: \`.skills\`"
+            echo "- Generated/copilot folder: \`skills/unitorch-copilot-tools\`"
+            echo "- Packaged scope: all root \`skills/\` directories"
             echo "- Artifact: \`dist/unitorch-skills.tar.gz\`"
+            echo "- External install command: \`npx skills add fuliucansheng/unitorch\`"
+            echo "- External install payload: {\"repo\": \"fuliucansheng/unitorch\", \"folder\": \"/home/decu/.hermes/skills\", \"copied\": [\"unitorch-config-ini\", \"unitorch-copilot-tools\", \"unitorch-infer-model\", \"unitorch-replace-decorator\", \"unitorch-serve-fastapi\", \"unitorch-train-model\"]}"
             echo "- Publish event: \`${SHOULD_PUBLISH}\`"
             echo "- ClawHub secrets present: token=\`${CLAWHUB_TOKEN_SET}\`, url=\`${CLAWHUB_URL_SET}\`"
             echo "- HermesHub secrets present: token=\`${HERMESHUB_TOKEN_SET}\`, url=\`${HERMESHUB_URL_SET}\`"

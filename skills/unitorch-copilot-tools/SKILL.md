@@ -21,24 +21,41 @@ related_skills: ["unitorch-config-ini", "unitorch-train-model", "unitorch-infer-
 
 ## Install
 
-Generate the skills into the project-standard `.skills` directory:
+Generate the canonical project skills under the root `skills/` directory:
 
 ```bash
 npm run generate-skills
 ```
 
-Install or export into another folder with the npx wrapper:
+Install the published root skills into an agent skill folder with the external `skills` npm package:
 
 ```bash
-npx unitorch install all --folder .skills --force true
-npx unitorch export all --folder ./agent-skills
+npx skills add fuliucansheng/unitorch
+npx skills add fuliucansheng/unitorch --folder ./agent-skills
 ```
 
-The Python entrypoint remains available for environments without Node:
+That external installer copies the root `skills/` package and can report:
+
+```json
+{
+  "repo": "fuliucansheng/unitorch",
+  "folder": "/home/decu/.hermes/skills",
+  "copied": [
+    "unitorch-config-ini",
+    "unitorch-copilot-tools",
+    "unitorch-infer-model",
+    "unitorch-replace-decorator",
+    "unitorch-serve-fastapi",
+    "unitorch-train-model"
+  ]
+}
+```
+
+Generate, export, and validate from Python when updating this repository:
 
 ```bash
-python3 -m unitorch.cli.copilots.skills install all --folder .skills --force true
-python3 -m unitorch.cli.copilots.skills validate --folder .skills
+python3 -m unitorch.cli.copilots.skills install all --folder ./skills --force true
+python3 -m unitorch.cli.copilots.skills validate --folder ./skills
 ```
 
 ## When To Use
@@ -71,12 +88,14 @@ result = tool.invoke(name="model")
 
 ## Verification Checklist
 
-- Run `python3 -m unitorch.cli.copilots.skills validate --folder .skills` after generation.
+- Run `python3 -m unitorch.cli.copilots.skills validate --folder ./skills` after generation.
 - Confirm the parent index lists every generated child skill.
-- For publishing, confirm the CI artifact contains `.skills/unitorch-copilot-tools/SKILL.md` and child `SKILL.md` files.
+- For publishing, confirm the CI artifact contains `skills/unitorch-copilot-tools/SKILL.md` and child `SKILL.md` files.
 
 ## Common Pitfalls
 
-- Generate into `.skills` for project skills; `skills/` is only the legacy folder used by older installs.
+- Generate into `skills/` so the generated copilot skill sits beside the hand-written root skills.
+- Use `npx skills add fuliucansheng/unitorch` only through the external open-agent skills ecosystem; this repository does not publish or alias that installer.
+- The external installer copies published skills into an agent-local folder; it does not regenerate this repository's skill markdown.
 - Run generation from an environment where UniTorch and any extension packages are importable.
 - Do not publish on normal pushes unless ClawHub/HermesHub credentials are intentionally configured.
