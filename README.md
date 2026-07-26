@@ -103,10 +103,37 @@ unitorch-infer examples/configs/generation/bart.ini --test_file path/to/test.tsv
 **Agent and Skill Tools**
 ```bash
 unitorch-copilot-cli core/copilot/pkg_infos --name model
-python3 -m unitorch.cli.copilots.skills install --folder ./skills
+npm run generate-skills
+npx unitorch install all --folder .skills --force true
 ```
 
 > See the [documentation](https://fuliucansheng.github.io/unitorch) for full tutorials and examples.
+
+## Generated Skills
+
+Generated UniTorch copilot skills are written to `.skills/<skill-name>/SKILL.md`
+for agent and hub compatibility. The npm wrapper delegates to the Python module,
+so run it from an environment where UniTorch can be imported.
+
+```bash
+# Generate and validate the project skills folder.
+npm run generate-skills
+npm run validate-skills
+
+# Install or export skills into a chosen folder with npx.
+npx unitorch install all --folder .skills --force true
+npx unitorch export all --folder ./agent-skills
+
+# Python entrypoint remains supported.
+python3 -m unitorch.cli.copilots.skills install all --folder .skills --force true
+```
+
+The `Publish UniTorch Skills to ClawHub/HermesHub` workflow generates and
+validates `.skills`, uploads a packaged artifact, and publishes only for tags,
+GitHub releases, or manual dispatch with publishing enabled. Configure these
+optional repository secrets to publish to hubs: `CLAWHUB_TOKEN`,
+`CLAWHUB_PUBLISH_URL`, `HERMESHUB_TOKEN`, and `HERMESHUB_PUBLISH_URL`.
+Normal pushes and pull requests do not fail when these secrets are absent.
 
 ## Supported Models
 

@@ -60,6 +60,7 @@ from unitorch.cli.copilots.skills import (
     install_copilot_skill_documents,
     render_copilot_skill_markdown,
     uninstall_copilot_skill_documents,
+    validate_copilot_skill_documents,
 )
 
 from unitorch.cli.copilots.pkg_infos import pkg_infos

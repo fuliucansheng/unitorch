@@ -1,0 +1,126 @@
+name: Publish UniTorch Skills to ClawHub/HermesHub
+
+on:
+  pull_request:
+    paths:
+      - "src/unitorch/cli/copilots/**"
+      - "bin/unitorch-skills.js"
+      - "package.json"
+      - ".github/workflows/publish-skills.yml"
+      - "README.md"
+      - "wiki/**"
+      - "tests/cli/test_copilot_skills.py"
+  push:
+    branches:
+      - master
+      - main
+      - "ci/**"
+    tags:
+      - "v*"
+      - "skills-v*"
+  release:
+    types:
+      - published
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "Publish to ClawHub/HermesHub when hub secrets are present"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  build-clawhub-hermeshub-skills:
+    name: Generate, validate, and publish ClawHub/HermesHub skills
+    runs-on: ubuntu-latest
+    env:
+      SHOULD_PUBLISH: ${{ startsWith(github.ref, 'refs/tags/') || github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && github.event.inputs.publish == 'true') }}
+      CLAWHUB_TOKEN_SET: ${{ secrets.CLAWHUB_TOKEN != '' }}
+      CLAWHUB_URL_SET: ${{ secrets.CLAWHUB_PUBLISH_URL != '' }}
+      HERMESHUB_TOKEN_SET: ${{ secrets.HERMESHUB_TOKEN != '' }}
+      HERMESHUB_URL_SET: ${{ secrets.HERMESHUB_PUBLISH_URL != '' }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install lightweight generation dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+          python3 -m pip install fire pillow imageio matplotlib sentencepiece importlib_resources scikit-learn transformers datasets peft safetensors
+          python3 -m pip install -e . --no-deps
+
+      - name: Generate ClawHub/HermesHub skills into .skills
+        run: npm run generate-skills
+
+      - name: Validate generated SKILL.md metadata
+        run: npm run validate-skills
+
+      - name: Package generated skills artifact
+        run: |
+          mkdir -p dist
+          find .skills -name SKILL.md | sort > dist/unitorch-skill-files.txt
+          tar -czf dist/unitorch-skills.tar.gz .skills dist/unitorch-skill-files.txt
+
+      - name: Upload generated skills artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: unitorch-clawhub-hermeshub-skills
+          path: |
+            dist/unitorch-skills.tar.gz
+            dist/unitorch-skill-files.txt
+          retention-days: 14
+
+      - name: Publish skills to ClawHub
+        if: ${{ env.SHOULD_PUBLISH == 'true' && env.CLAWHUB_TOKEN_SET == 'true' && env.CLAWHUB_URL_SET == 'true' }}
+        env:
+          CLAWHUB_TOKEN: ${{ secrets.CLAWHUB_TOKEN }}
+          CLAWHUB_PUBLISH_URL: ${{ secrets.CLAWHUB_PUBLISH_URL }}
+        run: |
+          curl --fail-with-body -X POST \
+            -H "Authorization: Bearer ${CLAWHUB_TOKEN}" \
+            -F "name=unitorch-skills" \
+            -F "version=${GITHUB_REF_NAME}" \
+            -F "artifact=@dist/unitorch-skills.tar.gz" \
+            "${CLAWHUB_PUBLISH_URL}"
+
+      - name: Publish skills to HermesHub
+        if: ${{ env.SHOULD_PUBLISH == 'true' && env.HERMESHUB_TOKEN_SET == 'true' && env.HERMESHUB_URL_SET == 'true' }}
+        env:
+          HERMESHUB_TOKEN: ${{ secrets.HERMESHUB_TOKEN }}
+          HERMESHUB_PUBLISH_URL: ${{ secrets.HERMESHUB_PUBLISH_URL }}
+        run: |
+          curl --fail-with-body -X POST \
+            -H "Authorization: Bearer ${HERMESHUB_TOKEN}" \
+            -F "name=unitorch-skills" \
+            -F "version=${GITHUB_REF_NAME}" \
+            -F "artifact=@dist/unitorch-skills.tar.gz" \
+            "${HERMESHUB_PUBLISH_URL}"
+
+      - name: Summarize ClawHub/HermesHub publishing
+        run: |
+          {
+            echo "## ClawHub/HermesHub UniTorch skills"
+            echo ""
+            echo "- Generated folder: \`.skills\`"
+            echo "- Artifact: \`dist/unitorch-skills.tar.gz\`"
+            echo "- Publish event: \`${SHOULD_PUBLISH}\`"
+            echo "- ClawHub secrets present: token=\`${CLAWHUB_TOKEN_SET}\`, url=\`${CLAWHUB_URL_SET}\`"
+            echo "- HermesHub secrets present: token=\`${HERMESHUB_TOKEN_SET}\`, url=\`${HERMESHUB_URL_SET}\`"
+            echo ""
+            echo "Publishing is skipped on normal pushes and PRs, and also skipped when optional hub credentials are absent."
+          } >> "${GITHUB_STEP_SUMMARY}"

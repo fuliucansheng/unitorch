@@ -31,13 +31,47 @@ unitorch-fastapi
 # List copilot tool names
 unitorch-copilot-cli
 
-# Show tool metadata
-unitorch-copilot describe classify_image
-
-# Install or uninstall skill markdown files
-python3 -m unitorch.cli.copilots.skills install --folder ./skills
-python3 -m unitorch.cli.copilots.skills uninstall --folder ./skills
+# Install, export, validate, or uninstall generated skill markdown files
+python3 -m unitorch.cli.copilots.skills install all --folder .skills --force true
+python3 -m unitorch.cli.copilots.skills export all --folder ./agent-skills
+python3 -m unitorch.cli.copilots.skills validate --folder .skills
+python3 -m unitorch.cli.copilots.skills uninstall all --folder .skills
 ```
+
+---
+
+## Generated Skills
+
+UniTorch copilot skill files are generated into the project-standard
+`.skills/<skill-name>/SKILL.md` layout. Each generated `SKILL.md` includes
+Hermes/OpenClaw-friendly frontmatter, CLI and Python invocation examples,
+parameter tables, FastAPI adapter details when available, and verification
+notes.
+
+Use npm scripts from this repository:
+
+```bash
+npm run generate-skills
+npm run validate-skills
+```
+
+Use the npx wrapper when installing or exporting to another folder:
+
+```bash
+npx unitorch install all --folder .skills --force true
+npx unitorch export all --folder ./agent-skills
+```
+
+The wrapper invokes `python3 -m unitorch.cli.copilots.skills`, so the active
+Python environment must be able to import UniTorch and any extension packages
+whose copilot tools should be registered.
+
+The `Publish UniTorch Skills to ClawHub/HermesHub` GitHub Actions workflow
+generates `.skills`, validates all generated `SKILL.md` frontmatter, packages
+the result as an artifact, and publishes only on tags, published releases, or
+manual dispatch with publishing enabled. Hub publishing is optional and uses
+these repository secrets when present: `CLAWHUB_TOKEN`,
+`CLAWHUB_PUBLISH_URL`, `HERMESHUB_TOKEN`, and `HERMESHUB_PUBLISH_URL`.
 
 ---
 

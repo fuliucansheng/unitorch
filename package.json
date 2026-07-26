@@ -1,8 +1,15 @@
 {
   "name": "unitorch",
   "version": "1.0.0",
+  "bin": {
+    "unitorch": "bin/unitorch-skills.js",
+    "unitorch-skills": "bin/unitorch-skills.js"
+  },
   "scripts": {
-    "generate-skills": "python3 -m unitorch.cli.copilots.skills install all"
+    "generate-skills": "node ./bin/unitorch-skills.js install all --folder .skills --force true",
+    "export-skills": "node ./bin/unitorch-skills.js export all --folder .skills",
+    "validate-skills": "node ./bin/unitorch-skills.js validate --folder .skills",
+    "generate-skills:legacy": "python3 -m unitorch.cli.copilots.skills install all"
   },
   "dependencies": {
     "pm2": "^6.0.8"
