@@ -10,6 +10,10 @@ directly for training, inference, evaluation, and FastAPI serving, and use
 `unitorch-copilot-cli` for component discovery, tool invocation, remote client
 access, and skill-oriented automation.
 
+Install UniTorch before running `python3 -m` commands or npm skill scripts. For
+local development, use `python3 -m pip install -e .`, then run commands without
+`PYTHONPATH=src`.
+
 ```bash
 unitorch-copilot-cli <tool-name> [--key value ...]
 ```
@@ -31,13 +35,69 @@ unitorch-fastapi
 # List copilot tool names
 unitorch-copilot-cli
 
-# Show tool metadata
-unitorch-copilot describe classify_image
-
-# Install or uninstall skill markdown files
-python3 -m unitorch.cli.copilots.skills install --folder ./skills
-python3 -m unitorch.cli.copilots.skills uninstall --folder ./skills
+# Install, export, validate, or uninstall generated skill markdown files
+python3 -m unitorch.cli.copilots.skills install all --folder ./skills --force true
+python3 -m unitorch.cli.copilots.skills export all --folder ./agent-skills
+python3 -m unitorch.cli.copilots.skills validate --folder ./skills
+python3 -m unitorch.cli.copilots.skills uninstall all --folder ./skills
 ```
+
+---
+
+## Generated Skills
+
+UniTorch copilot skill files are generated under the root
+`skills/unitorch-copilot-tools/` package. That generated package lives beside
+the hand-written root skills such as `skills/unitorch-config-ini` and
+`skills/unitorch-train-model`. Each generated `SKILL.md` includes
+Hermes/OpenClaw-friendly frontmatter, CLI and Python invocation examples,
+parameter tables, FastAPI adapter details when available, and verification
+notes.
+
+Use npm scripts from this repository:
+
+```bash
+npm run generate-skills
+npm run validate-skills
+```
+
+Use the npm-distributed `skills` installer when installing published UniTorch
+skills into a local Hermes/OpenClaw skill folder:
+
+```bash
+npx skills add fuliucansheng/unitorch
+npx skills add fuliucansheng/unitorch --folder ./agent-skills
+```
+
+The command above is provided by the external open-agent `skills` npm package.
+UniTorch only provides the root `skills/` layout for that ecosystem to copy;
+this repository does not publish or alias a local installer bin. A default
+install can report:
+
+```json
+{
+  "repo": "fuliucansheng/unitorch",
+  "folder": "/home/decu/.hermes/skills",
+  "copied": [
+    "unitorch-config-ini",
+    "unitorch-copilot-tools",
+    "unitorch-infer-model",
+    "unitorch-replace-decorator",
+    "unitorch-serve-fastapi",
+    "unitorch-train-model"
+  ]
+}
+```
+
+The external installer copies the published root `skills/` package; it does not
+generate, export, or validate skill markdown.
+
+The `Publish UniTorch Skills to ClawHub/HermesHub` GitHub Actions workflow
+generates root `skills/`, validates all `SKILL.md` frontmatter, packages all
+root skill directories as an artifact, and publishes only on tags, published
+releases, or manual dispatch with publishing enabled. Hub publishing is
+optional and uses these repository secrets when present: `CLAWHUB_TOKEN`,
+`CLAWHUB_PUBLISH_URL`, `HERMESHUB_TOKEN`, and `HERMESHUB_PUBLISH_URL`.
 
 ---
 

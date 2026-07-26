@@ -75,7 +75,7 @@ class FakeLLM:
     def generate(self, prompts, sampling_params):
         self.prompts = prompts
         self.sampling_params = sampling_params
-        
+
         return [
             SimpleNamespace(outputs=[SimpleNamespace(token_ids=[index + 1])])
             for index, _ in enumerate(prompts)
@@ -88,7 +88,7 @@ def test_base_vllm_model_accepts_object_prompt_inputs():
 
     model = object.__new__(VLLMForGeneration)
     model.llm = FakeLLM()
-    
+
     outputs = model.generate(prompt=["hello", "world"])
 
     assert model.llm.prompts == [{"prompt": "hello"}, {"prompt": "world"}]

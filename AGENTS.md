@@ -31,14 +31,15 @@ Always preserve unitorch's package/CLI separation.
 
 ## Project Skills
 
-Project skills live in `.skills/<skill-name>/SKILL.md`. This is the canonical
+Project skills live in `skills/<skill-name>/SKILL.md`. This is the canonical
 location for Claude, Codex, OpenCode, Studio, and other coding agents working in
-this repository.
+this repository. Generated UniTorch copilot tool skills live under
+`skills/unitorch-copilot-tools/`.
 
-Before starting a task, inspect the frontmatter of each `.skills/*/SKILL.md`.
+Before starting a task, inspect the frontmatter of each `skills/*/SKILL.md`.
 If a skill's `description` matches the task, read that whole `SKILL.md` before
-acting and follow its instructions. Do not use `.claude/skills` as the canonical
-source; the project skills were migrated to `.skills`.
+acting and follow its instructions. Do not use `.claude/skills` or `.skills` as
+the canonical source.
 
 Current skills:
 
@@ -67,6 +68,12 @@ UNITORCH_EXTENSIONS=NGRAM pip install .
 ```
 
 Use `".[all]"` only when every optional backend is needed.
+
+For development commands that run `python3 -m unitorch...`, npm skill scripts,
+and unit tests, install the package first, normally with
+`python3 -m pip install -e .` for local development. Run those commands from
+the installed package environment without `PYTHONPATH=src`; do not document
+`PYTHONPATH=src` as the normal path.
 
 ## Testing
 

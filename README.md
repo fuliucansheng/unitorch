@@ -103,10 +103,61 @@ unitorch-infer examples/configs/generation/bart.ini --test_file path/to/test.tsv
 **Agent and Skill Tools**
 ```bash
 unitorch-copilot-cli core/copilot/pkg_infos --name model
-python3 -m unitorch.cli.copilots.skills install --folder ./skills
+npm run generate-skills
+npx skills add fuliucansheng/unitorch --folder ./agent-skills
 ```
 
 > See the [documentation](https://fuliucansheng.github.io/unitorch) for full tutorials and examples.
+
+## Generated Skills
+
+Generated UniTorch copilot skills are written under
+`skills/unitorch-copilot-tools/` beside the hand-written root skills. The npm
+generation scripts call the Python module directly, so run them from an
+environment where UniTorch has been installed. For local development, install
+the package first with `python3 -m pip install -e .`; do not use `PYTHONPATH=src`
+as the normal path.
+
+```bash
+# Generate and validate the project skills folder.
+npm run generate-skills
+npm run validate-skills
+
+# Install the published root skills into a local agent skill folder.
+npx skills add fuliucansheng/unitorch
+npx skills add fuliucansheng/unitorch --folder ./agent-skills
+
+# Python entrypoint for repository updates.
+python3 -m unitorch.cli.copilots.skills install all --folder ./skills --force true
+python3 -m unitorch.cli.copilots.skills validate --folder ./skills
+```
+
+The install command above is provided by the external open-agent `skills` npm
+package. UniTorch only provides the root `skills/` layout for that ecosystem to
+copy; this repository does not publish or alias a local installer bin. A default
+install can report:
+
+```json
+{
+  "repo": "fuliucansheng/unitorch",
+  "folder": "/home/decu/.hermes/skills",
+  "copied": [
+    "unitorch-config-ini",
+    "unitorch-copilot-tools",
+    "unitorch-infer-model",
+    "unitorch-replace-decorator",
+    "unitorch-serve-fastapi",
+    "unitorch-train-model"
+  ]
+}
+```
+
+The `Publish UniTorch Skills to ClawHub/HermesHub` workflow generates and
+validates root `skills/`, packages all root skill directories, uploads the
+artifact, and publishes only for tags, GitHub releases, or manual dispatch with
+publishing enabled. Configure these optional repository secrets to publish to hubs: `CLAWHUB_TOKEN`,
+`CLAWHUB_PUBLISH_URL`, `HERMESHUB_TOKEN`, and `HERMESHUB_PUBLISH_URL`.
+Normal pushes and pull requests do not fail when these secrets are absent.
 
 ## Supported Models
 

@@ -3,6 +3,7 @@
 
 import atexit
 import gc
+import inspect
 import torch
 from typing import List, Optional, Union
 from vllm import LLM, SamplingParams
@@ -35,6 +36,30 @@ def _build_sampling_params(
         stop=stop,
         stop_token_ids=stop_token_ids,
     )
+
+
+def _generate_with_optional_tqdm(llm, prompts, sampling_params):
+    generate = llm.generate
+    try:
+        parameters = inspect.signature(generate).parameters
+    except (TypeError, ValueError):
+        return generate(
+            prompts,
+            sampling_params=sampling_params,
+            use_tqdm=False,
+        )
+
+    supports_use_tqdm = "use_tqdm" in parameters or any(
+        parameter.kind == inspect.Parameter.VAR_KEYWORD
+        for parameter in parameters.values()
+    )
+    if supports_use_tqdm:
+        return generate(
+            prompts,
+            sampling_params=sampling_params,
+            use_tqdm=False,
+        )
+    return generate(prompts, sampling_params=sampling_params)
 
 
 class VLLMForGeneration:
@@ -207,11 +232,7 @@ class VLLMForGeneration:
                 for row in input_ids
             ]
 
-        outputs = self.llm.generate(
-            prompts,
-            sampling_params=sampling_params,
-            use_tqdm=False,
-        )
+        outputs = _generate_with_optional_tqdm(self.llm, prompts, sampling_params)
         return [[o.token_ids for o in req.outputs] for req in outputs]
 
     async def async_generate(

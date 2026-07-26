@@ -19,6 +19,7 @@ from vllm.multimodal.parse import DictEmbeddingItems, ModalityDataItems
 from unitorch.utils.decorators import replace
 from unitorch.models.vllm.modeling import (
     _build_sampling_params,
+    _generate_with_optional_tqdm,
     _normalize_prompts,
 )
 
@@ -375,10 +376,8 @@ class VLLMVLForGeneration:
                     }
                 inputs.append(entry)
 
-            outputs = self.llm.generate(
-                inputs,
-                sampling_params=sampling_params,
-                use_tqdm=False,
+            outputs = _generate_with_optional_tqdm(
+                self.llm, inputs, sampling_params
             )
             return [[o.token_ids for o in req.outputs] for req in outputs]
 
