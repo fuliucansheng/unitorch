@@ -249,8 +249,9 @@ When implementing a new service:
 - Keep model-loading parameters in a pipeline class with
   `@config_defaults_init("core/fastapi/pipeline/<name>")` when the service wraps
   a model.
-- Import the module from `src/unitorch/cli/fastapis/__init__.py` so the
-  registration happens.
+- Ensure the service module is imported before startup so the registration happens.
+  For installed workflows, use package imports or `depends_libraries` to load
+  extension services.
 - Add or update an example config under `examples/configs/fastapis/`.
 - Do not introduce HuggingFace AutoClass usage.
 
