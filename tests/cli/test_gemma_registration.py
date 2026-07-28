@@ -3,7 +3,7 @@
 
 import pytest
 
-from unitorch.cli import Config
+from unitorch.cli import Config, cached_path
 
 
 def test_gemma_cli_registrations():
@@ -53,7 +53,7 @@ def test_gemma_fastapi_start_uses_config_pretrained(monkeypatch):
         classmethod(fake_from_config),
     )
 
-    fastapi = gemma_fastapi.GemmaFastAPI(Config("examples/configs/fastapis/gemma.ini"))
+    fastapi = gemma_fastapi.GemmaFastAPI(Config(cached_path("cli/configs/fastapis/gemma.ini")))
     assert fastapi.start() == "start success"
     assert captured["pretrained_name"] == "gemma-4-12b"
 
@@ -76,7 +76,7 @@ def test_gemma_vl_fastapi_start_uses_config_pretrained(monkeypatch):
     )
 
     fastapi = gemma_vl_fastapi.GemmaVLFastAPI(
-        Config("examples/configs/fastapis/gemma.ini")
+        Config(cached_path("cli/configs/fastapis/gemma.ini"))
     )
     assert fastapi.start() == "start success"
     assert captured["pretrained_name"] == "gemma-4-12b"
@@ -85,12 +85,13 @@ def test_gemma_vl_fastapi_start_uses_config_pretrained(monkeypatch):
 @pytest.mark.parametrize(
     "path",
     [
-        "examples/configs/generation/gemma.ini",
-        "examples/configs/generation/gemma.lora.ini",
-        "examples/configs/generation/gemma_vl.ini",
-        "examples/configs/fastapis/gemma.ini",
-        "examples/fastapis.ini",
+        "cli/configs/generation/gemma.ini",
+        "cli/configs/generation/gemma.lora.ini",
+        "cli/configs/generation/gemma_vl.ini",
+        "cli/configs/fastapis/gemma.ini",
+        "cli/configs/fastapis.ini",
     ],
 )
 def test_gemma_configs_parse(path):
+    path = cached_path(path)
     Config(path)

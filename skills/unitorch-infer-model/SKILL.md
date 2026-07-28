@@ -1,5 +1,5 @@
 ---
-name: infer-model
+name: unitorch-infer-model
 description: Guidance for creating, reviewing, running, and debugging unitorch batch model inference workflows with unitorch-infer. Use when preparing inference INI configs, choosing registered models/processors/postprocess functions/writers, running inference from checkpoints, configuring vLLM inference, preserving raw input columns in outputs, or diagnosing empty, duplicated, or incorrect inference results.
 ---
 
@@ -15,7 +15,7 @@ skill.
 
 ## Inference Workflow
 
-1. Start from the closest training or inference example in `examples/configs/`.
+1. Start from the closest training or inference example in `cli/configs/`.
 2. Query the live registries before inventing section names.
 3. Keep the dataset `test` split inputs-only unless labels are needed in output.
 4. Wire `preprocess_functions`, model, `postprocess_fn`, writer, and output path.
@@ -261,7 +261,7 @@ Check these points before a large run:
 Before considering an inference setup ready:
 
 - Registry names were checked for model, process, writer, and task.
-- The config was based on a nearby `examples/configs/` file.
+- The config was based on a nearby `cli/configs/` file.
 - `from_ckpt_dir` existence and intended checkpoint files were verified.
 - A tiny smoke run completed and wrote output rows.
 - Raw trace columns from `output_header` appear in the output.

@@ -2787,6 +2787,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#generated-skills" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Generated Skills
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#python-adapter" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4006,6 +4017,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#generated-skills" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Generated Skills
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#python-adapter" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4133,6 +4155,9 @@ stable parameter contracts.</p>
 directly for training, inference, evaluation, and FastAPI serving, and use
 <code>unitorch-copilot-cli</code> for component discovery, tool invocation, remote client
 access, and skill-oriented automation.</p>
+<p>Install UniTorch before running <code>python3 -m</code> commands or npm skill scripts. For
+local development, use <code>python3 -m pip install -e .</code>, then run commands without
+<code>PYTHONPATH=src</code>.</p>
 <div class="highlight"><pre><span></span><code>unitorch-copilot-cli<span class="w"> </span>&lt;tool-name&gt;<span class="w"> </span><span class="o">[</span>--key<span class="w"> </span>value<span class="w"> </span>...<span class="o">]</span>
 </code></pre></div>
 <p>Use workflow commands directly:</p>
@@ -4146,13 +4171,52 @@ unitorch-fastapi
 <div class="highlight"><pre><span></span><code><span class="c1"># List copilot tool names</span>
 unitorch-copilot-cli
 
-<span class="c1"># Show tool metadata</span>
-unitorch-copilot<span class="w"> </span>describe<span class="w"> </span>classify_image
-
-<span class="c1"># Install or uninstall skill markdown files</span>
-python3<span class="w"> </span>-m<span class="w"> </span>unitorch.cli.copilots.skills<span class="w"> </span>install<span class="w"> </span>--folder<span class="w"> </span>./skills
-python3<span class="w"> </span>-m<span class="w"> </span>unitorch.cli.copilots.skills<span class="w"> </span>uninstall<span class="w"> </span>--folder<span class="w"> </span>./skills
+<span class="c1"># Install, export, validate, or uninstall generated skill markdown files</span>
+python3<span class="w"> </span>-m<span class="w"> </span>unitorch.cli.copilots.skills<span class="w"> </span>install<span class="w"> </span>all<span class="w"> </span>--folder<span class="w"> </span>./skills<span class="w"> </span>--force<span class="w"> </span><span class="nb">true</span>
+python3<span class="w"> </span>-m<span class="w"> </span>unitorch.cli.copilots.skills<span class="w"> </span><span class="nb">export</span><span class="w"> </span>all<span class="w"> </span>--folder<span class="w"> </span>./agent-skills
+python3<span class="w"> </span>-m<span class="w"> </span>unitorch.cli.copilots.skills<span class="w"> </span>validate<span class="w"> </span>--folder<span class="w"> </span>./skills
+python3<span class="w"> </span>-m<span class="w"> </span>unitorch.cli.copilots.skills<span class="w"> </span>uninstall<span class="w"> </span>all<span class="w"> </span>--folder<span class="w"> </span>./skills
 </code></pre></div>
+<hr />
+<h2 id="generated-skills">Generated Skills<a class="headerlink" href="#generated-skills" title="Permanent link">¤</a></h2>
+<p>UniTorch copilot skill files are generated under the root
+<code>skills/unitorch-copilot-tools/</code> package. That generated package lives beside
+the hand-written root skills such as <code>skills/unitorch-config-ini</code> and
+<code>skills/unitorch-train-model</code>. Each generated <code>SKILL.md</code> includes
+Hermes/OpenClaw-friendly frontmatter, CLI and Python invocation examples,
+parameter tables, FastAPI adapter details when available, and verification
+notes.</p>
+<p>Use npm scripts from this repository:</p>
+<div class="highlight"><pre><span></span><code>npm<span class="w"> </span>run<span class="w"> </span>generate-skills
+npm<span class="w"> </span>run<span class="w"> </span>validate-skills
+</code></pre></div>
+<p>Use the npm-distributed <code>skills</code> installer when installing UniTorch repository
+skills into a local agent skill folder:</p>
+<div class="highlight"><pre><span></span><code>npx<span class="w"> </span>skills<span class="w"> </span>add<span class="w"> </span>fuliucansheng/unitorch
+npx<span class="w"> </span>skills<span class="w"> </span>add<span class="w"> </span>fuliucansheng/unitorch<span class="w"> </span>--folder<span class="w"> </span>./agent-skills
+</code></pre></div>
+<p>The command above is provided by the external open-agent <code>skills</code> npm package.
+UniTorch only provides the root <code>skills/</code> layout for that ecosystem to copy;
+this repository does not publish or alias a local installer bin. A default
+install can report:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;repo&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;fuliucansheng/unitorch&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;folder&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/home/decu/.hermes/skills&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;copied&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="s2">&quot;unitorch-config-ini&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;unitorch-copilot-tools&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;unitorch-infer-model&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;unitorch-replace-decorator&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;unitorch-serve-fastapi&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;unitorch-train-model&quot;</span>
+<span class="w">  </span><span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>The external installer copies the published root <code>skills/</code> package; it does not
+generate, export, or validate skill markdown.</p>
+<p>Use the repository npm or <code>python3 -m</code> commands above when updating the
+checked-in <code>skills/</code> tree. Use <code>npx skills add fuliucansheng/unitorch</code> when you
+only need to install the packaged repository skills into an agent environment.</p>
 <hr />
 <h2 id="python-adapter">Python Adapter<a class="headerlink" href="#python-adapter" title="Permanent link">¤</a></h2>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">unitorch.cli.copilots</span><span class="w"> </span><span class="kn">import</span> <span class="n">classify_image</span>

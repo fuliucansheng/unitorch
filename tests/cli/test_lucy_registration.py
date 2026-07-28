@@ -3,7 +3,7 @@
 
 import pytest
 
-from unitorch.cli import Config
+from unitorch.cli import Config, cached_path
 
 
 def _importorskip_lucy():
@@ -77,11 +77,12 @@ def test_lucy_state_dict_uses_wan_text_loader(monkeypatch):
 @pytest.mark.parametrize(
     "path",
     [
-        "examples/configs/diffusion/video_editing/lucy.ini",
-        "examples/configs/diffusion/editing/lucy.lora.ini",
-        "examples/configs/fastapis/lucy.ini",
-        "examples/fastapis.ini",
+        "cli/configs/diffusion/video_editing/lucy.ini",
+        "cli/configs/diffusion/editing/lucy.lora.ini",
+        "cli/configs/fastapis/lucy.ini",
+        "cli/configs/fastapis.ini",
     ],
 )
 def test_lucy_configs_parse(path):
+    path = cached_path(path)
     Config(path)

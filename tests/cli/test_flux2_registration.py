@@ -3,7 +3,7 @@
 
 import pytest
 
-from unitorch.cli import Config
+from unitorch.cli import Config, cached_path
 
 
 def test_flux2_cli_registrations():
@@ -60,7 +60,7 @@ def test_flux2_fastapi_start_uses_config_pretrained(monkeypatch):
         classmethod(fake_from_config),
     )
 
-    fastapi = Flux2Text2ImageFastAPI(Config("examples/configs/fastapis/flux2.ini"))
+    fastapi = Flux2Text2ImageFastAPI(Config(cached_path("cli/configs/fastapis/flux2.ini")))
     assert fastapi.start() == "start success"
     assert captured["pretrained_name"] is None
 
@@ -87,7 +87,7 @@ def test_flux2_editing_fastapi_start_uses_config_pretrained(monkeypatch):
         classmethod(fake_from_config),
     )
 
-    fastapi = Flux2ImageEditingFastAPI(Config("examples/configs/fastapis/flux2.ini"))
+    fastapi = Flux2ImageEditingFastAPI(Config(cached_path("cli/configs/fastapis/flux2.ini")))
     assert fastapi.start() == "start success"
     assert captured["pretrained_name"] is None
 
@@ -97,7 +97,7 @@ def test_flux2_fastapi_health_check_timeout():
 
     from unitorch.cli.consoles.fastapi import _health_check_timeout
 
-    config = Config("examples/configs/fastapis/flux2.ini")
+    config = Config(cached_path("cli/configs/fastapis/flux2.ini"))
     assert _health_check_timeout(config) == 300.0
 
 
@@ -123,12 +123,13 @@ def test_flux2_klein_pretrained_assets():
 @pytest.mark.parametrize(
     "path",
     [
-        "examples/configs/diffusion/text2image/flux2.ini",
-        "examples/configs/diffusion/text2image/flux2.lora.ini",
-        "examples/configs/diffusion/editing/flux2.ini",
-        "examples/configs/diffusion/editing/flux2.lora.ini",
-        "examples/configs/fastapis/flux2.ini",
+        "cli/configs/diffusion/text2image/flux2.ini",
+        "cli/configs/diffusion/text2image/flux2.lora.ini",
+        "cli/configs/diffusion/editing/flux2.ini",
+        "cli/configs/diffusion/editing/flux2.lora.ini",
+        "cli/configs/fastapis/flux2.ini",
     ],
 )
 def test_flux2_configs_parse(path):
+    path = cached_path(path)
     Config(path)

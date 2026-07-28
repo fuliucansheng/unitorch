@@ -109,7 +109,7 @@ Six commands are defined in `pyproject.toml` under `[project.scripts]`:
 | `unitorch-copilot` | `cli.consoles.copilot:main` | Unitorch-native agent |
 | `unitorch-copilot-cli` | `cli.consoles.copilot:cli_main` | CLI tool for agent use |
 
-All commands except `unitorch-copilot-cli` consume `.ini` config files. Examples live in `examples/configs/`.
+All commands except `unitorch-copilot-cli` consume `.ini` config files. Examples live in `src/unitorch/cli/configs/`.
 
 One-off scripts that previously used `unitorch-launch` should now run directly with:
 
@@ -151,7 +151,7 @@ Available listing types include `process`, `copilot_tool`, `model`, `fastapi`, `
 - `src/unitorch/optims/`, `src/unitorch/schedulers/`: optimization wrappers
 - `src/unitorch/tasks/`: high-level task abstractions
 - `src/unitorch/clib/`: optional CUDA C++ extensions
-- `examples/configs/`: runnable `.ini` examples
+- `src/unitorch/cli/configs/`: runnable `.ini` examples
 - `tests/`: automated checks
 
 Add new modules in the closest existing package and keep filenames in `snake_case`.
@@ -207,7 +207,7 @@ Every model and pipeline class should follow the same pattern: explicit `__init_
 
 After any code change that adds, removes, or modifies models, CLI commands, processors, or related components, keep the following in sync:
 
-1. `examples/configs/`: add, update, or remove `.ini` files
+1. `src/unitorch/cli/configs/`: add, update, or remove `.ini` files
 2. `mkdocs.yml` and `wiki/`: update navigation and API references
 3. `README.md`: update the supported models table and CLI commands table
 
@@ -317,7 +317,7 @@ raw data (text, PIL image, etc.)
 The standard multi-GPU CLI pattern for manual checks is:
 
 ```bash
-torchrun --no_python --nproc_per_node 4 unitorch-train examples/configs/generation/bart.ini ...
+torchrun --no_python --nproc_per_node 4 unitorch-train src/unitorch/cli/configs/generation/bart.ini ...
 ```
 
 ## Commit And Pull Request Guidelines
