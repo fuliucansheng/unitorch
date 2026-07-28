@@ -1,5 +1,5 @@
 ---
-name: serve-fastapi
+name: unitorch-serve-fastapi
 description: Guidance for creating, reviewing, launching, calling, and debugging unitorch FastAPI services with unitorch-fastapi and CopilotClient. Use when preparing FastAPI INI configs, choosing registered core/fastapi services, configuring routers and pipeline sections, starting or stopping daemon/foreground servers, calling /start /status /generate endpoints, using autostart_services, or diagnosing health-check, port, route, service loading, and request-format issues.
 ---
 
@@ -14,8 +14,8 @@ HTTP clients. When editing detailed INI syntax, also use the `config-ini` skill.
 ## FastAPI Workflow
 
 1. Query registered FastAPI services before choosing names.
-2. Start from the closest config in `examples/configs/fastapis/` or
-   `examples/configs/servers/`.
+2. Start from the closest config in `cli/configs/fastapis/` or
+   `cli/configs/servers/`.
 3. Configure `[core/cli] enabled_services`, `device`, `host`, `port`, and
    optional `autostart_services`.
 4. Configure the service router section and, for model services, the pipeline
@@ -129,15 +129,15 @@ num_thread = 20
 Run foreground mode while developing:
 
 ```bash
-unitorch-fastapi examples/configs/fastapis/gemma.ini
+unitorch-fastapi cli/configs/fastapis/gemma.ini
 ```
 
 Run daemon mode when using explicit lifecycle actions:
 
 ```bash
-unitorch-fastapi start examples/configs/fastapis/gemma.ini --port=5001
-unitorch-fastapi stop examples/configs/fastapis/gemma.ini --port=5001
-unitorch-fastapi restart examples/configs/fastapis/gemma.ini --port=5001
+unitorch-fastapi start cli/configs/fastapis/gemma.ini --port=5001
+unitorch-fastapi stop cli/configs/fastapis/gemma.ini --port=5001
+unitorch-fastapi restart cli/configs/fastapis/gemma.ini --port=5001
 ```
 
 Use the same config path and CLI overrides for `stop` as for `start`, because
@@ -179,7 +179,7 @@ provided, the client chooses an available local port and cleans it up on exit.
 from unitorch.cli.copilots import CopilotClient
 
 with CopilotClient(
-    config="examples/configs/fastapis/gemma.ini",
+    config="cli/configs/fastapis/gemma.ini",
     startup_timeout=1800,
 ) as client:
     client.request("/core/fastapi/gemma/start", method="GET")
@@ -252,7 +252,7 @@ When implementing a new service:
 - Ensure the service module is imported before startup so the registration happens.
   For installed workflows, use package imports or `depends_libraries` to load
   extension services.
-- Add or update an example config under `examples/configs/fastapis/`.
+- Add or update an example config under `cli/configs/fastapis/`.
 - Do not introduce HuggingFace AutoClass usage.
 
 ## Common Failure Patterns

@@ -1,5 +1,5 @@
 ---
-name: train-model
+name: unitorch-train-model
 description: Guidance for creating, reviewing, running, and debugging unitorch model training workflows with unitorch-train. Use when preparing training INI configs, choosing registered models/processors/losses/scores, launching single-GPU or distributed training, checking checkpoint loading, monitoring loss and validation metrics, or diagnosing unstable training.
 ---
 
@@ -14,7 +14,7 @@ When editing detailed INI syntax, also use the `config-ini` skill.
 
 ## Training Workflow
 
-1. Start from the closest example in `examples/configs/`.
+1. Start from the closest example in `cli/configs/`.
 2. Query the current registries before inventing section names.
 3. Wire raw data through `preprocess_functions`, `collate_fn`, model forward,
    loss, and metrics.
@@ -163,7 +163,7 @@ Check these points before launching a long run:
 Run a single-process smoke test first:
 
 ```bash
-unitorch-train examples/configs/generation/bart.ini \
+unitorch-train cli/configs/generation/bart.ini \
   --cache_dir=/tmp/unitorch-train-smoke \
   --"core/task/supervised@epochs"=1 \
   --"core/task/supervised@log_freq"=1 \
@@ -340,7 +340,7 @@ Important details:
 Before considering a training setup ready:
 
 - Registry names were checked with `unitorch-copilot-cli`.
-- The config was based on a nearby `examples/configs/` file.
+- The config was based on a nearby `cli/configs/` file.
 - A single-process smoke run completed.
 - `train/loss` logged and was finite.
 - The first snapshot wrote expected checkpoint files.

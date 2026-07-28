@@ -4062,26 +4062,44 @@
 <p>One-off utility scripts are run directly as Python modules:</p>
 <div class="highlight"><pre><span></span><code>python3<span class="w"> </span>-m<span class="w"> </span>unitorch.cli.&lt;module&gt;<span class="w"> </span><span class="o">[</span>args...<span class="o">]</span>
 </code></pre></div>
+<p>Install UniTorch before running module commands. For local development, use an
+editable install such as <code>python3 -m pip install -e .</code>, then run commands
+without <code>PYTHONPATH=src</code>.</p>
 <hr />
 <h2 id="copilot-skill-document-exporter">Copilot Skill Document Exporter<a class="headerlink" href="#copilot-skill-document-exporter" title="Permanent link">¤</a></h2>
-<p>Installs generated copilot-tool skills and hand-written skills from
-<code>src/unitorch/cli/skills</code> into a target folder. These skill documents make
-unitorch's ML lifecycle capabilities easier for agents to discover, plan, and
-reuse.</p>
-<div class="highlight"><pre><span></span><code>python3<span class="w"> </span>-m<span class="w"> </span>unitorch.cli.copilots.skills<span class="w"> </span>install<span class="w"> </span>--folder<span class="w"> </span>./skills
-python3<span class="w"> </span>-m<span class="w"> </span>unitorch.cli.copilots.skills<span class="w"> </span>uninstall<span class="w"> </span>--folder<span class="w"> </span>./skills
+<p>Generates the <code>unitorch-copilot-tools</code> skill package from registered copilot
+tools into a target folder. These skill documents make unitorch's ML lifecycle
+capabilities easier for agents to discover, plan, and reuse.</p>
+<div class="highlight"><pre><span></span><code>python3<span class="w"> </span>-m<span class="w"> </span>unitorch.cli.copilots.skills<span class="w"> </span>install<span class="w"> </span>all<span class="w"> </span>--folder<span class="w"> </span>./skills<span class="w"> </span>--force<span class="w"> </span><span class="nb">true</span>
+python3<span class="w"> </span>-m<span class="w"> </span>unitorch.cli.copilots.skills<span class="w"> </span>validate<span class="w"> </span>--folder<span class="w"> </span>./skills
+python3<span class="w"> </span>-m<span class="w"> </span>unitorch.cli.copilots.skills<span class="w"> </span>uninstall<span class="w"> </span>all<span class="w"> </span>--folder<span class="w"> </span>./skills
 </code></pre></div>
 <p>Each tool's output is written to
-<code>&lt;folder&gt;/unitorch-&lt;skill-safe-tool-name&gt;/SKILL.md</code>,
+<code>&lt;folder&gt;/unitorch-copilot-tools/&lt;skill-safe-tool-name&gt;/SKILL.md</code>,
 containing skill frontmatter, CLI/Python usage, parameter metadata, and any
 remote <code>unitorch-fastapi</code> route metadata declared by the copilot tool.
-<code>install</code> defaults to <code>./skills</code>, and <code>uninstall</code> removes the matching
-<code>SKILL.md</code> files from that folder. Use <code>--name all</code> or omit <code>--name</code> to include
-all generated and hand-written skills.</p>
-<p>Extension packages can expose additional hand-written skills by shipping a
-<code>unitorch.cli.skills</code> namespace package that contains skill subfolders in
-<code>&lt;skill-name&gt;/SKILL.md</code> format. Installed extension package skill directories
-are discovered automatically.</p>
+<code>install</code> defaults to <code>./skills</code>, and <code>uninstall</code> removes the generated
+copilot skill package from that folder. Use <code>--name all</code> or omit <code>--name</code> to
+include every registered copilot tool.</p>
+<p>The root <code>skills/</code> layout can then be installed into a local agent skill folder
+through the external open-agent <code>skills</code> npm package:</p>
+<div class="highlight"><pre><span></span><code>npx<span class="w"> </span>skills<span class="w"> </span>add<span class="w"> </span>fuliucansheng/unitorch
+npx<span class="w"> </span>skills<span class="w"> </span>add<span class="w"> </span>fuliucansheng/unitorch<span class="w"> </span>--folder<span class="w"> </span>./agent-skills
+</code></pre></div>
+<p>A default external install can report:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;repo&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;fuliucansheng/unitorch&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;folder&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/home/decu/.hermes/skills&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;copied&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="s2">&quot;unitorch-config-ini&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;unitorch-copilot-tools&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;unitorch-infer-model&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;unitorch-replace-decorator&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;unitorch-serve-fastapi&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;unitorch-train-model&quot;</span>
+<span class="w">  </span><span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div>
 
 
 

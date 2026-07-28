@@ -83,13 +83,13 @@ config = Config("path/to/config.ini")
 ### Multi-GPU Training
 ```bash
 torchrun --no_python --nproc_per_node 4 \
-	unitorch-train examples/configs/generation/bart.ini \
+	unitorch-train cli/configs/generation/bart.ini \
 	--train_file path/to/train.tsv --dev_file path/to/dev.tsv
 ```
 
 ### Single-GPU Inference
 ```bash
-unitorch-infer examples/configs/generation/bart.ini --test_file path/to/test.tsv
+unitorch-infer cli/configs/generation/bart.ini --test_file path/to/test.tsv
 ```
 
 > **Find more details in the Tutorials section of the [documentation](https://fuliucansheng.github.io/unitorch).**
