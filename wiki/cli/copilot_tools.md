@@ -61,8 +61,8 @@ npm run generate-skills
 npm run validate-skills
 ```
 
-Use the npm-distributed `skills` installer when installing published UniTorch
-skills into a local Hermes/OpenClaw skill folder:
+Use the npm-distributed `skills` installer when installing UniTorch repository
+skills into a local agent skill folder:
 
 ```bash
 npx skills add fuliucansheng/unitorch
@@ -92,12 +92,9 @@ install can report:
 The external installer copies the published root `skills/` package; it does not
 generate, export, or validate skill markdown.
 
-The `Publish UniTorch Skills to ClawHub/HermesHub` GitHub Actions workflow
-generates root `skills/`, validates all `SKILL.md` frontmatter, packages all
-root skill directories as an artifact, and publishes only on tags, published
-releases, or manual dispatch with publishing enabled. Hub publishing is
-optional and uses these repository secrets when present: `CLAWHUB_TOKEN`,
-`CLAWHUB_PUBLISH_URL`, `HERMESHUB_TOKEN`, and `HERMESHUB_PUBLISH_URL`.
+Use the repository npm or `python3 -m` commands above when updating the
+checked-in `skills/` tree. Use `npx skills add fuliucansheng/unitorch` when you
+only need to install the packaged repository skills into an agent environment.
 
 ---
 

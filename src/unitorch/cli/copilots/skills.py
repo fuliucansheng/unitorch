@@ -499,7 +499,7 @@ def _render_copilot_skill_index_markdown(names: list[str]) -> str:
         "",
         "- Discover registered UniTorch models, processors, tasks, writers, and services.",
         "- Invoke small agent-facing utilities through `unitorch-copilot-cli`.",
-        "- Publish generated skill markdown to ClawHub, HermesHub, or compatible skill registries.",
+        "- Install the packaged root `skills/` tree into an agent-local skill folder with the external `skills` npm package.",
         "",
         "## CLI",
         "",
@@ -547,7 +547,7 @@ def _render_copilot_skill_index_markdown(names: list[str]) -> str:
             "",
             "- Run `python3 -m unitorch.cli.copilots.skills validate --folder ./skills` after generation.",
             "- Confirm the parent index lists every generated child skill.",
-            "- For publishing, confirm the CI artifact contains `skills/unitorch-copilot-tools/SKILL.md` and child `SKILL.md` files.",
+            "- Confirm the root `skills/` package contains `skills/unitorch-copilot-tools/SKILL.md` and child `SKILL.md` files before installing it elsewhere.",
             "",
             "## Common Pitfalls",
             "",
@@ -555,7 +555,7 @@ def _render_copilot_skill_index_markdown(names: list[str]) -> str:
             "- Use `npx skills add fuliucansheng/unitorch` only through the external open-agent skills ecosystem; this repository does not publish or alias that installer.",
             "- The external installer copies published skills into an agent-local folder; it does not regenerate this repository's skill markdown.",
             "- Install UniTorch and any extension packages before generation; do not rely on `PYTHONPATH=src` as the normal path.",
-            "- Do not publish on normal pushes unless ClawHub/HermesHub credentials are intentionally configured.",
+            "- Keep the checked-in root `skills/` tree in sync when copilot tool metadata or installation guidance changes.",
             "",
         ]
     )

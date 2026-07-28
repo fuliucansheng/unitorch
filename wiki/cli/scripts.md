@@ -32,8 +32,8 @@ remote `unitorch-fastapi` route metadata declared by the copilot tool.
 copilot skill package from that folder. Use `--name all` or omit `--name` to
 include every registered copilot tool.
 
-The root `skills/` layout can then be installed into a local Hermes/OpenClaw
-skills folder through the external open-agent `skills` npm package:
+The root `skills/` layout can then be installed into a local agent skill folder
+through the external open-agent `skills` npm package:
 
 ```bash
 npx skills add fuliucansheng/unitorch
