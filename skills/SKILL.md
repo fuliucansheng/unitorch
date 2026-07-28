@@ -63,29 +63,6 @@ the detailed workflow.
   when the workflow needs them.
 - Use public package imports such as `from unitorch.cli import Config` or the
   installed CLI commands.
-- Preserve the package/CLI boundary: reusable ML logic belongs to the unitorch
-  package; CLI commands register, configure, and orchestrate package behavior.
-- No HuggingFace AutoClass, ever. Use explicit concrete class names in source.
-- All CLI entry points must use `fire`, not `argparse`, `click`, or direct
-  `sys.argv`.
-- When changing the package, keep examples, docs, and README model/CLI tables in sync.
-
-## Primary Commands
-
-The main command surface is:
-
-| Command | Purpose |
-|---|---|
-| `unitorch-train` | Train from a `.ini` config; scale out with `torchrun --no_python` after a small smoke test. |
-| `unitorch-eval` | Evaluate from a `.ini` config. |
-| `unitorch-infer` | Run batch inference from a `.ini` config. |
-| `unitorch-fastapi` | Start a FastAPI model server from a `.ini` config. |
-| `unitorch-copilot` | Launch the unitorch-native agent surface. |
-| `unitorch-copilot-cli` | Invoke a registered copilot tool such as `core/copilot/pkg_infos`. |
-
-`pyproject.toml` also lists `unitorch-gateway`; verify its implementation
-before relying on it.
-
 ## Config And Data-Flow Conventions
 
 - All primary commands except `unitorch-copilot-cli` consume `.ini` configs.
