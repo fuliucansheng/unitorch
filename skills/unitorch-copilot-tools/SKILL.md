@@ -1,6 +1,6 @@
 ---
 name: "unitorch-copilot-tools"
-description: "Use when an agent needs to discover or invoke UniTorch copilot tools, inspect registered models, processors, tasks, FastAPI services, and writers, or automate ML workflows through unitorch-copilot-cli."
+description: "Use when an agent needs to discover or invoke unitorch copilot tools, inspect registered models, processors, tasks, FastAPI services, and writers, or automate ML workflows through unitorch-copilot-cli after installing the unitorch package."
 version: "0.0.2.1"
 author: "FULIUCANSHENG"
 license: "MIT"
@@ -17,54 +17,37 @@ related_skills: ["unitorch-config-ini", "unitorch-train-model", "unitorch-infer-
 
 ## Overview
 
-`unitorch-copilot-tools` is the generated skill index for UniTorch copilot tools. Use it to discover registered components, invoke tools through `unitorch-copilot-cli`, call the same tools from Python, and bridge to remote services exposed by `unitorch-fastapi` when a tool declares a FastAPI adapter. It also preserves access to model and algorithm related workflows, including package info discovery for registered UniTorch components.
+`unitorch-copilot-tools` is the generated skill index for unitorch copilot tools. Use it to discover registered components, invoke tools through `unitorch-copilot-cli`, call the same tools from Python, and bridge to remote services exposed by `unitorch-fastapi` when a tool declares a FastAPI adapter. It assumes the `unitorch` package is installed and available through normal Python imports and installed CLI commands.
 
 ## Install
 
-Generate the canonical project skills under the root `skills/` directory:
-
-Install UniTorch first; for local development, use an editable install such as `python3 -m pip install -e .` and run without `PYTHONPATH=src`:
+Install unitorch from PyPI before using these tools:
 
 ```bash
-npm run generate-skills
+pip install unitorch
+# Optional extras only when needed:
+pip install "unitorch[fastapis]"
+pip install "unitorch[diffusers]"
 ```
 
-Install the published root skills into an agent skill folder with the external `skills` npm package:
+After installation, use Python imports or installed CLI commands directly:
 
 ```bash
-npx skills add fuliucansheng/unitorch
-npx skills add fuliucansheng/unitorch --folder ./agent-skills
+unitorch-copilot-cli core/copilot/pkg_infos
+unitorch-copilot-cli core/copilot/pkg_infos --name model
 ```
 
-That external installer copies the root `skills/` package and can report:
+```python
+from unitorch.cli.copilots import get_copilot_tool
 
-```json
-{
-  "repo": "fuliucansheng/unitorch",
-  "folder": "/home/decu/.hermes/skills",
-  "copied": [
-    "unitorch-config-ini",
-    "unitorch-copilot-tools",
-    "unitorch-infer-model",
-    "unitorch-replace-decorator",
-    "unitorch-serve-fastapi",
-    "unitorch-train-model"
-  ]
-}
-```
-
-Generate, export, and validate from Python when updating this repository:
-
-```bash
-python3 -m unitorch.cli.copilots.skills install all --folder ./skills --force true
-python3 -m unitorch.cli.copilots.skills validate --folder ./skills
+tool = get_copilot_tool("core/copilot/pkg_infos")
+result = tool.invoke(name="model")
 ```
 
 ## When To Use
 
-- Discover registered UniTorch models, processors, tasks, writers, and services.
+- Discover registered unitorch models, processors, tasks, writers, and services.
 - Invoke small agent-facing utilities through `unitorch-copilot-cli`.
-- Publish generated skill markdown to ClawHub, HermesHub, or compatible skill registries.
 
 ## CLI
 
@@ -90,14 +73,10 @@ result = tool.invoke(name="model")
 
 ## Verification Checklist
 
-- Run `python3 -m unitorch.cli.copilots.skills validate --folder ./skills` after generation.
+- Run `unitorch-copilot-cli core/copilot/pkg_infos` after installing unitorch.
 - Confirm the parent index lists every generated child skill.
-- For publishing, confirm the CI artifact contains `skills/unitorch-copilot-tools/SKILL.md` and child `SKILL.md` files.
 
 ## Common Pitfalls
 
-- Generate into `skills/` so the generated copilot skill sits beside the hand-written root skills.
-- Use `npx skills add fuliucansheng/unitorch` only through the external open-agent skills ecosystem; this repository does not publish or alias that installer.
-- The external installer copies published skills into an agent-local folder; it does not regenerate this repository's skill markdown.
-- Install UniTorch and any extension packages before generation; do not rely on `PYTHONPATH=src` as the normal path.
-- Do not publish on normal pushes unless ClawHub/HermesHub credentials are intentionally configured.
+- Use the installed package and CLI for normal workflows.
+- Install unitorch and any extension packages before discovery.

@@ -1,11 +1,11 @@
 ---
 name: replace-decorator
-description: Reference for using, reviewing, or modifying unitorch's @replace decorator in src/unitorch/utils/decorators.py. Use when overriding upstream classes, adding replacement classes under modules/replace, reasoning about process-global monkey patches, or debugging import-time replacement and subclass __bases__ rewriting.
+description: Reference for using, reviewing, or modifying unitorch's @replace decorator from the installed unitorch package. Use when overriding upstream classes, working with replacement modules, reasoning about process-global monkey patches, or debugging import-time replacement and subclass __bases__ rewriting.
 ---
 
 # `@replace` Decorator Reference
 
-`@replace` is defined in `src/unitorch/utils/decorators.py`.
+`@replace` is available from `unitorch.utils.decorators` after installing unitorch.
 
 ## Signature
 
@@ -40,8 +40,8 @@ call sites. The replacement class typically:
 
 | Location | Pattern |
 |----------|---------|
-| `src/unitorch/modules/replace/diffusers_v2.py` | Override diffusers pipeline `__call__` / `check_inputs`. |
-| `src/unitorch/modules/replace/datasets_v2.py` | Override HuggingFace datasets iterables for fast skip support. |
+| `unitorch.modules.replace.diffusers_v2` | Override diffusers pipeline `__call__` / `check_inputs`. |
+| `unitorch.modules.replace.datasets_v2` | Override HuggingFace datasets iterables for fast skip support. |
 
 Replacement classes are named `<Original>V2` by convention and are decorated
 immediately after their definition.

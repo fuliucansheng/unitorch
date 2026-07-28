@@ -1,6 +1,6 @@
 ---
 name: "unitorch-copilot-tools-core-copilot-pkg_infos"
-description: "Use when an agent needs to invoke the core/copilot/pkg_infos UniTorch copilot tool: List registered unitorch packages and copilot tools."
+description: "Use when an agent needs to invoke the core/copilot/pkg_infos unitorch copilot tool: list registered unitorch packages and copilot tools from the installed package."
 version: "0.0.2.1"
 author: "FULIUCANSHENG"
 license: "MIT"
@@ -19,7 +19,7 @@ related_skills: ["unitorch-copilot-tools"]
 
 List registered unitorch packages and copilot tools.
 
-This is a subskill of `unitorch-copilot-tools`. Use the parent skill index to discover other UniTorch model, algorithm, and package info tools.
+This is a subskill of `unitorch-copilot-tools`. Use the parent skill index to discover other unitorch model, algorithm, and package info tools.
 
 ## When To Use
 
