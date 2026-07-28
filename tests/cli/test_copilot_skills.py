@@ -103,6 +103,8 @@ def test_export_and_validate_copilot_skill_documents(tmp_path):
     assert "npx unitorch" not in parent_markdown
     assert "--folder .skills" not in parent_markdown
     assert "`.skills" not in parent_markdown
+    assert "Publish generated skill markdown to ClawHub" not in parent_markdown
+    assert "Do not publish on normal pushes" not in parent_markdown
     assert "## Registered Tools" in parent_markdown
 
 
@@ -155,41 +157,12 @@ def test_docs_describe_external_skills_installer():
         assert "repository exposes a `skills` bin" not in text
         assert "npx unitorch" not in text
         assert "bin/skills.js" not in text
+        assert "Publish UniTorch Skills to ClawHub/HermesHub" not in text
+        assert "CLAWHUB_TOKEN" not in text
+        assert "HERMESHUB_TOKEN" not in text
         _assert_external_skills_install_payload(text)
 
 
-def test_clawhub_hermeshub_workflow_sanity():
-    workflow_path = Path(".github/workflows/publish-skills.yml")
-    workflow = workflow_path.read_text(encoding="utf-8")
-
-    assert "ClawHub/HermesHub" in workflow
-    assert "workflow_dispatch" in workflow
-    assert "npm run generate-skills" in workflow
-    assert "npm run validate-skills" in workflow
-    assert "actions/setup-node" not in workflow
-    assert "bin/skills.js" not in workflow
-    assert "npx skills add fuliucansheng/unitorch" in workflow
-    assert "find skills -name SKILL.md" in workflow
-    assert "test -f skills/unitorch-copilot-tools/SKILL.md" in workflow
-    assert "test -f skills/unitorch-config-ini/SKILL.md" in workflow
-    assert "tar -czf dist/unitorch-skills.tar.gz skills" in workflow
-    assert ".skills" not in workflow
-    _assert_external_skills_install_payload(workflow)
-    assert "CLAWHUB_TOKEN" in workflow
-    assert "CLAWHUB_PUBLISH_URL" in workflow
-    assert "HERMESHUB_TOKEN" in workflow
-    assert "HERMESHUB_PUBLISH_URL" in workflow
-    assert "Authorization: Bearer ${CLAWHUB_TOKEN}" in workflow
-    assert "Authorization: Bearer ${HERMESHUB_TOKEN}" in workflow
-    assert "Authorization: Bearer CLAWHUB_TOKEN" not in workflow
-    assert "Authorization: Bearer HERMESHUB_TOKEN" not in workflow
-    assert "actions/upload-artifact" in workflow
-    assert "SHOULD_PUBLISH" in workflow
-    assert "github.event.inputs.publish == 'true'" in workflow
-
-    try:
-        import yaml
-    except Exception:
-        return
-
-    assert yaml.safe_load(workflow)
+def test_publish_skills_workflow_removed():
+    assert not Path(".github/workflows/publish-skills.yml").exists()
+    assert Path(".github/workflows/python-publish-pypi.yml").is_file()

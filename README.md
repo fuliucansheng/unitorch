@@ -103,8 +103,8 @@ unitorch-infer examples/configs/generation/bart.ini --test_file path/to/test.tsv
 **Agent and Skill Tools**
 ```bash
 unitorch-copilot-cli core/copilot/pkg_infos --name model
+npx skills add fuliucansheng/unitorch
 npm run generate-skills
-npx skills add fuliucansheng/unitorch --folder ./agent-skills
 ```
 
 > See the [documentation](https://fuliucansheng.github.io/unitorch) for full tutorials and examples.
@@ -123,7 +123,7 @@ as the normal path.
 npm run generate-skills
 npm run validate-skills
 
-# Install the published root skills into a local agent skill folder.
+# Install the repository skills into a local agent skill folder.
 npx skills add fuliucansheng/unitorch
 npx skills add fuliucansheng/unitorch --folder ./agent-skills
 
@@ -152,12 +152,10 @@ install can report:
 }
 ```
 
-The `Publish UniTorch Skills to ClawHub/HermesHub` workflow generates and
-validates root `skills/`, packages all root skill directories, uploads the
-artifact, and publishes only for tags, GitHub releases, or manual dispatch with
-publishing enabled. Configure these optional repository secrets to publish to hubs: `CLAWHUB_TOKEN`,
-`CLAWHUB_PUBLISH_URL`, `HERMESHUB_TOKEN`, and `HERMESHUB_PUBLISH_URL`.
-Normal pushes and pull requests do not fail when these secrets are absent.
+Use `npm run generate-skills` and the Python entrypoints above when updating the
+checked-in `skills/` tree in this repository. Use
+`npx skills add fuliucansheng/unitorch` from consumer environments that only
+need to install the packaged repository skills.
 
 ## Supported Models
 
