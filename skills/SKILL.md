@@ -63,24 +63,6 @@ the detailed workflow.
   when the workflow needs them.
 - Use public package imports such as `from unitorch.cli import Config` or the
   installed CLI commands.
-## Config And Data-Flow Conventions
-
-- All primary commands except `unitorch-copilot-cli` consume `.ini` configs.
-  Start from `examples/configs/` and prefer live registry discovery over
-  guessing names.
-- `Config` extends `configparser` with cross-section interpolation, safe
-  string-to-Python parsing, section freezing, CLI overrides, and remote loading.
-- Common section shapes are `core/process/<name>`,
-  `core/model/<task>/<name>`, `core/task/<name>`, `core/fastapi/<service>`,
-  and `core/fastapi/pipeline/<service>`.
-- FastAPI config generation must set `[core/cli] device = cpu`.
-- Training contract: `raw -> preprocess -> collate_fn -> model -> loss -> backward`.
-- Inference contract:
-  `raw -> preprocess -> collate_fn -> model -> postprocess(DataFrame) -> writer`.
-- `postprocess` must return a `pandas.DataFrame`; writers consume that DataFrame
-  and write formats such as `jsonl`, `tsv`, or `parquet`.
-- Use `unitorch-copilot-cli core/copilot/pkg_infos` to inspect live
-  registrations before inventing section names or component ids.
 
 ## Standard Commands
 
