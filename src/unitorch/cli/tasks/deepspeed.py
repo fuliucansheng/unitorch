@@ -48,6 +48,7 @@ from unitorch.cli import (
 )
 from unitorch.cli.models import LossOutputs
 from unitorch.cli.tasks.supervised import (
+    _to_device,
     DatasetFeature,
     collate_fn,
     infer,
@@ -62,6 +63,14 @@ def _strip_model_prefix(state_dict):
     return {(k[6:] if k.startswith("model.") else k): v for k, v in state_dict.items()}
 
 
+def _execution_device(model=None):
+    """Use the engine device, falling back to the accelerator for CPU engines."""
+    device = getattr(model, "device", None)
+    if device is None:
+        device = deepspeed.accelerator.get_accelerator().current_device_name()
+    return torch.device(device)
+
+
 def save_snapshot_zero_3(
     model,
     ckpt_dir,
@@ -70,7 +79,7 @@ def save_snapshot_zero_3(
     monitor_fns,
     save_checkpoint="default",  # checkpoint policy: default/best/latest/every/all
     merge_checkpoint=False,  # merge ZeRO-3 shards into a single fp32 bin file
-    exclude_freeze_parameters=True,  # skip frozen parameters when merging
+    exclude_freeze_parameters=True,  # reuse frozen base weights in native/exported checkpoints
     best_score=-np.inf,  # best validation score seen so far
     info_path=None,  # path to info.json for persisting training state
     local_rank=-1,  # only rank 0 (or -1) writes files
@@ -82,38 +91,44 @@ def save_snapshot_zero_3(
     """
     os.makedirs(ckpt_dir, exist_ok=True)
 
-    results = infer(model, iter_dev)
+    results = infer(model, iter_dev, device=_execution_device(model))
     new_score = score_fn(outputs=results.outputs, targets=results.targets)
     snapshot_time = time.strftime("%Y%m%d_%H%M", time.localtime())
 
     if local_rank in [-1, 0]:
         monitor(results.outputs, results.targets, monitor_fns)
 
-    if save_checkpoint in ("all", "default", "best") and new_score > best_score:
-        best_score = new_score
-        model.save_checkpoint(os.path.join(ckpt_dir, "pytorch_model"))
+    def save_named_checkpoint(name):
+        directory = os.path.join(ckpt_dir, name)
+        # A fixed tag replaces the latest/best shards instead of retaining a
+        # new, potentially hundreds-of-GB optimizer snapshot at every step.
+        model.save_checkpoint(
+            directory, tag="checkpoint",
+            exclude_frozen_parameters=exclude_freeze_parameters,
+        )
         if merge_checkpoint and local_rank in [-1, 0]:
-            _strip_model_prefix(
+            state_dict = _strip_model_prefix(
                 get_fp32_state_dict_from_zero_checkpoint(
-                    os.path.join(ckpt_dir, "pytorch_model"),
-                    exclude_frozen_parameters=exclude_freeze_parameters,
+                    directory, exclude_frozen_parameters=exclude_freeze_parameters,
                 )
             )
+            module = model.module
+            component = getattr(module, "model", module)
+            selector = getattr(component, "checkpoint_state_dict", None)
+            if exclude_freeze_parameters and selector is not None:
+                state_dict = selector(state_dict)
+            torch.save(state_dict, os.path.join(ckpt_dir, f"{name}.bin"))
+
+    if save_checkpoint in ("all", "default", "best") and new_score > best_score:
+        best_score = new_score
+        save_named_checkpoint("pytorch_model")
 
     if local_rank in [-1, 0] and info_path is not None:
         with open(info_path, "w") as f:
             json.dump({"best_score": best_score, **kwargs}, f, indent=4)
 
     if save_checkpoint in ("all", "default", "latest"):
-        model.save_checkpoint(os.path.join(ckpt_dir, "pytorch_model_latest"))
-        if merge_checkpoint and local_rank in [-1, 0]:
-            state_dict = _strip_model_prefix(
-                get_fp32_state_dict_from_zero_checkpoint(
-                    os.path.join(ckpt_dir, "pytorch_model_latest"),
-                    exclude_frozen_parameters=exclude_freeze_parameters,
-                )
-            )
-            torch.save(state_dict, os.path.join(ckpt_dir, "pytorch_model_latest.bin"))
+        save_named_checkpoint("pytorch_model_latest")
 
     if save_checkpoint in ("all", "every"):
         if merge_checkpoint and local_rank in [-1, 0]:
@@ -146,7 +161,8 @@ class DeepspeedTask:
         cpu_offload: bool = False,  # keep model on CPU (e.g. for ZeRO-Infinity offload)
     ):
         set_seed(seed)
-        self.n_gpu = 1 if torch.cuda.is_available() else 0
+        accelerator = deepspeed.accelerator.get_accelerator()
+        self.n_gpu = 1 if accelerator.is_available() else 0
         if dist.is_initialized():
             self.n_gpu = dist.get_world_size()
 
@@ -156,10 +172,14 @@ class DeepspeedTask:
         self.local_rank = local_rank
 
         if self.local_rank != -1:
-            torch.cuda.set_device(self.local_rank)
+            accelerator.set_device(self.local_rank)
+        self.device = torch.device(accelerator.current_device_name())
 
-        if torch.cuda.is_available() and not cpu_offload:
-            self.model = self.model.cuda()
+        zero_initialized = self.model is not None and any(
+            hasattr(p, "ds_id") for p in self.model.parameters()
+        )
+        if self.model is not None and not cpu_offload and not zero_initialized:
+            self.model = self.model.to(self.device)
 
         self.best_score = -np.inf
 
@@ -167,7 +187,10 @@ class DeepspeedTask:
     @config_defaults_init("core/task/deepspeed/supervised")
     def from_config(cls, config, **kwargs):
         try:
-            deepspeed.init_distributed(dist_backend="nccl", init_method="env://")
+            deepspeed.init_distributed(
+                dist_backend=deepspeed.accelerator.get_accelerator().communication_backend_name(),
+                init_method="env://",
+            )
         except Exception:
             logging.info("PyTorch is not in distributed mode")
 
@@ -177,7 +200,23 @@ class DeepspeedTask:
         dataset = config.getoption("dataset", None)
 
         if model is not None:
-            model = init_registered_module(model, config, registered_model)
+            if config.getoption("zero_init", False):
+                # ZeRO must shard during construction: moving a complete 32B
+                # model to one GPU before initialize() already exceeds VRAM.
+                with open(cached_path(config.getoption("config_path"))) as handle:
+                    zero_config = json.load(handle)
+                stage = config.getoption("zero_stage", zero_config.get("zero_optimization", {}).get("stage"))
+                if stage != 3:
+                    raise ValueError("zero_init requires zero_stage = 3")
+                zero_config["zero_optimization"]["stage"] = stage
+                zero_config["train_micro_batch_size_per_gpu"] = config.getoption("train_batch_size", 1)
+                with deepspeed.zero.Init(
+                    config_dict_or_path=zero_config, remote_device="cpu",
+                    pin_memory=False,
+                ):
+                    model = init_registered_module(model, config, registered_model)
+            else:
+                model = init_registered_module(model, config, registered_model)
         if dataset is not None:
             dataset = init_registered_module(dataset, config, registered_dataset)
 
@@ -338,6 +377,7 @@ class DeepspeedTask:
             config=config_dict,
             model_parameters=params,
         )
+        self.device = _execution_device(self.model)
 
         # ZeRO-3 checkpoints must be loaded after deepspeed.initialize
         if (
@@ -345,7 +385,8 @@ class DeepspeedTask:
             and zero_stage == 3
         ):
             self.model.load_checkpoint(
-                os.path.join(to_ckpt_dir, "pytorch_model_latest")
+                os.path.join(to_ckpt_dir, "pytorch_model_latest"),
+                load_module_strict=not exclude_freeze_parameters,
             )
 
         global_rank = dist.get_rank() if self.n_gpu > 1 else -1
@@ -412,6 +453,7 @@ class DeepspeedTask:
                 optim=optim if save_optimizer else None,
                 scheduler=scheduler if save_scheduler else None,
                 ema_model=self.ema_model if use_ema else None,
+                device=self.device,
                 best_score=self.best_score,
                 global_epoch=epoch,
                 global_step=step,
@@ -422,7 +464,7 @@ class DeepspeedTask:
         dev_epoch = 0
 
         for e in range(epochs):
-            torch.cuda.empty_cache()
+            deepspeed.accelerator.get_accelerator().empty_cache()
             if e < global_epoch:
                 continue
 
@@ -442,9 +484,8 @@ class DeepspeedTask:
                 step = step + global_step
                 is_update_step = False
 
-                if torch.cuda.is_available():
-                    inputs = inputs.cuda()
-                    targets = targets.cuda()
+                inputs = _to_device(inputs, self.device)
+                targets = _to_device(targets, self.device)
 
                 outputs = self.model(**inputs.dict())
                 loss = (
@@ -517,8 +558,8 @@ class DeepspeedTask:
         if self.n_gpu > 1:
             self.model = nn.parallel.DistributedDataParallel(
                 self.model,
-                device_ids=[self.local_rank],
-                output_device=self.local_rank,
+                device_ids=[self.local_rank] if self.device.type == "cuda" else None,
+                output_device=self.local_rank if self.device.type == "cuda" else None,
                 find_unused_parameters=False,
                 broadcast_buffers=False,
             )
@@ -540,7 +581,7 @@ class DeepspeedTask:
             collate_fn=collate_fn,
         )
 
-        results = infer(self.model.module, iter_dev)
+        results = infer(self.model, iter_dev, device=self.device)
         if global_rank in [-1, 0]:
             monitor(
                 outputs=results.outputs,
@@ -643,14 +684,12 @@ class DeepspeedTask:
 
         if iter_data is None:
             for step, (inputs, _) in enumerate(iter_test):
-                if torch.cuda.is_available():
-                    inputs = inputs.cuda()
+                inputs = _to_device(inputs, self.device)
                 outputs = self.model(**inputs.dict()).cpu()
                 data_queue.put((step, outputs))
         else:
             for step, ((inputs, _), raw_info) in enumerate(zip(iter_test, iter_data)):
-                if torch.cuda.is_available():
-                    inputs = inputs.cuda()
+                inputs = _to_device(inputs, self.device)
                 outputs = self.model(**inputs.dict()).cpu()
                 if output_header is not None:
                     raw_info = {k: raw_info[k] for k in output_header if k in raw_info}

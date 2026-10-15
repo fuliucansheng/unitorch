@@ -2,7 +2,7 @@
 # Licensed under the MIT License.
 
 import json
-from typing import Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 import torch
 from PIL import Image
@@ -135,6 +135,11 @@ def _build_flux2_tokenizer(
 
 
 class Flux2Processor:
+    """Tokenize the correct FLUX.2 prompt template and prepare RGB tensors.
+
+    Editing accepts one image or a list of references per sample. Lists produce
+    [R,C,H,W]; collation adds B. A batch must have the same R and image size.
+    """
     def __init__(
         self,
         tokenizer_path: Optional[str] = None,
@@ -164,11 +169,12 @@ class Flux2Processor:
         )
         self.processor = self.tokenizer
         self.max_seq_length = max_seq_length
+        self.is_klein = isinstance(self.tokenizer, Qwen2Tokenizer)
 
         if image_size is not None:
             self.image_size = (
                 image_size
-                if isinstance(image_size, tuple)
+                if isinstance(image_size, (tuple, list))
                 else (image_size, image_size)
             )
         else:
@@ -206,6 +212,15 @@ class Flux2Processor:
         else:
             vae_scale_factor = 8
 
+        self.image_size_multiple = vae_scale_factor * 2
+        if self.image_size is not None and any(
+            size <= 0 or size % self.image_size_multiple for size in self.image_size
+        ):
+            raise ValueError(
+                f"image_size must be positive and divisible by {self.image_size_multiple} "
+                "(VAE downsampling and 2x2 latent patches)."
+            )
+
         self.vae_image_processor = Flux2ImageProcessor(
             vae_scale_factor=vae_scale_factor * 2
         )
@@ -221,20 +236,30 @@ class Flux2Processor:
         max_seq_length: Optional[int] = None,
     ):
         max_seq_length = pop_value(max_seq_length, self.max_seq_length)
-        messages = [
-            {"role": "system", "content": str(SYSTEM_MESSAGE)},
-            {"role": "user", "content": str(prompt).replace("[IMG]", "")},
-        ]
-        outputs = self.tokenizer.apply_chat_template(
-            messages,
-            add_generation_prompt=False,
-            tokenize=True,
-            return_dict=True,
-            return_tensors="pt",
-            padding="max_length",
-            truncation=True,
-            max_length=max_seq_length,
-        )
+        if self.is_klein:
+            text = self.tokenizer.apply_chat_template(
+                [{"role": "user", "content": str(prompt)}],
+                tokenize=False, add_generation_prompt=True, enable_thinking=False,
+            )
+            outputs = self.tokenizer(
+                text, return_tensors="pt", padding="max_length",
+                truncation=True, max_length=max_seq_length,
+            )
+        else:
+            messages = [
+                {"role": "system", "content": str(SYSTEM_MESSAGE)},
+                {"role": "user", "content": str(prompt).replace("[IMG]", "")},
+            ]
+            outputs = self.tokenizer.apply_chat_template(
+                messages,
+                add_generation_prompt=False,
+                tokenize=True,
+                return_dict=True,
+                return_tensors="pt",
+                padding="max_length",
+                truncation=True,
+                max_length=max_seq_length,
+            )
         return GenericOutputs(
             input_ids=outputs["input_ids"][0].long(),
             attention_mask=outputs["attention_mask"][0].long(),
@@ -289,14 +314,19 @@ class Flux2Processor:
     def editing_inputs(
         self,
         prompt: str,
-        refer_image: Union[Image.Image, str],
+        refer_image: Union[Image.Image, str, List[Union[Image.Image, str]]],
         max_seq_length: Optional[int] = None,
     ):
         prompt_outputs = self.text2image_inputs(
             prompt=prompt,
             max_seq_length=max_seq_length,
         )
-        refer_pixel_values = self._process_reference_image(refer_image)
+        if isinstance(refer_image, (list, tuple)):
+            refer_pixel_values = torch.stack([
+                self._process_reference_image(image) for image in refer_image
+            ])
+        else:
+            refer_pixel_values = self._process_reference_image(refer_image)
 
         return GenericOutputs(
             input_ids=prompt_outputs.input_ids,
@@ -307,7 +337,7 @@ class Flux2Processor:
     def editing(
         self,
         prompt: str,
-        refer_image: Union[Image.Image, str],
+        refer_image: Union[Image.Image, str, List[Union[Image.Image, str]]],
         image: Union[Image.Image, str],
         max_seq_length: Optional[int] = None,
     ):
