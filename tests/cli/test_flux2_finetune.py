@@ -10,6 +10,10 @@ from pathlib import Path
 
 import pytest
 import torch
+
+pytest.importorskip("diffusers", minversion="0.38.0")
+pytest.importorskip("peft")
+
 from diffusers import Flux2Pipeline, Flux2KleinPipeline
 from PIL import Image
 

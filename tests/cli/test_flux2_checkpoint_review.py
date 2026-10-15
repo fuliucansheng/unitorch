@@ -9,6 +9,9 @@ import sys
 import pytest
 import torch
 
+pytest.importorskip("diffusers", minversion="0.38.0")
+pytest.importorskip("peft")
+
 from flux2_test_utils import make_assets, model_class, model_kwargs
 
 

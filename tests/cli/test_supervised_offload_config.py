@@ -9,6 +9,9 @@ import pytest
 import torch
 from PIL import Image
 
+pytest.importorskip("diffusers", minversion="0.38.0")
+pytest.importorskip("peft")
+
 from flux2_test_utils import make_assets, write_cli_config
 from unitorch.cli import Config, init_registered_module, registered_model, registered_task
 from unitorch.cli.consoles.infer import infer as cli_infer
