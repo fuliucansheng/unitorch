@@ -1,5 +1,16 @@
 # unitorch.cli.models.peft
 
+## FLUX.2 transformer LoRA
+
+Configure `core/model/diffusers/peft/lora/text2image/flux2` or
+`core/model/diffusers/peft/lora/editing/flux2`; use `pretrained_name = flux2-dev`
+or `flux2-klein-4b`. The [guide](../../guides/flux2_finetuning.md) gives all four
+LoRA configs alongside the four full-transformer configs.
+
+::: unitorch.cli.models.peft.diffusers.modeling_flux2.Flux2LoraForText2ImageGeneration
+
+::: unitorch.cli.models.peft.diffusers.modeling_flux2.Flux2LoraForImageEditingGeneration
+
 ## ClipLoraForImageClassificationV2
 
 !!! tip

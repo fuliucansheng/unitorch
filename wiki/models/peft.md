@@ -1,5 +1,15 @@
 # unitorch.models.peft
 
+## FLUX.2 transformer LoRA
+
+The default adapter targets include the fused single-stream projections in
+Diffusers 0.38. Text and VAE weights remain frozen; text adapters are opt-in.
+See the [FLUX.2 guide](../guides/flux2_finetuning.md) for native checkpoint keys.
+
+::: unitorch.models.peft.diffusers.modeling_flux2.Flux2LoraForText2ImageGeneration
+
+::: unitorch.models.peft.diffusers.modeling_flux2.Flux2LoraForImageEditingGeneration
+
 ## ClipLoraForImageClassificationV2
 
 ::: unitorch.models.peft.ClipLoraForImageClassificationV2

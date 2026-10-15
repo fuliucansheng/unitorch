@@ -167,7 +167,7 @@ need to install the packaged repository skills.
 | **Language** | BERT, RoBERTa, XLM-RoBERTa, BART, MBart, LLaMA, Mistral, QWen3, Gemma 4 |
 | **Vision** | BEiT, Swin Transformer, DINOv2, CLIP, SigLIP |
 | **Multimodal** | LLaVA, QWen3-VL, Gemma 4-VL, Chinese CLIP |
-| **Image Generation** | FLUX (StableFlux), QWenImage |
+| **Image Generation** | FLUX (StableFlux), FLUX.2 [dev] 32B and distilled FLUX.2 [klein] 4B (text-to-image/editing, transformer LoRA/full finetuning), QWenImage |
 | **Video Generation** | Wan (Wan2.2 TI2V-5B), Lucy Edit 1.1 Dev |
 | **Detection** | DETR, Grounding DINO |
 | **Segmentation** | SAM, Mask2Former, SegFormer, BRIA |
@@ -176,16 +176,33 @@ need to install the packaged repository skills.
 
 </details>
 
+The [FLUX.2 finetuning guide](wiki/guides/flux2_finetuning.md) provides eight
+explicit configs, data schemas, checkpoint/resume commands and ZeRO-3 CPU
+offload settings. Export native ZeRO-3 checkpoints with
+`python -m unitorch.cli.scripts.flux2 --checkpoint=... --output=... --mode=lora`.
+The requested distilled `FLUX.2-klein-4B` is kept distinct
+from the upstream-recommended `FLUX.2-klein-base-4B` training checkpoint.
+Official-weight GPU train/save/resume (optimizer step 1 → 2)/export/infer smokes
+passed for all four klein combinations and both dev LoRA tasks. These used
+64×64 synthetic data and two optimizer steps, with no convergence or image-quality
+claim. Both dev full-transformer tasks remain **NOT VERIFIED**: the CPUAdam/ZeRO
+profile requires 540 GiB available RAM and 560 GiB free disk; the validation host
+had about 160 GiB and 385 GiB, respectively, so training did not start. This is a
+resource limit, not a GPU, driver, or gated-access failure. See the guide for the
+pinned revisions and validation limits; all eight combinations remain supported,
+with text encoders and VAE frozen by default.
+
 ## CLI Commands
 
 | Command | Purpose |
 |---------|---------|
-| `unitorch-train` | Train models (supports `torchrun`) |
+| `unitorch-train` | Train models, including FLUX.2 transformer LoRA/full finetuning (supports `torchrun` and ZeRO-3) |
 | `unitorch-eval` | Evaluate models |
-| `unitorch-infer` | Run batch inference |
+| `unitorch-infer` | Run batch inference, including FLUX.2 finetuned checkpoints and image editing |
 | `unitorch-fastapi` | Start a FastAPI model server |
 | `unitorch-copilot` | unitorch-native agent for ML workflows |
 | `unitorch-copilot-cli` | Agent-facing CLI that invokes registered copilot tools and exposes component metadata |
+| `python -m unitorch.cli.scripts.flux2` | Export native FLUX.2 ZeRO-3 checkpoints for inference |
 
 ## License
 

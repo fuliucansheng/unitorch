@@ -43,6 +43,7 @@ nav:
       - XLMRoberta: models/xlm_roberta.md
   - Commands:
     - Configuration: configuration.md
+    - FLUX.2 Finetuning: guides/flux2_finetuning.md
     - Examples:
       - Classification:
         - Roberta: examples/classification/roberta.md
