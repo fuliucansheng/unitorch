@@ -1,6 +1,6 @@
 ---
-name: config-ini
-description: Guidance for writing, reviewing, and updating unitorch INI configuration files for train, eval, infer, and FastAPI workflows. Use when creating or modifying examples/configs/*.ini, reasoning about Config interpolation and CLI overrides, composing preprocess_functions, choosing registered component names, or debugging unitorch CLI config behavior.
+name: unitorch-config-ini
+description: Guidance for writing, reviewing, and updating unitorch INI configuration files for train, eval, infer, and FastAPI workflows. Use when creating or modifying cli/configs/*.ini, reasoning about Config interpolation and CLI overrides, composing preprocess_functions, choosing registered component names, or debugging unitorch CLI config behavior.
 ---
 
 # unitorch Config INI Writing Guide

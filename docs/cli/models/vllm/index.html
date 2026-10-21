@@ -4797,10 +4797,7 @@ compatible with <code>unitorch-infer</code>.</p>
 
                   <details class="mkdocstrings-source">
                     <summary>Source code in <code>src/unitorch/cli/models/vllm/modeling_vl.py</code></summary>
-                    <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">28</span>
-<span class="normal">29</span>
-<span class="normal">30</span>
-<span class="normal">31</span>
+                    <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">31</span>
 <span class="normal">32</span>
 <span class="normal">33</span>
 <span class="normal">34</span>
@@ -4823,7 +4820,10 @@ compatible with <code>unitorch-infer</code>.</p>
 <span class="normal">51</span>
 <span class="normal">52</span>
 <span class="normal">53</span>
-<span class="normal">54</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+<span class="normal">54</span>
+<span class="normal">55</span>
+<span class="normal">56</span>
+<span class="normal">57</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">hf_name_or_folder</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">tensor_parallel_size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
@@ -4886,10 +4886,7 @@ compatible with <code>unitorch-infer</code>.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/unitorch/cli/models/vllm/modeling_vl.py</code></summary>
-              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">56</span>
-<span class="normal">57</span>
-<span class="normal">58</span>
-<span class="normal">59</span>
+              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">59</span>
 <span class="normal">60</span>
 <span class="normal">61</span>
 <span class="normal">62</span>
@@ -4923,7 +4920,10 @@ compatible with <code>unitorch-infer</code>.</p>
 <span class="normal">90</span>
 <span class="normal">91</span>
 <span class="normal">92</span>
-<span class="normal">93</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
+<span class="normal">93</span>
+<span class="normal">94</span>
+<span class="normal">95</span>
+<span class="normal">96</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
 <span class="nd">@config_defaults_init</span><span class="p">(</span><span class="s2">&quot;core/model/vllm/generation/qwen3_vl&quot;</span><span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">from_config</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="n">config</span><span class="o">.</span><span class="n">set_default_section</span><span class="p">(</span><span class="s2">&quot;core/model/vllm/generation/qwen3_vl&quot;</span><span class="p">)</span>
@@ -5253,10 +5253,7 @@ is used as-is (matching the HuggingFace reference implementation).</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/unitorch/cli/models/vllm/modeling_vl.py</code></summary>
-              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 95</span>
-<span class="normal"> 96</span>
-<span class="normal"> 97</span>
-<span class="normal"> 98</span>
+              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 98</span>
 <span class="normal"> 99</span>
 <span class="normal">100</span>
 <span class="normal">101</span>
@@ -5368,8 +5365,7 @@ is used as-is (matching the HuggingFace reference implementation).</p>
 <span class="normal">207</span>
 <span class="normal">208</span>
 <span class="normal">209</span>
-<span class="normal">210</span>
-<span class="normal">211</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span>
+<span class="normal">210</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">input_ids</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">prompt</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -5478,11 +5474,7 @@ is used as-is (matching the HuggingFace reference implementation).</p>
             <span class="p">}</span>
         <span class="n">inputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span>
 
-    <span class="n">outputs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">llm</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span>
-        <span class="n">inputs</span><span class="p">,</span>
-        <span class="n">sampling_params</span><span class="o">=</span><span class="n">sampling_params</span><span class="p">,</span>
-        <span class="n">use_tqdm</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-    <span class="p">)</span>
+    <span class="n">outputs</span> <span class="o">=</span> <span class="n">_generate_with_optional_tqdm</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">llm</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">sampling_params</span><span class="p">)</span>
     <span class="n">batch_token_ids</span> <span class="o">=</span> <span class="p">[[</span><span class="n">o</span><span class="o">.</span><span class="n">token_ids</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">req</span><span class="o">.</span><span class="n">outputs</span><span class="p">]</span> <span class="k">for</span> <span class="n">req</span> <span class="ow">in</span> <span class="n">outputs</span><span class="p">]</span>
     <span class="n">sequences</span> <span class="o">=</span> <span class="n">_pad_token_ids</span><span class="p">(</span><span class="n">batch_token_ids</span><span class="p">,</span> <span class="n">pad_token_id</span><span class="p">,</span> <span class="n">max_gen_seq_length</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">GenerationOutputs</span><span class="p">(</span><span class="n">sequences</span><span class="o">=</span><span class="n">sequences</span><span class="p">)</span>

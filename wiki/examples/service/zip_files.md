@@ -10,7 +10,7 @@
 
 ### Configuration files
 
-#### [Single zip folder](https://github.com/fuliucansheng/unitorch/blob/master/examples/configs/servers/zip_files.ini)
+#### [Single zip folder](https://github.com/fuliucansheng/unitorch/blob/master/cli/configs/servers/zip_files.ini)
 ```ini
 [core/cli]
 zip_folder = zip_folder/
@@ -21,7 +21,7 @@ zip_folder = ${core/cli:zip_folder}
 zip_extension = .zip
 ```
 
-#### [Multiple zip folders](https://github.com/fuliucansheng/unitorch/blob/master/examples/configs/servers/zip_files.v2.ini)
+#### [Multiple zip folders](https://github.com/fuliucansheng/unitorch/blob/master/cli/configs/servers/zip_files.v2.ini)
 ```ini
 [core/cli]
 zip_folder1 = zip_folder1/

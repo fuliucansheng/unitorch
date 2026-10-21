@@ -5,9 +5,8 @@ import torch
 import pytest
 from PIL import Image
 import importlib
-
-from unitorch.cli import Config
 from unitorch.models import GenericOutputs
+from unitorch.cli import Config, cached_path
 
 
 def test_wan_cli_registrations():
@@ -99,14 +98,15 @@ def test_wan_lora_text_target_modules_match_umt5_attention():
 @pytest.mark.parametrize(
     "path",
     [
-        "examples/configs/diffusion/text2video/wan.ini",
-        "examples/configs/diffusion/text2video/wan.lora.ini",
-        "examples/configs/diffusion/image2video/wan.ini",
-        "examples/configs/diffusion/image2video/wan.lora.ini",
-        "examples/configs/fastapis/wan.ini",
+        "cli/configs/diffusion/text2video/wan.ini",
+        "cli/configs/diffusion/text2video/wan.lora.ini",
+        "cli/configs/diffusion/image2video/wan.ini",
+        "cli/configs/diffusion/image2video/wan.lora.ini",
+        "cli/configs/fastapis/wan.ini",
     ],
 )
 def test_wan_configs_parse(path):
+    path = cached_path(path)
     Config(path)
 
 
