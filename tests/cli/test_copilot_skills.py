@@ -42,7 +42,7 @@ def test_render_copilot_skill_frontmatter_metadata_and_sections():
 
     assert frontmatter["name"] == "unitorch-copilot-tools-tests-copilot-render_skill"
     assert frontmatter["version"]
-    assert frontmatter["author"] == "FULIUCANSHENG"
+    assert frontmatter["author"] == "fuliucansheng@gmail.com"
     assert frontmatter["license"] == "MIT"
     assert len(frontmatter["description"]) <= 1024
     assert "Use when an agent needs to invoke" in frontmatter["description"]
