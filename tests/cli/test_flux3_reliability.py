@@ -8,6 +8,20 @@ import sys
 import pytest
 import torch
 
+pytest.importorskip("diffusers", minversion="0.41.0.dev0")
+pytest.importorskip("peft")
+
+from unitorch.utils.import_utils import is_flux3_available
+
+if not is_flux3_available():
+    pytest.skip("FLUX.3 requires Diffusers >= 0.41.0.dev0 and PEFT", allow_module_level=True)
+
+try:
+    from diffusers import AutoencoderKLFlux2, Flux3Transformer2DModel
+    from diffusers.loaders.single_file_utils import convert_flux3_transformer_checkpoint_to_diffusers
+except ImportError as exc:
+    pytest.skip(f"FLUX.3 backend symbols unavailable: {exc}", allow_module_level=True)
+
 from flux3_reliability_utils import crash_at_publish, options, patch_runtime
 from unitorch.datasets.flux3_assets import file_sha256
 from unitorch.tasks import flux3
