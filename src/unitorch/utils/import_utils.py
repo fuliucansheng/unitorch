@@ -71,6 +71,15 @@ def is_diffusers_available() -> bool:
     return _diffusers_available
 
 
+def is_flux3_available() -> bool:
+    """Guard the new optional backend before importing FLUX.3-only symbols."""
+    if not _diffusers_available or importlib.util.find_spec("peft") is None:
+        return False
+    from packaging.version import Version
+
+    return Version(importlib_metadata.version("diffusers")) >= Version("0.41.0.dev0")
+
+
 def is_opencv_available() -> bool:
     return _opencv_available
 

@@ -44,6 +44,7 @@ nav:
   - Commands:
     - Configuration: configuration.md
     - FLUX.2 Finetuning: guides/flux2_finetuning.md
+    - FLUX.3 Finetuning: guides/flux3_finetuning.md
     - Examples:
       - Classification:
         - Roberta: examples/classification/roberta.md

@@ -310,6 +310,13 @@ pretrained_stable_infos = {
 
 pretrained_stable_extensions_infos = {}
 
+# FLUX.3 is a native BFL package; it does not share the FLUX.2 folder layout.
+pretrained_stable_infos["flux3-image-klein-base"] = {
+    "repo_id": "black-forest-labs/flux-3-image-klein-base",
+    "revision": "3f7fa5ee22ca1d5a5cc095ac7cc96e6a173b4c86",
+    "layout": "bfl-native", "steps": 50, "guidance_scale": 3.5, "flow_shift": 6.93,
+}
+
 from unitorch.cli.models.diffusion_utils import load_weight
 
 
@@ -338,6 +345,12 @@ import unitorch.cli.models.diffusers.modeling_lucy
 import unitorch.cli.models.diffusers.modeling_vae
 import unitorch.cli.models.diffusers.processing_qwen_image
 import unitorch.cli.models.diffusers.processing_flux2
+
+from unitorch.utils.import_utils import is_flux3_available
+
+if is_flux3_available():
+    import unitorch.cli.models.diffusers.modeling_flux3
+    import unitorch.cli.models.diffusers.processing_flux3
 
 if is_opencv_available():
     import unitorch.cli.models.diffusers.processing_wan

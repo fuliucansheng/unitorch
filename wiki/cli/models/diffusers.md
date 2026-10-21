@@ -1,5 +1,17 @@
 # unitorch.cli.models.diffusers
 
+## FLUX.3
+
+`core/process/diffusion/flux3` supplies scene-caption and source/target tensors.
+The base models use `core/model/diffusers/{text2image,editing}/flux3`.
+See the [FLUX.3 guide](../../guides/flux3_finetuning.md).
+
+::: unitorch.cli.models.diffusers.processing_flux3.Flux3Processor
+
+::: unitorch.cli.models.diffusers.modeling_flux3.Flux3ForText2ImageGeneration
+
+::: unitorch.cli.models.diffusers.modeling_flux3.Flux3ForImageEditingGeneration
+
 ## FLUX.2
 
 `core/process/diffusion/flux2` produces tensors for text-to-image and per-sample

@@ -1,5 +1,14 @@
 # unitorch.cli.models.peft
 
+## FLUX.3 image DiT LoRA
+
+The sections are `core/model/diffusers/{text2image,editing}/peft/lora/flux3`.
+Qwen3-VL and the VAE stay frozen; adapters use FP32.
+
+::: unitorch.cli.models.peft.diffusers.modeling_flux3.Flux3LoraForText2ImageGeneration
+
+::: unitorch.cli.models.peft.diffusers.modeling_flux3.Flux3LoraForImageEditingGeneration
+
 ## FLUX.2 transformer LoRA
 
 Configure `core/model/diffusers/peft/lora/text2image/flux2` or

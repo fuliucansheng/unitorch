@@ -1,5 +1,11 @@
 # unitorch.models.peft
 
+## FLUX.3 image DiT LoRA
+
+::: unitorch.models.peft.diffusers.modeling_flux3.Flux3LoraForText2ImageGeneration
+
+::: unitorch.models.peft.diffusers.modeling_flux3.Flux3LoraForImageEditingGeneration
+
 ## FLUX.2 transformer LoRA
 
 The default adapter targets include the fused single-stream projections in
