@@ -1,5 +1,18 @@
 # unitorch.cli.models.diffusers
 
+## FLUX.2
+
+`core/process/diffusion/flux2` produces tensors for text-to-image and per-sample
+image editing. `core/model/diffusers/text2image/flux2` and
+`core/model/diffusers/editing/flux2` train the full diffusion transformer.
+See [data, configuration and checkpoint commands](../../guides/flux2_finetuning.md).
+
+::: unitorch.cli.models.diffusers.processing_flux2.Flux2Processor
+
+::: unitorch.cli.models.diffusers.modeling_flux2.Flux2ForText2ImageGeneration
+
+::: unitorch.cli.models.diffusers.modeling_flux2.Flux2ForImageEditingGeneration
+
 ## WanProcessor
 
 !!! tip

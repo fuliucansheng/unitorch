@@ -98,20 +98,35 @@ def collate_fn(batch):
     return inputs, targets
 
 
+def _to_device(batch, device):
+    """Place CLI tensor containers on the caller's execution device."""
+    device = torch.device(device)
+    if device.type == "cpu":
+        return batch.cpu()
+    if device.type == "cuda":
+        if device.index is None:
+            return batch.cuda()
+        with torch.cuda.device(device):
+            return batch.cuda()
+    raise ValueError(f"Unsupported CLI tensor device: {device}")
+
+
 @torch.no_grad()
-def infer(model, data_loader):
+def infer(model, data_loader, device=None):
     """Run a full pass over *data_loader* and collect outputs and targets.
 
     Returns a ``GenericOutputs`` with ``.outputs`` and ``.targets`` fields,
     already reduced across distributed ranks when applicable.
     """
+    was_training = model.training
     model.eval()
     all_outputs, all_targets = [], []
+    if device is None:
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     for inputs, targets in data_loader:
-        if torch.cuda.is_available():
-            inputs = inputs.cuda()
-            targets = targets.cuda()
+        inputs = _to_device(inputs, device)
+        targets = _to_device(targets, device)
         outputs = model(**inputs.dict())
         all_outputs.append(outputs)
         all_targets.append(targets)
@@ -123,21 +138,24 @@ def infer(model, data_loader):
                 [o.loss for o in all_outputs], device=all_outputs[0].loss.device
             )
         )
-        combined = (
-            combined.cuda().sync().cpu() if dist.is_initialized() else combined.cpu()
-        )
+        if dist.is_initialized():
+            combined = _to_device(combined, device)
+            combined = combined.sync()
+        combined = combined.cpu()
+        model.train(was_training)
         return GenericOutputs(outputs=combined, targets=None)
 
     outputs = type(all_outputs[0]).union(*all_outputs)
     targets = type(all_targets[0]).union(*all_targets)
     if dist.is_initialized():
-        outputs = outputs.cuda().sync().cpu()
-        targets = targets.cuda().sync().cpu()
+        outputs, targets = _to_device(outputs, device), _to_device(targets, device)
+        outputs = outputs.sync().cpu()
+        targets = targets.sync().cpu()
     else:
         outputs = outputs.cpu()
         targets = targets.cpu()
 
-    model.train()
+    model.train(was_training)
     return GenericOutputs(outputs=outputs, targets=targets)
 
 
@@ -166,6 +184,7 @@ def save_snapshot(
     best_score=-np.inf,  # best validation score seen so far
     info_path=None,  # path to ``info.json`` for persisting training state
     local_rank=-1,  # only rank 0 (or -1 for single-GPU) writes checkpoints
+    device=None,  # optional execution device supplied by the task/engine
     **kwargs,  # extra fields forwarded to ``info.json`` (e.g. global_epoch)
 ):
     """Evaluate, update best score, and save checkpoints according to *save_checkpoint* policy.
@@ -176,7 +195,7 @@ def save_snapshot(
 
     eval_model = ema_model if ema_model is not None else model
     snapshot_time = time.strftime("%Y%m%d_%H%M", time.localtime())
-    results = infer(eval_model, iter_dev)
+    results = infer(eval_model, iter_dev, device=device)
 
     if local_rank not in [-1, 0]:
         return best_score
@@ -290,7 +309,7 @@ class SupervisedTask:
             model=model,
             datasets=dataset,
             local_rank=config.getdefault("core/cli", "local_rank", get_local_rank()),
-            cpu_offload=config.getoption("cpu_offload", False),
+            cpu_offload=config.getdefault("core/task/supervised", "cpu_offload", False),
         )
 
     @config_defaults_method("core/task/supervised")

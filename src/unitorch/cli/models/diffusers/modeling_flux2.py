@@ -1,6 +1,8 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
+import os
+import json
 import torch
 from torch import autocast
 from typing import List, Optional, Tuple, Union
@@ -9,6 +11,7 @@ from unitorch.models.diffusers import (
     Flux2ForImageEditingGeneration as _Flux2ForImageEditingGeneration,
     Flux2ForText2ImageGeneration as _Flux2ForText2ImageGeneration,
 )
+from unitorch.models.diffusers.modeling_flux2 import _zero3_initializing
 from unitorch.utils import (
     is_bfloat16_available,
     nested_dict_value,
@@ -39,12 +42,17 @@ def _flux2_model_kwargs(
     pretrained_name = pretrained_name or config.getoption(
         "pretrained_name", default_pretrained_name
     )
-    pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
+    pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name) or {}
     use_auth_token = config.getoption("use_auth_token", False)
+    pretrained_model_path = config.getoption("pretrained_model_path", None)
+
+    def local_config(name):
+        return os.path.join(pretrained_model_path, name) if pretrained_model_path else None
 
     config_path = config.getoption("config_path", None)
     config_path = pop_value(
         config_path,
+        local_config("transformer/config.json"),
         nested_dict_value(pretrained_infos, "transformer", "config"),
     )
     config_path = cached_path(config_path, use_auth_token=use_auth_token)
@@ -52,6 +60,7 @@ def _flux2_model_kwargs(
     text_config_path = config.getoption("text_config_path", None)
     text_config_path = pop_value(
         text_config_path,
+        local_config("text_encoder/config.json"),
         nested_dict_value(pretrained_infos, "text", "config"),
     )
     text_config_path = cached_path(text_config_path, use_auth_token=use_auth_token)
@@ -59,6 +68,7 @@ def _flux2_model_kwargs(
     vae_config_path = config.getoption("vae_config_path", None)
     vae_config_path = pop_value(
         vae_config_path,
+        local_config("vae/config.json"),
         nested_dict_value(pretrained_infos, "vae", "config"),
     )
     vae_config_path = cached_path(vae_config_path, use_auth_token=use_auth_token)
@@ -66,12 +76,32 @@ def _flux2_model_kwargs(
     scheduler_config_path = config.getoption("scheduler_config_path", None)
     scheduler_config_path = pop_value(
         scheduler_config_path,
+        local_config("scheduler/scheduler_config.json"),
         nested_dict_value(pretrained_infos, "scheduler"),
     )
     scheduler_config_path = cached_path(
         scheduler_config_path,
         use_auth_token=use_auth_token,
     )
+
+    if pretrained_model_path is not None and _zero3_initializing():
+        # A local snapshot under ZeRO uses the same bounded shard loader as
+        # remote assets. Meta/assign-based HF loaders cannot replace ds_params.
+        pretrained_infos = {}
+        for component, folder, basename in (
+            ("transformer", "transformer", "diffusion_pytorch_model"),
+            ("text", "text_encoder", "model"),
+            ("vae", "vae", "diffusion_pytorch_model"),
+        ):
+            directory = os.path.join(pretrained_model_path, folder)
+            index = os.path.join(directory, f"{basename}.safetensors.index.json")
+            if os.path.isfile(index):
+                with open(index) as handle:
+                    files = sorted(set(json.load(handle)["weight_map"].values()))
+            else:
+                files = [f"{basename}.safetensors"]
+            pretrained_infos[component] = {"weight": [os.path.join(directory, name) for name in files]}
+        pretrained_model_path = None
 
     return {
         "pretrained_infos": pretrained_infos,
@@ -81,39 +111,30 @@ def _flux2_model_kwargs(
         "vae_config_path": vae_config_path,
         "scheduler_config_path": scheduler_config_path,
         "num_train_timesteps": config.getoption("num_train_timesteps", 1000),
-        "num_infer_timesteps": config.getoption("num_infer_timesteps", 50),
+        "num_infer_timesteps": config.getoption("num_infer_timesteps", None),
         "freeze_vae_encoder": config.getoption("freeze_vae_encoder", True),
         "freeze_text_encoder": config.getoption("freeze_text_encoder", True),
         "snr_gamma": config.getoption("snr_gamma", 5.0),
         "seed": config.getoption("seed", 1123),
         "gradient_checkpointing": config.getoption("gradient_checkpointing", True),
-        "guidance_scale": config.getoption("guidance_scale", 1.0),
-        "text_encoder_out_layers": tuple(
-            config.getoption("text_encoder_out_layers", (10, 20, 30))
-        ),
+        "guidance_scale": config.getoption("guidance_scale", None),
+        "text_encoder_out_layers": config.getoption("text_encoder_out_layers", None),
+        "pretrained_model_path": pretrained_model_path,
+        "torch_dtype": config.getoption("torch_dtype", "bfloat16"),
     }
 
 
 def _flux2_state_dict(pretrained_infos, use_auth_token):
-    if pretrained_infos is None:
-        return None
-    return [
-        load_weight(
-            nested_dict_value(pretrained_infos, "transformer", "weight"),
-            prefix_keys={"": "transformer."},
-            use_auth_token=use_auth_token,
-        ),
-        load_weight(
-            nested_dict_value(pretrained_infos, "text", "weight"),
-            prefix_keys={"": "text."},
-            use_auth_token=use_auth_token,
-        ),
-        load_weight(
-            nested_dict_value(pretrained_infos, "vae", "weight"),
-            prefix_keys={"": "vae."},
-            use_auth_token=use_auth_token,
-        ),
-    ]
+    """Yield individual shards instead of retaining all official weights in RAM."""
+    if not pretrained_infos:
+        return
+    for component in ("transformer", "text", "vae"):
+        paths = nested_dict_value(pretrained_infos, component, "weight")
+        paths = [paths] if isinstance(paths, str) else (paths or [])
+        for path in paths:
+            yield load_weight(
+                path, prefix_keys={"": f"{component}."}, use_auth_token=use_auth_token
+            )
 
 
 def _load_flux2_loras(inst, config):
@@ -164,14 +185,16 @@ class Flux2ForText2ImageGeneration(_Flux2ForText2ImageGeneration):
         vae_config_path: str,
         scheduler_config_path: str,
         num_train_timesteps: Optional[int] = 1000,
-        num_infer_timesteps: Optional[int] = 50,
+        num_infer_timesteps: Optional[int] = None,
         freeze_vae_encoder: Optional[bool] = True,
         freeze_text_encoder: Optional[bool] = True,
         snr_gamma: Optional[float] = 5.0,
         seed: Optional[int] = 1123,
         gradient_checkpointing: Optional[bool] = True,
-        guidance_scale: Optional[float] = 1.0,
-        text_encoder_out_layers: Optional[Tuple[int, ...]] = (10, 20, 30),
+        guidance_scale: Optional[float] = None,
+        text_encoder_out_layers: Optional[Tuple[int, ...]] = None,
+        pretrained_model_path: Optional[str] = None,
+        torch_dtype: Union[str, torch.dtype] = "bfloat16",
     ):
         super().__init__(
             config_path=config_path,
@@ -187,6 +210,8 @@ class Flux2ForText2ImageGeneration(_Flux2ForText2ImageGeneration):
             gradient_checkpointing=gradient_checkpointing,
             guidance_scale=guidance_scale,
             text_encoder_out_layers=text_encoder_out_layers,
+            pretrained_model_path=pretrained_model_path,
+            torch_dtype=torch_dtype,
         )
 
     @classmethod
@@ -200,7 +225,9 @@ class Flux2ForText2ImageGeneration(_Flux2ForText2ImageGeneration):
         inst = cls(**model_kwargs)
 
         weight_path = config.getoption("pretrained_weight_path", None)
-        if weight_path is None:
+        if weight_path is None and model_kwargs["pretrained_model_path"] is not None:
+            state_dict = None
+        elif weight_path is None:
             state_dict = _flux2_state_dict(pretrained_infos, use_auth_token)
         else:
             state_dict = load_weight(weight_path, use_auth_token=use_auth_token)
@@ -239,7 +266,9 @@ class Flux2ForText2ImageGeneration(_Flux2ForText2ImageGeneration):
         attention_mask: Optional[torch.Tensor] = None,
         height: Optional[int] = 1024,
         width: Optional[int] = 1024,
-        guidance_scale: Optional[float] = 1.0,
+        guidance_scale: Optional[float] = None,
+        enable_cpu_offload: bool = False,
+        offload_device: str = "cuda",
     ):
         outputs = super().generate(
             input_ids=input_ids,
@@ -247,6 +276,8 @@ class Flux2ForText2ImageGeneration(_Flux2ForText2ImageGeneration):
             height=height,
             width=width,
             guidance_scale=guidance_scale,
+            enable_cpu_offload=enable_cpu_offload,
+            offload_device=offload_device,
         )
         return DiffusionOutputs(outputs=outputs.images.float())
 
@@ -260,14 +291,16 @@ class Flux2ForImageEditingGeneration(_Flux2ForImageEditingGeneration):
         vae_config_path: str,
         scheduler_config_path: str,
         num_train_timesteps: Optional[int] = 1000,
-        num_infer_timesteps: Optional[int] = 50,
+        num_infer_timesteps: Optional[int] = None,
         freeze_vae_encoder: Optional[bool] = True,
         freeze_text_encoder: Optional[bool] = True,
         snr_gamma: Optional[float] = 5.0,
         seed: Optional[int] = 1123,
         gradient_checkpointing: Optional[bool] = True,
-        guidance_scale: Optional[float] = 1.0,
-        text_encoder_out_layers: Optional[Tuple[int, ...]] = (10, 20, 30),
+        guidance_scale: Optional[float] = None,
+        text_encoder_out_layers: Optional[Tuple[int, ...]] = None,
+        pretrained_model_path: Optional[str] = None,
+        torch_dtype: Union[str, torch.dtype] = "bfloat16",
     ):
         super().__init__(
             config_path=config_path,
@@ -283,6 +316,8 @@ class Flux2ForImageEditingGeneration(_Flux2ForImageEditingGeneration):
             gradient_checkpointing=gradient_checkpointing,
             guidance_scale=guidance_scale,
             text_encoder_out_layers=text_encoder_out_layers,
+            pretrained_model_path=pretrained_model_path,
+            torch_dtype=torch_dtype,
         )
 
     @classmethod
@@ -296,7 +331,9 @@ class Flux2ForImageEditingGeneration(_Flux2ForImageEditingGeneration):
         inst = cls(**model_kwargs)
 
         weight_path = config.getoption("pretrained_weight_path", None)
-        if weight_path is None:
+        if weight_path is None and model_kwargs["pretrained_model_path"] is not None:
+            state_dict = None
+        elif weight_path is None:
             state_dict = _flux2_state_dict(pretrained_infos, use_auth_token)
         else:
             state_dict = load_weight(weight_path, use_auth_token=use_auth_token)
@@ -338,7 +375,9 @@ class Flux2ForImageEditingGeneration(_Flux2ForImageEditingGeneration):
         attention_mask: Optional[torch.Tensor] = None,
         height: Optional[int] = 1024,
         width: Optional[int] = 1024,
-        guidance_scale: Optional[float] = 1.0,
+        guidance_scale: Optional[float] = None,
+        enable_cpu_offload: bool = False,
+        offload_device: str = "cuda",
     ):
         outputs = super().generate(
             input_ids=input_ids,
@@ -347,5 +386,7 @@ class Flux2ForImageEditingGeneration(_Flux2ForImageEditingGeneration):
             height=height,
             width=width,
             guidance_scale=guidance_scale,
+            enable_cpu_offload=enable_cpu_offload,
+            offload_device=offload_device,
         )
         return DiffusionOutputs(outputs=outputs.images.float())

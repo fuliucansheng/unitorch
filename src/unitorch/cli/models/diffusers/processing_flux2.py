@@ -1,8 +1,9 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
+import os
 from PIL import Image
-from typing import Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 from unitorch.models.diffusers import Flux2Processor as _Flux2Processor
 from unitorch.utils import pop_value, nested_dict_value
@@ -55,126 +56,41 @@ class Flux2Processor(_Flux2Processor):
     def from_config(cls, config, **kwargs):
         config.set_default_section("core/process/diffusion/flux2")
         pretrained_name = config.getoption("pretrained_name", "flux2-dev")
-        pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name)
+        pretrained_infos = nested_dict_value(pretrained_stable_infos, pretrained_name) or {}
         use_auth_token = config.getoption("use_auth_token", False)
-
+        pretrained_model_path = config.getoption("pretrained_model_path", None)
         tokenizer_class = config.getoption("tokenizer_class", None)
-        tokenizer_class = pop_value(
-            tokenizer_class,
-            nested_dict_value(pretrained_infos, "text", "tokenizer_class"),
-            check_none=False,
-        )
+        if tokenizer_class is None and pretrained_model_path is None:
+            tokenizer_class = nested_dict_value(pretrained_infos, "text", "tokenizer_class")
 
-        tokenizer_path = config.getoption("tokenizer_path", None)
-        tokenizer_path = pop_value(
-            tokenizer_path,
-            nested_dict_value(pretrained_infos, "text", "tokenizer"),
-            check_none=False,
-        )
-        tokenizer_path = (
-            cached_path(tokenizer_path, use_auth_token=use_auth_token)
-            if tokenizer_path is not None
-            else None
-        )
-
-        vocab_path = config.getoption("vocab_path", None)
-        vocab_path = pop_value(
-            vocab_path,
-            nested_dict_value(pretrained_infos, "text", "vocab"),
-            check_none=False,
-        )
-        vocab_path = (
-            cached_path(vocab_path, use_auth_token=use_auth_token)
-            if vocab_path is not None
-            else None
-        )
-
-        merge_path = config.getoption("merge_path", None)
-        merge_path = pop_value(
-            merge_path,
-            nested_dict_value(pretrained_infos, "text", "merge"),
-            check_none=False,
-        )
-        merge_path = (
-            cached_path(merge_path, use_auth_token=use_auth_token)
-            if merge_path is not None
-            else None
-        )
-
-        tokenizer_config = config.getoption("tokenizer_config", None)
-        tokenizer_config = pop_value(
-            tokenizer_config,
-            nested_dict_value(pretrained_infos, "text", "tokenizer_config"),
-            check_none=False,
-        )
-        tokenizer_config = (
-            cached_path(tokenizer_config, use_auth_token=use_auth_token)
-            if tokenizer_config is not None
-            else None
-        )
-
-        special_tokens_map = config.getoption("special_tokens_map", None)
-        special_tokens_map = pop_value(
-            special_tokens_map,
-            nested_dict_value(pretrained_infos, "text", "special_tokens_map"),
-            check_none=False,
-        )
-        special_tokens_map = (
-            cached_path(special_tokens_map, use_auth_token=use_auth_token)
-            if special_tokens_map is not None
-            else None
-        )
-
-        chat_template = config.getoption("chat_template", None)
-        chat_template = pop_value(
-            chat_template,
-            nested_dict_value(pretrained_infos, "text", "chat_template"),
-            check_none=False,
-        )
-        chat_template = (
-            cached_path(chat_template, use_auth_token=use_auth_token)
-            if chat_template is not None
-            else None
-        )
-
-        added_tokens = config.getoption("added_tokens", None)
-        added_tokens = pop_value(
-            added_tokens,
-            nested_dict_value(pretrained_infos, "text", "added_tokens"),
-            check_none=False,
-        )
-        added_tokens = (
-            cached_path(added_tokens, use_auth_token=use_auth_token)
-            if added_tokens is not None
-            else None
-        )
-
-        vae_config_path = config.getoption("vae_config_path", None)
-        vae_config_path = pop_value(
-            vae_config_path,
-            nested_dict_value(pretrained_infos, "vae", "config"),
-        )
-        vae_config_path = cached_path(vae_config_path, use_auth_token=use_auth_token)
-
-        max_seq_length = config.getoption("max_seq_length", 512)
-        image_size = config.getoption("image_size", None)
-        center_crop = config.getoption("center_crop", False)
-        random_flip = config.getoption("random_flip", False)
+        assets = {
+            "tokenizer_path": ("tokenizer/tokenizer.json", ("text", "tokenizer")),
+            "vocab_path": ("tokenizer/vocab.json", ("text", "vocab")),
+            "merge_path": ("tokenizer/merges.txt", ("text", "merge")),
+            "tokenizer_config": ("tokenizer/tokenizer_config.json", ("text", "tokenizer_config")),
+            "special_tokens_map": ("tokenizer/special_tokens_map.json", ("text", "special_tokens_map")),
+            "chat_template": ("tokenizer/chat_template.jinja", ("text", "chat_template")),
+            "added_tokens": ("tokenizer/added_tokens.json", ("text", "added_tokens")),
+            "vae_config_path": ("vae/config.json", ("vae", "config")),
+        }
+        paths = {}
+        for option, (filename, keys) in assets.items():
+            if pretrained_model_path is not None:
+                default = os.path.join(pretrained_model_path, filename)
+                if not os.path.isfile(default):
+                    default = None
+            else:
+                default = nested_dict_value(pretrained_infos, *keys)
+            path = pop_value(config.getoption(option, None), default, check_none=False)
+            paths[option] = cached_path(path, use_auth_token=use_auth_token) if path else None
 
         return {
-            "tokenizer_path": tokenizer_path,
-            "vocab_path": vocab_path,
-            "merge_path": merge_path,
-            "tokenizer_config": tokenizer_config,
-            "special_tokens_map": special_tokens_map,
-            "chat_template": chat_template,
-            "added_tokens": added_tokens,
+            **paths,
             "tokenizer_class": tokenizer_class,
-            "vae_config_path": vae_config_path,
-            "max_seq_length": max_seq_length,
-            "image_size": image_size,
-            "center_crop": center_crop,
-            "random_flip": random_flip,
+            "max_seq_length": config.getoption("max_seq_length", 512),
+            "image_size": config.getoption("image_size", None),
+            "center_crop": config.getoption("center_crop", False),
+            "random_flip": config.getoption("random_flip", False),
             "use_auth_token": use_auth_token,
         }
 
@@ -215,7 +131,7 @@ class Flux2Processor(_Flux2Processor):
     def _editing(
         self,
         prompt: str,
-        refer_image: Union[Image.Image, str],
+        refer_image: Union[Image.Image, str, List[Union[Image.Image, str]]],
         image: Union[Image.Image, str],
         max_seq_length: Optional[int] = None,
     ):
@@ -236,7 +152,7 @@ class Flux2Processor(_Flux2Processor):
     def _editing_inputs(
         self,
         prompt: str,
-        refer_image: Union[Image.Image, str],
+        refer_image: Union[Image.Image, str, List[Union[Image.Image, str]]],
         max_seq_length: Optional[int] = None,
     ):
         outputs = super().editing_inputs(
