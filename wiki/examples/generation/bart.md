@@ -8,7 +8,7 @@
 
 ## Step 2: Prepare config.ini File
 
-Take this [config](https://github.com/fuliucansheng/unitorch/examples/configs/caption/bart.ini) as a template.
+Take this [config](https://raw.githubusercontent.com/fuliucansheng/unitorch/refs/heads/master/src/unitorch/cli/configs/caption/bart.ini) as a template.
 
 ### Task Settings
 

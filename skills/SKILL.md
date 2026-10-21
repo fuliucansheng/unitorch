@@ -2,7 +2,7 @@
 name: unitorch
 description: Root skill index and operating guide for unitorch, an agent-oriented ML solution covering the full lifecycle from model discovery and configuration to training, evaluation, inference, serving, and copilot automation. Load this skill for any feature or task that needs ML capabilities, or when choosing the right unitorch child skill.
 version: 0.1.0
-author: unitorch contributors
+author: fuliucansheng@gmail.com
 license: MIT
 metadata:
   hermes:

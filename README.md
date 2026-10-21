@@ -167,7 +167,7 @@ need to install the packaged repository skills.
 | **Language** | BERT, RoBERTa, XLM-RoBERTa, BART, MBart, LLaMA, Mistral, QWen3, Gemma 4 |
 | **Vision** | BEiT, Swin Transformer, DINOv2, CLIP, SigLIP |
 | **Multimodal** | LLaVA, QWen3-VL, Gemma 4-VL, Chinese CLIP |
-| **Image Generation** | FLUX (StableFlux), FLUX.2 [dev] 32B and distilled FLUX.2 [klein] 4B, FLUX.3 image klein base (text-to-image/editing, image-DiT LoRA/full finetuning), QWenImage |
+| **Image Generation** | FLUX (StableFlux), FLUX.2 [dev] 32B and distilled FLUX.2 [klein] 4B (text-to-image/editing, transformer LoRA/full finetuning), FLUX.3 image klein base (text-to-image/editing, image-DiT LoRA/full finetuning), QWenImage |
 | **Video Generation** | Wan (Wan2.2 TI2V-5B), Lucy Edit 1.1 Dev |
 | **Detection** | DETR, Grounding DINO |
 | **Segmentation** | SAM, Mask2Former, SegFormer, BRIA |
@@ -208,7 +208,7 @@ PyPI Diffusers release has not been verified as a substitute. With authorized
 weights under `./weights/`, run:
 
 ```bash
-unitorch-infer examples/configs/diffusion/editing/flux3.ini --test_file=./data/editing-captions.tsv
+unitorch-infer src/unitorch/cli/configs/diffusion/editing/flux3.ini --test_file=./data/editing-captions.tsv
 ```
 
 Each TSV row is a full desired-scene caption or complete task instruction and a
@@ -220,7 +220,7 @@ FLUX Kommunity weights retain their own license terms.
 
 | Command | Purpose |
 |---------|---------|
-| `unitorch-train` | Train models, including FLUX.2 and FLUX.3 image-DiT LoRA/full finetuning (`torchrun`; FLUX.2 also supports ZeRO-3) |
+| `unitorch-train` | Train models, including FLUX.2 transformer and FLUX.3 image-DiT LoRA/full finetuning (`torchrun`; FLUX.2 also supports ZeRO-3) |
 | `unitorch-eval` | Evaluate models |
 | `unitorch-infer` | Run batch inference, including FLUX.2/FLUX.3 finetuned checkpoints and image editing |
 | `unitorch-fastapi` | Start a FastAPI model server |

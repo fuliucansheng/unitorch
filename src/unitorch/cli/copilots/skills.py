@@ -21,7 +21,7 @@ from unitorch.cli.copilots import (
 
 
 _COPILOT_TOOLS_SKILL_NAME = "unitorch-copilot-tools"
-_SKILL_AUTHOR = "FULIUCANSHENG"
+_SKILL_AUTHOR = "fuliucansheng@gmail.com"
 _SKILL_LICENSE = "MIT"
 _COPILOT_TOOLS_DESCRIPTION = (
     "Use when an agent needs to discover or invoke UniTorch copilot tools, "

@@ -1,5 +1,5 @@
 ---
-name: replace-decorator
+name: unitorch-replace-decorator
 description: Reference for using, reviewing, or modifying unitorch's @replace decorator from the installed unitorch package. Use when overriding upstream classes, working with replacement modules, reasoning about process-global monkey patches, or debugging import-time replacement and subclass __bases__ rewriting.
 ---
 

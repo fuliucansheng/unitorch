@@ -98,7 +98,7 @@ Six commands defined in `pyproject.toml` under `[project.scripts]`:
 | `unitorch-copilot` | `cli.consoles.copilot:main` | Unitorch-native agent (similar to Claude / OpenCode) |
 | `unitorch-copilot-cli` | `cli.consoles.copilot:cli_main` | CLI tool for agent use — invokes registered copilot tools |
 
-All commands except `unitorch-copilot-cli` consume `.ini` config files. Examples in `examples/configs/`.
+All commands except `unitorch-copilot-cli` consume `.ini` config files. Examples in `cli/configs/`.
 
 One-off scripts (previously `unitorch-launch`) are now run directly with:
 
@@ -189,7 +189,7 @@ Defined in `src/unitorch/utils/decorators.py`. Process-global monkey-patcher: re
 
 After **any** code change (adding/removing models, CLI commands, processors, etc.), always keep the following in sync:
 
-1. **`examples/configs/`** — add, update, or remove `.ini` config files to match the current set of supported models and pipelines.
+1. **`src/unitorch/cli/configs/`** — add, update, or remove `.ini` config files to match the current set of supported models and pipelines.
 2. **`mkdocs.yml`** & **`wiki/`** — update the docs navigation and any auto-generated API references to reflect the change.
 3. **`README.md`** — update the Supported Models table and CLI Commands table.
 

@@ -5,7 +5,7 @@ import json
 
 import pytest
 
-from unitorch.cli import Config
+from unitorch.cli import Config, cached_path
 
 
 def test_clip_cli_registrations():
@@ -196,14 +196,15 @@ def test_clip_matching_pipeline_from_config_resolves_lora_name(monkeypatch):
 @pytest.mark.parametrize(
     "path",
     [
-        "examples/configs/classification/clip.ini",
-        "examples/configs/classification/clip.lora.ini",
-        "examples/configs/fastapis/clip.ini",
-        "examples/configs/classification/text_clip.ini",
-        "examples/configs/classification/image_clip.ini",
+        "cli/configs/classification/clip.ini",
+        "cli/configs/classification/clip.lora.ini",
+        "cli/configs/fastapis/clip.ini",
+        "cli/configs/classification/text_clip.ini",
+        "cli/configs/classification/image_clip.ini",
     ],
 )
 def test_clip_configs_parse(path):
+    path = cached_path(path)
     Config(path)
 
 

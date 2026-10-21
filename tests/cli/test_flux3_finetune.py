@@ -188,12 +188,14 @@ def test_checkpoint_rejects_before_mutation(assets, tmp_path, damage):
 
 def test_cli_train_resume_and_infer(assets, tmp_path):
     from PIL import Image
+    from unitorch.cli import cached_path
+
     source, target = tmp_path / "source.png", tmp_path / "target.png"
     Image.new("RGB", (16, 16), "red").save(source)
     Image.new("RGB", (16, 16), "blue").save(target)
     (tmp_path / "train.tsv").write_text(f"A blue garment on white.\t{source}\t{target}\n")
     (tmp_path / "infer.tsv").write_text(f"A blue garment on white.\t{source}\n")
-    template = Path("examples/configs/diffusion/editing/flux3.klein-base.lora.ini").read_text()
+    template = Path(cached_path("cli/configs/diffusion/editing/flux3.klein-base.lora.ini")).read_text()
     config = tmp_path / "config.ini"
     config.write_text(template)
     env = {**os.environ, "CUDA_VISIBLE_DEVICES": "", "OMP_NUM_THREADS": "2"}

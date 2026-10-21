@@ -119,7 +119,7 @@ up to 10 references are supported. Different resolutions can use separate calls.
 One-command editing inference with full scene captions:
 
 ```bash
-unitorch-infer examples/configs/diffusion/editing/flux3.ini \
+unitorch-infer src/unitorch/cli/configs/diffusion/editing/flux3.ini \
   --pretrained_model_path=./weights/flux-3-image-klein-base \
   --test_file=./data/editing-captions.tsv --cache_dir=./runs/flux3-base
 ```
@@ -127,7 +127,7 @@ unitorch-infer examples/configs/diffusion/editing/flux3.ini \
 One-command LoRA pilot through the ordinary UniTorch training CLI:
 
 ```bash
-unitorch-train examples/configs/diffusion/editing/flux3.klein-base.lora.ini \
+unitorch-train src/unitorch/cli/configs/diffusion/editing/flux3.klein-base.lora.ini \
   --pretrained_model_path=./weights/flux-3-image-klein-base \
   --train_file=./data/train.tsv --dev_file=./data/val.tsv \
   --cache_dir=./runs/flux3-pilot

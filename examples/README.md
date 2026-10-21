@@ -5,21 +5,22 @@ This directory contains ready-to-use configuration files and scripts for trainin
 ## Directory Structure
 
 ```
-examples/
+src/unitorch/cli/
 ├── configs/            # Task-specific training/inference configs
 │   ├── caption/        # Image captioning
 │   ├── classification/ # Text & image classification
 │   ├── deepspeed/      # DeepSpeed optimizer configs
 │   ├── detection/      # Object detection
 │   ├── diffusion/      # Image & video generation (Diffusers)
+│   ├── fastapis/       # FastAPI model server configs
 │   ├── generation/     # Text generation (LLM / seq2seq)
 │   ├── pretrain/       # Pretraining (CLIP, VAE)
 │   ├── segmentation/   # Image segmentation
 │   ├── services/       # Background file-serving services
 │   └── clip-interrogator.ini
-├── fastapis/           # FastAPI model server configs
-└── llms/               # Large language model configs & tools
-    └── deepseek-moe-16b/
+
+examples/
+├── deepseek-moe-16b/
 ```
 
 ---
@@ -181,7 +182,7 @@ FastAPI model server configs launched with `unitorch-fastapi`.
 unitorch-fastapi fastapis.ini --port 8000 --device cpu
 ```
 
-Focused Wan-only FastAPI example: `examples/configs/fastapis/wan.ini`
+Focused Wan-only FastAPI example: `cli/configs/fastapis/wan.ini`
 
 ---
 
