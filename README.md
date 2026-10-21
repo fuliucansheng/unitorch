@@ -167,7 +167,7 @@ need to install the packaged repository skills.
 | **Language** | BERT, RoBERTa, XLM-RoBERTa, BART, MBart, LLaMA, Mistral, QWen3, Gemma 4 |
 | **Vision** | BEiT, Swin Transformer, DINOv2, CLIP, SigLIP |
 | **Multimodal** | LLaVA, QWen3-VL, Gemma 4-VL, Chinese CLIP |
-| **Image Generation** | FLUX (StableFlux), FLUX.2 [dev] 32B and distilled FLUX.2 [klein] 4B (text-to-image/editing, transformer LoRA/full finetuning), QWenImage |
+| **Image Generation** | FLUX (StableFlux), FLUX.2 [dev] 32B and distilled FLUX.2 [klein] 4B (text-to-image/editing, transformer LoRA/full finetuning), FLUX.3 image klein base (text-to-image/editing, image-DiT LoRA/full finetuning), QWenImage |
 | **Video Generation** | Wan (Wan2.2 TI2V-5B), Lucy Edit 1.1 Dev |
 | **Detection** | DETR, Grounding DINO |
 | **Segmentation** | SAM, Mask2Former, SegFormer, BRIA |
@@ -194,15 +194,40 @@ with text encoders and VAE frozen by default.
 
 ## CLI Commands
 
+The [FLUX.3 guide](wiki/guides/flux3_finetuning.md) documents the exact native
+base package, scene conditioning, 50-step CFG inference and LoRA resume.
+Install in an isolated environment with the tested Diffusers revision:
+
+```bash
+python -m pip install -e '.[flux3]' 'diffusers @ https://github.com/huggingface/diffusers/archive/b800f828f3951c4d206e154411bcbfa693cd322e.tar.gz'
+```
+
+The `flux3` extra declares version constraints; the explicit URL above selects
+the tested FLUX.3 APIs. The extra alone does not pin that Git revision, and a
+PyPI Diffusers release has not been verified as a substitute. With authorized
+weights under `./weights/`, run:
+
+```bash
+unitorch-infer src/unitorch/cli/configs/diffusion/editing/flux3.ini --test_file=./data/editing-captions.tsv
+```
+
+Each TSV row is a full desired-scene caption or complete task instruction and a
+source-image path. A fixed full-scene instruction plus source-pixel conditioning
+is valid for paired-assets finetuning and is used by the authorized 100-epoch
+run; per-image VLM captions are optional. The guide documents that choice, the
+optional source-only caption stage and the admission-gated WearIt controller.
+FLUX Kommunity weights retain their own license terms.
+
 | Command | Purpose |
 |---------|---------|
-| `unitorch-train` | Train models, including FLUX.2 transformer LoRA/full finetuning (supports `torchrun` and ZeRO-3) |
+| `unitorch-train` | Train models, including FLUX.2 transformer and FLUX.3 image-DiT LoRA/full finetuning (`torchrun`; FLUX.2 also supports ZeRO-3) |
 | `unitorch-eval` | Evaluate models |
-| `unitorch-infer` | Run batch inference, including FLUX.2 finetuned checkpoints and image editing |
+| `unitorch-infer` | Run batch inference, including FLUX.2/FLUX.3 finetuned checkpoints and image editing |
 | `unitorch-fastapi` | Start a FastAPI model server |
 | `unitorch-copilot` | unitorch-native agent for ML workflows |
 | `unitorch-copilot-cli` | Agent-facing CLI that invokes registered copilot tools and exposes component metadata |
 | `python -m unitorch.cli.scripts.flux2` | Export native FLUX.2 ZeRO-3 checkpoints for inference |
+| `python -m unitorch.cli.scripts.flux3` | Validate assets, generate source-only captions, and run bounded/resumable FLUX.3 LoRA training |
 
 ## License
 

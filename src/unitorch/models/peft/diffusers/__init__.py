@@ -1,6 +1,13 @@
 # Copyright (c) FULIUCANSHENG.
 # Licensed under the MIT License.
 
+from unitorch.utils.import_utils import is_flux3_available
+
+if is_flux3_available():
+    from unitorch.models.peft.diffusers.modeling_flux3 import (
+        Flux3LoraForText2ImageGeneration, Flux3LoraForImageEditingGeneration,
+    )
+
 from unitorch.models.peft.diffusers.modeling_qwen_image import (
     QWenImageLoraForText2ImageGeneration,
     QWenImageLoraForImageEditing,

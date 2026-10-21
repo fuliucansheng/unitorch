@@ -77,7 +77,7 @@ def test_lucy_state_dict_uses_wan_text_loader(monkeypatch):
 @pytest.mark.parametrize(
     "path",
     [
-        "cli/configs/diffusion/video_editing/lucy.ini",
+        "cli/configs/diffusion/editing/lucy.ini",
         "cli/configs/diffusion/editing/lucy.lora.ini",
         "cli/configs/fastapis/lucy.ini",
         "cli/configs/fastapis.ini",

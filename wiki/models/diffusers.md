@@ -1,5 +1,19 @@
 # unitorch.models.diffusers
 
+## FLUX.3 image klein base
+
+See the [native base and source-only caption guide](../guides/flux3_finetuning.md).
+
+::: unitorch.models.diffusers.modeling_flux3.GenericFlux3Model
+
+::: unitorch.models.diffusers.modeling_flux3.Flux3ForText2ImageGeneration
+
+::: unitorch.models.diffusers.modeling_flux3.Flux3ForImageEditingGeneration
+
+::: unitorch.models.diffusers.processing_flux3.Flux3Processor
+
+::: unitorch.models.diffusers.caption_flux3.Flux3SourceCaptioner
+
 ## FLUX.2 finetuning
 
 [FLUX.2 训练指南](../guides/flux2_finetuning.md) covers the exact dev 32B and
