@@ -134,23 +134,7 @@ python3 -m unitorch.cli.copilots.skills validate --folder ./skills
 
 The install command above is provided by the external open-agent `skills` npm
 package. UniTorch only provides the root `skills/` layout for that ecosystem to
-copy; this repository does not publish or alias a local installer bin. A default
-install can report:
-
-```json
-{
-  "repo": "fuliucansheng/unitorch",
-  "folder": "/home/decu/.hermes/skills",
-  "copied": [
-    "unitorch-config-ini",
-    "unitorch-copilot-tools",
-    "unitorch-infer-model",
-    "unitorch-replace-decorator",
-    "unitorch-serve-fastapi",
-    "unitorch-train-model"
-  ]
-}
-```
+copy; this repository does not publish or alias a local installer bin.
 
 Use `npm run generate-skills` and the Python entrypoints above when updating the
 checked-in `skills/` tree in this repository. Use
@@ -176,47 +160,11 @@ need to install the packaged repository skills.
 
 </details>
 
-The [FLUX.2 finetuning guide](wiki/guides/flux2_finetuning.md) provides eight
-explicit configs, data schemas, checkpoint/resume commands and ZeRO-3 CPU
-offload settings. Export native ZeRO-3 checkpoints with
-`python -m unitorch.cli.scripts.flux2 --checkpoint=... --output=... --mode=lora`.
-The requested distilled `FLUX.2-klein-4B` is kept distinct
-from the upstream-recommended `FLUX.2-klein-base-4B` training checkpoint.
-Official-weight GPU train/save/resume (optimizer step 1 → 2)/export/infer smokes
-passed for all four klein combinations and both dev LoRA tasks. These used
-64×64 synthetic data and two optimizer steps, with no convergence or image-quality
-claim. Both dev full-transformer tasks remain **NOT VERIFIED**: the CPUAdam/ZeRO
-profile requires 540 GiB available RAM and 560 GiB free disk; the validation host
-had about 160 GiB and 385 GiB, respectively, so training did not start. This is a
-resource limit, not a GPU, driver, or gated-access failure. See the guide for the
-pinned revisions and validation limits; all eight combinations remain supported,
-with text encoders and VAE frozen by default.
+See the [FLUX.2](wiki/guides/flux2_finetuning.md) and
+[FLUX.3](wiki/guides/flux3_finetuning.md) guides for installation, training,
+checkpoint export, inference, and resource requirements.
 
 ## CLI Commands
-
-The [FLUX.3 guide](wiki/guides/flux3_finetuning.md) documents the exact native
-base package, scene conditioning, 50-step CFG inference and LoRA resume.
-Install in an isolated environment with the tested Diffusers revision:
-
-```bash
-python -m pip install -e '.[flux3]' 'diffusers @ https://github.com/huggingface/diffusers/archive/b800f828f3951c4d206e154411bcbfa693cd322e.tar.gz'
-```
-
-The `flux3` extra declares version constraints; the explicit URL above selects
-the tested FLUX.3 APIs. The extra alone does not pin that Git revision, and a
-PyPI Diffusers release has not been verified as a substitute. With authorized
-weights under `./weights/`, run:
-
-```bash
-unitorch-infer src/unitorch/cli/configs/diffusion/editing/flux3.ini --test_file=./data/editing-captions.tsv
-```
-
-Each TSV row is a full desired-scene caption or complete task instruction and a
-source-image path. A fixed full-scene instruction plus source-pixel conditioning
-is valid for paired-assets finetuning and is used by the authorized 100-epoch
-run; per-image VLM captions are optional. The guide documents that choice, the
-optional source-only caption stage and the admission-gated WearIt controller.
-FLUX Kommunity weights retain their own license terms.
 
 | Command | Purpose |
 |---------|---------|
@@ -226,8 +174,6 @@ FLUX Kommunity weights retain their own license terms.
 | `unitorch-fastapi` | Start a FastAPI model server |
 | `unitorch-copilot` | unitorch-native agent for ML workflows |
 | `unitorch-copilot-cli` | Agent-facing CLI that invokes registered copilot tools and exposes component metadata |
-| `python -m unitorch.cli.scripts.flux2` | Export native FLUX.2 ZeRO-3 checkpoints for inference |
-| `python -m unitorch.cli.scripts.flux3` | Validate assets, generate source-only captions, and run bounded/resumable FLUX.3 LoRA training |
 
 ## License
 

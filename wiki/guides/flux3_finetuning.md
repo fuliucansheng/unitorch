@@ -88,21 +88,27 @@ caption. Such a failure does not produce a completed caption corpus.
 For WearIt-format JSONL, preserve `pair_id`, `group_id`, `split`, `source_local`,
 `result_local`, `source_asset_sha256`, `result_asset_sha256`, algorithm metadata
 and the existing `prompt` instruction. To opt into per-image VLM captions, run
-the separate stage:
+the separate stage through the package APIs:
 
-```bash
-python -m unitorch.cli.scripts.flux3 captions \
-  --dataset_path=./wearit/dataset/train.jsonl \
-  --output_root=./wearit-flux3/captions \
-  --pretrained_model_path=./weights/flux-3-image-klein-base
+```python
+from unitorch.datasets.flux3_assets import prepare_captions
+from unitorch.models.diffusers.caption_flux3 import Flux3SourceCaptioner
+
+captioner = Flux3SourceCaptioner("./weights/flux-3-image-klein-base/text_encoder")
+result = prepare_captions(
+    dataset_path="./wearit/dataset/train.jsonl",
+    output_root="./wearit-flux3/captions",
+    captioner=captioner,
+    captioner_id=captioner.identity,
+)
 ```
 
 Repeat for `val.jsonl` using the same output directory. The SQLite cache commits
 every completed caption and keys it by the source SHA256, instruction and
 captioner identity. Restarting reuses verified entries. Output JSONL carries
 source-only provenance; output TSV is headerless `caption<TAB>source<TAB>target`.
-`--max_records=8` makes an explicitly partial pilot. Completion/count/SHA records
-distinguish a pilot from the full corpus. `--stop_file=./stop-captions` permits a
+The `max_records=8` argument makes an explicitly partial pilot. Completion/count/SHA records
+distinguish a pilot from the full corpus. `stop_file="./stop-captions"` permits a
 graceful stop after the current caption. Do not run the optional 9B PUP alongside
 the core image model on a memory-constrained GPU; run it as a separate stage.
 
@@ -163,16 +169,21 @@ not the default. Gradient checkpointing is enabled. `offload_conditioners=True`
 moves frozen Qwen/VAE to CPU between stages without offloading live adapters.
 It rejects attempts to offload trainable conditioners. No ZeRO-3 integration
 is claimed for this new backend; ordinary DDP is supported. The tested two-GPU
-fully resident recipe explicitly sets `--offload_conditioners=False` on the
-WearIt controller. Its generic CLI default remains `True`.
+fully resident recipe explicitly sets `offload_conditioners=False` on the
+WearIt controller API. Its default remains `True`.
 
 ## Bounded WearIt controller
 
-First verify the copied corpus, including every PNG and the original manifest:
+The optional controller and data validation are package APIs. First verify the
+copied corpus, including every PNG and the original manifest:
 
-```bash
-python -m unitorch.cli.scripts.flux3 validate_data \
-  --dataset_root=./wearit --output_root=./wearit-flux3/validation
+```python
+from unitorch.datasets.flux3_assets import validate_assets
+
+result = validate_assets(
+    dataset_root="./wearit",
+    output_root="./wearit-flux3/validation",
+)
 ```
 
 The WearIt verifier expects 58,026 RGB PNGs at 1024×1536, the pinned original
@@ -181,27 +192,33 @@ represent 130 connected groups. It writes a new image SHA manifest, verifies
 all paired file hashes, and rejects train/validation sharing. Below-1K originals
 retain their provenance; resampling does not create native 1K detail.
 
-Use the restartable controller for bounded smoke pilots and formal 100-epoch
-training:
+Call the restartable controller for bounded smoke pilots and formal 100-epoch
+training. This example uses the caption directory from the preparation stage:
 
-```bash
-python -m unitorch.cli.scripts.flux3 train \
-  --pretrained_model_path=./weights/flux-3-image-klein-base \
-  --train_captions=./wearit-flux3/pilot/train.jsonl \
-  --val_captions=./wearit-flux3/pilot/val.jsonl \
-  --data_validation=./wearit-flux3/validation/DATA_VALIDATED.json \
-  --output_root=./runs/flux3-assets-pilot --pilot_steps=20
+```python
+from unitorch.tasks.flux3 import train_assets
+
+result = train_assets(
+    pretrained_model_path="./weights/flux-3-image-klein-base",
+    train_captions="./wearit-flux3/captions/train.jsonl",
+    val_captions="./wearit-flux3/captions/val.jsonl",
+    data_validation="./wearit-flux3/validation/DATA_VALIDATED.json",
+    output_root="./runs/flux3-assets-pilot",
+    pilot_steps=20,
+)
 ```
 
-For two GPUs with fully resident conditioners, use
-`torchrun --nproc_per_node=2 -m unitorch.cli.scripts.flux3 train --offload_conditioners=False ...`
-with the remaining arguments above. Batch size is one per GPU, accumulation
+For custom distributed orchestration, `train_assets` reads the `torchrun`
+rank environment; pass `offload_conditioners=False` for fully resident
+conditioners. Ordinary config-driven DDP training uses `torchrun --no_python
+--nproc_per_node=2 unitorch-train` with the LoRA config shown above.
+The controller's batch size is one per GPU, accumulation
 four, rank 16, alpha 32, and
 the initial learning rate is 1e-5. The controller checks disk/RAM/GPU memory and
 aborts on nonfinite loss or gradients. It keeps only latest and best-loss
 snapshots with optimizer, cursor, RNG and exact input/base identity. Explicit
-`--resume=True` restores those states. STOP and save decisions are synchronized
-across ranks at each optimizer boundary; `--stop_file=./stop-training` stops all
+`resume=True` restores those states. STOP and save decisions are synchronized
+across ranks at each optimizer boundary; `stop_file="./stop-training"` stops all
 ranks after a complete snapshot. Publishing `latest` is crash-recoverable under
 the run lock: recovery validates the published checkpoint or the committed
 `previous-latest` fallback after an interrupted rename. Incomplete staging
@@ -209,13 +226,13 @@ directories are never resume candidates. Best loss is only a numerical monitor;
 it does not prove sharpness,
 item preservation or useful editing quality.
 
-Without `--pilot_steps`, the controller defaults to 100 epochs but refuses to
+With `pilot_steps=None`, the controller defaults to 100 epochs but refuses to
 start without all 31,640/200 conditioning records, an official train/save/resume/export/infer
 proof, and a review approval JSON tied to the exact caption/data/proof hashes.
 Formal validation evaluates exactly all 200 inherited rows at each snapshot.
 A smaller pilot is smoke evidence only and cannot replace formal validation;
 both keep 1024×1536 source/target geometry without a resolution downgrade.
-Keep `--epochs=100`, the full split and exact conditioning/data/proof hashes for
+Keep `epochs=100`, the full split and exact conditioning/data/proof hashes for
 the formal run; a pilot has a separate run identity and output directory.
 The parent reviewer creates that approval after examining same-seed base/LoRA
 images and swapped-reference controls. This development workflow does not start

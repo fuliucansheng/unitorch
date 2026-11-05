@@ -41,7 +41,7 @@ export TORCH_EXTENSIONS_DIR="$FLUX2_RUN_ROOT/torch_extensions"
 | 文生图 | `prompt<TAB>image` | `prompt` |
 | 编辑 | `prompt<TAB>reference<TAB>image` | `prompt<TAB>reference` |
 
-将 TSV 放入 `$FLUX2_DATA_ROOT/{text2image,editing}.{train,dev,test}.tsv`。下列命令显式覆盖配置中的任务环境路径；也可通过 `--train_file=... --dev_file=... --test_file=...` 指向其它位置。默认将图像处理为 256×256，prompt 长度为 512。官方 VAE 下尺寸必须为 16 的倍数；配置中的 `image_size` 顺序是 `(width, height)`。训练和推理应使用一致的处理尺寸。
+将 TSV 放入 `$FLUX2_DATA_ROOT/{text2image,editing}.{train,dev,test}.tsv`。示例配置默认使用仓库根目录下的 `./data` 和 `./flux2-runs`；下列命令通过变量显式指定路径，也可通过 `--train_file=... --dev_file=... --test_file=...` 指向其它位置。默认将图像处理为 256×256，prompt 长度为 512。官方 VAE 下尺寸必须为 16 的倍数；配置中的 `image_size` 顺序是 `(width, height)`。训练和推理应使用一致的处理尺寸。
 
 执行 smoke 时可使用明确标记的合成数据验证数值和 IO；正式训练需要真实数据及独立验证集。官方 pipeline 的参考图像输入要求至少 64×64。
 
@@ -153,14 +153,23 @@ GPU 配置使用 DeepSpeed CPUAdam；首次运行可能需要编译其扩展，�
 
 DeepSpeed task 的输入、标签和验证聚合跟随 accelerator/engine 的执行设备。选择 CPU/Gloo 时，即使宿主机 CUDA 可见也使用 CPU；CUDA/NCCL 的 CPU 参数 offload 仍以 GPU 为执行设备。
 
-将原生 ZeRO-3 latest 导出为推理文件，使用仓库自带的 CLI（只读取自己信任的原生检查点）：
+将原生 ZeRO-3 latest 导出为推理文件，在已安装 UniTorch 和 DeepSpeed 的环境中调用包 API（只读取自己信任的原生检查点）。以下相对路径对应上文默认的 `FLUX2_RUN_ROOT`，自定义目录时请同步修改：
+
+```python
+from unitorch.models.diffusers.checkpoint_flux2 import export_zero_checkpoint
+
+result = export_zero_checkpoint(
+    checkpoint="./flux2-runs/flux2.dev.text2image.lora/pytorch_model_latest",
+    output="./flux2-runs/exports/dev-text2image-lora",
+    mode="lora",
+    dtype="float32",
+)
+print(result["path"])
+```
+
+导出后使用普通推理入口：
 
 ```bash
-"$FLUX2_BIN/python" -m unitorch.cli.scripts.flux2 \
-  --checkpoint="$FLUX2_RUN_ROOT/flux2.dev.text2image.lora/pytorch_model_latest" \
-  --output="$FLUX2_RUN_ROOT/exports/dev-text2image-lora" \
-  --mode=lora --dtype=float32
-
 "$FLUX2_BIN/unitorch-infer" examples/configs/diffusion/text2image/flux2.dev.lora.ini \
   --task_name=core/task/supervised \
   --from_ckpt_dir="$FLUX2_RUN_ROOT/exports/dev-text2image-lora" \
@@ -169,7 +178,7 @@ DeepSpeed task 的输入、标签和验证聚合跟随 accelerator/engine 的执
   --core/model/diffusers/peft/lora/text2image/flux2@enable_cpu_offload=True
 ```
 
-E2E 导出改为 `--mode=e2e --dtype=bfloat16`，推理使用对应 E2E 配置及 `core/model/diffusers/<task>/flux2@enable_cpu_offload=True`。导出器采用 DeepSpeed lazy/mmap 读取，逐 tensor 转换，仅保存训练组件或 adapters；E2E 包括显式解冻的 text、VAE encoder/quant_conv。内存预检包含最终 tensors、最大 FP32 gather 临时空间、模型元数据和默认 16 GiB 余量；`--max_memory_bytes` 可进一步限制预算。磁盘需额外保留 1 GiB。输出目录必须没有 `pytorch_model.bin`，写完临时文件后原子发布，不覆盖已有文件。它不支持 ZeRO-2 的 eager 合并。原生 optimizer shards 用于恢复，导出 `.bin` 用于推理，不能互相代替。
+E2E 导出改用参数 `mode="e2e", dtype="bfloat16"`，推理使用对应 E2E 配置及 `core/model/diffusers/<task>/flux2@enable_cpu_offload=True`。导出器采用 DeepSpeed lazy/mmap 读取，逐 tensor 转换，仅保存训练组件或 adapters；E2E 包括显式解冻的 text、VAE encoder/quant_conv。内存预检包含最终 tensors、最大 FP32 gather 临时空间、模型元数据和默认 16 GiB 余量；`max_memory_bytes` 参数可进一步限制预算。磁盘需额外保留 1 GiB。输出目录必须没有 `pytorch_model.bin`，写完临时文件后原子发布，不覆盖已有文件。它不支持 ZeRO-2 的 eager 合并。原生 optimizer shards 用于恢复，导出 `.bin` 用于推理，不能互相代替。
 
 顺序 CPU offload 是**推理功能**；先加载底座和训练检查点，再加 hooks。需要同时设置 task 的 `cpu_offload=True`（避免初始化时整体上 GPU）和 model 的 `enable_cpu_offload=True`。训练后直接启用这些 hooks 的模型不应再用于优化；重新从 checkpoint 构造训练模型。
 
@@ -197,7 +206,7 @@ E2E 导出改为 `--mode=e2e --dtype=bfloat16`，推理使用对应 E2E 配置�
 
 dev 全 transformer 的未验证原因是可用 RAM 与磁盘不足，不是 GPU、驱动或 gated 权重访问失败。parent 完整测试套件已完成：249 passed、0 failed、0 skipped；parent 增量测试已完成：58 passed、0 failed。两个套件有重叠，计数不相加。
 
-验证证据说明：`/data/decu/flux2-finetune/scripts/official_smoke.py` 是本次任务专用的验证 harness，不是公开训练或导出的必需依赖。用户训练、恢复、导出和推理使用上文的仓库入口与可移植命令；原生 ZeRO 导出由 `python -m unitorch.cli.scripts.flux2` 提供。
+验证证据说明：上述官方权重 smoke 使用独立验证 harness，不是公开训练或导出的必需依赖。用户训练、恢复和推理使用上文的标准 CLI；原生 ZeRO 导出使用 `unitorch.models.diffusers.checkpoint_flux2.export_zero_checkpoint` 包 API。
 
 CPU 上真实 tiny Transformer/Mistral3 或 Qwen3/VAE 的优化、CLI train/resume/infer 和 ZeRO/Gloo 测试属于独立验证层级，不能证明官方大权重训练成功。CUDA 不可见的沙箱探测也不能证明宿主机驱动故障。实机验证应逐组合记录官方 repo/revision、资源预检、训练、optimizer step 恢复以及导出检查点推理结果；资源不足的组合标记为未验证。
 
