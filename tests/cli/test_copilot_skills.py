@@ -97,9 +97,7 @@ def test_export_and_validate_copilot_skill_documents(tmp_path):
     assert "npm run generate-skills" in parent_markdown
     assert "external `skills` npm package" in parent_markdown
     assert "npx skills add fuliucansheng/unitorch" in parent_markdown
-    assert '"repo": "fuliucansheng/unitorch"' in parent_markdown
-    assert '"folder": "/home/decu/.hermes/skills"' in parent_markdown
-    assert '"unitorch-replace-decorator"' in parent_markdown
+    _assert_external_skills_install_payload(parent_markdown)
     assert "npx unitorch" not in parent_markdown
     assert "--folder .skills" not in parent_markdown
     assert "`.skills" not in parent_markdown
@@ -131,8 +129,9 @@ def test_package_json_uses_python_scripts_without_local_skills_bin():
 
 def _assert_external_skills_install_payload(text: str) -> None:
     text = text.replace('\\"', '"')
+    assert "npx skills add fuliucansheng/unitorch --folder ./agent-skills" in text
     assert '"repo": "fuliucansheng/unitorch"' in text
-    assert '"folder": "/home/decu/.hermes/skills"' in text
+    assert '"folder": "./agent-skills"' in text
     for skill_name in (
         "unitorch-config-ini",
         "unitorch-copilot-tools",
@@ -160,7 +159,9 @@ def test_docs_describe_external_skills_installer():
         assert "Publish UniTorch Skills to ClawHub/HermesHub" not in text
         assert "CLAWHUB_TOKEN" not in text
         assert "HERMESHUB_TOKEN" not in text
-        _assert_external_skills_install_payload(text)
+        assert "--folder ./agent-skills" in text
+        if doc_path.name != "README.md":
+            _assert_external_skills_install_payload(text)
 
 
 def test_publish_skills_workflow_removed():

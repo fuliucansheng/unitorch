@@ -40,12 +40,12 @@ npx skills add fuliucansheng/unitorch
 npx skills add fuliucansheng/unitorch --folder ./agent-skills
 ```
 
-A default external install can report:
+An external install with `--folder ./agent-skills` can report:
 
 ```json
 {
   "repo": "fuliucansheng/unitorch",
-  "folder": "/home/decu/.hermes/skills",
+  "folder": "./agent-skills",
   "copied": [
     "unitorch-config-ini",
     "unitorch-copilot-tools",

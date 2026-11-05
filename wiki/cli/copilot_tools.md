@@ -71,13 +71,13 @@ npx skills add fuliucansheng/unitorch --folder ./agent-skills
 
 The command above is provided by the external open-agent `skills` npm package.
 UniTorch only provides the root `skills/` layout for that ecosystem to copy;
-this repository does not publish or alias a local installer bin. A default
-install can report:
+this repository does not publish or alias a local installer bin. An install with
+`--folder ./agent-skills` can report:
 
 ```json
 {
   "repo": "fuliucansheng/unitorch",
-  "folder": "/home/decu/.hermes/skills",
+  "folder": "./agent-skills",
   "copied": [
     "unitorch-config-ini",
     "unitorch-copilot-tools",

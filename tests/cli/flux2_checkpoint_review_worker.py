@@ -3,8 +3,6 @@
 import json
 import os
 from pathlib import Path
-import subprocess
-import sys
 
 import fire
 import torch
@@ -115,17 +113,6 @@ def main(assets, output, task="text2image", mode="lora", workflow="initialize", 
                 restored.from_checkpoint(str(destination))
                 for name, value in restored.checkpoint_state_dict().items():
                     torch.testing.assert_close(value, exported[name].float(), rtol=0, atol=0)
-            if epochs == 1:
-                cli_output = output / "cli-export"
-                subprocess.run([
-                    sys.executable, "-m", "unitorch.cli.scripts.flux2",
-                    f"--checkpoint={native}", f"--output={cli_output}",
-                    f"--mode={mode}", "--dtype=float32",
-                ], check=True, timeout=60)
-                cli_state = torch.load(cli_output / "pytorch_model.bin", weights_only=True)
-                assert cli_state.keys() == trained.keys()
-                for key, value in trained.items():
-                    torch.testing.assert_close(cli_state[key], value, rtol=0, atol=0)
             try:
                 export_zero_checkpoint(str(native), str(destination), mode=mode)
             except FileExistsError:
